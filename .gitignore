@@ -1,0 +1,53 @@
+*.out
+*.so
+# Vim
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+#buckup files
+#---------------------------
+*~
+*.orig
+*.bak
+# yyyyMMdd
+*.[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]
+# yyyyMMddHHmm
+*.[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]
+# yyyyMMddHHmmss
+*.[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]
+# OS dependent files
+#---------------------------
+.DS_Store
+Thumbs.db
+# Bundler specific
+#---------------------------
+/vendor/bundle/
+/.bundle/
+# Office specific
+~
+*.tmp
+# Vagrant specific
+.vagrant/
+# Cmake projects
+build*
+# Fortran object files
+*.mod
+*.o
+fort.*
+# test output
+dump/
+*.prs
+*.log
+*.dat
+*.sif
+*.csv
+*.bin
+*.png
+
+_skbuild/
+dist/
+*.egg-info/
+
+__pycache__/
