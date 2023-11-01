@@ -1,4 +1,5 @@
 find_package( BLAS REQUIRED )
+find_package( purelapack REQUIRED )
 find_package( unittest REQUIRED )
 
 add_compile_options(
@@ -48,6 +49,8 @@ endif()
 
 add_library( symRMSD )
 target_include_directories( symRMSD PRIVATE ${unittest_DIR}/mod_files )
+target_include_directories( symRMSD PRIVATE ${purelapack_DIR}/mod_files )
+target_include_directories( symRMSD PRIVATE ${purelapack_DIR}/include )
 
 list( APPEND f90_src mod_params.f90 )
 list( APPEND f90_src mod_cov.f90 )
@@ -56,6 +59,7 @@ list( APPEND f90_src mod_symRMSD.f90 )
 
 target_sources( symRMSD PRIVATE ${f90_src} )
 target_link_libraries( symRMSD PRIVATE blas )
+target_link_libraries( symRMSD PRIVATE purelapack )
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_subdirectory( test )

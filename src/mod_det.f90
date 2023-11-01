@@ -4,6 +4,10 @@ module mod_det
   private
   public :: det
 !
+  interface
+    include 'dgetrf.h'
+  end interface
+!
 contains
 !
    subroutine det(d, x, res)

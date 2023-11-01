@@ -11,7 +11,7 @@ module mod_params
   public  :: STDIN, STDOUT, STDERR
   public  :: RZERO, RONE, RHALF
 !
-!$<
+!&<
 !
   integer(IK), parameter      :: LK = KIND(.true.)
 !
@@ -19,6 +19,6 @@ module mod_params
   real(RK), parameter         :: RONE  = 1.0_RK
   real(RK), parameter         :: RHALF = 0.5_RK
 !
-!$>
+!&>
 !
 end module mod_params
