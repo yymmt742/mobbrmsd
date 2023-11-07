@@ -1,6 +1,5 @@
 find_package( BLAS REQUIRED )
 find_package( purelapack REQUIRED )
-find_package( unittest REQUIRED )
 
 add_compile_options(
   $<$<COMPILE_LANG_AND_ID:C,GNU>:-O2>
@@ -48,7 +47,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
 endif()
 
 add_library( symRMSD )
-target_include_directories( symRMSD PRIVATE ${unittest_DIR}/mod_files )
 target_include_directories( symRMSD PRIVATE ${purelapack_DIR}/mod_files )
 target_include_directories( symRMSD PRIVATE ${purelapack_DIR}/include )
 

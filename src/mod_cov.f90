@@ -1,8 +1,12 @@
 module mod_cov
-  use mod_params
+  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
   implicit none
   private
   public :: cov
+!
+  interface
+    include 'dgemm.h'
+  end interface
 !
 contains
 !
@@ -10,13 +14,8 @@ contains
     integer(IK), intent(in) :: d, n
     real(RK), intent(in)    :: x(d, n), y(d, n)
     real(RK), intent(inout) :: res(d, d)
-    integer(IK)             :: i, j, k
 !
-    do k = 1, n
-      do concurrent(j=1:d, i=1:d)
-        res(i, j) = res(i, j) + x(i, k) * y(j, k)
-      end do
-    end do
+    call DGEMM('N', 'T', d, d, n, ONE, x(1:,1:), d, y(1:,1:), d, ZERO, res(1:,1:), d)
 !
   end subroutine cov
 !
