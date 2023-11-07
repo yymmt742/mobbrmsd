@@ -53,6 +53,17 @@ target_include_directories( test_det PRIVATE ${purelapack_DIR}/include )
 target_link_libraries( test_det PRIVATE purelapack )
 add_test( NAME test_det COMMAND test_det )
 
+add_executable( test_svd )
+target_include_directories( test_svd PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_svd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
+                         PRIVATE test_svd.f90 )
+target_link_libraries( test_svd PRIVATE unittest )
+target_include_directories( test_svd PRIVATE ${purelapack_DIR}/mod_files )
+target_include_directories( test_svd PRIVATE ${purelapack_DIR}/include )
+target_link_libraries( test_svd PRIVATE purelapack )
+add_test( NAME test_svd COMMAND test_svd )
+
 add_executable( test_rot )
 target_include_directories( test_rot PRIVATE ${unittest_DIR}/mod_files )
 target_include_directories( test_rot PRIVATE ${purelapack_DIR}/mod_files )
