@@ -45,8 +45,8 @@ add_test( NAME test_cov COMMAND test_cov )
 add_executable( test_det )
 target_include_directories( test_det PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_det PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                         PRIVATE test_det.f90 )
+                                 ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
+                                 test_det.f90 )
 target_link_libraries( test_det PRIVATE unittest )
 target_include_directories( test_det PRIVATE ${purelapack_DIR}/mod_files )
 target_include_directories( test_det PRIVATE ${purelapack_DIR}/include )
@@ -56,8 +56,8 @@ add_test( NAME test_det COMMAND test_det )
 add_executable( test_svd )
 target_include_directories( test_svd PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_svd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
-                         PRIVATE test_svd.f90 )
+                                 ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
+                                 test_svd.f90 )
 target_link_libraries( test_svd PRIVATE unittest )
 target_include_directories( test_svd PRIVATE ${purelapack_DIR}/mod_files )
 target_include_directories( test_svd PRIVATE ${purelapack_DIR}/include )
@@ -75,3 +75,17 @@ target_link_libraries( test_rot PRIVATE unittest )
 target_link_libraries( test_rot PRIVATE blas )
 add_test( NAME test_rot COMMAND test_rot )
 
+add_executable( test_Kabsch )
+target_include_directories( test_Kabsch PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_Kabsch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_cov.f90
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rot.f90
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
+                                    test_Kabsch.f90 )
+target_link_libraries( test_Kabsch PRIVATE unittest )
+target_include_directories( test_Kabsch PRIVATE ${purelapack_DIR}/mod_files )
+target_include_directories( test_Kabsch PRIVATE ${purelapack_DIR}/include )
+target_link_libraries( test_Kabsch PRIVATE purelapack )
+add_test( NAME test_Kabsch COMMAND test_Kabsch )
