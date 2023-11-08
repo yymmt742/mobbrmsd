@@ -6,6 +6,7 @@ program main
   type(unittest) :: u
 !
   call test1()
+  call test2()
 !
   call u%finish_and_terminate()
 !
@@ -81,6 +82,27 @@ contains
    &                                   'cov3 3d')
 !
   end subroutine test1
+!
+  subroutine test2()
+    integer, parameter :: n_test = 10
+    integer, parameter :: d = 50
+    integer, parameter :: n = 20
+    real(RK)           :: X(d, n), Y(d, n)
+    real(RK)           :: XYT(d, d), XTY(n, n)
+    integer            :: i
+!
+    call u%init('test cov, d=100, n=20')
+!
+    do i = 1, n_test
+      call RANDOM_NUMBER(X)
+      call RANDOM_NUMBER(Y)
+      call cov(d, n, X, Y, XYT)
+      call u%assert_almost_equal([MATMUL(X, TRANSPOSE(Y)) - XYT], 0D0, 'cov X@YT')
+      call cov_row_major(d, n, X, Y, XTY)
+      call u%assert_almost_equal([MATMUL(TRANSPOSE(X), Y) - XTY], 0D0, 'cov XT@Y')
+    end do
+!
+  end subroutine test2
 !
   pure subroutine cov1(d, n, x, y, res)
   use, intrinsic :: ISO_FORTRAN_ENV, only:  &

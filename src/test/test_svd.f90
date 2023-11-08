@@ -6,7 +6,17 @@ program main
   type(unittest) :: z
 !
   call test1()
-  call test2()
+  call test2(2)
+  call test2(4)
+  call test2(5)
+  call test2(6)
+  call test2(7)
+  call test2(8)
+  call test2(9)
+  call test2(10)
+  call test2(20)
+  call test2(50)
+  call test2(100)
 !
   call z%finish_and_terminate()
 !
@@ -42,9 +52,9 @@ contains
 !
   end subroutine test1
 !
-  subroutine test2()
+  subroutine test2(d)
+    integer,intent(in)    :: d
     integer, parameter    :: N_TEST = 10
-    integer, parameter    :: d = 10
     real(RK)              :: Y(d * d), X(d * d), E(d, d), Q(d, d)
     real(RK)              :: s(d), u(d, d), vt(d, d)
     real(RK), allocatable :: w(:)
@@ -56,9 +66,8 @@ contains
     allocate(w(lw))
 !
     Q = 0D0
-    E = 0D0
-    do i = 1, d
-      E(i, i) = 1D0
+    do concurrent(j=1:d,i = 1:d)
+      E(i, j) = MERGE(1D0, 0D0, i == j)
     end do
 !
     do i = 1, N_TEST

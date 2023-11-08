@@ -1,8 +1,9 @@
+!| Calculate the covariance matrix.
 module mod_cov
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
   implicit none
   private
-  public :: cov
+  public :: cov, cov_row_major
 !
   interface
     include 'dgemm.h'
@@ -10,13 +11,38 @@ module mod_cov
 !
 contains
 !
+!| Calculate the covariance matrix, X@YT.
   pure subroutine cov(d, n, x, y, res)
-    integer(IK), intent(in) :: d, n
-    real(RK), intent(in)    :: x(d, n), y(d, n)
-    real(RK), intent(inout) :: res(d, d)
+    integer(IK), intent(in) :: d
+    !! matrix collumn dimension.
+    integer(IK), intent(in) :: n
+    !! matrix row dimension.
+    real(RK), intent(in)    :: x(*)
+    !! d*n array
+    real(RK), intent(in)    :: y(*)
+    !! d*n array
+    real(RK), intent(inout) :: res(*)
+    !! returns d*d covariance matrix
 !
-    call DGEMM('N', 'T', d, d, n, ONE, x(1:,1:), d, y(1:,1:), d, ZERO, res(1:,1:), d)
+    call DGEMM('N', 'T', d, d, n, ONE, x, d, y, d, ZERO, res, d)
 !
   end subroutine cov
+!
+!| Calculate the covariance matrix, XT@Y.
+  pure subroutine cov_row_major(d, n, x, y, res)
+    integer(IK), intent(in) :: d
+    !! matrix collumn dimension.
+    integer(IK), intent(in) :: n
+    !! matrix row dimension.
+    real(RK), intent(in)    :: x(*)
+    !! d*n array
+    real(RK), intent(in)    :: y(*)
+    !! d*n array
+    real(RK), intent(inout) :: res(*)
+    !! returns n*n covariance matrix
+!
+    call DGEMM('T', 'N', n, n, d, ONE, x, d, y, d, ZERO, res, n)
+!
+  end subroutine cov_row_major
 !
 end module mod_cov
