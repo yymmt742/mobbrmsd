@@ -18,17 +18,16 @@ contains
   subroutine test1()
     integer, parameter :: N_TEST=10
     real(RK)           :: W(1), X(1)
-    real(RK)           :: res, sig
     integer            :: i
 !
     call u%init('test det d=1')
 !
     do i=1,N_TEST
       call random_number(X)
-      W=X ; call det(1, W, res)
-      W=X ; call det_sign(1, W, sig)
-      call u%assert_almost_equal(res, X(1), 'det d=1')
-      call u%assert_almost_equal(sig, SIGN(ONE, X(1)), 'det_sign d=1')
+      W=X ; call det(1, W)
+      call u%assert_almost_equal(W(1), X(1), 'det d=1')
+      W=X ; call det_sign(1, W)
+      call u%assert_almost_equal(W(1), SIGN(ONE, X(1)), 'det_sign d=1')
     enddo
 !
   end subroutine test1
@@ -36,7 +35,7 @@ contains
   subroutine test2()
     integer, parameter :: N_TEST=10
     real(RK)           :: W(4), X(4)
-    real(RK)           :: res, sig, da
+    real(RK)           :: da
     integer            :: i
 !
     call u%init('test det d=2')
@@ -44,10 +43,10 @@ contains
     do i=1,N_TEST
       call random_number(X)
       da = X(1)*X(4)-X(2)*X(3)
-      W=X ; call det(2, W, res)
-      W=X ; call det_sign(2, W, sig)
-      call u%assert_almost_equal(res,            da, 'det d=2')
-      call u%assert_almost_equal(sig, SIGN(ONE, da), 'det_sign d=2')
+      W=X ; call det(2, W)
+      call u%assert_almost_equal(W(1),            da, 'det d=2')
+      W=X ; call det_sign(2, W)
+      call u%assert_almost_equal(W(1), SIGN(ONE, da), 'det_sign d=2')
     enddo
 !
   end subroutine test2
@@ -55,7 +54,7 @@ contains
   subroutine test3()
     integer, parameter :: N_TEST=10
     real(RK)           :: W(9), X(9)
-    real(RK)           :: res, sig, da
+    real(RK)           :: da
     integer            :: i
 !
     call u%init('test det d=3')
@@ -64,27 +63,26 @@ contains
       call random_number(X)
       da = X(1)*X(5)*X(9)+X(2)*X(6)*X(7)+X(3)*X(4)*X(8) &
           -X(3)*X(5)*X(7)-X(2)*X(4)*X(9)-X(1)*X(6)*X(8)
-      W=X ; call det(3, W, res)
-      W=X ; call det_sign(3, W, sig)
-      call u%assert_almost_equal(res,            da, 'det d=3')
-      call u%assert_almost_equal(sig, SIGN(ONE, da), 'det_sign d=3')
+      W=X ; call det(3, W)
+      call u%assert_almost_equal(W(1),            da, 'det d=3')
+      W=X ; call det_sign(3, W)
+      call u%assert_almost_equal(W(1), SIGN(ONE, da), 'det_sign d=3')
     enddo
 !
   end subroutine test3
 !
   subroutine test4()
     integer, parameter :: N_TEST=20
-    real(RK)           :: W(16), X(16)
-    real(RK)           :: res, sig
+    real(RK)           :: W(16), Y(16), X(16)
     integer            :: i
 !
     call u%init('test det d=4')
 !
     do i=1,N_TEST
       call random_number(X)
-      W=X ; call det(4, W, res)
-      W=X ; call det_sign(4, W, sig)
-      call u%assert_almost_equal(sig, SIGN(ONE, res), 'det_sign d=4')
+      W=X ; call det(4, W)
+      Y=X ; call det_sign(4, Y)
+      call u%assert_almost_equal(Y(1), SIGN(ONE, W(1)), 'det_sign d=4')
     enddo
 !
   end subroutine test4
@@ -92,17 +90,16 @@ contains
   subroutine test5()
     integer, parameter :: N_TEST=20
     integer, parameter :: d = 100
-    real(RK)           :: W(d*d), X(d*d)
-    real(RK)           :: res, sig
+    real(RK)           :: W(d*d), Y(d*d), X(d*d)
     integer            :: i
 !
     call u%init('test det d=100')
 !
     do i=1,N_TEST
       call random_number(X)
-      W=X ; call det(d, W, res)
-      W=X ; call det_sign(d, W, sig)
-      call u%assert_almost_equal(sig, SIGN(ONE, res), 'det_sign d=100')
+      W=X ; call det(d, W)
+      Y=X ; call det_sign(d, Y)
+      call u%assert_almost_equal(Y(1), SIGN(ONE, W(1)), 'det_sign d=100')
     enddo
 !
   end subroutine test5
