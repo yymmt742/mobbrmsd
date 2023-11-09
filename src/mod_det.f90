@@ -13,7 +13,7 @@ module mod_det
   end interface det
 !
   interface det_sign
-    module procedure :: det_sign_full, det_sign_part
+    module procedure :: det_sign_copy, det_sign_full, det_sign_part
   end interface det_sign
 !
 contains
@@ -100,6 +100,17 @@ contains
    end subroutine det_part
 !
 !| calculate determinant sign of square matrix x, with leading dimension.
+!
+   pure subroutine det_sign_copy(d, x, w)
+     integer(IK), intent(in) :: d
+    !! matrix dimension
+     real(RK), intent(in)    :: x(*)
+    !! d * d square matrix.
+     real(RK), intent(inout) :: w(*)
+    !! work array, on exit, w(1) is assigned the determinant sign of x.
+     w(:d * d) = x(:d * d)
+     call det_sign_full(d, w)
+   end subroutine det_sign_copy
 !
    pure subroutine det_sign_full(d, x)
      integer(IK), intent(in) :: d

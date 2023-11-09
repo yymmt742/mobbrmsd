@@ -87,5 +87,6 @@ target_sources( test_Kabsch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f9
 target_link_libraries( test_Kabsch PRIVATE unittest )
 target_include_directories( test_Kabsch PRIVATE ${purelapack_DIR}/mod_files )
 target_include_directories( test_Kabsch PRIVATE ${purelapack_DIR}/include )
-target_link_libraries( test_Kabsch PRIVATE purelapack )
+#target_link_libraries( test_Kabsch PRIVATE purelapack )
+target_link_libraries( test_Kabsch PRIVATE blas )
 add_test( NAME test_Kabsch COMMAND test_Kabsch )

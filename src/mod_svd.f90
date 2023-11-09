@@ -27,7 +27,7 @@ contains
   end function svd_worksize
 !
 !| singular value decomposition of square matrix x.
-   pure subroutine svd(d, x, s, u, vt, w)
+  pure subroutine svd(d, x, s, u, vt, w)
     integer(IK), intent(in) :: d
     !! matrix dimension
     real(RK), intent(inout) :: x(*)
