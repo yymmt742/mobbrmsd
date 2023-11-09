@@ -44,9 +44,10 @@ contains
 !
   subroutine test1(n, n_test)
     integer, intent(in) :: n, n_test
-    real(RK)            :: Y(3 * n), X(3 * n)
-    real(RK)            :: rot(3, 3), krot(3, 3)
-    real(RK)            :: w(Kabsch_worksize(3))
+    integer, parameter  :: d = 3
+    real(RK)            :: Y(d, n), X(d, n), cov(d, d)
+    real(RK)            :: rot(d, d), krot(d, d)
+    real(RK)            :: w(Kabsch_worksize(d))
     integer             :: i
 !
     call random_number(X)
@@ -54,9 +55,10 @@ contains
     do i=1,N_TEST
 !
       rot = SO3()
-      Y = [MATMUL(rot, RESHAPE(X, [3, n]))]
-      call Kabsch(3, n, X, Y, krot, w)
-      call z%assert_almost_equal([X - [MATMUL(krot, RESHAPE(Y, [3, n]))]], 0D0, 'X = RY  ')
+      Y = MATMUL(rot, X)
+      cov = MATMUL(X, TRANSPOSE(Y))
+      call Kabsch(3, cov, krot, w)
+      call z%assert_almost_equal([X - MATMUL(krot, Y)], 0D0, 'X = RY  ')
       call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - E3], 0D0, 'R@RT = I')
 !
     enddo
@@ -65,7 +67,7 @@ contains
 !
   subroutine test2(n, n_test)
     integer, intent(in) :: n, n_test
-    real(RK)            :: Y(6 * n), X(6 * n)
+    real(RK)            :: Y(6, n), X(6, n), cov(6, 6)
     real(RK)            :: rot(6, 6), krot(6, 6)
     real(RK)            :: w(Kabsch_worksize(6))
     integer             :: i
@@ -75,9 +77,10 @@ contains
     do i = 1, N_TEST
 !
       rot = SO6()
-      Y = [MATMUL(rot, RESHAPE(X, [6, n]))]
-      call Kabsch(6, n, X, Y, krot, w)
-      call z%assert_almost_equal([X - [MATMUL(krot, RESHAPE(Y, [6, n]))]], 0D0, 'X = RY  ')
+      Y = MATMUL(rot, X)
+      cov = MATMUL(X, TRANSPOSE(Y))
+      call Kabsch(6, cov, krot, w)
+      call z%assert_almost_equal([X - MATMUL(krot, Y)], 0D0, 'X = RY  ')
       call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - E6], 0D0, 'R@RT = I')
 !
     enddo
@@ -87,7 +90,7 @@ contains
   subroutine test3(d, n_test)
     integer, intent(in) :: d, n_test
     integer, parameter  :: n = 3
-    real(RK)            :: Y(d * n), X(d * n)
+    real(RK)            :: Y(d, n), X(d, n), cov(n, n)
     real(RK)            :: rot(n, n), krot(n, n)
     real(RK)            :: w(Kabsch_worksize(n))
     integer             :: i
@@ -97,9 +100,10 @@ contains
     do i=1,N_TEST
 !
       rot = SO3()
-      Y = [MATMUL(RESHAPE(X, [d, n]), rot)]
-      call Kabsch(d, n, X, Y, krot, w, row_major=.True.)
-      call z%assert_almost_equal([X - [MATMUL(RESHAPE(Y, [d, n]), krot)]], 0D0, 'X = YR  ')
+      Y = MATMUL(X, rot)
+      cov = MATMUL(TRANSPOSE(X), Y)
+      call Kabsch(n, cov, krot, w)
+      call z%assert_almost_equal([X - MATMUL(Y, TRANSPOSE(krot))], 0D0, 'X = YR  ')
       call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(n)], 0D0, 'R@RT = I')
 !
     enddo
@@ -109,7 +113,7 @@ contains
   subroutine test4(d, n_test)
     integer, intent(in) :: d, n_test
     integer, parameter  :: n = 6
-    real(RK)            :: Y(d * n), X(d * n)
+    real(RK)            :: Y(d, n), X(d, n), cov(n, n)
     real(RK)            :: rot(n, n), krot(n, n)
     real(RK)            :: w(Kabsch_worksize(n))
     integer             :: i
@@ -119,9 +123,10 @@ contains
     do i=1,N_TEST
 !
       rot = SO6()
-      Y = [MATMUL(RESHAPE(X, [d, n]), rot)]
-      call Kabsch(d, n, X, Y, krot, w, row_major=.True.)
-      call z%assert_almost_equal([X - [MATMUL(RESHAPE(Y, [d, n]), krot)]], 0D0, 'X = YR  ')
+      Y = MATMUL(X, rot)
+      cov = MATMUL(TRANSPOSE(X), Y)
+      call Kabsch(n, cov, krot, w)
+      call z%assert_almost_equal([X - MATMUL(Y, TRANSPOSE(krot))], 0D0, 'X = YR  ')
       call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(n)], 0D0, 'R@RT = I')
 !
     enddo

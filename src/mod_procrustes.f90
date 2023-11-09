@@ -1,12 +1,11 @@
-!| Calculate the rotation matrix that minimizes |X-RY|^2 using the Kabsch-Umeyama algorithm.
-!  Here, RR^T=I and det(R)=1 are satisfied.
-module mod_Kabsch
+!| Calculate the rotation matrix that minimizes |X-RY|^2 using the procrustes-Umeyama algorithm.
+!  Here, RR^T=I is satisfied.
+module mod_procrustes
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
   use mod_svd
-  use mod_det
   implicit none
   private
-  public :: Kabsch_worksize, Kabsch
+  public :: procrustes_worksize, procrustes
 !
   interface
     include 'dgemm.h'
@@ -15,7 +14,7 @@ module mod_Kabsch
 contains
 !
 !| Calculate work array size for d*d matrix.
-  pure elemental function Kabsch_worksize(d) result(res)
+  pure elemental function procrustes_worksize(d) result(res)
     integer(IK), intent(in)       :: d
     !! matrix collumn dimension.
     integer(IK)                   :: res
@@ -26,10 +25,10 @@ contains
       res = svd_worksize(d) + d * d * 3 + d
     end if
 !
-  end function Kabsch_worksize
+  end function procrustes_worksize
 !
 !| Calculate the rotation matrix from covariance matrix.
-  subroutine Kabsch(d, cov, rot, w)
+  subroutine procrustes(d, cov, rot, w)
     integer(IK), intent(in)       :: d
     !! matrix collumn dimension.
     real(RK), intent(in)          :: cov(*)
@@ -37,8 +36,8 @@ contains
     real(RK), intent(inout)       :: rot(*)
     !! rotation d*d matrix
     real(RK), intent(inout)       :: w(*)
-    !! work array, must be larger than Kabsch_worksize(d)
-    !! if row_major, must be larger than Kabsch_worksize(n)
+    !! work array, must be larger than procrustes_worksize(d)
+    !! if row_major, must be larger than procrustes_worksize(n)
     integer(IK)                   :: dd, m, s, u, vt, iw
 !
     if (d < 1) RETURN
@@ -53,17 +52,10 @@ contains
     w(:dd) = cov(:dd)
 !
     call svd(d, w(m), w(s), w(u), w(vt), w(iw))
-!
-    call det_sign(d, w(u:u+dd-1), w(s:s+dd-1))
-    call det_sign(d, w(vt:vt+dd-1), w(s+1:s+dd))
-    w(s) = w(s+1) * w(s)
-!
-    if (w(s) < ZERO) w(u + dd - d:u + dd - 1) = -w(u + dd - d:u + dd - 1)
-!
     call DGEMM('N', 'N', d, d, d, ONE, w(u), d, w(vt), d, ZERO, w(s), d)
 !
     rot(:dd) = w(s:s+dd-1)
 !
-  end subroutine Kabsch
+  end subroutine procrustes
 !
-end module mod_Kabsch
+end module mod_procrustes

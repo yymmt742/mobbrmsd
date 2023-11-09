@@ -11,6 +11,16 @@ module mod_cov
 !
 contains
 !
+  pure elemental function optarg(l) result(res)
+    logical, intent(in), optional :: l
+    logical                       :: res
+    if (PRESENT(l)) then
+      res = l
+    else
+      res = .false.
+    end if
+  end function optarg
+!
 !| Calculate the covariance matrix, X@YT.
   pure subroutine cov(d, n, x, y, res)
     integer(IK), intent(in) :: d
