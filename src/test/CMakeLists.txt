@@ -1,5 +1,13 @@
 find_package( unittest REQUIRED )
 
+add_executable( test_rmsd )
+target_include_directories( test_rmsd PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_rmsd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                 ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rmsd.f90
+                                 test_rmsd.f90 )
+target_link_libraries( test_rmsd PRIVATE unittest )
+add_test( NAME test_rmsd COMMAND test_rmsd )
+
 add_executable( test_cov_time_1 )
 target_include_directories( test_cov_time_1 PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_cov_time_1 PRIVATE cov_1.f90 test_cov_time.f90 )
@@ -87,5 +95,35 @@ target_link_libraries( test_Kabsch PRIVATE unittest )
 target_include_directories( test_Kabsch PRIVATE ${purelapack_DIR}/mod_files )
 target_include_directories( test_Kabsch PRIVATE ${purelapack_DIR}/include )
 target_link_libraries( test_Kabsch PRIVATE purelapack )
-#target_link_libraries( test_Kabsch PRIVATE blas )
 add_test( NAME test_Kabsch COMMAND test_Kabsch )
+
+add_executable( test_procrustes )
+target_include_directories( test_procrustes PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_procrustes PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rot.f90
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
+                                    test_procrustes.f90 )
+target_link_libraries( test_procrustes PRIVATE unittest )
+target_include_directories( test_procrustes PRIVATE ${purelapack_DIR}/mod_files )
+target_include_directories( test_procrustes PRIVATE ${purelapack_DIR}/include )
+target_link_libraries( test_procrustes PRIVATE purelapack )
+add_test( NAME test_procrustes COMMAND test_procrustes )
+
+add_executable( test_optimize )
+target_include_directories( test_optimize PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_optimize PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rmsd.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rot.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
+                                      test_optimize.f90 )
+target_link_libraries( test_optimize PRIVATE unittest )
+target_include_directories( test_optimize PRIVATE ${purelapack_DIR}/mod_files )
+target_include_directories( test_optimize PRIVATE ${purelapack_DIR}/include )
+target_link_libraries( test_optimize PRIVATE purelapack )
+target_link_libraries( test_optimize PRIVATE blas )
+add_test( NAME test_optimize COMMAND test_optimize )
