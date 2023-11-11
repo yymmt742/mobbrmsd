@@ -7,6 +7,7 @@ program main
 !
   call test1()
   call test2()
+  call test3()
 !
   call u%finish_and_terminate()
 !
@@ -16,9 +17,9 @@ contains
 !
     real(RK), parameter    :: X(12) = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     real(RK), parameter    :: Y(12) = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-    real(RK)               :: C1(1, 1)
-    real(RK)               :: C2(2, 2)
-    real(RK)               :: C3(3, 3)
+    real(RK)               :: C1(1 * 1)
+    real(RK)               :: C2(2 * 2)
+    real(RK)               :: C3(3 * 3)
 !
     call u%init('test cov')
 !
@@ -87,8 +88,8 @@ contains
     integer, parameter :: n_test = 10
     integer, parameter :: d = 50
     integer, parameter :: n = 20
-    real(RK)           :: X(d, n), Y(d, n)
-    real(RK)           :: XYT(d, d), XTY(n, n)
+    real(RK)           :: X(d * n), Y(d * n)
+    real(RK)           :: XYT(d * d), XTY(n * n)
     integer            :: i
 !
     call u%init('test cov, d=100, n=20')
@@ -96,13 +97,36 @@ contains
     do i = 1, n_test
       call RANDOM_NUMBER(X)
       call RANDOM_NUMBER(Y)
-      call cov(d, n, X, Y, XYT)
-      call u%assert_almost_equal([MATMUL(X, TRANSPOSE(Y)) - XYT], 0D0, 'cov X@YT')
-      call cov_row_major(d, n, X, Y, XTY)
-      call u%assert_almost_equal([MATMUL(TRANSPOSE(X), Y) - XTY], 0D0, 'cov XT@Y')
+      call cov(d, n, X, Y, XYT, reset=.true.)
+      call u%assert_almost_equal([MATMUL(RESHAPE(X, [d, n]), TRANSPOSE(RESHAPE(Y, [d, n])))] - XYT, 0D0, 'cov X@YT')
+      call cov_row_major(d, n, X, Y, XTY, reset=.true.)
+      call u%assert_almost_equal([MATMUL(TRANSPOSE(RESHAPE(X, [d, n])), RESHAPE(Y, [d, n]))] - XTY, 0D0, 'cov XT@Y')
     end do
 !
   end subroutine test2
+!
+  subroutine test3()
+    integer, parameter :: n_test = 10
+    integer, parameter :: d = 3
+    integer, parameter :: n = 100
+    integer, parameter :: ln = 20
+    integer, parameter :: nlist(ln) = [ 1, 2, 5, 7, 9,10,14,19,20,22,25,30,42,44,46,50,52,59,60,77]
+    real(RK)           :: X(d, n), Y(d, n)
+    real(RK)           :: XYT(d * d), XTY(ln * ln)
+    integer            :: i
+!
+    call u%init('test cov with mask, d=100, n=100')
+!
+    do i = 1, n_test
+      call RANDOM_NUMBER(X)
+      call RANDOM_NUMBER(Y)
+      call cov(d, nlist, [X], [Y], XYT, reset=.true.)
+      call u%assert_almost_equal([MATMUL(X(:,nlist), TRANSPOSE(Y(:,nlist)))] - XYT, 0D0, 'cov X@YT')
+      call cov_row_major(d, nlist, [X], [Y], XTY, reset=.true.)
+      call u%assert_almost_equal([MATMUL(TRANSPOSE(X(:,nlist)), Y(:,nlist))] - XTY, 0D0, 'cov XT@Y')
+    end do
+!
+  end subroutine test3
 !
   pure subroutine cov1(d, n, x, y, res)
   use, intrinsic :: ISO_FORTRAN_ENV, only:  &
