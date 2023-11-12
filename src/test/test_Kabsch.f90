@@ -57,7 +57,7 @@ contains
       rot = SO3()
       Y = MATMUL(rot, X)
       cov = MATMUL(X, TRANSPOSE(Y))
-      call Kabsch(3, cov, krot, w)
+      call Kabsch(3, n, cov, krot, w)
       call z%assert_almost_equal([X - MATMUL(krot, Y)], 0D0, 'X = RY  ')
       call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - E3], 0D0, 'R@RT = I')
 !
@@ -79,7 +79,7 @@ contains
       rot = SO6()
       Y = MATMUL(rot, X)
       cov = MATMUL(X, TRANSPOSE(Y))
-      call Kabsch(6, cov, krot, w)
+      call Kabsch(6, n, cov, krot, w)
       call z%assert_almost_equal([X - MATMUL(krot, Y)], 0D0, 'X = RY  ')
       call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - E6], 0D0, 'R@RT = I')
 !
@@ -102,7 +102,7 @@ contains
       rot = SO3()
       Y = MATMUL(X, rot)
       cov = MATMUL(TRANSPOSE(X), Y)
-      call Kabsch(n, cov, krot, w)
+      call Kabsch(n, d, cov, krot, w)
       call z%assert_almost_equal([X - MATMUL(Y, TRANSPOSE(krot))], 0D0, 'X = YR  ')
       call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(n)], 0D0, 'R@RT = I')
 !
@@ -125,7 +125,7 @@ contains
       rot = SO6()
       Y = MATMUL(X, rot)
       cov = MATMUL(TRANSPOSE(X), Y)
-      call Kabsch(n, cov, krot, w)
+      call Kabsch(n, d, cov, krot, w)
       call z%assert_almost_equal([X - MATMUL(Y, TRANSPOSE(krot))], 0D0, 'X = YR  ')
       call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(n)], 0D0, 'R@RT = I')
 !

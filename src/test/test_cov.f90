@@ -8,6 +8,7 @@ program main
   call test1()
   call test2()
   call test3()
+  call test4()
 !
   call u%finish_and_terminate()
 !
@@ -115,7 +116,7 @@ contains
     real(RK)           :: XYT(d * d), XTY(ln * ln)
     integer            :: i
 !
-    call u%init('test cov with mask, d=100, n=100')
+    call u%init('test cov with mask, d=3, n=100, nlist=20')
 !
     do i = 1, n_test
       call RANDOM_NUMBER(X)
@@ -127,6 +128,35 @@ contains
     end do
 !
   end subroutine test3
+!
+  subroutine test4()
+    integer, parameter :: n_test = 10
+    integer, parameter :: d = 3
+    integer, parameter :: nfold = 5
+    integer, parameter :: n = 100
+    integer, parameter :: ln = 20
+    integer, parameter :: nlist(ln) = [ 1, 2, 5, 7, 9,10,14,19,20,22,25,30,42,44,46,50,52,59,60,77]
+    real(RK)           :: X(d, nfold, n), Y(d, nfold, n)
+    real(RK)           :: XTY(ln * ln)
+    real(RK)           :: TMP(ln, ln)
+    integer            :: i, j
+!
+    call u%init('test cov with mask and dfold, d=3, nfold=5, n=100, nlist=20')
+!
+    do i = 1, n_test
+      call RANDOM_NUMBER(X)
+      call RANDOM_NUMBER(Y)
+!
+      call cov_row_major(d * nfold, nlist, [X], [Y], XTY, reset=.true.)
+      TMP = 0D0
+      do j=1,nfold
+        TMP = TMP + MATMUL(TRANSPOSE(X(:,j,nlist)), Y(:,j,nlist))
+      enddo
+      call u%assert_almost_equal([TMP] - XTY, 0D0, 'cov XT@Y')
+!
+    end do
+!
+  end subroutine test4
 !
   pure subroutine cov1(d, n, x, y, res)
   use, intrinsic :: ISO_FORTRAN_ENV, only:  &

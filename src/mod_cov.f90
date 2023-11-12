@@ -49,7 +49,8 @@ contains
     else
       call DGEMM('N', 'T', d, d, n, ONE, x, d, y, d, ONE, res, d)
     end if
-    if (d > n) call add_orthogonal_axis(d, n, res)
+!
+!   if (d > n) call add_orthogonal_axis(d, n, res)
 !
   end subroutine cov_full
 !
@@ -83,7 +84,7 @@ contains
       end do
     end do
 !
-    if (d > SIZE(nlist)) call add_orthogonal_axis(d, SIZE(nlist), res)
+!   if (d > SIZE(nlist)) call add_orthogonal_axis(d, SIZE(nlist), res)
 !
   end subroutine cov_part
 !
@@ -107,7 +108,8 @@ contains
     else
       call DGEMM('T', 'N', n, n, d, ONE, x, d, y, d, ONE, res, n)
     end if
-    if (n > d) call add_orthogonal_axis(n, d, res)
+!
+!   if (n > d) call add_orthogonal_axis(n, d, res)
 !
   end subroutine cov_row_major_full
 !
@@ -143,19 +145,19 @@ contains
       end block
     end do
 !
-    if (d < n) call add_orthogonal_axis(n, d, res)
+!   if (d < n) call add_orthogonal_axis(n, d, res)
 !
   end subroutine cov_row_major_part
 !
-  pure subroutine add_orthogonal_axis(d, n, res)
-    integer(IK), intent(in) :: d, n
-    real(RK), intent(inout) :: res(n, n)
-    integer(IK)             :: i
+! pure subroutine add_orthogonal_axis(d, n, res)
+!   integer(IK), intent(in) :: d, n
+!   real(RK), intent(inout) :: res(n, n)
+!   integer(IK)             :: i
 !
-    do i = d + 1, n
-      res(i, i) = res(i, i) + ONE
-    end do
+!   do i = d + 1, n
+!     res(i, i) = res(i, i) + ONE
+!   end do
 !
-  end subroutine add_orthogonal_axis
+! end subroutine add_orthogonal_axis
 !
 end module mod_cov

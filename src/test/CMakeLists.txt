@@ -115,6 +115,7 @@ add_executable( test_optimize )
 target_include_directories( test_optimize PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_optimize PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rmsd.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_cov.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rot.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90

@@ -29,9 +29,11 @@ contains
   end function Kabsch_worksize
 !
 !| Calculate the rotation matrix from covariance matrix.
-  subroutine Kabsch(d, cov, rot, w)
+  pure subroutine Kabsch(d, n, cov, rot, w)
     integer(IK), intent(in)       :: d
     !! matrix collumn dimension.
+    integer(IK), intent(in)       :: n
+    !! matrix row dimension.
     real(RK), intent(in)          :: cov(*)
     !! target d*n array
     real(RK), intent(inout)       :: rot(*)
@@ -39,10 +41,11 @@ contains
     real(RK), intent(inout)       :: w(*)
     !! work array, must be larger than Kabsch_worksize(d)
     !! if row_major, must be larger than Kabsch_worksize(n)
-    integer(IK)                   :: dd, m, s, u, vt, iw
+    integer(IK)                   :: dd, m, s, u, vt, iw, l
 !
     if (d < 1) RETURN
 !
+    l = MIN(d, n)
     dd = d * d
     m = 1
     u = m + dd
@@ -54,12 +57,9 @@ contains
 !
     call svd(d, w(m), w(s), w(u), w(vt), w(iw))
 !
-    call det_sign(d, w(u:u+dd-1), w(s:s+dd-1))
-    call det_sign(d, w(vt:vt+dd-1), w(s+1:s+dd))
-    w(s) = w(s+1) * w(s)
-!
+    call DGEMM('N', 'N', d, d, d, ONE, w(u), d, w(vt), d, ZERO, w(s), d)
+    call det_sign(d, w(s:s + dd - 1))
     if (w(s) < ZERO) w(u + dd - d:u + dd - 1) = -w(u + dd - d:u + dd - 1)
-!
     call DGEMM('N', 'N', d, d, d, ONE, w(u), d, w(vt), d, ZERO, w(s), d)
 !
     rot(:dd) = w(s:s+dd-1)
