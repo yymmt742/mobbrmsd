@@ -106,7 +106,6 @@ add_executable( test_Kabsch )
 target_include_directories( test_Kabsch PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_Kabsch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rot.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
                                     test_Kabsch.f90 )
@@ -120,7 +119,6 @@ add_executable( test_procrustes )
 target_include_directories( test_procrustes PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_procrustes PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rot.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
                                     test_procrustes.f90 )
@@ -137,7 +135,6 @@ target_sources( test_optimize PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rmsd.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_cov.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rot.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
@@ -158,7 +155,6 @@ target_sources( test_lower_bound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_para
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rmsd_brute.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_cov.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rot.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
