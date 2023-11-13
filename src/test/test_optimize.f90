@@ -6,10 +6,10 @@ program main
   use mod_procrustes
   use mod_unittest
   implicit none
-  type(unittest)    :: u
-  integer,parameter :: NTEST=5000
-  integer           :: fail
-  integer           :: i
+  type(unittest)     :: u
+  integer, parameter :: NTEST = 5000
+  integer            :: fail
+  integer            :: i
 !
   call u%init('test optimimze')
   fail = 0
@@ -23,12 +23,20 @@ program main
     call test2(fail)
   enddo
   print*,fail,'/',NTEST
+!
   call u%init('test partial molecular optimimze')
   fail = 0
   do i=1,NTEST
     call test3(fail)
   enddo
   print*,fail,'/',NTEST
+!
+! call u%init('test each molecular optimimze')
+! fail = 0
+! do i=1,NTEST
+!   call test4(fail)
+! enddo
+! print*,fail,'/',NTEST
 !
   call u%finish_and_terminate()
 !
@@ -144,7 +152,7 @@ contains
     do i = 1, m * n
       X((i - 1) * d + 1:i * d) = X((i - 1) * d + 1:i * d) - Xbar
     end do
-    call mol_rot(d, m, n, MATMUL(SO3(), RESHAPE(X, [d, m * n])), Y, SO26())
+    call mol_rot(d, m, n, SO26(), MATMUL(SO3(), RESHAPE(X, [d, m * n])), Y)
     Z = Y
 !
     prev = rmsd(d, m * n, X, Y)
@@ -156,30 +164,108 @@ contains
       Z = [MATMUL(RESHAPE(drot, [d, d]), RESHAPE(Y, [d, m * n]))]
       call cov_row_major(d * m, nlist, X, Z, ncov, reset=.true.)
       call procrustes(p, ncov, nrot, w)
-      call mol_rot(d, m, n, [MATMUL(RESHAPE(drot, [d, d]), RESHAPE(Y, [d, m * n]))], Z, RI2(nrot))
+      call mol_rot(d, m, n, RI2(nrot), [MATMUL(RESHAPE(drot, [d, d]), RESHAPE(Y, [d, m * n]))], Z)
       conv = rmsd(d, m * n, X, Z)
       !print*,i, prev, prev-conv
       if (ABS(prev - conv) < 1D-16) exit
       prev = conv
-      call mol_rot(d, m, n, Y, Z, RI2(nrot))
+      call mol_rot(d, m, n, RI2(nrot), Y, Z)
 !
     enddo
 !
-    call mol_rot(d, m, n, MATMUL(RESHAPE(drot, [d, d]), RESHAPE(Y, [d, m * n])), Z, RI2(nrot))
+    call mol_rot(d, m, n, RI2(nrot), MATMUL(RESHAPE(drot, [d, d]), RESHAPE(Y, [d, m * n])), Z)
 !   call u%assert_almost_equal([X - Z], 0D0, 'R = RY')
     if(rmsd(d, n, X, Z)>0.0001D0) fail = fail + 1
 !
   end subroutine test3
 !
-  pure subroutine mol_rot(d, m, n, X, Y, R)
+! subroutine test4(fail)
+!   integer, intent(inout) :: fail
+!   integer, parameter  :: d = 3
+!   integer, parameter  :: m = 6
+!   integer, parameter  :: n = 4
+!   integer, parameter  :: n_iter = 50
+!   integer, parameter  :: m1(m) = [ 1, 2, 3, 4, 5, 6]
+!   integer, parameter  :: m2(m) = [ 7, 8, 9,10,11,12]
+!   integer, parameter  :: m3(m) = [13,14,15,16,17,18]
+!   integer, parameter  :: m4(m) = [19,20,21,22,23,24]
+!   real(RK)            :: X(d * m * n), Y(d * m * n), Z(d * m * n), TMP(d * m * n)
+!   real(RK)            :: Xbar(d)
+!   real(RK)            :: dcov(d * d), mcov(m * m), ncov(n * n)
+!   real(RK)            :: drot(d * d), mrot(m * m, n), nrot(n * n)
+!   real(RK)            :: w(procrustes_worksize(m*n))
+!   real(RK)            :: conv, prev
+!   integer             :: i
+!
+!   call RANDOM_NUMBER(X); Xbar = centroid(d, n, X)
+!   do i = 1, m * n
+!     X((i - 1) * d + 1:i * d) = X((i - 1) * d + 1:i * d) - Xbar
+!   end do
+!   Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), SO24())]
+!   Z = Y
+!
+!   prev = rmsd(d, m * n, X, Y)
+!
+!   do i = 1, n_iter
+!
+!     call cov(d, m * n, X, Z, dcov)
+!     call Kabsch(d, m * n, dcov, drot, w)
+!     Z = [MATMUL(RESHAPE(drot, [d, d]), RESHAPE(Y, [d, m * n]))]
+!
+!     call cov_row_major(d * m, n, X, Z, ncov)
+!     call procrustes(n, ncov, nrot, w)
+!     call mol_rot(d, m, n, nrot, [MATMUL(RESHAPE(drot, [d, d]), RESHAPE(Y, [d, m * n]))], Z)
+!
+!     call cov_row_major(d, m1, X, Z, mcov)
+!     call procrustes(m, mcov, mrot(:, 1), w)
+!
+!     call cov_row_major(d, m2, X, Z, mcov)
+!     call procrustes(m, mcov, mrot(:, 2), w)
+!
+!     call cov_row_major(d, m3, X, Z, mcov)
+!     call procrustes(m, mcov, mrot(:, 3), w)
+!
+!     call cov_row_major(d, m4, X, Z, mcov)
+!     call procrustes(m, mcov, mrot(:, 4), w)
+!
+!     TMP = Z
+!     call mol_part_rot(d, m, n, TMP, Z, mrot)
+!
+!     conv = rmsd(d, m * n, X, Z)
+!     print*,i, conv, prev-conv
+!     if (ABS(prev - conv) < 1D-16) exit
+!     prev = conv
+!
+!     call mol_rot(d, m, n, nrot, Y, TMP)
+!     call mol_part_rot(d, m, n, mrot, TMP, Z)
+!
+!   enddo
+!
+!   call mol_rot(d, m, n, nrot, [MATMUL(RESHAPE(drot, [d, d]), RESHAPE(Y, [d, m * n]))], TMP)
+!   call mol_part_rot(d, m, n, mrot, TMP, Z)
+!   if(rmsd(d, n, X, Z)>0.0001D0) fail = fail + 1
+!
+! end subroutine test4
+!
+  pure subroutine mol_rot(d, m, n, R, X, Y)
     integer, intent(in)     :: d, m, n
-    real(RK), intent(in)    :: X(d, m, n), R(n, n)
+    real(RK), intent(in)    :: R(n, n), X(d, m, n)
     real(RK), intent(inout) :: Y(d, m, n)
     integer                 :: i
-    do i=1,m
-      Y(:, i, :) = MATMUL(X(:, i, :), R)
-    enddo
+    do i = 1, m
+      Y(:, i, :) = MATMUL(X(:, i, :), TRANSPOSE(R))
+    end do
   end subroutine mol_rot
+!
+! pure subroutine mol_part_rot(d, m, n, R, X, Y)
+!   integer, intent(in)     :: d, m, n
+!   real(RK), intent(in)    :: R(m, m, n), X(d, m, n)
+!   real(RK), intent(inout) :: Y(d, m, n)
+!   integer                 :: i
+!   do i = 1, n
+!     Y(:, :, i) = MATMUL(X(:, :, i), TRANSPOSE(R(:, :, i)))
+!   end do
+! end subroutine mol_part_rot
 !
   pure function RI(R) result(res)
     real(RK), intent(in) :: R(6, 6)
@@ -245,6 +331,17 @@ contains
     res(7:12,7:12) = eye(6)
 !
   end function SO12
+!
+! function SO24() result(res)
+!   real(RK) :: res(24, 24)
+!
+!   res = 0D0
+!   res( 1: 6, 7:12) = SO6()
+!   res( 7:12,13:18) = SO6()
+!   res(13:18,19:24) = SO6()
+!   res(19:24, 1: 6) = SO6()
+!
+! end function SO24
 !
   function SO26() result(res)
     real(RK) :: res(26, 26)
