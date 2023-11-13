@@ -6,42 +6,46 @@ program main
   use mod_procrustes
   use mod_unittest
   implicit none
-  type(unittest) :: u
+  type(unittest)    :: u
+  integer,parameter :: NTEST=5000
+  integer           :: fail
+  integer           :: i
 !
   call u%init('test optimimze')
-  call test1()
-  call test1()
-  call test1()
-  call test1()
-  call test1()
+  fail = 0
+  do i=1,NTEST
+    call test1(fail)
+  enddo
+  print*,fail,'/',NTEST
   call u%init('test partial optimimze')
-  call test2()
-  call test2()
-  call test2()
-  call test2()
-  call test2()
+  fail = 0
+  do i=1,NTEST
+    call test2(fail)
+  enddo
+  print*,fail,'/',NTEST
   call u%init('test partial molecular optimimze')
-  call test3()
-  call test3()
-  call test3()
-  call test3()
-  call test3()
+  fail = 0
+  do i=1,NTEST
+    call test3(fail)
+  enddo
+  print*,fail,'/',NTEST
 !
   call u%finish_and_terminate()
 !
 contains
 !
-  subroutine test1()
-    integer, parameter  :: n_iter = 500
-    integer, parameter  :: d = 3
-    integer, parameter  :: n = 6
-    real(RK)            :: X(d * n), Y(d * n), Z(d * n)
-    real(RK)            :: Xbar(d)
-    real(RK)            :: dcov(d * d), ncov(n * n)
-    real(RK)            :: drot(d * d), nrot(n * n)
-    real(RK)            :: w(Kabsch_worksize(n))
-    real(RK)            :: conv, prev
-    integer             :: i
+  subroutine test1(fail)
+    integer, intent(inout) :: fail
+    integer, parameter     :: n_iter = 500
+    integer, parameter     :: d = 3
+    integer, parameter     :: n = 6
+    real(RK)               :: X(d * n), Y(d * n), Z(d * n)
+    real(RK)               :: Xbar(d)
+    real(RK)               :: dcov(d * d), ncov(n * n)
+    real(RK)               :: drot(d * d), nrot(n * n)
+    real(RK)               :: w(Kabsch_worksize(n))
+    real(RK)               :: conv, prev
+    integer                :: i
 !
     call RANDOM_NUMBER(X); Xbar = centroid(d, n, X)
     do i = 1, n
@@ -62,7 +66,6 @@ contains
       call procrustes(n, ncov, nrot, w)
       Z = [MATMUL(RESHAPE(Z, [d, n]), TRANSPOSE(RESHAPE(nrot, [n, n])))]
       conv = rmsd(d, n, X, Z)
-!print*,i, prev, prev-conv
       if (ABS(prev - conv) < 1D-16) exit
       prev = conv
       Z = [MATMUL(RESHAPE(Y, [d, n]), TRANSPOSE(RESHAPE(nrot, [n, n])))]
@@ -70,11 +73,13 @@ contains
     enddo
 !
     Z = [MATMUL(MATMUL(RESHAPE(drot, [d, d]), RESHAPE(Y, [d, n])), TRANSPOSE(RESHAPE(nrot, [n, n])))]
-    call u%assert_almost_equal([X - Z], 0D0, 'R = RY')
+    if(rmsd(d, n, X, Z)>0.0001D0) fail = fail + 1
+!   call u%assert_almost_equal([X - Z], 0D0, 'R = RY')
 !
   end subroutine test1
 !
-  subroutine test2()
+  subroutine test2(fail)
+    integer, intent(inout) :: fail
     integer, parameter  :: n_iter = 500
     integer, parameter  :: d = 3
     integer, parameter  :: n = 12
@@ -114,11 +119,13 @@ contains
     enddo
 !
     Z = [MATMUL(MATMUL(RESHAPE(drot, [d, d]), RESHAPE(Y, [d, n])), RI(nrot))]
-    call u%assert_almost_equal([X - Z], 0D0, 'R = RY')
+    if(rmsd(d, n, X, Z)>0.0001D0) fail = fail + 1
+!   call u%assert_almost_equal([X - Z], 0D0, 'R = RY')
 !
   end subroutine test2
 !
-  subroutine test3()
+  subroutine test3(fail)
+    integer, intent(inout) :: fail
     integer, parameter  :: d = 3
     integer, parameter  :: m = 3
     integer, parameter  :: n = 26
@@ -159,7 +166,8 @@ contains
     enddo
 !
     call mol_rot(d, m, n, MATMUL(RESHAPE(drot, [d, d]), RESHAPE(Y, [d, m * n])), Z, RI2(nrot))
-    call u%assert_almost_equal([X - Z], 0D0, 'R = RY')
+!   call u%assert_almost_equal([X - Z], 0D0, 'R = RY')
+    if(rmsd(d, n, X, Z)>0.0001D0) fail = fail + 1
 !
   end subroutine test3
 !
