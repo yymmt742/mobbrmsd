@@ -16,6 +16,16 @@ target_sources( test_rmsd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
 target_link_libraries( test_rmsd PRIVATE unittest )
 add_test( NAME test_rmsd COMMAND test_rmsd )
 
+add_executable( test_rmsd_brute )
+target_include_directories( test_rmsd_brute PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_rmsd_brute PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_permutation.f90
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rmsd.f90
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rmsd_brute.f90
+                                        test_rmsd_brute.f90 )
+target_link_libraries( test_rmsd_brute PRIVATE unittest )
+add_test( NAME test_rmsd_brute COMMAND test_rmsd_brute )
+
 #add_executable( test_cov_time_1 )
 #target_include_directories( test_cov_time_1 PRIVATE ${unittest_DIR}/mod_files )
 #target_sources( test_cov_time_1 PRIVATE cov_1.f90 test_cov_time.f90 )
