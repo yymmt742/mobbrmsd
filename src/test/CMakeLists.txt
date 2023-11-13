@@ -1,5 +1,13 @@
 find_package( unittest REQUIRED )
 
+add_executable( test_optarg )
+target_include_directories( test_optarg PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_optarg PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
+                                    test_optarg.f90 )
+target_link_libraries( test_optarg PRIVATE unittest )
+add_test( NAME test_optarg COMMAND test_optarg )
+
 add_executable( test_rmsd )
 target_include_directories( test_rmsd PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_rmsd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
