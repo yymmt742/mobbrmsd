@@ -1,6 +1,7 @@
 !| Calculate the covariance matrix.
 module mod_cov
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
+  use mod_optarg
   implicit none
   private
   public :: cov, cov_row_major
@@ -19,16 +20,6 @@ module mod_cov
 !
 contains
 !
-  pure elemental function optarg(l) result(res)
-    logical, intent(in), optional :: l
-    logical                       :: res
-    if (PRESENT(l)) then
-      res = l
-    else
-      res = .false.
-    end if
-  end function optarg
-!
 !| Calculate the covariance matrix, X@YT.
   pure subroutine cov_full(d, n, x, y, res, reset)
     integer(IK), intent(in) :: d
@@ -44,13 +35,11 @@ contains
     logical, intent(in), optional :: reset
     !! reset flag
 !
-    if (optarg(reset)) then
+    if (optarg(reset, .true.)) then
       call DGEMM('N', 'T', d, d, n, ONE, x, d, y, d, ZERO, res, d)
     else
       call DGEMM('N', 'T', d, d, n, ONE, x, d, y, d, ONE, res, d)
     end if
-!
-!   if (d > n) call add_orthogonal_axis(d, n, res)
 !
   end subroutine cov_full
 !
@@ -71,7 +60,7 @@ contains
     integer(IK)             :: i, j, k, p, n
 !
     n = SIZE(nlist)
-    if (optarg(reset)) res(:d * d) = ZERO
+    if (optarg(reset, .true.)) res(:d * d) = ZERO
 !
     do i = 1, n
       p = d * (nlist(i) - 1)
@@ -83,8 +72,6 @@ contains
         end block
       end do
     end do
-!
-!   if (d > SIZE(nlist)) call add_orthogonal_axis(d, SIZE(nlist), res)
 !
   end subroutine cov_part
 !
@@ -103,13 +90,11 @@ contains
     logical, intent(in), optional :: reset
     !! reset flag
 !
-    if (optarg(reset)) then
+    if (optarg(reset, .true.)) then
       call DGEMM('T', 'N', n, n, d, ONE, x, d, y, d, ZERO, res, n)
     else
       call DGEMM('T', 'N', n, n, d, ONE, x, d, y, d, ONE, res, n)
     end if
-!
-!   if (n > d) call add_orthogonal_axis(n, d, res)
 !
   end subroutine cov_row_major_full
 !
@@ -131,7 +116,7 @@ contains
 !
     n = SIZE(nlist)
     dd = d * d
-    if (optarg(reset)) res(:n * n) = ZERO
+    if (optarg(reset, .true.)) res(:n * n) = ZERO
 !
     do concurrent(j=1:n, i=1:n)
       block
@@ -145,19 +130,6 @@ contains
       end block
     end do
 !
-!   if (d < n) call add_orthogonal_axis(n, d, res)
-!
   end subroutine cov_row_major_part
-!
-! pure subroutine add_orthogonal_axis(d, n, res)
-!   integer(IK), intent(in) :: d, n
-!   real(RK), intent(inout) :: res(n, n)
-!   integer(IK)             :: i
-!
-!   do i = d + 1, n
-!     res(i, i) = res(i, i) + ONE
-!   end do
-!
-! end subroutine add_orthogonal_axis
 !
 end module mod_cov

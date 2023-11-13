@@ -52,6 +52,7 @@ target_include_directories( test_cov PRIVATE ${unittest_DIR}/mod_files )
 target_include_directories( test_cov PRIVATE ${purelapack_DIR}/mod_files )
 target_include_directories( test_cov PRIVATE ${purelapack_DIR}/include )
 target_sources( test_cov PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                 ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_cov.f90
                                  test_cov.f90 )
 target_link_libraries( test_cov PRIVATE unittest )
@@ -122,6 +123,7 @@ add_test( NAME test_procrustes COMMAND test_procrustes )
 add_executable( test_optimize )
 target_include_directories( test_optimize PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_optimize PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rmsd.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_cov.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
@@ -136,3 +138,23 @@ target_include_directories( test_optimize PRIVATE ${purelapack_DIR}/include )
 target_link_libraries( test_optimize PRIVATE purelapack )
 target_link_libraries( test_optimize PRIVATE blas )
 add_test( NAME test_optimize COMMAND test_optimize )
+
+add_executable( test_lower_bound )
+target_include_directories( test_lower_bound PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_lower_bound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rmsd.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_cov.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rot.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_lower_bound.f90
+                                      test_lower_bound.f90 )
+target_link_libraries( test_lower_bound PRIVATE unittest )
+target_include_directories( test_lower_bound PRIVATE ${purelapack_DIR}/mod_files )
+target_include_directories( test_lower_bound PRIVATE ${purelapack_DIR}/include )
+target_link_libraries( test_lower_bound PRIVATE purelapack )
+target_link_libraries( test_lower_bound PRIVATE blas )
+add_test( NAME test_lower_bound COMMAND test_lower_bound )

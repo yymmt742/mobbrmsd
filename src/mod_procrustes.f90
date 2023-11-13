@@ -28,7 +28,7 @@ contains
   end function procrustes_worksize
 !
 !| Calculate the rotation matrix from covariance matrix.
-  subroutine procrustes(d, cov, rot, w)
+  pure subroutine procrustes(d, cov, rot, w)
     integer(IK), intent(in)       :: d
     !! matrix collumn dimension.
     real(RK), intent(in)          :: cov(*)

@@ -51,6 +51,7 @@ target_include_directories( symRMSD PRIVATE ${purelapack_DIR}/mod_files )
 target_include_directories( symRMSD PRIVATE ${purelapack_DIR}/include )
 
 list( APPEND f90_src mod_params.f90 )
+list( APPEND f90_src mod_optarg.f90 )
 list( APPEND f90_src mod_cov.f90 )
 list( APPEND f90_src mod_det.f90 )
 list( APPEND f90_src mod_symRMSD.f90 )
