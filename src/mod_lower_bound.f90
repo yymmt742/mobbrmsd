@@ -22,11 +22,13 @@ contains
     integer(IK), intent(in)       :: free_indices(:)
     !! rotation index, must be SIZE(free_indices) <= n
     integer(IK)                   :: res
+    integer(IK)                   :: f
 !
     if (d < 1 .or. n < 1) then
       res = 0
     else
-      res = 1
+      f = SIZE(free_indices)
+      res = 2 + 3 * d * n + MAX(d * d * 2 + Kabsch_worksize(d), f * f * 2 + procrustes_worksize(f))
     end if
 !
   end function lower_bound_worksize
@@ -48,7 +50,7 @@ contains
     integer(IK), intent(in), optional :: maxiter
     !! iteration limit, default = 1000
     real(RK), intent(in), optional    :: threshold
-    !! iteration limit, default = 1E-8
+    !! iteration limit, default = 1E-12
     integer(IK)                       :: i, j, maxiter_
     real(RK)                          :: threshold_
     integer(IK)                       :: f, dn, dd, df, ff
@@ -78,7 +80,7 @@ contains
     iw3  = iw2  + df
 !
     maxiter_   = optarg(maxiter,   1000_IK)
-    threshold_ = optarg(threshold, 1.0E-16_RK) * n
+    threshold_ = optarg(threshold, 1.0E-12_RK) ** 2 * n
 !
     do concurrent(j=1:dn)
       w(ix + j - 1) = X(j)

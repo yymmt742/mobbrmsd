@@ -1,5 +1,6 @@
 program main
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_rmsd
   use mod_lower_bound
   use mod_unittest
   implicit none
@@ -8,10 +9,16 @@ program main
   integer           :: fail
   integer           :: i
 !
-  call u%init('test optimimze')
+  call u%init('test lower_bound')
   fail = 0
   do i=1,NTEST
     call test1(fail)
+  enddo
+  print*,fail,'/',NTEST
+!
+  fail = 0
+  do i=1,NTEST
+    call test2(fail)
   enddo
   print*,fail,'/',NTEST
 !
@@ -25,7 +32,7 @@ contains
     integer, parameter  :: n = 12
     integer, parameter  :: nlist(6) = [1,2,3,4,5,6]
     real(RK)            :: X(d * n), Y(d * n)
-    real(RK)            :: w(1000)
+    real(RK)            :: w(lower_bound_worksize(d, n, nlist))
     real(RK)            :: Xbar(d)
     integer             :: i
 !
@@ -37,37 +44,45 @@ contains
 !
     call lower_bound(d, n, nlist, X, Y, w)
 !
-    if(w(1)>0.0001D0) fail = fail + 1
-!   call u%assert_almost_equal([X - Z], 0D0, 'R = RY')
+    if (w(1) > 0.0001D0) then
+      fail = fail + 1
+      print'(I8,F9.6)', fail, w(1)
+    endif
 !
   end subroutine test1
 !
-  pure subroutine mol_rot(d, m, n, X, Y, R)
-    integer, intent(in)     :: d, m, n
-    real(RK), intent(in)    :: X(d, m, n), R(n, n)
-    real(RK), intent(inout) :: Y(d, m, n)
-    integer                 :: i
-    do i=1,m
-      Y(:, i, :) = MATMUL(X(:, i, :), R)
-    enddo
-  end subroutine mol_rot
+  subroutine test2(fail)
+    integer, intent(inout) :: fail
+    integer, parameter  :: d = 3
+    integer, parameter  :: n = 12
+    integer, parameter  :: nlist(6) = [1,2,3,4,5,6]
+    real(RK)            :: X(d * n), Y(d * n)
+    real(RK)            :: w(lower_bound_worksize(d, n, nlist))
+    real(RK)            :: Xbar(d), Ybar(d), r
+    integer             :: i
 !
-  pure function RI(R) result(res)
-    real(RK), intent(in) :: R(6, 6)
-    real(RK)             :: res(12, 12)
-    res(1:6, 1:6) = TRANSPOSE(R)
-    res(7:12,1:6) = 0D0
-    res(1:6,7:12) = 0D0
-    res(7:12,7:12) = eye(6)
-  end function RI
+    call RANDOM_NUMBER(X); Xbar = centroid(d, n, X)
+    do i = 1, n
+      X((i - 1) * d + 1:i * d) = X((i - 1) * d + 1:i * d) - Xbar
+    end do
+    call RANDOM_NUMBER(Y); Ybar = centroid(d, n, Y)
+    do i = 1, n
+      Y((i - 1) * d + 1:i * d) = Y((i - 1) * d + 1:i * d) - Ybar
+    end do
+    Y = X + 0.1 * Y
+    r = rmsd(d, n, X, Y)
+    Y = [MATMUL(MATMUL(SO3(), RESHAPE(Y, [d, n])), SO12())]
 !
-  pure function RI2(R) result(res)
-    real(RK), intent(in) :: R(6, 6)
-    real(RK)             :: res(26, 26)
-    res = 0D0
-    res(1:20,1:20) = eye(20)
-    res(21:26, 21:26) = TRANSPOSE(R)
-  end function RI2
+    call lower_bound(d, n, nlist, X, Y, w)
+!
+    if (w(1) - r > 0.0001D0) then
+      fail = fail + 1
+      print'(I8,2F9.6)', fail, w(1), r
+    endif
+
+!   call u%assert_almost_equal([X - Z], 0D0, 'R = RY')
+!
+  end subroutine test2
 !
   pure function centroid(d, n, X) result(res)
     integer, intent(in)  :: d, n
@@ -116,15 +131,6 @@ contains
     res(7:12,7:12) = eye(6)
 !
   end function SO12
-!
-  function SO26() result(res)
-    real(RK) :: res(26, 26)
-!
-    res = 0D0
-    res(1:20,1:20) = eye(20)
-    res(21:26,21:26) = SO6()
-!
-  end function SO26
 !
   pure function eye(d) result(res)
     integer,intent(in) :: d
