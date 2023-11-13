@@ -1,6 +1,7 @@
 program main
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_rmsd
+  use mod_rmsd_brute
   use mod_lower_bound
   use mod_unittest
   implicit none
@@ -19,6 +20,12 @@ program main
   fail = 0
   do i=1,NTEST
     call test2(fail)
+  enddo
+  print*,fail,'/',NTEST
+!
+  fail = 0
+  do i=1,NTEST
+    call test3(fail)
   enddo
   print*,fail,'/',NTEST
 !
@@ -83,6 +90,35 @@ contains
 !   call u%assert_almost_equal([X - Z], 0D0, 'R = RY')
 !
   end subroutine test2
+!
+  subroutine test3(fail)
+    integer, intent(inout) :: fail
+    integer, parameter  :: d = 3
+    integer, parameter  :: n = 6
+    integer, parameter  :: nlist(6) = [1,2,3,4,5,6]
+    real(RK)            :: X(d * n), Y(d * n)
+    real(RK)            :: w(lower_bound_worksize(d, n, nlist))
+    real(RK)            :: Xbar(d), Ybar(d), r
+    integer             :: i
+!
+    call RANDOM_NUMBER(X); Xbar = centroid(d, n, X)
+    do i = 1, n
+      X((i - 1) * d + 1:i * d) = X((i - 1) * d + 1:i * d) - Xbar
+    end do
+    call RANDOM_NUMBER(Y); Ybar = centroid(d, n, Y)
+    do i = 1, n
+      Y((i - 1) * d + 1:i * d) = Y((i - 1) * d + 1:i * d) - Ybar
+    end do
+!
+    call lower_bound(d, n, nlist, X, Y, w)
+!
+    r = rmsd_brute(d, n, X, Y)
+    if (w(1) > r) then
+      fail = fail + 1
+      print'(I8,F9.6)', fail, w(1), r
+    endif
+!
+  end subroutine test3
 !
   pure function centroid(d, n, X) result(res)
     integer, intent(in)  :: d, n
