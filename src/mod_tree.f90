@@ -1,4 +1,4 @@
-module mod_branch
+module mod_tree
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
   use mod_lower_bound
   implicit none
@@ -105,4 +105,4 @@ contains
     this%lower = -HUGE(ZERO)
   end subroutine node_destroy
 !
-end module mod_branch
+end module mod_tree
