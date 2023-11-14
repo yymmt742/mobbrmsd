@@ -14,7 +14,7 @@ contains
 !
   subroutine test1()
     integer, parameter  :: d = 3
-    integer, parameter  :: m = 24
+    integer, parameter  :: m = 12
     integer, parameter  :: n = 8
     real(RK)            :: X(d * m * n), Y(d * m * n)
     type(node)          :: w

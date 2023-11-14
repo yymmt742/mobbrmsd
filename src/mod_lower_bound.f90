@@ -43,7 +43,6 @@ contains
 !
 !| Calculate min_{P,Q} |X-PYQ|^2
   pure subroutine lower_bound(d, n, free_indices, X, Y, w, maxiter, threshold)
-  !pure subroutine lower_bound(d, n, free_indices, X, Y, w, maxiter, threshold)
     integer(IK), intent(in)           :: d
     !! matrix collumn dimension.
     integer(IK), intent(in)           :: n
@@ -374,13 +373,14 @@ contains
 !
   pure subroutine calc_fixed_indices(n, f, free_indices, res)
     integer(IK), intent(in)    :: n, f, free_indices(f)
-    integer(IK), intent(inout) :: res(n-f)
-    integer(IK)                :: i, j
+    integer(IK), intent(inout) :: res(n - f)
+    integer(IK)                :: i, j, g
     j = 1
+    g = n - f
     do i = 1, n
       if (ANY(i == free_indices)) cycle
       res(j) = i
-      if (j == f) return
+      if (j == g) return
       j = j + 1
     end do
   end subroutine calc_fixed_indices

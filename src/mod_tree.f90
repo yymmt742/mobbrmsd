@@ -51,15 +51,15 @@ contains
     !! reference molecular coordinate, x(d,m,n)
     real(RK), intent(in)    :: y(*)
     !! target molecular coordinate, y(d,m,n)
-    real(RK)                :: w(node_worksize(d, m, n, free))
+    real(RK)                :: w(10*node_worksize(d, m, n, free))
     type(node)              :: res
-    integer(IK)             :: mn, dmn, ix, iy, iw
+    integer(IK)             :: dm, dmn, ix, iy, iw
 !
     res%fixed_indices = fixed
     res%free_indices = free
 !
-    mn  = m * n
-    dmn = d * mn
+    dm  = d * m
+    dmn = dm * n
 !
     ix = 1
     iy = ix + dmn
@@ -68,8 +68,7 @@ contains
     w(ix:ix + dmn - 1) = x(:dmn)
     call copy_y(d, m, n, fixed, free, y, w(iy))
 !
-    call lower_bound(d, mn, nlist(m, free), w(ix), w(iy), w(iw))
-!
+    call lower_bound(dm, n, free, w(ix), w(iy), w(iw))
     res%lower = w(iw)
 !
   contains
@@ -131,20 +130,20 @@ contains
   integer(IK), intent(in) :: d, m, n, free(:)
   integer(IK)             :: res
 !
-    res = 2 * (d * m * n) + lower_bound_worksize(d, m * n, nlist(m, free))
+    res = 2 * (d * m * n) + lower_bound_worksize(d * m, n, free)
 !
   end function node_worksize
 !
-  pure function nlist(m, free) result(res)
-  integer(IK), intent(in) :: m, free(:)
-  integer(IK)             :: res(SIZE(free) * m)
-  integer(IK)             :: i, j
+! pure function nlist(m, free) result(res)
+! integer(IK), intent(in) :: m, free(:)
+! integer(IK)             :: res(SIZE(free) * m)
+! integer(IK)             :: i, j
 !
-    do concurrent(j=1:SIZE(free), i=1:m)
-      res((j - 1) * m + i) = (free(j) - 1) * m + i
-    end do
+!   do concurrent(j=1:SIZE(free), i=1:m)
+!     res((j - 1) * m + i) = (free(j) - 1) * m + i
+!   end do
 !
-  end function nlist
+! end function nlist
 !
   pure elemental subroutine node_destroy(this)
     type(node), intent(inout) :: this
