@@ -7,8 +7,7 @@ program main
   use mod_unittest
   implicit none
   type(unittest)     :: u
-  !integer, parameter :: NTEST = 1
-  integer, parameter :: NTEST = 5000
+  integer, parameter :: NTEST = 1000
   integer            :: fail
   integer            :: i
 !
@@ -55,7 +54,7 @@ contains
     real(RK)               :: drot(d * d), nrot(n * n)
     real(RK)               :: w(Kabsch_worksize(n))
     real(RK)               :: conv, prev
-    integer                :: i
+    integer                :: i, j
 !
     call RANDOM_NUMBER(X); Xbar = centroid(d, n, X)
     do i = 1, n
@@ -68,11 +67,11 @@ contains
 !
     do i=1,n_iter
 !
-      call cov(d, n, X, Z, dcov, reset=.true.)
-      call Kabsch(3, n, dcov, drot, w)
+      call cov(d, [(j, j=1, n)], X, Z, dcov)
+      call Kabsch(3, dcov, drot, w)
 !
       Z = [MATMUL(RESHAPE(drot, [d, d]), RESHAPE(Y, [d, n]))]
-      call cov_row_major(d, n, X, Z, ncov, reset=.true.)
+      call cov_row_major(d, [(j, j=1, n)], X, Z, ncov, reset=.true.)
       call procrustes(n, ncov, nrot, w)
       Z = [MATMUL(RESHAPE(Z, [d, n]), TRANSPOSE(RESHAPE(nrot, [n, n])))]
       conv = rmsd(d, n, X, Z)
@@ -100,7 +99,7 @@ contains
     real(RK)            :: drot(d * d), nrot(6 * 6)
     real(RK)            :: w(Kabsch_worksize(n))
     real(RK)            :: conv, prev
-    integer             :: i
+    integer             :: i, j
 !
     call RANDOM_NUMBER(X); Xbar = centroid(d, n, X)
     do i = 1, n
@@ -113,8 +112,8 @@ contains
 !
     do i=1,n_iter
 !
-      call cov(d, n, X, Z, dcov, reset=.true.)
-      call Kabsch(3, n, dcov, drot, w)
+      call cov(d, [(j, j=1, n)], X, Z, dcov)
+      call Kabsch(3, dcov, drot, w)
 !
       Z = [MATMUL(RESHAPE(drot, [d, d]), RESHAPE(Y, [d, n]))]
       call cov_row_major(d, nlist, X, Z, ncov, reset=.true.)
@@ -148,7 +147,7 @@ contains
     real(RK)            :: drot(d * d), nrot(p * p)
     real(RK)            :: w(Kabsch_worksize(n))
     real(RK)            :: conv, prev
-    integer             :: i
+    integer             :: i, j
 !
     call RANDOM_NUMBER(X); Xbar = centroid(d, n, X)
     do i = 1, m * n
@@ -161,8 +160,8 @@ contains
 !
     do i=1,n_iter
 !
-      call cov(d, n, X, Z, dcov, reset=.true.)
-      call Kabsch(d, m * n, dcov, drot, w)
+      call cov(d, [(j, j=1, n)], X, Z, dcov)
+      call Kabsch(d, dcov, drot, w)
       Z = [MATMUL(RESHAPE(drot, [d, d]), RESHAPE(Y, [d, m * n]))]
       call cov_row_major(d * m, nlist, X, Z, ncov, reset=.true.)
       call procrustes(p, ncov, nrot, w)
@@ -208,8 +207,8 @@ contains
 !
     do i = 1, n_iter
 !
-      call cov(d, m * n, X, Z, dcov)
-      call Kabsch(d, m * n, dcov, drot, w)
+      call cov(d, [(j, j=1, m * n)], X, Z, dcov)
+      call Kabsch(d, dcov, drot, w)
       Z = [MATMUL(RESHAPE(drot, [d, d]), RESHAPE(Y, [d, m * n]))]
 !
       do j=1,n

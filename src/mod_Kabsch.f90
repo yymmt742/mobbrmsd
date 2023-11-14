@@ -29,11 +29,9 @@ contains
   end function Kabsch_worksize
 !
 !| Calculate the rotation matrix from covariance matrix.
-  pure subroutine Kabsch(d, n, cov, rot, w)
+  pure subroutine Kabsch(d, cov, rot, w)
     integer(IK), intent(in)       :: d
     !! matrix collumn dimension.
-    integer(IK), intent(in)       :: n
-    !! matrix row dimension.
     real(RK), intent(in)          :: cov(*)
     !! target d*n array
     real(RK), intent(inout)       :: rot(*)
@@ -41,11 +39,10 @@ contains
     real(RK), intent(inout)       :: w(*)
     !! work array, must be larger than Kabsch_worksize(d)
     !! if row_major, must be larger than Kabsch_worksize(n)
-    integer(IK)                   :: dd, m, s, u, vt, iw, l
+    integer(IK)                   :: dd, m, s, u, vt, iw
 !
     if (d < 1) RETURN
 !
-    l = MIN(d, n)
     dd = d * d
     m = 1
     u = m + dd
