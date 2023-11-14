@@ -184,10 +184,13 @@ contains
     integer, intent(inout) :: fail
     integer, parameter  :: d = 3
     integer, parameter  :: m = 6
-    integer, parameter  :: n = 2
+    integer, parameter  :: n = 4
     integer, parameter  :: n_iter = 500
     integer, parameter  :: ml(m, n) = RESHAPE([ 1, 2, 3, 4, 5, 6, &
-                                   &            7, 8, 9,10,11,12], [m, n])
+                                   &            7, 8, 9,10,11,12, &
+                                   &           13,14,15,16,17,18, &
+                                   &           19,20,21,22,23,24],&
+                                   &           [m, n])
     real(RK)            :: X(d * m * n), Y(d * m * n), Z(d * m * n)
     real(RK)            :: Xbar(d)
     real(RK)            :: dcov(d * d), mcov(m * m)
@@ -319,13 +322,13 @@ contains
   end function SO12
 !
   function SO24() result(res)
-    real(RK) :: res(12, 12)
+    real(RK) :: res(24, 24)
 !
     res = 0D0
     res( 1: 6, 1: 6) = SO6()
     res( 7:12, 7:12) = SO6()
-!   res(13:18,13:18) = SO6()
-!   res(19:24,19:24) = SO6()
+    res(13:18,13:18) = SO6()
+    res(19:24,19:24) = SO6()
 !
   end function SO24
 !
