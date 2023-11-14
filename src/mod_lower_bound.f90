@@ -34,7 +34,7 @@ contains
   end function lower_bound_worksize
 !
 !| Calculate min_{P,Q} |X-PYQ|^2
-  subroutine lower_bound(d, n, free_indices, X, Y, w, maxiter, threshold)
+  pure subroutine lower_bound(d, n, free_indices, X, Y, w, maxiter, threshold)
     integer(IK), intent(in)           :: d
     !! matrix collumn dimension.
     integer(IK), intent(in)           :: n

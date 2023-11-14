@@ -1,6 +1,6 @@
 module mod_symRMSD
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
-  use mod_lower_bound
+  use mod_tree
   implicit none
 !
 contains
@@ -14,17 +14,17 @@ contains
 ! end subroutine
 !
 !| Calculate the rotation matrix from covariance matrix.
-  subroutine branch_and_plune(d, n, free_indices, X, Y)
+  subroutine branch_and_plune(d, m, n, X, Y)
     integer(IK), intent(in)       :: d
+    !! matrix collumn dimension.
+    integer(IK), intent(in)       :: m
     !! matrix collumn dimension.
     integer(IK), intent(in)       :: n
     !! matrix row dimension.
-    integer(IK), intent(in)       :: free_indices(:)
-    !! matrix row dimension.
     real(RK), intent(in)          :: X(*)
-    !! target d*n array
+    !! reference d*m*n array
     real(RK), intent(inout)       :: Y(*)
-    !! rotation d*d matrix
+    !! target d*m*n array
 !
 !
   end subroutine branch_and_plune
