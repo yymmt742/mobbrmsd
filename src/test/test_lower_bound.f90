@@ -110,8 +110,7 @@ contains
     integer, parameter     :: mlist(3) = [2, 3, 4]
     integer, parameter     :: nlist(2) = [1, 3]
     real(RK)               :: X(d * m * n), Y(d * m * n)
-!   real(RK)               :: w(block_lower_bound_worksize(d, n, nlist))
-    real(RK)               :: w(10000)
+    real(RK)               :: w(block_lower_bound_worksize(d, m, n, mlist, nlist))
 !
     X = [sample(d, m * n)]
     Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), SO15())]

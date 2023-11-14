@@ -168,13 +168,14 @@ contains
     integer(IK), intent(in)           :: free_n_indices(:)
     !! rotation index, must be SIZE(free_indices) <= n
     integer(IK)                       :: res
-    integer(IK)                       :: f
+    integer(IK)                       :: f, g
 !
-    if (d < 1 .or. n < 1) then
+    if (d < 1 .or. m < 1 .or. n < 1) then
       res = 0
     else
       f = SIZE(free_m_indices)
-      res = 2 + 3 * d * n + MAX(d * d * 2 + Kabsch_worksize(d), f * f * 2 + procrustes_worksize(f))
+      g = SIZE(free_n_indices)
+      res = 2 + 3 * d * m * n + MAX(d * d * 2 + Kabsch_worksize(d), g * (f * f * 2 + procrustes_worksize(f)))
     end if
 !
   end function block_lower_bound_worksize
@@ -248,15 +249,11 @@ contains
       w(prev) = w(conv)
 !
       call R_rotation(d, mn, w(ix), w(iy), w(iz), w(drot), w(iw1))
-!print'(3f9.3)', w(iz:iz+dmn-1)
-!print*
 !
       do concurrent(j=0:g-1)
         call block_P_rotation(d, f, w(ix + j * df), w(iz + j * df), w(nrot + j * ff), w(iw2 + j * bs))
       end do
 !
-!print'(3f9.3)', w(iz:iz+dmn-1)
-!print*
       w(conv) = sd(d, mn, w(ix), w(iz))
       if (ABS(w(prev) - w(conv)) < threshold_) exit
 !
