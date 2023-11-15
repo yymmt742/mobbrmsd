@@ -83,6 +83,7 @@ add_test( NAME test_det COMMAND test_det )
 add_executable( test_svd )
 target_include_directories( test_svd PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_svd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                 ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
                                  test_svd.f90 )
 target_link_libraries( test_svd PRIVATE unittest )
@@ -105,6 +106,7 @@ add_test( NAME test_rot COMMAND test_rot )
 add_executable( test_Kabsch )
 target_include_directories( test_Kabsch PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_Kabsch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
@@ -118,7 +120,7 @@ add_test( NAME test_Kabsch COMMAND test_Kabsch )
 add_executable( test_procrustes )
 target_include_directories( test_procrustes PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_procrustes PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
                                     test_procrustes.f90 )

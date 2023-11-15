@@ -16,7 +16,7 @@ module mod_params
   public  :: I1, I2, I4, I8
   public  :: RK, IK, LK
   public  :: STDIN, STDOUT, STDERR
-  public  :: RZERO, RONE, RHALF
+  public  :: RZERO, RONE, RHALF, RHUGE
 !
 !&<
 !
@@ -27,6 +27,8 @@ module mod_params
   real(RK), parameter         :: RZERO = 0.0_RK
   real(RK), parameter         :: RONE  = 1.0_RK
   real(RK), parameter         :: RHALF = 0.5_RK
+!
+  real(RK), parameter         :: RHUGE = HUGE(RZERO)
 !
 !&>
 !

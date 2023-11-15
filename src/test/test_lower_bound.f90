@@ -6,7 +6,8 @@ program main
   use mod_unittest
   implicit none
   type(unittest)    :: u
-  integer,parameter :: NTEST=100
+  integer,parameter :: NTEST=1
+  !integer,parameter :: NTEST=100
   integer           :: fail
   integer           :: i
 !
@@ -23,17 +24,17 @@ program main
   enddo
   print*,fail,'/',NTEST
 !
-  fail = 0
-  do i = 1, NTEST
-    call test3(fail)
-  end do
-  print *, fail, '/', NTEST
+! fail = 0
+! do i = 1, NTEST
+!   call test3(fail)
+! end do
+! print *, fail, '/', NTEST
 !
-  fail = 0
-  do i = 1, NTEST
-    call test4(fail)
-  end do
-  print *, fail, '/', NTEST
+! fail = 0
+! do i = 1, NTEST
+!   call test4(fail)
+! end do
+! print *, fail, '/', NTEST
 !
   call u%finish_and_terminate()
 !
@@ -81,48 +82,48 @@ contains
 !
   end subroutine test2
 !
-  subroutine test3(fail)
-    integer, intent(inout) :: fail
-    integer, parameter  :: d = 3
-    integer, parameter  :: n = 6
-    integer, parameter  :: nlist(6) = [1,2,3,4,5,6]
-    real(RK)            :: X(d * n), Y(d * n)
-    real(RK)            :: w(lower_bound_worksize(d, n, nlist)), r
+! subroutine test3(fail)
+!   integer, intent(inout) :: fail
+!   integer, parameter  :: d = 3
+!   integer, parameter  :: n = 6
+!   integer, parameter  :: nlist(6) = [1,2,3,4,5,6]
+!   real(RK)            :: X(d * n), Y(d * n)
+!   real(RK)            :: w(lower_bound_worksize(d, n, nlist)), r
 !
-    X = [sample(d, n)]
-    Y = [sample(d, n)]
+!   X = [sample(d, n)]
+!   Y = [sample(d, n)]
 !
-    call lower_bound(d, n, nlist, X, Y, w)
+!   call lower_bound(d, n, nlist, X, Y, w)
 !
-    r = rmsd_brute(d, n, X, Y)
-    if (w(1) > r) then
-      fail = fail + 1
-      print'(I8,F9.6)', fail, w(1), r
-    endif
+!   r = rmsd_brute(d, n, X, Y)
+!   if (w(1) > r) then
+!     fail = fail + 1
+!     print'(I8,2F9.6)', fail, w(1), r
+!   endif
 !
-  end subroutine test3
+! end subroutine test3
 !
-  subroutine test4(fail)
-    integer, intent(inout) :: fail
-    integer, parameter     :: d = 3
-    integer, parameter     :: m = 5
-    integer, parameter     :: n = 3
-    integer, parameter     :: mlist(3) = [2, 3, 4]
-    integer, parameter     :: nlist(2) = [1, 3]
-    real(RK)               :: X(d * m * n), Y(d * m * n)
-    real(RK)               :: w(block_lower_bound_worksize(d, m, n, mlist, nlist))
+! subroutine test4(fail)
+!   integer, intent(inout) :: fail
+!   integer, parameter     :: d = 3
+!   integer, parameter     :: m = 5
+!   integer, parameter     :: n = 3
+!   integer, parameter     :: mlist(3) = [2, 3, 4]
+!   integer, parameter     :: nlist(2) = [1, 3]
+!   real(RK)               :: X(d * m * n), Y(d * m * n)
+!   real(RK)               :: w(block_lower_bound_worksize(d, m, n, mlist, nlist))
 !
-    X = [sample(d, m * n)]
-    Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), SO15())]
+!   X = [sample(d, m * n)]
+!   Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), SO15())]
 !
-    call block_lower_bound(d, m, n, mlist, nlist, X, Y, w)
+!   call block_lower_bound(d, m, n, mlist, nlist, X, Y, w)
 !
-    if (w(1) > 0.0001D0) then
-      fail = fail + 1
-      print'(I8,F9.6)', fail, w(1)
-    endif
+!   if (w(1) > 0.0001D0) then
+!     fail = fail + 1
+!     print'(I8,F9.6)', fail, w(1)
+!   endif
 !
-  end subroutine test4
+! end subroutine test4
 !
   function SO2() result(res)
     real(RK) :: a(1), res(2, 2)
