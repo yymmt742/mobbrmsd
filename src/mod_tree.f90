@@ -1,5 +1,7 @@
 module mod_tree
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
+  use mod_molecule
+  use mod_molecular_permutation
   use mod_lower_bound
   implicit none
   private
@@ -9,11 +11,9 @@ module mod_tree
 !
     private
 !
-    integer(IK), allocatable :: fixed_indices(:)
-    !! Molecules indices for fix
-    integer(IK), allocatable :: free_indices(:)
-    !! Molecules indices that can free rotation
-    real(RK), public         :: lower = -HUGE(ZERO)
+    type(molecular_permutation) :: prm
+    !! Molecular permutation indicator
+    real(RK), public            :: lower = -HUGE(ZERO)
     !! the lower bound
 !
   contains
@@ -36,28 +36,24 @@ module mod_tree
 contains
 !
 !| generate node instance
-  pure function node_new(d, m, n, fixed, free, x, y) result(res)
-    integer(IK), intent(in) :: d
-    !! space dimension, d > 0
-    integer(IK), intent(in) :: m
-    !! number of atom per molecule, m > 0
-    integer(IK), intent(in) :: n
-    !! number of molecule, n > 0
-    integer(IK), intent(in) :: fixed(:)
-    !! Molecules indices for fix, starting from 1.
-    integer(IK), intent(in) :: free(:)
-    !! Molecules indices that can free rotation, starting from 1.
-    real(RK), intent(in)    :: x(*)
+  pure function node_new(mol, prm, x, y) result(res)
+    class(molecule), intent(in)              :: mol
+    !! molecular template
+    class(molecular_permutation), intent(in) :: prm
+    !! molecular permutation
+    real(RK), intent(in)                     :: x(*)
     !! reference molecular coordinate, x(d,m,n)
-    real(RK), intent(in)    :: y(*)
+    real(RK), intent(in)                     :: y(*)
     !! target molecular coordinate, y(d,m,n)
-    real(RK)                :: w(10*node_worksize(d, m, n, free))
-    type(node)              :: res
-    integer(IK)             :: dm, dmn, ix, iy, iw
+    real(RK)                                 :: w(node_worksize(mol, prm))
+    type(node)                               :: res
+    integer(IK)                              :: d, m, n, dm, dmn, ix, iy, iw
 !
-    res%fixed_indices = fixed
-    res%free_indices = free
+    res%prm = prm
 !
+    d = prm%d
+    m = mol%natom()
+    n = prm%n
     dm  = d * m
     dmn = dm * n
 !
@@ -66,43 +62,18 @@ contains
     iw = iy + dmn
 !
     w(ix:ix + dmn - 1) = x(:dmn)
-    call copy_y(d, m, n, fixed, free, y, w(iy))
+    call prm%sort_matrix(mol, y, w(iy))
 !
-    call lower_bound(dm, n, free, w(ix), w(iy), w(iw))
+    call lower_bound(dm, n, prm%free_indices(), w(ix), w(iy), w(iw))
     res%lower = w(iw)
-!
-  contains
-!
-    pure subroutine copy_y(d, m, n, fixed, free, y, z)
-    integer(IK), intent(in) :: d, m, n, fixed(:), free(:)
-    real(RK), intent(in)    :: y(d, m, n)
-    real(RK), intent(inout) :: z(d, m, n)
-    integer(IK)             :: i, j, k, f, g
-!
-      f = SIZE(fixed)
-      g = SIZE(free)
-!
-      do concurrent(i=1:d, j=1:m, k=1:f)
-        z(i, j, k) = y(i, j, fixed(k))
-      enddo
-!
-      do concurrent(i=1:d, j=1:m, k=1:g)
-        z(i, j, f + k) = y(i, j, free(k))
-      enddo
-!
-    end subroutine copy_y
 !
   end function node_new
 !
 !| generate childe nodes instance
-  pure function node_generate_childs(this, d, m, n, x, y) result(res)
+  pure function node_generate_childs(this, mol, x, y) result(res)
     class(node), intent(in) :: this
-    integer(IK), intent(in) :: d
-    !! space dimension, d > 0
-    integer(IK), intent(in) :: m
-    !! number of atom per molecule, m > 0
-    integer(IK), intent(in) :: n
-    !! number of molecule, n > 0
+    class(molecule), intent(in)              :: mol
+    !! molecular template
     real(RK), intent(in)    :: x(*)
     !! reference molecular coordinate, x(d,m,n)
     real(RK), intent(in)    :: y(*)
@@ -110,27 +81,29 @@ contains
     type(childs)            :: res
     integer(IK)             :: f, g, i
 !
-    f = SIZE(this%free_indices)
-    g = SIZE(this%fixed_indices)
+!   f = SIZE(this%free_indices)
+!   g = SIZE(this%fixed_indices)
 !
-    ALLOCATE(res%nodes(f))
+!   ALLOCATE(res%nodes(f))
 !
-    do concurrent(i=1:f)
-      block
-        integer(IK) :: fixed(g + 1), free(f - 1)
-        fixed = [this%fixed_indices, this%free_indices(i)]
-        free = [this%free_indices(:i - 1), this%free_indices(i + 1:)]
-        res%nodes(i) = node(d, m, n, fixed, free, x, y)
-      end block
-    end do
+!   do concurrent(i=1:f)
+!     block
+!       integer(IK) :: fixed(g + 1), free(f - 1)
+!       fixed = [this%fixed_indices, this%free_indices(i)]
+!       free = [this%free_indices(:i - 1), this%free_indices(i + 1:)]
+!       res%nodes(i) = node(d, m, n, fixed, free, x, y)
+!     end block
+!   end do
 !
   end function node_generate_childs
 !
-  pure function node_worksize(d, m, n, free) result(res)
-  integer(IK), intent(in) :: d, m, n, free(:)
-  integer(IK)             :: res
+  pure function node_worksize(mol, prm) result(res)
+    class(molecule), intent(in)              :: mol
+    class(molecular_permutation), intent(in) :: prm
+    integer(IK)                              :: d, m, n, res
 !
-    res = 2 * (d * m * n) + lower_bound_worksize(d * m, n, free)
+    res = 2 * (prm%d * mol%natom() * prm%n) &
+   &    + lower_bound_worksize(prm%d * mol%natom(), prm%n, prm%free_indices())
 !
   end function node_worksize
 !
@@ -147,8 +120,6 @@ contains
 !
   pure elemental subroutine node_destroy(this)
     type(node), intent(inout) :: this
-    if(ALLOCATED(this%fixed_indices)) deallocate(this%fixed_indices)
-    if(ALLOCATED(this%free_indices))  deallocate(this%free_indices)
     this%lower = -HUGE(ZERO)
   end subroutine node_destroy
 !

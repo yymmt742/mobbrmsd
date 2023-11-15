@@ -171,6 +171,9 @@ add_executable( test_tree )
 target_include_directories( test_tree PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_tree PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
+                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_element.f90
+                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_molecule.f90
+                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_molecular_permutation.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_permutation.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rmsd.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rmsd_brute.f90
