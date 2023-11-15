@@ -1,5 +1,6 @@
 module mod_svd
   use mod_params, only : IK, RK, ONE => RONE, ZERO => RZERO
+  use mod_optarg
   implicit none
   private
   public :: svd_worksize, svd
@@ -27,7 +28,7 @@ contains
   end function svd_worksize
 !
 !| singular value decomposition of square matrix x.
-  pure subroutine svd(d, x, s, u, vt, w)
+  pure subroutine svd(d, x, s, u, vt, w, ldx)
     integer(IK), intent(in) :: d
     !! matrix dimension
     real(RK), intent(inout) :: x(*)
@@ -40,11 +41,14 @@ contains
     !! d*d square matrix, returns transpose right eigen vector.
     real(RK), intent(inout) :: w(*)
     !! work array, must be greater than svd_worksize(d).
-    integer(IK)             :: lw, info
+    integer(IK), intent(in), optional :: ldx
+    !! leading dimension of x
+    integer(IK)             :: lw, lx, info
 !
       lw = svd_worksize(d)
       if (lw <= 0 .or. d <= 0) return
-      call DGESVD('A', 'A', d, d, x, d, s, u, d, vt, d, w, lw, info)
+      lx = MAX(d, optarg(ldx, 0))
+      call DGESVD('A', 'A', d, d, x, lx, s, u, d, vt, d, w, lw, info)
 !
   end subroutine svd
 !
