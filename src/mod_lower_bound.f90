@@ -9,8 +9,8 @@ module mod_lower_bound
   use mod_Procrustes
   implicit none
   private
-  public :: lower_bound_worksize, lower_bound
-!         & block_lower_bound_worksize, block_lower_bound
+  public :: lower_bound_worksize, lower_bound, &
+          & block_lower_bound_worksize, block_lower_bound
 !
   interface
     include 'dgemm.h'
@@ -199,22 +199,26 @@ contains
     !! iteration limit, default = 1E-12
     integer(IK)                       :: maxiter_
     real(RK)                          :: threshold_
+!   real(RK)                          :: cov(SIZE(free_n_indices) * m, SIZE(free_n_indices) * m)
+!   real(RK)                          :: mrot(SIZE(free_m_indices), SIZE(free_m_indices), SIZE(free_n_indices))
+!   real(RK)                          :: nrot(SIZE(free_n_indices), SIZE(free_n_indices))
     integer(IK)                       :: n_indices(n), m_indices(m)
-    integer(IK)                       :: f, g, mg, mn, dd, df, ff, dfg, dmn, mmn, mmgg
+    integer(IK)                       :: f, g, mg, mn, dd, dm, df, ff, dfg, dmg, dmn, mmn, mmgg
     integer(IK)                       :: conv, prev
-    integer(IK)                       :: ix, iy, iz, ncov, nrot, bs
-    integer(IK)                       :: i, j, k, iw1, iw2
+    integer(IK)                       :: ix, iy, iz, rcov, rrot, cov, mrot, nrot
+    integer(IK)                       :: i, j, iw1, iw2
 !
     f = SIZE(free_m_indices)
     g = SIZE(free_n_indices)
 !
     if (f < 1 .or. g < 1) then
-      w(conv) = rmsd(d, m * n, X, Y)
+      w(1) = rmsd(d, m * n, X, Y)
       return
     end if
 !
     mg = m * g
     mn = m * n
+    dm = d * m
     dd = d * d
     df = d * f
     ff = f * f
@@ -222,20 +226,23 @@ contains
     mmn = m * m * n
     mmgg = mg * mg
     dfg = d * f * g
-    bs = ff + Procrustes_worksize(f)
+    dmg = d * m * g
 !
     conv = 1
     prev = conv + 1
-    ix   = prev + 1   ! copy of X
-    iy   = ix   + dmn ! copy of Y
-    iz   = iy   + dmn ! Z = P@Y
-    iw1  = iz   + dmn
-    ncov = iz   + dmn ! covariance matrix XRY^T
-    nrot = ncov + mmgg ! rotation matrix Q
-    iw2  = nrot + ff * g
+    ix   = prev + 1      ! copy of X
+    iy   = ix   + dmn    ! copy of Y
+    iz   = iy   + dmn    ! Z = P@Y
+    rcov = iz   + dmn    ! covariance matrix X^TYPQ
+    rrot = rcov + dd     ! rotation matrix R
+    iw1  = rrot + dd
+    cov  = iz   + dmn    ! covariance matrix XRY^T
+    mrot = cov  + mmgg   ! rotation matrix P
+    nrot = mrot + ff * g ! rotation matrix Q
+    iw2 = nrot + g * g
 !
     maxiter_   = optarg(maxiter,   DEF_maxiter)
-    threshold_ = optarg(threshold, DEF_threshold) ** 2 * n
+    threshold_ = optarg(threshold, DEF_threshold) * dmn
 !
     call calc_swap_indices(m, f, free_m_indices, m_indices)
     call calc_swap_indices(n, g, free_n_indices, n_indices)
@@ -253,43 +260,37 @@ contains
 !
       w(prev) = w(conv)
 !
-      call R_rotation(d, mn, w(ix), w(iy), w(iz), w(iw1))
+!!    M = X^T@Z
+      call DGEMM('T', 'N', mg, mg, d, ONE, w(ix), d, w(iz), d, ZERO, w(cov), mg)
+      call block_rotation(f, g, m, mg, w(cov), w(mrot), w(nrot), maxiter_, threshold_)
 !
-      !!  M = X^T@Z
-      call DGEMM('T', 'N', mg, mg, d, ONE, w(ix), d, w(iz), d, ZERO, w(ncov), mg)
+!!    R rotation
+!!    M = X(d,mn)@Z^T(mn,d)@P^T@Q^T
+      w(iz:iz + dmg - 1) = w(iy:iy + dmg - 1)
+      call P_rotation(d, m, n, f, g, w(mrot), w(iz))
+      call Q_rotation(dm, n, g, w(nrot), w(iz))
+      call DGEMM('N', 'T', d, d, mn, ONE, w(ix), d, w(iz), d, ZERO, w(rcov), d)
+!!    get optimal R
+      call Kabsch(d, w(rcov), w(rrot), w(iw1))
 !
-!     do concurrent(j=0:g-1)
-!       block
-!         integer(IK) :: ncov_j, nrot_j, iw_j
-!         ncov_j = ncov + j * (mmn + m)
-!         nrot_j = nrot + j * ff
-!         iw_j = iw2 + j * bs
-!         call Procrustes(f, w(ncov_j), w(nrot_j), w(iw_j), ldcov=mn)
-!         do concurrent(k=0:n - 1)
-!           block
-!             integer(IK) :: ncov_jk, iw_jk
-!             ncov_jk = ncov + k * mmn + j * m
-!             iw_jk = iw_j + k * ff
-!             call DGEMM('N', 'T', f, f, f, ONE, w(ncov_jk), mn, w(nrot_j), f, ZERO, w(iw_jk), d)
-!           end block
-!         end do
-!       end block
-!     end do
+!!    trace(MR) = trace(MR^T)
 !
-!     w(conv) = sd(d, mn, w(ix), w(iz))
-!     if (ABS(w(prev) - w(conv)) < threshold_) exit
+      w(conv) = ZERO
+      do j = 0, dd - 1
+        w(conv) = w(conv) + w(rcov + j) * w(rrot + j)
+      end do
 !
-!     do concurrent(j=0:g-1)
-!       call DGEMM('N', 'T', d, f, f, ONE, w(iy + j * df), d, w(nrot + j * ff), f, ZERO, w(iz + j * df), d)
-!     enddo
-
-!     do concurrent(j=dfg:dmn-1)
-!       w(iz + j) = w(iy + j)
-!     enddo
+      if (ABS(w(prev) - w(conv)) < threshold_) exit
+!
+!!    Z = R@Y
+      call DGEMM('N', 'N', d, mn, d, ONE, w(rrot), d, w(iy), d, ZERO, w(iz), d)
 !
     enddo
 !
-    w(conv) = rmsd(d, mn, w(ix), w(iy))
+    w(iz:iz + dmg - 1) = w(iy:iy + dmg - 1)
+    call P_rotation(d, m, n, f, g, w(mrot), w(iz))
+    call Q_rotation(dm, n, g, w(nrot), w(iz))
+    w(conv) = rmsd(d, mn, w(ix), w(iz))
 !
   contains
 !
@@ -305,153 +306,115 @@ contains
 !
     end subroutine pack_matrix
 !
-!   pure subroutine block_rotation(d, f, mn, M, P, w)
-!     integer(IK), intent(in)           :: d, f, mn
-!     real(RK), intent(in)              :: M(*)
-!     real(RK), intent(inout)           :: P(*), w(*)
-!     integer(IK)                       :: i, iw, df
-!
-!!  Z' = Z@P
-!     call DGEMM('N', 'T', d, f, f, ONE, z, d, P, f, ZERO, w(iw), d)
-!!  Z = Z'
-!     iw = iw - 1
-!     do concurrent(i=1:df)
-!       z(i) = w(iw + i)
-!     end do
-!
-!   end subroutine block_rotation
-!
   end subroutine block_lower_bound
+!
+  pure subroutine block_rotation(f, g, m, mg, cov, mrot, nrot, maxiter, threshold)
+    integer(IK), intent(in) :: f, g, m, mg, maxiter
+    real(RK), intent(in)    :: cov(mg, mg)
+    real(RK), intent(in)    :: threshold
+    real(RK), intent(inout) :: mrot(f, f, g), nrot(g, g)
+    real(RK)                :: mcov(f, f), ncov(g, g), ncov0(g, g)
+    real(RK)                :: w(procrustes_worksize(f))
+    real(RK)                :: prev, conv
+    integer(IK)             :: i, j, k
+!
+    do concurrent(j=1:g, k=1:g)
+      block
+        integer(IK) :: jm, km
+        jm = (j - 1) * m
+        km = (k - 1) * m
+        ncov0(j, k) = SUM(cov(jm + f + 1:jm + m, km + 1:km + f))&
+       &            + SUM(cov(jm + 1:jm + m, km + f + 1:km + m))
+      end block
+    end do
+!
+    prev = -RHUGE
+    conv = -RHUGE
+!
+    do concurrent(i=1:g, j=1:g)
+      nrot(i, j) = MERGE(1, 0, i == j)
+    end do
+!
+    do concurrent(i=1:f, j=1:f, k=1:g)
+      mrot(i, j, k) = MERGE(1, 0, i == j)
+    end do
+!
+    do i = 1, maxiter
+!
+      if (prev < conv) prev = conv
+!
+!!    P rotation
+!
+      do concurrent(j=1:g)
+        mcov = ZERO
+        do k = 1, g
+          mcov(:, :) = mcov(:, :) &
+         &           + nrot(k, j) * cov((k - 1) * m + 1:(k - 1) * m + f, (k - 1) * m + 1:(k - 1) * m + f)
+        end do
+        call Procrustes(f, mcov, mrot(:, :, j), w)
+      end do
+!
+!!    Q rotation
+      do concurrent(j=1:g, k=1:g)
+        block
+          integer(IK) :: jm, km
+          jm = (j - 1) * m
+          km = (k - 1) * m
+          ncov(j, k) = SUM(MATMUL(cov(jm + 1:jm + f, km + 1:km + f), TRANSPOSE(mrot(:, :, k))))
+        end block
+      end do
+!
+      call Procrustes(g, ncov, nrot, w)
+!
+      conv = SUM(ncov * nrot)
+      if (ABS(prev - conv) < threshold) exit
+!
+    end do
+!
+  end subroutine block_rotation
 !
   pure subroutine R_rotation(d, n, x, y, z, w)
     integer(IK), intent(in)           :: d, n
     real(RK), intent(in)              :: x(*), y(*)
     real(RK), intent(inout)           :: z(*), w(*)
-    integer(IK)                       :: ir, iw
+    integer(IK)                       :: ir, ic, iw
 !
-      ir = d * d + 1
-      iw = d * d + ir
+      ir = 1
+      ic = d * d + ir
+      iw = d * d + ic
 !
 !!    M = X@Z^T
-      call DGEMM('N', 'T', d, d, n, ONE, x, d, z, d, ZERO, w, d)
+      call DGEMM('N', 'T', d, d, n, ONE, x, d, z, d, ZERO, w(ic), d)
 !!    calc R from M
-      call Kabsch(d, w, w(ir), w(iw))
+      call Kabsch(d, w(ic), w(ir), w(iw))
 !!    Z = R@Y
       call DGEMM('N', 'N', d, n, d, ONE, w(ir), d, y, d, ZERO, z, d)
 !
   end subroutine R_rotation
 !
-! subroutine P_rotation(d, m, n, f, g, mg, cov, w, maxiter, threshold)
-!   integer(IK), intent(in) :: d, m, n, f, g, mg, maxiter
-!   real(RK), intent(in)    :: cov(mg, mg), threshold
-!   real(RK), intent(inout) :: w(*)
-!   integer(IK)             :: ff, mm, bs, iw1, iw2, covn
-!   integer(IK)             :: i, j, k
+  pure subroutine P_rotation(d, m, n, f, g, r, z)
+    integer(IK), intent(in) :: d, m, n, f, g
+    real(RK), intent(in)    :: r(f, f, g)
+    real(RK), intent(inout) :: z(d, m, n)
+    real(RK)                :: t(d, f)
+    integer(IK)             :: i
 !
-!!
-!!        | A_11 A_12 A_13 ... A_1g |          | b_11 b_12 b_13 ... b_1m |
-!!        | A_21 A_12 A_13 ... A_2g |          | b_21 b_22 b_23 ... b_2m |
-!!  cov = | A_31 A_32 A_33 ... A_3g |   A_IJ = | b_31 b_32 b_33 ... b_3m |
-!!        |  :    :    :        :   |          |  :    :    :        :   |
-!!        | A_g1 A_g2 A_g3 ... A_gg |          | b_m1 b_m2 b_m3 ... b_mm |
-!!
-!!               | b_11 ... b_1f |
-!!   B_IJ(f,f) = |  :        :   |   i, j = 1,2,...,g
-!!               | b_f1 ... b_ff |,
-!!
-!!   Pj minimizes trace[ B_jj@P_j ] and satisfies Pj@Pj^T=I
-!!
-!!   N      = { M1@P1 + M2@P_2 + ... + Mg@P_g,               if k, l \in 1,2,...,f
-!!            { A_11 + ... + A_g1 + ... + A_1g + ... + A_gg, otherwise
-!!
-!!   where, M_J(f,f)  = B_1J + B_2J + ... + B_nJ
-!!
-!!   Q minimizes trace[ N@Q ] and satisfies Q@Q^T=I
-!!
+    do i = 1, g
+      t = MATMUL(z(:, :f, i), TRANSPOSE(r(:, :, i)))
+      z(:, :f, i) = t
+      !z(:, :f, i) = MATMUL(z(:, :f, i), TRANSPOSE(r(:, :, i)))
+    end do
 !
-!     ff = f * f
-!     mm = m * m
-!     bs = 3 * ff + Procrustes_worksize(f)
-!     iw1 = 1
-!     covn = iw1 + bs * g
-!     iw2 = covn + ff
+  end subroutine P_rotation
 !
-!     do concurrent(i = 0:g-1)
-!       block
-!         integer(IK) :: ib, im, ic
-!         im = iw1 + i * bs
-!         ib = im + ff
-!         ic = m * i + 1
-!         call pack_fcov(f, m, g, cov( 1, ic), w(im))
-!         call pack_fcov(f, m, 1, cov(ic, ic), w(ib))
-!       end block
-!     end do
+  pure subroutine Q_rotation(dm, n, g, r, z)
+    integer(IK), intent(in) :: dm, n, g
+    real(RK), intent(in)    :: r(g, g)
+    real(RK), intent(inout) :: z(dm, n)
 !
-!     do concurrent(i=covn:covn + ff - 1)
-!       w(i) = ZERO
-!     enddo
-!     do j = 0, g-1
-!       do i = 0, g-1
-!         do concurrent(k = 0:mm-1)
-!           w(covn + k) = cov(i*m,j)
-!         enddo
-!       enddo
-!     enddo
+    z(:, :g) = MATMUL(z(:, :g), TRANSPOSE(r))
 !
-!     do i = 1, maxiter
-!
-!       do concurrent(j=0:g - 1)
-!         block
-!           integer(IK) :: jcov, mcov, rot, jw
-!           jcov = iw1 + j * bs
-!           mcov = jcov + ff
-!           jrot = jcov + ff
-!           jw   = jrot + ff
-!           call Procrustes(f, w(jcov), p(jrot), w(jw))
-!         end block
-!       end do
-!
-
-!       do j=1,g
-!         block
-!           integer(IK) :: jcov, mcov, rot, jw
-!         end block
-!       enddo
-!
-!     end do
-!
-! contains
-!
-!   pure subroutine pack_fcov(f, m, s, cov, fcov)
-!     integer(IK), intent(in) :: f, m, s
-!     real(RK), intent(in)    :: cov(m * g, m)
-!     real(RK), intent(inout) :: fcov(f, f)
-!     integer(IK)             :: i, j, k
-!     do concurrent(i=1:f, j=1:f)
-!       fcov(i, j) = ZERO
-!     end do
-!     do k = 0, s - 1
-!       do concurrent(i=1:f, j=1:f)
-!         fcov(i, j) = fcov(i, j) + cov(i + k * m, j)
-!       end do
-!     end do
-!   end subroutine pack_fcov
-!
-!   pure subroutine pack_ncov(m, g, cov, ncov)
-!     integer(IK), intent(in) :: f, m
-!     real(RK), intent(in)    :: cov(m * g, m * g)
-!     real(RK), intent(inout) :: ncov(m, m)
-!     integer(IK)             :: i, j, k, l
-!     do l = 0, g - 1
-!       do k = 0, g - 1
-!         do concurrent(i=1:m, j=1:m)
-!           ncov(i, j) = jcov(i, j) + cov(i + k * m, j + k * m)
-!         end do
-!       end do
-!     end do
-!   end subroutine pack_ncov
-!
-! end subroutine P_rotation
+  end subroutine Q_rotation
 !
   pure subroutine calc_swap_indices(n, f, free_indices, res)
     integer(IK), intent(in)    :: n, f, free_indices(f)
