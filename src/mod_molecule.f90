@@ -7,11 +7,13 @@ module mod_molecule
 !
   type :: molecule
     private
+    integer(IK)                :: f = 0
     type(element), allocatable :: e(:)
     integer(IK), allocatable   :: s(:, :)
   contains
     procedure :: natom      => molecule_natom
     procedure :: nsym       => molecule_nsym
+    procedure :: nrot       => molecule_nrot
     procedure :: sym_index  => molecule_sym_index
     procedure :: free_index => molecule_free_index
     final     :: molecule_destroy
@@ -34,11 +36,15 @@ contains
 !
     if (PRESENT(sym)) then
       block
-        integer(IK) :: r, s
+        integer(IK) :: i, r, s
         r = MIN(l, SIZE(sym, 1))
         s = SIZE(sym, 2)
         allocate (res%s(l, s), source=0)
         res%s(:r, :s) = sym(:r, :s)
+        do i = 1, r
+          if (ALL(res%s(i, :) == i)) cycle
+          res%f = res%f + 1
+        end do
       end block
     else
       allocate (res%s(l, 0))
@@ -66,6 +72,12 @@ contains
     end if
   end function molecule_nsym
 !
+  pure elemental function molecule_nrot(this) result(res)
+    class(molecule), intent(in) :: this
+    integer(IK)                 :: res
+    res = this%f
+  end function molecule_nrot
+!
   pure function molecule_sym_index(this, s) result(res)
     class(molecule), intent(in) :: this
     integer(IK), intent(in)     :: s
@@ -84,13 +96,14 @@ contains
 !
   pure function molecule_free_index(this) result(res)
     class(molecule), intent(in) :: this
-    integer(IK), allocatable    :: res(:)
-    integer(IK)                 :: i
-    allocate (res(0))
+    integer(IK)                 :: res(this%f)
+    integer(IK)                 :: i, j
     if (ALLOCATED(this%s)) then
+      j = 1
       do i = 1, this%natom()
-        if (ALL(this%s(:, i)==i)) cycle
-        res = [res, i]
+        if (ALL(this%s(i, :)==i)) cycle
+        res(j) = i
+        j = j + 1
       end do
     end if
   end function molecule_free_index

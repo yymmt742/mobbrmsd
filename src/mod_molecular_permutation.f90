@@ -14,17 +14,14 @@ module mod_molecular_permutation
   type :: molecular_permutation
 !
     integer(IK)              :: d = 0
-    integer(IK)              :: m = 0
     integer(IK)              :: n = 0
-    integer(IK), allocatable :: sym(:), fix(:)
+    integer(IK), allocatable :: sym(:), fix(:), free(:)
 !
   contains
 !
     procedure :: nfree        => molecular_permutation_nfree
     procedure :: nfix         => molecular_permutation_nfix
-    procedure :: free_indices => molecular_permutation_free_indices
     procedure :: swap_indices => molecular_permutation_swap_indices
-    procedure :: sort_matrix  => molecular_permutation_sort_matrix
     procedure :: clear        => molecular_permutation_clear
     final     :: molecular_permutation_destroy
 !
@@ -51,13 +48,29 @@ contains
     type(molecular_permutation)       :: res
 !
     res%n = MAX(optarg(n, DEF_n), 1)
-    res%m = mol%natom()
     res%d = MAX(optarg(d, DEF_d), 1)
 !
-    if(PRESENT(sym)) res%sym = sym
-    if(PRESENT(fix)) res%fix = fix
+    if (PRESENT(sym)) res%sym = sym
+    if (PRESENT(fix)) then
+      res%fix = fix
+      res%free = free_indices(res%n, fix)
+    end if
 !
   end function molecular_permutation_new
+!
+  pure function free_indices(n, fix) result(res)
+    integer(IK), intent(in)                  :: n, fix(:)
+    integer(IK)                              :: res(n - SIZE(fix))
+    integer(IK)                              :: i, j, g
+    j = 1
+    g = SIZE(res)
+    do i = 1, n
+      if (ANY(i == fix)) cycle
+      res(j) = i
+      if (j == g) return
+      j = j + 1
+    end do
+  end function free_indices
 !
   pure elemental function molecular_permutation_nfix(this) result(res)
     class(molecular_permutation), intent(in) :: this
@@ -72,33 +85,18 @@ contains
   pure elemental function molecular_permutation_nfree(this) result(res)
     class(molecular_permutation), intent(in) :: this
     integer(IK)                              :: res
-    res = this%n - this%nfix()
-  end function molecular_permutation_nfree
-!
-  pure function molecular_permutation_free_indices(this) result(res)
-    class(molecular_permutation), intent(in) :: this
-    integer(IK)                              :: res(this%nfree())
-    integer(IK)                              :: i, j, g
-    j = 1
-    g = this%nfree()
-    if (ALLOCATED(this%fix)) then
-      do i = 1, this%n
-        if (ANY(i == this%fix)) cycle
-        res(j) = i
-        if (j == g) return
-        j = j + 1
-      end do
+    if(ALLOCATED(this%free))then
+      res = SIZE(this%free)
     else
-      do concurrent(i=1:this%n)
-        res(i) = i
-      end do
-    end if
-  end function molecular_permutation_free_indices
+      res = 0
+    endif
+  end function molecular_permutation_nfree
 !
   pure function molecular_permutation_swap_indices(this) result(res)
     class(molecular_permutation), intent(in) :: this
     integer(IK)                              :: res(this%n)
     integer(IK)                              :: i, j, f
+!
     if (ALLOCATED(this%fix)) then
       f = this%nfix()
       do concurrent(i=1:f)
@@ -116,43 +114,8 @@ contains
         res(i) = i
       end do
     end if
+!
   end function molecular_permutation_swap_indices
-!
-  pure subroutine molecular_permutation_sort_matrix(this, mol, source, dest)
-    class(molecular_permutation), intent(in) :: this
-    class(molecule), intent(in)              :: mol
-    real(RK), intent(in)                     :: source(*)
-    real(RK), intent(inout)                  :: dest(*)
-    integer(IK)                              :: s
-!
-    if(ALLOCATED(this%sym))then
-      call sort_matrix(mol, this%d, mol%natom(), this%n, this%sym, this%swap_indices(), source, dest)
-    else
-      call sort_matrix(mol, this%d, mol%natom(), this%n, [(1, s=1, this%n)], this%swap_indices(), source, dest)
-    endif
-!
-  contains
-!
-    pure subroutine sort_matrix(mol, d, m, n, sym, swp, source, dest)
-      class(molecule), intent(in) :: mol
-      integer(IK), intent(in)     :: d, m, n, sym(n), swp(n)
-      real(RK), intent(in)        :: source(d, m, n)
-      real(RK), intent(inout)     :: dest(d, m, n)
-      integer(IK)                 :: i, j, k
-!
-      do concurrent(k=1:n)
-        block
-          integer(IK) :: w(m)
-          w = mol%sym_index(sym(swp(k)))
-          do concurrent(i=1:d, j=1:m)
-            dest(i, j, k) = source(i, w(j), swp(k))
-          end do
-        end block
-      end do
-!
-    end subroutine sort_matrix
-!
-  end subroutine molecular_permutation_sort_matrix
 !
   pure elemental subroutine molecular_permutation_clear(this)
     class(molecular_permutation), intent(inout) :: this

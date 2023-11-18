@@ -64,7 +64,7 @@ contains
     integer(IK)                       :: f, dn, dd, df, ff
     integer(IK)                       :: n_indices(n)
     integer(IK)                       :: conv, prev
-    integer(IK)                       :: ix, iy, iz, ncov, nrot
+    integer(IK)                       :: ix, iy, iz, rcov, rrot, ncov, nrot
     integer(IK)                       :: iw1, iw2
 !
     f = SIZE(free_indices)
@@ -77,19 +77,25 @@ contains
     dd = d * d
     df = d * f
     ff = f * f
-!
-    conv = 1
-    prev = conv + 1
-    ix   = prev + 1  ! copy of X
-    iy   = ix   + dn ! copy of Y
-    iz   = iy   + dn ! Z = P@Y
-    iw1  = iz   + dn
-    nrot = iz   + dn ! rotation matrix Q
-    ncov = nrot + ff ! covariance matrix, X^TY
-    iw2  = ncov + ff
-!
+!&<
+    block
+      integer(IK) :: l, u
+      u = 0
+      l = u + 1 ; u = u + 1  ; conv = l
+      l = u + 1 ; u = u + 1  ; prev = l
+      l = u + 1 ; u = u + dn ; ix   = l ! copy of X
+      l = u + 1 ; u = u + dn ; iy   = l ! copy of Y
+      l = u + 1 ; u = u + dn ; iz   = l ! Z = P@Y
+      l = u + 1 ; u = u + dd ; rrot = l ! rotation matrix R
+      l = u + 1 ; u = u + dd ; rcov = l ! covariance matrix, X^TY
+      l = u + 1 ; u = rrot   ; iw1  = l
+      l = u + 1 ; u = u + ff ; nrot = l ! rotation matrix Q
+      l = u + 1 ; u = u + ff ; ncov = l ! covariance matrix, X^TY
+      l = u + 1 ; u = u + 1  ; iw2  = l
+    end block
+!>&
     maxiter_   = optarg(maxiter,   DEF_maxiter)
-    threshold_ = optarg(threshold, DEF_threshold) ** 2 * n
+    threshold_ = optarg(threshold, DEF_threshold) ** 2 * n / 2
 !
     call calc_swap_indices(n, f, free_indices, n_indices)
 !
@@ -102,33 +108,45 @@ contains
 !
     w(conv) = -RHUGE
 !
-    do i = 1, maxiter_
+   do i = 1, maxiter_
 !
       w(prev) = w(conv)
 !
-      call R_rotation(d, n, w(ix), w(iy), w(iz), w(iw1))
+!!!!  P rotation  !!!!
 !
 !!    M = X^T@Z
       call DGEMM('T', 'N', f, f, d, ONE, w(ix), d, w(iz), d, ZERO, w(ncov), f)
 !!    calc P from M
       call Procrustes(f, w(ncov), w(nrot), w(iw2))
-!!    trace(XRYP)
-      w(conv) = SUM(w(ncov:ncov + ff - 1) * w(nrot:nrot + ff - 1)) &
-     &        + SUM(w(ix + df:ix + dn - 1) * w(iz + df:iz + dn - 1))
 !
-      if (ABS(w(prev) - w(conv)) < threshold_)then
-        call DGEMM('N', 'T', d, f, f, ONE, w(iz), d, w(nrot), f, ZERO, w(iy), d)
-        do concurrent(j=df:dn - 1)
-          w(iy + j) = w(iz + j)
-        end do
-        exit
-      endif
-!
-!!    Z = Y@P
+!!    Z = Y@P^T
       call DGEMM('N', 'T', d, f, f, ONE, w(iy), d, w(nrot), f, ZERO, w(iz), d)
       do concurrent(j=df:dn - 1)
         w(iz + j) = w(iy + j)
       end do
+!
+!!!!  R rotation  !!!!
+!
+!!    M = X@Z^T
+      call DGEMM('N', 'T', d, d, n, ONE, w(ix), d, w(iz), d, ZERO, w(rcov), d)
+!!    get optimal R
+      call Kabsch(d, w(rcov), w(rrot), w(iw1))
+!
+!!    trace(X@R@Y@P) = trace(R^T@(Y@P@X))
+!
+      w(conv) = ZERO
+      do j = 0, dd - 1
+        w(conv) = w(conv) + w(rcov + j) * w(rrot + j)
+      end do
+!
+      if (ABS(w(prev) - w(conv)) < threshold_) then
+!!    Y = R@Z
+        call DGEMM('N', 'N', d, n, d, ONE, w(rrot), d, w(iz), d, ZERO, w(iy), d)
+        exit
+      else
+!!    Z = R@Y
+        call DGEMM('N', 'N', d, n, d, ONE, w(rrot), d, w(iy), d, ZERO, w(iz), d)
+      end if
 !
     enddo
 !
@@ -372,25 +390,6 @@ contains
     end do
 !
   end subroutine block_rotation
-!
-  pure subroutine R_rotation(d, n, x, y, z, w)
-    integer(IK), intent(in)           :: d, n
-    real(RK), intent(in)              :: x(*), y(*)
-    real(RK), intent(inout)           :: z(*), w(*)
-    integer(IK)                       :: ir, ic, iw
-!
-      ir = 1
-      ic = d * d + ir
-      iw = d * d + ic
-!
-!!    M = X@Z^T
-      call DGEMM('N', 'T', d, d, n, ONE, x, d, z, d, ZERO, w(ic), d)
-!!    calc R from M
-      call Kabsch(d, w(ic), w(ir), w(iw))
-!!    Z = R@Y
-      call DGEMM('N', 'N', d, n, d, ONE, w(ir), d, y, d, ZERO, z, d)
-!
-  end subroutine R_rotation
 !
   pure subroutine P_rotation(d, m, n, f, g, r, z)
     integer(IK), intent(in) :: d, m, n, f, g
