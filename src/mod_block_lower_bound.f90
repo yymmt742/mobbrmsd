@@ -290,13 +290,50 @@ contains
 !
   end subroutine calc_swap_indices
 !
-  pure function objective(d, n, m, f, g, P, Q, R) result(res)
+  pure function objective(d, n, m, f, g, P, Q, R, L, X, Y) result(res)
     integer(IK), intent(in) :: d, n, m, f, g
-    real(RK), intent(in)    :: P(d, d), Q(g, g), R(f, f, g)
-    real(RK), intent(in)    :: x(*), y(*)
-    real(RK)                :: YTQRX()
+    real(RK), intent(in)    :: P(g, g), Q(f, f, g), R(d, d), L(4)
+    real(RK), intent(in)    :: X(d, m * n), Y(d, m * n)
+    real(RK)                :: C(m * n, m * n)
+    real(RK)                :: PI(g, g)
+    real(RK)                :: PQ(m * n, m * n)
     real(RK)                :: res
+    integer(IK)             :: i
+!
+    res = ZERO
+    C = MATMUL(MATMUL(TRANSPOSE(Y), R), X)
+    do i = 1, g
+      PI = ZERO
+      PI(:, i) = P(:, i)
+      call kronecker_product(g, PI, f, Q(:, :, i), PQ)
+      res = res + SUM(PQ * C)
+    end do
+!
+    res = res + L(1) * constraint_1(g, P)
+    do i = 1, g
+      res = res + L(2) * constraint_1(f, Q(:, :, i))
+    end do
+    res = res + L(3) * constraint_1(d, R)
 !
   end function objective
+!
+  pure subroutine kronecker_product(m, A, n, B, C)
+    integer(IK), intent(in) :: m, n
+    real(RK), intent(in)    :: A(m, m), B(n, n)
+    real(RK), intent(inout) :: C(m, n, m, n)
+    integer(IK)             :: i, j, k, l
+    do concurrent(i=1:m, j=1:n, k=1:m, l=1:n)
+      C(i, j, k, l) = A(i, k) * B(j, l)
+    end do
+  end subroutine kronecker_product
+!
+  pure function constraint_1(n, A) result(res)
+    integer(IK), intent(in) :: n
+    real(RK), intent(in)    :: A(n, n)
+    real(RK)                :: AA(n, n)
+    real(RK)                :: res
+    AA = MATMUL(A, TRANSPOSE(A))
+    res = SUM(AA * AA) - 2 * SUM(A * A) + n
+  end function constraint_1
 !
 end module mod_block_lower_bound
