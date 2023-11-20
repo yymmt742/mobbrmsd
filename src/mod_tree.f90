@@ -36,7 +36,7 @@ module mod_tree
 contains
 !
 !| generate node instance
-   function node_new(mol, prm, x, y) result(res)
+  pure function node_new(mol, prm, x, y) result(res)
     class(molecule), intent(in)              :: mol
     !! molecular template
     class(molecular_permutation), intent(in) :: prm
@@ -64,7 +64,7 @@ contains
   end function node_new
 !
 !| generate childe nodes instance
-  function node_generate_childs(this, mol, x, y) result(res)
+  pure function node_generate_childs(this, mol, x, y) result(res)
     class(node), intent(in)     :: this
     class(molecule), intent(in) :: mol
     !! molecular template
@@ -86,7 +86,6 @@ contains
         integer(IK)                 :: fix(g + 1)
         fix = [this%prm%fix, this%prm%free(i)]
         prm = molecular_permutation(mol, f + g, fix=fix, d=prm%d)
-        print*,prm%n, prm%nfree()
         res%nodes(i) = node(mol, prm, x, y)
       end block
     end do
