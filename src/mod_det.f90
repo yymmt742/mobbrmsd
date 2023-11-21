@@ -2,7 +2,7 @@ module mod_det
   use mod_params, only : IK, RK, ONE => RONE, ZERO => RZERO
   implicit none
   private
-  public :: det, det_sign
+  public :: det, det_, det_sign
 !
   interface
     include 'dgetrf.h'
@@ -12,11 +12,29 @@ module mod_det
     module procedure :: det_full, det_part
   end interface det
 !
+  interface det_
+    module procedure :: det_func
+  end interface det_
+!
   interface det_sign
     module procedure :: det_sign_copy, det_sign_full, det_sign_part
   end interface det_sign
 !
 contains
+!
+!| calculate determinant of square matrix x.
+   pure function det_func(d, x) result(res)
+     integer(IK), intent(in) :: d
+    !! matrix dimension
+     real(RK), intent(in)    :: x(d, d)
+    !! square matrix, on exit, x(1) is assigned the determinant of x,
+    !! and the other elements are undefined.
+     real(RK)                :: y(d * d)
+     real(RK)                :: res
+     y = [x]
+     call det_full(d, y)
+     res = y(1)
+   end function det_func
 !
 !| calculate determinant of square matrix x.
    pure subroutine det_full(d, x)
