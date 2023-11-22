@@ -33,8 +33,8 @@ contains
 !
     X = [sample(d, m * n)]
     !Y = [MATMUL(SO3(), RESHAPE(X, [d, m * n]))]
-    Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), SO15())]
-    !Y = [MATMUL(RESHAPE(X, [d, m * n]), SO15())]
+    !Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), SO15())]
+    Y = [MATMUL(RESHAPE(X, [d, m * n]), SO15())]
 !
     call block_lower_bound(d, m, n, mlist, nlist, X, Y, w)
 !
@@ -82,38 +82,32 @@ contains
 !
     res = 0D0
 !
-!   res(1,11) = 1D0
-!   res(2,12) = 1D0
-!   res(3,13) = 1D0
-!   res(4,14) = 1D0
-!   res(5,15) = 1D0
+    res(1,11) = 1D0
+    res(2,12) = 1D0
+    res(3,13) = 1D0
+    res(4,14) = 1D0
+    res(5,15) = 1D0
 !
     res(6,6) = 1D0
     res(7,7) = 1D0
     res(8,8) = 1D0
     res(9,9) = 1D0
+!   res(7:9,7:9) = SO3()
     res(10,10) = 1D0
 !
-    res(1,1) = 1D0
-    res(2:4,2:4) = SO3()
-    res(5,5) = 1D0
+!   res(1,1) = 1D0
+!   res(2:4,2:4) = SO3()
+!   res(5,5) = 1D0
 !
-    res(11,11) = 1D0
-    res(12:14,12:14) = SO3()
-    res(15,15) = 1D0
-!
-!   res(6,1) = 1D0
-!   res(7,2) = 1D0
-!   res(8,3) = 1D0
-!   res(9,4) = 1D0
-!   res(10,5) = 1D0
-!
-!   res(11,1) = 1D0
+!   res(11,11) = 1D0
 !   res(12:14,12:14) = SO3()
-!   res(12,2) = 1D0
-!   res(13,3) = 1D0
-!   res(14,4) = 1D0
-!   res(15,5) = 1D0
+!   res(15,15) = 1D0
+!
+    res(11,1) = 1D0
+    res(12,2) = 1D0
+    res(13,3) = 1D0
+    res(14,4) = 1D0
+    res(15,5) = 1D0
 !
   end function SO15
 !

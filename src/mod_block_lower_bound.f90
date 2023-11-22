@@ -144,14 +144,14 @@ do concurrent(i=1:d,j=1:d)
 enddo
 LAM = ONE
 !
-print*, objective(d, m, n, f, g, P, Q, R, LAM, X, Y)
+print*, objective(d, m, n, f, g, P, Q, R, LAM, w(ix), w(ix))
 !
-call random_number(P)! ; P = ZERO
-call random_number(Q)! ; Q = ZERO
-call random_number(R)
-call random_number(LAM)
-print'(15f6.1)',PxQ(m, n, f, g, P, Q)
-call gradient(d, m, n, f, g, P, Q, R, LAM, X, Y, GP, GQ, GR, GLAM)
+!call random_number(P)
+!call random_number(Q)
+!call random_number(R)
+!call random_number(LAM)
+print'(15f6.2)',PxQ(m, n, f, g, P, Q)
+call gradient(d, m, n, f, g, P, Q, R, LAM, w(ix), w(iy), GP, GQ, GR, GLAM)
 print'(2f9.3)', GP
 print*
 print'(3f9.3)', GQ
@@ -160,7 +160,7 @@ print'(3f9.3)', GR
 print*
 print'(4f9.3)', GLAM
 print*
-call numgrad(d, m, n, f, g, P, Q, R, LAM, X, Y, GP, GQ, GR, GLAM)
+call numgrad(d, m, n, f, g, P, Q, R, LAM, w(ix), w(iy), GP, GQ, GR, GLAM)
 print'(2f9.3)', GP
 print*
 print'(3f9.3)', GQ
@@ -169,22 +169,40 @@ print'(3f9.3)', GR
 print*
 print'(4f9.3)', GLAM
 print*
-return
 !
-do i = 1, 10
-  call gradient(d, m, n, f, g, P, Q, R, LAM, X, Y, GP, GQ, GR, GLAM)
-  R = R - GR * 0.001
-  P = P - GP * 0.001
-  Q = Q - GQ * 0.001
-  LAM = LAM - GLAM * 0.001
-  print *, objective(d, m, n, f, g, P, Q, R, LAM, X, Y)
+do i = 1, 100000
+! w(iz:iz + dmg - 1) = w(iy:iy + dmg - 1)
+! call Q_rotation(dm, n, g, Q, w(iz))
+! call P_rotation(d, m, n, f, g, P, w(iz))
+! call DGEMM('N', 'T', d, d, mn, ONE, w(ix), d, w(iz), d, ZERO, w(rcov), d)
+! call Kabsch(d, w(rcov), R, w(iw1))
+  call gradient(d, m, n, f, g, P, Q, R, LAM, w(ix), w(iy), GP, GQ, GR, GLAM)
+! R = R + GR * 0.0005
+  P = P + GP * 0.0001
+! Q = Q + GQ * 0.0005
+  LAM = LAM + GLAM * 0.0005
+  if(MODULO(i,1000)==1) print *, objective(d, m, n, f, g, P, Q, R, LAM, w(ix), w(iy))
 end do
-print'(2f9.3)', P
+print'(2f9.1)', P, matmul(P,transpose(P))
 print*
-print'(3f9.3)', Q
+print'(3f9.1)', Q, matmul(Q(:,:,1),transpose(Q(:,:,1)))
 print*
-print'(3f9.3)', R
+print'(3f9.1)', R, matmul(R,transpose(R))
 print*
+print'(4f9.1)', LAM
+print*
+    w(iz:iz + dmn - 1) = w(iy:iy + dmn - 1)
+    call Q_rotation(dm, g, P, w(iz))
+!   call P_rotation(d, m, n, f, g, Q, w(iz))
+!w(iy:iy + dmn - 1) = [MATMUL(R,RESHAPE(w(iz:iz + dmn - 1), [d, mn]))]
+w(iy:iy + dmn - 1) = w(iz:iz + dmn - 1)
+!w(iy:iy + dmn - 1) = [TRANSPOSE(MATMUL(TRANSPOSE(RESHAPE(w(iz:iz + dmn - 1), [d, mn])), transpose(R)))]
+print'(3f9.3)',w(ix:ix+dmn-1)
+print*
+print'(3f9.3)',w(iy:iy+dmn-1)
+print*
+    print*, rmsd(d, mn, w(ix), w(iy))
+return
 !
     do i = 1, maxiter_
 !
@@ -198,7 +216,7 @@ print*
 !!    M = X(d,mn)@Z^T(mn,d)@P^T@Q^T
       w(iz:iz + dmg - 1) = w(iy:iy + dmg - 1)
       call P_rotation(d, m, n, f, g, w(mrot), w(iz))
-      call Q_rotation(dm, n, g, w(nrot), w(iz))
+      call Q_rotation(dm, g, w(nrot), w(iz))
       call DGEMM('N', 'T', d, d, mn, ONE, w(ix), d, w(iz), d, ZERO, w(rcov), d)
 !!    get optimal R
       call Kabsch(d, w(rcov), w(rrot), w(iw1))
@@ -219,7 +237,7 @@ print*
 !
     w(iz:iz + dmg - 1) = w(iy:iy + dmg - 1)
     call P_rotation(d, m, n, f, g, w(mrot), w(iz))
-    call Q_rotation(dm, n, g, w(nrot), w(iz))
+    call Q_rotation(dm, g, w(nrot), w(iz))
     w(conv) = rmsd(d, mn, w(ix), w(iz))
 !
   contains
@@ -311,6 +329,7 @@ print*
     integer(IK)             :: i
 !
     do i = 1, g
+      !t = MATMUL(z(:, :f, i), r(:, :, i))
       t = MATMUL(z(:, :f, i), TRANSPOSE(r(:, :, i)))
       z(:, :f, i) = t
       !z(:, :f, i) = MATMUL(z(:, :f, i), TRANSPOSE(r(:, :, i)))
@@ -318,12 +337,12 @@ print*
 !
   end subroutine P_rotation
 !
-  pure subroutine Q_rotation(dm, n, g, r, z)
-    integer(IK), intent(in) :: dm, n, g
+  pure subroutine Q_rotation(dm, g, r, z)
+    integer(IK), intent(in) :: dm, g
     real(RK), intent(in)    :: r(g, g)
-    real(RK), intent(inout) :: z(dm, n)
+    real(RK), intent(inout) :: z(dm, g)
 !
-    z(:, :g) = MATMUL(z(:, :g), TRANSPOSE(r))
+    z(:, :) = MATMUL(z(:, :), TRANSPOSE(r))
 !
   end subroutine Q_rotation
 !
@@ -357,26 +376,24 @@ print*
     integer(IK)             :: i, j
 !
     Cji = ZERO
-!
     do j = 1, g
       do i = 1, g
-        Cji = Cji + P(i, j) * MATMUL(MATMUL(X(:, :f, j), Q(:, :, i)), TRANSPOSE(Y(:, :f, j)))
+        Cji = Cji + P(i, j) * MATMUL(MATMUL(X(:, :f, i), Q(:, :, j)), TRANSPOSE(Y(:, :f, j)))
+        Cji = Cji + P(i, j) * MATMUL(X(:, f + 1:, i), TRANSPOSE(Y(:, f + 1:, j)))
       end do
-      Cji = Cji + SUM(P(:, j)) * MATMUL(X(:, f + 1:, j), TRANSPOSE(Y(:, f + 1:, j)))
     end do
     Cji = Cji + MATMUL(RESHAPE(X(:, :, g + 1:), [d, m * (n - g)]), TRANSPOSE(RESHAPE(Y(:, :, g + 1:), [d, m * (n - g)])))
 !
     res = SUM(R * Cji)
 !
-    return
-Cji = MATMUL(MATMUL(RESHAPE(X, [d, m * n]), PxQ(m, n, f, g, P, Q)), TRANSPOSE(RESHAPE(Y, [d, m * n])))
-res = SUM(R * Cji)
-!   res = res - L(1) * constraint_1(g, P)
-!   do i = 1, g
-!     res = res - L(2) * constraint_1(f, Q(:, :, i))
-!   end do
-!   res = res - L(3) * constraint_1(d, R)
-!   res = res - L(4) * constraint_2(d, R)
+!Cji = MATMUL(MATMUL(RESHAPE(X, [d, m * n]), PxQ(m, n, f, g, P, Q)), TRANSPOSE(RESHAPE(Y, [d, m * n])))
+!res = SUM(R * Cji)
+    res = res + L(1) * constraint_1(g, P)
+    do i = 1, g
+      res = res + L(2) * constraint_1(f, Q(:, :, i))
+    end do
+    res = res + L(3) * constraint_1(d, R)
+    res = res + L(4) * constraint_2(d, R)
 !
   end function objective
 !
@@ -386,6 +403,7 @@ res = SUM(R * Cji)
     real(RK), intent(in)    :: X(d, m, n), Y(d, m, n)
     real(RK), intent(inout) :: GP(g, g), GQ(f, f, g), GR(d, d), GL(4)
     real(RK)                :: Cij(f, f), TR(d, d)
+    real(RK)                :: XP(d, m), QY(m, d)
     integer(IK)             :: i, j, k
 !
 !!! GP = - lambda_P * d(g(P))/dP
@@ -402,37 +420,45 @@ res = SUM(R * Cji)
       end do
     enddo
 !
-!!! GR = - lambda_R * d(g(R))/dR - lambda_|R| * d(h(R))/dR
+    do j = 1, g
+      do i = 1, g
+!
+        Cij = MATMUL(MATMUL(TRANSPOSE(X(:, :f, i)), R), Y(:, :f, j))
+!
+        GP(i, j) = GP(i, j) + SUM(Cij * Q(:, :, j))
+        do k = f + 1, m
+          GP(i, j) = GP(i, j) + SUM(MATMUL(MATMUL(RESHAPE(X(:, k, i), [1, d]), R), Y(:, k:k, j)))
+        enddo
+!
+        GQ(:, :, j) = GQ(:, :, j) + P(i, j) * Cij
+!
+      end do
+    end do
+!
+!!! GR = d tr[XRYPQ]/dR - lambda_R * d(g(R))/dR - lambda_|R| * d(h(R))/dR
     call constraint_1_grad(d, R, GR)
     call constraint_2_grad(d, R, TR)
     do concurrent(i=1:d, j=1:d)
       GR(i, j) = - L(3) * GR(i, j) - L(4) * TR(i, j)
     enddo
 !
-GP = ZERO
-GQ = ZERO
-GR = ZERO
-GL = ZERO
-!
     do j = 1, g
+!
+      XP(:, :) = ZERO
       do i = 1, g
-        Cij = MATMUL(MATMUL(TRANSPOSE(X(:, :f, i)), R), Y(:, :f, j))
-        GP(j, i) = GP(j, i) + SUM(Cij * Q(:, :, j))
-        GQ(:, :, j) = GQ(:, :, j) + P(j, i) * Cij
-        TR = MATMUL(Y(:, :f, j), MATMUL(Q(:, :, i), TRANSPOSE(X(:, :f, j)))) &
-           + MATMUL(Y(:, f + 1:, j), TRANSPOSE(X(:, f + 1:, j)))
-        GR(:, :) = GR(:, :) + P(j, i) * TR(:, :)
+        XP(:, :) = XP(:, :) + P(i, j) * X(:, :, i)
       end do
+!
+      QY(:f, :) = MATMUL(Q(:, :, j), TRANSPOSE(Y(:, :f, j)))
+      QY(f + 1:, :) = TRANSPOSE(Y(:, f + 1:, j))
+!
+      GR(:, :) = GR(:, :) + MATMUL(XP, QY)
+!
     end do
 !
-    do i = g + 1, n
-      GR(:, :) = GR(:, :) + MATMUL(Y(:, :, i), TRANSPOSE(X(:, :, i)))
-    end do
+    GR(:, :) = GR(:, :) + MATMUL(RESHAPE(X(:, :, g + 1:), [d, m * (n - g)]), &
+   &                   TRANSPOSE(RESHAPE(Y(:, :, g + 1:), [d, m * (n - g)])))
 !
-GR = MATMUL(MATMUL(RESHAPE(X, [d, m * n]), PxQ(m, n, f, g, P, Q)), TRANSPOSE(RESHAPE(Y, [d, m * n])))
-return
-!
-
     GL(1) = constraint_1(g, P)
     GL(2) = ZERO
     do i = 1, g
@@ -466,7 +492,7 @@ return
     real(RK)                :: AA(n, n)
     real(RK)                :: res
     AA = MATMUL(A, TRANSPOSE(A))
-    res = SUM(AA * AA) - 2 * SUM(A * A) + n
+    res = SUM(AA * transpose(AA)) - 2 * SUM(A * transpose(A)) + n
   end function constraint_1
 !
   pure subroutine constraint_1_grad(n, A, G)
@@ -477,12 +503,14 @@ return
     integer(IK)             :: i
 !
 !!! B = A@A^T - I
-    call DGEMM('N', 'T', n, n, n, ONE, A, n, A, n, ZERO, B, n)
+    !call DGEMM('N', 'T', n, n, n, ONE, A, n, A, n, ZERO, B, n)
+    B = MATMUL(A, TRANSPOSE(A))
     do concurrent(i=1:n)
       B(i, i) = B(i, i) - ONE
     enddo
 !!! G = B@A = 4 *(A@A^T - I)@A
-    call DGEMM('N', 'N', n, n, n, FOUR, B, n, A, n, ZERO, G, n)
+    !call DGEMM('N', 'N', n, n, n, FOUR, B, n, A, n, ZERO, G, n)
+    G = MATMUL(B, A)
 !
   end subroutine constraint_1_grad
 !
