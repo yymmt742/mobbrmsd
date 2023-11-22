@@ -150,6 +150,7 @@ call random_number(P)! ; P = ZERO
 call random_number(Q)! ; Q = ZERO
 call random_number(R)
 call random_number(LAM)
+print'(15f6.1)',PxQ(m, n, f, g, P, Q)
 call gradient(d, m, n, f, g, P, Q, R, LAM, X, Y, GP, GQ, GR, GLAM)
 print'(2f9.3)', GP
 print*
@@ -351,42 +352,24 @@ print*
     integer(IK), intent(in) :: d, m, n, f, g
     real(RK), intent(in)    :: P(g, g), Q(f, f, g), R(d, d), L(4)
     real(RK), intent(in)    :: X(d, m, n), Y(d, m, n)
-    real(RK)                :: Cji(d, d), Cij(f, f)
+    real(RK)                :: Cji(d, d)
     real(RK)                :: res
-    real(RK)                :: PxQ(m * n, m * n)
     integer(IK)             :: i, j
 !
-    res = ZERO
     Cji = ZERO
 !
     do j = 1, g
-!
-!     Cij = ZERO
       do i = 1, g
-        res = res + SUM(P(i, j) * Q(:, :, j) * MATMUL(MATMUL(TRANSPOSE(X(:, :f, i)), R), Y(:, :f, j)))
-!       Cij = Cij + P(i, j) * MATMUL(MATMUL(TRANSPOSE(X(:, :f, i)), R), Y(:, :f, j))
+        Cji = Cji + P(i, j) * MATMUL(MATMUL(X(:, :f, j), Q(:, :, i)), TRANSPOSE(Y(:, :f, j)))
       end do
-!
-!     res = res + SUM(Q(:, :, i) * Cij)
-!
-      Cji = Cji + MATMUL(Y(:, f + 1:, j), TRANSPOSE(X(:, f + 1:, j)))
-!
+      Cji = Cji + SUM(P(:, j)) * MATMUL(X(:, f + 1:, j), TRANSPOSE(Y(:, f + 1:, j)))
     end do
+    Cji = Cji + MATMUL(RESHAPE(X(:, :, g + 1:), [d, m * (n - g)]), TRANSPOSE(RESHAPE(Y(:, :, g + 1:), [d, m * (n - g)])))
 !
-    Cji = Cji + MATMUL(RESHAPE(Y(:, :, g + 1:), [d, m * (n - g)]), TRANSPOSE(RESHAPE(X(:, :, g + 1:), [d, m * (n - g)])))
-    res = res + SUM(R * Cji)
-return
+    res = SUM(R * Cji)
 !
-PxQ = ZERO
-do i = 1, m * n
-  PxQ(i, i) = ONE
-end do
-do j=1,g
-do i=1,g
-  PxQ(1 + m * (i - 1):f + m * (i - 1), 1 + m * (j - 1):f + m * (j - 1)) = P(i, j) * Q(:, :, j)
-enddo
-enddo
-Cji = MATMUL(MATMUL(RESHAPE(Y, [d, m * n]), PxQ), TRANSPOSE(RESHAPE(X, [d, m * n])))
+    return
+Cji = MATMUL(MATMUL(RESHAPE(X, [d, m * n]), PxQ(m, n, f, g, P, Q)), TRANSPOSE(RESHAPE(Y, [d, m * n])))
 res = SUM(R * Cji)
 !   res = res - L(1) * constraint_1(g, P)
 !   do i = 1, g
@@ -403,7 +386,6 @@ res = SUM(R * Cji)
     real(RK), intent(in)    :: X(d, m, n), Y(d, m, n)
     real(RK), intent(inout) :: GP(g, g), GQ(f, f, g), GR(d, d), GL(4)
     real(RK)                :: Cij(f, f), TR(d, d)
-    real(RK)                :: PxQ(m*n, m*n)
     integer(IK)             :: i, j, k
 !
 !!! GP = - lambda_P * d(g(P))/dP
@@ -431,16 +413,6 @@ GP = ZERO
 GQ = ZERO
 GR = ZERO
 GL = ZERO
-print*,d, m, n, f, g
-PxQ = ZERO
-do i = 1, m * n
-  PxQ(i, i) = ONE
-end do
-do j=1,g
-do i=1,g
-  PxQ(1 + m * (i - 1):f + m * (i - 1), 1 + m * (j - 1):f + m * (j - 1)) = P(i, j) * Q(:, :, j)
-enddo
-enddo
 !
     do j = 1, g
       do i = 1, g
@@ -457,7 +429,7 @@ enddo
       GR(:, :) = GR(:, :) + MATMUL(Y(:, :, i), TRANSPOSE(X(:, :, i)))
     end do
 !
-GR = MATMUL(MATMUL(RESHAPE(Y, [d, m * n]), PxQ), TRANSPOSE(RESHAPE(X, [d, m * n])))
+GR = MATMUL(MATMUL(RESHAPE(X, [d, m * n]), PxQ(m, n, f, g, P, Q)), TRANSPOSE(RESHAPE(Y, [d, m * n])))
 return
 !
 
@@ -470,6 +442,23 @@ return
     GL(4) = constraint_2(d, R)
 !
   end subroutine gradient
+!
+  pure function PxQ(m, n, f, g, P, Q) result(res)
+    integer(IK), intent(in) :: m, n, f, g
+    real(RK), intent(in)    :: P(g, g), Q(f, f, g)
+    real(RK)                :: res(m * n, m * n), eye(m - f, m - f)
+    integer(IK)             :: i, j
+    do concurrent(i=1:m - f, j=1:m - f)
+      eye(i, j) = MERGE(ONE, ZERO, i==j)
+    end do
+    do concurrent(i=1:m * n, j=1:m * n)
+      res(i, j) = MERGE(ONE, ZERO, i==j)
+    end do
+    do concurrent(i=1:g, j=1:g)
+      res(1 + m * (i - 1):f + m * (i - 1), 1 + m * (j - 1):f + m * (j - 1)) = P(i, j) * Q(:, :, j)
+      res(f + 1 + m * (i - 1):m * i, f + 1 + m * (j - 1):m * j) = P(i, j) * eye
+    end do
+  end function PxQ
 !
   pure function constraint_1(n, A) result(res)
     integer(IK), intent(in) :: n
