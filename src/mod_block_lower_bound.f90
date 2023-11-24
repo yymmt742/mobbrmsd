@@ -49,7 +49,7 @@ contains
   end function block_lower_bound_worksize
 !
 !| Calculate min_{P,Q} |X-PYQ|^2, Q is block rotation matrix
-  subroutine block_lower_bound(d, m, n, free_m_indices, free_n_indices, X, Y, w, maxiter, threshold)
+  subroutine block_lower_bound(d, m, n, free_m_indices, free_n_indices, X, Y, w, maxiter, threshold, R0)
     integer(IK), intent(in)           :: d
     !! matrix dimension 1.
     integer(IK), intent(in)           :: m
@@ -70,23 +70,19 @@ contains
     !! iteration limit, default = 1000
     real(RK), intent(in), optional    :: threshold
     !! iteration limit, default = 1E-12
+    real(RK), intent(in), optional    :: R0(*)
+    !! initial Rotation matrix
     integer(IK)                       :: maxiter_
     real(RK)                          :: threshold_
     integer(IK)                       :: n_indices(n), m_indices(m)
-    integer(IK)                       :: f, g, mg, mn, dd, dm, df, ff, dfg, dmg, dmn, mmn, mmgg
+    integer(IK)                       :: f, g, mg, mn, dd, dm, df, ff, gg, dmn
+    integer(IK)                       :: cf, r, p, q
+    integer(IK)                       :: ix, iy, iz
     integer(IK)                       :: conv, prev
-    integer(IK)                       :: ix, iy, iz, rcov, rrot, cov, mrot, nrot
-    integer(IK)                       :: i, j, iw1, iw2
-!
-    real(RK)                          :: R(d, d), P(SIZE(free_n_indices), SIZE(free_n_indices)), LAM(4)
-    real(RK)                          :: Q(SIZE(free_m_indices), SIZE(free_m_indices), SIZE(free_n_indices))
-    real(RK)                          :: GR(d, d), GP(SIZE(free_n_indices), SIZE(free_n_indices)), GLAM(4)
-    real(RK)                          :: GQ(SIZE(free_m_indices), SIZE(free_m_indices), SIZE(free_n_indices))
-    integer(IK)                       :: k
+    integer(IK)                       :: i, iw
 !
     f = SIZE(free_m_indices)
     g = SIZE(free_n_indices)
-print*,d, m, n, f, g
 !
     if (f < 1 .or. g < 1) then
       w(1) = rmsd(d, m * n, X, Y)
@@ -99,146 +95,49 @@ print*,d, m, n, f, g
     dd = d * d
     df = d * f
     ff = f * f
+    gg = g * g
     dmn = d * m * n
-    mmn = m * m * n
-    mmgg = mg * mg
-    dfg = d * f * g
-    dmg = d * m * g
 !
     conv = 1
     prev = conv + 1
     ix   = prev + 1      ! copy of X
     iy   = ix   + dmn    ! copy of Y
     iz   = iy   + dmn    ! Z = P@Y
-    rcov = iz   + dmn    ! covariance matrix X^TYPQ
-    rrot = rcov + dd     ! rotation matrix R
-    iw1  = rrot + dd
-    cov  = iz   + dmn    ! covariance matrix XRY^T
-    mrot = cov  + mmgg   ! rotation matrix P
-    nrot = mrot + ff * g ! rotation matrix Q
-    iw2 = nrot + g * g
+    cf   = iz   + dmn    ! covariance matrix X^TYPQ
+    r    = cf   + dd     ! rotation matrix R
+    p    = r    + dd     ! rotation matrix R
+    q    = p    + gg     ! rotation matrix R
+    iw   = q    + ff * g
 !
     maxiter_   = optarg(maxiter,   DEF_maxiter)
     threshold_ = optarg(threshold, DEF_threshold) * dmn
 !
     call calc_swap_indices(m, f, free_m_indices, m_indices)
     call calc_swap_indices(n, g, free_n_indices, n_indices)
-!
     call pack_matrix(d, m, n, m_indices, n_indices, X, w(ix))
     call pack_matrix(d, m, n, m_indices, n_indices, Y, w(iy))
-!
-    do concurrent(j=0:dmn-1)
-      w(iz + j) = w(iy + j)
-    end do
+    call copy(dmn, w(iy), w(iz))
 !
     w(conv) = -RHUGE
 !
-do concurrent(i=1:g,j=1:g)
-  P(i, j) = MERGE(ONE, ZERO, i == j)
-enddo
-do concurrent(i=1:f,j=1:f,k=1:g)
-  Q(i, j, k) = MERGE(ONE, ZERO, i == j)
-enddo
-do concurrent(i=1:d,j=1:d)
-  R(i, j) = MERGE(ONE, ZERO, i == j)
-enddo
-LAM = ONE
+    call get_C_fix(d, m, n, g, w(ix), w(iy), w(cf))
 !
-print*, objective(d, m, n, f, g, P, Q, R, LAM, w(ix), w(ix))
-!
-!call random_number(P)
-!call random_number(Q)
-!call random_number(R)
-!call random_number(LAM)
-print'(15f6.2)',PxQ(m, n, f, g, P, Q)
-call gradient(d, m, n, f, g, P, Q, R, LAM, w(ix), w(iy), GP, GQ, GR, GLAM)
-print'(2f9.3)', GP
-print*
-print'(3f9.3)', GQ
-print*
-print'(3f9.3)', GR
-print*
-print'(4f9.3)', GLAM
-print*
-call numgrad(d, m, n, f, g, P, Q, R, LAM, w(ix), w(iy), GP, GQ, GR, GLAM)
-print'(2f9.3)', GP
-print*
-print'(3f9.3)', GQ
-print*
-print'(3f9.3)', GR
-print*
-print'(4f9.3)', GLAM
-print*
-!
-do i = 1, 100000
-! w(iz:iz + dmg - 1) = w(iy:iy + dmg - 1)
-! call Q_rotation(dm, n, g, Q, w(iz))
-! call P_rotation(d, m, n, f, g, P, w(iz))
-! call DGEMM('N', 'T', d, d, mn, ONE, w(ix), d, w(iz), d, ZERO, w(rcov), d)
-! call Kabsch(d, w(rcov), R, w(iw1))
-  call gradient(d, m, n, f, g, P, Q, R, LAM, w(ix), w(iy), GP, GQ, GR, GLAM)
-! R = R + GR * 0.0005
-  P = P + GP * 0.0001
-! Q = Q + GQ * 0.0005
-  LAM = LAM + GLAM * 0.0005
-  if(MODULO(i,1000)==1) print *, objective(d, m, n, f, g, P, Q, R, LAM, w(ix), w(iy))
-end do
-print'(2f9.1)', P, matmul(P,transpose(P))
-print*
-print'(3f9.1)', Q, matmul(Q(:,:,1),transpose(Q(:,:,1)))
-print*
-print'(3f9.1)', R, matmul(R,transpose(R))
-print*
-print'(4f9.1)', LAM
-print*
-    w(iz:iz + dmn - 1) = w(iy:iy + dmn - 1)
-    call Q_rotation(dm, g, P, w(iz))
-!   call P_rotation(d, m, n, f, g, Q, w(iz))
-!w(iy:iy + dmn - 1) = [MATMUL(R,RESHAPE(w(iz:iz + dmn - 1), [d, mn]))]
-w(iy:iy + dmn - 1) = w(iz:iz + dmn - 1)
-!w(iy:iy + dmn - 1) = [TRANSPOSE(MATMUL(TRANSPOSE(RESHAPE(w(iz:iz + dmn - 1), [d, mn])), transpose(R)))]
-print'(3f9.3)',w(ix:ix+dmn-1)
-print*
-print'(3f9.3)',w(iy:iy+dmn-1)
-print*
-    print*, rmsd(d, mn, w(ix), w(iy))
-return
+    if (PRESENT(R0)) then
+      call copy(dd, R0, w(r))
+    else
+      call eye(d, w(r))
+    end if
 !
     do i = 1, maxiter_
-!
       w(prev) = w(conv)
+      call update_PQ(d, m, n, f, g, w(ix), w(iy), w(r), maxiter_, threshold_, w(p), w(q), w(conv), W(iw))
+      call update_R(d, m, n, f, g, w(ix), w(iy), w(p), w(q), w(cf), w(r), W(iw))
+      if (ABS(w(conv) - w(prev)) < threshold_) exit
+    end do
 !
-!!    M = X^T@Z
-      call DGEMM('T', 'N', mg, mg, d, ONE, w(ix), d, w(iz), d, ZERO, w(cov), mg)
-      call block_rotation(f, g, m, mg, w(cov), w(mrot), w(nrot), maxiter_, threshold_)
-!
-!!    R rotation
-!!    M = X(d,mn)@Z^T(mn,d)@P^T@Q^T
-      w(iz:iz + dmg - 1) = w(iy:iy + dmg - 1)
-      call P_rotation(d, m, n, f, g, w(mrot), w(iz))
-      call Q_rotation(dm, g, w(nrot), w(iz))
-      call DGEMM('N', 'T', d, d, mn, ONE, w(ix), d, w(iz), d, ZERO, w(rcov), d)
-!!    get optimal R
-      call Kabsch(d, w(rcov), w(rrot), w(iw1))
-!
-!!    trace(MR) = trace(MR^T)
-!
-      w(conv) = ZERO
-      do j = 0, dd - 1
-        w(conv) = w(conv) + w(rcov + j) * w(rrot + j)
-      end do
-!
-      if (ABS(w(prev) - w(conv)) < threshold_) exit
-!
-!!    Z = R@Y
-      call DGEMM('N', 'N', d, mn, d, ONE, w(rrot), d, w(iy), d, ZERO, w(iz), d)
-!
-    enddo
-!
-    w(iz:iz + dmg - 1) = w(iy:iy + dmg - 1)
-    call P_rotation(d, m, n, f, g, w(mrot), w(iz))
-    call Q_rotation(dm, g, w(nrot), w(iz))
-    w(conv) = rmsd(d, mn, w(ix), w(iz))
+    call R_rotation(d, mn, w(r), w(iy), w(iz))
+    call PQ_rotation(d, m, n, f, g, w(p), w(q), w(iy), w(iz))
+    w(conv) = rmsd(d, mn, w(ix), w(iy))
 !
   contains
 !
@@ -254,351 +153,243 @@ return
 !
     end subroutine pack_matrix
 !
+    pure subroutine calc_swap_indices(n, f, free_indices, res)
+      integer(IK), intent(in)    :: n, f, free_indices(f)
+      integer(IK), intent(inout) :: res(n)
+      integer(IK)                :: i, fi, n_f
+      do concurrent(i=1:f)
+        res(i) = free_indices(i)
+      end do
+      n_f = n - f
+      fi  = f + 1
+      do i = 1, n
+        if (ANY(i == res(:f))) cycle
+        res(fi) = i
+        if (fi == n) exit
+        fi = fi + 1
+      end do
+    end subroutine calc_swap_indices
+!
   end subroutine block_lower_bound
 !
-  pure subroutine block_rotation(f, g, m, mg, cov, mrot, nrot, maxiter, threshold)
-    integer(IK), intent(in) :: f, g, m, mg, maxiter
-    real(RK), intent(in)    :: cov(mg, mg)
-    real(RK), intent(in)    :: threshold
-    real(RK), intent(inout) :: mrot(f, f, g), nrot(g, g)
-    real(RK)                :: mcov(f, f), ncov(g, g), ncov0(g, g)
-    real(RK)                :: w(procrustes_worksize(f))
-    real(RK)                :: prev, conv
-    integer(IK)             :: i, j, k
+  pure subroutine get_C_fix(d, m, n, g, X, Y, CF)
+    integer(IK), intent(in) :: d, m, n, g
+    real(RK), intent(in)    :: X(d, m, n), Y(d, m, n)
+    real(RK), intent(inout) :: CF(d, d)
+    integer(IK)             :: mn_g
+      mn_g = m * (n - g)
+      if (mn_g < 1) then
+        call zfill(d * d, CF) ; return
+      end if
+      call DGEMM('N', 'T', d, d, mn_g, ONE, X(:, :, g + 1), d, Y(:, :, g + 1), d, ZERO, CF, d)
+  end subroutine get_C_fix
 !
-    do concurrent(j=1:g, k=1:g)
-      block
-        integer(IK) :: jm, km
-        jm = (j - 1) * m
-        km = (k - 1) * m
-        ncov0(j, k) = SUM(cov(jm + f + 1:jm + m, km + 1:km + f))&
-       &            + SUM(cov(jm + 1:jm + m, km + f + 1:km + m))
-      end block
-    end do
+  pure subroutine update_R(d, m, n, f, g, X, Y, P, Q, CF, R, W)
+    integer(IK), intent(in) :: d, m, n, f, g
+    real(RK), intent(in)    :: X(d, m, n), Y(d, m, n)
+    real(RK), intent(in)    :: P(g, g), Q(f, f, g), CF(d, d)
+    real(RK), intent(inout) :: R(d, d), W(*)
+    integer(IK)             :: dd, mg, dmg, iz, ic, iw
+!!    R rotation
+!!    M = X(d,mn)@Z^T(mn,d)@P^T@Q^T
+      dd = d * d
+      mg = m * g
+      dmg = d * mg
+      ic = 1
+      iz = ic + dd
+      iw = iz + dmg
+      call copy(dmg, Y, W(iz))
+      call PQ_rotation(d, m, n, f, g, P, Q, W(iz), W(iw))
+      call copy(dd, CF, W(ic))
+      call DGEMM('N', 'T', d, d, mg, ONE, X, d, W(iz), d, ONE, W(ic), d)
+!!    get optimal R
+      call Kabsch(d, W(ic), R, W(iz))
+  end subroutine update_R
 !
-    prev = -RHUGE
-    conv = -RHUGE
+  pure subroutine update_XRYT(d, m, n, f, g, X, Y, R, XTRY, RESTR)
+    integer(IK), intent(in) :: d, m, n, f, g
+    real(RK), intent(in)    :: X(d, m, n), Y(d, m, n), R(d, d)
+    real(RK), intent(inout) :: XTRY(f, f, g, g), RESTR(g, g)
+    integer(IK)             :: i, j, m_f
 !
-    do concurrent(i=1:g, j=1:g)
-      nrot(i, j) = MERGE(1, 0, i == j)
-    end do
-!
-    do concurrent(i=1:f, j=1:f, k=1:g)
-      mrot(i, j, k) = MERGE(1, 0, i == j)
-    end do
-!
-    do i = 1, maxiter
-!
-      if (prev < conv) prev = conv
-!
-!!    P rotation
-!
-      do concurrent(j=1:g)
-        mcov = ZERO
-        do k = 1, g
-          mcov(:, :) = mcov(:, :) &
-         &           + nrot(k, j) * cov((k - 1) * m + 1:(k - 1) * m + f, (k - 1) * m + 1:(k - 1) * m + f)
-        end do
-        call Procrustes(f, mcov, mrot(:, :, j), w)
-      end do
-!
-!!    Q rotation
-      do concurrent(j=1:g, k=1:g)
+    if (f > 0) then
+      do concurrent(i=1:g, j=1:g)
         block
-          integer(IK) :: jm, km
-          jm = (j - 1) * m
-          km = (k - 1) * m
-          ncov(j, k) = SUM(MATMUL(cov(jm + 1:jm + f, km + 1:km + f), TRANSPOSE(mrot(:, :, k))))
+          real(RK) :: temp(d * f)
+          call DGEMM('T', 'N', f, d, d, ONE, X(1, 1, i), d, R, d, ZERO, temp, f)
+          call DGEMM('N', 'N', f, f, d, ONE, temp, f, Y(1, 1, j), d, ZERO, XTRY(1, 1, i, j), f)
         end block
       end do
+    end if
 !
-      call Procrustes(g, ncov, nrot, w)
+    m_f = m - f; if (m_f < 1) return
 !
-      conv = SUM(ncov * nrot)
-      if (ABS(prev - conv) < threshold) exit
-!
+    do concurrent(i=1:g, j=1:g)
+      block
+        real(RK) :: RY(d * m_f)
+        call DGEMM('N', 'N', d, m_f, d, ONE, R, d, Y(1, f + 1, j), d, ZERO, RY, d)
+        RESTR(i, j) = ddot(d * m_f, X(1, f + 1, i), RY)
+      end block
     end do
 !
-  end subroutine block_rotation
+  end subroutine update_XRYT
 !
-  pure subroutine P_rotation(d, m, n, f, g, r, z)
+  pure subroutine update_PQ(d, m, n, f, g, X, Y, R, maxiter, threshold, P, Q, trace, W)
+    integer(IK), intent(in) :: d, m, n, f, g, maxiter
+    real(RK), intent(in)    :: X(d, m, n), Y(d, m, n), R(d, d), threshold
+    real(RK), intent(inout) :: P(g, g), Q(f, f, g), trace, W(*)
+    real(RK)                :: prev
+    integer(IK)             :: rest, xtry, cp, cq, wp, wq, bs, gg, ff
+    integer(IK)             :: i, j, l
+!
+    gg = g * g
+    ff = f * f
+!
+!!! covariance matrices and residue matrix, REST(g, g), XTRY(f, f, g, g)
+    rest = 1
+    xtry = rest + gg
+!
+!!! covariance matrix for P estimation, CP(g, g), w(*)
+    cp = xtry + ff * gg
+    wp = cp + gg
+!
+!!! covariance matrix for Q estimation, CQ(f, f, g), w(*)
+    cq = xtry + ff * gg
+    wq = cq + ff
+    bs = ff + Procrustes_worksize(f)
+!
+    trace = -RHUGE
+!
+    call update_XRYT(d, m, n, f, g, X, Y, R, w(xtry), w(rest))
+!
+    call eye(g, p)
+    do concurrent(i=1:g)
+      call eye(f, Q(1, 1, i))
+    enddo
+!
+    do l = 1, maxiter
+!
+      prev = trace
+!
+!!!   CP = RESTR
+      call copy(gg, w(rest), w(cp))
+      do concurrent(i=1:g, j=1:g)
+!!!     CP(i,j) = trace(Qi@Cij) = ddot(Qi^T, Cij)
+        block
+          integer(IK) :: icp, ixtry
+          icp = cp + i + (j - 1) * g - 1
+          ixtry = xtry + ff * ((i - 1) + g * (j - 1))
+          w(icp) = w(icp) + ddot(ff, Q(1, 1, i), w(ixtry))
+        end block
+      end do
+!!!   Get P = UV^T
+      call Procrustes(g, w(cp), P, w(wp))
+!!!   tr(P^T, CP) = ddot(P, CP)
+      trace = ddot(gg, P, w(cp))
+      if (ABS(trace - prev) < threshold) exit
+!
+      do concurrent(j=1:g)
+        block
+          integer(IK) :: icq, iwq, ixtry
+          icq = cq + bs * (j - 1)
+          iwq = wq + bs * (j - 1)
+          ixtry = xtry + ff * (j - 1)
+!!        CQ^T = sum_i Pi * Cji
+          call zfill(ff, w(icq))
+          do i = 1, g
+            call add(ff, P(j, i), w(ixtry), w(icq))
+            ixtry = ixtry + g * ff
+          end do
+!!!       Get Qi^T = UV^T
+          call Procrustes(f, w(icq), Q(1, 1, j), w(iwq))
+        end block
+      end do
+    end do
+!
+  end subroutine update_PQ
+!
+  pure subroutine R_rotation(d, n, R, X, W)
+    integer(IK), intent(in) :: d, n
+    real(RK), intent(in)    :: R(*)
+    real(RK), intent(inout) :: X(*), W(*)
+    call DGEMM('N', 'N', d, n, d, ONE, R, d, X, d, ZERO, W, d)
+    call copy(d * n, W, X)
+  end subroutine R_rotation
+!
+  pure subroutine PQ_rotation(d, m, n, f, g, P, Q, X, W)
     integer(IK), intent(in) :: d, m, n, f, g
-    real(RK), intent(in)    :: r(f, f, g)
-    real(RK), intent(inout) :: z(d, m, n)
-    real(RK)                :: t(d, f)
+    real(RK), intent(in)    :: P(*), Q(*)
+    real(RK), intent(inout) :: X(*), W(*)
+    integer(IK)             :: i, ff, dm, df, dmg, dm_f
+!
+    ff = f * f
+    dm = d * m
+    df = d * f
+    dmg = dm * g
+    dm_f = d * (m - f)
+!
+    call DGEMM('N', 'N', dm, g, g, ONE, X, dm, P, g, ZERO, W, dm)
+!
+    do concurrent(i=1:g)
+      block
+        integer(IK) :: iq, ix
+        ix = (i - 1) * dm + 1
+        iq = (i - 1) * ff + 1
+        call DGEMM('N', 'T', d, f, f, ONE, W(ix), d, q(iq), f, ZERO, X(ix), d)
+        ix = ix + df
+        call copy(dm_f, W(ix), X(ix))
+      end block
+    end do
+!
+  end subroutine PQ_rotation
+!
+  pure subroutine copy(d, source, dest)
+    integer(IK), intent(in) :: d
+    real(RK), intent(in)    :: source(*)
+    real(RK), intent(inout) :: dest(*)
     integer(IK)             :: i
-!
-    do i = 1, g
-      !t = MATMUL(z(:, :f, i), r(:, :, i))
-      t = MATMUL(z(:, :f, i), TRANSPOSE(r(:, :, i)))
-      z(:, :f, i) = t
-      !z(:, :f, i) = MATMUL(z(:, :f, i), TRANSPOSE(r(:, :, i)))
+    do concurrent(i=1:d)
+      dest(i) = source(i)
     end do
+  end subroutine copy
 !
-  end subroutine P_rotation
-!
-  pure subroutine Q_rotation(dm, g, r, z)
-    integer(IK), intent(in) :: dm, g
-    real(RK), intent(in)    :: r(g, g)
-    real(RK), intent(inout) :: z(dm, g)
-!
-    z(:, :) = MATMUL(z(:, :), TRANSPOSE(r))
-!
-  end subroutine Q_rotation
-!
-  pure subroutine calc_swap_indices(n, f, free_indices, res)
-    integer(IK), intent(in)    :: n, f, free_indices(f)
-    integer(IK), intent(inout) :: res(n)
-    integer(IK)                :: i, j, g
-!
-    do concurrent(i=1:f)
-      res(i) = free_indices(i)
-    end do
-!
-    g = n - f
-    j = f + 1
-!
-    do i = 1, n
-      if (ANY(i == res(:f))) cycle
-      res(j) = i
-      if (j == n) exit
-      j = j + 1
-    end do
-!
-  end subroutine calc_swap_indices
-!
-   function objective(d, m, n, f, g, P, Q, R, L, X, Y) result(res)
-    integer(IK), intent(in) :: d, m, n, f, g
-    real(RK), intent(in)    :: P(g, g), Q(f, f, g), R(d, d), L(4)
-    real(RK), intent(in)    :: X(d, m, n), Y(d, m, n)
-    real(RK)                :: Cji(d, d)
-    real(RK)                :: res
-    integer(IK)             :: i, j
-!
-    Cji = ZERO
-    do j = 1, g
-      do i = 1, g
-        Cji = Cji + P(i, j) * MATMUL(MATMUL(X(:, :f, i), Q(:, :, j)), TRANSPOSE(Y(:, :f, j)))
-        Cji = Cji + P(i, j) * MATMUL(X(:, f + 1:, i), TRANSPOSE(Y(:, f + 1:, j)))
-      end do
-    end do
-    Cji = Cji + MATMUL(RESHAPE(X(:, :, g + 1:), [d, m * (n - g)]), TRANSPOSE(RESHAPE(Y(:, :, g + 1:), [d, m * (n - g)])))
-!
-    res = SUM(R * Cji)
-!
-!Cji = MATMUL(MATMUL(RESHAPE(X, [d, m * n]), PxQ(m, n, f, g, P, Q)), TRANSPOSE(RESHAPE(Y, [d, m * n])))
-!res = SUM(R * Cji)
-    res = res + L(1) * constraint_1(g, P)
-    do i = 1, g
-      res = res + L(2) * constraint_1(f, Q(:, :, i))
-    end do
-    res = res + L(3) * constraint_1(d, R)
-    res = res + L(4) * constraint_2(d, R)
-!
-  end function objective
-!
-   subroutine gradient(d, m, n, f, g, P, Q, R, L, X, Y, GP, GQ, GR, GL)
-    integer(IK), intent(in) :: d, m, n, f, g
-    real(RK), intent(in)    :: P(g, g), Q(f, f, g), R(d, d), L(4)
-    real(RK), intent(in)    :: X(d, m, n), Y(d, m, n)
-    real(RK), intent(inout) :: GP(g, g), GQ(f, f, g), GR(d, d), GL(4)
-    real(RK)                :: Cij(f, f), TR(d, d)
-    real(RK)                :: XP(d, m), QY(m, d)
-    integer(IK)             :: i, j, k
-!
-!!! GP = - lambda_P * d(g(P))/dP
-    call constraint_1_grad(g, P, GP)
-    do concurrent(i=1:g, j=1:g)
-      GP(i, j) = - L(1) * GP(i, j)
-    end do
-!
-!!! GQ_I = - lambda_Q * d(g(Q_I))/dQ_I
-    do concurrent(k=1:g)
-      call constraint_1_grad(f, Q(:, :, k), GQ(:, :, k))
-      do concurrent(i=1:f, j=1:f)
-        GQ(i, j, k) = - L(2) * GQ(i, j, k)
-      end do
-    enddo
-!
-    do j = 1, g
-      do i = 1, g
-!
-        Cij = MATMUL(MATMUL(TRANSPOSE(X(:, :f, i)), R), Y(:, :f, j))
-!
-        GP(i, j) = GP(i, j) + SUM(Cij * Q(:, :, j))
-        do k = f + 1, m
-          GP(i, j) = GP(i, j) + SUM(MATMUL(MATMUL(RESHAPE(X(:, k, i), [1, d]), R), Y(:, k:k, j)))
-        enddo
-!
-        GQ(:, :, j) = GQ(:, :, j) + P(i, j) * Cij
-!
-      end do
-    end do
-!
-!!! GR = d tr[XRYPQ]/dR - lambda_R * d(g(R))/dR - lambda_|R| * d(h(R))/dR
-    call constraint_1_grad(d, R, GR)
-    call constraint_2_grad(d, R, TR)
-    do concurrent(i=1:d, j=1:d)
-      GR(i, j) = - L(3) * GR(i, j) - L(4) * TR(i, j)
-    enddo
-!
-    do j = 1, g
-!
-      XP(:, :) = ZERO
-      do i = 1, g
-        XP(:, :) = XP(:, :) + P(i, j) * X(:, :, i)
-      end do
-!
-      QY(:f, :) = MATMUL(Q(:, :, j), TRANSPOSE(Y(:, :f, j)))
-      QY(f + 1:, :) = TRANSPOSE(Y(:, f + 1:, j))
-!
-      GR(:, :) = GR(:, :) + MATMUL(XP, QY)
-!
-    end do
-!
-    GR(:, :) = GR(:, :) + MATMUL(RESHAPE(X(:, :, g + 1:), [d, m * (n - g)]), &
-   &                   TRANSPOSE(RESHAPE(Y(:, :, g + 1:), [d, m * (n - g)])))
-!
-    GL(1) = constraint_1(g, P)
-    GL(2) = ZERO
-    do i = 1, g
-      GL(2) = GL(2) + constraint_1(f, Q(:, :, i))
-    end do
-    GL(3) = constraint_1(d, R)
-    GL(4) = constraint_2(d, R)
-!
-  end subroutine gradient
-!
-  pure function PxQ(m, n, f, g, P, Q) result(res)
-    integer(IK), intent(in) :: m, n, f, g
-    real(RK), intent(in)    :: P(g, g), Q(f, f, g)
-    real(RK)                :: res(m * n, m * n), eye(m - f, m - f)
-    integer(IK)             :: i, j
-    do concurrent(i=1:m - f, j=1:m - f)
-      eye(i, j) = MERGE(ONE, ZERO, i==j)
-    end do
-    do concurrent(i=1:m * n, j=1:m * n)
-      res(i, j) = MERGE(ONE, ZERO, i==j)
-    end do
-    do concurrent(i=1:g, j=1:g)
-      res(1 + m * (i - 1):f + m * (i - 1), 1 + m * (j - 1):f + m * (j - 1)) = P(i, j) * Q(:, :, j)
-      res(f + 1 + m * (i - 1):m * i, f + 1 + m * (j - 1):m * j) = P(i, j) * eye
-    end do
-  end function PxQ
-!
-  pure function constraint_1(n, A) result(res)
-    integer(IK), intent(in) :: n
-    real(RK), intent(in)    :: A(n, n)
-    real(RK)                :: AA(n, n)
-    real(RK)                :: res
-    AA = MATMUL(A, TRANSPOSE(A))
-    res = SUM(AA * transpose(AA)) - 2 * SUM(A * transpose(A)) + n
-  end function constraint_1
-!
-  pure subroutine constraint_1_grad(n, A, G)
-    integer(IK), intent(in) :: n
-    real(RK), intent(in)    :: A(n, n)
-    real(RK), intent(inout) :: G(n, n)
-    real(RK)                :: B(n, n)
+  pure subroutine add(d, c, source, dest)
+    integer(IK), intent(in) :: d
+    real(RK), intent(in)    :: c, source(*)
+    real(RK), intent(inout) :: dest(*)
     integer(IK)             :: i
+    do concurrent(i=1:d)
+      dest(i) = dest(i) + c * source(i)
+    end do
+  end subroutine add
 !
-!!! B = A@A^T - I
-    !call DGEMM('N', 'T', n, n, n, ONE, A, n, A, n, ZERO, B, n)
-    B = MATMUL(A, TRANSPOSE(A))
-    do concurrent(i=1:n)
-      B(i, i) = B(i, i) - ONE
-    enddo
-!!! G = B@A = 4 *(A@A^T - I)@A
-    !call DGEMM('N', 'N', n, n, n, FOUR, B, n, A, n, ZERO, G, n)
-    G = MATMUL(B, A)
-!
-  end subroutine constraint_1_grad
-!
-  pure function constraint_2(n, A) result(res)
-    integer(IK), intent(in) :: n
-    real(RK), intent(in)    :: A(n, n)
+  pure function ddot(d, X, Y) result(res)
+    integer(IK), intent(in) :: d
+    real(RK), intent(in)    :: X(*), Y(*)
     real(RK)                :: res
-    res = (det_(n, A) - ONE)**2
-  end function constraint_2
+    integer(IK)             :: i
+    res = ZERO
+    do i = 1, d
+      res = res + X(i) * Y(i)
+    end do
+  end function ddot
 !
-  pure subroutine constraint_2_grad(n, A, G)
-    integer(IK), intent(in) :: n
-    real(RK), intent(in)    :: A(n, n)
-    real(RK), intent(inout) :: G(n, n)
-    real(RK)                :: tmp
+  pure subroutine eye(d, X)
+    integer(IK), intent(in) :: d
+    real(RK), intent(inout) :: X(d, *)
     integer(IK)             :: i, j
-!
-    tmp = det_(n, A) - ONE
-!
-    do concurrent(i=1:n, j=1:n)
-      block
-        real(RK)    :: P(n - 1, n - 1)
-        integer(IK) :: k, l
-        do concurrent(k=1:n - 1, l=1:n - 1)
-          block
-            integer(IK) :: ik, jl
-            ik = MERGE(k, k + 1, k < i)
-            jl = MERGE(l, l + 1, l < j)
-            P(k, l) = A(ik, jl)
-          end block
-        end do
-        G(i, j) = tmp * det_(n - 1, P)
-        G(i, j) = G(i, j) + G(i, j)
-      end block
-    end do
-!
-  end subroutine constraint_2_grad
-!
-   subroutine numgrad(d, m, n, f, g, P, Q, R, L, X, Y, GP, GQ, GR, GL)
-    integer(IK), intent(in) :: d, m, n, f, g
-    real(RK), intent(in)    :: P(g, g), Q(f, f, g), R(d, d), L(4)
-    real(RK), intent(in)    :: X(d, m, n), Y(d, m, n)
-    real(RK), intent(inout) :: GP(g, g), GQ(f, f, g), GR(d,d), GL(4)
-    real(RK), parameter     :: dif = 1.0E-8_RK
-    integer(IK)             :: i, j, k
-    do concurrent(i=1:g, j=1:g)
-      block
-        real(RK) :: t(g, g), pz, mz
-        t = P
-        t(i, j) = t(i, j) + dif
-        pz = objective(d, m, n, f, g, t, Q, R, L, X, Y)
-        t(i, j) = t(i, j) - dif - dif
-        mz = objective(d, m, n, f, g, t, Q, R, L, X, Y)
-        GP(i, j) = (pz - mz) / (dif + dif)
-      end block
-    end do
-    do concurrent(i=1:f, j=1:f, k=1:g)
-      block
-        real(RK) :: t(f, f, g), pz, mz
-        t = Q
-        t(i, j, k) = t(i, j, k) + dif
-        pz = objective(d, m, n, f, g, P, t, R, L, X, Y)
-        t(i, j, k) = t(i, j, k) - dif - dif
-        mz = objective(d, m, n, f, g, P, t, R, L, X, Y)
-        GQ(i, j, k) = (pz - mz) / (dif + dif)
-      end block
-    end do
     do concurrent(i=1:d, j=1:d)
-      block
-        real(RK) :: t(d, d), pz, mz
-        t = R
-        t(i, j) = t(i, j) + dif
-        pz = objective(d, m, n, f, g, P, Q, t, L, X, Y)
-        t(i, j) = t(i, j) - dif - dif
-        mz = objective(d, m, n, f, g, P, Q, t, L, X, Y)
-        GR(i, j) = (pz - mz) / (dif + dif)
-      end block
+      X(i, j) = MERGE(ONE, ZERO, i == j)
     end do
-    do concurrent(i=1:4)
-      block
-        real(RK) :: t(4), pz, mz
-        t = L
-        t(i) = t(i) + dif
-        pz = objective(d, m, n, f, g, P, Q, R, t, X, Y)
-        t(i) = t(i) - dif - dif
-        mz = objective(d, m, n, f, g, P, Q, R, t, X, Y)
-        GL(i) = (pz - mz) / (dif + dif)
-      end block
+  end subroutine eye
+!
+  pure subroutine zfill(d, dest)
+    integer(IK), intent(in) :: d
+    real(RK), intent(inout) :: dest(*)
+    integer(IK)             :: i
+    do concurrent(i=1:d)
+      dest(i) = ZERO
     end do
-  end subroutine numgrad
+  end subroutine zfill
+!
 end module mod_block_lower_bound

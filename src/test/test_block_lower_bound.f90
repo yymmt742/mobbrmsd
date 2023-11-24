@@ -6,7 +6,7 @@ program main
   use mod_unittest
   implicit none
   type(unittest)    :: u
-  integer,parameter :: NTEST=1
+  integer,parameter :: NTEST=1000
   integer           :: fail
   integer           :: i
 !
@@ -30,15 +30,20 @@ contains
     integer, parameter     :: nlist(2) = [1, 3]
     real(RK)               :: X(d * m * n), Y(d * m * n)
     real(RK)               :: w(block_lower_bound_worksize(d, m, n, mlist, nlist))
+    real(RK)               :: b
+    integer(IK)            :: i
 !
     X = [sample(d, m * n)]
-    !Y = [MATMUL(SO3(), RESHAPE(X, [d, m * n]))]
-    !Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), SO15())]
-    Y = [MATMUL(RESHAPE(X, [d, m * n]), SO15())]
+    Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), SO15())]
 !
     call block_lower_bound(d, m, n, mlist, nlist, X, Y, w)
+    b = w(1)
+    call block_lower_bound(d, m, n, mlist, nlist, X, Y, w, R0=SO3()) ; if(w(1)<b) b = w(1)
+    call block_lower_bound(d, m, n, mlist, nlist, X, Y, w, R0=SO3()) ; if(w(1)<b) b = w(1)
+    call block_lower_bound(d, m, n, mlist, nlist, X, Y, w, R0=SO3()) ; if(w(1)<b) b = w(1)
+    call block_lower_bound(d, m, n, mlist, nlist, X, Y, w, R0=SO3()) ; if(w(1)<b) b = w(1)
 !
-    if (w(1) > 0.0001D0) then
+    if (b > 0.0001D0) then
       fail = fail + 1
       print'(I8,F9.6)', fail, w(1)
     endif
@@ -82,31 +87,32 @@ contains
 !
     res = 0D0
 !
+!   res(1,11) = 1D0
+!   res(2,12) = 1D0
+!   res(3,13) = 1D0
+!   res(4,14) = 1D0
+!   res(5,15) = 1D0
+!
+!   res(6,6) = 1D0
+!   res(7,7) = 1D0
+!   res(8,8) = 1D0
+!   res(9,9) = 1D0
+!   res(10,10) = 1D0
+!
+!   res(11,1) =-1D0
+!   res(12,2) =-1D0
+!   res(13,3) =-1D0
+!   res(14,4) =-1D0
+!   res(15,5) =-1D0
+!
+    res(6:10,6:10) = eye(5)
+!
     res(1,11) = 1D0
-    res(2,12) = 1D0
-    res(3,13) = 1D0
-    res(4,14) = 1D0
+    res(2:4,12:14) = SO3()
     res(5,15) = 1D0
 !
-    res(6,6) = 1D0
-    res(7,7) = 1D0
-    res(8,8) = 1D0
-    res(9,9) = 1D0
-!   res(7:9,7:9) = SO3()
-    res(10,10) = 1D0
-!
-!   res(1,1) = 1D0
-!   res(2:4,2:4) = SO3()
-!   res(5,5) = 1D0
-!
-!   res(11,11) = 1D0
-!   res(12:14,12:14) = SO3()
-!   res(15,15) = 1D0
-!
     res(11,1) = 1D0
-    res(12,2) = 1D0
-    res(13,3) = 1D0
-    res(14,4) = 1D0
+    res(12:14,2:4) = SO3()
     res(15,5) = 1D0
 !
   end function SO15
