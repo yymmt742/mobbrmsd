@@ -2,7 +2,7 @@ module mod_tree
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
   use mod_molecule
   use mod_molecular_permutation
-  use mod_lower_bound
+  use mod_block_lower_bound
   implicit none
   private
   public :: node, childs
@@ -47,18 +47,20 @@ contains
     !! target molecular coordinate, y(d,m,n)
     real(RK)                                 :: w(node_worksize(mol, prm))
     type(node)                               :: res
-    integer(IK)                              :: d, m, n, mn, dmn
+    integer(IK)                              :: i, d, m, n, g, mn, dmn
 !
     res%prm = prm
 !
     d = prm%d
     m = mol%natom()
     n = prm%n
+    g = prm%nfix()
     mn  = m * n
     dmn = d * mn
 !
     call sort_matrix(mol, res%prm, y, w)
-    call lower_bound(d, mn, free_indices(mol, prm), x, w, w(dmn + 1))
+
+    call block_lower_bound(d, m, n, mol%free_index(), [(i, i=g + 1, n)], x, w, w(dmn + 1))
     res%lower = w(dmn + 1)
 !
   end function node_new
@@ -95,15 +97,13 @@ contains
   pure function node_worksize(mol, prm) result(res)
     class(molecule), intent(in)              :: mol
     class(molecular_permutation), intent(in) :: prm
-    integer(IK)                              :: nm, i, res
+    integer(IK)                              :: n, m, g, i, res
 !
-    nm = prm%n * mol%natom()
-    res = prm%d * mol%natom() * prm%n
-    if (ALLOCATED(prm%free)) then
-      res = lower_bound_worksize(prm%d, nm, free_indices(mol, prm))
-    else
-      res = lower_bound_worksize(prm%d, nm, [(i, i=1, nm)])
-    end if
+    n = prm%n
+    m = mol%natom()
+    g = prm%nfix()
+    res = prm%d * m * n &
+   &    + block_lower_bound_worksize(prm%d, m, n, mol%free_index(), [(i, i=g + 1, n)])
 !
   end function node_worksize
 !

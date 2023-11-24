@@ -65,6 +65,7 @@ list( APPEND f90_src mod_svd.f90 )
 list( APPEND f90_src mod_Kabsch.f90 )
 list( APPEND f90_src mod_procrustes.f90 )
 list( APPEND f90_src mod_lower_bound.f90 )
+list( APPEND f90_src mod_block_lower_bound.f90 )
 list( APPEND f90_src mod_tree.f90 )
 list( APPEND f90_src mod_symRMSD.f90 )
 

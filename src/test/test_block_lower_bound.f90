@@ -31,17 +31,16 @@ contains
     real(RK)               :: X(d * m * n), Y(d * m * n)
     real(RK)               :: w(block_lower_bound_worksize(d, m, n, mlist, nlist))
     real(RK)               :: b
-    integer(IK)            :: i
 !
     X = [sample(d, m * n)]
     Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), SO15())]
 !
     call block_lower_bound(d, m, n, mlist, nlist, X, Y, w)
     b = w(1)
-    call block_lower_bound(d, m, n, mlist, nlist, X, Y, w, R0=SO3()) ; if(w(1)<b) b = w(1)
-    call block_lower_bound(d, m, n, mlist, nlist, X, Y, w, R0=SO3()) ; if(w(1)<b) b = w(1)
-    call block_lower_bound(d, m, n, mlist, nlist, X, Y, w, R0=SO3()) ; if(w(1)<b) b = w(1)
-    call block_lower_bound(d, m, n, mlist, nlist, X, Y, w, R0=SO3()) ; if(w(1)<b) b = w(1)
+!   call block_lower_bound(d, m, n, mlist, nlist, X, Y, w, R0=SO3()) ; if(w(1)<b) b = w(1)
+!   call block_lower_bound(d, m, n, mlist, nlist, X, Y, w, R0=SO3()) ; if(w(1)<b) b = w(1)
+!   call block_lower_bound(d, m, n, mlist, nlist, X, Y, w, R0=SO3()) ; if(w(1)<b) b = w(1)
+!   call block_lower_bound(d, m, n, mlist, nlist, X, Y, w, R0=SO3()) ; if(w(1)<b) b = w(1)
 !
     if (b > 0.0001D0) then
       fail = fail + 1

@@ -43,13 +43,15 @@ contains
     else
       f = SIZE(free_m_indices)
       g = SIZE(free_n_indices)
-      res = 2 + 3 * d * m * n + MAX(d * d * 2 + Kabsch_worksize(d), (m * n)**2 + g * (2 * f * f + procrustes_worksize(f)))
+      res = 2 + 3 * d * m * n &
+     &    + MAX(d * d * 2 + Kabsch_worksize(d), &
+     &          (m * n)**2 + g * (2 * f * f + procrustes_worksize(f)))
     end if
 !
   end function block_lower_bound_worksize
 !
 !| Calculate min_{P,Q} |X-PYQ|^2, Q is block rotation matrix
-  subroutine block_lower_bound(d, m, n, free_m_indices, free_n_indices, X, Y, w, maxiter, threshold, R0)
+  pure subroutine block_lower_bound(d, m, n, free_m_indices, free_n_indices, X, Y, w, maxiter, threshold, R0)
     integer(IK), intent(in)           :: d
     !! matrix dimension 1.
     integer(IK), intent(in)           :: m
