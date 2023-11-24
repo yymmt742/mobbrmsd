@@ -134,29 +134,20 @@ $$
 
 ## 目的関数の勾配
 
-ラグランジュの未定乗数 $\lambda=(\lambda_P,\lambda_Q,\lambda_R,\lambda_{|R|})$ に対して
+ラグランジュの未定乗数 $\lambda=(\Lambda_P,\Lambda_{Q_1},\dots,\Lambda_{Q_N},\Lambda_R,\lambda_{|R|})$ に対して
 $$
-f(P,Q,R,\lambda)=\sum_{I=1}^N\mathrm{tr}\left[Q_I\sum_{J=1}^Np_{JI}X^T_IRY_J\right]-\lambda_Pg(P)-\lambda_Qg(Q)-\lambda_Rg(R)-\lambda_{|R|}(\det(R)-1)^2
+f(P,Q_1,Q_2,\dots,Q_N,R,\lambda)=\sum_{I=1}^N\mathrm{tr}\left[Q_I\sum_{J=1}^Np_{JI}X^T_IRY_J\right]-g(P,\Lambda_P)-\sum_{I=1}^{N}g(Q_I,\Lambda_{Q_I})-g(R,\Lambda_R)-\lambda_{|R|}(\det(R)-1)
 $$
-を目的関数として最大化することを考える。ここで $g$ は$A\in\R^{n\times m}$ に対して
+を目的関数として最大化することを考える。ここで $g$ は$\R^{m\times n}\ni A=(a_1,\dots,a_n)$ に対して
 $$
-g(A)=\|AA^T-E_n\|^2=\mathrm{tr}[(AA^T)^2]-2\mathrm{tr}[AA^T]+n
+g(A,\Lambda)=\sum_{i=1}^n\sum_{j=1}^n \lambda_{ij}(a_i^Ta_j-\delta_{ij})
 $$
 で定義される。
 
-$P,Q$ の拘束条件よりl
+$P$について偏微分を行う。
 $$
-f(P,Q_1,Q_2,\dots,Q_N,R,\lambda)\\
-=\mathrm{tr}\left[\sum_{I=1}^NQ_I\sum_{J=1}^Np_{JI}C_{IJ}\right]-\lambda_Pg(P)-\lambda_Q\sum_{I=1}^Ng(Q_I)-\lambda_Rg(R)-\lambda_{|R|}(\det(R)-1)^2
+\frac{\partial f}{\partial P}&=&\frac{\partial}{\partial P}\sum_{I=1}^N\mathrm{tr}\left[Q_I\sum_{J=1}^Np_{JI}C_{IJ}\right]-\frac{\partial g(P,\Lambda_P)}{\partial P}\\
 $$
-の最大化問題へと簡略化される。
-
-$P$ について偏微分を行うと
-$$
-\frac{\partial f}{\partial P}&=&\frac{\partial}{\partial P}\sum_{I=1}^N\mathrm{tr}\left[Q_I\sum_{J=1}^Np_{JI}C_{IJ}\right]-\lambda_P\frac{\partial g(P)}{\partial P}\\
-$$
-と計算できる。
-
 第一項は
 $$
 \frac{\partial}{\partial P}\sum_{I=1}^N\mathrm{tr}\left[Q_I\sum_{J=1}^Np_{JI}C_{IJ}\right]&=&\left\{\frac{\partial}{\partial p_{mn}}\sum_{I=1}^N\mathrm{tr}\left[Q_I\sum_{J=1}^Np_{JI}C_{IJ}\right]\right\}_{mn}
@@ -164,29 +155,17 @@ $$
 $$
 と求まる。第二項は
 $$
-\lambda_P\frac{\partial g(P)}{\partial P}=4\lambda_P((\mathrm{Tr}[(P^TP)^2])'-P)=4\lambda_P(PP^T-I)P
+\frac{\partial g(P,\Lambda_P)}{\partial P}&=&\left\{\sum_{i=1}^n\sum_{j=1}^n\sum_{k=1}^n \lambda_{ij}\frac{\partial}{\partial p_{mn}}(p_{ki}p_{kj}-\delta_{ij})\right\}_{mn}\\
+&=&\left\{\sum_{i=1}^n\lambda_{ni}p_{mi}+\sum_{i=1}^n\lambda_{in}p_{mi}\right\}_{mn}\\
+&=&(\Lambda_P+\Lambda_P^T)P
 $$
-と計算でき、ここで、$\R^{n\times n}\ni A=\{a_{ij}\}_{ij}$ に対して
-$$
-(\mathrm{Tr}[(A^TA)^2])'&=&\left\{a_{ij}^3+\left(\sum_{k\ne j}a_{ik}^2+\sum_{k\ne i}a_{kj}^2\right)a_{ij}+\sum_{k\ne i,l\ne j}a_{il}a_{kj}a_{kl}\right\}_{ij}\\
-&=&\left\{\sum_{k=1}^N\sum_{l=1}^Na_{il}a_{kj}a_{kl}\right\}_{ij}\\
-&=&AA^TA
-$$
-まとめると
-$$
-\frac{\partial f}{\partial P}&=&\left\{\mathrm{tr}\left[Q_nC_{nm}\right]\right\}_{mn}-4\lambda_P(PP^T-I)P\\
-$$
-が得られる。
+と計算できる。
 
 $Q_I$についても同様に
 $$
 \frac{\partial}{\partial Q_I}\sum_{I=1}^N\mathrm{tr}\left[Q_I\sum_{J=1}^Np_{JI}C_{IJ}\right]&=&\sum_{J=1}^Np_{JI}C_{IJ}^T\\
 $$
-であるから
-$$
-\frac{\partial f}{\partial Q_I}&=&\sum_{J=1}^Np_{JI}C_{IJ}^T-4\lambda_Q(Q_IQ_I^T-E)Q_I\\
-$$
-と定まる。
+である。
 
 $R$については
 $$
@@ -200,17 +179,78 @@ $$
 $$
 と計算できる。この形式は部分回転を考える際に計算不要な部分をスキップできるためクロネッカー積で表される$\R^{MN\times MN}$ の直行行列を用いるより有利である。まとめて
 $$
-\frac{\partial f}{\partial R}&=&\sum_{I=1}^N\left(X_IQ_I^T\left(\sum_{J=1}^Np_{JI}Y_J^T\right)\right)-4\lambda_R(RR^T-E)R-2\lambda_{|R|}(\det(R)-1)\mathrm{adj}(R)\\
+\frac{\partial f}{\partial R}&=&\sum_{I=1}^N\left(X_IQ_I^T\left(\sum_{J=1}^Np_{JI}Y_J^T\right)\right)-(\Lambda_{R}+\Lambda_{R}^T)R-\lambda_{|R|}\mathrm{adj}(R)\\
 $$
 ここで$\mathrm{adj}(R)$ は $R$ の余因子行列を表す。
 
 未定乗数の勾配についても同様に
 $$
-\frac{\partial f}{\partial \lambda_P}&=&g(P)\\
-\frac{\partial f}{\partial \lambda_Q}&=&\sum_{I=1}^Ng(Q_I)\\
-\frac{\partial f}{\partial \lambda_R}&=&g(R)\\
-\frac{\partial f}{\partial \lambda_{|R|}}&=&(\det(R)-1)^2\\
+\frac{\partial f}{\partial \Lambda_P}&=&P^TP-E_N\\
+\frac{\partial f}{\partial \Lambda_{Q_I}}&=&Q_I^TQ_I-E_M\\
+\frac{\partial f}{\partial \Lambda_R}&=&R^TR-E_d\\
+\frac{\partial f}{\partial \lambda_{|R|}}&=&\det(R)-1\\
 $$
 と計算される。
 
-$P,Q$ を固定した状態での $R$ の推定は Kabsch-Umeyama あるいは四元数を用いた陽な解法がある。どっち使ったら良いかはわからない。
+まとめれば
+$$
+\left\{\mathrm{tr}\left[Q_nC_{nm}\right]\right\}_{mn}&=&(\Lambda_{P}+\Lambda_{P}^T)P\\
+\sum_{J=1}^Np_{JI}C_{IJ}^T&=&(\Lambda_{Q_I}+\Lambda_{Q_I}^T)Q_I\\
+\sum_{I=1}^N\left(X_IQ_I^T\left(\sum_{J=1}^Np_{JI}Y_J^T\right)\right)&=&(\Lambda_R+\Lambda_R^T)R+\lambda_{|R|}\mathrm{adj}(R)\\
+P^TP&=&E_N\\
+Q_I^TQ_I&=&E_M\\
+R^TR&=&E_d\\
+\det(R)&=&1\\
+$$
+連立して
+$$
+\left\{\mathrm{tr}\left[Q_nC_{nm}\right]\right\}_{mn}P^T&=&\Lambda_{P}+\Lambda_{P}^T\\
+\left(\sum_{J=1}^Np_{JI}C_{IJ}^T\right)Q_I^T&=&\Lambda_{Q_I}+\Lambda_{Q_I}^T\\
+\left(\sum_{I=1}^N\left(X_IQ_I^T\left(\sum_{J=1}^Np_{JI}Y_J^T\right)\right)\right)R^T&=&\Lambda_R+\Lambda_R^T+\lambda_{|R|}\det(R)E_d\\
+$$
+つまり、左辺は対称行列とならなければらない。ここで特異値分解
+$$
+\left\{\mathrm{tr}\left[Q_nC_{nm}\right]\right\}_{mn}=U\Sigma V^T
+$$
+を考えて、ある$SS^T=E_M$ となる対角行列$S$に対して
+$$
+P&=&U_PSV^T_P\\
+$$
+とすれば
+$$
+PP^T=UV^T(UV^T)^T=UV^TVU^T=E_N
+$$
+
+$$
+\left\{\mathrm{tr}\left[Q_nC_{nm}\right]\right\}_{mn}P^T&=&U\Sigma V^T(USV^T)^T\\
+&=&U\Sigma V^TVS^TU^T\\
+&=&U\Sigma SU^T
+$$
+
+であるから、$(U\Sigma SU^T)^T=US^T\Sigma^TU^T=U\Sigma SU^T$ となり、これは未定乗数法の解となっている。特に$S=E_M$としたものは直交プロクラステス問題の解と一致するため、トレースの最大化が保証される。同様に
+$$
+Q_I&=&U_{Q_I}V_{Q_I}^T\\
+R&=&U_R\tilde S_RV_R^T\\
+$$
+はそれぞれの方程式の解となっている。ただし$\tilde S_R$はKabsch-Umeyama アルゴリズムの $\tilde S$ である。
+
+それぞれの方程式は
+$$
+P'(\{Q_I\},R)&=&U_PV^T_P\\
+Q'_I(P,R)&=&U_{Q_I}V^T_{Q_I}\\
+R(P,\{Q_I\})&=&U_R\tilde SV^T_R\\
+$$
+となり解けない。そこでSCFで最適化することになる。特に $P',Q'$ は分散共分散行列行列を一度計算しておけば繰り返し使い回せるため、$R\rightarrow \{P,\{Q_I\}\}\rightarrow R\rightarrow\cdots$ という順番で計算するのが効率的である。また、$d=3$ の場合、四元数を用いた$R$の高速な推定法があるため、それで代用することができる。
+
+## 一般化
+
+
+
+
+
+ここで、$\R^{n\times n}\ni A=\{a_{ij}\}_{ij}$ に対して
+$$
+(\mathrm{Tr}[(A^TA)^2])'&=&\left\{a_{ij}^3+\left(\sum_{k\ne j}a_{ik}^2+\sum_{k\ne i}a_{kj}^2\right)a_{ij}+\sum_{k\ne i,l\ne j}a_{il}a_{kj}a_{kl}\right\}_{ij}\\
+&=&\left\{\sum_{k=1}^N\sum_{l=1}^Na_{il}a_{kj}a_{kl}\right\}_{ij}\\
+&=&AA^TA
+$$
