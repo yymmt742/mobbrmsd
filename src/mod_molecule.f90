@@ -16,6 +16,7 @@ module mod_molecule
     procedure :: nrot       => molecule_nrot
     procedure :: sym_index  => molecule_sym_index
     procedure :: free_index => molecule_free_index
+    procedure :: clear      => molecule_clear
     final     :: molecule_destroy
   end type molecule
 !
@@ -108,12 +109,15 @@ contains
     end if
   end function molecule_free_index
 !
-  pure elemental subroutine molecule_destroy(this)
-    type(molecule), intent(inout) :: this
-!
+  pure elemental subroutine molecule_clear(this)
+    class(molecule), intent(inout) :: this
     if (ALLOCATED(this%e)) deallocate (this%e)
     if (ALLOCATED(this%s)) deallocate (this%s)
+  end subroutine molecule_clear
 !
+  pure elemental subroutine molecule_destroy(this)
+    type(molecule), intent(inout) :: this
+    call this%clear()
   end subroutine molecule_destroy
 !
 end module mod_molecule
