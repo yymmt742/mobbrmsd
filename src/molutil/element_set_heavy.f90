@@ -1,3 +1,5 @@
+character(*), parameter  :: title_HEAVY       = 'element_set HEAVY'
+character(*), parameter  :: description_HEAVY = 'element set of HEAVY atoms.'
 type(element), parameter :: element_set_HEAVY(8) = [&
     element('Li', 'Li', 'Li',  3, 6.94100_RK, 0.0_RK),&
     element('Be', 'Be', 'He',  4, 9.01218_RK, 0.0_RK),&

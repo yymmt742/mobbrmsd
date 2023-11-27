@@ -1,3 +1,5 @@
+character(*), parameter  :: title_default       = 'element_set default'
+character(*), parameter  :: description_default = 'default element set.'
 type(element), parameter :: element_set_default(10) = [&
     element('H',  'H',  'H',   1, 1.00797_RK, 0.0_RK),&
     element('He', 'He', 'He',  2, 4.00260_RK, 0.0_RK),&

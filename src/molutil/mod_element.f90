@@ -9,7 +9,7 @@ module mod_element
 !
   integer, parameter      :: element_formatted_charlen = 80
   character(*), parameter :: element_formatted_header  = &
- &   '  name  type  spec  atmnum            mass          charge'//NL
+ &   '  name  type  spec  atmnum        mass      charge'//NL
 !
   type element
     sequence
@@ -26,7 +26,7 @@ contains
   pure function element_formatted_string(this) result(res)
     type(element), intent(in)            :: this
     character(element_formatted_charlen) :: res
-    write(res, '(2X,A,2X,A,2X,A,I8,2F16.9)') this
+    write(res, '(2X,A,2X,A,2X,A,I8,2F12.4)') this
     res(element_formatted_charlen:element_formatted_charlen) = NL
   end function element_formatted_string
 !

@@ -3,6 +3,7 @@ program main
   use mod_element
   use mod_element_set
   use mod_molecule
+  use mod_molecular_topology
   use mod_unittest
   implicit none
   type(unittest) :: u

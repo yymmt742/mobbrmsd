@@ -2,6 +2,7 @@ module mod_molecule
   use mod_params, only: IK, RK
   use mod_optarg
   use mod_base
+  use mod_bonds
   implicit none
   private
   public :: molecule
@@ -14,6 +15,7 @@ module mod_molecule
     character(MOLECULE_CHARLEN)  :: c = DEF_molname
     integer(IK)                  :: f = 0
     integer(IK), allocatable     :: s(:, :)
+    type(bonds)                  :: b
   contains
     procedure :: natom               => molecule_natom
     procedure :: nsym                => molecule_nsym

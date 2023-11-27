@@ -8,7 +8,7 @@ module mod_element_set
 !
   integer(IK), parameter  :: ELESET_CHARLEN  = 128
   character(*), parameter :: DEF_title       = 'default_name'
-  character(*), parameter :: DEF_description = 'default_description'
+  character(*), parameter :: DEF_description = 'this is default description.'
 !
   include 'element_set_CH.f90'
   include 'element_set_heavy.f90'
@@ -53,13 +53,19 @@ contains
 !
     select case (setname_)
     case ('CH', 'ch')
+      res%t = title_CH
+      res%d = description_CH
       res%e = element_set_CH
     case ('HE', 'he')
+      res%t = title_HEAVY
+      res%d = description_HEAVY
       res%e = element_set_HEAVY
     case default
       if(PRESENT(ele))then
         res%e = ele
       else
+      res%t = title_default
+      res%d = description_default
         res%e = element_set_default
       endif
     end select
@@ -98,13 +104,14 @@ contains
     integer(IK)                 :: l, i, n, h, m
 !
     n = element_set_nlist(this)
-    m = ELESET_CHARLEN + LEN(NL)
+    m = LEN_TRIM(this%t) + LEN(NL) + &
+      & LEN_TRIM(this%d) + LEN(NL) + 2
     h = LEN(EH)
     l = m + EL * n + MERGE(h, 0, n > 0)
 !
     allocate (character(l) :: res)
 !
-    res(:m) = this%t//NL
+    res(:m) = TRIM(this%t)//NL//'- '//TRIM(this%d)//NL
 !
     if (n < 1) return
     res(m + 1:m + h) = EH

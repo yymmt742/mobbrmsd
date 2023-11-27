@@ -7,7 +7,9 @@ target_sources( test_molecule PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_base.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_element.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_element_set.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bonds.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_molecule.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_molecular_topology.f90
                                       test_molecule.f90 )
 target_link_libraries( test_molecule PRIVATE unittest )
 add_test( NAME test_molecule COMMAND test_molecule )
