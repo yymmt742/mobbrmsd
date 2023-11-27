@@ -26,7 +26,7 @@ contains
 !
     mol = molecule(m, sym=RESHAPE([1, 2, 3, 4, 9, 10, 11, 12, 5, 6, 7, 8], [12, 1]))
     prm = molecular_permutation(mol, n, sym=[1, 1, 1, 1], fix=[1, 2, 3, 4])
-    print*,prm%swap_indices()
+!   print*,prm%swap_indices()
 !
     X = [sample(d, m * n)]
     Y = X + 0.00*[sample(d, m * n)]
@@ -48,8 +48,8 @@ contains
     print *, p%nodes(:)%lower
     p = c%nodes(4)%generate_childs(mol, X, Y)
     print *, p%nodes(:)%lower
+    print*
 !
-    return
     mol = molecule(m, RESHAPE([1, 2, 3, 4, 9, 10, 11, 12, 5, 6, 7, 8], [12, 1]))
     prm = molecular_permutation(mol, n, sym=[1, 1, 1, 1], fix=[5, 6, 7, 8])
 !

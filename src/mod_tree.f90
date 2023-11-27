@@ -132,7 +132,7 @@ contains
       do concurrent(k=1:f)
         block
           integer(IK) :: w(m)
-          w = mol%sym_index(sym(swp(k)))
+          w = mol%sym_index(sym(k))
           do concurrent(i=1:d, j=1:m)
             dest(i, j, k) = source(i, w(j), swp(k))
           end do
