@@ -1,5 +1,6 @@
 module mod_molecule
   use mod_params, only: IK, RK
+  use mod_optarg
   use mod_element
   implicit none
   private
@@ -17,6 +18,10 @@ module mod_molecule
     procedure :: sym_index  => molecule_sym_index
     procedure :: free_index => molecule_free_index
     procedure :: clear      => molecule_clear
+    procedure :: unfmtread  => molecule_unfmtread
+    generic   :: read (unformatted) => unfmtread
+    procedure :: unfmtwrite => molecule_unfmtwrite
+    generic   :: write (unformatted) => unfmtwrite
     final     :: molecule_destroy
   end type molecule
 !
@@ -41,37 +46,43 @@ module mod_molecule
 !
 contains
 !
-  pure function molecule_new(n, sym, ele) result(res)
+  pure function molecule_new(n, d, sym, ele) result(res)
     integer(IK), intent(in)             :: n
-    integer(IK), intent(in), optional   :: sym(:, :)
-    type(element), intent(in), optional :: ele(:)
+    integer(IK), intent(in), optional   :: d
+    integer(IK), intent(in), optional   :: sym(*)
+    type(element), intent(in), optional :: ele(*)
     type(molecule)                      :: res
-    integer(IK)                         :: i, l
+    integer(IK)                         :: i, j, n_, d_
 !
-    l = MAX(n, 0)
-    allocate (res%e(l))
+    n_ = MAX(n, 0)
+    d_ = optarg(d, 0)
+!
+    allocate (res%e(n_))
 !
     if (PRESENT(ele)) then
-      do concurrent(i=1:l)
+      do concurrent(i=1:n_)
         res%e(i) = ele(i)
       end do
     end if
 !
     if (PRESENT(sym)) then
-      block
-        integer(IK) :: i, r, s
-        r = MIN(l, SIZE(sym, 1))
-        s = SIZE(sym, 2)
-        allocate (res%s(l, s), source=0)
-        res%s(:r, :s) = sym(:r, :s)
-        do i = 1, r
-          if (ALL(res%s(i, :) == i)) cycle
-          res%f = res%f + 1
-        end do
-      end block
+      allocate (res%s(n_, d_))
+      do concurrent(i=1:n_, j=1:d_)
+         block
+           integer(IK) :: k
+           k = i + (j - 1) * n_
+           res%s(i, j) = sym(k)
+         end block
+      end do
     else
-      allocate (res%s(l, 0))
+      allocate (res%s(n_, d_), source=0_IK)
     end if
+!
+    res%f = 0
+    do i = 1, d_
+      if (ALL(res%s(i, :) == i)) cycle
+      res%f = res%f + 1
+    end do
 !
   end function molecule_new
 !
@@ -131,8 +142,52 @@ contains
     end if
   end function molecule_free_index
 !
+  subroutine molecule_unfmtread(this, unit, iostat, iomsg)
+    class(molecule), intent(inout) :: this
+    integer(IK), intent(in)        :: unit
+    integer(IK), intent(out)       :: iostat
+    character(*), intent(inout)    :: iomsg
+    integer(IK)                    :: i, n, d
+!
+    call molecule_clear(this)
+!
+    read (unit, IOSTAT=iostat, IOMSG=iomsg) n, d
+!
+    if (n < 0) return
+    allocate (this%e(n))
+    read (unit, IOSTAT=iostat, IOMSG=iomsg) this%e
+!
+    if (d < 1) return
+    allocate (this%s(n, d))
+    read (unit, IOSTAT=iostat, IOMSG=iomsg) this%s
+    do i = 1, d
+      if (ALL(this%s(i, :) == i)) cycle
+      this%f = this%f + 1
+    end do
+!
+  end subroutine molecule_unfmtread
+!
+  subroutine molecule_unfmtwrite(this, unit, iostat, iomsg)
+    class(molecule), intent(in) :: this
+    integer(IK), intent(in)     :: unit
+    integer(IK), intent(out)    :: iostat
+    character(*), intent(inout) :: iomsg
+    integer(IK)                 :: n, d
+!
+    n = molecule_natom(this)
+    d = molecule_nsym(this) - 1
+!
+    write (unit, IOSTAT=iostat, IOMSG=iomsg) n, d
+    if(n<1) return
+    write (unit, IOSTAT=iostat, IOMSG=iomsg) this%e
+    if(d<1) return
+    write (unit, IOSTAT=iostat, IOMSG=iomsg) this%s
+!
+  end subroutine molecule_unfmtwrite
+!
   pure elemental subroutine molecule_clear(this)
     class(molecule), intent(inout) :: this
+    this%f = 0
     if (ALLOCATED(this%e)) deallocate (this%e)
     if (ALLOCATED(this%s)) deallocate (this%s)
   end subroutine molecule_clear
