@@ -3,7 +3,7 @@ module mod_molecule
   use mod_element
   implicit none
   private
-  public :: molecule
+  public :: molecule, molecules
 !
   type :: molecule
     private
@@ -19,6 +19,17 @@ module mod_molecule
     procedure :: clear      => molecule_clear
     final     :: molecule_destroy
   end type molecule
+!
+  type :: molecules
+    private
+    type(molecule), allocatable :: m(:)
+    integer(IK), allocatable    :: l(:)
+  contains
+    procedure :: nmol       => molecules_nmol
+    procedure :: nspecies   => molecules_nspecies
+    procedure :: clear      => molecules_clear
+    final     :: molecules_destroy
+  end type molecules
 !
   interface molecule
     module procedure molecule_new
@@ -119,5 +130,36 @@ contains
     type(molecule), intent(inout) :: this
     call this%clear()
   end subroutine molecule_destroy
+!
+  pure elemental function molecules_nmol(this) result(res)
+    class(molecules), intent(in) :: this
+    integer(IK)                 :: res
+    if (ALLOCATED(this%l)) then
+      res = SIZE(this%l)
+    else
+      res = 0
+    end if
+  end function molecules_nmol
+!
+  pure elemental function molecules_nspecies(this) result(res)
+    class(molecules), intent(in) :: this
+    integer(IK)                 :: res
+    if (ALLOCATED(this%m)) then
+      res = SIZE(this%m)
+    else
+      res = 0
+    end if
+  end function molecules_nspecies
+!
+  pure elemental subroutine molecules_clear(this)
+    class(molecules), intent(inout) :: this
+    if (ALLOCATED(this%m)) deallocate (this%m)
+    if (ALLOCATED(this%l)) deallocate (this%l)
+  end subroutine molecules_clear
+!
+  pure elemental subroutine molecules_destroy(this)
+    type(molecules), intent(inout) :: this
+    call this%clear()
+  end subroutine molecules_destroy
 !
 end module mod_molecule
