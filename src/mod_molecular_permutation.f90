@@ -1,7 +1,6 @@
 module mod_molecular_permutation
   use mod_params, only: IK, RK
   use mod_optarg
-  use mod_molecule
   implicit none
   private
   public :: molecular_permutation
@@ -10,6 +9,13 @@ module mod_molecular_permutation
   !! default number of molecule = 1.
   integer(IK), parameter :: DEF_d = 3
   !! default spatial dimension = 3.
+!
+  type :: molecular_description
+    sequence
+    integer(IK) :: n = 0
+    integer(IK) :: m = 0
+    integer(IK) :: s = 0
+  end type
 !
   type :: molecular_permutation
 !
@@ -34,8 +40,8 @@ module mod_molecular_permutation
 contains
 !
 !| Generator
-  pure function molecular_permutation_new(mol, n, sym, fix, d) result(res)
-    class(molecule), intent(in)       :: mol
+  pure function molecular_permutation_new(n, sym, fix, d) result(res)
+    !class(molecule), intent(in)       :: mol
     !! molecular template.
     integer(IK), intent(in), optional :: n
     !! default number of molecule = 1.

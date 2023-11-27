@@ -47,10 +47,12 @@ add_library( molutil )
 
 list( APPEND molutil_src mod_params.f90 )
 list( APPEND molutil_src mod_optarg.f90 )
-list( APPEND molutil_src mod_base.f90 )
 list( APPEND molutil_src mod_element.f90 )
+list( APPEND molutil_src mod_element_set.f90 )
+list( APPEND molutil_src mod_base.f90 )
 list( APPEND molutil_src mod_bonds.f90 )
 list( APPEND molutil_src mod_molecule.f90 )
+list( APPEND molutil_src mod_molecular_topology.f90 )
 
 target_sources( molutil PRIVATE ${molutil_src} )
 

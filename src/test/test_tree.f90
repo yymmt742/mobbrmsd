@@ -18,13 +18,14 @@ contains
     integer, parameter          :: d = 3
     integer, parameter          :: m = 12
     integer, parameter          :: n = 8
+    integer, parameter          :: sym(m) = [1, 2, 3, 4, 9, 10, 11, 12, 5, 6, 7, 8]
     real(RK)                    :: X(d * m * n), Y(d * m * n)
     type(molecule)              :: mol
     type(molecular_permutation) :: prm
     type(node)                  :: w
     type(childs)                :: c, p, q, r
 !
-    mol = molecule(m, d=1, sym=[1, 2, 3, 4, 9, 10, 11, 12, 5, 6, 7, 8])
+    mol = molecule(m, d=1, sym=sym)
     prm = molecular_permutation(mol, n, sym=[1, 1, 1, 1], fix=[1, 2, 3, 4])
 !   print*,prm%swap_indices()
 !
