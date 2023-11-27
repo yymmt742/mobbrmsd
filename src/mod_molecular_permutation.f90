@@ -119,17 +119,13 @@ contains
 !
   pure elemental subroutine molecular_permutation_clear(this)
     class(molecular_permutation), intent(inout) :: this
-!
     if (ALLOCATED(this%sym)) deallocate (this%sym)
     if (ALLOCATED(this%fix)) deallocate (this%fix)
-!
   end subroutine molecular_permutation_clear
 !
   pure elemental subroutine molecular_permutation_destroy(this)
     type(molecular_permutation), intent(inout) :: this
-!
     call this%clear()
-!
   end subroutine molecular_permutation_destroy
 !
 end module mod_molecular_permutation

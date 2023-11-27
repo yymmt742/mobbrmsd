@@ -1,6 +1,3 @@
-find_package( BLAS REQUIRED )
-find_package( purelapack REQUIRED )
-
 add_compile_options(
   $<$<COMPILE_LANG_AND_ID:C,GNU>:-O2>
   $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wall>
@@ -46,34 +43,16 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
 
 endif()
 
-add_subdirectory( molutil )
+add_library( molutil )
 
-add_library( symRMSD )
-target_include_directories( symRMSD PRIVATE ${purelapack_DIR}/mod_files )
-target_include_directories( symRMSD PRIVATE ${purelapack_DIR}/include )
+list( APPEND molutil_src mod_params.f90 )
+list( APPEND molutil_src mod_optarg.f90 )
+list( APPEND molutil_src mod_base.f90 )
+list( APPEND molutil_src mod_element.f90 )
+list( APPEND molutil_src mod_bonds.f90 )
+list( APPEND molutil_src mod_molecule.f90 )
 
-list( APPEND f90_src mod_params.f90 )
-list( APPEND f90_src mod_optarg.f90 )
-list( APPEND f90_src mod_permutation.f90 )
-list( APPEND f90_src mod_molecular_permutation.f90 )
-list( APPEND f90_src mod_rmsd.f90 )
-list( APPEND f90_src mod_rmsd_brute.f90 )
-list( APPEND f90_src mod_cov.f90 )
-list( APPEND f90_src mod_det.f90 )
-list( APPEND f90_src mod_rot.f90 )
-list( APPEND f90_src mod_svd.f90 )
-list( APPEND f90_src mod_Kabsch.f90 )
-list( APPEND f90_src mod_procrustes.f90 )
-list( APPEND f90_src mod_lower_bound.f90 )
-list( APPEND f90_src mod_block_lower_bound.f90 )
-list( APPEND f90_src mod_tree.f90 )
-list( APPEND f90_src mod_symRMSD.f90 )
-
-target_sources( symRMSD PRIVATE ${f90_src} )
-target_link_libraries( symRMSD PRIVATE molutil )
-target_link_libraries( symRMSD PRIVATE blas )
-target_link_libraries( symRMSD PRIVATE purelapack )
-#target_link_libraries ( symRMSD jsonfortran::jsonfortran-static )
+target_sources( molutil PRIVATE ${molutil_src} )
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_subdirectory( test )

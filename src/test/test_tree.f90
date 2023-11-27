@@ -24,7 +24,7 @@ contains
     type(node)                  :: w
     type(childs)                :: c, p, q, r
 !
-    mol = molecule(m, sym=RESHAPE([1, 2, 3, 4, 9, 10, 11, 12, 5, 6, 7, 8], [12, 1]))
+    mol = molecule(m, d=1, sym=[1, 2, 3, 4, 9, 10, 11, 12, 5, 6, 7, 8])
     prm = molecular_permutation(mol, n, sym=[1, 1, 1, 1], fix=[1, 2, 3, 4])
 !   print*,prm%swap_indices()
 !
@@ -50,7 +50,7 @@ contains
     print *, p%nodes(:)%lower
     print*
 !
-    mol = molecule(m, RESHAPE([1, 2, 3, 4, 9, 10, 11, 12, 5, 6, 7, 8], [12, 1]))
+    mol = molecule(m, d=1, sym=[1, 2, 3, 4, 9, 10, 11, 12, 5, 6, 7, 8])
     prm = molecular_permutation(mol, n, sym=[1, 1, 1, 1], fix=[5, 6, 7, 8])
 !
     w = node(mol, prm, X, Y)
