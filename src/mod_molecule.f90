@@ -35,16 +35,27 @@ module mod_molecule
     module procedure molecule_new
   end interface molecule
 !
+  interface molecules
+    module procedure molecules_new
+  end interface molecules
+!
 contains
 !
-  pure function molecule_new(n, sym) result(res)
-    integer(IK), intent(in)           :: n
-    integer(IK), intent(in), optional :: sym(:, :)
-    type(molecule)                    :: res
-    integer(IK)                       :: l
+  pure function molecule_new(n, sym, ele) result(res)
+    integer(IK), intent(in)             :: n
+    integer(IK), intent(in), optional   :: sym(:, :)
+    type(element), intent(in), optional :: ele(:)
+    type(molecule)                      :: res
+    integer(IK)                         :: i, l
 !
     l = MAX(n, 0)
     allocate (res%e(l))
+!
+    if (PRESENT(ele)) then
+      do concurrent(i=1:l)
+        res%e(i) = ele(i)
+      end do
+    end if
 !
     if (PRESENT(sym)) then
       block
@@ -130,6 +141,23 @@ contains
     type(molecule), intent(inout) :: this
     call this%clear()
   end subroutine molecule_destroy
+!
+  pure function molecules_new(mol, list) result(res)
+    class(molecule), intent(in) :: mol(:)
+    integer(IK), intent(in)     :: list(:)
+    type(molecules)             :: res
+    integer(IK)                 :: i, s, n
+!
+    s = SIZE(mol)
+    n = SIZE(list)
+    allocate (res%m(s))
+    do concurrent(i=1:s)
+      res%m(i) = mol(i)
+    end do
+!
+    allocate (res%l, source=list)
+!
+  end function molecules_new
 !
   pure elemental function molecules_nmol(this) result(res)
     class(molecules), intent(in) :: this
