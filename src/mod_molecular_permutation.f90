@@ -6,31 +6,16 @@ module mod_molecular_permutation
   public :: molecular_permutation
 !
   integer(IK), parameter :: DEF_n = 1
-  !! default number of molecule = 1.
-  integer(IK), parameter :: DEF_d = 3
-  !! default spatial dimension = 3.
-!
-  type :: molecular_description
-    sequence
-    integer(IK) :: n = 0
-    integer(IK) :: m = 0
-    integer(IK) :: s = 0
-  end type
+  !! default number of molecule.
 !
   type :: molecular_permutation
-!
-    integer(IK)              :: d = 0
-    integer(IK)              :: n = 0
-    integer(IK), allocatable :: sym(:), fix(:), free(:)
-!
+    private
+    integer(IK)              :: n = DEF_n
+    integer(IK)              :: g = DEF_n
+    integer(IK), allocatable :: p(:)
   contains
-!
-    procedure :: nfree        => molecular_permutation_nfree
-    procedure :: nfix         => molecular_permutation_nfix
-    procedure :: swap_indices => molecular_permutation_swap_indices
     procedure :: clear        => molecular_permutation_clear
     final     :: molecular_permutation_destroy
-!
   end type molecular_permutation
 !
   interface molecular_permutation
@@ -39,22 +24,15 @@ module mod_molecular_permutation
 !
 contains
 !
-!| Generator
-  pure function molecular_permutation_new(n, sym, fix, d) result(res)
-    !class(molecule), intent(in)       :: mol
-    !! molecular template.
+!| Constructer
+  pure function molecular_permutation_new(n, prm) result(res)
     integer(IK), intent(in), optional :: n
     !! default number of molecule = 1.
-    integer(IK), intent(in), optional :: d
-    !! default number of molecule = 1.
-    integer(IK), intent(in), optional :: sym(:)
-    !! fixed swap
-    integer(IK), intent(in), optional :: fix(:)
-    !! fixed swap
+    integer(IK), intent(in), optional :: prm(:)
+    !! permutation indices
     type(molecular_permutation)       :: res
 !
     res%n = MAX(optarg(n, DEF_n), 1)
-    res%d = MAX(optarg(d, DEF_d), 1)
 !
     if (PRESENT(sym)) res%sym = sym
     if (PRESENT(fix)) then
