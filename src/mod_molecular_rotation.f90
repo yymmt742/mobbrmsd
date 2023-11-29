@@ -1,6 +1,7 @@
 module mod_molecular_rotation
   use mod_params, only: IK, RK
   use mod_optarg
+  use mod_group_permutation
   implicit none
   private
   public :: molecular_rotation
@@ -12,14 +13,10 @@ module mod_molecular_rotation
 !
   type molecular_rotation
     private
-    integer(IK)              :: m = 0
-    !! number of atom in molecule.
-    integer(IK)              :: f = 0
+    type(group_permutation), allocatable :: p(:)
     !! number of operation, must be f <= m.
-    integer(IK), allocatable :: q(:, :)
-    !! permuation matrix, q(2, f).
-    !! dimension 1 is pointer to source index, 0 < q1 <= m.
-    !! dimension 2 is pointer to destination index, 0 < q2 <= m.
+    integer(IK), allocatable             :: f(:)
+    !! free indices
   contains
     procedure :: clear        => molecular_rotation_clear
     final     :: molecular_rotation_destroy
@@ -32,27 +29,46 @@ module mod_molecular_rotation
 contains
 !
 !| Constructer
-  pure function molecular_rotation_new(m, sym) result(res)
-    integer(IK), intent(in), optional :: m
-    !! default number of molecule = 1.
+  pure function molecular_rotation_new(sym) result(res)
     integer(IK), intent(in), optional :: sym(:, :)
-    !! swap indices
+    !! symmetry indices
     type(molecular_rotation)          :: res
-!
-    res%m = MAX(optarg(m, DEF_m), 1)
+    integer(IK)                       :: i, n, m
 !
     if (PRESENT(sym)) then
-      res%fix = fix
-      res%free = free_indices(res%n, fix)
+      n = SIZE(sym, 1)
+      m = SIZE(sym, 2)
+      allocate (res%p(m))
+      do concurrent(i=1:m)
+        res%p(i) = group_permutation(sym(:, i))
+      end do
+      res%f = free_indices(n, m, res%p)
+    else
+      allocate (res%p(0))
+      allocate (res%f(0))
     end if
 !
   end function molecular_rotation_new
 !
+  pure function free_indices(n, m, p) result(res)
+    integer(IK), intent(in)             :: n, m
+    type(group_permutation), intent(in) :: p(*)
+    logical                             :: w(n)
+    integer(IK), allocatable            :: res(:)
+    integer(IK)                         :: i
+    do concurrent(i = 1:m)
+      w(i) = .FALSE.
+    enddo
+    do i = 1, m
+      w(p(i)%free_indices()) = .TRUE.
+    end do
+    res = PACK([(i, i=1, n)], w)
+  end function free_indices
+!
   pure elemental subroutine molecular_rotation_clear(this)
     class(molecular_rotation), intent(inout) :: this
-    this%m = 0
-    this%f = 0
-    if (ALLOCATED(this%q)) deallocate (this%q)
+    if (ALLOCATED(this%p)) deallocate (this%p)
+    if (ALLOCATED(this%f)) deallocate (this%f)
   end subroutine molecular_rotation_clear
 !
   pure elemental subroutine molecular_rotation_destroy(this)
