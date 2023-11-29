@@ -12,9 +12,15 @@ module mod_group_permutation
     integer(IK), allocatable :: p(:, :)
     integer(IK), allocatable :: q(:)
   contains
+    procedure          :: nfree        => group_permutation_nfree
+    procedure          :: free_indices => group_permutation_free_indices
+    procedure, private :: group_permutation_swap_int_l1
+    procedure, private :: group_permutation_swap_int_l2
     procedure, private :: group_permutation_swap_real_l1
     procedure, private :: group_permutation_swap_real_l2
-    generic            :: swap         => group_permutation_swap_real_l1, &
+    generic            :: swap         => group_permutation_swap_int_l1, &
+                      &                   group_permutation_swap_int_l2, &
+                      &                   group_permutation_swap_real_l1, &
                       &                   group_permutation_swap_real_l2
     procedure          :: clear        => group_permutation_clear
     final              :: group_permutation_destroy
@@ -35,8 +41,6 @@ contains
     allocate (res%p(0, 0))
     allocate (res%q(0))
     call decompose_to_cyclic(SIZE(prm), prm, res%p, res%q)
-    print'(3i8)',res%p
-    print*,res%q
 !
   end function group_permutation_new
 !
@@ -157,6 +161,45 @@ contains
 !
   end subroutine count_permutation
 !
+  pure subroutine group_permutation_swap_int_l1(this, X)
+    class(group_permutation), intent(inout) :: this
+    integer(IK), intent(inout)              :: X(*)
+    integer(IK)                             :: i, j
+!
+    if (.not. ALLOCATED(this%p)) return
+!
+    do concurrent(i=1:SIZE(this%p, 2))
+      do concurrent(j=1:this%p(3, i))
+        block
+          integer(IK) :: b
+          b = this%p(1, i) + this%p(2, i) * (j - 1)
+          call cyclic_swap_int(1, this%p(2, i), this%q(b), X)
+        end block
+      end do
+    end do
+!
+  end subroutine group_permutation_swap_int_l1
+!
+  pure subroutine group_permutation_swap_int_l2(this, d, X)
+    class(group_permutation), intent(inout) :: this
+    integer(IK), intent(in)                 :: d
+    integer(IK), intent(inout)              :: X(d, *)
+    integer(IK)                             :: i, j
+!
+    if (.not. ALLOCATED(this%p)) return
+!
+    do concurrent(i=1:SIZE(this%p, 2))
+      do concurrent(j=1:this%p(3, i))
+        block
+          integer(IK) :: b
+          b = this%p(1, i) + this%p(2, i) * (j - 1)
+          call cyclic_swap_int(d, this%p(2, i), this%q(b), X)
+        end block
+      end do
+    end do
+!
+  end subroutine group_permutation_swap_int_l2
+!
   pure subroutine group_permutation_swap_real_l1(this, X)
     class(group_permutation), intent(inout) :: this
     real(RK), intent(inout)                 :: X(*)
@@ -169,7 +212,7 @@ contains
         block
           integer(IK) :: b
           b = this%p(1, i) + this%p(2, i) * (j - 1)
-          call cyclic_swap(1, this%p(2, i), this%q(b), X)
+          call cyclic_swap_real(1, this%p(2, i), this%q(b), X)
         end block
       end do
     end do
@@ -189,14 +232,32 @@ contains
         block
           integer(IK) :: b
           b = this%p(1, i) + this%p(2, i) * (j - 1)
-          call cyclic_swap(d, this%p(2, i), this%q(b), X)
+          call cyclic_swap_real(d, this%p(2, i), this%q(b), X)
         end block
       end do
     end do
 !
   end subroutine group_permutation_swap_real_l2
 !
-  pure subroutine cyclic_swap(d, s, q, X)
+  pure subroutine cyclic_swap_int(d, s, q, X)
+    integer(IK), intent(in)    :: d, s, q(*)
+    integer(IK), intent(inout) :: X(d, *)
+    integer(IK)                :: T(d)
+    integer(IK)                :: i, j
+    do concurrent(i=1:d)
+      T(i) = X(i, q(1))
+    end do
+    do j = 1, s - 1
+      do concurrent(i=1:d)
+        X(i, q(j)) = X(i, q(j + 1))
+      end do
+    end do
+    do concurrent(i=1:d)
+      X(i, q(s)) = T(i)
+    end do
+  end subroutine cyclic_swap_int
+!
+  pure subroutine cyclic_swap_real(d, s, q, X)
     integer(IK), intent(in) :: d, s, q(*)
     real(RK), intent(inout) :: X(d, *)
     real(RK)                :: T(d)
@@ -212,7 +273,29 @@ contains
     do concurrent(i=1:d)
       X(i, q(s)) = T(i)
     end do
-  end subroutine cyclic_swap
+  end subroutine cyclic_swap_real
+!
+  pure elemental function group_permutation_nfree(this) result(res)
+    class(group_permutation), intent(in) :: this
+    integer(IK)                          :: res
+    if(ALLOCATED(this%q))then
+    res = SIZE(this%q)
+    else
+    res = 0
+    endif
+  end function group_permutation_nfree
+!
+  pure function group_permutation_free_indices(this) result(res)
+    class(group_permutation), intent(in) :: this
+    integer(IK)                          :: res(this%nfree())
+    integer(IK)                          :: i, n
+    n = SIZE(res)
+    if (n < 1) return
+    do concurrent(i=1:n)
+      res(i) = this%q(i)
+    end do
+    call qsi(res)
+  end function group_permutation_free_indices
 !
   pure elemental subroutine group_permutation_clear(this)
     class(group_permutation), intent(inout) :: this
@@ -225,6 +308,7 @@ contains
     call this%clear()
   end subroutine group_permutation_destroy
 !
+!! returns uniq integer list without 1.
   pure subroutine uniq(n, a, u, res)
     integer(IK), intent(in)    :: n, a(*)
     integer(IK), intent(inout) :: u, res(*)
@@ -236,7 +320,7 @@ contains
     do concurrent(i=1:n)
       res(i) = a(i)
     enddo
-    call qsort(res(:n))
+    call qsi(res(:n))
 !
     u = 1
     res(n + u) = 1
@@ -255,11 +339,6 @@ contains
     end do
 !
   end subroutine uniq
-!
-  pure subroutine qsort(s)
-    integer(IK), intent(inout) :: s(:)
-    if (SIZE(s) > 1) call qsi(s)
-  end subroutine qsort
 !
   pure recursive subroutine qsi(s)
     integer(IK), intent(inout) :: s(:)

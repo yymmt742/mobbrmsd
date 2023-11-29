@@ -26,9 +26,11 @@ contains
     end do
     call g%swap(X)
     call g%swap(2, Y)
-    print'(*(I4))', s
-    print'(*(f4.1))', X
-    print'(*(f4.1))', Y
+    call u%assert_almost_equal(real(s, RK), X, 's = X')
+    call u%assert_almost_equal(real(s, RK), Y(1, :), 's = Y1')
+    call u%assert_almost_equal(real(s, RK), Y(2, :), 's = Y2')
+    call u%assert_equal(g%nfree(), 12, 'nfree')
+    call u%assert_equal(g%free_indices(), [[(i,i=1,7)],[(i,i=9,13)]], 'free_indices')
 !
     s = [3, 2, 1, 6, 5, 4, 8, 7, 9,10, 11, 13, 12]
     g = group_permutation(s)
@@ -38,9 +40,11 @@ contains
     end do
     call g%swap(X)
     call g%swap(2, Y)
-    print'(*(I4))', s
-    print'(*(f4.1))', X
-    print'(*(f4.1))', Y
+    call u%assert_almost_equal(real(s, RK), X, 's = X')
+    call u%assert_almost_equal(real(s, RK), Y(1, :), 's = Y1')
+    call u%assert_almost_equal(real(s, RK), Y(2, :), 's = Y2')
+    call u%assert_equal(g%nfree(), 8, 'nfree')
+    call u%assert_equal(g%free_indices(), [1,3,4,6,7,8,12,13], 'free_indices')
 !
   end subroutine test1
 !
