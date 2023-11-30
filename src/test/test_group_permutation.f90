@@ -24,7 +24,7 @@ contains
       X(i) = i
       Y(:, i) = i
     end do
-    call g%swap(X)
+    call g%swap(1, X)
     call g%swap(2, Y)
     call u%assert_almost_equal(real(s, RK), X, 's = X')
     call u%assert_almost_equal(real(s, RK), Y(1, :), 's = Y1')
@@ -38,7 +38,7 @@ contains
       X(i) = i
       Y(:, i) = i
     end do
-    call g%swap(X)
+    call g%swap(1, X)
     call g%swap(2, Y)
     call u%assert_almost_equal(real(s, RK), X, 's = X')
     call u%assert_almost_equal(real(s, RK), Y(1, :), 's = Y1')
