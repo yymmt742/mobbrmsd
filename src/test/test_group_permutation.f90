@@ -24,7 +24,7 @@ contains
       X(i) = i
       Y(:, i) = i
     end do
-    call g%swap(X)
+    call g%swap(1, X)
     call g%swap(2, Y)
     print'(*(I4))', s
     print'(*(f4.1))', X
@@ -36,7 +36,7 @@ contains
       X(i) = i
       Y(:, i) = i
     end do
-    call g%swap(X)
+    call g%swap(1, X)
     call g%swap(2, Y)
     print'(*(I4))', s
     print'(*(f4.1))', X

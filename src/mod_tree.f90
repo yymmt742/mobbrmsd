@@ -1,6 +1,7 @@
 module mod_tree
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
   use mod_molecule
+  use mod_molecular_rotation
   use mod_molecular_permutation
   use mod_block_lower_bound
   implicit none
@@ -8,19 +9,19 @@ module mod_tree
   public :: node, childs
 !
   type node
-!
+    sequence
     private
-!
-    type(molecular_permutation) :: prm
-    !! Molecular permutation indicator
-    real(RK), public            :: lower = -HUGE(ZERO)
+    integer(IK)              :: depth = 0
+    !! node depth
+    integer(IK)              :: iprm  = 0
+    !! molecular permutation indicator
+    integer(IK)              :: isym  = 0
+    !! molecular symmetry indicator
+    real(RK), public         :: lower = -HUGE(ZERO)
     !! the lower bound
-!
   contains
-!
     procedure         :: generate_childs => node_generate_childs
     final             :: node_destroy
-!
   end type node
 !
   type childs
@@ -36,18 +37,17 @@ module mod_tree
 contains
 !
 !| generate node instance
-  pure function node_new(mol, prm, x, y) result(res)
-    class(molecule), intent(in)              :: mol
-    !! molecular template
-    class(molecular_permutation), intent(in) :: prm
-    !! molecular permutation
-    real(RK), intent(in)                     :: x(*)
+  pure function node_new(rot, n, m, depth, iprm, isym, x, y) result(res)
+    class(molecular_rotation), intent(in) :: prm
+    !! molecular rotation
+    integer(IK), intent(in)               :: n, m, depth, iprm, isym
+    real(RK), intent(in)                  :: x(*)
     !! reference molecular coordinate, x(d,m,n)
-    real(RK), intent(in)                     :: y(*)
+    real(RK), intent(in)                  :: y(*)
     !! target molecular coordinate, y(d,m,n)
-    real(RK)                                 :: w(node_worksize(mol, prm))
-    type(node)                               :: res
-    integer(IK)                              :: i, d, m, n, g, mn, dmn
+    real(RK)                              :: w(node_worksize(mol, prm))
+    type(node)                            :: res
+    integer(IK)                           :: i, d, m, n, g, mn, dmn
 !
     res%prm = prm
 !
