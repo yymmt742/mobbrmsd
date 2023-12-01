@@ -13,14 +13,28 @@ module mod_block_lower_bound
   implicit none
   private
   public :: mol_block
-  public :: block_lower_bound_worksize, block_lower_bound
+  public :: mol_block_invalid
+  public :: block_lower_bound_worksize
+  public :: block_lower_bound
 !
+!| molecular block indicator
+!  atomic coordinates vector must be stored in the following format.
+!    X(d,m,n)
+!    - d :: spatial dimension.
+!    - m :: number of atom in a molecule.
+!    - n :: number of molecule.
+!    - where X(d,:f,:g)     :: Free rotatable.
+!    -       X(d,f+1:,g+1:) :: Fixed.
   type mol_block
     sequence
     integer(IK) :: m = 1
+    !  m :: number of atom in a molecule
     integer(IK) :: n = 1
+    !  n :: number of molecule
     integer(IK) :: f = 1
+    !  f :: number of free atom in a molecule, must be f<=m.
     integer(IK) :: g = 1
+    !  g :: number of free molecule, must be g<=n
   end type mol_block
 !
   type mol_block_
@@ -50,7 +64,6 @@ module mod_block_lower_bound
     integer(IK) :: iq
     integer(IK) :: rest
     integer(IK) :: xtry
-    integer(IK) :: cost
     integer(IK) :: cp
     integer(IK) :: wp
     integer(IK) :: cq
@@ -69,11 +82,11 @@ module mod_block_lower_bound
 !
 contains
 !
-  pure elemental function invalid(b) result(res)
+  pure elemental function mol_block_invalid(b) result(res)
     type(mol_block), intent(in) :: b
     logical                     :: res
     res = (b%m < 1) .or. (b%n < 1) .or. (b%m < b%f) .or. (b%n < b%g)
-  end function invalid
+  end function mol_block_invalid
 !
   pure elemental function b2b_(d, x, w, b) result(res)
     integer(IK), intent(in)     :: d
@@ -107,9 +120,8 @@ contains
     res%iw   = w
     res%rest = w
     res%xtry = res%rest + res%gg
-    res%cost = res%xtry + res%ffgg
 !!! rotation matrix P(g,g)
-    res%ip = res%cost + 1
+    res%ip = res%xtry + res%ffgg
 !!! rotation matrix Q(f,f,g)
     res%iq = res%ip + res%gg
 !!! covariance matrix for P estimation, CP(g, g), w(*)
@@ -120,7 +132,7 @@ contains
     res%wq = res%cq + res%ff
     res%bp = res%gg + res%proc_g
     res%bq = res%ff + res%proc_f
-    res%bs = res%gg + res%ffgg + 1 + res%gg + res%ffg + MAX(res%bp, res%bq * res%g)
+    res%bs = res%gg + res%ffgg + res%gg + res%ffg + MAX(res%bp, res%bq * res%g)
   end function b2b_
 !
 !| Calculate work array size for d*d matrix.
@@ -134,7 +146,7 @@ contains
     type(mol_block_)                  :: b_(s)
     integer(IK)                       :: dd, dmn, res
 !
-    if (d < 1 .or. s < 1 .or. ANY(invalid(b))) then
+    if (d < 1 .or. s < 1 .or. ANY(mol_block_invalid(b))) then
       res = 0
     else
       b_ = b2b_(d, 1, 1, b)
@@ -157,7 +169,7 @@ contains
     !! reference d*sum_i (mi*ni) array
     real(RK), intent(in)              :: Y(*)
     !! target d*sum_i (mi*ni) array
-    real(RK), intent(inout)           :: w(*)
+    real(RK), intent(inout)           :: W(*)
     !! work array, must be larger than lower_bound_worksize(d, n, free_indices)
     integer(IK), intent(in), optional :: maxiter
     !! iteration limit, default = 1000
@@ -172,7 +184,7 @@ contains
     integer(IK)                       :: iy, iz
     integer(IK)                       :: i, j
 !
-    if (d < 1 .or. s < 1 .or. ANY(invalid(b))) then
+    if (d < 1 .or. s < 1 .or. ANY(mol_block_invalid(b))) then
       w(1) = rmsd(d, SUM(b%m * b%n), X, Y)
       return
     end if
@@ -217,6 +229,17 @@ contains
     else
       call eye(d, w(r))
     end if
+!!! P = I, Qi = I
+    do concurrent(i=1:s)
+      call eye(b_(i)%g, w(b_(i)%ip))
+      do concurrent(j=1:b_(i)%g)
+        block
+          integer(IK) :: iq
+          iq = b_(i)%iq + (j - 1) * b_(i)%ff
+          call eye(b_(i)%f, w(iq))
+        end block
+      end do
+    end do
 !
     do i = 1, maxiter_
       w(prev) = w(cost)
@@ -241,25 +264,6 @@ contains
 !
     w(1) = rmsd(d, mn, X, w(iy))
 !
-  contains
-!
-    pure subroutine calc_swap_indices(n, f, free_indices, res)
-      integer(IK), intent(in)    :: n, f, free_indices(f)
-      integer(IK), intent(inout) :: res(n)
-      integer(IK)                :: i, fi, n_f
-      do concurrent(i=1:f)
-        res(i) = free_indices(i)
-      end do
-      n_f = n - f
-      fi  = f + 1
-      do i = 1, n
-        if (ANY(i == res(:f))) cycle
-        res(fi) = i
-        if (fi == n) exit
-        fi = fi + 1
-      end do
-    end subroutine calc_swap_indices
-!
   end subroutine block_lower_bound
 !
   pure subroutine get_C_fix(d, s, b, X, Y, CF)
@@ -282,10 +286,11 @@ contains
     real(RK), intent(in)         :: X(*), Y(*), R(d, d), threshold
     real(RK), intent(inout)      :: P(b%g, b%g), Q(b%f, b%f, b%g)
     real(RK), intent(inout)      :: W(*)
-    real(RK)                     :: prev
+    real(RK)                     :: cost, prev
     integer(IK)                  :: i, j, l
 !
-    w(b%cost) = -RHUGE
+    if (b%g < 1 .and. b%f < 1) return
+    cost = -RHUGE
 !
     call update_XTRY(d, b, X, Y, R, w(b%xtry), w(b%rest))
 !
@@ -296,7 +301,7 @@ contains
 !
     do l = 1, maxiter
 !
-      prev = w(b%cost)
+      prev = cost
 !
 !!!   CP = RESTR
       call copy(b%gg, w(b%rest), w(b%cp))
@@ -312,8 +317,8 @@ contains
 !!!   Get P = UV^T
       call Procrustes(b%g, w(b%cp), P, w(b%wp))
 !!!   tr(P^T, CP) = ddot(P, CP)
-      w(b%cost) = ddot(b%gg, P, w(b%cp))
-      if (ABS(w(b%cost) - prev) < threshold) exit
+      cost = ddot(b%gg, P, w(b%cp))
+      if (ABS(cost - prev) < threshold) exit
 !
       do concurrent(j=1:b%g)
         block
@@ -331,6 +336,7 @@ contains
           call Procrustes(b%f, w(icq), Q(1, 1, j), w(iwq))
         end block
       end do
+!
     end do
 !
   end subroutine update_PQ

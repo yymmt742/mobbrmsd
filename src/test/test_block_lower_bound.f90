@@ -17,6 +17,12 @@ program main
   enddo
   print*,fail,'/',NTEST
 !
+  fail = 0
+  do i=1,NTEST
+    call test2(fail)
+  enddo
+  print*,fail,'/',NTEST
+!
   call u%finish_and_terminate()
 !
 contains
@@ -45,6 +51,34 @@ contains
     endif
 !
   end subroutine test1
+!
+  subroutine test2(fail)
+    integer, intent(inout)     :: fail
+    integer, parameter         :: d = 3
+    integer, parameter         :: m = 5
+    integer, parameter         :: n = 3
+    integer, parameter         :: f = 3
+    integer, parameter         :: g = 2
+    real(RK), parameter        :: lambda = 2.0_RK
+    type(mol_block), parameter :: b(1) = [mol_block(m, n, f, g)]
+    real(RK)                   :: X(d * m * n), Y(d * m * n)
+    real(RK)                   :: w(block_lower_bound_worksize(d, 1, b))
+    real(RK)                   :: score
+    integer                    :: i
+!
+    X = [([lambda * i + 0.5 * sample(d, m)], i=1, n)]
+    call centering(d, m * n, X)
+    Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), SO15())]
+!
+    call block_lower_bound(d, 1, [b], X, Y, w)
+    score = w(1)
+!
+    if (score > 0.001D0) then
+      fail = fail + 1
+      print'(I8,F9.6)', fail, w(1)
+    endif
+!
+  end subroutine test2
 !
   function SO2() result(res)
     real(RK) :: a(1), res(2, 2)
@@ -89,8 +123,14 @@ contains
     res(1:3,6:8) = SO3()
     res(4:5,9:10) = eye(2)
 !
+!   res(1:2,6:7) = SO2()
+!   res(3:5,8:10) = eye(3)
+!
     res(6:8,1:3) = SO3()
     res(9:10,4:5) = eye(2)
+!
+!   res(6:7,1:2) = SO2()
+!   res(8:10,3:5) = eye(3)
 !
     res(11:15,11:15) = eye(5)
 !
@@ -116,6 +156,17 @@ contains
       res(:, i) = res(:, i) - cnt
     enddo
   end function sample
+!
+  pure subroutine centering(d, n, X)
+    integer, intent(in)     :: d, n
+    real(RK), intent(inout) :: X(d, n)
+    real(RK)                :: c(d)
+    integer(IK)             :: i
+    c = centroid(d, n, X)
+    do concurrent(i=1:n)
+      X(:,i) = X(:,i) - c
+    end do
+  end subroutine centering
 !
   pure function centroid(d, n, X) result(res)
     integer, intent(in)  :: d, n
