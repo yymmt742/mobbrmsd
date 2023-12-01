@@ -37,33 +37,84 @@ module mod_tree
 contains
 !
 !| generate node instance
-  pure function node_new(rot, n, m, depth, iprm, isym, x, y) result(res)
-    class(molecular_rotation), intent(in) :: prm
+  pure function node_new(rot, d, m, n, k, iper, isym, x, yfix, yfree) result(res)
+    class(molecular_rotation), intent(in) :: rot
     !! molecular rotation
-    integer(IK), intent(in)               :: n, m, depth, iprm, isym
+    integer(IK), intent(in)               :: d
+    !! spatial dimension
+    integer(IK), intent(in)               :: m
+    !! molecular rotation
+    integer(IK), intent(in)               :: n
+    !! molecular rotation
+    integer(IK), intent(in)               :: k
+    !! node depth
+    integer(IK), intent(in)               :: iper
+    !! permutation index
+    integer(IK), intent(in)               :: isym
+    !! rotation index
     real(RK), intent(in)                  :: x(*)
     !! reference molecular coordinate, x(d,m,n)
-    real(RK), intent(in)                  :: y(*)
-    !! target molecular coordinate, y(d,m,n)
+    real(RK), intent(in)                  :: yfix(*)
+    !! target molecular coordinate, y(d,m,depth)
+    real(RK), intent(in)                  :: yfree(*)
+    !! target molecular coordinate, y(d,m,n-depth)
     real(RK)                              :: w(node_worksize(mol, prm))
     type(node)                            :: res
     integer(IK)                           :: i, d, m, n, g, mn, dmn
 !
-    res%prm = prm
-!
-    d = prm%d
-    m = mol%natom()
-    n = prm%n
-    g = prm%nfix()
-    mn  = m * n
-    dmn = d * mn
-!
-    call sort_matrix(mol, res%prm, y, w)
-
+    dmk = d * m * k
+    do concurrent(i=1:dmk)
+      w(i) = yfix(i)
+    end do
     call block_lower_bound(d, m, n, mol%free_index(), [(i, i=g + 1, n)], x, w, w(dmn + 1))
     res%lower = w(dmn + 1)
 !
   end function node_new
+!
+  pure subroutine sort_matrix(rot, d, m, n, depth, iprm, isym, yfix, yfree, w)
+    class(molecular_rotation), intent(in) :: rot
+    !! molecular rotation indicator
+    integer(IK), intent(in)               :: d, n, m, depth, iprm, isym
+    !! molecular rotation
+    real(RK), intent(in)                  :: yfix(d, m, depth)
+    !! target molecular coordinate, y(d,m,depth)
+    real(RK), intent(in)                  :: yfree(d, m, n - depth)
+    !! target molecular coordinate, y(d,m,n-depth)
+    real(RK), intent(inout)               :: w(*)
+    integer(IK)                           :: s
+!
+    if (ALLOCATED(prm%sym)) then
+      call sort(mol, prm%d, mol%natom(), prm%n, prm%nfree(), prm%sym, prm%swap_indices(), source, dest)
+    else
+      call sort(mol, prm%d, mol%natom(), prm%n, prm%nfree(), [(1, s=1, prm%n)], prm%swap_indices(), source, dest)
+    end if
+!
+  contains
+!
+    pure subroutine sort(mol, d, m, n, f, sym, swp, source, dest)
+      class(molecule), intent(in) :: mol
+      integer(IK), intent(in)     :: d, m, n, f, sym(f), swp(n)
+      real(RK), intent(in)        :: source(d, m, n)
+      real(RK), intent(inout)     :: dest(d, m, n)
+      integer(IK)                 :: i, j, k
+!
+      do concurrent(k=1:f)
+        block
+          integer(IK) :: w(m)
+          w = mol%sym_index(sym(k))
+          do concurrent(i=1:d, j=1:m)
+            dest(i, j, k) = source(i, w(j), swp(k))
+          end do
+        end block
+      end do
+!
+      do concurrent(i=1:d, j=1:m, k=f + 1:n)
+        dest(i, j, k) = source(i, j, swp(k))
+      end do
+!
+    end subroutine sort
+!
+  end subroutine sort_matrix
 !
 !| generate childe nodes instance
   pure function node_generate_childs(this, mol, x, y) result(res)
@@ -106,46 +157,6 @@ contains
    &    + block_lower_bound_worksize(prm%d, m, n, mol%free_index(), [(i, i=g + 1, n)])
 !
   end function node_worksize
-!
-  pure subroutine sort_matrix(mol, prm, source, dest)
-    class(molecular_permutation), intent(in) :: prm
-    class(molecule), intent(in)              :: mol
-    real(RK), intent(in)                     :: source(*)
-    real(RK), intent(inout)                  :: dest(*)
-    integer(IK)                              :: s
-!
-    if (ALLOCATED(prm%sym)) then
-      call sort(mol, prm%d, mol%natom(), prm%n, prm%nfree(), prm%sym, prm%swap_indices(), source, dest)
-    else
-      call sort(mol, prm%d, mol%natom(), prm%n, prm%nfree(), [(1, s=1, prm%n)], prm%swap_indices(), source, dest)
-    end if
-!
-  contains
-!
-    pure subroutine sort(mol, d, m, n, f, sym, swp, source, dest)
-      class(molecule), intent(in) :: mol
-      integer(IK), intent(in)     :: d, m, n, f, sym(f), swp(n)
-      real(RK), intent(in)        :: source(d, m, n)
-      real(RK), intent(inout)     :: dest(d, m, n)
-      integer(IK)                 :: i, j, k
-!
-      do concurrent(k=1:f)
-        block
-          integer(IK) :: w(m)
-          w = mol%sym_index(sym(k))
-          do concurrent(i=1:d, j=1:m)
-            dest(i, j, k) = source(i, w(j), swp(k))
-          end do
-        end block
-      end do
-!
-      do concurrent(i=1:d, j=1:m, k=f + 1:n)
-        dest(i, j, k) = source(i, j, swp(k))
-      end do
-!
-    end subroutine sort
-!
-  end subroutine sort_matrix
 !
   pure function free_indices(mol, prm) result(res)
     class(molecule), intent(in)              :: mol

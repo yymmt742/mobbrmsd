@@ -14,6 +14,48 @@ module mod_block_lower_bound
   private
   public :: block_lower_bound_worksize, block_lower_bound
 !
+  type mol_block
+    sequence
+    integer(IK) :: m = 1
+    integer(IK) :: n = 1
+    integer(IK) :: g = 1
+    integer(IK) :: f = 1
+  end type mol_block
+!
+  type mol_block_
+    private
+    sequence
+    integer(IK) :: m
+    integer(IK) :: n
+    integer(IK) :: g
+    integer(IK) :: f
+    integer(IK) :: mg
+    integer(IK) :: mn
+    integer(IK) :: df
+    integer(IK) :: dm
+    integer(IK) :: ff
+    integer(IK) :: gg
+    integer(IK) :: dmn
+    integer(IK) :: dmg
+    integer(IK) :: m_f
+    integer(IK) :: ffg
+    integer(IK) :: ffgg
+    integer(IK) :: dxm_dxf
+    integer(IK) :: proc_f
+    integer(IK) :: blksiz
+    integer(IK) :: ix
+    integer(IK) :: iy
+    integer(IK) :: ip
+    integer(IK) :: iq
+    integer(IK) :: iw
+    integer(IK) :: rest
+    integer(IK) :: xtry
+    integer(IK) :: cp
+    integer(IK) :: wp
+    integer(IK) :: cq
+    integer(IK) :: wq
+  end type mol_block_
+!
   interface
     include 'dgemm.h'
   end interface
@@ -22,6 +64,49 @@ module mod_block_lower_bound
   real(RK), parameter    :: DEF_threshold = 1.0E-12_RK
 !
 contains
+!
+  pure elemental function b2b_(d, x, y, p, q, w, b) result(res)
+    integer(IK), intent(in)     :: d
+!!! spatial dimension
+    integer(IK), intent(in)     :: x, y, p, q, w
+!!! pointer to x, y, p, q, w
+    type(mol_block), intent(in) :: b
+    type(mol_block_)            :: res
+    res%m = b%m
+    res%n = b%n
+    res%g = b%g
+    res%f = b%f
+    res%mg = res%m * res%g
+    res%mn = res%m * res%n
+    res%df = d * res%f
+    res%dm = d * res%m
+    res%ff = res%f * res%f
+    res%gg = res%g * res%g
+    res%ffg = res%ff * res%g
+    res%dmn = d * res%mn
+    res%dmg = d * res%mg
+    res%m_f = res%m - res%f
+    res%ffgg = res%ff * res%gg
+    res%proc_f = Procrustes_worksize(res%f)
+    res%blksiz = res%ff + res%proc_f
+    res%dxm_dxf = d * res%m_f
+    res%ix = x
+    res%iy = y
+!!! rotation matrix P(g,g)
+    res%ip = p
+!!! rotation matrix Q(f,f,g)
+    res%iq = q
+!!! covariance matrices and residue matrix, REST(g, g), XTRY(f, f, g, g)
+    res%iw = w
+    res%rest = 1
+    res%xtry = res%rest + res%gg
+!!! covariance matrix for P estimation, CP(g, g), w(*)
+    res%cp = res%xtry + res%ffgg
+    res%wp = res%cp + res%gg
+!!! covariance matrix for Q estimation, CQ(f, f, g), w(*)
+    res%cq = res%xtry + res%ffgg
+    res%wq = res%cq + res%ff
+  end function b2b_
 !
 !| Calculate work array size for d*d matrix.
   pure function block_lower_bound_worksize(d, m, n, free_m_indices, free_n_indices) result(res)
@@ -51,21 +136,24 @@ contains
   end function block_lower_bound_worksize
 !
 !| Calculate min_{P,Q} |X-PYQ|^2, Q is block rotation matrix
-  pure subroutine block_lower_bound(d, m, n, free_m_indices, free_n_indices, X, Y, w, maxiter, threshold, R0)
+  pure subroutine block_lower_bound(d, s, b, X, Y, w, maxiter, threshold, R0)
     integer(IK), intent(in)           :: d
     !! matrix dimension 1.
-    integer(IK), intent(in)           :: m
-    !! matrix dimension 2.
-    integer(IK), intent(in)           :: n
-    !! matrix dimension 3.
-    integer(IK), intent(in)           :: free_m_indices(:)
-    !! rotation index, must be SIZE(free_indices) <= m
-    integer(IK), intent(in)           :: free_n_indices(:)
+    integer(IK), intent(in)           :: s
+    !! matrix dimension 1.
+    type(mol_block), intent(in)       :: b(s)
+!   integer(IK), intent(in)           :: m
+!   !! matrix dimension 2.
+!   integer(IK), intent(in)           :: n
+!   !! matrix dimension 3.
+!   integer(IK), intent(in)           :: free_m_indices(:)
+!   !! rotation index, must be SIZE(free_indices) <= m
+!   integer(IK), intent(in)           :: free_n_indices(:)
     !! rotation index, must be SIZE(free_indices) <= n
     real(RK), intent(in)              :: X(*)
-    !! reference d*m*n array
+    !! reference d*sum_i (mi*ni) array
     real(RK), intent(in)              :: Y(*)
-    !! target d*m*n array
+    !! target d*sum_i (mi*ni) array
     real(RK), intent(inout)           :: w(*)
     !! work array, must be larger than lower_bound_worksize(d, n, free_indices)
     integer(IK), intent(in), optional :: maxiter
@@ -76,53 +164,56 @@ contains
     !! initial Rotation matrix
     integer(IK)                       :: maxiter_
     real(RK)                          :: threshold_
-    integer(IK)                       :: n_indices(n), m_indices(m)
-    integer(IK)                       :: f, g, mg, mn, dd, dm, df, ff, gg, dmn
+    real(RK)                          :: conv_(s), conv, prev
+    type(mol_block_)                  :: b_(s)
+    integer(IK)                       :: dd
     integer(IK)                       :: cf, r, p, q
-    integer(IK)                       :: ix, iy, iz
-    integer(IK)                       :: conv, prev
-    integer(IK)                       :: i, iw
+    integer(IK)                       :: ix, iy
+    integer(IK)                       :: i, j, iw
 !
-    f = SIZE(free_m_indices)
-    g = SIZE(free_n_indices)
-!
-    if (f < 1 .or. g < 1) then
-      w(1) = rmsd(d, m * n, X, Y)
+    if (d < 1 .or. s < 1) then
+      w(1) = rmsd(d, SUM(b%m * b%n), X, Y)
       return
     end if
 !
-    mg = m * g
-    mn = m * n
-    dm = d * m
     dd = d * d
-    df = d * f
-    ff = f * f
-    gg = g * g
-    dmn = d * m * n
+!   mg = m * g
+!   mn = m * n
+!   dm = d * m
+!   df = d * f
+!   ff = f * f
+!   gg = g * g
+!   dmn = d * m * n
 !
-    conv = 1
-    prev = conv + 1
-    ix   = prev + 1      ! copy of X
-    iy   = ix   + dmn    ! copy of Y
-    iz   = iy   + dmn    ! Z = P@Y
-    cf   = iz   + dmn    ! covariance matrix X^TYPQ
-    r    = cf   + dd     ! rotation matrix R
-    p    = r    + dd     ! rotation matrix R
-    q    = p    + gg     ! rotation matrix R
-    iw   = q    + ff * g
+!   ix   = 1          ! copy of X
+!   iy   = ix   + dmn ! copy of Y
+!   cf   = iy   + dmn ! covariance matrix X^TYPQ
+!   r    = cf   + dd  ! rotation matrix R
+!
+!   p    = r    + dd     ! rotation matrix R
+!   q    = p    + gg     ! rotation matrix R
+!   iw   = q    + ff * g
+    block
+      integer(IK) :: iix, iiy
+      iix = ix
+      iiy = iy
+      do i = 1, s
+        !b_(i) = b2b_(d, b(i))
+      end do
+    end block
+!
+!   call get_C_fix(d, m, n, g, w(ix), w(iy), w(cf))
 !
     maxiter_   = optarg(maxiter,   DEF_maxiter)
-    threshold_ = optarg(threshold, DEF_threshold) * dmn
+    threshold_ = optarg(threshold, DEF_threshold) * SUM(b_%dmn)
 !
-    call calc_swap_indices(m, f, free_m_indices, m_indices)
-    call calc_swap_indices(n, g, free_n_indices, n_indices)
-    call pack_matrix(d, m, n, m_indices, n_indices, X, w(ix))
-    call pack_matrix(d, m, n, m_indices, n_indices, Y, w(iy))
-    call copy(dmn, w(iy), w(iz))
+!   call calc_swap_indices(m, f, free_m_indices, m_indices)
+!   call calc_swap_indices(n, g, free_n_indices, n_indices)
+!   call pack_matrix(d, m, n, m_indices, n_indices, X, w(ix))
+!   call pack_matrix(d, m, n, m_indices, n_indices, Y, w(iy))
+!   call copy(dmn, w(iy), w(iz))
 !
-    w(conv) = -RHUGE
-!
-    call get_C_fix(d, m, n, g, w(ix), w(iy), w(cf))
+    conv_ = -RHUGE
 !
     if (PRESENT(R0)) then
       call copy(dd, R0, w(r))
@@ -131,15 +222,19 @@ contains
     end if
 !
     do i = 1, maxiter_
-      w(prev) = w(conv)
-      call update_PQ(d, m, n, f, g, w(ix), w(iy), w(r), maxiter_, threshold_, w(p), w(q), w(conv), W(iw))
-      call update_R(d, m, n, f, g, w(ix), w(iy), w(p), w(q), w(cf), w(r), W(iw))
-      if (ABS(w(conv) - w(prev)) < threshold_) exit
+      prev = conv
+      do concurrent(j=1:s)
+     !  call update_PQ(d, b_(j), w(b_(j)%ix), w(b_(j)%iy), w(r), maxiter_, threshold_, &
+     ! &               w(b_(j)%ip), w(b_(j)%iq), conv_(j), W(b_(j)%iw))
+      end do
+      !call update_R(d, s, b_, w(ix), w(iy), w(cf), w(r), W(iw))
+      conv = SUM(conv_)
+      if (ABS(conv - prev) < threshold_) exit
     end do
 !
-    call R_rotation(d, mn, w(r), w(iy), w(iz))
-    call PQ_rotation(d, m, n, f, g, w(p), w(q), w(iy), w(iz))
-    w(conv) = rmsd(d, mn, w(ix), w(iy))
+!   call R_rotation(d, mn, w(r), w(iy), w(cf))
+!   call PQ_rotation(d, b_, w(p), w(q), w(iy), w(cf))
+!   w(1) = rmsd(d, mn, w(ix), w(iy))
 !
   contains
 !
@@ -186,87 +281,87 @@ contains
       call DGEMM('N', 'T', d, d, mn_g, ONE, X(:, :, g + 1), d, Y(:, :, g + 1), d, ZERO, CF, d)
   end subroutine get_C_fix
 !
-  pure subroutine update_R(d, m, n, f, g, X, Y, P, Q, CF, R, W)
-    integer(IK), intent(in) :: d, m, n, f, g
-    real(RK), intent(in)    :: X(d, m, n), Y(d, m, n)
-    real(RK), intent(in)    :: P(g, g), Q(f, f, g), CF(d, d)
-    real(RK), intent(inout) :: R(d, d), W(*)
-    integer(IK)             :: dd, mg, dmg, iz, ic, iw
+  pure subroutine update_R(d, s, b, X, Y, CF, R, Z, W)
+    integer(IK), intent(in)      :: d, s
+    type(mol_block_), intent(in) :: b(s)
+    real(RK), intent(in)         :: X(*), Y(*)
+    !real(RK), intent(in)         :: P(g, g), Q(f, f, g), CF(d, d)
+    real(RK), intent(in)         :: CF(d, d)
+    real(RK), intent(inout)      :: R(d, d), Z(*), W(*)
+    integer(IK)                  :: i
 !!    R rotation
 !!    M = X(d,mn)@Z^T(mn,d)@P^T@Q^T
-      dd = d * d
-      mg = m * g
-      dmg = d * mg
-      ic = 1
-      iz = ic + dd
-      iw = iz + dmg
-      call copy(dmg, Y, W(iz))
-      call PQ_rotation(d, m, n, f, g, P, Q, W(iz), W(iw))
-      call copy(dd, CF, W(ic))
-      call DGEMM('N', 'T', d, d, mg, ONE, X, d, W(iz), d, ONE, W(ic), d)
+      do concurrent(i=1:s)
+        call copy(b(i)%dmg, Y(b(i)%ix), Z(b(i)%ix))
+        call PQ_rotation(d, b(i), w(b(i)%ip), w(b(i)%iq), Z(b(i)%ix), W(b(i)%iw))
+      end do
+!!    W = CF + YPQXT
+      call copy(d * d, CF, W)
+      call DGEMM('N', 'T', d, d, SUM(b%mg), ONE, X, d, Z, d, ONE, W, d)
 !!    get optimal R
-      call Kabsch(d, W(ic), R, W(iz))
+      call Kabsch(d, W, R, W(d * d + 1))
   end subroutine update_R
 !
-  pure subroutine update_XRYT(d, m, n, f, g, X, Y, R, XTRY, RESTR)
-    integer(IK), intent(in) :: d, m, n, f, g
-    real(RK), intent(in)    :: X(d, m, n), Y(d, m, n), R(d, d)
-    real(RK), intent(inout) :: XTRY(f, f, g, g), RESTR(g, g)
-    integer(IK)             :: i, j, m_f
+  pure subroutine update_XRYT(d, b, X, Y, R, XTRY, RESTR)
+    !integer(IK), intent(in) :: d, m, n, f, g
+    integer(IK), intent(in)      :: d
+    type(mol_block_), intent(in) :: b
+    real(RK), intent(in)         :: X(d, b%m, b%n), Y(d, b%m, b%n), R(d, d)
+    real(RK), intent(inout)      :: XTRY(b%f, b%f, b%g, b%g), RESTR(b%g, b%g)
+    integer(IK)                  :: i, j
 !
-    if (f > 0) then
-      do concurrent(i=1:g, j=1:g)
+    if (b%f > 0) then
+      do concurrent(i=1:b%g, j=1:b%g)
         block
-          real(RK) :: temp(d * f)
-          call DGEMM('T', 'N', f, d, d, ONE, X(1, 1, i), d, R, d, ZERO, temp, f)
-          call DGEMM('N', 'N', f, f, d, ONE, temp, f, Y(1, 1, j), d, ZERO, XTRY(1, 1, i, j), f)
+          real(RK) :: temp(b%df)
+          call DGEMM('T', 'N', b%f, d, d, ONE, X(1, 1, i), d, R, d, ZERO, temp, b%f)
+          call DGEMM('N', 'N', b%f, b%f, d, ONE, temp, b%f, Y(1, 1, j), d, ZERO, XTRY(1, 1, i, j), b%f)
         end block
       end do
     end if
 !
-    m_f = m - f; if (m_f < 1) return
+    if (b%m_f < 1) return
 !
-    do concurrent(i=1:g, j=1:g)
+    do concurrent(i=1:b%g, j=1:b%g)
       block
-        real(RK) :: RY(d * m_f)
-        call DGEMM('N', 'N', d, m_f, d, ONE, R, d, Y(1, f + 1, j), d, ZERO, RY, d)
-        RESTR(i, j) = ddot(d * m_f, X(1, f + 1, i), RY)
+        real(RK) :: RY(b%dxm_dxf)
+        call DGEMM('N', 'N', d, b%m_f, d, ONE, R, d, Y(1, b%f + 1, j), d, ZERO, RY, d)
+        RESTR(i, j) = ddot(b%dxm_dxf, X(1, b%f + 1, i), RY)
       end block
     end do
 !
   end subroutine update_XRYT
 !
-  pure subroutine update_PQ(d, m, n, f, g, X, Y, R, maxiter, threshold, P, Q, trace, W)
-    integer(IK), intent(in) :: d, m, n, f, g, maxiter
-    real(RK), intent(in)    :: X(d, m, n), Y(d, m, n), R(d, d), threshold
-    real(RK), intent(inout) :: P(g, g), Q(f, f, g), trace, W(*)
-    real(RK)                :: prev
-    integer(IK)             :: rest, xtry, cp, cq, wp, wq, bs, gg, ff
-    integer(IK)             :: i, j, l
-!
-    gg = g * g
-    ff = f * f
+  pure subroutine update_PQ(d, b, X, Y, R, Q, P, maxiter, threshold, trace, W)
+    !integer(IK), intent(in) :: d, m, n, f, g, maxiter
+    integer(IK), intent(in)      :: d, maxiter
+    type(mol_block_), intent(in) :: b
+    real(RK), intent(in)         :: X(*), Y(*), R(d, d), threshold
+    real(RK), intent(inout)      :: P(b%g, b%g), Q(b%f, b%f, b%g)
+    real(RK), intent(inout)      :: trace, W(*)
+    real(RK)                     :: prev
+    !integer(IK)                  :: rest, xtry, cp, cq, wp, wq
+    integer(IK)                  :: i, j, l
 !
 !!! covariance matrices and residue matrix, REST(g, g), XTRY(f, f, g, g)
-    rest = 1
-    xtry = rest + gg
+!   rest = 1
+!   xtry = rest + b%gg
 !
 !!! covariance matrix for P estimation, CP(g, g), w(*)
-    cp = xtry + ff * gg
-    wp = cp + gg
+!   cp = xtry + b%ffgg
+!   wp = cp + b%gg
 !
 !!! covariance matrix for Q estimation, CQ(f, f, g), w(*)
-    cq = xtry + ff * gg
-    wq = cq + ff
-    bs = ff + Procrustes_worksize(f)
+!   cq = xtry + b%ffgg
+!   wq = cq + b%ff
 !
     trace = -RHUGE
 !
-    call update_XRYT(d, m, n, f, g, X, Y, R, w(xtry), w(rest))
+    call update_XRYT(d, b, X, Y, R, w(b%xtry), w(b%rest))
 !
-    call eye(g, p)
-    do concurrent(i=1:g)
-      call eye(f, Q(1, 1, i))
+    call eye(b%g, P)
+    do concurrent(i=1:b%g)
+      call eye(b%f, Q(1, 1, i))
     enddo
 !
     do l = 1, maxiter
@@ -274,36 +369,36 @@ contains
       prev = trace
 !
 !!!   CP = RESTR
-      call copy(gg, w(rest), w(cp))
-      do concurrent(i=1:g, j=1:g)
+      call copy(b%gg, w(b%rest), w(b%cp))
+      do concurrent(i=1:b%g, j=1:b%g)
 !!!     CP(i,j) = trace(Qi@Cij) = ddot(Qi^T, Cij)
         block
           integer(IK) :: icp, ixtry
-          icp = cp + i + (j - 1) * g - 1
-          ixtry = xtry + ff * ((i - 1) + g * (j - 1))
-          w(icp) = w(icp) + ddot(ff, Q(1, 1, i), w(ixtry))
+          icp = b%cp + i + (j - 1) * b%g - 1
+          ixtry = b%xtry + b%ff * ((i - 1) + b%g * (j - 1))
+          w(icp) = w(icp) + ddot(b%ff, Q(1, 1, i), w(ixtry))
         end block
       end do
 !!!   Get P = UV^T
-      call Procrustes(g, w(cp), P, w(wp))
+      call Procrustes(b%g, w(b%cp), P, w(b%wp))
 !!!   tr(P^T, CP) = ddot(P, CP)
-      trace = ddot(gg, P, w(cp))
+      trace = ddot(b%gg, P, w(b%cp))
       if (ABS(trace - prev) < threshold) exit
 !
-      do concurrent(j=1:g)
+      do concurrent(j=1:b%g)
         block
           integer(IK) :: icq, iwq, ixtry
-          icq = cq + bs * (j - 1)
-          iwq = wq + bs * (j - 1)
-          ixtry = xtry + ff * (j - 1)
+          icq = b%cq + b%blksiz * (j - 1)
+          iwq = b%wq + b%blksiz * (j - 1)
+          ixtry = b%xtry + b%ff * (j - 1)
 !!        CQ^T = sum_i Pi * Cji
-          call zfill(ff, w(icq))
-          do i = 1, g
-            call add(ff, P(j, i), w(ixtry), w(icq))
-            ixtry = ixtry + g * ff
+          call zfill(b%ff, w(icq))
+          do i = 1, b%g
+            call add(b%ff, P(j, i), w(ixtry), w(icq))
+            ixtry = ixtry + b%ffg
           end do
 !!!       Get Qi^T = UV^T
-          call Procrustes(f, w(icq), Q(1, 1, j), w(iwq))
+          call Procrustes(b%f, w(icq), Q(1, 1, j), w(iwq))
         end block
       end do
     end do
@@ -318,28 +413,23 @@ contains
     call copy(d * n, W, X)
   end subroutine R_rotation
 !
-  pure subroutine PQ_rotation(d, m, n, f, g, P, Q, X, W)
-    integer(IK), intent(in) :: d, m, n, f, g
-    real(RK), intent(in)    :: P(*), Q(*)
-    real(RK), intent(inout) :: X(*), W(*)
-    integer(IK)             :: i, ff, dm, df, dmg, dm_f
+  pure subroutine PQ_rotation(d, b, P, Q, X, W)
+    integer(IK), intent(in)      :: d
+    type(mol_block_), intent(in) :: b
+    real(RK), intent(in)         :: P(*), Q(*)
+    real(RK), intent(inout)      :: X(*), W(*)
+    integer(IK)                  :: i, ff, dm, df, dmg, dm_f
 !
-    ff = f * f
-    dm = d * m
-    df = d * f
-    dmg = dm * g
-    dm_f = d * (m - f)
+    call DGEMM('N', 'N', b%dm, b%g, b%g, ONE, X, b%dm, P, b%g, ZERO, W, b%dm)
 !
-    call DGEMM('N', 'N', dm, g, g, ONE, X, dm, P, g, ZERO, W, dm)
-!
-    do concurrent(i=1:g)
+    do concurrent(i=1:b%g)
       block
         integer(IK) :: iq, ix
-        ix = (i - 1) * dm + 1
-        iq = (i - 1) * ff + 1
-        call DGEMM('N', 'T', d, f, f, ONE, W(ix), d, q(iq), f, ZERO, X(ix), d)
+        ix = (i - 1) * b%dm + 1
+        iq = (i - 1) * b%ff + 1
+        call DGEMM('N', 'T', d, b%f, b%f, ONE, W(ix), d, q(iq), b%f, ZERO, X(ix), d)
         ix = ix + df
-        call copy(dm_f, W(ix), X(ix))
+        call copy(b%dxm_dxf, W(ix), X(ix))
       end block
     end do
 !

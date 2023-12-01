@@ -35,7 +35,7 @@ contains
     X = [sample(d, m * n)]
     Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), SO15())]
 !
-    call block_lower_bound(d, m, n, mlist, nlist, X, Y, w)
+!   call block_lower_bound(d, m, n, mlist, nlist, X, Y, w)
     b = w(1)
 !   call block_lower_bound(d, m, n, mlist, nlist, X, Y, w, R0=SO3()) ; if(w(1)<b) b = w(1)
 !   call block_lower_bound(d, m, n, mlist, nlist, X, Y, w, R0=SO3()) ; if(w(1)<b) b = w(1)
