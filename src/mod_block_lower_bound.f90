@@ -59,6 +59,7 @@ module mod_block_lower_bound
     integer(IK) :: proc_g
     integer(IK) :: proc_f
     integer(IK) :: ix
+    integer(IK) :: iz
     integer(IK) :: iw
     integer(IK) :: ip
     integer(IK) :: iq
@@ -92,10 +93,10 @@ contains
     res = (b%m < 1) .or. (b%n < 1) .or. (b%m < b%f) .or. (b%n < b%g)
   end function mol_block_invalid
 !
-  pure elemental function b2b_(d, x, w, b) result(res)
+  pure elemental function b2b_(d, x, z, w, b) result(res)
     integer(IK), intent(in)     :: d
 !!! spatial dimension
-    integer(IK), intent(in)     :: x, w
+    integer(IK), intent(in)     :: x, z, w
 !!! pointer to x, y, p, q, w
     type(mol_block), intent(in) :: b
     type(mol_block_)            :: res
@@ -119,6 +120,7 @@ contains
     res%proc_f = Procrustes_worksize(res%f)
 !!! relative address to X
     res%ix = x
+    res%iz = z
 !!! memory block, with absolute index.
 !!! covariance matrices and residue matrix, REST(g, g), XTRY(f, f, g, g)
     res%iw   = w
@@ -151,21 +153,22 @@ contains
     type(mol_block), intent(in)       :: b(s)
     !! mol_block
     type(mol_block_)                  :: b_(s)
-    integer(IK)                       :: dd, dmn, res
+    integer(IK)                       :: dd, dmn, dmg, res
 !
     if (d < 1 .or. s < 1 .or. ANY(mol_block_invalid(b))) then
       res = 0
     else
-      b_ = b2b_(d, 1, 1, b)
+      b_ = b2b_(d, 1, 1, 1, b)
       dd = d * d
       dmn = d * SUM(b_%mn)
-      res = SUM(b_%bs) + MAX(dmn, dd + dd + Kabsch_worksize(d)) + dmn + 1
+      dmg = d * SUM(b_%mg)
+      res = SUM(b_%bs) + MAX(dmg, dd + dd + Kabsch_worksize(d)) + dmn + 1
     end if
 !
   end function block_lower_bound_worksize
 !
 !| Calculate min_{P,Q} |X-PYQ|^2, Q is block rotation matrix
-   subroutine block_lower_bound(d, s, b, X, Y, w, maxiter, threshold, nrand, R0)
+  pure subroutine block_lower_bound(d, s, b, X, Y, w, maxiter, threshold, nrand, R0)
     integer(IK), intent(in)           :: d
     !! matrix dimension 1.
     integer(IK), intent(in)           :: s
@@ -187,12 +190,11 @@ contains
     real(RK), parameter               :: lambda = 1D-8
     integer(IK)                       :: maxiter_, nrand_
     type(mol_block_)                  :: b_(s)
-    integer(IK)                       :: dd, mn, mg, dmn
+    integer(IK)                       :: dd, mn, mg, dmn, dmg
     integer(IK)                       :: cost, prev, thre, cf, cr, rw, r
     integer(IK)                       :: iy, iz
     integer(IK)                       :: i, j
 !
-!w(:block_lower_bound_worksize(d, s, b))=HUGE(0D0)
     if (d < 1 .or. s < 1 .or. ANY(mol_block_invalid(b))) then
       w(1) = rmsd(d, SUM(b%m * b%n), X, Y)
       return
@@ -202,6 +204,7 @@ contains
     mn = SUM(b%m * b%n)
     mg = SUM(b%m * b%g)
     dmn = d * mn
+    dmg = d * mg
 !
     cost = 1
     prev = 2
@@ -218,12 +221,14 @@ contains
     w(thre) = optarg(threshold, DEF_threshold) * dmn
 !
     block
-      integer(IK) :: iw, iix
+      integer(IK) :: iw, iix, iiz
       iix = 1
-      iw = MAX(r + dd, cf + dmn)
+      iiz = 1
+      iw = MAX(r + dd, cf + dmg)
       do i = 1, s
-        b_(i) = b2b_(d, iix, iw, b(i))
+        b_(i) = b2b_(d, iix, iiz, iw, b(i))
         iix = iix + b_(i)%dmn
+        iiz = iiz + b_(i)%dmg
         iw  = iw + b_(i)%bs
       end do
     end block
@@ -233,7 +238,6 @@ contains
 !
     w(cost) = -RHUGE
     w(prev) = w(cost)
-!   call copy(dmn, Y, w(iy))
 !
 !!! R = R0 or R = I
     if (PRESENT(R0)) then
@@ -269,14 +273,13 @@ contains
       block
         integer(IK) :: iiy, iiz
         iiy = iy + b_(i)%ix - 1
-        iiz = iz + b_(i)%ix - 1
+        iiz = iz + b_(i)%iz - 1
         call PQ_rotation(d, b_(i), w(b_(i)%ip), w(b_(i)%iq), w(iiy), w(iiz))
         call copy(b_(i)%dmg, w(iiz), w(iiy))
       end block
     end do
 !
     w(cost) = rmsd(d, mn, X, w(iy))
-!print'(10f9.3)',w(:block_lower_bound_worksize(d, s, b))
 !
   end subroutine block_lower_bound
 !
@@ -351,9 +354,6 @@ contains
 !
       end do
 !
-!print'(2f9.3)',w(b%cost), w(b%cost)
-!print'(2f9.3)',P
-!print'(3f9.3)',Q
       w(b%best) = MAX(w(b%best), w(b%cost))
       if (k >= nrand .and. ABS(w(b%best) - w(b%cost)) < threshold) exit
 !
@@ -365,7 +365,7 @@ contains
 !
   end subroutine update_PQ
 !
-   subroutine update_R(d, dd, s, b, X, Y, CF, R, CR, trace, Z, RW, W)
+  pure subroutine update_R(d, dd, s, b, X, Y, CF, R, CR, trace, Z, RW, W)
     integer(IK), intent(in)      :: d, dd, s
     type(mol_block_), intent(in) :: b(s)
     real(RK), intent(in)         :: X(*), Y(*), CF(*)
@@ -377,26 +377,13 @@ contains
         call PQ_rotation(d, b(i), w(b(i)%ip), w(b(i)%iq), Y(b(i)%ix), Z(b(i)%ix))
       enddo
 !
-!print'(3f9.3)', X(:d*25)
-!print*
-!print'(3f9.3)', Y(:d*25)
-!print*
-!print'(3f9.3)', Z(:d*25)
-!print*
       call copy(dd, CF, CR)
-!print'(3f9.3)', CF(:dd)
-!print'(3f9.3)', CR(:dd)
-!print*
       do i = 1, s
 !!      CR = X(d,mn)@Z^T(mn,d)@P^T@Q^T
         call DGEMM('N', 'T', d, d, b(i)%mg, ONE, X(b(i)%ix), d, Z(b(i)%ix), d, ONE, CR, d)
       enddo
-!print'(3f9.3)', CR(:dd)
-!print*
 !!    get optimal R
       call Kabsch(d, CR, R, RW)
-!print'(3f9.3)', R(:dd)
-!print*
       trace = ddot(dd, CR, R)
   end subroutine update_R
 !

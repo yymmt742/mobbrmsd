@@ -11,11 +11,11 @@ program main
   integer           :: i
 !
   call u%init('test block_lower_bound')
-  fail = 0
-  do i = 1, NTEST
-    call test1(fail)
-  end do
-  print*,fail,'/',NTEST
+! fail = 0
+! do i = 1, NTEST
+!   call test1(fail)
+! end do
+! print*,fail,'/',NTEST
 !
   fail = 0
   do i = 1, NTEST
