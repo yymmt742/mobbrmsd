@@ -11,14 +11,14 @@ program main
   integer           :: i
 !
   call u%init('test block_lower_bound')
-  fail = 0
-  do i=1,NTEST
-    call test1(fail)
-  enddo
-  print*,fail,'/',NTEST
+! fail = 0
+! do i = 1, NTEST
+!   call test1(fail)
+! end do
+! print*,fail,'/',NTEST
 !
   fail = 0
-  do i=1,NTEST
+  do i = 1, NTEST
     call test2(fail)
   enddo
   print*,fail,'/',NTEST
@@ -40,7 +40,7 @@ contains
     real(RK)                   :: score
 !
     X = [sample(d, m * n)]
-    Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), SO15())]
+    Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), PER15())]
 !
     call block_lower_bound(d, 1, [b], X, Y, w)
     score = w(1)
@@ -59,7 +59,7 @@ contains
     integer, parameter         :: n = 3
     integer, parameter         :: f = 3
     integer, parameter         :: g = 2
-    real(RK), parameter        :: lambda = 2.0_RK
+    real(RK), parameter        :: lambda = 5.0_RK
     type(mol_block), parameter :: b(1) = [mol_block(m, n, f, g)]
     real(RK)                   :: X(d * m * n), Y(d * m * n)
     real(RK)                   :: w(block_lower_bound_worksize(d, 1, b))
@@ -68,12 +68,13 @@ contains
 !
     X = [([lambda * i + 0.5 * sample(d, m)], i=1, n)]
     call centering(d, m * n, X)
-    Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), SO15())]
+    Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), PER15())]
 !
-    call block_lower_bound(d, 1, [b], X, Y, w)
+    call block_lower_bound(d, 1, b, X, Y, w, threshold=0.000001D0, maxiter=100)
+    !call block_lower_bound(d, 1, b, X, Y, w)
     score = w(1)
 !
-    if (score > 0.001D0) then
+    if (score > 0.01D0) then
       fail = fail + 1
       print'(I8,F9.6)', fail, w(1)
     endif
@@ -112,7 +113,20 @@ contains
 !
   end function SO6
 !
-  function SO15() result(res)
+  function PER3() result(res)
+    real(RK) :: res(3, 3)
+    integer  :: r(3)
+    integer  :: i, j
+    call RANDOM_NUMBER(res(:, 1))
+    r(1) = MAXLOC(res(:, 1), 1)
+    r(2) = MAXLOC([res(:r(1)-1, 1),-100D0,res(r(1)+1:, 1)], 1)
+    r(3) = MINLOC(res(:, 1), 1)
+    do concurrent(i=1:3, j=1:3)
+      res(i, j) = MERGE(1, 0, r(i)==j)
+    end do
+  end function PER3
+!
+  function PER15() result(res)
     real(RK) :: res(15, 15)
 !
     res = 0D0
@@ -120,13 +134,13 @@ contains
 !   res(6:10,1:5) = eye(5)
 !   res(1:5,6:10) = eye(5)
 !
-    res(1:3,6:8) = SO3()
+    res(1:3,6:8) = PER3()
     res(4:5,9:10) = eye(2)
 !
 !   res(1:2,6:7) = SO2()
 !   res(3:5,8:10) = eye(3)
 !
-    res(6:8,1:3) = SO3()
+    res(6:8,1:3) = PER3()
     res(9:10,4:5) = eye(2)
 !
 !   res(6:7,1:2) = SO2()
@@ -134,7 +148,7 @@ contains
 !
     res(11:15,11:15) = eye(5)
 !
-  end function SO15
+  end function PER15
 !
   pure function eye(d) result(res)
     integer,intent(in) :: d

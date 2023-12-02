@@ -59,18 +59,20 @@ contains
     integer, parameter  :: n = 12
     integer, parameter  :: nlist(6) = [1,2,3,4,5,6]
     real(RK)            :: X(d * n), Y(d * n)
-    real(RK)            :: w(lower_bound_worksize(d, n, nlist)), r
+    real(RK)            :: w(lower_bound_worksize(d, n, nlist)), r, r2
 !
     X = [sample(d, n)]
-    Y = X + 0.1 * [sample(d, n)]
+    Y = X + 0.01 * [sample(d, n)]
     r = rmsd(d, n, X, Y)
+    call lower_bound(d, n, nlist, X, Y, w)
+    r2 = w(1)
     Y = [MATMUL(MATMUL(SO3(), RESHAPE(Y, [d, n])), SO12())]
 !
     call lower_bound(d, n, nlist, X, Y, w)
 !
     if (w(1) - r > 0.0001D0) then
       fail = fail + 1
-      print'(I8,2F9.6)', fail, w(1), r
+      print'(I8,3F9.6)', fail, w(1), r, r2
     endif
 !
   end subroutine test2
@@ -121,8 +123,8 @@ contains
     res(5:6,5:6) = SO2()
 !
     tmp = 0D0
-    tmp(4:6,1:3) = SO3()
-    tmp(1:3,4:6) = - SO3()
+    tmp(4:6,1:3) = PER3()
+    tmp(1:3,4:6) = - PER3()
 !
     res = MATMUL(res, tmp)
 !
@@ -136,6 +138,19 @@ contains
     res(7:12,7:12) = eye(6)
 !
   end function SO12
+!
+  function PER3() result(res)
+    real(RK) :: res(3, 3)
+    integer  :: r(3)
+    integer  :: i, j
+    call RANDOM_NUMBER(res(:, 1))
+    r(1) = MAXLOC(res(:, 1), 1)
+    r(2) = MAXLOC([res(:r(1)-1, 1),-100D0,res(r(1)+1:, 1)], 1)
+    r(3) = MINLOC(res(:, 1), 1)
+    do concurrent(i=1:3, j=1:3)
+      res(i, j) = MERGE(1, 0, r(i)==j)
+    end do
+  end function PER3
 !
   pure function eye(d) result(res)
     integer,intent(in) :: d

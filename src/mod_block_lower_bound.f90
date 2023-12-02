@@ -64,6 +64,9 @@ module mod_block_lower_bound
     integer(IK) :: iq
     integer(IK) :: rest
     integer(IK) :: xtry
+    integer(IK) :: cost
+    integer(IK) :: prev
+    integer(IK) :: best
     integer(IK) :: cp
     integer(IK) :: wp
     integer(IK) :: cq
@@ -120,8 +123,11 @@ contains
     res%iw   = w
     res%rest = w
     res%xtry = res%rest + res%gg
+    res%cost = res%xtry + res%ffgg
+    res%prev = res%cost + 1
+    res%best = res%prev + 1
 !!! rotation matrix P(g,g)
-    res%ip = res%xtry + res%ffgg
+    res%ip = res%best + 1
 !!! rotation matrix Q(f,f,g)
     res%iq = res%ip + res%gg
 !!! covariance matrix for P estimation, CP(g, g), w(*)
@@ -132,7 +138,7 @@ contains
     res%wq = res%cq + res%ff
     res%bp = res%gg + res%proc_g
     res%bq = res%ff + res%proc_f
-    res%bs = res%gg + res%ffgg + res%gg + res%ffg + MAX(res%bp, res%bq * res%g)
+    res%bs = res%gg + res%ffgg + res%gg + res%ffg + 3 + MAX(res%bp, res%bq * res%g)
   end function b2b_
 !
 !| Calculate work array size for d*d matrix.
@@ -158,7 +164,7 @@ contains
   end function block_lower_bound_worksize
 !
 !| Calculate min_{P,Q} |X-PYQ|^2, Q is block rotation matrix
-  pure subroutine block_lower_bound(d, s, b, X, Y, w, maxiter, threshold, R0)
+   subroutine block_lower_bound(d, s, b, X, Y, w, maxiter, threshold, R0)
     integer(IK), intent(in)           :: d
     !! matrix dimension 1.
     integer(IK), intent(in)           :: s
@@ -221,6 +227,10 @@ contains
     call get_C_fix(d, s, b_, X, Y, w(cf))
 !
     w(cost) = -RHUGE
+    w(prev) = w(cost)
+    do concurrent(i=1:s)
+      w(b_(i)%best) = -RHUGE
+    end do
     call copy(dmn, Y, w(iy))
 !
 !!! R = R0 or R = I
@@ -237,18 +247,21 @@ contains
           integer(IK) :: iq
           iq = b_(i)%iq + (j - 1) * b_(i)%ff
           call eye(b_(i)%f, w(iq))
+          !call permat(b_(i)%f, i + j, w(iq))
         end block
       end do
     end do
 !
     do i = 1, maxiter_
-      w(prev) = w(cost)
       do concurrent(j=1:s)
-        call update_PQ(d, b_(j), X(b_(j)%ix), Y(b_(j)%ix), w(r), maxiter_, w(thre), &
-       &               w(b_(j)%ip), w(b_(j)%iq), W)
+        call update_PQ(d, b_(j), X(b_(j)%ix), Y(b_(j)%ix), w(r), maxiter_, i, &
+       &               w(thre), w(b_(j)%ip), w(b_(j)%iq), W)
       end do
       call update_R(d, dd, s, b_, X, Y, w(cf), w(r), W(cr), w(cost), W(iy), W(rw), W)
+!print*,w(cost)
+      if(w(cost) < w(prev)) CYCLE
       if (ABS(w(cost) - w(prev)) < w(thre)) exit
+      w(prev) = w(cost)
     end do
 !
     call R_rotation(d, mn, w(r), Y, w(iy))
@@ -280,64 +293,76 @@ contains
       end do
   end subroutine get_C_fix
 !
-  pure subroutine update_PQ(d, b, X, Y, R, maxiter, threshold, P, Q, W)
-    integer(IK), intent(in)      :: d, maxiter
+  pure subroutine update_PQ(d, b, X, Y, R, maxiter, iseed, threshold, P, Q, W)
+    integer(IK), intent(in)      :: d, maxiter, iseed
     type(mol_block_), intent(in) :: b
     real(RK), intent(in)         :: X(*), Y(*), R(d, d), threshold
     real(RK), intent(inout)      :: P(b%g, b%g), Q(b%f, b%f, b%g)
     real(RK), intent(inout)      :: W(*)
-    real(RK)                     :: cost, prev
-    integer(IK)                  :: i, j, l
+    integer(IK)                  :: i, j, k, l
 !
     if (b%g < 1 .and. b%f < 1) return
-    cost = -RHUGE
+    w(b%best) = -RHUGE
+    w(b%cost) = -RHUGE
 !
     call update_XTRY(d, b, X, Y, R, w(b%xtry), w(b%rest))
 !
-    call eye(b%g, P)
-    do concurrent(i=1:b%g)
-      call eye(b%f, Q(1, 1, i))
-    enddo
+!   call eye(b%g, P)
 !
-    do l = 1, maxiter
+    do k = 1, maxiter
 !
-      prev = cost
+      do l = 1, maxiter
+!
+        w(b%prev) = w(b%cost)
 !
 !!!   CP = RESTR
-      call copy(b%gg, w(b%rest), w(b%cp))
-      do concurrent(i=1:b%g, j=1:b%g)
+        call copy(b%gg, w(b%rest), w(b%cp))
+        do concurrent(i=1:b%g, j=1:b%g)
 !!!     CP(i,j) = trace(Qi@Cij) = ddot(Qi^T, Cij)
-        block
-          integer(IK) :: icp, ixtry
-          icp = b%cp + i + (j - 1) * b%g - 1
-          ixtry = b%xtry + b%ff * ((i - 1) + b%g * (j - 1))
-          w(icp) = w(icp) + ddot(b%ff, Q(1, 1, i), w(ixtry))
-        end block
-      end do
+          block
+            integer(IK) :: icp, ixtry
+            icp = b%cp + i + (j - 1) * b%g - 1
+            ixtry = b%xtry + b%ff * ((i - 1) + b%g * (j - 1))
+            w(icp) = w(icp) + ddot(b%ff, Q(1, 1, i), w(ixtry))
+          end block
+        end do
 !!!   Get P = UV^T
-      call Procrustes(b%g, w(b%cp), P, w(b%wp))
+        call Procrustes(b%g, w(b%cp), P, w(b%wp))
 !!!   tr(P^T, CP) = ddot(P, CP)
-      cost = ddot(b%gg, P, w(b%cp))
-      if (ABS(cost - prev) < threshold) exit
+        w(b%cost) = ddot(b%gg, P, w(b%cp))
+        if (ABS(w(b%cost) - w(b%prev)) < threshold) exit
 !
-      do concurrent(j=1:b%g)
-        block
-          integer(IK) :: icq, iwq, ixtry
-          icq = b%cq + b%bq * (j - 1)
-          iwq = b%wq + b%bq * (j - 1)
-          ixtry = b%xtry + b%ff * (j - 1)
+        do concurrent(j=1:b%g)
+          block
+            integer(IK) :: icq, iwq, ixtry
+            icq = b%cq + b%bq * (j - 1)
+            iwq = b%wq + b%bq * (j - 1)
+            ixtry = b%xtry + b%ff * (j - 1)
 !!        CQ^T = sum_i Pi * Cji
-          call zfill(b%ff, w(icq))
-          do i = 1, b%g
-            call add(b%ff, P(j, i), w(ixtry), w(icq))
-            ixtry = ixtry + b%ffg
-          end do
+            call zfill(b%ff, w(icq))
+            do i = 1, b%g
+              call add(b%ff, P(j, i), w(ixtry), w(icq))
+              ixtry = ixtry + b%ffg
+            end do
 !!!       Get Qi^T = UV^T
-          call Procrustes(b%f, w(icq), Q(1, 1, j), w(iwq))
-        end block
+            call Procrustes(b%f, w(icq), Q(1, 1, j), w(iwq))
+          end block
+        end do
+!
+      end do
+!
+      w(b%best) = MAX(w(b%cost), w(b%cost))
+      if (k > 2 .and. ABS(w(b%best) - w(b%cost)) < threshold) exit
+!
+      do concurrent(i=1:b%g)
+!       !call eye(b%f, Q(1, 1, i))
+        !call permat(b%f, i + k, Q(1, 1, i))
+        !call permat(b%f, i + k + iseed, Q(1, 1, i))
+        call orthogonal(b%f, i + k + iseed, Q(1, 1, i))
       end do
 !
     end do
+!print*
 !
   end subroutine update_PQ
 !
@@ -461,6 +486,24 @@ contains
     end do
   end subroutine eye
 !
+  pure subroutine permat(d, iseed, X)
+    integer(IK), intent(in) :: d, iseed
+    real(RK), intent(inout) :: X(d, *)
+    integer(IK)             :: i, j, s
+    s = MODULO(iseed, d) + 1
+    do concurrent(i=1:d, j=1:d)
+      X(i, j) = MERGE(ONE, ZERO, MODULO(s * i - j - iseed, d) == 0)
+    end do
+  end subroutine permat
+!
+  pure subroutine orthogonal(d, iseed, X)
+    integer(IK), intent(in) :: d, iseed
+    real(RK), intent(inout) :: X(*)
+    real(RK)                :: Y(d * d), W(Procrustes_worksize(d))
+    call rand(d * d, iseed, Y)
+    call Procrustes(d, Y, X, W)
+  end subroutine orthogonal
+!
   pure subroutine zfill(d, dest)
     integer(IK), intent(in) :: d
     real(RK), intent(inout) :: dest(*)
@@ -469,5 +512,26 @@ contains
       dest(i) = ZERO
     end do
   end subroutine zfill
+!
+  pure subroutine rand(d, iseed, dest)
+    integer(IK), intent(in) :: d, iseed
+    real(RK), intent(inout) :: dest(*)
+    real(RK), parameter     :: R0 = ONE / HUGE(0_IK)
+    integer(IK)             :: a, i
+    a = xorshift(iseed)
+    do i = 1, d
+      dest(i) = a * R0
+      a = xorshift(a)
+    end do
+  end subroutine rand
+!
+  pure elemental function xorshift(a) result(res)
+  use ISO_FORTRAN_ENV, only : INT32
+    integer(INT32), intent(in) :: a
+    integer(INT32)             :: res
+    res = IEOR(a, ISHFT(a, 13))
+    res = IEOR(res, ISHFT(res, -17))
+    res = IEOR(res, ISHFT(res, 15))
+  end function xorshift
 !
 end module mod_block_lower_bound
