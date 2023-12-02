@@ -29,6 +29,8 @@ program main
   enddo
   print*,fail,'/',NTEST
 !
+  call test4()
+!
   call u%finish_and_terminate()
 !
 contains
@@ -113,6 +115,29 @@ contains
 !
   end subroutine test3
 !
+  subroutine test4()
+    integer, parameter         :: d = 3
+    integer, parameter         :: m = 5
+    integer, parameter         :: n = 5
+    integer, parameter         :: f = 3
+    integer, parameter         :: g = 2
+    real(RK), parameter        :: lambda = 5.0_RK
+    type(mol_block), parameter :: b(2) = [mol_block(m, n, f, g), mol_block(m, n, 0, 0)]
+    real(RK)                   :: X(d, m * n * 2), Y(d, m * n * 2)
+    real(RK)                   :: w(block_lower_bound_worksize(d, 2, b))
+    integer                    :: i, j, k
+!
+    X = RESHAPE([([([lambda * RESHAPE([([i, j, 0], k=1, m)], [d, m]) + sample(d, m)], i=1, n)], j=0, 1)], [d, m * n * 2])
+    call centering(d, 2 * m * n, X)
+    Y = MATMUL(SO3(), X)
+    Y(:, :m * n) = MATMUL(Y(:, :m * n), PER25())
+    call centering(d, 2 * m * n, Y)
+!
+    call block_lower_bound(d, 2, b, X, Y, w, nrand=5)
+    print*,w(1)
+!
+  end subroutine test4
+!
   function SO2() result(res)
     real(RK) :: a(1), res(2, 2)
     call RANDOM_NUMBER(a)
@@ -129,22 +154,6 @@ contains
     res(:, 3) = [a(1) * a(3) - a(2), a(2) * a(3) + a(1), a(3) * a(3)]
   end function SO3
 !
-  function SO6() result(res)
-    real(RK) :: res(6, 6), tmp(6, 6)
-!
-    res = 0D0
-    res(1:2,3:4) = SO2()
-    res(3:4,1:2) = SO2()
-    res(5:6,5:6) = SO2()
-!
-    tmp = 0D0
-    tmp(4:6,1:3) = SO3()
-    tmp(1:3,4:6) = - SO3()
-!
-    res = MATMUL(res, tmp)
-!
-  end function SO6
-!
   function PER3() result(res)
     real(RK) :: res(3, 3)
     integer  :: r(3)
@@ -159,24 +168,22 @@ contains
   end function PER3
 !
   function PER15() result(res)
-    real(RK) :: res(15, 15)
+    real(RK) :: res(15, 15), a
 !
+    call RANDOM_NUMBER(a)
     res = 0D0
 !
-!   res(6:10,1:5) = eye(5)
-!   res(1:5,6:10) = eye(5)
-!
-    res(1:3,6:8) = PER3()
-    res(4:5,9:10) = eye(2)
-!
-!   res(1:2,6:7) = SO2()
-!   res(3:5,8:10) = eye(3)
-!
-    res(6:8,1:3) = PER3()
-    res(9:10,4:5) = eye(2)
-!
-!   res(6:7,1:2) = SO2()
-!   res(8:10,3:5) = eye(3)
+    if (a < 0.5D0) then
+      res(1:3, 1:3) = PER3()
+      res(4:5, 4:5) = eye(2)
+      res(6:8, 6:8) = PER3()
+      res(9:10, 9:10) = eye(2)
+    else
+      res(1:3, 6:8) = PER3()
+      res(4:5, 9:10) = eye(2)
+      res(6:8, 1:3) = PER3()
+      res(9:10, 4:5) = eye(2)
+    end if
 !
     res(11:15,11:15) = eye(5)
 !
