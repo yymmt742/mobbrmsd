@@ -11,11 +11,11 @@ program main
   integer           :: i
 !
   call u%init('test block_lower_bound')
-! fail = 0
-! do i = 1, NTEST
-!   call test1(fail)
-! end do
-! print*,fail,'/',NTEST
+  fail = 0
+  do i = 1, NTEST
+    call test1(fail)
+  end do
+  print*,fail,'/',NTEST
 !
   fail = 0
   do i = 1, NTEST
@@ -37,15 +37,15 @@ contains
     type(mol_block), parameter :: b(1) = [mol_block(m, n, f, g)]
     real(RK)                   :: X(d * m * n), Y(d * m * n)
     real(RK)                   :: w(block_lower_bound_worksize(d, 1, b))
-    real(RK)                   :: score
 !
     X = [sample(d, m * n)]
+    call centering(d, m * n, X)
     Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), PER15())]
+    call centering(d, m * n, Y)
 !
-    call block_lower_bound(d, 1, [b], X, Y, w)
-    score = w(1)
+    call block_lower_bound(d, 1, b, X, Y, w, nrand=5)
 !
-    if (score > 0.0001D0) then
+    if (w(1) > 0.0001D0) then
       fail = fail + 1
       print'(I8,F9.6)', fail, w(1)
     endif
@@ -56,27 +56,25 @@ contains
     integer, intent(inout)     :: fail
     integer, parameter         :: d = 3
     integer, parameter         :: m = 5
-    integer, parameter         :: n = 3
+    integer, parameter         :: n = 5
     integer, parameter         :: f = 3
     integer, parameter         :: g = 2
     real(RK), parameter        :: lambda = 5.0_RK
     type(mol_block), parameter :: b(1) = [mol_block(m, n, f, g)]
     real(RK)                   :: X(d * m * n), Y(d * m * n)
     real(RK)                   :: w(block_lower_bound_worksize(d, 1, b))
-    real(RK)                   :: score
     integer                    :: i
 !
-    X = [([lambda * i + 0.5 * sample(d, m)], i=1, n)]
+    X = [([lambda * i + sample(d, m)], i=1, n)]
     call centering(d, m * n, X)
-    Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), PER15())]
+    Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), PER25())]
+    call centering(d, m * n, Y)
 !
-    call block_lower_bound(d, 1, b, X, Y, w, threshold=0.000001D0, maxiter=100)
-    !call block_lower_bound(d, 1, b, X, Y, w)
-    score = w(1)
+    call block_lower_bound(d, 1, b, X, Y, w, nrand=5)
 !
-    if (score > 0.01D0) then
+    if (w(1) > 0.01D0) then
       fail = fail + 1
-      print'(I8,F9.6)', fail, w(1)
+      print'(I8,F9.4)', fail, w(1)
     endif
 !
   end subroutine test2
@@ -149,6 +147,21 @@ contains
     res(11:15,11:15) = eye(5)
 !
   end function PER15
+!
+  function PER25() result(res)
+    real(RK) :: res(25, 25)
+!
+    res = 0D0
+!
+    res(1:3,6:8) = PER3()
+    res(4:5,9:10) = eye(2)
+!
+    res(6:8,1:3) = PER3()
+    res(9:10,4:5) = eye(2)
+!
+    res(11:25,11:25) = eye(15)
+!
+  end function PER25
 !
   pure function eye(d) result(res)
     integer,intent(in) :: d

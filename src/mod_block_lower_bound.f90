@@ -80,8 +80,9 @@ module mod_block_lower_bound
     include 'dgemm.h'
   end interface
 !
-  integer(IK), parameter :: DEF_maxiter   = 1000_IK
-  real(RK), parameter    :: DEF_threshold = 1.0E-12_RK
+  integer(IK), parameter :: DEF_maxiter   = 200_IK
+  integer(IK), parameter :: DEF_nrand     = 1_IK
+  real(RK), parameter    :: DEF_threshold = 1.0E-8_RK
 !
 contains
 !
@@ -164,7 +165,7 @@ contains
   end function block_lower_bound_worksize
 !
 !| Calculate min_{P,Q} |X-PYQ|^2, Q is block rotation matrix
-   subroutine block_lower_bound(d, s, b, X, Y, w, maxiter, threshold, R0)
+   subroutine block_lower_bound(d, s, b, X, Y, w, maxiter, threshold, nrand, R0)
     integer(IK), intent(in)           :: d
     !! matrix dimension 1.
     integer(IK), intent(in)           :: s
@@ -177,19 +178,21 @@ contains
     !! target d*sum_i (mi*ni) array
     real(RK), intent(inout)           :: W(*)
     !! work array, must be larger than lower_bound_worksize(d, n, free_indices)
-    integer(IK), intent(in), optional :: maxiter
+    integer(IK), intent(in), optional :: maxiter, nrand
     !! iteration limit, default = 1000
     real(RK), intent(in), optional    :: threshold
     !! iteration limit, default = 1E-12
     real(RK), intent(in), optional    :: R0(*)
     !! initial Rotation matrix
-    integer(IK)                       :: maxiter_
+    real(RK), parameter               :: lambda = 1D-8
+    integer(IK)                       :: maxiter_, nrand_
     type(mol_block_)                  :: b_(s)
     integer(IK)                       :: dd, mn, mg, dmn
     integer(IK)                       :: cost, prev, thre, cf, cr, rw, r
     integer(IK)                       :: iy, iz
     integer(IK)                       :: i, j
 !
+!w(:block_lower_bound_worksize(d, s, b))=HUGE(0D0)
     if (d < 1 .or. s < 1 .or. ANY(mol_block_invalid(b))) then
       w(1) = rmsd(d, SUM(b%m * b%n), X, Y)
       return
@@ -210,7 +213,8 @@ contains
     rw = cr + dd                 ! covariance matrix X^TYPQ
     r  = rw + Kabsch_worksize(d) ! rotation matrix R
 !
-    maxiter_ = optarg(maxiter,   DEF_maxiter)
+    maxiter_ = optarg(maxiter,  DEF_maxiter)
+    nrand_   = optarg(nrand,    DEF_nrand)
     w(thre) = optarg(threshold, DEF_threshold) * dmn
 !
     block
@@ -224,43 +228,39 @@ contains
       end do
     end block
 !
+    call zfill(dd, w(cf))
     call get_C_fix(d, s, b_, X, Y, w(cf))
 !
     w(cost) = -RHUGE
     w(prev) = w(cost)
-    do concurrent(i=1:s)
-      w(b_(i)%best) = -RHUGE
-    end do
-    call copy(dmn, Y, w(iy))
+!   call copy(dmn, Y, w(iy))
 !
 !!! R = R0 or R = I
     if (PRESENT(R0)) then
       call copy(dd, R0, w(r))
     else
-      call eye(d, w(r))
+      call eye(d, ONE, w(r))
     end if
 !!! P = I, Qi = I
     do concurrent(i=1:s)
-      call eye(b_(i)%g, w(b_(i)%ip))
+      call eye(b_(i)%g, ONE, w(b_(i)%ip))
       do concurrent(j=1:b_(i)%g)
         block
           integer(IK) :: iq
           iq = b_(i)%iq + (j - 1) * b_(i)%ff
-          call eye(b_(i)%f, w(iq))
-          !call permat(b_(i)%f, i + j, w(iq))
+          call eye(b_(i)%f, ONE, w(iq))
         end block
       end do
     end do
 !
     do i = 1, maxiter_
-      do concurrent(j=1:s)
-        call update_PQ(d, b_(j), X(b_(j)%ix), Y(b_(j)%ix), w(r), maxiter_, i, &
-       &               w(thre), w(b_(j)%ip), w(b_(j)%iq), W)
-      end do
       call update_R(d, dd, s, b_, X, Y, w(cf), w(r), W(cr), w(cost), W(iy), W(rw), W)
-!print*,w(cost)
       if(w(cost) < w(prev)) CYCLE
       if (ABS(w(cost) - w(prev)) < w(thre)) exit
+      do concurrent(j=1:s)
+        call update_PQ(d, b_(j), X(b_(j)%ix), Y(b_(j)%ix), w(r), maxiter_, nrand_, i, &
+       &               w(thre), w(b_(j)%ip), w(b_(j)%iq), W)
+      end do
       w(prev) = w(cost)
     end do
 !
@@ -275,7 +275,8 @@ contains
       end block
     end do
 !
-    w(1) = rmsd(d, mn, X, w(iy))
+    w(cost) = rmsd(d, mn, X, w(iy))
+!print'(10f9.3)',w(:block_lower_bound_worksize(d, s, b))
 !
   end subroutine block_lower_bound
 !
@@ -285,7 +286,6 @@ contains
     real(RK), intent(in)         :: X(*), Y(*)
     real(RK), intent(inout)      :: CF(d, d)
     integer(IK)                  :: i, ix, mn_mg
-      call zfill(d * d, CF)
       do i = 1, s
         ix = b(i)%ix + b(i)%dmg
         mn_mg = b(i)%mn - b(i)%mg
@@ -293,8 +293,8 @@ contains
       end do
   end subroutine get_C_fix
 !
-  pure subroutine update_PQ(d, b, X, Y, R, maxiter, iseed, threshold, P, Q, W)
-    integer(IK), intent(in)      :: d, maxiter, iseed
+  pure subroutine update_PQ(d, b, X, Y, R, maxiter, nrand, iseed, threshold, P, Q, W)
+    integer(IK), intent(in)      :: d, maxiter, nrand, iseed
     type(mol_block_), intent(in) :: b
     real(RK), intent(in)         :: X(*), Y(*), R(d, d), threshold
     real(RK), intent(inout)      :: P(b%g, b%g), Q(b%f, b%f, b%g)
@@ -307,7 +307,7 @@ contains
 !
     call update_XTRY(d, b, X, Y, R, w(b%xtry), w(b%rest))
 !
-!   call eye(b%g, P)
+!   call eye(b%g, ONE, P)
 !
     do k = 1, maxiter
 !
@@ -351,22 +351,21 @@ contains
 !
       end do
 !
-      w(b%best) = MAX(w(b%cost), w(b%cost))
-      if (k > 2 .and. ABS(w(b%best) - w(b%cost)) < threshold) exit
+!print'(2f9.3)',w(b%cost), w(b%cost)
+!print'(2f9.3)',P
+!print'(3f9.3)',Q
+      w(b%best) = MAX(w(b%best), w(b%cost))
+      if (k >= nrand .and. ABS(w(b%best) - w(b%cost)) < threshold) exit
 !
       do concurrent(i=1:b%g)
-!       !call eye(b%f, Q(1, 1, i))
-        !call permat(b%f, i + k, Q(1, 1, i))
-        !call permat(b%f, i + k + iseed, Q(1, 1, i))
         call orthogonal(b%f, i + k + iseed, Q(1, 1, i))
       end do
 !
     end do
-!print*
 !
   end subroutine update_PQ
 !
-  pure subroutine update_R(d, dd, s, b, X, Y, CF, R, CR, trace, Z, RW, W)
+   subroutine update_R(d, dd, s, b, X, Y, CF, R, CR, trace, Z, RW, W)
     integer(IK), intent(in)      :: d, dd, s
     type(mol_block_), intent(in) :: b(s)
     real(RK), intent(in)         :: X(*), Y(*), CF(*)
@@ -378,13 +377,26 @@ contains
         call PQ_rotation(d, b(i), w(b(i)%ip), w(b(i)%iq), Y(b(i)%ix), Z(b(i)%ix))
       enddo
 !
+!print'(3f9.3)', X(:d*25)
+!print*
+!print'(3f9.3)', Y(:d*25)
+!print*
+!print'(3f9.3)', Z(:d*25)
+!print*
       call copy(dd, CF, CR)
+!print'(3f9.3)', CF(:dd)
+!print'(3f9.3)', CR(:dd)
+!print*
       do i = 1, s
 !!      CR = X(d,mn)@Z^T(mn,d)@P^T@Q^T
         call DGEMM('N', 'T', d, d, b(i)%mg, ONE, X(b(i)%ix), d, Z(b(i)%ix), d, ONE, CR, d)
       enddo
+!print'(3f9.3)', CR(:dd)
+!print*
 !!    get optimal R
       call Kabsch(d, CR, R, RW)
+!print'(3f9.3)', R(:dd)
+!print*
       trace = ddot(dd, CR, R)
   end subroutine update_R
 !
@@ -477,24 +489,15 @@ contains
     end do
   end function ddot
 !
-  pure subroutine eye(d, X)
+  pure subroutine eye(d, lambda, X)
     integer(IK), intent(in) :: d
+    real(RK), intent(in)    :: lambda
     real(RK), intent(inout) :: X(d, *)
     integer(IK)             :: i, j
     do concurrent(i=1:d, j=1:d)
-      X(i, j) = MERGE(ONE, ZERO, i == j)
+      X(i, j) = MERGE(lambda, ZERO, i == j)
     end do
   end subroutine eye
-!
-  pure subroutine permat(d, iseed, X)
-    integer(IK), intent(in) :: d, iseed
-    real(RK), intent(inout) :: X(d, *)
-    integer(IK)             :: i, j, s
-    s = MODULO(iseed, d) + 1
-    do concurrent(i=1:d, j=1:d)
-      X(i, j) = MERGE(ONE, ZERO, MODULO(s * i - j - iseed, d) == 0)
-    end do
-  end subroutine permat
 !
   pure subroutine orthogonal(d, iseed, X)
     integer(IK), intent(in) :: d, iseed
