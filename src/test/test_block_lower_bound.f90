@@ -23,6 +23,12 @@ program main
   enddo
   print*,fail,'/',NTEST
 !
+  fail = 0
+  do i = 1, NTEST
+    call test3(fail)
+  enddo
+  print*,fail,'/',NTEST
+!
   call u%finish_and_terminate()
 !
 contains
@@ -78,6 +84,34 @@ contains
     endif
 !
   end subroutine test2
+!
+  subroutine test3(fail)
+    integer, intent(inout)     :: fail
+    integer, parameter         :: d = 3
+    integer, parameter         :: m = 5
+    integer, parameter         :: n = 5
+    integer, parameter         :: f = 3
+    integer, parameter         :: g = 2
+    real(RK), parameter        :: lambda = 5.0_RK
+    type(mol_block), parameter :: b(2) = [mol_block(m, n, f, g), mol_block(m, n, f, g)]
+    real(RK)                   :: X(d * m * n * 2), Y(d * m * n * 2)
+    real(RK)                   :: w(block_lower_bound_worksize(d, 2, b))
+    integer                    :: i, j, k
+!
+    X = [([([lambda * RESHAPE([([i, j, 0], k=1, m)], [d, m]) + sample(d, m)], i=1, n)], j=0, 1)]
+    call centering(d, 2 * m * n, X)
+    Y = [MATMUL(SO3(), RESHAPE([(MATMUL(reshape(X(d * m * n * j + 1:d * m * n * (j + 1)), [d, m * n]), &
+      & PER25()), j=0, 1)], [d, m * n * 2] ))]
+    call centering(d, 2 * m * n, Y)
+!
+    call block_lower_bound(d, 2, b, X, Y, w, nrand=5)
+!
+    if (w(1) > 0.01D0) then
+      fail = fail + 1
+      print'(I8,F9.4)', fail, w(1)
+    endif
+!
+  end subroutine test3
 !
   function SO2() result(res)
     real(RK) :: a(1), res(2, 2)
