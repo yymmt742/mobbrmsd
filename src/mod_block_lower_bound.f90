@@ -13,7 +13,7 @@ module mod_block_lower_bound
   implicit none
   private
   public :: mol_block
-  public :: mol_block_invalid
+  public :: mol_block_list
   public :: block_lower_bound_worksize
   public :: block_lower_bound
 !
@@ -27,6 +27,8 @@ module mod_block_lower_bound
 !    -       X(d,f+1:,g+1:) :: Fixed.
   type mol_block
     sequence
+    integer(IK) :: p = 1
+    !  p :: pointer to memory
     integer(IK) :: m = 1
     !  m :: number of atom in a molecule
     integer(IK) :: n = 1
@@ -36,6 +38,17 @@ module mod_block_lower_bound
     integer(IK) :: g = 1
     !  g :: number of free molecule, must be g<=n
   end type mol_block
+!
+  type mol_block_list
+    integer(IK)                  :: d = 0
+    type(mol_block), allocatable :: b(:)
+  contains
+    procedure         :: child    => mol_block_list_child
+    procedure         :: invalid  => mol_block_list_invalid
+    procedure         :: nspecies => mol_block_list_nspecies
+    procedure         :: ispecies => mol_block_list_ispecies
+    final             :: mol_block_list_destroy
+  end type mol_block_list
 !
   type mol_block_
     private
@@ -85,7 +98,79 @@ module mod_block_lower_bound
   integer(IK), parameter :: DEF_nrand     = 1_IK
   real(RK), parameter    :: DEF_threshold = 1.0E-8_RK
 !
+  interface mol_block_list
+    module procedure mol_block_list_new
+  end interface mol_block_list
+!
 contains
+!
+  pure function mol_block_list_new(d, s, n, m, f) result(res)
+    integer(IK), intent(in) :: d, s, n(s), m(s), f(s)
+    type(mol_block_list)    :: res
+    integer(IK)             :: i, p
+    res%d = d
+    if (s < 1) then; allocate (res%b(0)); return
+    else; allocate (res%b(s))
+    end if
+    p = 1
+    do i = 1, s
+      res%b(i) = mol_block(p, n(i), m(i), f(i), m(i))
+      p = p + d * n(i) * m(i)
+    end do
+  end function mol_block_list_new
+!
+  pure elemental function mol_block_list_child(b) result(res)
+    class(mol_block_list), intent(in) :: b
+    type(mol_block_list)              :: res
+    integer(IK)                       :: i
+    if (.not. ALLOCATED(b%b)) then
+      allocate (res%b(0))
+      return
+    end if
+    res%b = b%b
+    do i = 1, SIZE(res%b)
+      if (res%b(i)%g == 0) cycle
+      res%b(i)%g = res%b(i)%g - 1
+    end do
+  end function mol_block_list_child
+!
+  pure elemental function mol_block_list_ispecies(b) result(res)
+    class(mol_block_list), intent(in) :: b
+    integer(IK)                       :: i, res
+    if (.not. ALLOCATED(b%b)) then
+      res = 0
+    else
+      do i = 1, SIZE(b%b)
+        if (b%b(i)%g == 0) cycle
+        res = i; return
+      end do
+    end if
+  end function mol_block_list_ispecies
+!
+  pure elemental function mol_block_list_nspecies(this) result(res)
+    class(mol_block_list), intent(in) :: this
+    integer(IK)                       :: res
+    if (.not. ALLOCATED(this%b)) then
+      res = 0
+    else
+      res = SIZE(this%b)
+    end if
+  end function mol_block_list_nspecies
+!
+  pure elemental function mol_block_list_invalid(this) result(res)
+    class(mol_block_list), intent(in) :: this
+    logical                           :: res
+    if (this%d < 1 .or. .not. ALLOCATED(this%b)) then
+      res = .false.
+    else
+      res = ANY(mol_block_invalid(this%b))
+    end if
+  end function mol_block_list_invalid
+!
+  pure elemental subroutine mol_block_list_destroy(this)
+    type(mol_block_list), intent(inout) :: this
+    if (ALLOCATED(this%b)) deallocate (this%b)
+  end subroutine mol_block_list_destroy
 !
   pure elemental function mol_block_invalid(b) result(res)
     type(mol_block), intent(in) :: b
@@ -145,40 +230,32 @@ contains
   end function b2b_
 !
 !| Calculate work array size for d*d matrix.
-  pure function block_lower_bound_worksize(d, s, b) result(res)
-    integer(IK), intent(in)           :: d
-    !! matrix collumn dimension.
-    integer(IK), intent(in)           :: s
-    !! block size
-    type(mol_block), intent(in)       :: b(s)
+  pure function block_lower_bound_worksize(b) result(res)
+    type(mol_block_list), intent(in)  :: b
     !! mol_block
-    type(mol_block_)                  :: b_(s)
+    type(mol_block_)                  :: b_(b%nspecies())
     integer(IK)                       :: dd, dmn, dmg, res
 !
-    if (d < 1 .or. s < 1 .or. ANY(mol_block_invalid(b))) then
+    if (b%invalid()) then
       res = 0
     else
-      b_ = b2b_(d, 1, 1, 1, b)
-      dd = d * d
-      dmn = d * SUM(b_%mn)
-      dmg = d * SUM(b_%mg)
-      res = SUM(b_%bs) + MAX(dmg, dd + dd + Kabsch_worksize(d)) + dmn + 1
+      b_ = b2b_(b%d, 1, 1, 1, b%b)
+      dd = b%d * b%d
+      dmn = b%d * SUM(b_%mn)
+      dmg = b%d * SUM(b_%mg)
+      res = SUM(b_%bs) + MAX(dmg, dd + dd + Kabsch_worksize(b%d)) + dmn + 1
     end if
 !
   end function block_lower_bound_worksize
 !
 !| Calculate min_{P,Q} |X-PYQ|^2, Q is block rotation matrix
-  pure subroutine block_lower_bound(d, s, b, X, Y, w, maxiter, threshold, nrand, R0)
-    integer(IK), intent(in)           :: d
-    !! matrix dimension 1.
-    integer(IK), intent(in)           :: s
-    !! matrix dimension 1.
-    type(mol_block), intent(in)       :: b(s)
+  pure subroutine block_lower_bound(b, X, Y, w, maxiter, threshold, nrand, R0)
+    type(mol_block_list), intent(in)  :: b
     !! mol_block
     real(RK), intent(in)              :: X(*)
-    !! reference d*sum_i (mi*ni) array
+    !! reference d*sum_i (mi*ni) array, the centroid must be offset to the origin.
     real(RK), intent(in)              :: Y(*)
-    !! target d*sum_i (mi*ni) array
+    !! target d*sum_i (mi*ni) array, the centroid must be offset to the origin.
     real(RK), intent(inout)           :: W(*)
     !! work array, must be larger than lower_bound_worksize(d, n, free_indices)
     integer(IK), intent(in), optional :: maxiter, nrand
@@ -189,32 +266,33 @@ contains
     !! initial Rotation matrix
     real(RK), parameter               :: lambda = 1D-8
     integer(IK)                       :: maxiter_, nrand_
-    type(mol_block_)                  :: b_(s)
+    type(mol_block_)                  :: b_(b%nspecies())
     integer(IK)                       :: dd, mn, mg, dmn, dmg
     integer(IK)                       :: cost, prev, thre, cf, cr, rw, r
     integer(IK)                       :: iy, iz
-    integer(IK)                       :: i, j
+    integer(IK)                       :: i, j, s
 !
-    if (d < 1 .or. s < 1 .or. ANY(mol_block_invalid(b))) then
-      w(1) = rmsd(d, SUM(b%m * b%n), X, Y)
+    if (b%invalid()) then
+      w(1) = rmsd(b%d, SUM(b%b%m * b%b%n), X, Y)
       return
     end if
 !
-    dd = d * d
-    mn = SUM(b%m * b%n)
-    mg = SUM(b%m * b%g)
-    dmn = d * mn
-    dmg = d * mg
+    s = b%nspecies()
+    dd = b%d * b%d
+    mn = SUM(b%b%m * b%b%n)
+    mg = SUM(b%b%m * b%b%g)
+    dmn = b%d * mn
+    dmg = b%d * mg
 !
     cost = 1
     prev = 2
     thre = 3
-    iy = thre + 1                ! copy of Y
-    iz = iy + dmn                ! copy of Y (caution, interference with others)
-    cf = iy + dmn                ! covariance matrix X^TYPQ, independent of P and Q.
-    cr = cf + dd                 ! covariance matrix X^TYPQ
-    rw = cr + dd                 ! covariance matrix X^TYPQ
-    r  = rw + Kabsch_worksize(d) ! rotation matrix R
+    iy = thre + 1                  ! copy of Y
+    iz = iy + dmn                  ! copy of Y (caution, interference with others)
+    cf = iy + dmn                  ! covariance matrix X^TYPQ, independent of P and Q.
+    cr = cf + dd                   ! covariance matrix X^TYPQ
+    rw = cr + dd                   ! covariance matrix X^TYPQ
+    r  = rw + Kabsch_worksize(b%d) ! rotation matrix R
 !
     maxiter_ = optarg(maxiter,  DEF_maxiter)
     nrand_   = optarg(nrand,    DEF_nrand)
@@ -226,7 +304,7 @@ contains
       iiz = 1
       iw = MAX(r + dd, cf + dmg)
       do i = 1, s
-        b_(i) = b2b_(d, iix, iiz, iw, b(i))
+        b_(i) = b2b_(b%d, iix, iiz, iw, b%b(i))
         iix = iix + b_(i)%dmn
         iiz = iiz + b_(i)%dmg
         iw  = iw + b_(i)%bs
@@ -234,7 +312,7 @@ contains
     end block
 !
     call zfill(dd, w(cf))
-    call get_C_fix(d, s, b_, X, Y, w(cf))
+    call get_C_fix(b%d, s, b_, X, Y, w(cf))
 !
     w(cost) = -RHUGE
     w(prev) = w(cost)
@@ -243,7 +321,7 @@ contains
     if (PRESENT(R0)) then
       call copy(dd, R0, w(r))
     else
-      call eye(d, ONE, w(r))
+      call eye(b%d, ONE, w(r))
     end if
 !!! P = I, Qi = I
     do concurrent(i=1:s)
@@ -258,28 +336,28 @@ contains
     end do
 !
     do i = 1, maxiter_
-      call update_R(d, dd, s, b_, X, Y, w(cf), w(r), W(cr), w(cost), W(iy), W(rw), W)
+      call update_R(b%d, dd, s, b_, X, Y, w(cf), w(r), W(cr), w(cost), W(iy), W(rw), W)
       if(w(cost) < w(prev)) CYCLE
       if (ABS(w(cost) - w(prev)) < w(thre)) exit
       do concurrent(j=1:s)
-        call update_PQ(d, b_(j), X(b_(j)%ix), Y(b_(j)%ix), w(r), maxiter_, nrand_, i, &
+        call update_PQ(b%d, b_(j), X(b_(j)%ix), Y(b_(j)%ix), w(r), maxiter_, nrand_, i, &
        &               w(thre), w(b_(j)%ip), w(b_(j)%iq), W)
       end do
       w(prev) = w(cost)
     end do
 !
-    call R_rotation(d, mn, w(r), Y, w(iy))
+    call R_rotation(b%d, mn, w(r), Y, w(iy))
     do concurrent(i=1:s)
       block
         integer(IK) :: iiy, iiz
         iiy = iy + b_(i)%ix - 1
         iiz = iz + b_(i)%iz - 1
-        call PQ_rotation(d, b_(i), w(b_(i)%ip), w(b_(i)%iq), w(iiy), w(iiz))
+        call PQ_rotation(b%d, b_(i), w(b_(i)%ip), w(b_(i)%iq), w(iiy), w(iiz))
         call copy(b_(i)%dmg, w(iiz), w(iiy))
       end block
     end do
 !
-    w(cost) = rmsd(d, mn, X, w(iy))
+    w(cost) = rmsd(b%d, mn, X, w(iy))
 !
   end subroutine block_lower_bound
 !

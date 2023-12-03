@@ -35,7 +35,7 @@ contains
       m = SIZE(sym, 2)
       ALLOCATE(res%p(m))
       do concurrent(i=1:m)
-        res%p(i) = group_permutation(sym(:,i))
+        res%p(i) = group_permutation(sym(:, i))
       enddo
     end if
 !

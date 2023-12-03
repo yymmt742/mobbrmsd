@@ -315,7 +315,7 @@ contains
     do concurrent(i=1:n)
       res(i) = a(i)
     enddo
-    call qsi(n, res)
+    if (n > 1) call qsi(n, res)
 !
     u = 1
     res(n + u) = 1
@@ -340,7 +340,7 @@ contains
     integer(IK), intent(inout) :: s(n)
     integer(IK)                :: i, j, p, t
 !
-    j = SIZE(s); i = 1; p = j / 2
+    j = n; i = 1; p = j / 2
 !
     do
 !
@@ -358,7 +358,7 @@ contains
     end do
 !
     if (2 < i) call qsi(i - 1, s(:i - 1))
-    if (j + 1 < SIZE(s)) call qsi(n - j, s(j + 1:))
+    if (j + 1 < n) call qsi(n - j, s(j + 1:))
 !
   end subroutine qsi
 !
