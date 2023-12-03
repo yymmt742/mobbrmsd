@@ -26,6 +26,7 @@ contains
     type(mol_block_list)     :: b
     real(RK)                 :: X(d, mn), Y(d, mn)
     type(node)               :: a
+    type(breadth)            :: z
     integer                  :: i
 !
     b = mol_block_list(d, s, [m1,m2,m3], [n1,n2,n3], [f1,f2,f3])
@@ -41,11 +42,13 @@ contains
       Y(:, i) = i
     enddo
 !
-!   a = node(b, x, y)
+    a = node(b, [x], [y])
+    z = a%generate_breadth(r, b, [x], [y])
+    print'(*(f9.3))',z%nodes%lower
 !
   end subroutine test1
 !
-! subroutine test1()
+! subroutine test2()
 !   integer, parameter          :: d = 3
 !   integer, parameter          :: m = 12
 !   integer, parameter          :: n = 8
@@ -98,7 +101,7 @@ contains
 !   p = c%nodes(4)%generate_childs(mol, X, Y)
 !   print *, p%nodes(:)%lower
 !
-! end subroutine test1
+! end subroutine test2
 !
 ! function sample(d, n) result(res)
 !   integer, intent(in)  :: d, n

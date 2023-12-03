@@ -123,6 +123,7 @@ contains
     class(mol_block_list), intent(in) :: b
     type(mol_block_list)              :: res
     integer(IK)                       :: i
+    res%d = b%d
     if (.not. ALLOCATED(b%b)) then
       allocate (res%b(0))
       return
@@ -131,6 +132,7 @@ contains
     do i = 1, SIZE(res%b)
       if (res%b(i)%g == 0) cycle
       res%b(i)%g = res%b(i)%g - 1
+      return
     end do
   end function mol_block_list_child
 !
