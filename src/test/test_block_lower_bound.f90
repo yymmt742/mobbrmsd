@@ -2,6 +2,7 @@ program main
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_rmsd
   use mod_rmsd_brute
+  use mod_mol_block
   use mod_block_lower_bound
   use mod_unittest
   implicit none
