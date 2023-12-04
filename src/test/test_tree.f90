@@ -1,6 +1,7 @@
 program main
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_block_lower_bound
+  use mod_mol_block
   use mod_molecular_rotation
   use mod_molecular_permutation
   use mod_tree
@@ -16,34 +17,35 @@ program main
 contains
 !
   subroutine test1()
-    integer, parameter       :: d = 3
-    integer, parameter       :: s = 3
-    integer, parameter       :: m1 = 5, n1 = 3, f1 = 3, g1 = 0
-    integer, parameter       :: m2 = 3, n2 = 4, f2 = 2, g2 = 3
-    integer, parameter       :: m3 = 7, n3 = 5, f3 = 7, g3 = 5
-    integer, parameter       :: mn = m1 * n1 + m2 * n2 + m3 * n3
-    type(molecular_rotation) :: r(s)
-    type(mol_block_list)     :: b
-    real(RK)                 :: X(d, mn), Y(d, mn)
-    type(node)               :: a
-    type(breadth)            :: z
-    integer                  :: i
+    integer, parameter          :: d = 3
+    integer, parameter          :: s = 3
+    integer, parameter          :: m1 = 5, n1 = 3, f1 = 3
+    integer, parameter          :: m2 = 3, n2 = 4, f2 = 2
+    integer, parameter          :: m3 = 7, n3 = 5, f3 = 7
+    integer, parameter          :: mn = m1 * n1 + m2 * n2 + m3 * n3
+    type(mol_block_list)        :: blk
+    type(molecular_rotation)    :: rot(s)
+    type(molecular_permutation) :: per(s)
+    real(RK)                    :: X(d, mn), Y(d, mn)
+    type(node)                  :: a
+    type(breadth)               :: z
+    integer                     :: i
 !
-    b = mol_block_list(d, s, [m1,m2,m3], [n1,n2,n3], [f1,f2,f3])
-    b%b(1)%g = g1
-    b%b(2)%g = g2
-    b%b(3)%g = g3
-    r(1) = molecular_rotation(RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m1, 2]))
-    r(2) = molecular_rotation(RESHAPE([2, 1, 3], [m2, 1]))
-    r(3) = molecular_rotation(RESHAPE([7, 6, 5, 4, 3, 2, 1], [m3, 1]))
+    blk = mol_block_list(d, s, [m1,m2,m3], [n1,n2,n3], [f1,f2,f3])
+    rot(1) = molecular_rotation(RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m1, 2]))
+    rot(2) = molecular_rotation(RESHAPE([2, 1, 3], [m2, 1]))
+    rot(3) = molecular_rotation(RESHAPE([7, 6, 5, 4, 3, 2, 1], [m3, 1]))
+    per(1) = molecular_permutation(n1)
+    per(2) = molecular_permutation(n2)
+    per(3) = molecular_permutation(n3)
 !
     do concurrent(i=1:mn)
       X(:, i) = i
       Y(:, i) = i
     enddo
 !
-    a = node(b, [x], [y])
-    z = a%generate_breadth(r, b, [x], [y])
+    a = node(blk, rot, per, [x], [y])
+    z = a%generate_breadth(rot, [x], [y])
     print'(*(f9.3))',z%nodes%lower
 !
   end subroutine test1

@@ -34,6 +34,8 @@ module mod_mol_block
     type(mol_block), allocatable :: b(:)
     !  mol_blocks
   contains
+    procedure         :: n_atom   => mol_block_list_n_atom
+    procedure         :: n_spc    => mol_block_list_n_spc
     procedure         :: child    => mol_block_list_child
     procedure         :: invalid  => mol_block_list_invalid
     procedure         :: nspecies => mol_block_list_nspecies
@@ -71,6 +73,26 @@ contains
       p = p + d * n(i) * m(i)
     end do
   end function mol_block_list_new
+!
+  pure elemental function mol_block_list_n_atom(this) result(res)
+    class(mol_block_list), intent(in) :: this
+    integer(IK)                       :: res
+    if (ALLOCATED(this%b)) then
+      res = SUM(this%b%n * this%b%m)
+    else
+      res = 0
+    end if
+  end function mol_block_list_n_atom
+!
+  pure elemental function mol_block_list_n_spc(this) result(res)
+    class(mol_block_list), intent(in) :: this
+    integer(IK)                       :: res
+    if (ALLOCATED(this%b)) then
+      res = SIZE(this%b)
+    else
+      res = 0
+    end if
+  end function mol_block_list_n_spc
 !
   pure elemental function mol_block_list_child(b) result(res)
     class(mol_block_list), intent(in) :: b

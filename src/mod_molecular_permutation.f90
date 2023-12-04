@@ -7,7 +7,7 @@ module mod_molecular_permutation
   public :: molecular_permutation
 !
   type, extends(group_permutation) :: molecular_permutation
-    private
+!   private
     integer(IK)              :: g = 0
     integer(IK), allocatable :: iper(:)
     integer(IK), allocatable :: isym(:)
@@ -30,6 +30,7 @@ contains
     integer(IK), intent(in)           :: n
     !! number of molecules
     type(molecular_permutation)       :: res
+    integer(IK)                       :: i
 !
     if (n < 0) then
       res%g = 0
@@ -38,6 +39,9 @@ contains
     else
       res%g = n
       ALLOCATE(res%iper(n))
+      do concurrent(i=1:n)
+        res%iper(i) = i
+      end do
       ALLOCATE(res%isym(n), source=0)
     endif
 !
@@ -110,11 +114,11 @@ contains
   end function molecular_permutation_child
 !
   pure subroutine molecular_permutation_mol_swap(this, d, m, rot, X)
-    class(molecular_permutation), intent(inout) :: this
-    integer(IK), intent(in)                     :: d, m
-    type(molecular_rotation), intent(in)        :: rot
-    real(RK), intent(inout)                     :: X(*)
-    integer(IK)                                 :: i, dm
+    class(molecular_permutation), intent(in) :: this
+    integer(IK), intent(in)                  :: d, m
+    type(molecular_rotation), intent(in)     :: rot
+    real(RK), intent(inout)                  :: X(*)
+    integer(IK)                              :: i, dm
     dm = d * m
     call group_permutation_swap(this, dm, X)
     do concurrent(i=1:SIZE(this%isym))

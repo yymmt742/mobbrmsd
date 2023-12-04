@@ -9,9 +9,11 @@ module mod_molecular_rotation
 !
   type molecular_rotation
     private
+    integer(IK)                          :: m = 0
     type(group_permutation), allocatable :: p(:)
   contains
-    procedure :: nsym         => molecular_rotation_nsym
+    procedure :: n_atom       => molecular_rotation_n_atom
+    procedure :: n_sym        => molecular_rotation_n_sym
     procedure :: swap         => molecular_rotation_swap
     procedure :: clear        => molecular_rotation_clear
     final     :: molecular_rotation_destroy
@@ -28,20 +30,26 @@ contains
     integer(IK), intent(in), optional :: sym(:, :)
     !! symmetry indices
     type(molecular_rotation)          :: res
-    integer(IK)                       :: i, n, m
+    integer(IK)                       :: i, n
 !
     if (PRESENT(sym)) then
-      n = SIZE(sym, 1)
-      m = SIZE(sym, 2)
-      ALLOCATE(res%p(m))
-      do concurrent(i=1:m)
+      res%m = SIZE(sym, 1)
+      n = SIZE(sym, 2)
+      ALLOCATE(res%p(n))
+      do concurrent(i=1:n)
         res%p(i) = group_permutation(sym(:, i))
       enddo
     end if
 !
   end function molecular_rotation_new
 !
-  pure elemental function molecular_rotation_nsym(this) result(res)
+  pure elemental function molecular_rotation_n_atom(this) result(res)
+    class(molecular_rotation), intent(in) :: this
+    integer(IK)                           :: res
+    res = this%m
+  end function molecular_rotation_n_atom
+!
+  pure elemental function molecular_rotation_n_sym(this) result(res)
     class(molecular_rotation), intent(in) :: this
     integer(IK)                           :: res
     if (ALLOCATED(this%p)) then
@@ -49,18 +57,19 @@ contains
     else
       res = 0
     end if
-  end function molecular_rotation_nsym
+  end function molecular_rotation_n_sym
 !
   pure subroutine molecular_rotation_swap(this, d, X, isym)
     class(molecular_rotation), intent(in) :: this
     integer(IK), intent(in)               :: d, isym
     real(RK), intent(inout)               :: X(*)
-    if (isym < 1 .or. this%nsym() < isym) return
+    if (isym < 1 .or. this%n_sym() < isym) return
     call this%p(isym)%swap(d, X)
   end subroutine molecular_rotation_swap
 !
   pure elemental subroutine molecular_rotation_clear(this)
     class(molecular_rotation), intent(inout) :: this
+    this%m = 0
     if (ALLOCATED(this%p)) deallocate (this%p)
   end subroutine molecular_rotation_clear
 !
