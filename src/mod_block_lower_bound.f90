@@ -202,6 +202,10 @@ contains
     call zfill(dd, w(cf))
     call get_C_fix(b%d, s, b_, X, Y, w(cf))
 !
+    do concurrent(i=1:s)
+      call zfill(b_(i)%gg, w(b_(i)%rest))
+    end do
+!
     w(cost) = -RHUGE
     w(prev) = w(cost)
 !
