@@ -42,6 +42,10 @@ contains
     integer(IK)                   :: dd, m, s, u, vt, iw
 !
     if (d < 1) RETURN
+    if (d == 1)then
+      rot(1) = SIGN(ONE, cov(1))
+      RETURN
+    endif
 !
     dd = d * d
     m = 1
