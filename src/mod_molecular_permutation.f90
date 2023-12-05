@@ -86,28 +86,27 @@ contains
       enddo
     else
       res%g = this%g - 1
-      do concurrent(i=1:iper-1)
+      do concurrent(i=1:iper - 1)
         res%iper(i) = this%iper(i)
-      enddo
-      do concurrent(i=iper+1:this%g)
+      end do
+      do concurrent(i=iper + 1:this%g)
         res%iper(i - 1) = this%iper(i)
-      enddo
+      end do
       res%iper(this%g) = this%iper(iper)
-      do concurrent(i=this%g+1:n)
-        res%iper(i - 1) = this%iper(i)
-      enddo
+      do concurrent(i=this%g + 1:n)
+        res%iper(i) = this%iper(i)
+      end do
     end if
 !
-    if (.not. ALLOCATED(this%iper)) then
-    else
-      do concurrent(i=1:this%g-1)
+    if (ALLOCATED(this%isym)) then
+      do concurrent(i=1:this%g - 1)
         res%isym(i) = this%isym(i)
-      enddo
-      res%isym(this%g) = isym
-      do concurrent(i=this%g+1:n)
+      end do
+      if (this%g > 0) res%isym(this%g) = isym
+      do concurrent(i=this%g + 1:n)
         res%isym(i) = this%isym(i)
-      enddo
-    endif
+      end do
+    end if
 !
     call group_permutation_init(res, res%iper)
 !

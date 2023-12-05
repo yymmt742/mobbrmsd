@@ -107,6 +107,7 @@ contains
     do i = 1, SIZE(res%b)
       if (res%b(i)%g == 0) cycle
       res%b(i)%g = res%b(i)%g - 1
+      if (res%b(i)%g == 0) cycle
       return
     end do
   end function mol_block_list_child

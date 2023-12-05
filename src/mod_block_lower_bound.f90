@@ -160,10 +160,9 @@ contains
     integer(IK)                       :: iy, iz
     integer(IK)                       :: i, j, s
 !
-    if (b%invalid()) then
-      w(1) = rmsd(b%d, SUM(b%b%m * b%b%n), X, Y)
-      return
-    end if
+    w(1) = RHUGE
+!
+    if (b%invalid()) return
 !
     s = b%nspecies()
     dd = b%d * b%d
@@ -175,6 +174,18 @@ contains
     cost = 1
     prev = 2
     thre = 3
+!
+    if (mg < 1) then
+      r = thre + 1
+      cr = r + dd
+      rw = cr + dd
+      iy = rw
+      call atom_fixed_R(b%d, mn, X, Y, w(r), w(cr), w(rw))
+      call R_rotation(b%d, mn, w(r), Y, w(iy))
+      w(cost) = rmsd(b%d, mn, X, w(iy))
+      return
+    end if
+!
     iy = thre + 1                  ! copy of Y
     iz = iy + dmn                  ! copy of Y (caution, interference with others)
     cf = iy + dmn                  ! covariance matrix X^TYPQ, independent of P and Q.
@@ -199,15 +210,15 @@ contains
       end do
     end block
 !
+    w(cost) = -RHUGE
+    w(prev) = w(cost)
+!
     call zfill(dd, w(cf))
     call get_C_fix(b%d, s, b_, X, Y, w(cf))
 !
     do concurrent(i=1:s)
       call zfill(b_(i)%gg, w(b_(i)%rest))
     end do
-!
-    w(cost) = -RHUGE
-    w(prev) = w(cost)
 !
 !!! R = R0 or R = I
     if (PRESENT(R0)) then
@@ -345,10 +356,10 @@ contains
     real(RK), intent(inout)      :: R(*), CR(*), trace, Z(*), RW(*), W(*)
     integer(IK)                  :: i
 !!    W = CF + YPQXT
-      do concurrent(i = 1:s)
+      do concurrent(i=1:s)
 !!      PQ rotation
         call PQ_rotation(d, b(i), w(b(i)%ip), w(b(i)%iq), Y(b(i)%ix), Z(b(i)%ix))
-      enddo
+      end do
 !
       call copy(dd, CF, CR)
       do i = 1, s
@@ -359,6 +370,14 @@ contains
       call Kabsch(d, CR, R, RW)
       trace = ddot(dd, CR, R)
   end subroutine update_R
+!
+  pure subroutine atom_fixed_R(d, mn, X, Y, R, CR, RW)
+    integer(IK), intent(in)      :: d, mn
+    real(RK), intent(in)         :: X(*), Y(*)
+    real(RK), intent(inout)      :: R(*), CR(*), RW(*)
+      call DGEMM('N', 'T', d, d, mn, ONE, X, d, Y, d, ZERO, CR, d)
+      call Kabsch(d, CR, R, RW)
+  end subroutine atom_fixed_R
 !
   pure subroutine R_rotation(d, n, R, X, W)
     integer(IK), intent(in) :: d, n
