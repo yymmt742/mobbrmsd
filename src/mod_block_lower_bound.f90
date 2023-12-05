@@ -7,7 +7,7 @@ module mod_block_lower_bound
   use mod_optarg
   use mod_rmsd
   use mod_det
-  use mod_cov
+  use mod_svd
   use mod_Kabsch
   use mod_Procrustes
   use mod_mol_block
@@ -58,6 +58,7 @@ module mod_block_lower_bound
 !
   interface
     include 'dgemm.h'
+    include 'dgesvd.h'
   end interface
 !
   integer(IK), parameter :: DEF_maxiter   = 200_IK
@@ -242,9 +243,7 @@ contains
     end do
 !
     do i = 1, maxiter_
-      call update_R(b%d, dd, s, b_, X, Y, w(cf), w(r), W(cr), w(cost), W(iy), W(rw), W)
-      print*,i,w(cost)
-      print'(3f9.3)',w(r:r+dd-1)
+      call update_R(b%d, dd, mg, mn, s, b_, X, Y, w(cf), w(r), W(cr), w(cost), W(iy), W(rw), W)
       if (ABS(w(cost) - w(prev)) < w(thre)) exit
       do j=1,s
       !do concurrent(j=1:s)
@@ -255,15 +254,6 @@ contains
     end do
 !
     call R_rotation(b%d, mn, w(r), Y, w(iy))
-print*,dd,dmn
-print'(3f9.3)',w(r:r+dd-1)
-print*
-print'(3f9.3)',X(:dmn)
-print*
-print'(3f9.3)',Y(:dmn)
-print*
-print'(3f9.3)',w(iy:iy+dmn-1)
-print*
     do concurrent(i=1:s)
       block
         integer(IK) :: iiy, iiz
@@ -274,9 +264,7 @@ print*
       end block
     end do
 !
-print'(3f9.3)',w(iy:iy+dmn-1)
     w(cost) = rmsd(b%d, mn, X, w(iy))
-print*,w(cost)
 !
   end subroutine block_lower_bound
 !
@@ -364,17 +352,18 @@ print*,w(cost)
 !
     end do
 !
-print'(6f12.6)',w(b%rest:b%rest+b%gg-1)
-print'(6f12.6)',P
-print'(6f12.6)',matmul(P, transpose(P))
-print'(f9.3)',Q
+!print'(6f12.6)',w(b%rest:b%rest+b%gg-1)
+!print'(6f12.6)',P
+!print'(6f12.6)',matmul(P, transpose(P))
+!print'(f9.3)',Q
   end subroutine update_PQ
 !
-  pure subroutine update_R(d, dd, s, b, X, Y, CF, R, CR, trace, Z, RW, W)
-    integer(IK), intent(in)      :: d, dd, s
+  pure subroutine update_R(d, dd, mg, mn, s, b, X, Y, CF, R, CR, trace, Z, RW, W)
+    integer(IK), intent(in)      :: d, dd, mg, mn, s
     type(mol_block_), intent(in) :: b(s)
     real(RK), intent(in)         :: X(*), Y(*), CF(*)
     real(RK), intent(inout)      :: R(*), CR(*), trace, Z(*), RW(*), W(*)
+    real(RK)                     :: U(d, d), V(d)
     integer(IK)                  :: i
 !!    W = CF + YPQXT
       do concurrent(i=1:s)
@@ -382,15 +371,40 @@ print'(f9.3)',Q
         call PQ_rotation(d, b(i), w(b(i)%ip), w(b(i)%iq), Y(b(i)%ix), Z(b(i)%ix))
       end do
 !
+      call reduce_dimension(d, mg, mn, X, Y, Z, U, V)
+!
       call copy(dd, CF, CR)
       do i = 1, s
 !!      CR = X(d,mn)@Z^T(mn,d)@P^T@Q^T
         call DGEMM('N', 'T', d, d, b(i)%mg, ONE, X(b(i)%ix), d, Z(b(i)%ix), d, ONE, CR, d)
       enddo
+      call DGEMM('T', 'N', d, d, d, ONE, U, d, CR, d, ZERO, RW, d)
+      call DGEMM('N', 'N', d, d, d, ONE, RW, d, U, d, ZERO, CR, d)
 !!    get optimal R
       call Kabsch(d, CR, R, RW)
+      call DGEMM('N', 'N', d, d, d, ONE, U, d, R, d, ZERO, RW, d)
+      call DGEMM('N', 'T', d, d, d, ONE, RW, d, U, d, ZERO, R, d)
       trace = ddot(dd, CR, R)
   end subroutine update_R
+!
+  pure subroutine reduce_dimension(d, mg, mn, X, Y, Z, U, S)
+    integer(IK), intent(in)      :: d, mg, mn
+    real(RK), intent(in)         :: X(d, mn), Y(d, mn), Z(d, mg)
+    real(RK), intent(inout)      :: U(d, d), S(d)
+    real(RK)                     :: M(d, mn), dumm(1)
+    real(RK), allocatable        :: W(:)
+    integer(IK)                  :: i, j, lw, info
+      do concurrent(i=1:d, j=1:mg)
+        M(i, j) = X(i, j) - Z(i, j)
+      end do
+      do concurrent(i=1:d, j=mg + 1:mn)
+        M(i, j) = X(i, j) - Y(i, j)
+      end do
+      call DGESVD('A', 'N', d, mn, M, d, S, U, d, dumm, mn, dumm, -1, info)
+      lw = NINT(dumm(1))
+      allocate (W(lw))
+      call DGESVD('A', 'N', d, mn, M, d, S, U, d, dumm, mn, W, lw, info)
+  end subroutine reduce_dimension
 !
   pure subroutine atom_fixed_R(d, mn, X, Y, R, CR, RW)
     integer(IK), intent(in)      :: d, mn

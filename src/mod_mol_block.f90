@@ -30,6 +30,8 @@ module mod_mol_block
 !
   type mol_block_list
     integer(IK)                  :: d = 0
+    integer(IK)                  :: mg = 0
+    integer(IK)                  :: mn = 0
     !  d :: spatial dimension
     type(mol_block), allocatable :: b(:)
     !  mol_blocks
@@ -72,6 +74,8 @@ contains
       res%b(i) = mol_block(p, m(i), n(i), f(i), n(i))
       p = p + d * n(i) * m(i)
     end do
+    res%mg = SUM(res%b%m * res%b%g)
+    res%mn = SUM(res%b%m * res%b%n)
   end function mol_block_list_new
 !
   pure elemental function mol_block_list_n_atom(this) result(res)
@@ -99,6 +103,8 @@ contains
     type(mol_block_list)              :: res
     integer(IK)                       :: i
     res%d = b%d
+    res%mg = b%mg
+    res%mn = b%mn
     if (.not. ALLOCATED(b%b)) then
       allocate (res%b(0))
       return
