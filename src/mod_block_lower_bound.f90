@@ -131,7 +131,11 @@ contains
       dd = b%d * b%d
       dmn = b%d * SUM(b_%mn)
       dmg = b%d * SUM(b_%mg)
-      res = SUM(b_%bs) + MAX(dmg, dd + dd + Kabsch_worksize(b%d)) + dmn + 1
+      if (dmg < 1) then
+        res = dd + MAX(dmn, dd + Kabsch_worksize(b%d))
+      else
+        res = SUM(b_%bs) + MAX(dmg, dd + dd + Kabsch_worksize(b%d)) + dmn + 3
+      end if
     end if
 !
   end function block_lower_bound_worksize
@@ -171,20 +175,20 @@ contains
     dmn = b%d * mn
     dmg = b%d * mg
 !
+    if (mg < 1) then
+      r = 1
+      cr = r + dd
+      rw = cr + dd
+      iy = cr
+      call atom_fixed_R(b%d, mn, X, Y, w(r), w(cr), w(rw))
+      call R_rotation(b%d, mn, w(r), Y, w(iy))
+      w(1) = rmsd(b%d, mn, X, w(iy))
+      return
+    end if
+!
     cost = 1
     prev = 2
     thre = 3
-!
-    if (mg < 1) then
-      r = thre + 1
-      cr = r + dd
-      rw = cr + dd
-      iy = rw
-      call atom_fixed_R(b%d, mn, X, Y, w(r), w(cr), w(rw))
-      call R_rotation(b%d, mn, w(r), Y, w(iy))
-      w(cost) = rmsd(b%d, mn, X, w(iy))
-      return
-    end if
 !
     iy = thre + 1                  ! copy of Y
     iz = iy + dmn                  ! copy of Y (caution, interference with others)

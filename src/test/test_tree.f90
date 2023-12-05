@@ -10,7 +10,8 @@ program main
   type(unittest) :: u
 !
   call u%init('test node')
-  call test1()
+! call test1()
+  call test2()
 !
   call u%finish_and_terminate()
 !
@@ -41,14 +42,60 @@ contains
 !
     do concurrent(i=1:mn)
       X(:, i) = i
-      Y(:, i) = i
     enddo
+    Y = X
 !
     a = node(blk, rot, per, [x], [y])
     z = a%generate_breadth(rot, [x], [y])
-    print'(*(f9.3))',z%nodes%lower
+    print'(*(f9.3))',z%nodes%lowerbound
 !
   end subroutine test1
+!
+  subroutine test2()
+    integer, parameter          :: d = 3
+    integer, parameter          :: s = 2
+    integer, parameter          :: m1 = 5, n1 = 3, f1 = 3
+    integer, parameter          :: m2 = 3, n2 = 4, f2 = 2
+    integer, parameter          :: mn = m1 * n1 + m2 * n2
+    type(mol_block_list)        :: blk
+    type(molecular_rotation)    :: rot(s)
+    type(molecular_permutation) :: per(s)
+    real(RK)                    :: X(d, mn), Y(d, mn)
+    type(node)                  :: a
+    type(breadth)               :: z(6)
+    integer                     :: i, m
+!
+    blk = mol_block_list(d, s, [m1,m2], [n1,n2], [f1,f2])
+    rot(1) = molecular_rotation(RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m1, 2]))
+    rot(2) = molecular_rotation(RESHAPE([2, 1, 3], [m2, 1]))
+    per = molecular_permutation([n1, n2])
+!
+    do concurrent(i=1:mn)
+      X(:, i) = [1, i, i*i]
+    enddo
+    Y = X
+!
+    a = node(blk, rot, per, [x], [y])
+    z(1) = a%generate_breadth(rot, [x], [y])
+    m    = MINLOC(z(1)%nodes%lowerbound, 1)
+    print'(I4,*(f9.2))',m, z(1)%nodes%lowerbound
+    z(2) = z(1)%nodes(m)%generate_breadth(rot, [x], [y])
+    m    = MINLOC(z(2)%nodes%lowerbound, 1)
+    print'(I4,*(f9.2))',m, z(2)%nodes%lowerbound
+    z(3) = z(2)%nodes(m)%generate_breadth(rot, [x], [y])
+    m    = MINLOC(z(3)%nodes%lowerbound, 1)
+    print'(I4,*(f9.2))',m, z(3)%nodes%lowerbound
+    z(4) = z(3)%nodes(m)%generate_breadth(rot, [x], [y])
+    m    = MINLOC(z(4)%nodes%lowerbound, 1)
+    print'(I4,*(f9.2))',m, z(4)%nodes%lowerbound
+    z(5) = z(4)%nodes(m)%generate_breadth(rot, [x], [y])
+    m    = MINLOC(z(5)%nodes%lowerbound, 1)
+    print'(I4,*(f9.2))',m, z(5)%nodes%lowerbound
+    z(6) = z(5)%nodes(m)%generate_breadth(rot, [x], [y])
+    m    = MINLOC(z(6)%nodes%lowerbound, 1)
+    print'(I4,*(f9.2))',m, z(6)%nodes%lowerbound
+!
+  end subroutine test2
 !
 ! subroutine test2()
 !   integer, parameter          :: d = 3

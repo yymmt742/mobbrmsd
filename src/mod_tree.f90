@@ -1,5 +1,5 @@
 module mod_tree
-  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_molecular_rotation
   use mod_molecular_permutation
   use mod_mol_block
@@ -14,7 +14,7 @@ module mod_tree
     !! molecular permutation block
     type(molecular_permutation), allocatable :: per(:)
     !! molecular permutation
-    real(RK), public                         :: lower = -HUGE(ZERO)
+    real(RK), public                         :: lowerbound = RHUGE
     !! the lower bound
   contains
     procedure         :: generate_breadth => node_generate_breadth
@@ -68,7 +68,7 @@ contains
     end do
     call centering(blk%d, mn, y_)
     call block_lower_bound(blk, x_, y_, w)
-    res%lower = w(1)
+    res%lowerbound = w(1)
 !
   end function node_new
 !
@@ -94,7 +94,7 @@ contains
   end subroutine centering
 !
 !| generate childe nodes instance
-  function node_generate_breadth(this, rot, x, y) result(res)
+  pure function node_generate_breadth(this, rot, x, y) result(res)
     class(node), intent(in)               :: this
     !! molecular template
     class(molecular_rotation), intent(in) :: rot(:)
@@ -111,9 +111,10 @@ contains
     b_child = this%blk%child()
     ispc = b_child%ispecies()
     nspc = b_child%nspecies()
-!
+    if (ispc < 1) ispc = nspc
     nper = b_child%b(ispc)%g + 1
     nsym = rot(ispc)%n_sym()
+!
     allocate (res%nodes(nper * (nsym + 1)))
 !
     do concurrent(iper=1:nper, isym=0:nsym)
@@ -135,7 +136,7 @@ contains
 !
   pure elemental subroutine node_destroy(this)
     type(node), intent(inout) :: this
-    this%lower = -HUGE(ZERO)
+    this%lowerbound = RHUGE
   end subroutine node_destroy
 !
   pure elemental subroutine breadth_destroy(this)
