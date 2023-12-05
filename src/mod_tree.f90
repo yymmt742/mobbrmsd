@@ -34,7 +34,8 @@ module mod_tree
 contains
 !
 !| generate node instance
-  pure function node_new(blk, rot, per, x, y) result(res)
+  function node_new(blk, rot, per, x, y) result(res)
+  !pure function node_new(blk, rot, per, x, y) result(res)
     class(mol_block_list), intent(in)        :: blk
     class(molecular_rotation), intent(in)    :: rot(:)
     !! molecular rotation
@@ -60,14 +61,19 @@ contains
       res%per(i) = per(i)
     end do
 !
+print*, res%blk%d, res%blk%b
     call copy(dmn, x, x_)
+print'(3f9.3)',x_(:dmn)
+print*
     call centering(blk%d, mn, x_)
     call copy(dmn, y, y_)
     do concurrent(i=1:s)
       call per(i)%mol_swap(blk%d, blk%b(i)%m, rot(i), y_(blk%b(i)%p))
     end do
+print'(3f9.3)',y_(:dmn)
+print*
     call centering(blk%d, mn, y_)
-    call block_lower_bound(blk, x_, y_, w)
+    call block_lower_bound(blk, x_, y_, w, nrand=50)
     res%lowerbound = w(1)
 !
   end function node_new
@@ -94,7 +100,7 @@ contains
   end subroutine centering
 !
 !| generate childe nodes instance
-  pure function node_generate_breadth(this, rot, x, y) result(res)
+   function node_generate_breadth(this, rot, x, y) result(res)
     class(node), intent(in)               :: this
     !! molecular template
     class(molecular_rotation), intent(in) :: rot(:)
@@ -117,7 +123,9 @@ contains
 !
     allocate (res%nodes(nper * (nsym + 1)))
 !
-    do concurrent(iper=1:nper, isym=0:nsym)
+    do isym=0,nsym
+    do iper=1,nper
+    !do concurrent(iper=1:nper, isym=0:nsym)
       block
         type(molecular_permutation) :: p_child(nspc)
         integer(IK)                 :: i
@@ -130,6 +138,7 @@ contains
         end do
         res%nodes(isym * nper + iper) = node(b_child, rot, p_child, x, y)
       end block
+    end do
     end do
 !
   end function node_generate_breadth

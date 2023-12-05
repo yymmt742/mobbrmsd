@@ -100,6 +100,18 @@ target_include_directories( test_svd PRIVATE ${purelapack_DIR}/include )
 target_link_libraries( test_svd PRIVATE purelapack )
 add_test( NAME test_svd COMMAND test_svd )
 
+add_executable( test_pca )
+target_include_directories( test_pca PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_pca PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                 ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
+                                 ${CMAKE_CURRENT_SOURCE_DIR}/../mod_pca.f90
+                                 test_pca.f90 )
+target_link_libraries( test_pca PRIVATE unittest )
+target_include_directories( test_pca PRIVATE ${purelapack_DIR}/mod_files )
+target_include_directories( test_pca PRIVATE ${purelapack_DIR}/include )
+target_link_libraries( test_pca PRIVATE purelapack )
+add_test( NAME test_pca COMMAND test_pca )
+
 add_executable( test_rot )
 target_include_directories( test_rot PRIVATE ${unittest_DIR}/mod_files )
 target_include_directories( test_rot PRIVATE ${purelapack_DIR}/mod_files )
@@ -130,6 +142,7 @@ target_include_directories( test_procrustes PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_procrustes PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_pca.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
                                     test_procrustes.f90 )
 target_link_libraries( test_procrustes PRIVATE unittest )

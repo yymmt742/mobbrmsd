@@ -1,4 +1,4 @@
-!| Calculate min_{R,P,Q1,...,Q_n} |X-R@Y@f(P)@g(Q1,Q2,...,Qn)|^2 for R\in\R^{d,d}, P\in \R^{n,n} and Qi\in \R^{m,m}.
+!1e| Calculate min_{R,P,Q1,...,Q_n} |X-R@Y@f(P)@g(Q1,Q2,...,Qn)|^2 for R\in\R^{d,d}, P\in \R^{n,n} and Qi\in \R^{m,m}.
 !  f(P) = I x P ( I is the identity and \in R^{m,m} ).
 !  g(Q1,Q2,...,Qn) = Diag(Q1 Q2 ... Qn).
 !  Here, R@R^T=I, det(R)=1, P@P^T=I, and Q@Q^T=I are satisfied.
@@ -141,7 +141,7 @@ contains
   end function block_lower_bound_worksize
 !
 !| Calculate min_{P,Q} |X-PYQ|^2, Q is block rotation matrix
-  pure subroutine block_lower_bound(b, X, Y, w, maxiter, threshold, nrand, R0)
+   subroutine block_lower_bound(b, X, Y, w, maxiter, threshold, nrand, R0)
     type(mol_block_list), intent(in)  :: b
     !! mol_block
     real(RK), intent(in)              :: X(*)
@@ -156,7 +156,6 @@ contains
     !! iteration limit, default = 1E-12
     real(RK), intent(in), optional    :: R0(*)
     !! initial Rotation matrix
-    real(RK), parameter               :: lambda = 1D-8
     integer(IK)                       :: maxiter_, nrand_
     type(mol_block_)                  :: b_(b%nspecies())
     integer(IK)                       :: dd, mn, mg, dmn, dmg
@@ -244,9 +243,11 @@ contains
 !
     do i = 1, maxiter_
       call update_R(b%d, dd, s, b_, X, Y, w(cf), w(r), W(cr), w(cost), W(iy), W(rw), W)
-      if(w(cost) < w(prev)) CYCLE
+      print*,i,w(cost)
+      print'(3f9.3)',w(r:r+dd-1)
       if (ABS(w(cost) - w(prev)) < w(thre)) exit
-      do concurrent(j=1:s)
+      do j=1,s
+      !do concurrent(j=1:s)
         call update_PQ(b%d, b_(j), X(b_(j)%ix), Y(b_(j)%ix), w(r), maxiter_, nrand_, i, &
        &               w(thre), w(b_(j)%ip), w(b_(j)%iq), W)
       end do
@@ -254,6 +255,15 @@ contains
     end do
 !
     call R_rotation(b%d, mn, w(r), Y, w(iy))
+print*,dd,dmn
+print'(3f9.3)',w(r:r+dd-1)
+print*
+print'(3f9.3)',X(:dmn)
+print*
+print'(3f9.3)',Y(:dmn)
+print*
+print'(3f9.3)',w(iy:iy+dmn-1)
+print*
     do concurrent(i=1:s)
       block
         integer(IK) :: iiy, iiz
@@ -264,7 +274,9 @@ contains
       end block
     end do
 !
+print'(3f9.3)',w(iy:iy+dmn-1)
     w(cost) = rmsd(b%d, mn, X, w(iy))
+print*,w(cost)
 !
   end subroutine block_lower_bound
 !
@@ -281,7 +293,7 @@ contains
       end do
   end subroutine get_C_fix
 !
-  pure subroutine update_PQ(d, b, X, Y, R, maxiter, nrand, iseed, threshold, P, Q, W)
+   subroutine update_PQ(d, b, X, Y, R, maxiter, nrand, iseed, threshold, P, Q, W)
     integer(IK), intent(in)      :: d, maxiter, nrand, iseed
     type(mol_block_), intent(in) :: b
     real(RK), intent(in)         :: X(*), Y(*), R(d, d), threshold
@@ -295,7 +307,7 @@ contains
 !
     call update_XTRY(d, b, X, Y, R, w(b%xtry), w(b%rest))
 !
-!   call eye(b%g, ONE, P)
+    call eye(b%g, ONE, P)
 !
     do k = 1, maxiter
 !
@@ -303,7 +315,7 @@ contains
 !
         w(b%prev) = w(b%cost)
 !
-!!!   CP = RESTR
+!!!     CP = RESTR
         call copy(b%gg, w(b%rest), w(b%cp))
         if (b%f > 0) then
           do concurrent(i=1:b%g, j=1:b%g)
@@ -321,7 +333,7 @@ contains
 !!!   tr(P^T, CP) = ddot(P, CP)
         w(b%cost) = ddot(b%gg, P, w(b%cp))
         if (ABS(w(b%cost) - w(b%prev)) < threshold) exit
-        if (b%f < 1) exit
+        if (b%f < 2) exit
 !
         do concurrent(j=1:b%g)
           block
@@ -344,6 +356,7 @@ contains
 !
       w(b%best) = MAX(w(b%best), w(b%cost))
       if (k >= nrand .and. ABS(w(b%best) - w(b%cost)) < threshold) exit
+      if (b%f < 2) exit
 !
       do concurrent(i=1:b%g)
         call orthogonal(b%f, i + k + iseed, Q(1, 1, i))
@@ -351,6 +364,10 @@ contains
 !
     end do
 !
+print'(6f12.6)',w(b%rest:b%rest+b%gg-1)
+print'(6f12.6)',P
+print'(6f12.6)',matmul(P, transpose(P))
+print'(f9.3)',Q
   end subroutine update_PQ
 !
   pure subroutine update_R(d, dd, s, b, X, Y, CF, R, CR, trace, Z, RW, W)

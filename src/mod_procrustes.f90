@@ -54,7 +54,6 @@ contains
 !
     call svd(d, w(m), w(s), w(u), w(vt), w(iw), ldx=ldcov)
     call DGEMM('N', 'N', d, d, d, ONE, w(u), d, w(vt), d, ZERO, w(s), d)
-!
     rot(:dd) = w(s:s+dd-1)
 !
   end subroutine procrustes

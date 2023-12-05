@@ -1,5 +1,6 @@
 program main
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_pca
   use mod_procrustes
   use mod_unittest
   implicit none
@@ -37,6 +38,9 @@ program main
   call test4(3, 2)
   call test4(8, 4)
   call test4(100, 10)
+!
+  call z%init('test Kabsch row major n=6, partial rotation')
+  call test5(3, 1)
 !
   call z%finish_and_terminate()
 !
@@ -133,6 +137,40 @@ contains
 !
   end subroutine test4
 !
+  subroutine test5(d, n_test)
+    integer, intent(in) :: d, n_test
+    integer, parameter  :: n = 6
+    real(RK)            :: Y(d, n), X(d, n), cov(n, n)
+    real(RK)            :: u(n, n), v(n, n)
+    real(RK)            :: rot(n, n), krot(n, n)
+    real(RK)            :: w(procrustes_worksize(n))
+    integer             :: i
+!
+    call random_number(X)
+!
+    do i=1,N_TEST
+!
+      rot = SO6_part()
+      Y = MATMUL(X, rot)
+      print'(3f9.3)', X-Y
+      call pca(.TRUE., d, n, X - Y, u, v, w)
+      print'(6f9.3)',u
+      print*
+      print'(6f9.3)', v(:, 1)
+      print*
+      print'(3f9.3)', MATMUL(X,u)
+      print*
+      print'(3f9.3)', MATMUL(Y,u)
+      print*
+!     cov = MATMUL(TRANSPOSE(X), Y)
+!     call procrustes(n, cov, krot, w)
+!     call z%assert_almost_equal([X - MATMUL(Y, TRANSPOSE(krot))], 0D0, 'X = YR  ')
+!     call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(n)], 0D0, 'R@RT = I')
+!
+    enddo
+!
+  end subroutine test5
+!
   function SO2() result(res)
     real(RK) :: a(2), res(2, 2)
     call RANDOM_NUMBER(a)
@@ -169,6 +207,15 @@ contains
     res = MATMUL(res, tmp)
 !
   end function SO6
+!
+  function SO6_part() result(res)
+    real(RK) :: res(6, 6)
+!
+    res = eye(6)
+    res(1:2,1) = [0,1]
+    res(1:2,2) = [1,0]
+!
+  end function SO6_part
 !
   pure function eye(d) result(res)
     integer,intent(in) :: d

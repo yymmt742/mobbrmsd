@@ -1,5 +1,6 @@
 program main
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_Procrustes
   use mod_block_lower_bound
   use mod_mol_block
   use mod_molecular_rotation
@@ -11,7 +12,8 @@ program main
 !
   call u%init('test node')
 ! call test1()
-  call test2()
+! call test2()
+  call test3()
 !
   call u%finish_and_terminate()
 !
@@ -96,6 +98,71 @@ contains
     print'(I4,*(f9.2))',m, z(6)%nodes%lowerbound
 !
   end subroutine test2
+!
+  subroutine test3()
+    integer, parameter          :: d = 3
+    integer, parameter          :: s = 1
+    integer, parameter          :: m = 1, n = 6, f = 0
+    integer, parameter          :: swap(n) = [2,1,3,4,5,6]
+    !integer, parameter          :: swap(n) = [1,2,3,4,5,6]
+    !integer, parameter          :: swap(n) = [2,5,1,6,3,4]
+    integer, parameter          :: flip(m, 2) = RESHAPE([1, 1], [m, 2])
+    !integer, parameter          :: flip(m, 2) = RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m, 2])
+    integer, parameter          :: iflp(n) = [0,0,0,0,0,0]
+    !integer, parameter          :: iflp(n) = [2,0,1,2,0,1]
+    !integer, parameter          :: swap(n) = [5,9,2,7,6,4,1,8,3,10]
+    type(mol_block_list)        :: blk
+    type(molecular_rotation)    :: rot(1)
+    type(molecular_permutation) :: per(1)
+    real(RK)                    :: X(d, m, n), Y(d, m, n)
+    real(RK)                    :: P(m*n,m*n)
+    real(RK), allocatable       :: w(:)
+    type(node)                  :: a
+    type(breadth)               :: z(9)
+    integer                     :: i, j, ml
+!
+    blk = mol_block_list(d, s, [m], [n], [f])
+    rot(1) = molecular_rotation(flip)
+    per = molecular_permutation([n])
+!
+call random_number(X)
+!   do concurrent(i=1:m, j=1:n)
+!     X(:, i, j) = [1, i, 10*j]
+!   enddo
+    do concurrent(i=1:m, j=1:n)
+      if (iflp(j) < 1) then
+        Y(:, i, swap(j)) = X(:, i, j)
+      else
+        Y(:, flip(i, iflp(j)), swap(j)) = X(:, i, j)
+      end if
+    enddo
+!
+allocate(w(block_lower_bound_worksize(blk)))
+print'(3f9.3)', X
+print*
+print'(3f9.3)', Y
+print*
+call Procrustes(6, MATMUL(TRANSPOSE(X(:, 1, :)), Y(:, 1, :)), P, w)
+print'(6f9.3)', X(:, 1, :) - MATMUL(Y(:, 1, :), TRANSPOSE(P))
+print'(6f9.3)', P
+print *
+return
+    !blk%b(1)%g = 4
+    print*, blk%d, blk%b
+    call block_lower_bound(blk, x, y, w, nrand=0)
+    print*,w(1)
+    print'(6f9.3)', MATMUL( TRANSPOSE(reshape(X,[3,6])),reshape(Y,[3,6]))
+print*
+    a = node(blk, rot, per, [x], [y])
+    print*, a%lowerbound
+    return
+    do i = 1, 9
+      z(i) = a%generate_breadth(rot, [x], [y])
+      ml   = MINLOC(z(i)%nodes%lowerbound, 1)
+      print'(I4,*(f9.2))',ml, z(i)%nodes%lowerbound
+    end do
+!
+  end subroutine test3
 !
 ! subroutine test2()
 !   integer, parameter          :: d = 3

@@ -50,15 +50,15 @@ module mod_mol_block
 contains
 !
 ! Constructer
-  pure function mol_block_list_new(d, s, n, m, f) result(res)
+  pure function mol_block_list_new(d, s, m, n, f) result(res)
     integer(IK), intent(in) :: d
     !  d :: spatial dimension
     integer(IK), intent(in) :: s
     !  s :: number of species
-    integer(IK), intent(in) :: n(s)
-    !  n :: list of number of molecules, n
     integer(IK), intent(in) :: m(s)
     !  m :: list of number of atoms in a molecule, m
+    integer(IK), intent(in) :: n(s)
+    !  n :: list of number of molecules, n
     integer(IK), intent(in) :: f(s)
     !  f :: list of number of free atoms in a molecule, f
     type(mol_block_list)    :: res
@@ -69,7 +69,7 @@ contains
     end if
     p = 1
     do i = 1, s
-      res%b(i) = mol_block(p, n(i), m(i), f(i), m(i))
+      res%b(i) = mol_block(p, m(i), n(i), f(i), n(i))
       p = p + d * n(i) * m(i)
     end do
   end function mol_block_list_new

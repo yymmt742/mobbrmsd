@@ -61,7 +61,7 @@ contains
     integer(IK)                             :: w(5 * n)
     integer(IK)                             :: i, j, k, l
 !
-    if (n < 1) return
+    if (n < 2) return
 !
     w(1) = -1
     w(:3*n) = -1
