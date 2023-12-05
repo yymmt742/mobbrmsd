@@ -290,20 +290,23 @@ contains
 !
 !!!   CP = RESTR
         call copy(b%gg, w(b%rest), w(b%cp))
-        do concurrent(i=1:b%g, j=1:b%g)
-!!!     CP(i,j) = trace(Qi@Cij) = ddot(Qi^T, Cij)
-          block
-            integer(IK) :: icp, ixtry
-            icp = b%cp + i + (j - 1) * b%g - 1
-            ixtry = b%xtry + b%ff * ((i - 1) + b%g * (j - 1))
-            w(icp) = w(icp) + ddot(b%ff, Q(1, 1, i), w(ixtry))
-          end block
-        end do
+        if (b%f > 0) then
+          do concurrent(i=1:b%g, j=1:b%g)
+!!!       CP(i,j) = trace(Qi@Cij) = ddot(Qi^T, Cij)
+            block
+              integer(IK) :: icp, ixtry
+              icp = b%cp + i + (j - 1) * b%g - 1
+              ixtry = b%xtry + b%ff * ((i - 1) + b%g * (j - 1))
+              w(icp) = w(icp) + ddot(b%ff, Q(1, 1, i), w(ixtry))
+            end block
+          end do
+        end if
 !!!   Get P = UV^T
         call Procrustes(b%g, w(b%cp), P, w(b%wp))
 !!!   tr(P^T, CP) = ddot(P, CP)
         w(b%cost) = ddot(b%gg, P, w(b%cp))
         if (ABS(w(b%cost) - w(b%prev)) < threshold) exit
+        if (b%f < 1) exit
 !
         do concurrent(j=1:b%g)
           block
