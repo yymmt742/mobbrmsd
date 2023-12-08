@@ -128,7 +128,7 @@ contains
         uu = cov + dp * dp
         vt = uu + dp * dp
         iw = vt + dp * dp
-        call partial_Kabsch(d, dp, n, X, Y, w(U), R, w(ux), w(yu), w(cov), w(uu), w(vt), w(iw))
+        call partial_Kabsch(d, dp, n, C, w(U), R, w(ux), w(yu), w(cov), w(uu), w(vt), w(iw))
       end block
     else
       call Kabsch(d, C, R, w)
@@ -150,9 +150,9 @@ contains
 !
   end subroutine pca_rotation
 !
-  pure subroutine partial_Kabsch(d, dp, n, X, Y, U, R, UX, YU, C, UU, VT, W)
+  pure subroutine partial_Kabsch(d, dp, n, CC, U, R, UX, YU, C, UU, VT, W)
     integer(IK), intent(in) :: d, dp, n
-    real(RK), intent(in)    :: X(d, n), Y(d, n), U(d, d)
+    real(RK), intent(in)    :: CC(d, d), U(d, d)
     real(RK), intent(inout) :: R(d, d), UX(dp, n), YU(n, dp), C(dp, dp)
     real(RK), intent(inout) :: UU(dp,dp), VT(dp,dp), W(*)
     integer(IK)             :: i, j, dd
@@ -160,9 +160,8 @@ contains
     if (dp < 1) return
 !
     dd = dp * dp
-    call DGEMM('T', 'N', dp, n, d, ONE, U, d, X, d, ZERO, UX, dp)
-    call DGEMM('T', 'N', n, dp, d, ONE, Y, d, U, d, ZERO, YU, n)
-    call DGEMM('N', 'N', dp, dp, n, ONE, UX, dp, YU, n, ZERO, C, dp)
+    call DGEMM('T', 'N', dp, d, d, ONE, U, d, CC, d, ZERO, W, dp)
+    call DGEMM('N', 'N', dp, dp, d, ONE, W, dp,  U, d, ZERO, C, dp)
 !
     if (dp == 1) then
       UU(1, 1) = SIGN(ONE, C(1, 1))
