@@ -54,8 +54,9 @@ contains
           call zfill(n, v)
           return
         end if
-        call DGEMM('T', 'N', n, n, d, ONE, x, d, x, d, ZERO, u, n)
+        call DGEMM('T', 'N', n, n, d,-ONE, x, d, x, d, ZERO, u, n)
         call DSYEV('V', 'L', n, u, n, v, w, lw, info)
+        v(:n) = -v(:n)
       else
         lw = pca_worksize(d)
         if (lw <= 0 .or. d <= 0) return
@@ -64,8 +65,9 @@ contains
           call zfill(d, v)
           return
         end if
-        call DGEMM('N', 'T', d, d, n, ONE, x, d, x, d, ZERO, u, d)
+        call DGEMM('N', 'T', d, d, n,-ONE, x, d, x, d, ZERO, u, d)
         call DSYEV('V', 'L', d, u, d, v, w, lw, info)
+        v(:d) = -v(:d)
       end if
 !
   end subroutine pca

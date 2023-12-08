@@ -38,8 +38,11 @@ program main
   call test4(8, 4)
   call test4(100, 10)
 !
-  call z%init('test Kabsch, part d=6')
-  call test5(2, 1)
+  call z%init('test Kabsch, partial rotation for d=6')
+  call test5(2, 2)
+  call test5(3, 2)
+  call test5(10, 4)
+  call test5(100, 10)
 !
   call z%finish_and_terminate()
 !
@@ -144,30 +147,22 @@ contains
     integer, parameter  :: d = 6
     real(RK)            :: Y(d, n), X(d, n), cov(d, d)
     real(RK)            :: rot(d, d), krot(d, d)
-    real(RK)            :: w(Kabsch_worksize(d)+100)
+    real(RK)            :: w(Kabsch_worksize(d, n))
     integer             :: i
 !
-    call random_number(X)
+    call RANDOM_NUMBER(X)
     do i = 1, n
       X(:, i) = X(:, i) - SUM(X, 2)
     end do
-!   x(3:,:) = 0
-    print'(6f9.3)',x
 !
-    do i=1,N_TEST
+    do i = 1, N_TEST
       rot = SO6_part()
       Y = MATMUL(rot, X)
-    print'(6f9.3)',Y
-    print*
       cov = MATMUL(X, TRANSPOSE(Y))
-      print'(6f9.3)',cov
-    print*
-      !call Kabsch(d, cov, krot, w)
       call get_rotation_matrix(d, n, X, Y, cov, krot, w)
-      print'(6f9.3)',krot
       call z%assert_almost_equal([X - MATMUL(krot, Y)], 0D0, 'X = YR  ')
       call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(d)], 0D0, 'R@RT = I')
-    enddo
+    end do
 !
   end subroutine test5
 !
@@ -207,9 +202,10 @@ contains
     real(RK) :: res(6, 6)
 !
     res = eye(6)
-    res(1:2,1) = [0,1]
-    res(1:2,2) = [-1,0]
-    !res(1:3,1:3) = SO3()
+    !res(2:4, 2) = [0, 0, 1]
+    !res(2:4, 3) = [1, 0, 0]
+    !res(2:4, 4) = [0, 1, 0]
+    res(3:5,3:5) = SO3()
 !
   end function SO6_part
 !

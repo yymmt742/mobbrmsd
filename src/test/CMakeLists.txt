@@ -128,6 +128,7 @@ target_include_directories( test_Kabsch PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_Kabsch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_pca.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
                                     test_Kabsch.f90 )
@@ -159,6 +160,7 @@ target_sources( test_optimize PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_cov.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_pca.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
                                       test_optimize.f90 )
@@ -179,6 +181,7 @@ target_sources( test_lower_bound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_para
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_cov.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_pca.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_lower_bound.f90
@@ -200,6 +203,7 @@ target_sources( test_block_lower_bound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mo
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_cov.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_pca.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
@@ -222,6 +226,7 @@ target_sources( test_tree PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_cov.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
+                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_pca.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
