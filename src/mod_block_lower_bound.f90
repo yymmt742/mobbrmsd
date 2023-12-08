@@ -90,8 +90,8 @@ contains
     res%m_f = res%m - res%f
     res%ffgg = res%ff * res%gg
     res%dm_df = d * res%m_f
-    res%proc_g = Procrustes_worksize(res%g)
-    res%proc_f = Procrustes_worksize(res%f)
+    res%proc_g = Procrustes_worksize(res%g, res%n)
+    res%proc_f = Procrustes_worksize(res%f, res%n)
 !!! relative address to X
     res%ix = x
     res%iz = z
@@ -123,19 +123,20 @@ contains
     type(mol_block_list), intent(in)  :: b
     !! mol_block
     type(mol_block_)                  :: b_(b%nspecies())
-    integer(IK)                       :: dd, dmn, dmg, res
+    integer(IK)                       :: dd, mn, dmn, dmg, res
 !
     if (b%invalid()) then
       res = 0
     else
       b_ = b2b_(b%d, 1, 1, 1, b%b)
       dd = b%d * b%d
-      dmn = b%d * SUM(b_%mn)
+      mn = SUM(b_%mn)
+      dmn = b%d * mn
       dmg = b%d * SUM(b_%mg)
       if (dmg < 1) then
-        res = dd + MAX(dmn, dd + Kabsch_worksize(b%d))
+        res = dd + MAX(dmn, dd + Kabsch_worksize(b%d, mn))
       else
-        res = SUM(b_%bs) + MAX(dmg, dd + dd + Kabsch_worksize(b%d)) + dmn + 3
+        res = SUM(b_%bs) + MAX(dmg, dd + dd + Kabsch_worksize(b%d, mn)) + dmn + 3
       end if
     end if
 !
@@ -190,12 +191,12 @@ contains
     prev = 2
     thre = 3
 !
-    iy = thre + 1                  ! copy of Y
-    iz = iy + dmn                  ! copy of Y (caution, interference with others)
-    cf = iy + dmn                  ! covariance matrix X^TYPQ, independent of P and Q.
-    cr = cf + dd                   ! covariance matrix X^TYPQ
-    rw = cr + dd                   ! covariance matrix X^TYPQ
-    r  = rw + Kabsch_worksize(b%d) ! rotation matrix R
+    iy = thre + 1                      ! copy of Y
+    iz = iy + dmn                      ! copy of Y (caution, interference with others)
+    cf = iy + dmn                      ! covariance matrix X^TYPQ, independent of P and Q.
+    cr = cf + dd                       ! covariance matrix X^TYPQ
+    rw = cr + dd                       ! covariance matrix X^TYPQ
+    r  = rw + Kabsch_worksize(b%d, mn) ! workarray to rotation matrix R
 !
     maxiter_ = optarg(maxiter,  DEF_maxiter)
     nrand_   = optarg(nrand,    DEF_nrand)
