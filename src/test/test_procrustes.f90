@@ -40,8 +40,8 @@ program main
   call test4(100, 10)
 !
   call z%init('test Kabsch row major n=6, partial rotation')
-  call test5(3, 2)
-  call test5(8, 2)
+  call test5(1, 1)
+  call test5(8, 1)
   call test5(10, 4)
   call test5(300, 10)
 !
@@ -142,47 +142,24 @@ contains
 !
   subroutine test5(d, n_test)
     integer, intent(in) :: d, n_test
-    integer, parameter  :: n = 6
-    real(RK)            :: Y(d, n), X(d, n), t(n*n), cov(n, n)
-    real(RK)            :: u(n, n), v(n)
+    integer, parameter  :: n = 12
+    real(RK)            :: Y(d, n), X(d, n), cov(n, n)
     real(RK)            :: rot(n, n), krot(n, n)
-    real(RK)            :: w(procrustes_worksize(n))
-    integer             :: i, dp
+    real(RK)            :: w(procrustes_worksize(n)+10000)
+    integer             :: i
 !
     call random_number(X)
 !
     do i = 1, N_TEST
-!
-      rot = SO6_part()
-      call random_number(Y)
+      rot = SO12_part()
       Y = MATMUL(X, rot)
-      call pca(.TRUE., d, n, X - Y, u, v, w)
-      dp = COUNT(V>1D-16)
-      call partial_cov(d, n, dp, MATMUL(X, u), MATMUL(Y, u), V, 1D-16, t)
-      cov = eye(n)
-      cov(n-dp+1:n, n-dp+1:n) = RESHAPE(t(:dp * dp), [dp, dp])
-      call procrustes(n, cov, krot, w)
-      krot = MATMUL(MATMUL(U, krot), TRANSPOSE(U))
-      call z%assert_almost_equal([X - MATMUL(Y, TRANSPOSE(krot))], 0D0, 'X = YR  ')
+      cov = MATMUL(TRANSPOSE(Y), X)
+      call get_permutation_matrix(d, n, X, Y, cov, krot, w)
+      call z%assert_almost_equal([X - MATMUL(Y, krot)], 0D0, 'X = YR  ')
       call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(n)], 0D0, 'R@RT = I')
-!
     enddo
 !
   end subroutine test5
-!
-  pure subroutine partial_cov(d, n, dp, XU, YU, V, threshold, cov)
-    integer, intent(in)     :: d, n, dp
-    real(RK), intent(in)    :: YU(d, n), XU(d, n)
-    real(RK), intent(in)    :: V(n), threshold
-    real(RK), intent(inout) :: cov(dp, dp)
-    integer(IK)             :: k(dp)
-    integer(IK)             :: i, j
-    j = 0
-    k = PACK([(i, i=1, n)], V > threshold)
-    do concurrent(i=1:dp, j=1:dp)
-      cov(i, j) = SUM(XU(:, k(i)) * YU(:, k(j)))
-    end do
-  end subroutine partial_cov
 !
   function SO2() result(res)
     real(RK) :: a(2), res(2, 2)
@@ -221,13 +198,16 @@ contains
 !
   end function SO6
 !
-  function SO6_part() result(res)
-    real(RK) :: res(6, 6)
+  function SO12_part() result(res)
+    real(RK) :: res(12, 12)
 !
-    res = eye(6)
+    res = eye(12)
+    !res(2:4, 2) = [0, 0, 1]
+    !res(2:4, 3) = [0, 1, 0]
+    !res(2:4, 4) = [1, 0, 0]
     res(1:3,1:3) = SO3()
 !
-  end function SO6_part
+  end function SO12_part
 !
   pure function eye(d) result(res)
     integer,intent(in) :: d

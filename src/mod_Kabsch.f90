@@ -157,6 +157,10 @@ contains
     real(RK), intent(inout) :: UU(dp,dp), VT(dp,dp), W(*)
     integer(IK)             :: i, j, dd
 !
+    do concurrent(i=1:d, j=1:d)
+      R(i, j) = MERGE(ONE, ZERO, i == j)
+    end do
+!
     if (dp < 1) return
 !
     dd = dp * dp
@@ -168,17 +172,12 @@ contains
       VT(1, 1) = ONE
     else
       call svd(dp, C, w, UU, VT, w(dp+1))
-      w(:dp*dp) = [UU]
       call copy(dd, UU, w)
       call det_sign(dp, w)
       call copy(dd, VT, w(2))
       call det_sign(dp, w(2:dd+1))
       if (w(1) * w(2) < ZERO) UU(:, dp) = -UU(:, dp)
     end if
-!
-    do concurrent(i=1:d, j=1:d)
-      R(i, j) = MERGE(ONE, ZERO, i == j)
-    end do
 !
     call DGEMM('N', 'N', dp, dp, dp, ONE, UU, dp, VT, dp, ZERO, R, d)
     call DGEMM('N', 'N', d, d, d, ONE, U, d, R, d, ZERO, W, d)
