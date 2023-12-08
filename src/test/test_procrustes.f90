@@ -145,7 +145,7 @@ contains
     integer, parameter  :: n = 12
     real(RK)            :: Y(d, n), X(d, n), cov(n, n)
     real(RK)            :: rot(n, n), krot(n, n)
-    real(RK)            :: w(procrustes_worksize(n)+10000)
+    real(RK)            :: w(procrustes_worksize(d, n))
     integer             :: i
 !
     call random_number(X)

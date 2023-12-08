@@ -18,15 +18,22 @@ module mod_procrustes
 contains
 !
 !| Calculate work array size for d*d matrix.
-  pure elemental function procrustes_worksize(d) result(res)
-    integer(IK), intent(in)       :: d
+  pure elemental function procrustes_worksize(d, n) result(res)
+    integer(IK), intent(in)           :: d
     !! matrix collumn dimension.
-    integer(IK)                   :: res
+    integer(IK), intent(in), optional :: n
+    !! matrix row dimension.
+    integer(IK)                       :: res
 !
     if (d < 1) then
       res = 0
     else
-      res = svd_worksize(d) + d * d * 3 + d
+      if (PRESENT(n)) then
+        res = MAX(n * n + 2 * d * MAX(n - 1, 0) + MAX(n - 1, 0)**2 * 3 + svd_worksize(MAX(n - 1, 0)), &
+       &          n * n * 3 + 2 * d * n + n + MAX(svd_worksize(n) + n * n * 3 + n, pca_worksize(n)))
+      else
+        res = svd_worksize(d) + d * d * 3 + d
+      end if
     end if
 !
   end function procrustes_worksize
