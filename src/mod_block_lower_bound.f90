@@ -318,6 +318,7 @@ contains
           end do
         end if
 !!!   Get P = UV^T
+        !call get_permutation_matrix(d, n, X, Y, C, R, w, threshold)
         call Procrustes(b%g, w(b%cp), P, w(b%wp))
 !!!   tr(P^T, CP) = ddot(P, CP)
         w(b%cost) = ddot(b%gg, P, w(b%cp))
