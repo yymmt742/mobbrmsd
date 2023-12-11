@@ -112,6 +112,18 @@ target_include_directories( test_pca PRIVATE ${purelapack_DIR}/include )
 target_link_libraries( test_pca PRIVATE purelapack )
 add_test( NAME test_pca COMMAND test_pca )
 
+add_executable( test_diagonalize )
+target_sources( test_diagonalize PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
+                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_diagonalize.f90
+                                         test_diagonalize.f90 )
+target_include_directories( test_diagonalize PRIVATE ${unittest_DIR}/mod_files )
+target_include_directories( test_diagonalize PRIVATE ${purelapack_DIR}/mod_files )
+target_include_directories( test_diagonalize PRIVATE ${purelapack_DIR}/include )
+target_link_libraries( test_diagonalize PRIVATE unittest )
+target_link_libraries( test_diagonalize PRIVATE purelapack )
+add_test( NAME test_diagonalize COMMAND test_diagonalize )
+
 add_executable( test_rot )
 target_include_directories( test_rot PRIVATE ${unittest_DIR}/mod_files )
 target_include_directories( test_rot PRIVATE ${purelapack_DIR}/mod_files )
