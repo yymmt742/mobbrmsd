@@ -282,7 +282,7 @@ contains
       end do
   end subroutine get_C_fix
 !
-   subroutine update_PQ(d, b, X, Y, R, maxiter, nrand, iseed, threshold, P, Q, W)
+  pure subroutine update_PQ(d, b, X, Y, R, maxiter, nrand, iseed, threshold, P, Q, W)
     integer(IK), intent(in)      :: d, maxiter, nrand, iseed
     type(mol_block_), intent(in) :: b
     real(RK), intent(in)         :: X(*), Y(*), R(d, d), threshold
@@ -304,23 +304,11 @@ contains
 !
         w(b%prev) = w(b%cost)
 !
-!!!     CP = RESTR
-        call copy(b%gg, w(b%rest), w(b%cp))
-        if (b%f > 0) then
-          do concurrent(i=1:b%g, j=1:b%g)
-!!!       CP(i,j) = trace(Qi@Cij) = ddot(Qi^T, Cij)
-            block
-              integer(IK) :: icp, ixtry
-              icp = b%cp + i + (j - 1) * b%g - 1
-              ixtry = b%xtry + b%ff * ((i - 1) + b%g * (j - 1))
-              w(icp) = w(icp) + ddot(b%ff, Q(1, 1, i), w(ixtry))
-            end block
-          end do
-        end if
-!!!   Get P = UV^T
-        !call get_permutation_matrix(d, n, X, Y, C, R, w, threshold)
-        call Procrustes(b%g, w(b%cp), P, w(b%wp))
-!!!   tr(P^T, CP) = ddot(P, CP)
+        call update_CP(b, w(b%xtry), w(b%rest), Q, w(b%cp))
+!!!     Get P = UV^T
+        call update_P(b, w(b%cp), P, w(b%wp))
+!
+!!!     tr(P^T, CP) = ddot(P, CP)
         w(b%cost) = ddot(b%gg, P, w(b%cp))
         if (ABS(w(b%cost) - w(b%prev)) < threshold) exit
         if (b%f < 2) exit
@@ -330,14 +318,9 @@ contains
             integer(IK) :: icq, iwq, ixtry
             icq = b%cq + b%bq * (j - 1)
             iwq = b%wq + b%bq * (j - 1)
-            ixtry = b%xtry + b%ff * (j - 1)
-!!        CQ^T = sum_i Pi * Cji
-            call zfill(b%ff, w(icq))
-            do i = 1, b%g
-              call add(b%ff, P(j, i), w(ixtry), w(icq))
-              ixtry = ixtry + b%ffg
-            end do
-!!!       Get Qi^T = UV^T
+            ixtry = b%xtry + b%ffg * (j - 1)
+            call update_CQ(b, w(ixtry), P(1, j), w(icq))
+!!!         Get Qi^T = UV^T
             call Procrustes(b%f, w(icq), Q(1, 1, j), w(iwq))
           end block
         end do
@@ -354,10 +337,6 @@ contains
 !
     end do
 !
-!print'(6f12.6)',w(b%rest:b%rest+b%gg-1)
-!print'(6f12.6)',P
-!print'(6f12.6)',matmul(P, transpose(P))
-!print'(f9.3)',Q
   end subroutine update_PQ
 !
   pure subroutine update_R(d, dd, mg, mn, s, b, X, Y, CF, R, CR, trace, Z, RW, W)
@@ -365,7 +344,7 @@ contains
     type(mol_block_), intent(in) :: b(s)
     real(RK), intent(in)         :: X(*), Y(*), CF(*)
     real(RK), intent(inout)      :: R(*), CR(*), trace, Z(*), RW(*), W(*)
-    real(RK)                     :: U(d, d), V(d)
+!   real(RK)                     :: U(d, d), V(d)
     integer(IK)                  :: i
 !!    W = CF + YPQXT
       do concurrent(i=1:s)
@@ -373,40 +352,26 @@ contains
         call PQ_rotation(d, b(i), w(b(i)%ip), w(b(i)%iq), Y(b(i)%ix), Z(b(i)%ix))
       end do
 !
-      call reduce_dimension(d, mg, mn, X, Y, Z, U, V)
-!
       call copy(dd, CF, CR)
       do i = 1, s
 !!      CR = X(d,mn)@Z^T(mn,d)@P^T@Q^T
         call DGEMM('N', 'T', d, d, b(i)%mg, ONE, X(b(i)%ix), d, Z(b(i)%ix), d, ONE, CR, d)
       enddo
-      call DGEMM('T', 'N', d, d, d, ONE, U, d, CR, d, ZERO, RW, d)
-      call DGEMM('N', 'N', d, d, d, ONE, RW, d, U, d, ZERO, CR, d)
 !!    get optimal R
       call Kabsch(d, CR, R, RW)
-      call DGEMM('N', 'N', d, d, d, ONE, U, d, R, d, ZERO, RW, d)
-      call DGEMM('N', 'T', d, d, d, ONE, RW, d, U, d, ZERO, R, d)
       trace = ddot(dd, CR, R)
+!
   end subroutine update_R
 !
-  pure subroutine reduce_dimension(d, mg, mn, X, Y, Z, U, S)
-    integer(IK), intent(in)      :: d, mg, mn
-    real(RK), intent(in)         :: X(d, mn), Y(d, mn), Z(d, mg)
-    real(RK), intent(inout)      :: U(d, d), S(d)
-    real(RK)                     :: M(d, mn), dumm(1)
-    real(RK), allocatable        :: W(:)
-    integer(IK)                  :: i, j, lw, info
-      do concurrent(i=1:d, j=1:mg)
-        M(i, j) = X(i, j) - Z(i, j)
-      end do
-      do concurrent(i=1:d, j=mg + 1:mn)
-        M(i, j) = X(i, j) - Y(i, j)
-      end do
-      call DGESVD('A', 'N', d, mn, M, d, S, U, d, dumm, mn, dumm, -1, info)
-      lw = NINT(dumm(1))
-      allocate (W(lw))
-      call DGESVD('A', 'N', d, mn, M, d, S, U, d, dumm, mn, W, lw, info)
-  end subroutine reduce_dimension
+  pure subroutine update_P(b, CP, P, W)
+    type(mol_block_), intent(in) :: b
+    real(RK), intent(in)         :: CP(b%g, b%g)
+    real(RK), intent(inout)      :: P(b%g, b%g), W(*)
+!
+!!! Get P = UV^T
+    call Procrustes(b%g, CP, P, w)
+!
+  end subroutine update_P
 !
   pure subroutine atom_fixed_R(d, mn, X, Y, R, CR, RW)
     integer(IK), intent(in)      :: d, mn
@@ -456,8 +421,8 @@ contains
       do concurrent(i=1:b%g, j=1:b%g)
         block
           real(RK) :: temp(b%df)
-          call DGEMM('T', 'N', b%f, d, d, ONE, X(1, 1, i), d, R, d, ZERO, temp, b%f)
-          call DGEMM('N', 'N', b%f, b%f, d, ONE, temp, b%f, Y(1, 1, j), d, ZERO, XTRY(1, 1, i, j), b%f)
+          call DGEMM('T', 'N', b%f, d, d, ONE, X(1, 1, j), d, R, d, ZERO, temp, b%f)
+          call DGEMM('N', 'N', b%f, b%f, d, ONE, temp, b%f, Y(1, 1, i), d, ZERO, XTRY(1, 1, i, j), b%f)
         end block
       end do
     end if
@@ -467,12 +432,45 @@ contains
     do concurrent(i=1:b%g, j=1:b%g)
       block
         real(RK) :: RY(b%dm_df)
-        call DGEMM('N', 'N', d, b%m_f, d, ONE, R, d, Y(1, b%f + 1, j), d, ZERO, RY, d)
-        RESTR(i, j) = ddot(b%dm_df, X(1, b%f + 1, i), RY)
+        call DGEMM('N', 'N', d, b%m_f, d, ONE, R, d, Y(1, b%f + 1, i), d, ZERO, RY, d)
+        RESTR(i, j) = ddot(b%dm_df, X(1, b%f + 1, j), RY)
       end block
     end do
 !
   end subroutine update_XTRY
+!
+  pure subroutine update_CP(b, XTRY, RESTR, Q, CP)
+    type(mol_block_), intent(in) :: b
+    real(RK), intent(in)         :: XTRY(b%f, b%f, b%g, b%g), RESTR(b%g, b%g)
+    real(RK), intent(in)         :: Q(b%f, b%f, b%g)
+    real(RK), intent(inout)      :: CP(b%g, b%g)
+    integer(IK)                  :: i, j
+!
+!!! CP = RESTR
+    call copy(b%gg, RESTR, CP)
+    if (b%f < 1) return
+!
+    do concurrent(i=1:b%g, j=1:b%g)
+!!!   CP(i,j) = trace(Qi@Cij) = ddot(Qi^T, Cij)
+      CP(i, j) = CP(i, j) + ddot(b%ff, Q(1, 1, i), XTRY(1, 1, i, j))
+    end do
+!
+  end subroutine update_CP
+!
+  pure subroutine update_CQ(b, XTRY, P, CQ)
+    type(mol_block_), intent(in) :: b
+    real(RK), intent(in)         :: XTRY(b%f, b%f, b%g)
+    real(RK), intent(in)         :: P(b%g)
+    real(RK), intent(inout)      :: CQ(b%f, b%f)
+    integer(IK)                  :: i, j, k
+!!    CQ^T = sum_i Pi * Cji
+      do concurrent(i=1:b%f, j=1:b%f)
+        CQ(i, j) = ZERO
+        do k = 1, b%g
+          CQ(i, j) = CQ(i, j) + P(k) * XTRY(i, j, k)
+        end do
+      end do
+  end subroutine update_CQ
 !
   pure subroutine copy(d, source, dest)
     integer(IK), intent(in) :: d
@@ -484,15 +482,15 @@ contains
     end do
   end subroutine copy
 !
-  pure subroutine add(d, c, source, dest)
-    integer(IK), intent(in) :: d
-    real(RK), intent(in)    :: c, source(*)
-    real(RK), intent(inout) :: dest(*)
-    integer(IK)             :: i
-    do concurrent(i=1:d)
-      dest(i) = dest(i) + c * source(i)
-    end do
-  end subroutine add
+! pure subroutine add(d, c, source, dest)
+!   integer(IK), intent(in) :: d
+!   real(RK), intent(in)    :: c, source(*)
+!   real(RK), intent(inout) :: dest(*)
+!   integer(IK)             :: i
+!   do concurrent(i=1:d)
+!     dest(i) = dest(i) + c * source(i)
+!   end do
+! end subroutine add
 !
   pure function ddot(d, X, Y) result(res)
     integer(IK), intent(in) :: d
