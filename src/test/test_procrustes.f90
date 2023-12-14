@@ -11,36 +11,37 @@ program main
   E3 = eye(3)
   E6 = eye(6)
 !
-  call z%init('test Kabsch d=3')
+  call z%init('test procrustes d=3')
   call test1(1, 2)
   call test1(2, 2)
   call test1(3, 2)
   call test1(5, 4)
   call test1(100, 10)
 !
-  call z%init('test Kabsch d=6')
+  call z%init('test procrustes d=6')
   call test2(1, 2)
   call test2(2, 2)
   call test2(3, 2)
   call test2(5, 4)
   call test2(100, 10)
 !
-  call z%init('test Kabsch row major n=3')
+  call z%init('test procrustes row major n=3')
   call test3(1, 2)
   call test3(2, 2)
   call test3(3, 2)
   call test3(8, 4)
   call test3(100, 10)
 !
-  call z%init('test Kabsch row major n=6')
+  call z%init('test procrustes row major n=6')
   call test4(1, 2)
   call test4(2, 2)
   call test4(3, 2)
   call test4(8, 4)
   call test4(100, 10)
 !
-  call z%init('test Kabsch row major n=6, partial rotation')
+  call z%init('test procrustes row major n=6, partial rotation')
   call test5(1, 1)
+  call test5(3, 1)
   call test5(8, 1)
   call test5(10, 4)
   call test5(300, 10)
@@ -145,7 +146,7 @@ contains
     integer, parameter  :: n = 12
     real(RK)            :: Y(d, n), X(d, n), cov(n, n)
     real(RK)            :: rot(n, n), krot(n, n)
-    real(RK)            :: w(procrustes_worksize(d, n))
+    real(RK)            :: w(procrustes_worksize(n))
     integer             :: i
 !
     call random_number(X)
@@ -154,7 +155,7 @@ contains
       rot = SO12_part()
       Y = MATMUL(X, rot)
       cov = MATMUL(TRANSPOSE(Y), X)
-      call get_permutation_matrix(d, n, X, Y, cov, krot, w)
+      call procrustes(n, cov, krot, w)
       call z%assert_almost_equal([X - MATMUL(Y, krot)], 0D0, 'X = YR  ')
       call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(n)], 0D0, 'R@RT = I')
     enddo
@@ -205,7 +206,10 @@ contains
     !res(2:4, 2) = [0, 0, 1]
     !res(2:4, 3) = [0, 1, 0]
     !res(2:4, 4) = [1, 0, 0]
-    res(1:3,1:3) = SO3()
+    res(1:3,1:3) = 0
+    res(4:6,1:3) = SO3()
+    res(4:6,4:6) = 0
+    res(1:3,4:6) =-SO3()
 !
   end function SO12_part
 !
