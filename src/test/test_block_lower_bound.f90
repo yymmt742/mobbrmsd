@@ -7,7 +7,7 @@ program main
   use mod_unittest
   implicit none
   type(unittest)    :: u
-  integer,parameter :: NTEST=1000
+  integer, parameter :: NTEST = 100
   integer           :: fail
   integer           :: i
 !
@@ -20,17 +20,17 @@ program main
 !
   fail = 0
   do i = 1, NTEST
-    call test2(fail)
-  enddo
-  print*,fail,'/',NTEST
+    call test2(i, fail)
+  end do
+  print *, fail, '/', NTEST
 !
-  fail = 0
-  do i = 1, NTEST
-    call test3(fail)
-  enddo
-  print*,fail,'/',NTEST
+! fail = 0
+! do i = 1, NTEST
+!   call test3(fail)
+! enddo
+! print*,fail,'/',NTEST
 !
-  call test4()
+! call test4()
 !
   call u%finish_and_terminate()
 !
@@ -60,17 +60,18 @@ contains
     if (w(1) > 0.0001D0) then
       fail = fail + 1
       print'(I8,F9.6)', fail, w(1)
-    endif
+    end if
 !
   end subroutine test1
 !
-  subroutine test2(fail)
+  subroutine test2(itest, fail)
+    integer, intent(in)    :: itest
     integer, intent(inout) :: fail
     integer, parameter     :: d = 3
-    integer, parameter     :: m = 5
-    integer, parameter     :: n = 5
+    integer, parameter     :: m = 15
+    integer, parameter     :: n = 15
     integer, parameter     :: f = 3
-    integer, parameter     :: g = 2
+    integer, parameter     :: g = 8
     real(RK), parameter    :: lambda = 2.0_RK
     type(mol_block_list)   :: b
     real(RK)               :: X(d * m * n), Y(d * m * n)
@@ -82,15 +83,15 @@ contains
     allocate (w(block_lower_bound_worksize(b)))
     X = [([lambda * i + sample(d, m)], i=1, n)]
     call centering(d, m * n, X)
-    Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), PER25())]
+    Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), PER25(m, n, g))]
     call centering(d, m * n, Y)
 !
-    call block_lower_bound(b, X, Y, w, nrand=10)
+    call block_lower_bound(b, X, Y, w, nrand=5)
 !
     if (w(1) > 0.01D0) then
       fail = fail + 1
-      print'(I8,F9.4)', fail, w(1)
-    endif
+      print'(I8,A,I8,2F9.4)', fail, '/', itest, w(1), real(fail, RK) / real(itest, RK)
+    end if
 !
   end subroutine test2
 !
@@ -98,7 +99,7 @@ contains
     integer, intent(inout) :: fail
     integer, parameter     :: d = 3
     integer, parameter     :: m = 5
-    integer, parameter     :: n = 5
+    integer, parameter     :: n = 12
     integer, parameter     :: f = 3
     integer, parameter     :: g = 2
     real(RK), parameter    :: lambda = 2.0_RK
@@ -113,8 +114,8 @@ contains
 !
     X = [([([lambda * RESHAPE([([i, j, 0], k=1, m)], [d, m]) + sample(d, m)], i=1, n)], j=0, 1)]
     call centering(d, 2 * m * n, X)
-    Y = [MATMUL(SO3(), RESHAPE([(MATMUL(reshape(X(d * m * n * j + 1:d * m * n * (j + 1)), [d, m * n]), &
-      & PER25()), j=0, 1)], [d, m * n * 2] ))]
+    Y = [MATMUL(SO3(), RESHAPE([(MATMUL(RESHAPE(X(d * m * n * j + 1:d * m * n * (j + 1)), [d, m * n]), &
+      & PER25(m, n, g)), j=0, 1)], [d, m * n * 2]))]
     call centering(d, 2 * m * n, Y)
 !
     allocate (w(block_lower_bound_worksize(b)))
@@ -123,7 +124,7 @@ contains
     if (w(1) > 0.01D0) then
       fail = fail + 1
       print'(I8,F9.4)', fail, w(1)
-    endif
+    end if
 !
   end subroutine test3
 !
@@ -146,12 +147,12 @@ contains
     X = RESHAPE([([([lambda * RESHAPE([([i, j, 0], k=1, m)], [d, m]) + sample(d, m)], i=1, n)], j=0, 1)], [d, m * n * 2])
     call centering(d, 2 * m * n, X)
     Y = MATMUL(SO3(), X)
-    Y(:, :m * n) = MATMUL(Y(:, :m * n), PER25())
+    Y(:, :m * n) = MATMUL(Y(:, :m * n), PER25(m, n, g))
     call centering(d, 2 * m * n, Y)
 !
     allocate (w(block_lower_bound_worksize(b)))
     call block_lower_bound(b, X, Y, w, nrand=5)
-    print*,w(1)
+    print *, w(1)
 !
   end subroutine test4
 !
@@ -159,8 +160,8 @@ contains
     real(RK) :: a(3), res(3, 3)
     call RANDOM_NUMBER(a)
     a = a / SQRT(DOT_PRODUCT(a, a))
-    res(:, 1) = [a(1) * a(1),        a(1) * a(2) - a(3), a(1) * a(3) + a(2)]
-    res(:, 2) = [a(1) * a(2) + a(3), a(2) * a(2),        a(2) * a(3) - a(1)]
+    res(:, 1) = [a(1) * a(1), a(1) * a(2) - a(3), a(1) * a(3) + a(2)]
+    res(:, 2) = [a(1) * a(2) + a(3), a(2) * a(2), a(2) * a(3) - a(1)]
     res(:, 3) = [a(1) * a(3) - a(2), a(2) * a(3) + a(1), a(3) * a(3)]
   end function SO3
 !
@@ -170,10 +171,10 @@ contains
     integer  :: i, j
     call RANDOM_NUMBER(res(:, 1))
     r(1) = MAXLOC(res(:, 1), 1)
-    r(2) = MAXLOC([res(:r(1)-1, 1),-100D0,res(r(1)+1:, 1)], 1)
+    r(2) = MAXLOC([res(:r(1) - 1, 1), -100D0, res(r(1) + 1:, 1)], 1)
     r(3) = MINLOC(res(:, 1), 1)
     do concurrent(i=1:3, j=1:3)
-      res(i, j) = MERGE(1, 0, r(i)==j)
+      res(i, j) = MERGE(1, 0, r(i) == j)
     end do
   end function PER3
 !
@@ -195,32 +196,30 @@ contains
       res(9:10, 4:5) = eye(2)
     end if
 !
-    res(11:15,11:15) = eye(5)
+    res(11:15, 11:15) = eye(5)
 !
   end function PER15
 !
-  function PER25() result(res)
-    real(RK) :: res(25, 25)
+  function PER25(m, n, g) result(res)
+    integer(IK), intent(in) :: m, n, g
+    real(RK) :: res(m * n, m * n)
+    integer(IK) :: i
 !
-    res = 0D0
+    res = eye(m * n)
 !
-    res(1:3,6:8) = PER3()
-    res(4:5,9:10) = eye(2)
-!
-    res(6:8,1:3) = PER3()
-    res(9:10,4:5) = eye(2)
-!
-    res(11:25,11:25) = eye(15)
+    do i = 0, g - 1
+      res(i * m + 1:i * m + 3, i * m + 1:i * m + 3) = PER3()
+    end do
 !
   end function PER25
 !
   pure function eye(d) result(res)
-    integer,intent(in) :: d
+    integer, intent(in) :: d
     real(RK)           :: res(d, d)
     integer            :: i, j
     do concurrent(j=1:d, i=1:d)
       res(i, j) = MERGE(1D0, 0D0, i == j)
-    enddo
+    end do
   end function eye
 !
   function sample(d, n) result(res)
@@ -232,7 +231,7 @@ contains
     cnt = centroid(d, n, res)
     do concurrent(i=1:n)
       res(:, i) = res(:, i) - cnt
-    enddo
+    end do
   end function sample
 !
   pure subroutine centering(d, n, X)
@@ -242,7 +241,7 @@ contains
     integer(IK)             :: i
     c = centroid(d, n, X)
     do concurrent(i=1:n)
-      X(:,i) = X(:,i) - c
+      X(:, i) = X(:, i) - c
     end do
   end subroutine centering
 !

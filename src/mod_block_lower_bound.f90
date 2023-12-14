@@ -90,8 +90,8 @@ contains
     res%m_f = res%m - res%f
     res%ffgg = res%ff * res%gg
     res%dm_df = d * res%m_f
-    res%proc_g = Procrustes_worksize(res%g, res%n)
-    res%proc_f = Procrustes_worksize(res%f, res%n)
+    res%proc_g = Procrustes_worksize(res%g)
+    res%proc_f = Procrustes_worksize(res%f)
 !!! relative address to X
     res%ix = x
     res%iz = z
