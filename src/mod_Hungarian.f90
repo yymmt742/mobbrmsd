@@ -10,104 +10,108 @@ contains
   subroutine Hungarian(n, C, P)
     integer(IK), intent(in) :: n
     !! matrix dimension
-    real(RK), intent(in)    :: C(n, n)
-    !! d*n square matrix, on exit, x is destroyed.
-    real(RK), intent(inout) :: P(n, n)
-    !! n*m permutation matrix
-    real(RK)                :: h(n), answers(n), ans_cur
-    integer(IK)             :: j_cur, w_cur, job(n + 1)
+    real(RK), intent(in)    :: C(n, *)
+    !! n*n score matrix.
+    real(RK), intent(inout) :: P(n, *)
+    !! n*n permutation matrix
 !
-    P = MAXVAL(C) - C
-!   print'(10f9.3)',P
-!   print*
-!   call sweep(n, P)
-    print'(10f9.3)',P
-    print*
-    job = -1
-    ans_cur = ZERO
-    h = ZERO
-!
-    do j_cur = 1, n
+    if (n < 1)then
+      return
+    elseif (n == 1) then
+      P(1, 1) = ONE
+    elseif (n == 2) then
+      if (C(1, 1) + C(2, 2) >= C(1, 2) + C(2, 1))then
+        P(1, 1) = ONE
+        P(2, 1) = ZERO
+        P(1, 2) = ZERO
+        P(2, 2) = ONE
+      else
+        P(1, 1) = ZERO
+        P(2, 1) = ONE
+        P(1, 2) = ONE
+        P(2, 2) = ZERO
+      endif
+    else
       block
-        logical     :: vis(n + 1)
-        integer(IK) :: prv(n + 1)
-        real(RK)    :: dist(n), min_dist, edge
-        integer(IK) :: w, w_next
-        w_cur = n
-        job(w_cur) = j_cur
-        dist = RHUGE
-        dist(n) = ZERO
-        prv = -1
-print*,j_cur, w_cur, job
-        do
-        !do while (job(w_cur)/=-1)
-          min_dist = RHUGE
-          vis(w_cur) = .TRUE.
-          w_next = -1
-print*, vis
-          do w = 1, n
-print*, w, w_cur, vis(w)
-            if (.not. vis(w)) then
-              edge = P(w, job(w_cur)) - h(w)
-              if (w_cur/=n) then
-                edge = edge - P(w_cur, job(w_cur)) - h(w_cur)
-              end if
-              if (dist(w) > dist(w_cur) + edge) then
-                dist(w) = dist(w_cur) + edge
-                prv(w) = w_cur
-              end if
-              if (min_dist > dist(w)) then
-                min_dist = dist(w)
-                w_next = w
-              end if
-              print'(2i4,3f9.3)',w, job(w_cur), P(w, job(w_cur)), h(w), edge
-            end if
-          end do
-print*, w_next
-          w_cur = w_next
-          if(job(w_cur)==-1) exit
+        integer(IK) :: iw(3 * (n + 1)), i, j
+!
+        call get_piv(n, n + 1, C, iw(1), iw(n + 2), iw(n + n + 3), P(1, 1), P(1, 2))
+!
+        do concurrent(i=1:n, j=1:n)
+          P(i, j) = MERGE(ONE, ZERO, iw(j) == i)
         end do
-print*,prv
-print*,w_cur
-        do w = 1, n
-          if (dist(w) > dist(w_cur)) then
-            dist(w) = dist(w_cur)
-            h(w) = h(w) + dist(w)
-          end if
-        end do
-        ans_cur = ans_cur + dist(w_cur)
-        w = prv(w_cur)
-        do
-          w = prv(w_cur)
-          job(w_cur) = job(w)
-          w_cur = w
-          if(w_cur == n) exit
-        end do
+!
       end block
-      answers(j_cur) = ans_cur
-    end do
+    end if
 !
   end subroutine Hungarian
-
 !
-  pure subroutine sweep(n, P)
-    integer(IK), intent(in) :: n
-    real(RK), intent(inout) :: P(n, n)
-    integer(IK)             :: i
-    do concurrent(i=1:n)
-      block
-        real(RK) :: mv
-        mv = MINVAL(P(:, i))
-        P(:, i) = P(:, i) - mv
-      end block
+  pure subroutine get_piv(n, n1, C, piv, vis, prv, y, cij)
+    integer(IK), intent(in)    :: n, n1
+    real(RK), intent(in)       :: C(n, n)
+    integer(IK), intent(inout) :: piv(n1), vis(n1), prv(n1)
+    real(RK), intent(inout)    :: y(*), cij(*)
+    integer(IK)                :: i, ic, ix, j
+!
+    piv = -1
+!
+    do j = 1, n
+!
+      do concurrent(i=1:n1)
+        vis(i) = 0
+      end do
+!
+      do concurrent(i=1:n1)
+        prv(i) = -1
+      end do
+!
+      do concurrent(i=1:n)
+        cij(i) = RHUGE
+      end do
+      cij(n1) = ZERO
+!
+      ic = n1
+      piv(ic) = j
+!
+      do while (piv(ic) /= -1)
+        block
+          real(RK) :: minc, edge
+          minc = RHUGE
+          vis(ic) = 1
+          ix = -1
+          do i = 1, n
+            if (vis(i)==0) then
+              edge = -C(i, piv(ic)) - y(i)
+              if (ic /= n1) edge = edge + C(ic, piv(ic)) + y(ic)
+              if (cij(i) > cij(ic) + edge) then
+                prv(i) = ic
+                cij(i) = cij(ic) + edge
+              end if
+              if (minc > cij(i)) then
+                ix = i
+                minc = cij(i)
+              end if
+            end if
+          end do
+        end block
+        ic = ix
+      end do
+!
+      do concurrent(i = 1:n)
+        if(i/=ic) cij(i) = MIN(cij(i), cij(ic))
+      end do
+      do concurrent(i = 1:n)
+        y(i) = y(i) + cij(i)
+      end do
+!
+      do while(ic /= n1)
+        i = prv(ic)
+        piv(ic) = piv(i)
+        ic = i
+      end do
+!
     end do
-    do concurrent(i=1:n)
-      block
-        real(RK) :: mv
-        mv = MINVAL(P(i, :))
-        P(i, :) = P(i, :) - mv
-      end block
-    end do
-  end subroutine sweep
+!
+  end subroutine get_piv
 !
 end module mod_Hungarian
