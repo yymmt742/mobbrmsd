@@ -7,7 +7,7 @@ program main
   use mod_unittest
   implicit none
   type(unittest)    :: u
-  integer, parameter :: NTEST = 100
+  integer, parameter :: NTEST = 1000
   integer           :: fail
   integer           :: i
 !

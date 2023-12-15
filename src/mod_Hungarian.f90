@@ -6,39 +6,40 @@ module mod_Hungarian
 !
 contains
 !
-!| Hungarian
-  subroutine Hungarian(n, C, P)
-    integer(IK), intent(in) :: n
+!| Hungarian method
+  pure subroutine Hungarian(n, C, piv, W)
+    integer(IK), intent(in)    :: n
     !! matrix dimension
-    real(RK), intent(in)    :: C(n, *)
+    real(RK), intent(in)       :: C(*)
     !! n*n score matrix.
-    real(RK), intent(inout) :: P(n, *)
-    !! n*n permutation matrix
+    integer(IK), intent(inout) :: piv(*)
+    !! pivot index
+    real(RK), intent(inout)    :: W(*)
+    !! work array
 !
-    if (n < 1)then
+    if (n < 0)then
+      ! query work array size
+      W(1) = ABS(n + n) + 1
+    elseif (n == 0)then
       return
     elseif (n == 1) then
-      P(1, 1) = ONE
+      piv(1) = 1
     elseif (n == 2) then
-      if (C(1, 1) + C(2, 2) >= C(1, 2) + C(2, 1))then
-        P(1, 1) = ONE
-        P(2, 1) = ZERO
-        P(1, 2) = ZERO
-        P(2, 2) = ONE
+      if (C(1) + C(4) >= C(2) + C(3))then
+        piv(1) = 1
+        piv(2) = 2
       else
-        P(1, 1) = ZERO
-        P(2, 1) = ONE
-        P(1, 2) = ONE
-        P(2, 2) = ZERO
+        piv(1) = 2
+        piv(2) = 1
       endif
     else
       block
-        integer(IK) :: iw(3 * (n + 1)), i, j
+        integer(IK) :: iw(3 * (n + 1)), i
 !
-        call get_piv(n, n + 1, C, iw(1), iw(n + 2), iw(n + n + 3), P(1, 1), P(1, 2))
+        call get_piv(n, n + 1, C, iw(1), iw(n + 2), iw(n + n + 3), W(1), W(n+1))
 !
-        do concurrent(i=1:n, j=1:n)
-          P(i, j) = MERGE(ONE, ZERO, iw(j) == i)
+        do concurrent(i=1:n)
+          piv(i) = iw(i)
         end do
 !
       end block

@@ -8,6 +8,7 @@ module mod_block_lower_bound
   use mod_rmsd
   use mod_det
   use mod_svd
+  use mod_Hungarian
   use mod_Kabsch
   use mod_Procrustes
   use mod_mol_block
@@ -63,6 +64,7 @@ module mod_block_lower_bound
 !
   integer(IK), parameter :: DEF_maxiter   = 200_IK
   integer(IK), parameter :: DEF_nrand     = 1_IK
+  integer(IK), parameter :: DEF_nbrute    = 20_IK
   real(RK), parameter    :: DEF_threshold = 1.0E-8_RK
 !
 contains
@@ -306,7 +308,7 @@ contains
 !
         call update_CP(b, w(b%xtry), w(b%rest), Q, w(b%cp))
 !!!     Get P = UV^T
-        call update_P(b, w(b%cp), P, w(b%wp))
+        call update_P(b, w(b%cp), P)
 !
 !!!     tr(P^T, CP) = ddot(P, CP)
         w(b%cost) = ddot(b%gg, P, w(b%cp))
@@ -320,8 +322,7 @@ contains
             iwq = b%wq + b%bq * (j - 1)
             ixtry = b%xtry + b%ffg * (j - 1)
             call update_CQ(b, w(ixtry), P(1, j), w(icq))
-!!!         Get Qi^T = UV^T
-            call Procrustes(b%f, w(icq), Q(1, 1, j), w(iwq))
+            call update_Q(b, w(icq), Q(1, 1, j))
           end block
         end do
 !
@@ -363,15 +364,33 @@ contains
 !
   end subroutine update_R
 !
-  pure subroutine update_P(b, CP, P, W)
+  pure subroutine update_P(b, CP, P)
     type(mol_block_), intent(in) :: b
     real(RK), intent(in)         :: CP(b%g, b%g)
-    real(RK), intent(inout)      :: P(b%g, b%g), W(*)
+    real(RK), intent(inout)      :: P(b%g, b%g)
+    integer(IK)                  :: i, j, piv(b%g)
 !
-!!! Get P = UV^T
-    call Procrustes(b%g, CP, P, w)
+    call Hungarian(b%g, CP, piv, P)
+    do concurrent(j=1:b%g, i=1:b%g)
+      P(i,j) = MERGE(ONE, ZERO, i==piv(j))
+    enddo
+!    call Procrustes(b%g, CP, P, w)
 !
   end subroutine update_P
+!
+  pure subroutine update_Q(b, CQ, Q)
+    type(mol_block_), intent(in) :: b
+    real(RK), intent(in)         :: CQ(b%f, b%f)
+    real(RK), intent(inout)      :: Q(b%f, b%f)
+    integer(IK)                  :: i, j, piv(b%f)
+!
+    call Hungarian(b%f, CQ, piv, Q)
+    do concurrent(j=1:b%f, i=1:b%f)
+      Q(i, j) = MERGE(ONE, ZERO, j == piv(i))
+    enddo
+!    call Procrustes(b%g, CP, P, w)
+!
+  end subroutine update_Q
 !
   pure subroutine atom_fixed_R(d, mn, X, Y, R, CR, RW)
     integer(IK), intent(in)      :: d, mn

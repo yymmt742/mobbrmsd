@@ -215,6 +215,7 @@ target_sources( test_block_lower_bound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mo
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_block_lower_bound.f90
                                       test_block_lower_bound.f90 )
 target_link_libraries( test_block_lower_bound PRIVATE unittest )
@@ -241,6 +242,7 @@ target_sources( test_tree PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_molecular_rotation.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_molecular_permutation.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
+                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_block_lower_bound.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
                                   test_tree.f90 )

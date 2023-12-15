@@ -7,6 +7,7 @@ program main
 !
   call z%init('test pca d=3')
   call test1()
+  call test2()
 !
   call z%finish_and_terminate()
 !
@@ -23,11 +24,15 @@ contains
     integer, parameter :: i5(3) = [3,1,2]
     integer, parameter :: i6(3) = [3,2,1]
     real(RK)           :: X(d, n), Y(d, n), C(n, n), P(n, n)
+    integer            :: piv(n), i, j
 !
     call random_number(X)
     call random_number(Y)
     C = MATMUL(TRANSPOSE(X), Y)
-    call Hungarian(n, C, P)
+    call Hungarian(n, C, piv, P)
+    do concurrent(i=1:n, j=1:n)
+      P(i, j) = MERGE(ONE, ZERO, i == piv(j))
+    end do
     print'(3f9.3)', C,P
     print'(3f9.3)', SUM(C * TRANSPOSE(P))
     print*
@@ -43,6 +48,21 @@ contains
     print'(3i4,f9.6)',i6, SP(n, i6, C)
 !
   end subroutine test1
+!
+  subroutine test2()
+    integer, parameter :: N_TEST=10
+    integer, parameter :: n=1000
+    real(RK)           :: C(n, n), P(n, n)
+    integer            :: i, j, piv(n)
+!
+    call random_number(C)
+    call Hungarian(n, C, piv, P)
+    do concurrent(i=1:n, j=1:n)
+    P(i, j) = MERGE(ONE, ZERO, i == piv(j))
+  end do
+    print'(f9.3)', SUM(C * TRANSPOSE(P))
+!
+  end subroutine test2
 !
   pure function SP(n, ix, C) result(res)
     integer, intent(in)  :: n, ix(n)
