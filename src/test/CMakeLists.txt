@@ -65,6 +65,14 @@ add_test( NAME test_rmsd_brute COMMAND test_rmsd_brute )
 #target_link_libraries( test_cov_time_4 PRIVATE unittest )
 #add_test( NAME test_cov_time_4 COMMAND test_cov_time_4 )
 
+add_executable( test_Hungarian )
+target_include_directories( test_Hungarian PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_Hungarian PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
+                                       test_Hungarian.f90 )
+target_link_libraries( test_Hungarian PRIVATE unittest )
+add_test( NAME test_Hungarian COMMAND test_Hungarian )
+
 add_executable( test_cov )
 target_include_directories( test_cov PRIVATE ${unittest_DIR}/mod_files )
 target_include_directories( test_cov PRIVATE ${purelapack_DIR}/mod_files )
