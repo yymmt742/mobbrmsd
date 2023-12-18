@@ -36,12 +36,15 @@ module mod_mol_block
     type(mol_block), allocatable :: b(:)
     !  mol_blocks
   contains
-    procedure         :: n_atom   => mol_block_list_n_atom
-    procedure         :: n_spc    => mol_block_list_n_spc
-    procedure         :: child    => mol_block_list_child
-    procedure         :: invalid  => mol_block_list_invalid
-    procedure         :: nspecies => mol_block_list_nspecies
-    procedure         :: ispecies => mol_block_list_ispecies
+    procedure         :: n_atom      => mol_block_list_n_atom
+    procedure         :: n_spc       => mol_block_list_n_spc
+    procedure         :: child       => mol_block_list_child
+    procedure         :: invalid     => mol_block_list_invalid
+    procedure         :: nspecies    => mol_block_list_nspecies
+    procedure         :: ispecies    => mol_block_list_ispecies
+    procedure         :: ipointer    => mol_block_list_ipointer
+    procedure         :: n_res       => mol_block_list_n_res
+    procedure         :: res_pointer => mol_block_list_res_pointer
     final             :: mol_block_list_destroy
   end type mol_block_list
 !
@@ -52,7 +55,7 @@ module mod_mol_block
 contains
 !
 ! Constructer
-  pure function mol_block_list_new(d, s, m, n, f) result(res)
+  pure function mol_block_list_new(d, s, m, n, f, g) result(res)
     integer(IK), intent(in) :: d
     !  d :: spatial dimension
     integer(IK), intent(in) :: s
@@ -63,16 +66,28 @@ contains
     !  n :: list of number of molecules, n
     integer(IK), intent(in) :: f(s)
     !  f :: list of number of free atoms in a molecule, f
+    integer(IK), intent(in) :: g(s)
+    !  g :: list of number of free molecule, g
     type(mol_block_list)    :: res
     integer(IK)             :: i, p
     res%d = d
     if (s < 1) then; allocate (res%b(0)); return
     else; allocate (res%b(s))
     end if
+    do concurrent(i=1:s)
+      block
+        integer(IK) :: mi, ni, fi, gi
+        mi = MAX(0, m(i))
+        ni = MAX(0, n(i))
+        fi = MAX(0, MIN(m(i), f(i)))
+        gi = MAX(0, MIN(n(i), g(i)))
+        res%b(i) = mol_block(0, mi, ni, fi, gi)
+      end block
+    end do
     p = 1
     do i = 1, s
-      res%b(i) = mol_block(p, m(i), n(i), f(i), n(i))
-      p = p + d * n(i) * m(i)
+      res%b(i)%p = p
+      p = p + d * res%b(i)%n * res%b(i)%m
     end do
     res%mg = SUM(res%b%m * res%b%g)
     res%mn = SUM(res%b%m * res%b%n)
@@ -130,6 +145,42 @@ contains
       end do
     end if
   end function mol_block_list_ispecies
+!
+  pure elemental function mol_block_list_ipointer(b, imol) result(res)
+    class(mol_block_list), intent(in) :: b
+    integer(IK), intent(in)           :: imol
+    integer(IK)                       :: i, res
+    res = 0
+    if (ALLOCATED(b%b)) then
+      do i = 1, SIZE(b%b)
+        if (b%b(i)%g == 0) cycle
+        if (imol < 1 .or. b%b(i)%n < imol) return
+        res = b%b(i)%p + (imol - 1) * b%d * b%b(i)%m; return
+      end do
+    end if
+  end function mol_block_list_ipointer
+!
+  pure function mol_block_list_n_res(b) result(res)
+    class(mol_block_list), intent(in) :: b
+    integer(IK)                       :: i, s, res(b%nspecies())
+    res = 0
+    s = b%nspecies()
+    do i = 1, s
+      res(i) = (b%b(i)%n - b%b(i)%g) * b%b(i)%m
+    end do
+  end function mol_block_list_n_res
+!
+  pure elemental function mol_block_list_res_pointer(b, ispc) result(res)
+    class(mol_block_list), intent(in) :: b
+    integer(IK), intent(in)           :: ispc
+    integer(IK)                       :: res
+    res = 0
+    if (ALLOCATED(b%b)) then
+      if (ispc < 1 .or. SIZE(b%b) < ispc) return
+      if (b%b(ispc)%n <= b%b(ispc)%g) return
+      res = b%b(ispc)%p + b%d * b%b(ispc)%m * (b%b(ispc)%n - b%b(ispc)%g); return
+    end if
+  end function mol_block_list_res_pointer
 !
   pure elemental function mol_block_list_nspecies(this) result(res)
     class(mol_block_list), intent(in) :: this

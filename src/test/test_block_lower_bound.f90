@@ -47,7 +47,7 @@ contains
     real(RK)               :: X(d * m * n), Y(d * m * n)
     real(RK), allocatable  :: w(:)
 !
-    b = mol_block_list(d, 1, [m], [n], [f]) ! g = n
+    b = mol_block_list(d, 1, [m], [n], [f], [n]) ! g = n
     b%b(1)%g = g
     allocate (w(block_lower_bound_worksize(b)))
     X = [sample(d, m * n)]
@@ -78,7 +78,7 @@ contains
     real(RK), allocatable  :: w(:)
     integer                :: i
 !
-    b = mol_block_list(d, 1, [m], [n], [f]) ! g = n
+    b = mol_block_list(d, 1, [m], [n], [f], [n]) ! g = n
     b%b(1)%g = g
     allocate (w(block_lower_bound_worksize(b)))
     X = [([lambda * i + sample(d, m)], i=1, n)]
@@ -108,7 +108,7 @@ contains
     real(RK), allocatable  :: w(:)
     integer                :: i, j, k
 !
-    b = mol_block_list(d, 2, [m, m], [n, n], [f, f]) ! g = n
+    b = mol_block_list(d, 2, [m, m], [n, n], [f, f], [n, n]) ! g = n
     b%b(1)%g = g
     b%b(2)%g = g
 !
@@ -140,7 +140,7 @@ contains
     real(RK), allocatable  :: w(:)
     integer                :: i, j, k
 !
-    b = mol_block_list(d, 2, [m, m], [n, n], [f, f]) ! g = n
+    b = mol_block_list(d, 2, [m, m], [n, n], [f, f], [n, n]) ! g = n
     b%b(1)%g = g
     b%b(2)%g = 0
 !

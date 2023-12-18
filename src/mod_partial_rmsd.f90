@@ -25,6 +25,7 @@ module mod_partial_rmsd
     procedure         :: sd      => partial_rmsd_sd
     procedure         :: msd     => partial_rmsd_msd
     procedure         :: rmsd    => partial_rmsd_rmsd
+    procedure         :: clear   => partial_rmsd_clear
     final             :: partial_rmsd_destroy
 !
   end type partial_rmsd
@@ -153,14 +154,19 @@ contains
     res = SQRT(this%msd())
   end function partial_rmsd_rmsd
 !
-  pure elemental subroutine partial_rmsd_destroy(this)
-    type(partial_rmsd), intent(inout) :: this
+  pure elemental subroutine partial_rmsd_clear(this)
+    class(partial_rmsd), intent(inout) :: this
     this%d = 0
     this%n = 0
     this%fix = 0
     this%yxt = 0
     this%rot = 0
     if (ALLOCATED(this%w)) deallocate (this%w)
+  end subroutine partial_rmsd_clear
+!
+  pure elemental subroutine partial_rmsd_destroy(this)
+    type(partial_rmsd), intent(inout) :: this
+    call this%clear()
   end subroutine partial_rmsd_destroy
 !
 !!! utils

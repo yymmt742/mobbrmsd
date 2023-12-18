@@ -267,6 +267,7 @@ target_sources( test_tree PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_block_lower_bound.f90
+                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_partial_rmsd.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
                                   test_tree.f90 )
 target_link_libraries( test_tree PRIVATE unittest )
