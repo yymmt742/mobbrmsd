@@ -225,6 +225,29 @@ target_link_libraries( test_block_lower_bound PRIVATE purelapack )
 target_link_libraries( test_block_lower_bound PRIVATE blas )
 add_test( NAME test_block_lower_bound COMMAND test_block_lower_bound )
 
+add_executable( test_partial_rmsd )
+target_include_directories( test_partial_rmsd PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_partial_rmsd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_permutation.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rmsd.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rmsd_brute.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_cov.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_pca.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_partial_rmsd.f90
+                                      test_partial_rmsd.f90 )
+target_link_libraries( test_partial_rmsd PRIVATE unittest )
+target_include_directories( test_partial_rmsd PRIVATE ${purelapack_DIR}/mod_files )
+target_include_directories( test_partial_rmsd PRIVATE ${purelapack_DIR}/include )
+target_link_libraries( test_partial_rmsd PRIVATE purelapack )
+add_test( NAME test_partial_rmsd COMMAND test_partial_rmsd )
+
 add_executable( test_tree )
 target_include_directories( test_tree PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_tree PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
