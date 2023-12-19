@@ -1,6 +1,7 @@
 !| molecular coodinate block indicator
 module mod_mol_block
   use mod_params, only: IK, RK, ONE => RONE, FOUR => RFOUR, ZERO => RZERO, RHUGE
+  use mod_molecular_rotation
   implicit none
   private
   public :: mol_block
@@ -29,12 +30,14 @@ module mod_mol_block
   end type mol_block
 !
   type mol_block_list
-    integer(IK)                  :: d = 0
-    integer(IK)                  :: mg = 0
-    integer(IK)                  :: mn = 0
+    integer(IK)                           :: d = 0
+    integer(IK)                           :: mg = 0
+    integer(IK)                           :: mn = 0
     !  d :: spatial dimension
-    type(mol_block), allocatable :: b(:)
+    type(mol_block), allocatable          :: b(:)
     !  mol_blocks
+    type(molecular_rotation), allocatable :: r(:)
+    !  molecular symmetry
   contains
     procedure         :: n_atom      => mol_block_list_n_atom
     procedure         :: n_spc       => mol_block_list_n_spc
@@ -45,6 +48,7 @@ module mod_mol_block
     procedure         :: ipointer    => mol_block_list_ipointer
     procedure         :: n_res       => mol_block_list_n_res
     procedure         :: res_pointer => mol_block_list_res_pointer
+    procedure         :: has_child   => mol_block_list_has_child
     final             :: mol_block_list_destroy
   end type mol_block_list
 !
@@ -55,39 +59,39 @@ module mod_mol_block
 contains
 !
 ! Constructer
-  pure function mol_block_list_new(d, s, m, n, f, g) result(res)
-    integer(IK), intent(in) :: d
+  pure function mol_block_list_new(d, s, b, r) result(res)
+    integer(IK), intent(in)              :: d
     !  d :: spatial dimension
-    integer(IK), intent(in) :: s
+    integer(IK), intent(in)              :: s
     !  s :: number of species
-    integer(IK), intent(in) :: m(s)
-    !  m :: list of number of atoms in a molecule, m
-    integer(IK), intent(in) :: n(s)
-    !  n :: list of number of molecules, n
-    integer(IK), intent(in) :: f(s)
-    !  f :: list of number of free atoms in a molecule, f
-    integer(IK), intent(in) :: g(s)
-    !  g :: list of number of free molecule, g
-    type(mol_block_list)    :: res
-    integer(IK)             :: i, p
+    type(mol_block), intent(in)          :: b(s)
+    !  molecular block
+    type(molecular_rotation), intent(in) :: r(s)
+    !  molecular block
+    type(mol_block_list)                 :: res
+    integer(IK)                          :: i, p
     res%d = d
-    if (s < 1) then; allocate (res%b(0)); return
-    else; allocate (res%b(s))
+    if (s < 1) then
+      allocate (res%b(0))
+      allocate (res%r(0))
+      return
     end if
+    allocate (res%b(s))
+    allocate (res%r(s))
     do concurrent(i=1:s)
-      block
-        integer(IK) :: mi, ni, fi, gi
-        mi = MAX(0, m(i))
-        ni = MAX(0, n(i))
-        fi = MAX(0, MIN(m(i), f(i)))
-        gi = MAX(0, MIN(n(i), g(i)))
-        res%b(i) = mol_block(0, mi, ni, fi, gi)
-      end block
+      res%b(i) = b(i)
+      res%b(i)%m = MAX(0, res%b(i)%m)
+      res%b(i)%n = MAX(0, res%b(i)%n)
+      res%b(i)%f = MAX(0, MIN(res%b(i)%m, res%b(i)%f))
+      res%b(i)%g = MAX(0, MIN(res%b(i)%n, res%b(i)%g))
     end do
     p = 1
     do i = 1, s
       res%b(i)%p = p
       p = p + d * res%b(i)%n * res%b(i)%m
+    end do
+    do concurrent(i=1:s)
+      res%r(i) = r(i)
     end do
     res%mg = SUM(res%b%m * res%b%g)
     res%mn = SUM(res%b%m * res%b%n)
@@ -128,7 +132,6 @@ contains
     do i = 1, SIZE(res%b)
       if (res%b(i)%g == 0) cycle
       res%b(i)%g = res%b(i)%g - 1
-      if (res%b(i)%g == 0) cycle
       return
     end do
   end function mol_block_list_child
@@ -154,8 +157,10 @@ contains
     if (ALLOCATED(b%b)) then
       do i = 1, SIZE(b%b)
         if (b%b(i)%g == 0) cycle
+        res = b%b(i)%p
         if (imol < 1 .or. b%b(i)%n < imol) return
-        res = b%b(i)%p + (imol - 1) * b%d * b%b(i)%m; return
+        res = res + (imol - 1) * b%d * b%b(i)%m
+        return
       end do
     end if
   end function mol_block_list_ipointer
@@ -201,6 +206,13 @@ contains
       res = ANY(mol_block_invalid(this%b))
     end if
   end function mol_block_list_invalid
+!
+  pure elemental function mol_block_list_has_child(this) result(res)
+    class(mol_block_list), intent(in) :: this
+    logical                           :: res
+    res = .false.
+    if (ALLOCATED(this%b)) res = ANY(this%b%g > 0)
+  end function mol_block_list_has_child
 !
   pure elemental function mol_block_invalid(b) result(res)
     type(mol_block), intent(in) :: b
