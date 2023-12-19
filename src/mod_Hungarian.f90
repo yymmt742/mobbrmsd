@@ -2,9 +2,41 @@ module mod_Hungarian
   use mod_params, only : IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   implicit none
   private
-  public :: Hungarian
+  public :: Hungarian, Hungarian_value
 !
 contains
+!
+  pure function Hungarian_value(n, C) result(res)
+    integer(IK), intent(in) :: n
+    !! matrix dimension
+    real(RK), intent(in)    :: C(*)
+    !! n*n score matrix.
+    real(RK)                :: res
+    if (n < 1) then
+      res = ZERO
+      return
+    elseif (n == 1) then
+      res = C(1)
+    elseif (n == 2) then
+      if (C(1) + C(4) >= C(2) + C(3)) then
+        res = C(1) + C(4)
+      else
+        res = C(2) + C(3)
+      end if
+    else
+      block
+        real(RK)    :: W(n + n + 1)
+        integer(IK) :: iw(3 * (n + 1)), i, j
+!
+        call get_piv(n, n + 1, C, iw(1), iw(n + 2), iw(n + n + 3), W(1), W(n + 1))
+        res = ZERO
+        do i = 1, n
+          j = i + n * (iw(i) - 1)
+          res = res + C(j)
+        end do
+      end block
+    end if
+  end function Hungarian_value
 !
 !| Hungarian method
   pure subroutine Hungarian(n, C, piv, W)
@@ -36,7 +68,7 @@ contains
       block
         integer(IK) :: iw(3 * (n + 1)), i
 !
-        call get_piv(n, n + 1, C, iw(1), iw(n + 2), iw(n + n + 3), W(1), W(n+1))
+        call get_piv(n, n + 1, C, iw(1), iw(n + 2), iw(n + n + 3), W(1), W(n + 1))
 !
         do concurrent(i=1:n)
           piv(i) = iw(i)

@@ -35,6 +35,7 @@ contains
     end do
     print'(3f9.3)', C,P
     print'(3f9.3)', SUM(C * TRANSPOSE(P))
+    print'(3f9.3)', Hungarian_value(n, C)
     print*
     print'(3f9.3)', matmul(C, P)
     print*
