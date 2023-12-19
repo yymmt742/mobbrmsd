@@ -114,8 +114,8 @@ contains
           ix = -1
           do i = 1, n
             if (vis(i)==0) then
-              edge = -C(i, piv(ic)) - y(i)
-              if (ic /= n1) edge = edge + C(ic, piv(ic)) + y(ic)
+              edge = C(i, piv(ic)) - y(i)
+              if (ic /= n1) edge = edge - C(ic, piv(ic)) + y(ic)
               if (cij(i) > cij(ic) + edge) then
                 prv(i) = ic
                 cij(i) = cij(ic) + edge

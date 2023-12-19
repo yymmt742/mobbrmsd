@@ -370,7 +370,7 @@ contains
     real(RK), intent(inout)      :: P(b%g, b%g)
     integer(IK)                  :: i, j, piv(b%g)
 !
-    call Hungarian(b%g, CP, piv, P)
+    call Hungarian(b%g, -CP, piv, P)
     do concurrent(j=1:b%g, i=1:b%g)
       P(i,j) = MERGE(ONE, ZERO, i==piv(j))
     enddo
@@ -384,7 +384,7 @@ contains
     real(RK), intent(inout)      :: Q(b%f, b%f)
     integer(IK)                  :: i, j, piv(b%f)
 !
-    call Hungarian(b%f, CQ, piv, Q)
+    call Hungarian(b%f, -CQ, piv, Q)
     do concurrent(j=1:b%f, i=1:b%f)
       Q(i, j) = MERGE(ONE, ZERO, j == piv(i))
     enddo

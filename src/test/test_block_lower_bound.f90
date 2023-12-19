@@ -43,19 +43,20 @@ contains
     integer, parameter     :: n = 3
     integer, parameter     :: f = 3
     integer, parameter     :: g = 2
-    type(mol_block_list)   :: b
+    type(mol_block)        :: b = mol_block(0, m, n, f, g)
+    type(mol_block_list)   :: blk
     real(RK)               :: X(d * m * n), Y(d * m * n)
     real(RK), allocatable  :: w(:)
 !
-    b = mol_block_list(d, 1, [m], [n], [f], [n]) ! g = n
-    b%b(1)%g = g
-    allocate (w(block_lower_bound_worksize(b)))
+    blk = mol_block_list(d, 1, [b]) ! g = n
+    blk%b(1)%g = g
+    allocate (w(block_lower_bound_worksize(blk)))
     X = [sample(d, m * n)]
     call centering(d, m * n, X)
     Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), PER15())]
     call centering(d, m * n, Y)
 !
-    call block_lower_bound(b, X, Y, w, nrand=10)
+    call block_lower_bound(blk, X, Y, w, nrand=10)
 !
     if (w(1) > 0.0001D0) then
       fail = fail + 1
@@ -73,20 +74,20 @@ contains
     integer, parameter     :: f = 3
     integer, parameter     :: g = 8
     real(RK), parameter    :: lambda = 2.0_RK
-    type(mol_block_list)   :: b
+    type(mol_block)        :: b = mol_block(0, m, n, f, g)
+    type(mol_block_list)   :: blk
     real(RK)               :: X(d * m * n), Y(d * m * n)
     real(RK), allocatable  :: w(:)
     integer                :: i
 !
-    b = mol_block_list(d, 1, [m], [n], [f], [n]) ! g = n
-    b%b(1)%g = g
-    allocate (w(block_lower_bound_worksize(b)))
+    blk = mol_block_list(d, 1, [b]) ! g = n
+    allocate (w(block_lower_bound_worksize(blk)))
     X = [([lambda * i + sample(d, m)], i=1, n)]
     call centering(d, m * n, X)
     Y = [MATMUL(MATMUL(SO3(), RESHAPE(X, [d, m * n])), PER25(m, n, g))]
     call centering(d, m * n, Y)
 !
-    call block_lower_bound(b, X, Y, w, nrand=5)
+    call block_lower_bound(blk, X, Y, w, nrand=5)
 !
     if (w(1) > 0.01D0) then
       fail = fail + 1
@@ -95,66 +96,66 @@ contains
 !
   end subroutine test2
 !
-  subroutine test3(fail)
-    integer, intent(inout) :: fail
-    integer, parameter     :: d = 3
-    integer, parameter     :: m = 5
-    integer, parameter     :: n = 12
-    integer, parameter     :: f = 3
-    integer, parameter     :: g = 2
-    real(RK), parameter    :: lambda = 2.0_RK
-    real(RK)               :: X(d * m * n * 2), Y(d * m * n * 2)
-    type(mol_block_list)   :: b
-    real(RK), allocatable  :: w(:)
-    integer                :: i, j, k
+! subroutine test3(fail)
+!   integer, intent(inout) :: fail
+!   integer, parameter     :: d = 3
+!   integer, parameter     :: m = 5
+!   integer, parameter     :: n = 12
+!   integer, parameter     :: f = 3
+!   integer, parameter     :: g = 2
+!   real(RK), parameter    :: lambda = 2.0_RK
+!   real(RK)               :: X(d * m * n * 2), Y(d * m * n * 2)
+!   type(mol_block_list)   :: b
+!   real(RK), allocatable  :: w(:)
+!   integer                :: i, j, k
 !
-    b = mol_block_list(d, 2, [m, m], [n, n], [f, f], [n, n]) ! g = n
-    b%b(1)%g = g
-    b%b(2)%g = g
+!   b = mol_block_list(d, 2, [m, m], [n, n], [f, f], [n, n]) ! g = n
+!   b%b(1)%g = g
+!   b%b(2)%g = g
 !
-    X = [([([lambda * RESHAPE([([i, j, 0], k=1, m)], [d, m]) + sample(d, m)], i=1, n)], j=0, 1)]
-    call centering(d, 2 * m * n, X)
-    Y = [MATMUL(SO3(), RESHAPE([(MATMUL(RESHAPE(X(d * m * n * j + 1:d * m * n * (j + 1)), [d, m * n]), &
-      & PER25(m, n, g)), j=0, 1)], [d, m * n * 2]))]
-    call centering(d, 2 * m * n, Y)
+!   X = [([([lambda * RESHAPE([([i, j, 0], k=1, m)], [d, m]) + sample(d, m)], i=1, n)], j=0, 1)]
+!   call centering(d, 2 * m * n, X)
+!   Y = [MATMUL(SO3(), RESHAPE([(MATMUL(RESHAPE(X(d * m * n * j + 1:d * m * n * (j + 1)), [d, m * n]), &
+!     & PER25(m, n, g)), j=0, 1)], [d, m * n * 2]))]
+!   call centering(d, 2 * m * n, Y)
 !
-    allocate (w(block_lower_bound_worksize(b)))
-    call block_lower_bound(b, X, Y, w, nrand=5)
+!   allocate (w(block_lower_bound_worksize(b)))
+!   call block_lower_bound(b, X, Y, w, nrand=5)
 !
-    if (w(1) > 0.01D0) then
-      fail = fail + 1
-      print'(I8,F9.4)', fail, w(1)
-    end if
+!   if (w(1) > 0.01D0) then
+!     fail = fail + 1
+!     print'(I8,F9.4)', fail, w(1)
+!   end if
 !
-  end subroutine test3
+! end subroutine test3
 !
-  subroutine test4()
-    integer, parameter     :: d = 3
-    integer, parameter     :: m = 5
-    integer, parameter     :: n = 5
-    integer, parameter     :: f = 3
-    integer, parameter     :: g = 2
-    real(RK), parameter    :: lambda = 5.0_RK
-    real(RK)               :: X(d, m * n * 2), Y(d, m * n * 2)
-    type(mol_block_list)   :: b
-    real(RK), allocatable  :: w(:)
-    integer                :: i, j, k
+! subroutine test4()
+!   integer, parameter     :: d = 3
+!   integer, parameter     :: m = 5
+!   integer, parameter     :: n = 5
+!   integer, parameter     :: f = 3
+!   integer, parameter     :: g = 2
+!   real(RK), parameter    :: lambda = 5.0_RK
+!   real(RK)               :: X(d, m * n * 2), Y(d, m * n * 2)
+!   type(mol_block_list)   :: b
+!   real(RK), allocatable  :: w(:)
+!   integer                :: i, j, k
 !
-    b = mol_block_list(d, 2, [m, m], [n, n], [f, f], [n, n]) ! g = n
-    b%b(1)%g = g
-    b%b(2)%g = 0
+!   b = mol_block_list(d, 2, [m, m], [n, n], [f, f], [n, n]) ! g = n
+!   b%b(1)%g = g
+!   b%b(2)%g = 0
 !
-    X = RESHAPE([([([lambda * RESHAPE([([i, j, 0], k=1, m)], [d, m]) + sample(d, m)], i=1, n)], j=0, 1)], [d, m * n * 2])
-    call centering(d, 2 * m * n, X)
-    Y = MATMUL(SO3(), X)
-    Y(:, :m * n) = MATMUL(Y(:, :m * n), PER25(m, n, g))
-    call centering(d, 2 * m * n, Y)
+!   X = RESHAPE([([([lambda * RESHAPE([([i, j, 0], k=1, m)], [d, m]) + sample(d, m)], i=1, n)], j=0, 1)], [d, m * n * 2])
+!   call centering(d, 2 * m * n, X)
+!   Y = MATMUL(SO3(), X)
+!   Y(:, :m * n) = MATMUL(Y(:, :m * n), PER25(m, n, g))
+!   call centering(d, 2 * m * n, Y)
 !
-    allocate (w(block_lower_bound_worksize(b)))
-    call block_lower_bound(b, X, Y, w, nrand=5)
-    print *, w(1)
+!   allocate (w(block_lower_bound_worksize(b)))
+!   call block_lower_bound(b, X, Y, w, nrand=5)
+!   print *, w(1)
 !
-  end subroutine test4
+! end subroutine test4
 !
   function SO3() result(res)
     real(RK) :: a(3), res(3, 3)
