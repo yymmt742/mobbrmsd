@@ -3,7 +3,6 @@
 module mod_Kabsch
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
   use mod_svd
-  use mod_pca
   use mod_det
   implicit none
   private
@@ -19,22 +18,15 @@ module mod_Kabsch
 contains
 !
 !| Calculate work array size for d*d matrix.
-  pure elemental function Kabsch_worksize(d, n) result(res)
+  pure elemental function Kabsch_worksize(d) result(res)
     integer(IK), intent(in)           :: d
     !! matrix collumn dimension.
-    integer(IK), intent(in), optional :: n
-    !! matrix row dimension.
     integer(IK)                       :: res
 !
     if (d < 1) then
       res = 0
     else
-      if (PRESENT(n)) then
-        res = MAX(d * d + 2 * MAX(d - 1, 0) * n + MAX(d - 1, 0)**2 * 3 + svd_worksize(MAX(d - 1, 0)), &
-       &          d * d * 3 + 2 * d * n + d + MAX(svd_worksize(d) + d * d * 3 + d, pca_worksize(d)))
-        else
-        res = svd_worksize(d) + d * d * 3 + d
-      end if
+      res = svd_worksize(d) + d * d * 3 + d
     end if
 !
   end function Kabsch_worksize
