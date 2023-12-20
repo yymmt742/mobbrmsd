@@ -7,6 +7,7 @@ module mod_d_matrix
   implicit none
   private
   public :: d_matrix
+  public :: d_matrix_list
   public :: d_matrix_memsize
   public :: d_matrix_eval
   public :: d_matrix_partial_eval
@@ -16,12 +17,26 @@ module mod_d_matrix
     sequence
     integer(IK) :: d, s, m, n
     integer(IK) :: dd, nn, dm, cb
-    integer(IK) :: z, c, nk
+    integer(IK) :: x, z, c, nk
   end type d_matrix
 !
   interface d_matrix
     module procedure d_matrix_new
   end interface d_matrix
+!
+  type d_matrix_list
+    integer(IK)                           :: d = 0
+    integer(IK)                           :: n = 0
+    type(d_matrix), allocatable           :: m(:)
+    type(molecular_rotation), allocatable :: r(:)
+  contains
+    procedure :: eval => d_matrix_list_eval
+    final     :: d_matrix_list_destroy
+  end type d_matrix_list
+!
+  interface d_matrix_list
+    module procedure d_matrix_list_new
+  end interface d_matrix_list
 !
   interface
     include 'dgemm.h'
@@ -30,8 +45,8 @@ module mod_d_matrix
 contains
 !
 !| generator
-  pure elemental function d_matrix_new(p, d, s, b) result(res)
-    integer(IK), intent(in)     :: p, d, s
+  pure elemental function d_matrix_new(p, q, d, s, b) result(res)
+    integer(IK), intent(in)     :: p, q, d, s
     type(mol_block), intent(in) :: b
     type(d_matrix)              :: res
     res%d = MAX(d, 1)
@@ -42,6 +57,7 @@ contains
     res%nn = res%n * res%n
     res%dm = res%d * res%m
     res%cb = res%dd * res%s + 1
+    res%x  = q
     res%z  = p
     res%c  = res%z + res%nn
     res%nk = Kabsch_worksize(d)
@@ -60,7 +76,7 @@ contains
     real(RK), intent(in)                  :: Y(*)
     real(RK), intent(inout)               :: W(*)
 !
-    call eval(a%d, a%s, a%m, a%n, a%dd, a%dm, a%cb, a%nk, rot, X, Y, W(a%z), W(a%c))
+    call eval(a%d, a%s, a%m, a%n, a%dd, a%dm, a%cb, a%nk, rot, X(a%x), Y(a%x), W(a%z), W(a%c))
 !
   end subroutine d_matrix_eval
 !
@@ -151,18 +167,18 @@ contains
     ic = ih + 1 + a%dd * (isym - 1)
     nw = 1 + a%dd * 2 + a%nk
 !
-    if (p < 2) then
-      H = ZERO
-      call zfill(a%dd, C)
-    endif
-!
     if (p == 0) then
       LF = ZERO
       if (PRESENT(R)) call eye(a%d, R)
     else
       call partial_eval(a%d, a%s, a%n, a%dd, nw, p, iprm, isym, W(ih), W(ic), LF, H, C, R)
     end if
-    call residue_eval(a, p, ires, W, LB)
+!
+    if (p == a%n) then
+      LB = ZERO
+    else
+      call residue_eval(a, p, ires, W, LB)
+    endif
 !
   end subroutine d_matrix_partial_eval
 !
@@ -251,6 +267,55 @@ contains
 !
   end subroutine residue_eval
 !
+!!! d_matrix_list
+!
+  pure function d_matrix_list_new(n, d, b, r) result(res)
+    integer(IK), intent(in)              :: n, d
+    type(mol_block), intent(in)          :: b(n)
+    type(molecular_rotation), intent(in) :: r(n)
+    type(d_matrix_list)                  :: res
+    integer(IK)                          :: i, p, q, s
+!
+    res%n = MAX(n, 0)
+    res%d = MAX(d, 1)
+!
+    allocate(res%m(res%n))
+    allocate(res%r(res%n))
+!
+    do concurrent(i=1:res%n)
+      res%r(i) = r(i)
+    end do
+!
+    p = 1
+    q = 1
+!
+    do concurrent(i=1:res%n)
+      s = r(i)%n_sym()
+      res%m(i) = d_matrix(p, q, d, s, b(i))
+      p = p + d_matrix_memsize(res%m(i))
+      q = q + d * b(i)%m * b(i)%n
+    end do
+!
+  end function d_matrix_list_new
+!
+  pure subroutine d_matrix_list_eval(this, X, Y, W)
+    class(d_matrix_list), intent(in) :: this
+    real(RK), intent(in)             :: X(*), Y(*)
+    real(RK), intent(inout)          :: W(*)
+    integer(IK)                      :: i
+    do concurrent(i=1:this%n)
+      call d_matrix_eval(this%m(i), this%r(i), X, Y, W)
+    enddo
+  end subroutine d_matrix_list_eval
+!
+  pure elemental subroutine d_matrix_list_destroy(this)
+    type(d_matrix_list), intent(inout) :: this
+    this%n = 0
+    this%d = 0
+    if (ALLOCATED(this%m)) deallocate (this%m)
+    if (ALLOCATED(this%r)) deallocate (this%r)
+  end subroutine d_matrix_list_destroy
+!
 !!! util
 !
   pure function ddot(d, X, Y) result(res)
@@ -296,15 +361,6 @@ contains
       C(i) = A(i) + B(i)
     end do
   end subroutine add
-!
-  pure subroutine zfill(d, x)
-    integer(IK), intent(in) :: d
-    real(RK), intent(inout) :: x(*)
-    integer(IK)             :: i
-    do concurrent(i=1:d)
-      x(i) = ZERO
-    end do
-  end subroutine zfill
 !
   pure subroutine eye(d, x)
     integer(IK), intent(in) :: d
