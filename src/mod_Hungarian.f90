@@ -39,15 +39,15 @@ contains
   end function Hungarian_value
 !
 !| Hungarian method
-  pure subroutine Hungarian(n, C, piv, W)
-    integer(IK), intent(in)    :: n
+  pure subroutine Hungarian(n, C, W, piv)
+    integer(IK), intent(in)              :: n
     !! matrix dimension
-    real(RK), intent(in)       :: C(*)
-    !! n*n score matrix.
-    integer(IK), intent(inout) :: piv(*)
+    real(RK), intent(in)                 :: C(*)
     !! pivot index
-    real(RK), intent(inout)    :: W(*)
+    real(RK), intent(inout)              :: W(*)
     !! work array
+    integer(IK), intent(inout), optional :: piv(*)
+    !! n*n score matrix.
 !
     if (n < 0)then
       ! query work array size
@@ -55,24 +55,40 @@ contains
     elseif (n == 0)then
       return
     elseif (n == 1) then
-      piv(1) = 1
+      W(1) = C(1)
+      if (PRESENT(piv)) piv(1) = 1
     elseif (n == 2) then
-      if (C(1) + C(4) >= C(2) + C(3))then
-        piv(1) = 1
-        piv(2) = 2
+      W(1) = C(1) + C(4)
+      W(2) = C(2) + C(3)
+      if (W(1) >= W(2))then
+        if (PRESENT(piv)) then
+          piv(1) = 1
+          piv(2) = 2
+        end if
       else
-        piv(1) = 2
-        piv(2) = 1
+        W(2) = W(1)
+        if (PRESENT(piv)) then
+          piv(1) = 2
+          piv(2) = 1
+        end if
       endif
     else
       block
-        integer(IK) :: iw(3 * (n + 1)), i
+        integer(IK) :: iw(3 * (n + 1)), i, j
 !
         call get_piv(n, n + 1, C, iw(1), iw(n + 2), iw(n + n + 3), W(1), W(n + 1))
 !
-        do concurrent(i=1:n)
-          piv(i) = iw(i)
+        W(1) = ZERO
+        do i = 1, n
+          j = i + n * (iw(i) - 1)
+          W(1) = W(1) + C(j)
         end do
+!
+        if (PRESENT(piv)) then
+          do concurrent(i=1:n)
+            piv(i) = iw(i)
+          end do
+        end if
 !
       end block
     end if

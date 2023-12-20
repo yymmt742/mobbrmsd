@@ -29,7 +29,7 @@ contains
     call random_number(X)
     call random_number(Y)
     C = MATMUL(TRANSPOSE(X), Y)
-    call Hungarian(n, C, piv, P)
+    call Hungarian(n, C, P, piv)
     do concurrent(i=1:n, j=1:n)
       P(i, j) = MERGE(ONE, ZERO, i == piv(j))
     end do
@@ -57,7 +57,7 @@ contains
     integer            :: i, j, piv(n)
 !
     call random_number(C)
-    call Hungarian(n, C, piv, P)
+    call Hungarian(n, C, P, piv)
     do concurrent(i=1:n, j=1:n)
     P(i, j) = MERGE(ONE, ZERO, i == piv(j))
   end do
