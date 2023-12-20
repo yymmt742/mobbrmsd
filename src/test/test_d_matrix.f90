@@ -9,6 +9,7 @@ program main
 !
   call u%init('test d_matrix')
   call test1()
+  call test2()
 !
   call u%finish_and_terminate()
 !
@@ -31,31 +32,70 @@ contains
     real(RK), allocatable      :: w(:)
 !
     rot = molecular_rotation(swp)
-    a = d_matrix(1, 1, d, s, b)
+    a = d_matrix(1, d, s, b)
     X = sample(d, mn)
     Y = 0.9D0 * MATMUL(SO3(), X) + 0.1D0 * sample(d, mn)
     print *, d_matrix_memsize(a)
     allocate (w(d_matrix_memsize(a)))
     call d_matrix_eval(a, rot, X, Y, W)
     call d_matrix_partial_eval(a, 1, 1, 1, [2,3,4,5], W, LF, LB, H, C, R)
-print'(3f9.3)',LF, LB, LF+LB
+    print'(3f9.3)',LF, LB, LF+LB
     call d_matrix_partial_eval(a, 2, 2, 1, [3,4,5], W, LF, LB, H, C, R)
-print'(3f9.3)',LF, LB, LF+LB
+    print'(3f9.3)',LF, LB, LF+LB
     call d_matrix_partial_eval(a, 3, 3, 1, [4,5], W, LF, LB, H, C, R)
-print'(3f9.3)',LF, LB, LF+LB
+    print'(3f9.3)',LF, LB, LF+LB
     call d_matrix_partial_eval(a, 4, 4, 1, [5], W, LF, LB, H, C, R)
-print'(3f9.3)',LF, LB, LF+LB
+    print'(3f9.3)',LF, LB, LF+LB
     call d_matrix_partial_eval(a, 5, 5, 1, [5], W, LF, LB, H, C, R)
-print'(3f9.3)',LF, LB, LF+LB
-print*
+    print'(3f9.3)',LF, LB, LF+LB
+    print*
     call d_matrix_partial_eval(a, 1, 1, 2, [2,3,4,5], W, LF, LB, H, C, R)
-print'(3f9.3)',LF, LB, LF+LB
+    print'(3f9.3)',LF, LB, LF+LB
     call d_matrix_partial_eval(a, 1, 2, 1, [1,3,4,5], W, LF, LB, H, C, R)
-print'(3f9.3)',LF, LB, LF+LB
+    print'(3f9.3)',LF, LB, LF+LB
     call d_matrix_partial_eval(a, 1, 2, 2, [1,3,4,5], W, LF, LB, H, C, R)
-print'(3f9.3)',LF, LB, LF+LB
+    print'(3f9.3)',LF, LB, LF+LB
 !
   end subroutine test1
+!
+  subroutine test2()
+    integer, parameter       :: l = 3
+    integer, parameter       :: d = 3
+    integer, parameter       :: s = 3
+    integer, parameter       :: m = 5
+    integer, parameter       :: n = 7
+    integer, parameter       :: f = 3
+    integer, parameter       :: g = 5
+    integer, parameter       :: mnl = (3 * m + 6) * n
+    integer, parameter       :: swp(m, s - 1) = RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m, s - 1])
+    type(mol_block)          :: b(l)
+    type(molecular_rotation) :: rot(l)
+    type(d_matrix_list)      :: a
+    real(RK)                 :: X(d, mnl), Y(d, mnl)
+    real(RK)                 :: LF, LB, H, C(d, d), R(d, d)
+    real(RK), allocatable    :: w(:)
+    integer                  :: i, ix
+!
+    ix = 1
+    do i=1, l
+      b(i) = mol_block(ix, m + i, n, f, g - i)
+      ix = ix + d * b(i)%m * b(i)%n
+    end do
+    do concurrent(i=1:l)
+      rot(i) = molecular_rotation(swp(:, :i - 1))
+    end do
+    a = d_matrix_list(l, b, rot, d, 1)
+!
+    X = sample(d, mnl)
+    Y = 0.9D0 * MATMUL(SO3(), X) + 0.1D0 * sample(d, mnl)
+    print *, a%memsize()
+    print *, d_matrix_memsize(a%m)
+!
+    allocate (w(a%memsize()))
+!
+    call a%eval(X, Y, W)
+!
+  end subroutine test2
 !
   function sample(d, n) result(res)
     integer, intent(in)  :: d, n
@@ -63,6 +103,9 @@ print'(3f9.3)',LF, LB, LF+LB
     real(RK)             :: res(d, n)
     integer              :: i
     call RANDOM_NUMBER(res)
+!   do concurrent(i=1:n)
+!     res(:, i) = i
+!   enddo
     cnt = SUM(res, 2) / n
     do concurrent(i=1:n)
       res(:, i) = res(:, i) - cnt

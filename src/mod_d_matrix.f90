@@ -15,8 +15,8 @@ module mod_d_matrix
   type d_matrix
     private
     sequence
-    integer(IK) :: d, s, m, n
-    integer(IK) :: dd, nn, dm, cb
+    integer(IK) :: d, s, m, n, g
+    integer(IK) :: dd, gg, dm, cb
     integer(IK) :: x, z, c, nk
   end type d_matrix
 !
@@ -26,11 +26,14 @@ module mod_d_matrix
 !
   type d_matrix_list
     integer(IK)                           :: d = 0
-    integer(IK)                           :: n = 0
+    integer(IK)                           :: l = 0
+    integer(IK)                           :: h = 0
+    integer(IK)                           :: c = 0
     type(d_matrix), allocatable           :: m(:)
     type(molecular_rotation), allocatable :: r(:)
   contains
-    procedure :: eval => d_matrix_list_eval
+    procedure :: eval    => d_matrix_list_eval
+    procedure :: memsize => d_matrix_list_memsize
     final     :: d_matrix_list_destroy
   end type d_matrix_list
 !
@@ -45,28 +48,29 @@ module mod_d_matrix
 contains
 !
 !| generator
-  pure elemental function d_matrix_new(p, q, d, s, b) result(res)
-    integer(IK), intent(in)     :: p, q, d, s
+  pure elemental function d_matrix_new(p, d, s, b) result(res)
+    integer(IK), intent(in)     :: p, d, s
     type(mol_block), intent(in) :: b
     type(d_matrix)              :: res
     res%d = MAX(d, 1)
     res%s = MAX(s, 1)
     res%m = b%m
-    res%n = b%g
+    res%g = b%g
+    res%n = b%n
     res%dd = res%d * res%d
-    res%nn = res%n * res%n
+    res%gg = res%g * res%g
     res%dm = res%d * res%m
     res%cb = res%dd * res%s + 1
-    res%x  = q
+    res%x  = b%p
     res%z  = p
-    res%c  = res%z + res%nn
+    res%c  = res%z + res%gg
     res%nk = Kabsch_worksize(d)
   end function d_matrix_new
 !
   pure elemental function d_matrix_memsize(a) result(res)
     type(d_matrix), intent(in) :: a
     integer(IK)                :: res
-    res = (a%cb + 1) * a%nn
+    res = (a%cb + 1) * a%gg
   end function d_matrix_memsize
 !
   pure subroutine d_matrix_eval(a, rot, X, Y, W)
@@ -76,18 +80,18 @@ contains
     real(RK), intent(in)                  :: Y(*)
     real(RK), intent(inout)               :: W(*)
 !
-    call eval(a%d, a%s, a%m, a%n, a%dd, a%dm, a%cb, a%nk, rot, X(a%x), Y(a%x), W(a%z), W(a%c))
+    call eval(a%d, a%s, a%m, a%g, a%dd, a%dm, a%cb, a%nk, rot, X(a%x), Y(a%x), W(a%z), W(a%c))
 !
   end subroutine d_matrix_eval
 !
-  pure subroutine eval(d, s, m, n, dd, dm, cb, nk, r, X, Y, Z, C)
-    integer(IK), intent(in)              :: d, s, m, n
+  pure subroutine eval(d, s, m, g, dd, dm, cb, nk, r, X, Y, Z, C)
+    integer(IK), intent(in)              :: d, s, m, g
     integer(IK), intent(in)              :: dd, dm, cb, nk
     type(molecular_rotation), intent(in) :: r
-    real(RK), intent(in)                 :: X(d, m, n)
-    real(RK), intent(in)                 :: Y(d, m, n)
-    real(RK), intent(inout)              :: Z(n, n)
-    real(RK), intent(inout)              :: C(cb, n, n)
+    real(RK), intent(in)                 :: X(d, m, g)
+    real(RK), intent(in)                 :: Y(d, m, g)
+    real(RK), intent(inout)              :: Z(g, g)
+    real(RK), intent(inout)              :: C(cb, g, g)
     integer(IK), parameter               :: ib = 1
     integer(IK), parameter               :: it = 2
     integer(IK), parameter               :: ih = 3
@@ -95,7 +99,7 @@ contains
     integer(IK)                          :: iy, ic, ir, iw
     integer(IK)                          :: j, k, nw
 !
-    if (n < 1) return
+    if (g < 1) return
 !
     nw = 3 + 2 * d * d + dm + dm + nk
     iy = ix + dm
@@ -103,7 +107,7 @@ contains
     ir = ic + dd
     iw = ir + dd
 !
-    do concurrent(j=1:n, k=1:n)
+    do concurrent(j=1:g, k=1:g)
       block
         integer(IK) :: i, ip
         real(RK)    :: W(nw)
@@ -112,7 +116,7 @@ contains
         call copy(dm, Y(1, 1, k), W(iy))
 !
 !!!     trace of self correlation matrix
-        w(ih) = ddot(dm + dm, W(ix), W(ix)) ! tr[X, X^t] + tr[Y, Y^t]
+        call ddot(dm + dm, W(ix), W(ix), w(ih)) ! tr[X, X^t] + tr[Y, Y^t]
         C(1, j, k) = w(ih)
 !
         ip = 2
@@ -144,7 +148,7 @@ contains
       call DGEMM('N', 'T', d, d, m, ONE, XY(1, 2), d, XY(1, 1), d, ZERO, C, d)
       call Kabsch(d, C, R, W)
 !!!   get squared displacement
-      T = ddot(dd, C, R) ! tr[C, R^t]
+      call ddot(dd, C, R, T) ! tr[C, R^t]
       T = T + T
       T = H - T
     end subroutine calc_lb
@@ -159,11 +163,11 @@ contains
     real(RK), intent(inout), optional :: R(*)
     integer(IK)                       :: ih, ic, nw
 !
-    if (p < 0 .or. a%n < p) return
-    if (iprm < 1 .or. a%n < iprm) return
+    if (p < 0 .or. a%g < p) return
+    if (iprm < 1 .or. a%g < iprm) return
     if (isym < 1 .or. a%s < isym) return
 !
-    ih = a%c + (iprm - 1) * a%cb + (p - 1) * a%cb * a%n
+    ih = a%c + (iprm - 1) * a%cb + (p - 1) * a%cb * a%g
     ic = ih + 1 + a%dd * (isym - 1)
     nw = 1 + a%dd * 2 + a%nk
 !
@@ -171,10 +175,10 @@ contains
       LF = ZERO
       if (PRESENT(R)) call eye(a%d, R)
     else
-      call partial_eval(a%d, a%s, a%n, a%dd, nw, p, iprm, isym, W(ih), W(ic), LF, H, C, R)
+      call partial_eval(a%d, a%s, a%g, a%dd, nw, p, iprm, isym, W(ih), W(ic), LF, H, C, R)
     end if
 !
-    if (p == a%n) then
+    if (p == a%g) then
       LB = ZERO
     else
       call residue_eval(a, p, ires, W, LB)
@@ -205,7 +209,7 @@ contains
 !!! get correlation matrix C = Y^t@X and optimal rotation R^t
     call Kabsch(d, w(ic), w(ir), W(iw))
 !!! get squared displacement
-    W(it) = ddot(dd, W(ic), W(ir)) ! tr[C, R^t]
+    call ddot(dd, W(ic), W(ir), W(it)) ! tr[C, R^t]
     W(it) = W(it) + W(it)
     LF = HP - w(it)
 !
@@ -221,25 +225,25 @@ contains
     real(RK), intent(inout)    :: res
     integer(IK)                :: nw, nr, rr
 !
-    if (p < 0 .or. a%n < p) then
+    if (p < 0 .or. a%g < p) then
       res = ZERO
     elseif (p == 0) then
-      nw = nwork(a%n)
+      nw = nwork(a%g)
       block
         real(RK) :: T(nw)
-        call Hungarian(a%n, W(a%z), T(1))
+        call Hungarian(a%g, W(a%z), T(1))
         res = T(1)
       end block
     else
-      nr = a%n - p
+      nr = a%g - p
       rr = nr * nr
       nw = rr + nwork(nr)
       block
         integer(IK) :: iw, iz
         real(RK)    :: T(nw)
         iw = 1 + rr
-        iz = a%z + a%n * (p - 1)
-        call pack_Z(a%n, nr, ires, W(a%z), T(1))
+        iz = a%z + a%g * (p - 1)
+        call pack_Z(a%g, nr, ires, W(a%z), T(1))
         call Hungarian(nr, T(1), T(iw))
         res = T(iw)
       end block
@@ -269,48 +273,131 @@ contains
 !
 !!! d_matrix_list
 !
-  pure function d_matrix_list_new(n, d, b, r) result(res)
-    integer(IK), intent(in)              :: n, d
-    type(mol_block), intent(in)          :: b(n)
-    type(molecular_rotation), intent(in) :: r(n)
+  pure function d_matrix_list_new(l, b, r, d, p) result(res)
+    integer(IK), intent(in)              :: l
+    type(mol_block), intent(in)          :: b(l)
+    type(molecular_rotation), intent(in) :: r(l)
+    integer(IK), intent(in)              :: d, p
     type(d_matrix_list)                  :: res
-    integer(IK)                          :: i, p, q, s
+    integer(IK)                          :: i, ip, s
 !
-    res%n = MAX(n, 0)
+    res%l = MAX(l, 0)
     res%d = MAX(d, 1)
+    res%h = p
+    res%c = res%h + 1
+    ip = res%c + d * d
 !
-    allocate(res%m(res%n))
-    allocate(res%r(res%n))
+    allocate(res%m(res%l))
+    allocate(res%r(res%l))
 !
-    do concurrent(i=1:res%n)
+    do concurrent(i=1:res%l)
       res%r(i) = r(i)
     end do
 !
-    p = 1
-    q = 1
-!
-    do concurrent(i=1:res%n)
-      s = r(i)%n_sym()
-      res%m(i) = d_matrix(p, q, d, s, b(i))
-      p = p + d_matrix_memsize(res%m(i))
-      q = q + d * b(i)%m * b(i)%n
+    do i=1,res%l
+      s = r(i)%n_sym() + 1
+      res%m(i) = d_matrix(ip, res%d, s, b(i))
+      ip = ip + d_matrix_memsize(res%m(i))
     end do
 !
   end function d_matrix_list_new
+!
+  pure function d_matrix_list_memsize(this) result(res)
+    class(d_matrix_list), intent(in) :: this
+    integer(IK)                      :: res
+    if (ALLOCATED(this%m)) then
+      res = this%d**2 + 1 + SUM(d_matrix_memsize(this%m))
+    else
+      res = 0
+    end if
+  end function d_matrix_list_memsize
 !
   pure subroutine d_matrix_list_eval(this, X, Y, W)
     class(d_matrix_list), intent(in) :: this
     real(RK), intent(in)             :: X(*), Y(*)
     real(RK), intent(inout)          :: W(*)
     integer(IK)                      :: i
-    do concurrent(i=1:this%n)
+!
+    if (.not. ALLOCATED(this%m)) return
+!
+    call eval_residue(this%d, this%l, this%m, X, Y, W(this%h), W(this%c))
+!
+    do concurrent(i=1:this%l)
       call d_matrix_eval(this%m(i), this%r(i), X, Y, W)
     enddo
+!
   end subroutine d_matrix_list_eval
+!
+  pure subroutine eval_residue(d, l, m, X, Y, H, C)
+    integer(IK), intent(in)    :: d, l
+    type(d_matrix), intent(in) :: m(l)
+    real(RK), intent(in)       :: X(*), Y(*)
+    real(RK), intent(inout)    :: H, C(*)
+    integer(IK)                :: t(l), p(l), q(l)
+    integer(IK), parameter     :: ih = 1
+    integer(IK), parameter     :: ic = 2
+    integer(IK)                :: i, dd, ix, iy, mn, dmn, nw
+!
+    do concurrent(i=1:l)
+      t(i) = m(i)%m * (m(i)%n - m(i)%g)
+    end do
+!
+    dd = d * d
+    mn = SUM(t)
+    dmn = d * mn
+!
+    ix = ic + dd
+    iy = ix + dmn
+    nw = 1 + dd + dmn + dmn
+!
+    do concurrent(i=1:l)
+      t(i) = t(i) * d
+    end do
+    p(1) = 0
+    do i = 2, l
+      p(i) = p(i - 1) + t(i - 1)
+    end do
+    do concurrent(i=1:l)
+      q(i) = m(i)%x + m(i)%dm * m(i)%g
+    end do
+!
+    block
+      real(RK) :: W(nw)
+      W=999
+!
+      do concurrent(i=1:l)
+        block
+          integer(IK) :: px
+          px = p(i) + ix
+          call copy(t(i), X(q(i)), W(px))
+        end block
+      end do
+      do concurrent(i=1:l)
+        block
+          integer(IK) :: py
+          py = p(i) + iy
+          call copy(t(i), Y(q(i)), W(py))
+        end block
+      end do
+!
+      call ddot(dmn + dmn, W(ix), W(ix), W(ih))
+!
+      if(nw>0)then
+        call DGEMM('N', 'T', d, d, mn, ONE, W(iy), d, W(ix), d, ZERO, W(ic), d)
+      else
+        call zfill(dd, W(ic))
+      endif
+!
+      H = W(ih)
+      call copy(dd, W(ic), C)
+!
+    end block
+!
+  end subroutine eval_residue
 !
   pure elemental subroutine d_matrix_list_destroy(this)
     type(d_matrix_list), intent(inout) :: this
-    this%n = 0
+    this%l = 0
     this%d = 0
     if (ALLOCATED(this%m)) deallocate (this%m)
     if (ALLOCATED(this%r)) deallocate (this%r)
@@ -318,10 +405,10 @@ contains
 !
 !!! util
 !
-  pure function ddot(d, X, Y) result(res)
+  pure subroutine ddot(d, X, Y, res)
     integer(IK), intent(in) :: d
     real(RK), intent(in)    :: X(*), Y(*)
-    real(RK)                :: res
+    real(RK), intent(inout) :: res
     if(d==1)then
       res = X(1) * Y(1)
     elseif(d==4)then
@@ -340,7 +427,7 @@ contains
         end do
       end block
     endif
-  end function ddot
+  end subroutine ddot
 !
   pure subroutine copy(d, source, dest)
     integer(IK), intent(in) :: d
@@ -370,5 +457,14 @@ contains
       x(i, j) = MERGE(ONE, ZERO, i == j)
     end do
   end subroutine eye
+!
+  pure subroutine zfill(d, x)
+    integer(IK), intent(in) :: d
+    real(RK), intent(inout) :: x(*)
+    integer(IK)             :: i
+    do concurrent(i=1:d)
+      x(i) = ZERO
+    end do
+  end subroutine zfill
 !
 end module mod_d_matrix

@@ -2,22 +2,23 @@ module mod_tree
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_molecular_rotation
   use mod_mol_block
-  use mod_Hungarian
+  use mod_d_matrix
   use mod_partial_rmsd
   implicit none
   private
-  public :: node, breadth
+  public :: d_matrix_list, node, breadth
 !
   type node
     private
-    type(partial_rmsd)             :: prd
-    type(mol_block_list)           :: blk
-    integer(IK), allocatable       :: per(:)
+    integer(IK)              :: depth
+    integer(IK)              :: h, lf, lb, c
+    integer(IK), allocatable :: per(:)
+    real(RK), allocatable    :: W(:)
     !! molecular permutation block
-    real(RK), public               :: lowerbound = RHUGE
+    real(RK), public         :: lowerbound = RHUGE
     !! the lower bound
   contains
-    procedure         :: generate_breadth => node_generate_breadth
+!   procedure         :: generate_breadth => node_generate_breadth
     procedure         :: has_child        => node_has_child
     final             :: node_destroy
   end type node
@@ -34,86 +35,23 @@ module mod_tree
 !
 contains
 !
-  pure subroutine calc_lowerbound_matrix(blk, X, Y, Z)
-    class(mol_block_list), intent(in)     :: blk
-    real(RK), intent(in)                  :: X(*)
-    real(RK), intent(in)                  :: Y(*)
-    real(RK), intent(inout)               :: Z(*)
-    integer(IK)                           :: si
-    integer(IK)                           :: nspc, ispc
-!
-    nspc = blk%nspecies()
-    do concurrent(ispc=1:nspc)
-      block
-        integer(IK) :: s, px, pz
-        s = blk%r(ispc)%n_sym() + 1
-        px = bx(ispc, blk)
-        pz = bz(ispc, blk)
-        ph = pz + blk%b(ispc)%g**2 * s
-        call lbmat(blk%d, s, blk%b(ispc), blk%r(ispc), X(px), Y(px), Z(pz))
-      end block
-    end do
-!
-  contains
-!
-    pure elemental function bx(s, blk) result(res)
-      integer(IK), intent(in)           :: s
-      class(mol_block_list), intent(in) :: blk
-      integer(IK)                       :: i, res
-      res = 0
-      do i = 1, s - 1
-        res = res + blk%b(i)%m * blk%b(i)%n
-      end do
-      res = res * blk%d + 1
-    end function bx
-!
-    pure elemental function bz(s, blk) result(res)
-      integer(IK), intent(in)           :: s
-      class(mol_block_list), intent(in) :: blk
-      integer(IK)                       :: i, res
-      res = s + s - 1
-      do i = 1, s - 1
-        res = res + blk%b(i)%g**2
-      enddo
-      do i = 1, s - 1
-        res = res + blk%r(i)%n_sym()
-      enddo
-    end function bz
-!
-  end subroutine calc_lowerbound_matrix
-!
-  pure subroutine lbmat(d, s, b, r, X, Y, Z)
-    integer(IK), intent(in)              :: d, s
-    type(mol_block), intent(in)          :: b
-    type(molecular_rotation), intent(in) :: r
-    real(RK), intent(in)                 :: X(d, b%m, b%g), Y(d, b%m, b%g)
-    real(RK), intent(inout)              :: Z(b%g, b%g, s)
-    integer(IK)                          :: i, j, k, dm
-!
-    dm = d * m
-    do concurrent(i=1:b%g, j=1:b%g, k=1:s)
-      if (i < j) CYCLE
-      block
-        type(partial_rmsd) :: prd
-        real(RK)           :: W(dm, 2)
-        call copy(dm, X(1, 1, i), W(1, 1))
-        call copy(dm, Y(1, 1, i), W(1, 2))
-        if (k > 1) call r%swap(d, W(1, 2), k - 1)
-        prd = partial_rmsd(d, m, W(1, 1), W(1, 2))
-        Z(i, j, k) = prd%sd()
-        if (i > j) Z(j, i, k) = Z(i, j, k)
-      end block
-    enddo
-!
-  end subroutine lbmat
-!
 !| generate node instance
-  pure function node_new(blk, x, y) result(res)
-    class(mol_block_list), intent(in) :: blk
-    real(RK), intent(in)              :: X(*)
-    real(RK), intent(in)              :: Y(*)
-    type(node)                        :: res
-    integer(IK)                       :: si, nb
+  pure function node_new(depth, iprm, isym, per, dmat, H, C, W) result(res)
+    integer(IK), intent(in) :: depth, iprm, isym, per(:)
+    real(RK), intent(in)    :: H, C(*), W(*)
+    type(node)              :: res
+    integer(IK)             :: d, ip
+!
+    ip = depth - 1
+    res%depth = depth
+!
+    allocate (res%C, source=C)
+    res%H = H
+    allocate (res%C, source=C)
+!
+    res%per = [per(:ip), per(ip + iper), per(ip + 2:ip + iper - 1), per(ip + iper + 1:)]
+!
+    call d_matrix_partial_eval(dmat, res%depth, res%per(depth), isym, res%per(depth+1:), W, LF, LB, res%H, res%C, res%R)
 !
     res%blk = blk
     si = blk%ispecies()

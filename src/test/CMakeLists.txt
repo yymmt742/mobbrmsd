@@ -208,11 +208,11 @@ target_sources( test_d_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_d_matrix.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_molecular_rotation.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_d_matrix.f90
                                       test_d_matrix.f90 )
 target_link_libraries( test_d_matrix PRIVATE unittest )
 target_include_directories( test_d_matrix PRIVATE ${purelapack_DIR}/mod_files )
@@ -284,11 +284,9 @@ target_sources( test_tree PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_molecular_rotation.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_molecular_permutation.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_block_lower_bound.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_partial_rmsd.f90
+                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_d_matrix.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
                                   test_tree.f90 )
 target_link_libraries( test_tree PRIVATE unittest )
