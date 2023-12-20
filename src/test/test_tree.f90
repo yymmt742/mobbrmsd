@@ -31,23 +31,49 @@ contains
     type(molecular_permutation) :: per(s)
     real(RK)                    :: X(d, mn), Y(d, mn)
     type(node)                  :: a
-    integer                     :: i
+    type(breadth)               :: z1, z2, z3, z4, z5, z6, z7, z8
+    integer                     :: i, ml
 !
     blk = mol_block_list(d, s, [m1,m2,m3], [n1,n2,n3], [f1,f2,f3], [g1,g2,g3])
     rot(1) = molecular_rotation(RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m1, 2]))
-    rot(2) = molecular_rotation(RESHAPE([2, 1, 3], [m2, 1]))
+    rot(2) = molecular_rotation(RESHAPE([(i, i=1,0)], [0, 1]))
     rot(3) = molecular_rotation(RESHAPE([7, 6, 5, 4, 3, 2, 1], [m3, 1]))
     per(1) = molecular_permutation(n1)
     per(2) = molecular_permutation(n2)
     per(3) = molecular_permutation(n3)
 !
     X = sample(d,mn)
-    Y = sample(d,mn)
+    Y = 0.5D0 * X + 0.5D0 * sample(d, mn)
 !
     a = node(blk, [x], [y])
     print'(*(f16.3))',a%lowerbound
-!   z = a%generate_breadth(rot, [x], [y])
-!   print'(*(f9.3))',z%nodes%lowerbound
+    z1 = a%generate_breadth(rot, [x], [y])
+    print'(*(f16.3))',z1%nodes%lowerbound
+    ml = MINLOC(z1%nodes%lowerbound, 1)
+    z2 = z1%nodes(ml)%generate_breadth(rot, [x], [y])
+    print'(*(f16.3))',z2%nodes%lowerbound
+    ml = MINLOC(z2%nodes%lowerbound, 1)
+    z3 = z2%nodes(ml)%generate_breadth(rot, [x], [y])
+    print'(*(f16.3))',z3%nodes%lowerbound
+    ml = MINLOC(z3%nodes%lowerbound, 1)
+    z4 = z3%nodes(ml)%generate_breadth(rot, [x], [y])
+    print'(*(f16.3))',z4%nodes%lowerbound
+!
+    ml = MINLOC(z4%nodes%lowerbound, 1)
+    z5 = z4%nodes(ml)%generate_breadth(rot, [x], [y])
+    print'(*(f16.3))',z5%nodes%lowerbound
+!
+    ml = MINLOC(z5%nodes%lowerbound, 1)
+    z6 = z5%nodes(ml)%generate_breadth(rot, [x], [y])
+    print'(*(f16.3))',z6%nodes%lowerbound
+!
+    ml = MINLOC(z6%nodes%lowerbound, 1)
+    z7 = z6%nodes(ml)%generate_breadth(rot, [x], [y])
+    print'(*(f16.3))',z7%nodes%lowerbound
+!
+    ml = MINLOC(z7%nodes%lowerbound, 1)
+    z8 = z7%nodes(ml)%generate_breadth(rot, [x], [y])
+    print'(*(f16.3))',z8%nodes%lowerbound
 !
   end subroutine test1
 !

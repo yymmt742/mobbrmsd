@@ -136,9 +136,9 @@ contains
       dmn = b%d * mn
       dmg = b%d * SUM(b_%mg)
       if (dmg < 1) then
-        res = dd + MAX(dmn, dd + Kabsch_worksize(b%d, mn))
+        res = dd + MAX(dmn, dd + Kabsch_worksize(b%d))
       else
-        res = SUM(b_%bs) + MAX(dmg, dd + dd + Kabsch_worksize(b%d, mn)) + dmn + 3
+        res = SUM(b_%bs) + MAX(dmg, dd + dd + Kabsch_worksize(b%d)) + dmn + 3
       end if
     end if
 !
@@ -193,12 +193,12 @@ contains
     prev = 2
     thre = 3
 !
-    iy = thre + 1                      ! copy of Y
-    iz = iy + dmn                      ! copy of Y (caution, interference with others)
-    cf = iy + dmn                      ! covariance matrix X^TYPQ, independent of P and Q.
-    cr = cf + dd                       ! covariance matrix X^TYPQ
-    rw = cr + dd                       ! covariance matrix X^TYPQ
-    r  = rw + Kabsch_worksize(b%d, mn) ! workarray to rotation matrix R
+    iy = thre + 1                  ! copy of Y
+    iz = iy + dmn                  ! copy of Y (caution, interference with others)
+    cf = iy + dmn                  ! covariance matrix X^TYPQ, independent of P and Q.
+    cr = cf + dd                   ! covariance matrix X^TYPQ
+    rw = cr + dd                   ! covariance matrix X^TYPQ
+    r  = rw + Kabsch_worksize(b%d) ! workarray to rotation matrix R
 !
     maxiter_ = optarg(maxiter,  DEF_maxiter)
     nrand_   = optarg(nrand,    DEF_nrand)

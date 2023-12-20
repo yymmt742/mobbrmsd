@@ -17,6 +17,7 @@ module mod_group_permutation
     procedure          :: nfree        => group_permutation_nfree
     procedure          :: free_indices => group_permutation_free_indices
     procedure          :: swap         => group_permutation_swap_real
+    procedure          :: reverse      => group_permutation_reverse_real
     procedure          :: clear        => group_permutation_clear
     final              :: group_permutation_destroy
   end type group_permutation
@@ -231,6 +232,26 @@ contains
 !
   end subroutine group_permutation_swap_real
 !
+  pure subroutine group_permutation_reverse_real(this, d, X)
+    class(group_permutation), intent(in) :: this
+    integer(IK), intent(in)              :: d
+    real(RK), intent(inout)              :: X(*)
+    integer(IK)                          :: i, j
+!
+    if (.not. ALLOCATED(this%p)) return
+!
+    do concurrent(i=1:SIZE(this%p, 2))
+      do concurrent(j=1:this%p(3, i))
+        block
+          integer(IK) :: b
+          b = this%p(1, i) + this%p(2, i) * (j - 1)
+          call cyclic_reverse_real(d, this%p(2, i), this%q(b), X)
+        end block
+      end do
+    end do
+!
+  end subroutine group_permutation_reverse_real
+!
   pure elemental function group_permutation_nfree(this) result(res)
     class(group_permutation), intent(in) :: this
     integer(IK)                          :: res
@@ -302,6 +323,24 @@ contains
       X(i, q(s)) = T(i)
     end do
   end subroutine cyclic_swap_real
+!
+  pure subroutine cyclic_reverse_real(d, s, q, X)
+    integer(IK), intent(in) :: d, s, q(*)
+    real(RK), intent(inout) :: X(d, *)
+    real(RK)                :: T(d)
+    integer(IK)             :: i, j
+    do concurrent(i=1:d)
+      T(i) = X(i, q(s))
+    end do
+    do j = s - 1, 1, -1
+      do concurrent(i=1:d)
+        X(i, q(j + 1)) = X(i, q(j))
+      end do
+    end do
+    do concurrent(i=1:d)
+      X(i, q(1)) = T(i)
+    end do
+  end subroutine cyclic_reverse_real
 !
 !! returns uniq integer list without 1.
   pure subroutine uniq(n, a, u, res)

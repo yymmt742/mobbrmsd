@@ -60,16 +60,16 @@ contains
 !
 ! Constructer
   pure function mol_block_list_new(d, s, b, r) result(res)
-    integer(IK), intent(in)              :: d
+    integer(IK), intent(in)     :: d
     !  d :: spatial dimension
-    integer(IK), intent(in)              :: s
+    integer(IK), intent(in)     :: s
     !  s :: number of species
-    type(mol_block), intent(in)          :: b(s)
+    type(mol_block), intent(in) :: b(s)
     !  molecular block
-    type(molecular_rotation), intent(in) :: r(s)
+    type(molecular_rotation), intent(in), optional :: r(s)
     !  molecular block
-    type(mol_block_list)                 :: res
-    integer(IK)                          :: i, p
+    type(mol_block_list)        :: res
+    integer(IK)                 :: i, p
     res%d = d
     if (s < 1) then
       allocate (res%b(0))
@@ -90,9 +90,11 @@ contains
       res%b(i)%p = p
       p = p + d * res%b(i)%n * res%b(i)%m
     end do
-    do concurrent(i=1:s)
-      res%r(i) = r(i)
-    end do
+    if (PRESENT(r)) then
+      do concurrent(i=1:s)
+        res%r(i) = r(i)
+      end do
+    end if
     res%mg = SUM(res%b%m * res%b%g)
     res%mn = SUM(res%b%m * res%b%n)
   end function mol_block_list_new

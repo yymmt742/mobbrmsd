@@ -15,6 +15,7 @@ module mod_molecular_rotation
     procedure :: n_atom       => molecular_rotation_n_atom
     procedure :: n_sym        => molecular_rotation_n_sym
     procedure :: swap         => molecular_rotation_swap
+    procedure :: reverse      => molecular_rotation_reverse
     procedure :: clear        => molecular_rotation_clear
     final     :: molecular_rotation_destroy
   end type molecular_rotation
@@ -66,6 +67,14 @@ contains
     if (isym < 1 .or. this%n_sym() < isym) return
     call this%p(isym)%swap(d, X)
   end subroutine molecular_rotation_swap
+!
+  pure subroutine molecular_rotation_reverse(this, d, X, isym)
+    class(molecular_rotation), intent(in) :: this
+    integer(IK), intent(in)               :: d, isym
+    real(RK), intent(inout)               :: X(*)
+    if (isym < 1 .or. this%n_sym() < isym) return
+    call this%p(isym)%reverse(d, X)
+  end subroutine molecular_rotation_reverse
 !
   pure elemental subroutine molecular_rotation_clear(this)
     class(molecular_rotation), intent(inout) :: this

@@ -198,8 +198,27 @@ target_link_libraries( test_lower_bound PRIVATE unittest )
 target_include_directories( test_lower_bound PRIVATE ${purelapack_DIR}/mod_files )
 target_include_directories( test_lower_bound PRIVATE ${purelapack_DIR}/include )
 target_link_libraries( test_lower_bound PRIVATE purelapack )
-target_link_libraries( test_lower_bound PRIVATE blas )
 add_test( NAME test_lower_bound COMMAND test_lower_bound )
+
+add_executable( test_d_matrix )
+target_include_directories( test_d_matrix PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_d_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_cov.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_d_matrix.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_molecular_rotation.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
+                                      test_d_matrix.f90 )
+target_link_libraries( test_d_matrix PRIVATE unittest )
+target_include_directories( test_d_matrix PRIVATE ${purelapack_DIR}/mod_files )
+target_include_directories( test_d_matrix PRIVATE ${purelapack_DIR}/include )
+target_link_libraries( test_d_matrix PRIVATE purelapack )
+add_test( NAME test_d_matrix COMMAND test_d_matrix )
 
 add_executable( test_block_lower_bound )
 target_include_directories( test_block_lower_bound PRIVATE ${unittest_DIR}/mod_files )
@@ -214,6 +233,8 @@ target_sources( test_block_lower_bound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mo
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_pca.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_molecular_rotation.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_block_lower_bound.f90
