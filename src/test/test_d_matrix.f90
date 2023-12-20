@@ -16,35 +16,38 @@ contains
 !
   subroutine test1()
     integer, parameter         :: d = 3
-    integer, parameter         :: s = 2
+    integer, parameter         :: s = 3
     integer, parameter         :: m = 5
     integer, parameter         :: n = 7
     integer, parameter         :: f = 3
     integer, parameter         :: g = 5
     integer, parameter         :: mn = m * n
-    integer, parameter         :: swp(m,s) = RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m, s])
+    integer, parameter         :: swp(m, s - 1) = RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m, s - 1])
     type(mol_block), parameter :: b = mol_block(1, m, n, f, g)
     type(molecular_rotation)   :: rot
     type(d_matrix)             :: a
     real(RK)                   :: X(d, mn), Y(d, mn)
+    real(RK)                   :: LF, LB, H, C(d, d), R(d, d)
     real(RK), allocatable      :: w(:)
 !
     rot = molecular_rotation(swp)
     a = d_matrix(1, d, s, b)
     X = sample(d, mn)
-    Y = 0.8D0 * X + 0.2D0 * sample(d, mn)
+    Y = 0.9D0 * X + 0.1D0 * sample(d, mn)
     print *, d_matrix_memsize(a)
     allocate (w(d_matrix_memsize(a)))
     call d_matrix_eval(a, rot, X, Y, W)
-    print*, d_matrix_partial_lower_bound(a, 0, [1], W)
-    print*, d_matrix_partial_lower_bound(a, 1, [5], W)
-    print*, d_matrix_partial_lower_bound(a, 2, [1, 2], W)
-    print*, d_matrix_partial_lower_bound(a, 2, [4, 5], W)
-    print*, d_matrix_partial_lower_bound(a, 3, [1, 3, 5], W)
-    print*, d_matrix_partial_lower_bound(a, 3, [3, 4, 5], W)
-    print*, d_matrix_partial_lower_bound(a, 4, [1, 2, 3, 5], W)
-    print*, d_matrix_partial_lower_bound(a, 4, [2, 3, 4, 5], W)
-    print*, d_matrix_partial_lower_bound(a, 5, [1, 2, 3, 4, 5], W)
+    call d_matrix_partial_eval(a, 1, 1, 1, [2,3,4,5], W, LF, LB, H, C, R)
+print'(3f9.3)',R
+    call d_matrix_partial_eval(a, 2, 2, 1, [3,4,5], W, LF, LB, H, C, R)
+print'(3f9.3)',R
+    call d_matrix_partial_eval(a, 3, 3, 1, [4,5], W, LF, LB, H, C, R)
+print'(3f9.3)',R
+    call d_matrix_partial_eval(a, 4, 4, 1, [5], W, LF, LB, H, C, R)
+print'(3f9.3)',R
+    call d_matrix_partial_eval(a, 1, 1, 2, [2,3,4,5], W, LF, LB, H, C, R)
+    call d_matrix_partial_eval(a, 1, 2, 1, [1,3,4,5], W, LF, LB, H, C, R)
+    call d_matrix_partial_eval(a, 1, 2, 2, [1,3,4,5], W, LF, LB, H, C, R)
 !
   end subroutine test1
 !
