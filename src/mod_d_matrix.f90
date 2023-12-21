@@ -26,6 +26,7 @@ module mod_d_matrix
 !
   type d_matrix_list
     integer(IK)                           :: h = 0
+    integer(IK)                           :: v = 0
     integer(IK)                           :: c = 0
     integer(IK)                           :: d = 0
     integer(IK)                           :: l = 0
@@ -284,7 +285,8 @@ contains
     res%d = b%nspatial()
     res%l = b%nspecies()
     res%h = p
-    res%c = res%h + 1
+    res%v = res%h + 1
+    res%c = res%v + 1
     ip = res%c + res%d**2
 !
     allocate(res%m(res%l))
@@ -300,7 +302,7 @@ contains
     class(d_matrix_list), intent(in) :: this
     integer(IK)                      :: res
     if (ALLOCATED(this%m)) then
-      res = SUM(d_matrix_memsize(this%m)) + this%d**2 + 1
+      res = SUM(d_matrix_memsize(this%m)) + this%d**2 + 2
     else
       res = 0
     end if
@@ -315,7 +317,7 @@ contains
 !
     if (.not. ALLOCATED(this%m)) return
 !
-    call fixpoints_eval(this%d, this%l, this%m, X, Y, W(this%h), W(this%c))
+    call fixpoints_eval(this%d, this%l, this%m, X, Y, W(this%h), W(this%v), W(this%c))
 !
     do concurrent(i=1:this%l)
       call d_matrix_eval(this%m(i), rot(i), X, Y, W)
@@ -323,27 +325,31 @@ contains
 !
   end subroutine d_matrix_list_eval
 !
-  pure subroutine fixpoints_eval(d, l, m, X, Y, H, C)
+  pure subroutine fixpoints_eval(d, l, m, X, Y, H, V, C)
     integer(IK), intent(in)    :: d, l
     type(d_matrix), intent(in) :: m(l)
     real(RK), intent(in)       :: X(*), Y(*)
-    real(RK), intent(inout)    :: H, C(*)
+    real(RK), intent(inout)    :: H, V, C(*)
     integer(IK)                :: t(l), p(l), q(l)
     integer(IK), parameter     :: ih = 1
-    integer(IK), parameter     :: ic = 2
-    integer(IK)                :: i, dd, ix, iy, mn, dmn, nw
+    integer(IK), parameter     :: iv = 2
+    integer(IK), parameter     :: ic = 3
+    integer(IK)                :: i, dd, nk, ir, iw, ix, iy, mn, dmn, nw
 !
     do concurrent(i=1:l)
       t(i) = m(i)%m * (m(i)%n - m(i)%g)
     end do
 !
+    nk = Kabsch_worksize(d)
     dd = d * d
     mn = SUM(t)
     dmn = d * mn
 !
+    ir = ic + dd
+    iw = ir + dd
     ix = ic + dd
     iy = ix + dmn
-    nw = 1 + dd + dmn + dmn
+    nw = 2 + dd + MAX(dmn + dmn, dd + nk)
 !
     do concurrent(i=1:l)
       t(i) = t(i) * d
@@ -376,13 +382,17 @@ contains
 !
       call ddot(dmn + dmn, W(ix), W(ix), W(ih))
 !
-      if(nw>0)then
+      if (mn > 0) then
         call DGEMM('N', 'T', d, d, mn, ONE, W(iy), d, W(ix), d, ZERO, W(ic), d)
+        call Kabsch(d, w(ic), w(ir), W(iw))
+        call ddot(dd, w(ic), w(ir), w(iv))
       else
         call zfill(dd, W(ic))
+        w(iv) = ZERO
       endif
 !
       H = W(ih)
+      V = W(ih) - W(iv) - W(iv)
       call copy(dd, W(ic), C)
 !
     end block
