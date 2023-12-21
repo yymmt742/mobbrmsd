@@ -32,6 +32,8 @@ contains
     real(RK), allocatable      :: w(:)
 !
     rot = molecular_rotation(swp)
+    C = 0D0
+    H = 0D0
     a = d_matrix(1, d, b)
     X = sample(d, mn)
     Y = 0.9D0 * MATMUL(SO3(), X) + 0.1D0 * sample(d, mn)
