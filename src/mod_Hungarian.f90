@@ -39,7 +39,7 @@ contains
   end function Hungarian_value
 !
 !| Hungarian method
-  pure subroutine Hungarian(n, C, W, piv)
+  pure  subroutine Hungarian(n, C, W, piv)
     integer(IK), intent(in)              :: n
     !! matrix dimension
     real(RK), intent(in)                 :: C(*)
@@ -74,9 +74,10 @@ contains
       endif
     else
       block
-        integer(IK) :: iw(3 * (n + 1)), i, j
+        integer(IK) :: iw(n + n + n + 3), n1, i, j
 !
-        call get_piv(n, n + 1, C, iw(1), iw(n + 2), iw(n + n + 3), W(1), W(n + 1))
+        n1 = n + 1
+        call get_piv(n, n1, C, iw(1), iw(n + 2), iw(n + n + 3), W(1), W(n + 1))
 !
         W(1) = ZERO
         do i = 1, n
@@ -95,19 +96,26 @@ contains
 !
   end subroutine Hungarian
 !
-  pure subroutine get_piv(n, n1, C, piv, vis, prv, y, cij)
+  pure subroutine get_piv(n, n1, C, piv, is_visited, prv, y, cij)
     integer(IK), intent(in)    :: n, n1
     real(RK), intent(in)       :: C(n, n)
-    integer(IK), intent(inout) :: piv(n1), vis(n1), prv(n1)
+    integer(IK), intent(inout) :: piv(n1), is_visited(n1), prv(n1)
     real(RK), intent(inout)    :: y(*), cij(*)
+    real(RK)                   :: minc, edge, cedg
     integer(IK)                :: i, ic, ix, j
 !
-    piv = -1
+    do concurrent(i=1:n1)
+      piv(i) = -1
+    end do
+!
+    do concurrent(i=1:n1)
+      y(i) = ZERO
+    end do
 !
     do j = 1, n
 !
       do concurrent(i=1:n1)
-        vis(i) = 0
+        is_visited(i) = 0
       end do
 !
       do concurrent(i=1:n1)
@@ -123,26 +131,24 @@ contains
       piv(ic) = j
 !
       do while (piv(ic) /= -1)
-        block
-          real(RK) :: minc, edge
-          minc = RHUGE
-          vis(ic) = 1
-          ix = -1
-          do i = 1, n
-            if (vis(i)==0) then
-              edge = C(i, piv(ic)) - y(i)
-              if (ic /= n1) edge = edge - C(ic, piv(ic)) + y(ic)
-              if (cij(i) > cij(ic) + edge) then
-                prv(i) = ic
-                cij(i) = cij(ic) + edge
-              end if
-              if (minc > cij(i)) then
-                ix = i
-                minc = cij(i)
-              end if
+        minc = RHUGE
+        is_visited(ic) = 1
+        ix = -1
+        do i = 1, n
+          if (is_visited(i) == 0) then
+            edge = C(i, piv(ic)) - y(i)
+            if (ic < n1) edge = edge - C(ic, piv(ic)) + y(ic)
+            cedg = cij(ic) + edge
+            if (cij(i) > cedg) then
+              prv(i) = ic
+              cij(i) = cedg
             end if
-          end do
-        end block
+            if (minc > cij(i)) then
+              ix = i
+              minc = cij(i)
+            end if
+          end if
+        end do
         ic = ix
       end do
 !
