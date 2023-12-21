@@ -32,8 +32,10 @@ module mod_d_matrix
     integer(IK)                           :: l = 0
     type(d_matrix), allocatable           :: m(:)
   contains
+    procedure :: n_depth => d_matrix_list_n_depth
     procedure :: eval    => d_matrix_list_eval
     procedure :: memsize => d_matrix_list_memsize
+    procedure :: clear   => d_matrix_list_clear
     final     :: d_matrix_list_destroy
   end type d_matrix_list
 !
@@ -308,6 +310,16 @@ contains
     end if
   end function d_matrix_list_memsize
 !
+  pure elemental function d_matrix_list_n_depth(this) result(res)
+    class(d_matrix_list), intent(in) :: this
+    integer(IK)                      :: res
+    if (ALLOCATED(this%m)) then
+      res = SUM(this%m%g)
+    else
+      res = 0
+    end if
+  end function d_matrix_list_n_depth
+!
   pure subroutine d_matrix_list_eval(this, rot, X, Y, W)
     class(d_matrix_list), intent(in)     :: this
     type(molecular_rotation), intent(in) :: rot(*)
@@ -399,11 +411,16 @@ contains
 !
   end subroutine fixpoints_eval
 !
-  pure elemental subroutine d_matrix_list_destroy(this)
-    type(d_matrix_list), intent(inout) :: this
+  pure elemental subroutine d_matrix_list_clear(this)
+    class(d_matrix_list), intent(inout) :: this
     this%l = 0
     this%d = 0
     if (ALLOCATED(this%m)) deallocate (this%m)
+  end subroutine d_matrix_list_clear
+!
+  pure elemental subroutine d_matrix_list_destroy(this)
+    type(d_matrix_list), intent(inout) :: this
+    call d_matrix_list_clear(this)
   end subroutine d_matrix_list_destroy
 !
 !!! util

@@ -16,6 +16,7 @@ module mod_tree
     real(RK)                 :: H
     real(RK), allocatable    :: C(:), L(:)
     real(RK), public         :: lowerbound = ZERO
+    logical, public          :: alive = .TRUE.
     !! the lower bound
   contains
     procedure         :: n_per            => node_n_per
@@ -23,12 +24,16 @@ module mod_tree
     procedure         :: n_depth          => node_n_depth
     procedure         :: generate_breadth => node_generate_breadth
     procedure         :: has_child        => node_has_child
+    procedure         :: clear            => node_clear
     final             :: node_destroy
   end type node
 !
   type breadth
     type(node), allocatable :: nodes(:)
   contains
+    procedure         :: prune            => breadth_prune
+    procedure         :: is_finished      => breadth_is_finished
+    procedure         :: lowervalue_index => breadth_lowervalue_index
     final             :: breadth_destroy
   end type breadth
 !
@@ -72,7 +77,9 @@ contains
     do concurrent(i=1:g)
       res%per(i) = i
     end do
+!
     res%L = res%L(res%ispc + 1:)
+    res%alive = res%has_child()
 !
   end function node_new_as_root
 !
@@ -121,6 +128,8 @@ contains
         allocate (res%L(0))
       end if
     end block
+!
+    res%alive = res%has_child()
 !
   contains
 !
@@ -203,7 +212,7 @@ contains
     type(d_matrix_list), intent(in) :: dmat
     real(RK), intent(in)            :: W(*)
     type(breadth)                   :: res
-    integer(IK)                     :: nper, nsym, iper, isym
+    integer(IK)                     :: nper, nsym, nchd, iper, isym
 !
     if (.not. this%has_child()) then
       allocate (res%nodes(0))
@@ -212,6 +221,7 @@ contains
 !
     nper = this%n_per(dmat)
     nsym = this%n_sym(dmat)
+    nchd = nper * nsym
 !
     allocate (res%nodes(nper * nsym))
 !
@@ -225,19 +235,70 @@ contains
 !
   end function node_generate_breadth
 !
-  pure elemental subroutine node_destroy(this)
-    type(node), intent(inout) :: this
+  pure elemental subroutine node_clear(this)
+    class(node), intent(inout) :: this
     if (ALLOCATED(this%per)) deallocate (this%per)
     if (ALLOCATED(this%L)) deallocate (this%L)
     if (ALLOCATED(this%C)) deallocate (this%C)
     this%depth = 0
     this%ispc  = 0
     this%lowerbound = ZERO
+  end subroutine node_clear
+!
+  pure elemental subroutine node_destroy(this)
+    type(node), intent(inout) :: this
+    call node_clear(this)
   end subroutine node_destroy
+!
+  pure elemental subroutine breadth_prune(this, upperbound)
+    class(breadth), intent(inout) :: this
+    real(RK), intent(in)          :: upperbound
+    integer(IK)                   :: i, n
+    if (ALLOCATED(this%nodes)) then
+      n = SIZE(this%nodes)
+      do concurrent(i=1:n)
+        this%nodes(i)%alive = this%nodes(i)%alive .and. this%nodes(i)%lowerbound < upperbound
+      end do
+    end if
+  end subroutine breadth_prune
+!
+  pure elemental function breadth_is_finished(this) result(res)
+    class(breadth), intent(in) :: this
+    logical                    :: res
+    if (ALLOCATED(this%nodes)) then
+      res = .not. ANY(this%nodes%alive)
+    else
+      res = .true.
+    end if
+  end function breadth_is_finished
+!
+  pure elemental function breadth_lowervalue_index(this) result(res)
+    class(breadth), intent(in) :: this
+    real(RK)                   :: lowervalue
+    integer(IK)                :: res, i, n
+!
+    res = 0
+    if (.not.ALLOCATED(this%nodes)) return
+!
+    lowervalue = RHUGE
+    n = SIZE(this%nodes)
+    do i = 1, n
+      if (this%nodes(i)%alive .and. this%nodes(i)%lowerbound < lowervalue) then
+        res = i
+        lowervalue = this%nodes(i)%lowerbound
+      end if
+    end do
+!
+  end function breadth_lowervalue_index
+
+  pure elemental subroutine breadth_clear(this)
+    class(breadth), intent(inout) :: this
+    if (ALLOCATED(this%nodes)) deallocate (this%nodes)
+  end subroutine breadth_clear
 !
   pure elemental subroutine breadth_destroy(this)
     type(breadth), intent(inout) :: this
-    if (ALLOCATED(this%nodes)) deallocate (this%nodes)
+    call breadth_clear(this)
   end subroutine breadth_destroy
 !
 end module mod_tree
