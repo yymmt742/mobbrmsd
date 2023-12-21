@@ -24,7 +24,7 @@ contains
     integer, parameter         :: g = 5
     integer, parameter         :: mn = m * n
     integer, parameter         :: swp(m, s - 1) = RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m, s - 1])
-    type(mol_block), parameter :: b = mol_block(1, m, n, f, g)
+    type(mol_block), parameter :: b = mol_block(1, s, m, n, f, g)
     type(molecular_rotation)   :: rot
     type(d_matrix)             :: a
     real(RK)                   :: X(d, mn), Y(d, mn)
@@ -32,7 +32,7 @@ contains
     real(RK), allocatable      :: w(:)
 !
     rot = molecular_rotation(swp)
-    a = d_matrix(1, d, s, b)
+    a = d_matrix(1, d, b)
     X = sample(d, mn)
     Y = 0.9D0 * MATMUL(SO3(), X) + 0.1D0 * sample(d, mn)
     print *, d_matrix_memsize(a)
@@ -68,23 +68,24 @@ contains
     integer, parameter       :: g = 5
     integer, parameter       :: mnl = (3 * m + 6) * n
     integer, parameter       :: swp(m, s - 1) = RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m, s - 1])
+    type(mol_block_list)     :: blk
     type(mol_block)          :: b(l)
     type(molecular_rotation) :: rot(l)
     type(d_matrix_list)      :: a
     real(RK)                 :: X(d, mnl), Y(d, mnl)
-    real(RK)                 :: LF, LB, H, C(d, d), R(d, d)
     real(RK), allocatable    :: w(:)
-    integer                  :: i, ix
+    integer                  :: i
 !
-    ix = 1
-    do i=1, l
-      b(i) = mol_block(ix, m + i, n, f, g - i)
-      ix = ix + d * b(i)%m * b(i)%n
-    end do
     do concurrent(i=1:l)
       rot(i) = molecular_rotation(swp(:, :i - 1))
     end do
-    a = d_matrix_list(l, b, rot, d, 1)
+!
+    do i=1, l
+      b(i) = mol_block(0, rot(i)%n_sym() + 1, m + i, n, f, g - i)
+    end do
+!
+    blk = mol_block_list(d, l, b)
+    a = d_matrix_list(blk, 1)
 !
     X = sample(d, mnl)
     Y = 0.9D0 * MATMUL(SO3(), X) + 0.1D0 * sample(d, mnl)
@@ -93,7 +94,9 @@ contains
 !
     allocate (w(a%memsize()))
 !
-    call a%eval(X, Y, W)
+    call a%eval(rot, X, Y, W)
+    print *, W(1)
+    print'(3f9.3)', W(2:10)
 !
   end subroutine test2
 !
@@ -103,9 +106,6 @@ contains
     real(RK)             :: res(d, n)
     integer              :: i
     call RANDOM_NUMBER(res)
-!   do concurrent(i=1:n)
-!     res(:, i) = i
-!   enddo
     cnt = SUM(res, 2) / n
     do concurrent(i=1:n)
       res(:, i) = res(:, i) - cnt

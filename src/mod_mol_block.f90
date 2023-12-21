@@ -1,7 +1,6 @@
 !| molecular coodinate block indicator
 module mod_mol_block
   use mod_params, only: IK, RK, ONE => RONE, FOUR => RFOUR, ZERO => RZERO, RHUGE
-  use mod_molecular_rotation
   implicit none
   private
   public :: mol_block
@@ -19,6 +18,8 @@ module mod_mol_block
     sequence
     integer(IK) :: p = 1
     !  p :: pointer to memory
+    integer(IK) :: s = 1
+    !  s :: number of molecular symmetry
     integer(IK) :: m = 1
     !  m :: number of atom in a molecule
     integer(IK) :: n = 1
@@ -36,13 +37,11 @@ module mod_mol_block
     !  d :: spatial dimension
     type(mol_block), allocatable          :: b(:)
     !  mol_blocks
-    type(molecular_rotation), allocatable :: r(:)
-    !  molecular symmetry
   contains
-    procedure         :: n_atom      => mol_block_list_n_atom
-    procedure         :: n_spc       => mol_block_list_n_spc
     procedure         :: child       => mol_block_list_child
     procedure         :: invalid     => mol_block_list_invalid
+    procedure         :: natom       => mol_block_list_natom
+    procedure         :: nspatial    => mol_block_list_nspatial
     procedure         :: nspecies    => mol_block_list_nspecies
     procedure         :: ispecies    => mol_block_list_ispecies
     procedure         :: ipointer    => mol_block_list_ipointer
@@ -59,65 +58,49 @@ module mod_mol_block
 contains
 !
 ! Constructer
-  pure function mol_block_list_new(d, s, b, r) result(res)
+  pure function mol_block_list_new(d, l, b) result(res)
     integer(IK), intent(in)     :: d
     !  d :: spatial dimension
-    integer(IK), intent(in)     :: s
+    integer(IK), intent(in)     :: l
     !  s :: number of species
-    type(mol_block), intent(in) :: b(s)
-    !  molecular block
-    type(molecular_rotation), intent(in), optional :: r(s)
+    type(mol_block), intent(in) :: b(l)
     !  molecular block
     type(mol_block_list)        :: res
     integer(IK)                 :: i, p
     res%d = d
-    if (s < 1) then
+    if (l < 1) then
       allocate (res%b(0))
-      allocate (res%r(0))
       return
     end if
-    allocate (res%b(s))
-    allocate (res%r(s))
-    do concurrent(i=1:s)
+    allocate (res%b(l))
+    do concurrent(i=1:l)
       res%b(i) = b(i)
+      res%b(i)%s = MAX(1, res%b(i)%s)
       res%b(i)%m = MAX(0, res%b(i)%m)
       res%b(i)%n = MAX(0, res%b(i)%n)
       res%b(i)%f = MAX(0, MIN(res%b(i)%m, res%b(i)%f))
       res%b(i)%g = MAX(0, MIN(res%b(i)%n, res%b(i)%g))
     end do
     p = 1
-    do i = 1, s
+    do i = 1, l
       res%b(i)%p = p
       p = p + d * res%b(i)%n * res%b(i)%m
     end do
-    if (PRESENT(r)) then
-      do concurrent(i=1:s)
-        res%r(i) = r(i)
-      end do
-    end if
     res%mg = SUM(res%b%m * res%b%g)
     res%mn = SUM(res%b%m * res%b%n)
   end function mol_block_list_new
 !
-  pure elemental function mol_block_list_n_atom(this) result(res)
+  pure elemental function mol_block_list_natom(this) result(res)
     class(mol_block_list), intent(in) :: this
     integer(IK)                       :: res
-    if (ALLOCATED(this%b)) then
-      res = SUM(this%b%n * this%b%m)
-    else
-      res = 0
-    end if
-  end function mol_block_list_n_atom
+    res = this%mn
+  end function mol_block_list_natom
 !
-  pure elemental function mol_block_list_n_spc(this) result(res)
+  pure elemental function mol_block_list_nspatial(this) result(res)
     class(mol_block_list), intent(in) :: this
     integer(IK)                       :: res
-    if (ALLOCATED(this%b)) then
-      res = SIZE(this%b)
-    else
-      res = 0
-    end if
-  end function mol_block_list_n_spc
+    res = this%d
+  end function mol_block_list_nspatial
 !
   pure elemental function mol_block_list_child(b) result(res)
     class(mol_block_list), intent(in) :: b
