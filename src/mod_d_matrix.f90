@@ -31,6 +31,7 @@ module mod_d_matrix
     integer(IK)                           :: o = 0
     integer(IK)                           :: d = 0
     integer(IK)                           :: l = 0
+    integer(IK)                           :: dd = 0
     type(d_matrix), allocatable           :: m(:)
   contains
     procedure :: n_depth => d_matrix_list_n_depth
@@ -162,19 +163,21 @@ contains
 !
   end subroutine eval
 !
-  pure subroutine d_matrix_partial_eval(a, p, iprm, isym, ires, W, LF, LB, H, C, R)
+  pure subroutine d_matrix_partial_eval(a, p, iprm, isym, ires, W, LT, H, C, LF, LB, R)
     type(d_matrix), intent(in)        :: a
     integer(IK), intent(in)           :: p, iprm, isym, ires(*)
     real(RK), intent(in)              :: W(*)
-    real(RK), intent(inout)           :: LF, LB, H, C(*)
-    real(RK), intent(inout), optional :: R(*)
+    real(RK), intent(inout)           :: LT, H, C(*)
+    real(RK), intent(inout), optional :: LF, LB, R(*)
 !
-    LF = ZERO
-    LB = ZERO
+    LT = ZERO
+    if (PRESENT(LF)) LF = ZERO
+    if (PRESENT(LB)) LB = ZERO
     if (PRESENT(R)) call eye(a%d, R)
 !
     if (p < 0 .or. a%g < p) return
-    if (p < a%g) call setminus_eval(a, p, ires, W, LB)
+    if (p < a%g) call setminus_eval(a, p, ires, W, LT)
+    if (PRESENT(LB)) LB = LT
 !
     if (p == 0) return
     if (iprm < 1 .or. a%g < iprm) return
@@ -182,47 +185,18 @@ contains
 !
     block
       integer(IK) :: ih, ic, nw
-!
       ih = a%c + (iprm - 1) * a%cb + (p - 1) * a%cb * a%g
       ic = ih + 1 + a%dd * (isym - 1)
       nw = 1 + a%dd * 2 + a%nk
-!
-      call partial_eval(a%d, a%s, a%g, a%dd, nw, p, iprm, isym, W(ih), W(ic), LF, H, C, R)
+      if (PRESENT(LF)) then
+        call partial_eval(a%d, a%s, a%g, a%dd, nw, p, iprm, isym, W(ih), W(ic), LF, H, C, R)
+        LT = LT + LF
+      else
+        call partial_eval(a%d, a%s, a%g, a%dd, nw, p, iprm, isym, W(ih), W(ic), LT, H, C, R)
+      end if
     end block
 !
   contains
-!
-    pure subroutine partial_eval(d, s, n, dd, nw, p, iprm, isym, H, C, LF, HP, CP, R)
-      integer(IK), intent(in) :: d, s, n, dd, nw
-      integer(IK), intent(in) :: p, iprm, isym
-      real(RK), intent(in)    :: H, C(*)
-      real(RK), intent(inout) :: LF, HP, CP(*)
-      real(RK), intent(inout), optional :: R(*)
-      real(RK)                :: W(nw)
-      integer(IK), parameter  :: it = 1
-      integer(IK), parameter  :: ic = 2
-      integer(IK)             :: ir, iw
-!
-      ir = ic + dd
-      iw = ir + dd
-!
-!!! update H and C
-      w(it) = HP + H
-      HP = w(it)
-      call add(dd, CP, C, W(ic))
-      call copy(dd, w(ic), CP)
-!
-!!! get correlation matrix C = Y^t@X and optimal rotation R^t
-      call Kabsch(d, w(ic), w(ir), W(iw))
-!!! get squared displacement
-      call ddot(dd, W(ic), W(ir), W(it)) ! tr[C, R^t]
-      W(it) = W(it) + W(it)
-      LF = HP - w(it)
-!
-!!! summarize to memory
-      if (PRESENT(R)) call copy(dd, w(ir), R)
-!
-    end subroutine partial_eval
 !
     pure subroutine setminus_eval(a, p, ires, W, res)
       type(d_matrix), intent(in) :: a
@@ -257,6 +231,38 @@ contains
 !
     end subroutine setminus_eval
 !
+    pure subroutine partial_eval(d, s, n, dd, nw, p, iprm, isym, H, C, LF, HP, CP, R)
+      integer(IK), intent(in) :: d, s, n, dd, nw
+      integer(IK), intent(in) :: p, iprm, isym
+      real(RK), intent(in)    :: H, C(*)
+      real(RK), intent(inout) :: LF, HP, CP(*)
+      real(RK), intent(inout), optional :: R(*)
+      real(RK)                :: W(nw)
+      integer(IK), parameter  :: it = 1
+      integer(IK), parameter  :: ic = 2
+      integer(IK)             :: ir, iw
+!
+      ir = ic + dd
+      iw = ir + dd
+!
+!!! update H and C
+      w(it) = HP + H
+      HP = w(it)
+      call add(dd, CP, C, W(ic))
+      call copy(dd, w(ic), CP)
+!
+!!! get correlation matrix C = Y^t@X and optimal rotation R^t
+      call Kabsch(d, w(ic), w(ir), W(iw))
+!!! get squared displacement
+      call ddot(dd, W(ic), W(ir), W(it)) ! tr[C, R^t]
+      W(it) = W(it) + W(it)
+      LF = LF + HP - w(it)
+!
+!!! summarize to memory
+      if (PRESENT(R)) call copy(dd, w(ir), R)
+!
+    end subroutine partial_eval
+!
     pure elemental function nwork(np) result(res)
       integer(IK), intent(in) :: np
       real(RK)                :: W(1)
@@ -287,15 +293,16 @@ contains
 !
     res%d = b%nspatial()
     res%l = b%nspecies()
-    res%h = p
-    res%v = res%h + 1
-    res%c = res%v + 1
-    res%o = res%c + res%d**2
-    ip = res%o + res%l
+    res%dd = res%d**2
+    res%h = p              ! H(1)
+    res%v = res%h + 1      ! V(1)
+    res%c = res%v + 1      ! C(d*d)
+    res%o = res%c + res%dd ! O(L+1)
+    ip = res%o + res%l + 1
 !
-    allocate(res%m(res%l))
+    allocate (res%m(res%l))
 !
-    do i=1,res%l
+    do i = 1, res%l
       res%m(i) = d_matrix(ip, res%d, b%b(i))
       ip = ip + d_matrix_memsize(res%m(i))
     end do
@@ -306,7 +313,7 @@ contains
     class(d_matrix_list), intent(in) :: this
     integer(IK)                      :: res
     if (ALLOCATED(this%m)) then
-      res = SUM(d_matrix_memsize(this%m)) + this%l + this%d**2 + 2
+      res = SUM(d_matrix_memsize(this%m)) + (this%l + 1) + this%d**2 + 2
     else
       res = 0
     end if
@@ -341,13 +348,15 @@ contains
           ires(j) = j
         end do
         j = this%o + i - 1
-        call d_matrix_partial_eval(this%m(i), 0, 0, 0, ires, W, W(j), W(j), W(j), W(j))
+        call d_matrix_partial_eval(this%m(i), 0, 0, 0, ires, W, W(j), W(j), W(j))
       end block
     end do
 !
     do concurrent(i=this%l - 1:1:-1)
       W(this%o + i - 1) = W(this%o + i - 1) + W(this%o + i)
     enddo
+!
+    W(this%o + this%l) = ZERO
 !
   end subroutine d_matrix_list_eval
 !

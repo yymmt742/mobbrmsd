@@ -5,7 +5,46 @@ module mod_tree
   use mod_d_matrix
   implicit none
   private
+  public :: tree
   public :: node, breadth
+!
+  type node_
+    private
+    sequence
+    logical     :: alive
+    integer(IK) :: iper, isym, v, h, c
+  end type node_
+!
+  type breadth_
+    private
+    integer(IK)              :: inod = 0
+    integer(IK)              :: nper = 0
+    integer(IK)              :: nsym = 0
+    integer(IK)              :: nnod = 0
+    integer(IK)              :: ispc = 0
+    integer(IK)              :: irow = 0
+    integer(IK)              :: lowd = 0
+    integer(IK)              :: uppd = 0
+    type(node_), allocatable :: nodes(:)
+  contains
+    final             :: breadth__destroy
+  end type breadth_
+!
+  type tree
+    private
+    integer(IK)                 :: iscope
+    type(d_matrix_list)         :: dmat
+    type(node_)                 :: root
+    integer(IK), allocatable    :: perms(:)
+    type(breadth_), allocatable :: breadthes(:)
+    type(molecular_rotation), allocatable :: rots(:)
+  contains
+    procedure         :: init             => tree_init
+    procedure         :: setup            => tree_setup
+    procedure         :: n_depth          => tree_n_depth
+    procedure         :: memsize          => tree_memsize
+    final             :: tree_destroy
+  end type tree
 !
   type node
     private
@@ -28,7 +67,6 @@ module mod_tree
   end type node
 !
   type breadth
-    integer(IK)             :: ofsd = 0
     integer(IK)             :: inod = 0
     integer(IK)             :: nper = 0
     integer(IK)             :: nsym = 0
@@ -52,6 +90,269 @@ module mod_tree
   end interface node
 !
 contains
+!
+  pure subroutine node__init_as_root(this, dmat, pw)
+    type(node_), intent(inout)      :: this
+    type(d_matrix_list), intent(in) :: dmat
+    integer(IK), intent(in)         :: pw
+!
+    this%iper = 0
+    this%isym = 0
+    this%v = pw          ! v(1)
+    this%h = this%v + 1  ! h(1)
+    this%c = this%h + 1  ! c(d, d)
+!
+  end subroutine node__init_as_root
+!
+  pure subroutine node__init(this, iper, isym, pw)
+    type(node_), intent(inout)      :: this
+    integer(IK), intent(in)         :: iper, isym, pw
+!
+    this%iper = iper
+    this%isym = isym
+    this%v = pw          ! v(1)
+    this%h = this%v + 1  ! h(1)
+    this%c = this%h + 1  ! c(d, d)
+!
+  end subroutine node__init
+!
+  pure elemental function node__memsize(dmat) result(res)
+    type(d_matrix_list), intent(in) :: dmat
+    integer(IK)                     :: res
+    res = 2 + dmat%d**2
+  end function node__memsize
+!
+  pure subroutine breadth__init(this, dmat, pw, depth)
+    type(breadth_), intent(inout)   :: this
+    type(d_matrix_list), intent(in) :: dmat
+    integer(IK), intent(in)         :: pw, depth
+    integer(IK)                     :: i, j, bs
+!
+    this%ispc = 0
+    this%uppd = 0
+    do while (this%ispc < dmat%l)
+      this%ispc = this%ispc + 1
+      this%uppd = this%uppd + dmat%m(this%ispc)%g
+      if (depth <= this%uppd) exit
+    end do
+    this%lowd = depth
+    this%irow = dmat%m(this%ispc)%g - this%uppd + this%lowd
+    this%nper = dmat%m(this%ispc)%g - this%irow + 1
+    this%nsym = dmat%m(this%ispc)%s
+    this%nnod = this%nper * this%nsym
+    this%inod = 0
+!
+    allocate (this%nodes(this%nnod))
+    bs = node__memsize(dmat)
+!
+    do concurrent(i=1:this%nper, j=1:this%nsym)
+      block
+        integer(IK) :: inod, ipnt
+        inod = (j - 1) * this%nper + i
+        ipnt = (inod - 1) * bs + pw
+        call node__init(this%nodes(inod), i, j, ipnt)
+      end block
+    end do
+!
+    if (this%ispc < 1) return
+!
+  end subroutine breadth__init
+!
+  pure elemental function breadth__memsize(this, dmat) result(res)
+    type(breadth_), intent(in)      :: this
+    type(d_matrix_list), intent(in) :: dmat
+    integer(IK)                     :: res
+    res = node__memsize(dmat) * this%nnod
+  end function breadth__memsize
+!
+  pure elemental subroutine breadth__destroy(this)
+    type(breadth_), intent(inout) :: this
+    if (ALLOCATED(this%nodes)) deallocate (this%nodes)
+  end subroutine breadth__destroy
+!
+  pure subroutine tree_init(this, pw, blk, rot)
+    class(tree), intent(inout)           :: this
+    integer(IK), intent(in)              :: pw
+    type(mol_block_list), intent(in)     :: blk
+    type(molecular_rotation), intent(in), optional :: rot(*)
+    integer(IK)                          :: n, i, ipw
+!
+    this%iscope = 0
+!
+    ipw = pw
+    this%dmat = d_matrix_list(blk, ipw)
+    ipw = ipw + this%dmat%memsize()
+!
+    call node__init_as_root(this%root, this%dmat, ipw)
+    ipw = ipw + node__memsize(this%dmat)
+!
+    n = this%dmat%n_depth()
+    if(n<1) return
+!
+    allocate (this%perms(n))
+    allocate (this%breadthes(n))
+!
+    do i = 1, n
+      call breadth__init(this%breadthes(i), this%dmat, ipw, i)
+      ipw = ipw + breadth__memsize(this%breadthes(i), this%dmat)
+    end do
+!
+    allocate (this%rots(this%dmat%l))
+!
+    if (PRESENT(rot)) then
+      do concurrent(i=1:this%dmat%l)
+        this%rots(i) = rot(i)
+      end do
+    end if
+!
+  end subroutine tree_init
+!
+  pure elemental function tree_memsize(this) result(res)
+    class(tree), intent(in) :: this
+    integer(IK)             :: res
+    res = this%dmat%memsize() + node__memsize(this%dmat)
+    if (.not. ALLOCATED(this%breadthes)) return
+    res = res + SUM(breadth__memsize(this%breadthes, this%dmat))
+  end function tree_memsize
+!
+  pure elemental function tree_n_depth(this) result(res)
+    class(tree), intent(in) :: this
+    integer(IK)             :: res
+    if (ALLOCATED(this%breadthes)) then
+      res = SIZE(this%breadthes)
+    else
+      res = 0
+    end if
+  end function tree_n_depth
+!
+   subroutine tree_setup(this, X, Y, W)
+    class(tree), intent(inout) :: this
+    real(RK), intent(in)       :: X(*)
+    real(RK), intent(in)       :: Y(*)
+    real(RK), intent(inout)    :: W(*)
+    integer(IK)                :: nd
+!
+    if (.not. ALLOCATED(this%breadthes)) return
+!
+    call this%dmat%eval(this%rots, X, Y, W)
+!
+!!! lower bound is set to fixed lowerbound + Hungarian lowerbound.
+!!! Assign the covariance matrix obtained from fixed points to root covariance matrix.
+!
+    W(this%root%v) = W(this%dmat%v) + W(this%dmat%o)
+    W(this%root%h) = W(this%dmat%h)
+    call copy(this%dmat%dd, W(this%dmat%c), W(this%root%c))
+!
+    nd = this%n_depth()
+!
+    if (nd < 1) then
+      this%root%alive = .false.
+      this%iscope = 0
+      return
+    else
+      this%root%alive = .true.
+    end if
+!
+    call init_perms(this%dmat, this%perms)
+    call breadth__eval(this%breadthes(1), this%dmat, this%perms, &
+   &                   W(this%root%h), W(this%root%c), W, nd == 1)
+    this%iscope = 1
+!
+  end subroutine tree_setup
+!
+  pure subroutine init_perms(dmat, perms)
+    type(d_matrix_list), intent(in) :: dmat
+    integer(IK), intent(inout)      :: perms(*)
+    integer(IK)                     :: i, j, k
+    k = 0
+    do j = 1, dmat%l
+      do i = 1, dmat%m(j)%g
+        k = k + 1
+        perms(k) = i
+      end do
+    end do
+  end subroutine init_perms
+!
+  pure elemental subroutine tree_destroy(this)
+    type(tree), intent(inout) :: this
+    call this%dmat%clear()
+    if (ALLOCATED(this%breadthes)) deallocate (this%breadthes)
+    if (ALLOCATED(this%perms)) deallocate (this%perms)
+    if (ALLOCATED(this%rots)) deallocate (this%rots)
+  end subroutine tree_destroy
+!
+!
+  pure  subroutine breadth__eval(this, dmat, perm, H, C, W, is_terminal)
+    type(breadth_), intent(inout)   :: this
+    type(d_matrix_list), intent(in) :: dmat
+    integer(IK), intent(in)         :: perm(*)
+    real(RK), intent(in)            :: H, C(*)
+    real(RK), intent(inout)         :: W(*)
+    logical, intent(in)             :: is_terminal
+    integer(IK)                     :: nr, i
+!
+    nr = this%uppd - this%lowd
+    do concurrent(i=0:this%nper - 1)
+      block
+        integer(IK) :: j, ip, ir(nr)
+!
+        ip = perm(this%lowd + i)
+        do concurrent(j=1:i)
+          ir(j) = perm(this%lowd + j - 1)
+        end do
+        do concurrent(j=i + 1:nr)
+          ir(j) = perm(this%lowd + j)
+        end do
+!
+        do concurrent(j=1:this%nsym)
+          block
+            integer(IK) :: inod
+!
+            inod = this%nsym * i + j
+            this%nodes(inod)%alive = .true.
+            W(this%nodes(inod)%h) = H
+            call copy(dmat%dd, C, W(this%nodes(inod)%c))
+!
+            call d_matrix_partial_eval(dmat%m(this%ispc), this%irow, ip, j, ir, W, &
+           &                           W(this%nodes(inod)%v), W(this%nodes(inod)%h),  &
+           &                           W(this%nodes(inod)%c))
+!
+          end block
+        end do
+      end block
+    end do
+!
+    call breadth__set_node_index(this, W)
+!
+    if (is_terminal) then
+      do concurrent(i=1:this%nnod)
+        this%nodes(i)%alive = .false.
+      end do
+    end if
+!
+  end subroutine breadth__eval
+!
+  pure subroutine breadth__set_node_index(this, W)
+    type(breadth_), intent(inout) :: this
+    real(RK), intent(in)          :: W(*)
+    real(RK)                      :: lv
+    integer(IK)                   :: i
+!
+    this%inod = 0
+!
+    lv = RHUGE
+    do i = 1, this%nnod
+      if (this%nodes(i)%alive .and. W(this%nodes(i)%v) < lv) then
+        this%inod = i
+        lv = W(this%nodes(i)%v)
+      end if
+    end do
+!
+  end subroutine breadth__set_node_index
+!
+!
+!!!
+!
 !| generate node instance
   pure function node_new_as_root(dmat, W) result(res)
     type(d_matrix_list), intent(in) :: dmat
@@ -66,20 +367,19 @@ contains
 !
     do concurrent(i=1:dmat%l)
       block
-        real(RK)    :: LF, LB, H, C(1)
+        real(RK)    :: H, C(1)
         integer(IK) :: ires(dmat%m(i)%g)
         integer(IK) :: j
         do concurrent(j=1:dmat%m(i)%g)
           ires(j) = j
         end do
-        call d_matrix_partial_eval(dmat%m(i), 0, 0, 0, ires, W, LF, LB, H, C)
-        res%L(i) = LB
+        call d_matrix_partial_eval(dmat%m(i), 0, 0, 0, ires, W, res%L(i), H, C)
       end block
     end do
 !
     res%lowerbound = W(dmat%v) + SUM(res%L)
 !
-    call next_index(dmat%l, dmat%m, 0, 0, res)
+    call next_index(dmat%l, dmat%m, 0, 0, res%ispc, res%depth)
     if(res%ispc<1) return
 !
     g = dmat%m(res%ispc)%g
@@ -98,7 +398,6 @@ contains
     type(d_matrix_list), intent(in) :: dmat
     integer(IK), intent(in)         :: iper, isym
     real(RK), intent(in)            :: W(*)
-    real(RK)                        :: LF, LB
     type(node)                      :: res
     integer(IK)                     :: i, np
 !
@@ -112,11 +411,11 @@ contains
 !
       call perm_index(np, iper, parent%per(parent%depth), ip, ir)
       call d_matrix_partial_eval(dmat%m(parent%ispc), parent%depth, &
-     &                           ip, isym, ir, W, LF, LB, res%H, res%C)
+     &                           ip, isym, ir, W, res%lowerbound, res%H, res%C)
 !
-      res%lowerbound = LF + LB + SUM(parent%L)
+      res%lowerbound = res%lowerbound + SUM(parent%L)
 !
-      call next_index(dmat%l, dmat%m, parent%depth, parent%ispc, res)
+      call next_index(dmat%l, dmat%m, parent%depth, parent%ispc, res%ispc, res%depth)
 !
       if (parent%ispc == res%ispc) then
         ALLOCATE(res%per, mold=parent%per)
@@ -159,21 +458,21 @@ contains
 !
   end function node_new
 !
-  pure subroutine next_index(l, m, depth, ispc, child)
+  pure subroutine next_index(l, m, depth, ispc, next_ispc, next_depth)
     integer(IK), intent(in)    :: l, depth, ispc
     type(d_matrix), intent(in) :: m(l)
-    type(node), intent(inout)  :: child
+    integer(IK), intent(inout) :: next_ispc, next_depth
     integer(IK)                :: i, spc
     spc = MAX(ispc, 1)
     if (depth < m(spc)%g) then
-      child%ispc = spc
-      child%depth = depth + 1
+      next_ispc = spc
+      next_depth = depth + 1
       return
     end if
     do i = spc + 1, l
       if (m(i)%g < 1) cycle
-      child%ispc = i
-      child%depth = 1
+      next_ispc = i
+      next_depth = 1
       return
     end do
   end subroutine next_index
@@ -247,7 +546,6 @@ contains
       return
     end if
 !
-    res%ofsd = this%depth
     res%nper = this%n_per(dmat)
     res%nsym = this%n_sym(dmat)
     res%nnod = res%nper * res%nsym
@@ -316,7 +614,7 @@ contains
     if (this%nnod < 1 .or. this%inod < 1) then
       res = 0
     else
-      res = MODULO(this%inod - 1, this%nper) + this%ofsd
+      res = MODULO(this%inod - 1, this%nper)
     end if
   end function breadth_iper
 !
@@ -383,5 +681,17 @@ contains
     type(breadth), intent(inout) :: this
     call breadth_clear(this)
   end subroutine breadth_destroy
+!
+!!!
+!
+  pure subroutine copy(d, source, dest)
+    integer(IK), intent(in) :: d
+    real(RK), intent(in)    :: source(*)
+    real(RK), intent(inout) :: dest(*)
+    integer(IK)             :: i
+    do concurrent(i=1:d)
+      dest(i) = source(i)
+    end do
+  end subroutine copy
 !
 end module mod_tree

@@ -9,9 +9,9 @@ program main
   type(unittest) :: u
 !
   call u%init('test node')
-  call test1()
-  call test2()
-! call test3()
+! call test1()
+! call test2()
+  call test3()
 !
   call u%finish_and_terminate()
 !
@@ -101,20 +101,20 @@ contains
     integer                     :: i, ml
 !
     rot(1) = molecular_rotation(RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m1, 2]))
-    rot(2) = molecular_rotation(RESHAPE([(i, i=1,0)], [0, 1]))
+    rot(2) = molecular_rotation(RESHAPE([(i, i=1, 0)], [0, 1]))
     rot(3) = molecular_rotation(RESHAPE([7, 6, 5, 4, 3, 2, 1], [m3, 1]))
     blk = mol_block_list(d, s, b)
     dmat = d_matrix_list(blk, 1)
-    allocate(W(dmat%memsize()))
+    allocate (W(dmat%memsize()))
 !
-    X = sample(d,mn)
+    X = sample(d, mn)
     Y = 0.9D0 * X + 0.1D0 * sample(d, mn)
 !
     call dmat%eval(rot, X, Y, W)
 !
     a = node(dmat, W)
-print'(6i4)',b
-print*,a%n_depth(dmat)
+    print'(6i4)', b
+    print *, a%n_depth(dmat)
     z1 = a%generate_breadth(dmat, W)
     ml = MINLOC(z1%nodes%lowerbound, 1)
     z2 = z1%nodes(ml)%generate_breadth(dmat, W)
@@ -131,16 +131,50 @@ print*,a%n_depth(dmat)
     ml = MINLOC(z7%nodes%lowerbound, 1)
     z8 = z7%nodes(ml)%generate_breadth(dmat, W)
     ml = MINLOC(z8%nodes%lowerbound, 1)
-    print'(8(f9.3))',z1%nodes%lowerbound
-    print'(8(f9.3))',z2%nodes%lowerbound
-    print'(8(f9.3))',z3%nodes%lowerbound
-    print'(8(f9.3))',z4%nodes%lowerbound
-    print'(8(f9.3))',z5%nodes%lowerbound
-    print'(8(f9.3))',z6%nodes%lowerbound
-    print'(8(f9.3))',z7%nodes%lowerbound
-    print'(8(f9.3))',z8%nodes%lowerbound
+    print'(8(f9.3))', z1%nodes%lowerbound
+    print'(8(f9.3))', z2%nodes%lowerbound
+    print'(8(f9.3))', z3%nodes%lowerbound
+    print'(8(f9.3))', z4%nodes%lowerbound
+    print'(8(f9.3))', z5%nodes%lowerbound
+    print'(8(f9.3))', z6%nodes%lowerbound
+    print'(8(f9.3))', z7%nodes%lowerbound
+    print'(8(f9.3))', z8%nodes%lowerbound
 !
   end subroutine test2
+!
+  subroutine test3()
+    integer, parameter          :: d = 3
+    integer, parameter          :: s = 3
+    integer, parameter          :: m1 = 5, n1 = 5, f1 = 3, g1 = 4
+    integer, parameter          :: m2 = 3, n2 = 3, f2 = 2, g2 = 2
+    integer, parameter          :: m3 = 7, n3 = 5, f3 = 7, g3 = 5
+    integer, parameter          :: mn = m1 * n1 + m2 * n2 + m3 * n3
+    type(mol_block_list)        :: blk
+    type(mol_block)             :: b(3) = [mol_block(0, 3, m1, n1, f1, g1), &
+                                        &  mol_block(0, 1, m2, n2, f2, g2), &
+                                        &  mol_block(0, 2, m3, n3, f3, g3)]
+    type(molecular_rotation)    :: rot(s)
+    real(RK)                    :: X(d, mn), Y(d, mn)
+    real(RK), allocatable       :: W(:)
+    type(d_matrix_list)         :: dmat
+    type(tree)                  :: a
+    integer                     :: i
+!
+    rot(1) = molecular_rotation(RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m1, 2]))
+    rot(2) = molecular_rotation(RESHAPE([(i, i=1, 0)], [0, 1]))
+    rot(3) = molecular_rotation(RESHAPE([7, 6, 5, 4, 3, 2, 1], [m3, 1]))
+    blk = mol_block_list(d, s, b)
+    dmat = d_matrix_list(blk, 1)
+!
+    X = sample(d, mn)
+    Y = 0.9D0 * X + 0.1D0 * sample(d, mn)
+!
+    call a%init(1, blk, rot)
+print*,a%memsize()
+    allocate (W(a%memsize()))
+    call a%setup(X, Y, W)
+!
+  end subroutine test3
 !
   function sample(d, n) result(res)
     integer, intent(in)  :: d, n
