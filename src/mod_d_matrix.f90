@@ -28,6 +28,7 @@ module mod_d_matrix
     integer(IK)                           :: h = 0
     integer(IK)                           :: v = 0
     integer(IK)                           :: c = 0
+    integer(IK)                           :: o = 0
     integer(IK)                           :: d = 0
     integer(IK)                           :: l = 0
     type(d_matrix), allocatable           :: m(:)
@@ -289,7 +290,8 @@ contains
     res%h = p
     res%v = res%h + 1
     res%c = res%v + 1
-    ip = res%c + res%d**2
+    res%o = res%c + res%d**2
+    ip = res%o + res%l
 !
     allocate(res%m(res%l))
 !
@@ -304,7 +306,7 @@ contains
     class(d_matrix_list), intent(in) :: this
     integer(IK)                      :: res
     if (ALLOCATED(this%m)) then
-      res = SUM(d_matrix_memsize(this%m)) + this%d**2 + 2
+      res = SUM(d_matrix_memsize(this%m)) + this%l + this%d**2 + 2
     else
       res = 0
     end if
@@ -333,6 +335,18 @@ contains
 !
     do concurrent(i=1:this%l)
       call d_matrix_eval(this%m(i), rot(i), X, Y, W)
+      block
+        integer(IK) :: j, ires(this%m(i)%g)
+        do concurrent(j=1:this%m(i)%g)
+          ires(j) = j
+        end do
+        j = this%o + i - 1
+        call d_matrix_partial_eval(this%m(i), 0, 0, 0, ires, W, W(j), W(j), W(j), W(j))
+      end block
+    end do
+!
+    do concurrent(i=this%l - 1:1:-1)
+      W(this%o + i - 1) = W(this%o + i - 1) + W(this%o + i)
     enddo
 !
   end subroutine d_matrix_list_eval

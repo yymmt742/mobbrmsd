@@ -99,6 +99,7 @@ contains
     call a%eval(rot, X, Y, W)
     print *, W(1)
     print'(3f9.3)', W(2:10)
+    print'(*(f9.3))', W(a%o:a%o+l-1)
 !
   end subroutine test2
 !
