@@ -1,6 +1,5 @@
 program main
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
-  use mod_pca
   use mod_procrustes
   use mod_unittest
   implicit none

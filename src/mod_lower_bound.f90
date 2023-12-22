@@ -4,7 +4,6 @@ module mod_lower_bound
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_optarg
   use mod_rmsd
-  use mod_cov
   use mod_Kabsch
   use mod_Procrustes
   implicit none

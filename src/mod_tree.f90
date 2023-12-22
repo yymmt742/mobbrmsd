@@ -28,11 +28,22 @@ module mod_tree
   end type node
 !
   type breadth
+    integer(IK)             :: ofsd = 0
+    integer(IK)             :: inod = 0
+    integer(IK)             :: nper = 0
+    integer(IK)             :: nsym = 0
+    integer(IK)             :: nnod = 0
     type(node), allocatable :: nodes(:)
   contains
+    procedure         :: generate_breadth => breadth_generate_breadth
     procedure         :: prune            => breadth_prune
     procedure         :: is_finished      => breadth_is_finished
-    procedure         :: lowervalue_index => breadth_lowervalue_index
+    procedure         :: not_finished     => breadth_not_finished
+    procedure         :: isym             => breadth_isym
+    procedure         :: iper             => breadth_iper
+    procedure         :: set_node_index   => breadth_set_node_index
+    procedure         :: set_node_minloc  => breadth_set_node_minloc
+    procedure         :: lowerbound       => breadth_lowerbound
     final             :: breadth_destroy
   end type breadth
 !
@@ -95,12 +106,13 @@ contains
     res%H = parent%H
 !
     np = SIZE(parent%per) - parent%depth
+!
     block
       integer(IK) :: ip, ir(np)
 !
       call perm_index(np, iper, parent%per(parent%depth), ip, ir)
-      call d_matrix_partial_eval(dmat%m(parent%ispc), parent%depth, ip, isym, ir, &
-     &                           W, LF, LB, res%H, res%C)
+      call d_matrix_partial_eval(dmat%m(parent%ispc), parent%depth, &
+     &                           ip, isym, ir, W, LF, LB, res%H, res%C)
 !
       res%lowerbound = LF + LB + SUM(parent%L)
 !
@@ -205,35 +217,6 @@ contains
     res = this%ispc > 0
   end function node_has_child
 !
-!| generate childe nodes instance
-  pure function node_generate_breadth(this, dmat, W) result(res)
-    class(node), intent(in)         :: this
-    type(d_matrix_list), intent(in) :: dmat
-    real(RK), intent(in)            :: W(*)
-    type(breadth)                   :: res
-    integer(IK)                     :: nper, nsym, nchd, iper, isym
-!
-    if (.not. this%has_child()) then
-      allocate (res%nodes(0))
-      return
-    end if
-!
-    nper = this%n_per(dmat)
-    nsym = this%n_sym(dmat)
-    nchd = nper * nsym
-!
-    allocate (res%nodes(nper * nsym))
-!
-    do concurrent(iper=1:nper, isym=1:nsym)
-      block
-        integer(IK) :: inod
-        inod = (isym - 1) * nper + iper
-        res%nodes(inod) = node_new(this, iper, isym, dmat, W)
-      end block
-    end do
-!
-  end function node_generate_breadth
-!
   pure elemental subroutine node_clear(this)
     class(node), intent(inout) :: this
     if (ALLOCATED(this%per)) deallocate (this%per)
@@ -249,47 +232,148 @@ contains
     call node_clear(this)
   end subroutine node_destroy
 !
+!!!
+!
+!| generate childe nodes instance
+  pure function node_generate_breadth(this, dmat, W) result(res)
+    class(node), intent(in)         :: this
+    type(d_matrix_list), intent(in) :: dmat
+    real(RK), intent(in)            :: W(*)
+    type(breadth)                   :: res
+    integer(IK)                     :: iper, isym
+!
+    if (.not. this%has_child()) then
+      allocate (res%nodes(0))
+      return
+    end if
+!
+    res%ofsd = this%depth
+    res%nper = this%n_per(dmat)
+    res%nsym = this%n_sym(dmat)
+    res%nnod = res%nper * res%nsym
+!
+    allocate (res%nodes(res%nnod))
+!
+    do concurrent(iper=1:res%nper, isym=1:res%nsym)
+      block
+        integer(IK) :: inod
+        inod = (isym - 1) * res%nper + iper
+        res%nodes(inod) = node_new(this, iper, isym, dmat, W)
+      end block
+    end do
+!
+    call breadth_set_node_index(res)
+!
+  end function node_generate_breadth
+!
+  pure function breadth_generate_breadth(this, dmat, W) result(res)
+    class(breadth), intent(in)      :: this
+    type(d_matrix_list), intent(in) :: dmat
+    real(RK), intent(in)            :: W(*)
+    type(breadth)                   :: res
+!
+    if(this%inod<1)then
+      allocate (res%nodes(0))
+    else
+      res = node_generate_breadth(this%nodes(this%inod), dmat, W)
+    end if
+!
+  end function breadth_generate_breadth
+!
   pure elemental subroutine breadth_prune(this, upperbound)
     class(breadth), intent(inout) :: this
     real(RK), intent(in)          :: upperbound
     integer(IK)                   :: i, n
-    if (ALLOCATED(this%nodes)) then
-      n = SIZE(this%nodes)
-      do concurrent(i=1:n)
-        this%nodes(i)%alive = this%nodes(i)%alive .and. this%nodes(i)%lowerbound < upperbound
-      end do
-    end if
+    n = this%nper * this%nsym
+    do concurrent(i=1:n)
+      if (i == this%inod) then
+        this%nodes(i)%alive = .false.
+      else
+        this%nodes(i)%alive = this%nodes(i)%alive .and. (this%nodes(i)%lowerbound < upperbound)
+      end if
+    end do
   end subroutine breadth_prune
+!
+  pure elemental function breadth_not_finished(this) result(res)
+    class(breadth), intent(in) :: this
+    logical                    :: res
+    if (ALLOCATED(this%nodes)) then
+      res = ANY(this%nodes%alive)
+    else
+      res = .false.
+    end if
+  end function breadth_not_finished
 !
   pure elemental function breadth_is_finished(this) result(res)
     class(breadth), intent(in) :: this
     logical                    :: res
-    if (ALLOCATED(this%nodes)) then
-      res = .not. ANY(this%nodes%alive)
-    else
-      res = .true.
-    end if
+    res = .not. this%not_finished()
   end function breadth_is_finished
 !
-  pure elemental function breadth_lowervalue_index(this) result(res)
+  pure elemental function breadth_iper(this) result(res)
     class(breadth), intent(in) :: this
-    real(RK)                   :: lowervalue
-    integer(IK)                :: res, i, n
+    integer(IK)                :: res
+    if (this%nnod < 1 .or. this%inod < 1) then
+      res = 0
+    else
+      res = MODULO(this%inod - 1, this%nper) + this%ofsd
+    end if
+  end function breadth_iper
 !
-    res = 0
+  pure elemental function breadth_isym(this) result(res)
+    class(breadth), intent(in) :: this
+    integer(IK)                :: res
+    if (this%nnod < 1 .or. this%inod < 1) then
+      res = 0
+    else
+      res = 1 + (this%inod - 1) / this%nper
+    end if
+  end function breadth_isym
+!
+  pure elemental subroutine breadth_set_node_index(this, inod)
+    class(breadth), intent(inout)     :: this
+    integer(IK), intent(in), optional :: inod
+!
+    this%inod = 0
     if (.not.ALLOCATED(this%nodes)) return
 !
-    lowervalue = RHUGE
-    n = SIZE(this%nodes)
-    do i = 1, n
-      if (this%nodes(i)%alive .and. this%nodes(i)%lowerbound < lowervalue) then
-        res = i
-        lowervalue = this%nodes(i)%lowerbound
+    if (PRESENT(inod)) then
+      if (0 < inod .and. inod <= this%nnod) then
+        if(this%nodes(inod)%alive) this%inod = inod
+        return
       end if
-    end do
+    end if
 !
-  end function breadth_lowervalue_index
-
+    block
+      real(RK)    :: lv
+      integer(IK) :: i
+      lv = RHUGE
+      do i = 1, this%nnod
+        if (this%nodes(i)%alive .and. this%nodes(i)%lowerbound < lv) then
+          this%inod = i
+          lv = this%nodes(i)%lowerbound
+        end if
+      end do
+    end block
+!
+  end subroutine breadth_set_node_index
+!
+  pure elemental subroutine breadth_set_node_minloc(this)
+    class(breadth), intent(inout)     :: this
+    if (.not.ALLOCATED(this%nodes)) return
+    this%inod = MINLOC(this%nodes%lowerbound, 1)
+  end subroutine breadth_set_node_minloc
+!
+  pure elemental function breadth_lowerbound(this) result(res)
+    class(breadth), intent(in) :: this
+    real(RK)                   :: res
+    if (.not. ALLOCATED(this%nodes) .or. this%inod < 1) then
+      res = RHUGE
+    else
+      res = this%nodes(this%inod)%lowerbound
+    endif
+  end function breadth_lowerbound
+!
   pure elemental subroutine breadth_clear(this)
     class(breadth), intent(inout) :: this
     if (ALLOCATED(this%nodes)) deallocate (this%nodes)

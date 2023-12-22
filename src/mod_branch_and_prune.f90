@@ -76,7 +76,6 @@ contains
     if (.not. ALLOCATED(this%childs)) return
     if (SIZE(this%childs) < 1) return
 !
-    print*,this%childs(1)%lowervalue_index()
     ndep = SIZE(this%childs)
     block
       integer(IK) :: bstper(ndep)
@@ -92,27 +91,29 @@ contains
     type(breadth), intent(inout)    :: childs(*)
     real(RK), intent(inout)         :: upperbound
     integer(IK), intent(inout)      :: bstper(*)
-    integer(IK)                     :: i, nn, ll
+    integer(IK)                     :: i
 !
-    call childs(idep)%prune(upperbound)
-print*,childs(idep)%is_finished(),idep, ndep, childs(idep)%nodes%alive
+print*,childs(idep)%is_finished(),idep, childs(idep)%nodes%alive
 print'(*(f9.3))', upperbound, childs(idep)%nodes%lowerbound
     if (idep == ndep) then
-      ll = MINLOC(childs(idep)%nodes%lowerbound, 1)
-      if (upperbound > childs(idep)%nodes(ll)%lowerbound)then
-        upperbound = childs(idep)%nodes(ll)%lowerbound
-      endif
+      block
+        real(RK) :: lb
+        call childs(idep)%set_node_minloc()
+        lb = childs(idep)%lowerbound()
+        if (upperbound > lb) then
+          upperbound = lb
+          do i = 1, ndep
+            print *, childs(i)%iper(), childs(i)%isym()
+          end do
+        end if
+      end block
       return
     end if
 !
-    nn = SIZE(childs(idep)%nodes)
-!
-    do i = 1, nn
-      if (childs(idep)%is_finished()) return
-      ll = childs(idep)%lowervalue_index()
-      childs(idep + 1) = childs(idep)%nodes(ll)%generate_breadth(dmat, W)
+    do while (childs(idep)%not_finished())
+      call childs(idep)%set_node_index()
+      childs(idep + 1) = childs(idep)%generate_breadth(dmat, W)
       call breadth_search(idep + 1, ndep, dmat, W, childs, upperbound, bstper)
-      childs(idep)%nodes(ll)%alive = .FALSE.
       call childs(idep)%prune(upperbound)
       print*,childs(idep)%nodes%alive
     end do

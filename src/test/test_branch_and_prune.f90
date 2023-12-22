@@ -38,7 +38,7 @@ contains
 !
     X = sample(d,mn)
     !Y = sample(d, mn)
-    Y = 0.5D0 * X + 0.5D0 * sample(d, mn)
+    Y = 1.0D0 * X + 0.0D0 * sample(d, mn)
 !
     bra = branch_and_prune(blk, rot, 1)
     allocate (W(bra%memsize()))
