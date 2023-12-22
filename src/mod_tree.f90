@@ -3,7 +3,6 @@ module mod_tree
   use mod_molecular_rotation
   use mod_mol_block
   use mod_d_matrix
-  use mod_partial_rmsd
   implicit none
   private
   public :: node, breadth
