@@ -173,6 +173,7 @@ contains
 print*,a%memsize()
     allocate (W(a%memsize()))
     call a%setup(X, Y, W)
+print'(4(f9.3))', a%lowerbounds(W)
 !
   end subroutine test3
 !

@@ -40,9 +40,11 @@ module mod_tree
     type(molecular_rotation), allocatable :: rots(:)
   contains
     procedure         :: init             => tree_init
+    procedure         :: memsize          => tree_memsize
     procedure         :: setup            => tree_setup
     procedure         :: n_depth          => tree_n_depth
-    procedure         :: memsize          => tree_memsize
+    procedure         :: n_breadth        => tree_n_breadth
+    procedure         :: lowerbounds      => tree_lowerbounds
     final             :: tree_destroy
   end type tree
 !
@@ -225,7 +227,33 @@ contains
     end if
   end function tree_n_depth
 !
-   subroutine tree_setup(this, X, Y, W)
+  pure elemental function tree_n_breadth(this) result(res)
+    class(tree), intent(in) :: this
+    integer(IK)             :: res
+    if (this%iscope > 0 .and. ALLOCATED(this%breadthes)) then
+      res = SIZE(this%breadthes(this%iscope)%nodes)
+    else
+      res = 0
+    end if
+  end function tree_n_breadth
+!
+  pure function tree_lowerbounds(this, W) result(res)
+    class(tree), intent(in) :: this
+    real(RK), intent(in)    :: W(*)
+    real(RK)                :: res(this%n_breadth())
+    integer(IK)             :: i, j, n
+    if (this%iscope < 1.or..not.ALLOCATED(this%breadthes)) return
+    n = SIZE(res)
+    do concurrent(i=1:n)
+      res(i) = W(this%breadthes(this%iscope)%nodes(i)%v)
+    end do
+    j = this%dmat%o + this%breadthes(this%iscope)%ispc
+    do concurrent(i=1:n)
+      res(i) = res(i) + W(j)
+    end do
+  end function tree_lowerbounds
+!
+  pure subroutine tree_setup(this, X, Y, W)
     class(tree), intent(inout) :: this
     real(RK), intent(in)       :: X(*)
     real(RK), intent(in)       :: Y(*)
@@ -258,20 +286,22 @@ contains
    &                   W(this%root%h), W(this%root%c), W, nd == 1)
     this%iscope = 1
 !
-  end subroutine tree_setup
+  contains
 !
-  pure subroutine init_perms(dmat, perms)
-    type(d_matrix_list), intent(in) :: dmat
-    integer(IK), intent(inout)      :: perms(*)
-    integer(IK)                     :: i, j, k
-    k = 0
-    do j = 1, dmat%l
-      do i = 1, dmat%m(j)%g
-        k = k + 1
-        perms(k) = i
+    pure subroutine init_perms(dmat, perms)
+      type(d_matrix_list), intent(in) :: dmat
+      integer(IK), intent(inout)      :: perms(*)
+      integer(IK)                     :: i, j, k
+      k = 0
+      do j = 1, dmat%l
+        do i = 1, dmat%m(j)%g
+          k = k + 1
+          perms(k) = i
+        end do
       end do
-    end do
-  end subroutine init_perms
+    end subroutine init_perms
+!
+  end subroutine tree_setup
 !
   pure elemental subroutine tree_destroy(this)
     type(tree), intent(inout) :: this
@@ -281,8 +311,7 @@ contains
     if (ALLOCATED(this%rots)) deallocate (this%rots)
   end subroutine tree_destroy
 !
-!
-  pure  subroutine breadth__eval(this, dmat, perm, H, C, W, is_terminal)
+  pure subroutine breadth__eval(this, dmat, perm, H, C, W, is_terminal)
     type(breadth_), intent(inout)   :: this
     type(d_matrix_list), intent(in) :: dmat
     integer(IK), intent(in)         :: perm(*)
