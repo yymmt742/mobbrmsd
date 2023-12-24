@@ -20,11 +20,13 @@ module mod_tree
   type tree
     integer(IK)                :: iscope = 0
     integer(IK)                :: memsize = 0
+    integer(IK)                :: upperbound = 0
     type(node), allocatable    :: nodes(:)
     type(breadth), allocatable :: breadthes(:)
   contains
     procedure         :: n_depth          => tree_n_depth
     procedure         :: n_breadth        => tree_n_breadth
+    procedure         :: prune            => tree_prune
 !   procedure         :: lowerbounds      => tree_lowerbounds
     final             :: tree_destroy
   end type tree
@@ -41,12 +43,13 @@ contains
     type(tree)              :: res
 !
     n = SUM(n_breadths)
+    res%upperbound = pw
     allocate (res%nodes(n))
     do concurrent(i=1:n)
-      res%nodes(i) = node(.true., pw + (i - 1) * memnode)
+      res%nodes(i) = node(.true., pw + 1 + (i - 1) * memnode)
     end do
 !
-    res%memsize = n * memnode
+    res%memsize = n * memnode + 1
 !
     allocate (res%breadthes(ndepth))
     j = 0
@@ -73,6 +76,18 @@ contains
     integer(IK)             :: res
     res = 0
   end function tree_n_breadth
+!
+  pure subroutine tree_prune(this, W)
+    class(tree), intent(inout) :: this
+    real(RK), intent(in)       :: W(*)
+    integer(IK)                :: i, l, u
+    if (this%iscope < 1 .or. this%n_depth() < this%iscope) return
+    l = this%breadthes(this%iscope)%lowd + 1
+    u = this%breadthes(this%iscope)%uppd
+    do concurrent(i=l:u)
+      this%nodes(i)%alive = this%nodes(i)%alive .and. (W(this%nodes(i)%p) < W(this%upperbound))
+    end do
+  end subroutine tree_prune
 !
   pure elemental subroutine tree_destroy(this)
     type(tree), intent(inout) :: this
