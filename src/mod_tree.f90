@@ -11,33 +11,31 @@ module mod_tree
   type node_
     private
     sequence
-    logical     :: alive
-    integer(IK) :: iper, isym, v, h, c
+    integer(IK) :: p
   end type node_
 !
   type breadth_
     private
-    integer(IK)              :: inod = 0
-    integer(IK)              :: nper = 0
-    integer(IK)              :: nsym = 0
-    integer(IK)              :: nnod = 0
-    integer(IK)              :: ispc = 0
-    integer(IK)              :: irow = 0
-    integer(IK)              :: lowd = 0
-    integer(IK)              :: uppd = 0
-    type(node_), allocatable :: nodes(:)
-  contains
-    final             :: breadth__destroy
+    sequence
+    integer(IK) :: ispc = 0
+    integer(IK) :: inod = 0
+    integer(IK) :: iper = 0
+    integer(IK) :: isym = 0
+    integer(IK) :: lowd = 0
+    integer(IK) :: uppd = 0
+    integer(IK) :: ncur = 0
+    integer(IK) :: nsym = 0
+    integer(IK) :: nper = 0
+    integer(IK) :: nnod = 0
   end type breadth_
 !
   type tree
     private
     integer(IK)                 :: iscope
     type(d_matrix_list)         :: dmat
-    type(node_)                 :: root
-    integer(IK), allocatable    :: perms(:)
-    type(breadth_), allocatable :: breadthes(:)
     type(molecular_rotation), allocatable :: rots(:)
+    type(node_), allocatable    :: nodes(:)
+    type(breadth_), allocatable :: breadthes(:)
   contains
     procedure         :: init             => tree_init
     procedure         :: memsize          => tree_memsize
@@ -93,45 +91,28 @@ module mod_tree
 !
 contains
 !
-  pure subroutine node__init_as_root(this, dmat, pw)
-    type(node_), intent(inout)      :: this
-    type(d_matrix_list), intent(in) :: dmat
-    integer(IK), intent(in)         :: pw
-!
-    this%iper = 0
-    this%isym = 0
-    this%v = pw          ! v(1)
-    this%h = this%v + 1  ! h(1)
-    this%c = this%h + 1  ! c(d, d)
-!
-  end subroutine node__init_as_root
-!
-  pure subroutine node__init(this, iper, isym, pw)
-    type(node_), intent(inout)      :: this
-    integer(IK), intent(in)         :: iper, isym, pw
-!
-    this%iper = iper
-    this%isym = isym
-    this%v = pw          ! v(1)
-    this%h = this%v + 1  ! h(1)
-    this%c = this%h + 1  ! c(d, d)
-!
-  end subroutine node__init
-!
   pure elemental function node__memsize(dmat) result(res)
     type(d_matrix_list), intent(in) :: dmat
     integer(IK)                     :: res
     res = 2 + dmat%d**2
   end function node__memsize
 !
-  pure subroutine breadth__init(this, dmat, pw, depth)
+  pure elemental function tree_memsize(this) result(res)
+    class(tree), intent(in) :: this
+    integer(IK)             :: res
+    res = this%dmat%memsize()
+    if (ALLOCATED(this%nodes)) res = res + node__memsize(this%dmat) * SIZE(this%nodes)
+  end function tree_memsize
+!
+  pure subroutine breadth__init(this, dmat, pw, pd, depth)
     type(breadth_), intent(inout)   :: this
     type(d_matrix_list), intent(in) :: dmat
-    integer(IK), intent(in)         :: pw, depth
+    integer(IK), intent(in)         :: pw, pd, depth
     integer(IK)                     :: i, j, bs
 !
     this%ispc = 0
     this%uppd = 0
+!
     do while (this%ispc < dmat%l)
       this%ispc = this%ispc + 1
       this%uppd = this%uppd + dmat%m(this%ispc)%g
@@ -144,33 +125,9 @@ contains
     this%nnod = this%nper * this%nsym
     this%inod = 0
 !
-    allocate (this%nodes(this%nnod))
-    bs = node__memsize(dmat)
-!
-    do concurrent(i=1:this%nper, j=1:this%nsym)
-      block
-        integer(IK) :: inod, ipnt
-        inod = (j - 1) * this%nper + i
-        ipnt = (inod - 1) * bs + pw
-        call node__init(this%nodes(inod), i, j, ipnt)
-      end block
-    end do
-!
     if (this%ispc < 1) return
 !
   end subroutine breadth__init
-!
-  pure elemental function breadth__memsize(this, dmat) result(res)
-    type(breadth_), intent(in)      :: this
-    type(d_matrix_list), intent(in) :: dmat
-    integer(IK)                     :: res
-    res = node__memsize(dmat) * this%nnod
-  end function breadth__memsize
-!
-  pure elemental subroutine breadth__destroy(this)
-    type(breadth_), intent(inout) :: this
-    if (ALLOCATED(this%nodes)) deallocate (this%nodes)
-  end subroutine breadth__destroy
 !
   pure subroutine tree_init(this, pw, blk, rot)
     class(tree), intent(inout)           :: this
@@ -191,8 +148,20 @@ contains
     n = this%dmat%n_depth()
     if(n<1) return
 !
-    allocate (this%perms(n))
     allocate (this%breadthes(n))
+    n = 
+    allocate (this%nodes(n))
+!
+    bs = node__memsize(dmat)
+!
+    do concurrent(i=1:this%nper, j=1:this%nsym)
+      block
+        integer(IK) :: inod, ipnt
+        inod = (j - 1) * this%nper + i
+        ipnt = (inod - 1) * bs + pw
+        this%nodes(inod) = node_(.true., i, j, ipnt)
+      end block
+    end do
 !
     do i = 1, n
       call breadth__init(this%breadthes(i), this%dmat, ipw, i)
@@ -209,14 +178,6 @@ contains
 !
   end subroutine tree_init
 !
-  pure elemental function tree_memsize(this) result(res)
-    class(tree), intent(in) :: this
-    integer(IK)             :: res
-    res = this%dmat%memsize() + node__memsize(this%dmat)
-    if (.not. ALLOCATED(this%breadthes)) return
-    res = res + SUM(breadth__memsize(this%breadthes, this%dmat))
-  end function tree_memsize
-!
   pure elemental function tree_n_depth(this) result(res)
     class(tree), intent(in) :: this
     integer(IK)             :: res
@@ -226,6 +187,15 @@ contains
       res = 0
     end if
   end function tree_n_depth
+!
+  pure function n_nodes(dmat) result(res)
+    type(d_matrix_list), intent(in) :: dmat
+    integer(IK)                     :: i, res
+    res = 0
+    do i = 1, d%l
+      res = res + d%m(i)%g
+    end do
+  end function n_nodes
 !
   pure elemental function tree_n_breadth(this) result(res)
     class(tree), intent(in) :: this
@@ -303,11 +273,33 @@ contains
 !
   end subroutine tree_setup
 !
+  pure subroutine tree_proceed(this, W)
+    class(tree), intent(inout) :: this
+    real(RK), intent(inout)    :: W(*)
+!
+  contains
+!
+    pure subroutine eval(dmat, iscope, is_terminal, child, perms, symms, W)
+      integer(IK), intent(in)         :: iscope
+      logical, intent(in)             :: is_terminal
+      type(d_matrix_list), intent(in) :: node
+      type(node_), intent(in)         :: node
+      type(breadth_), intent(in)      :: child
+      integer(IK), intent(inout)      :: perms(*), symms(*)
+      real(RK), intent(inout)         :: W(*)
+!
+      call breadth__eval(this%breadthes(this%iscope), this%dmat, this%perms, &
+     &                   W(node%h), W(node%c), W, is_terminal)
+!
+    end subroutine eval
+!
+  end subroutine tree_proceed
+!
   pure elemental subroutine tree_destroy(this)
     type(tree), intent(inout) :: this
     call this%dmat%clear()
     if (ALLOCATED(this%breadthes)) deallocate (this%breadthes)
-    if (ALLOCATED(this%perms)) deallocate (this%perms)
+    if (ALLOCATED(this%nodes)) deallocate (this%nodes)
     if (ALLOCATED(this%rots)) deallocate (this%rots)
   end subroutine tree_destroy
 !
