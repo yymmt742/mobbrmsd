@@ -70,27 +70,38 @@ contains
     integer, parameter       :: g = 5
     integer, parameter       :: mnl = (3 * m + 6) * n
     integer, parameter       :: swp(m, s - 1) = RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m, s - 1])
+    integer                  :: perm(3 * g - 6)
     type(mol_block_list)     :: blk
     type(mol_block)          :: b(l)
     type(molecular_rotation) :: rot(l)
     type(d_matrix_list)      :: a
     real(RK)                 :: X(d, mnl), Y(d, mnl)
     real(RK), allocatable    :: w(:)
-    integer                  :: i
+    real(RK)                 :: C(d * d), R(d * d), H, LT, LF, LB
+    integer                  :: i, j, k
 !
     do concurrent(i=1:l)
       rot(i) = molecular_rotation(swp(:, :i - 1))
     end do
 !
-    do i=1, l
+    do i = 1, l
       b(i) = mol_block(0, rot(i)%n_sym() + 1, m + i, n, f, g - i)
     end do
+!
+    k = 0
+    do j = 1, l
+      do i = 1, b(j)%g
+        k = k + 1
+        perm(k) = i
+      end do
+    end do
+    print*,perm
 !
     blk = mol_block_list(d, l, b)
     a = d_matrix_list(blk, 1)
 !
     X = sample(d, mnl)
-    Y = 0.9D0 * MATMUL(SO3(), X) + 0.1D0 * sample(d, mnl)
+    Y = 0.99D0 * MATMUL(SO3(), X) + 0.01D0 * sample(d, mnl)
     print *, a%memsize()
     print *, d_matrix_memsize(a%m)
 !
@@ -100,6 +111,56 @@ contains
     print *, W(1)
     print'(3f9.3)', W(2:10)
     print'(*(f9.3))', W(a%o:a%o+l-1)
+    print*
+!
+    H = W(a%h)
+    C = W(a%c:a%c + a%dd - 1)
+    call a%partial_eval(1, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    print'(3f9.3)',H, LT
+    call a%partial_eval(2, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    print'(3f9.3)',H, LT
+    call a%partial_eval(3, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    print'(3f9.3)',H, LT
+    call a%partial_eval(4, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    print'(3f9.3)',H, LT
+    call a%partial_eval(5, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    print'(3f9.3)',H, LT
+    call a%partial_eval(6, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    print'(3f9.3)',H, LT
+    call a%partial_eval(7, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    print'(3f9.3)',H, LT
+    call a%partial_eval(8, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    print'(3f9.3)',H, LT
+    call a%partial_eval(9, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    print'(3f9.3)',H, LT
+    print*
+!
+    H = W(a%h)
+    C = W(a%c:a%c + a%dd - 1)
+    call a%partial_eval(1, perm, 4, 1, W, LT, H, C, LF, LB, R)
+    perm(:4) = [4,1,2,3]
+    print'(3f9.3)',H, LT
+    call a%partial_eval(2, perm, 3, 1, W, LT, H, C, LF, LB, R)
+    perm(:4) = [4,3,1,2]
+    print'(3f9.3)',H, LT
+    call a%partial_eval(3, perm, 2, 1, W, LT, H, C, LF, LB, R)
+    perm(:4) = [4,3,2,1]
+    print'(3f9.3)',H, LT
+    call a%partial_eval(4, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    print'(3f9.3)',H, LT
+    call a%partial_eval(5, perm, 3, 1, W, LT, H, C, LF, LB, R)
+    perm(5:7) = [3,1,2]
+    print'(3f9.3)',H, LT
+    call a%partial_eval(6, perm, 2, 1, W, LT, H, C, LF, LB, R)
+    perm(5:7) = [3,2,1]
+    print'(3f9.3)',H, LT
+    call a%partial_eval(7, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    print'(3f9.3)',H, LT
+    call a%partial_eval(8, perm, 2, 1, W, LT, H, C, LF, LB, R)
+    perm(8:9) = [2,1]
+    print'(3f9.3)',H, LT
+    call a%partial_eval(9, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    print'(3f9.3)',H, LT
 !
   end subroutine test2
 !

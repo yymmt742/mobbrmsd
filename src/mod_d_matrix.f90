@@ -34,10 +34,11 @@ module mod_d_matrix
     integer(IK)                           :: dd = 0
     type(d_matrix), allocatable           :: m(:)
   contains
-    procedure :: n_depth => d_matrix_list_n_depth
-    procedure :: eval    => d_matrix_list_eval
-    procedure :: memsize => d_matrix_list_memsize
-    procedure :: clear   => d_matrix_list_clear
+    procedure :: n_depth      => d_matrix_list_n_depth
+    procedure :: eval         => d_matrix_list_eval
+    procedure :: partial_eval => d_matrix_list_partial_eval
+    procedure :: memsize      => d_matrix_list_memsize
+    procedure :: clear        => d_matrix_list_clear
     final     :: d_matrix_list_destroy
   end type d_matrix_list
 !
@@ -354,85 +355,138 @@ contains
 !
     do concurrent(i=this%l - 1:1:-1)
       W(this%o + i - 1) = W(this%o + i - 1) + W(this%o + i)
-    enddo
+    end do
 !
     W(this%o + this%l) = ZERO
 !
+  contains
+!
+    pure subroutine fixpoints_eval(d, l, m, X, Y, H, V, C)
+      integer(IK), intent(in)    :: d, l
+      type(d_matrix), intent(in) :: m(l)
+      real(RK), intent(in)       :: X(*), Y(*)
+      real(RK), intent(inout)    :: H, V, C(*)
+      integer(IK)                :: t(l), p(l), q(l)
+      integer(IK), parameter     :: ih = 1
+      integer(IK), parameter     :: iv = 2
+      integer(IK), parameter     :: ic = 3
+      integer(IK)                :: i, dd, nk, ir, iw, ix, iy, mn, dmn, nw
+!
+      do concurrent(i=1:l)
+        t(i) = m(i)%m * (m(i)%n - m(i)%g)
+      end do
+!
+      nk = Kabsch_worksize(d)
+      dd = d * d
+      mn = SUM(t)
+      dmn = d * mn
+!
+      ir = ic + dd
+      iw = ir + dd
+      ix = ic + dd
+      iy = ix + dmn
+      nw = 2 + dd + MAX(dmn + dmn, dd + nk)
+!
+      do concurrent(i=1:l)
+        t(i) = t(i) * d
+      end do
+      p(1) = 0
+      do i = 2, l
+        p(i) = p(i - 1) + t(i - 1)
+      end do
+      do concurrent(i=1:l)
+        q(i) = m(i)%x + m(i)%dm * m(i)%g
+      end do
+!
+      block
+        real(RK) :: W(nw)
+!
+        do concurrent(i=1:l)
+          block
+            integer(IK) :: px
+            px = p(i) + ix
+            call copy(t(i), X(q(i)), W(px))
+          end block
+        end do
+        do concurrent(i=1:l)
+          block
+            integer(IK) :: py
+            py = p(i) + iy
+            call copy(t(i), Y(q(i)), W(py))
+          end block
+        end do
+!
+        call ddot(dmn + dmn, W(ix), W(ix), W(ih))
+!
+        if (mn > 0) then
+          call DGEMM('N', 'T', d, d, mn, ONE, W(iy), d, W(ix), d, ZERO, W(ic), d)
+          call Kabsch(d, w(ic), w(ir), W(iw))
+          call ddot(dd, w(ic), w(ir), w(iv))
+        else
+          call zfill(dd, W(ic))
+          w(iv) = ZERO
+        end if
+!
+        H = W(ih)
+        V = W(ih) - W(iv) - W(iv)
+        call copy(dd, W(ic), C)
+!
+      end block
+!
+    end subroutine fixpoints_eval
+!
   end subroutine d_matrix_list_eval
 !
-  pure subroutine fixpoints_eval(d, l, m, X, Y, H, V, C)
-    integer(IK), intent(in)    :: d, l
-    type(d_matrix), intent(in) :: m(l)
-    real(RK), intent(in)       :: X(*), Y(*)
-    real(RK), intent(inout)    :: H, V, C(*)
-    integer(IK)                :: t(l), p(l), q(l)
-    integer(IK), parameter     :: ih = 1
-    integer(IK), parameter     :: iv = 2
-    integer(IK), parameter     :: ic = 3
-    integer(IK)                :: i, dd, nk, ir, iw, ix, iy, mn, dmn, nw
+  pure subroutine d_matrix_list_partial_eval(this, p, perm, iprm, isym, W, LT, H, C, LF, LB, R)
+    class(d_matrix_list), intent(in)  :: this
+    integer(IK), intent(in)           :: p, perm(*), iprm, isym
+    real(RK), intent(in)              :: W(*)
+    real(RK), intent(inout)           :: LT, H, C(*)
+    real(RK), intent(inout), optional :: LF, LB, R(*)
+    integer(IK)                       :: ispc, iofs, nres
 !
-    do concurrent(i=1:l)
-      t(i) = m(i)%m * (m(i)%n - m(i)%g)
-    end do
+    call p_index(this, p, ispc, iofs)
+    if (ispc < 1) return
 !
-    nk = Kabsch_worksize(d)
-    dd = d * d
-    mn = SUM(t)
-    dmn = d * mn
-!
-    ir = ic + dd
-    iw = ir + dd
-    ix = ic + dd
-    iy = ix + dmn
-    nw = 2 + dd + MAX(dmn + dmn, dd + nk)
-!
-    do concurrent(i=1:l)
-      t(i) = t(i) * d
-    end do
-    p(1) = 0
-    do i = 2, l
-      p(i) = p(i - 1) + t(i - 1)
-    end do
-    do concurrent(i=1:l)
-      q(i) = m(i)%x + m(i)%dm * m(i)%g
-    end do
-!
+    nres = this%m(ispc)%g - iofs
     block
-      real(RK) :: W(nw)
-!
-      do concurrent(i=1:l)
-        block
-          integer(IK) :: px
-          px = p(i) + ix
-          call copy(t(i), X(q(i)), W(px))
-        end block
+      integer(IK) :: i, jper, ires(nres)
+      jper = perm(p + iprm - 1)
+      do concurrent(i=1:iprm - 1)
+        ires(i) = perm(p + i - 1)
       end do
-      do concurrent(i=1:l)
-        block
-          integer(IK) :: py
-          py = p(i) + iy
-          call copy(t(i), Y(q(i)), W(py))
-        end block
+      do concurrent(i=iprm:nres)
+        ires(i) = perm(p + i)
       end do
-!
-      call ddot(dmn + dmn, W(ix), W(ix), W(ih))
-!
-      if (mn > 0) then
-        call DGEMM('N', 'T', d, d, mn, ONE, W(iy), d, W(ix), d, ZERO, W(ic), d)
-        call Kabsch(d, w(ic), w(ir), W(iw))
-        call ddot(dd, w(ic), w(ir), w(iv))
-      else
-        call zfill(dd, W(ic))
-        w(iv) = ZERO
-      endif
-!
-      H = W(ih)
-      V = W(ih) - W(iv) - W(iv)
-      call copy(dd, W(ic), C)
-!
+      call d_matrix_partial_eval(this%m(ispc), iofs, jper, isym, ires, W, LT, H, C, LF, LB, R)
     end block
 !
-  end subroutine fixpoints_eval
+  contains
+!
+    pure elemental subroutine p_index(this, p, ispc, iofs)
+      type(d_matrix_list), intent(in) :: this
+      integer(IK), intent(in)         :: p
+      integer(IK), intent(inout)      :: ispc, iofs
+      integer(IK)                     :: i, q, r
+!
+      ispc = 0
+      iofs = 0
+      r = p
+      q = 1
+!
+      do i = 1, this%l
+        if (q > p) return
+        ispc = i
+        iofs = r
+        r = r - this%m(i)%g
+        q = q + this%m(i)%g
+      end do
+!
+      if (q <= p) ispc = 0
+!
+    end subroutine p_index
+!
+  end subroutine d_matrix_list_partial_eval
 !
   pure elemental subroutine d_matrix_list_clear(this)
     class(d_matrix_list), intent(inout) :: this

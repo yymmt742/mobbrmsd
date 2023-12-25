@@ -75,6 +75,10 @@ contains
     class(tree), intent(in) :: this
     integer(IK)             :: res
     res = 0
+    if (ALLOCATED(this%breadthes)) then
+      if (this%iscope < 1) return
+      res = this%breadthes(this%iscope)%uppd - this%breadthes(this%iscope)%lowd
+    end if
   end function tree_n_breadth
 !
   pure subroutine tree_prune(this, W)
