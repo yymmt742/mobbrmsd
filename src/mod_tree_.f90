@@ -18,16 +18,22 @@ module mod_tree
   end type breadth
 !
   type tree
+    private
     integer(IK)                :: iscope = 0
-    integer(IK)                :: memsize = 0
-    integer(IK)                :: upperbound = 0
+    integer(IK), public        :: memsize = 0
+    integer(IK), public        :: upperbound = 0
     type(node), allocatable    :: nodes(:)
     type(breadth), allocatable :: breadthes(:)
   contains
     procedure         :: n_depth          => tree_n_depth
     procedure         :: n_breadth        => tree_n_breadth
+    procedure         :: set_parent_node  => tree_set_parent_node
     procedure         :: prune            => tree_prune
-!   procedure         :: lowerbounds      => tree_lowerbounds
+    procedure         :: nodes_pointer    => tree_nodes_pointer
+    procedure         :: parent_pointer   => tree_parent_pointer
+    procedure         :: open_node        => tree_open_node
+    procedure         :: close_node       => tree_close_node
+    procedure         :: unfinished       => tree_unfinished
     final             :: tree_destroy
   end type tree
 !
@@ -71,6 +77,27 @@ contains
     end if
   end function tree_n_depth
 !
+  pure elemental function tree_nodes_pointer(this) result(res)
+    class(tree), intent(in) :: this
+    integer(IK)             :: res
+    res = 0
+    if (ALLOCATED(this%breadthes)) then
+      if (this%iscope < 1) return
+      res = this%nodes(this%breadthes(this%iscope)%lowd + 1)%p
+    end if
+  end function tree_nodes_pointer
+!
+  pure elemental function tree_parent_pointer(this) result(res)
+    class(tree), intent(in) :: this
+    integer(IK)             :: res
+    res = 0
+    if (ALLOCATED(this%breadthes)) then
+      if (this%iscope < 1) return
+      if (this%breadthes(this%iscope)%inod < 1) return
+      res = this%nodes(this%breadthes(this%iscope)%inod)%p
+    end if
+  end function tree_parent_pointer
+!
   pure elemental function tree_n_breadth(this) result(res)
     class(tree), intent(in) :: this
     integer(IK)             :: res
@@ -81,16 +108,79 @@ contains
     end if
   end function tree_n_breadth
 !
+  pure subroutine tree_set_parent_node(this, W)
+    class(tree), intent(inout) :: this
+    real(RK), intent(in)       :: W(*)
+    real(RK)                   :: lv
+    integer(IK)                :: i, l, u
+!
+    if (this%iscope < 1 .or. this%n_depth() < this%iscope) return
+    l = this%breadthes(this%iscope)%lowd + 1
+    u = this%breadthes(this%iscope)%uppd
+!
+    this%breadthes(this%iscope)%inod = l
+!
+    lv = RHUGE
+    do i = l, u
+      if (this%nodes(i)%alive .and. W(this%nodes(i)%p) < lv) then
+        this%breadthes(this%iscope)%inod = i
+        lv = W(this%nodes(i)%p)
+      end if
+    end do
+!
+  end subroutine tree_set_parent_node
+!
+  pure elemental subroutine tree_open_node(this)
+    class(tree), intent(inout) :: this
+    integer(IK)                :: i, l, u
+!
+    if (this%iscope < 0 .or. this%n_depth() <= this%iscope) return
+    this%iscope = this%iscope + 1
+    l = this%breadthes(this%iscope)%lowd + 1
+    u = this%breadthes(this%iscope)%uppd
+!
+    do concurrent(i=l:u)
+      this%nodes(i)%alive = .true.
+    end do
+!
+  end subroutine tree_open_node
+!
+  pure elemental subroutine tree_close_node(this)
+    class(tree), intent(inout) :: this
+    integer(IK)                :: p
+!
+    if (this%iscope <= 1 .or. this%n_depth() < this%iscope) return
+    this%iscope = this%iscope - 1
+    p = this%breadthes(this%iscope)%inod
+    this%nodes(p)%alive = .false.
+!
+  end subroutine tree_close_node
+!
+  pure elemental function tree_unfinished(this) result(res)
+    class(tree), intent(in) :: this
+    logical                 :: res
+    integer(IK)             :: i, l, u
+!
+    res = .true.
+    if (this%iscope < 1 .or. this%n_depth() < this%iscope) return
+    l = this%breadthes(this%iscope)%lowd + 1
+    u = this%breadthes(this%iscope)%uppd
+    res = ANY([(this%nodes(i)%alive, i=l, u)])
+!
+  end function tree_unfinished
+!
   pure subroutine tree_prune(this, W)
     class(tree), intent(inout) :: this
     real(RK), intent(in)       :: W(*)
     integer(IK)                :: i, l, u
+!
     if (this%iscope < 1 .or. this%n_depth() < this%iscope) return
     l = this%breadthes(this%iscope)%lowd + 1
     u = this%breadthes(this%iscope)%uppd
     do concurrent(i=l:u)
       this%nodes(i)%alive = this%nodes(i)%alive .and. (W(this%nodes(i)%p) < W(this%upperbound))
     end do
+!
   end subroutine tree_prune
 !
   pure elemental subroutine tree_destroy(this)
