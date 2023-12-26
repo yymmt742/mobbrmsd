@@ -66,7 +66,7 @@ contains
     if (n < 2) return
     if (n == 2) then
       if(prm(1)==2)then
-        p = RESHAPE([1, 1, 2], [3, 1])
+        p = RESHAPE([1, 2, 1], [3, 1])
         q = [2, 1]
       endif
       return
