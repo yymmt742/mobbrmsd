@@ -34,6 +34,8 @@ module mod_tree
     procedure         :: nodes_pointer    => tree_nodes_pointer
     procedure         :: parent_pointer   => tree_parent_pointer
     procedure         :: parent_index     => tree_parent_index
+    procedure         :: current_pointer  => tree_current_pointer
+    procedure         :: current_index    => tree_current_index
     procedure         :: open_node        => tree_open_node
     procedure         :: close_node       => tree_close_node
     procedure         :: finished         => tree_finished
@@ -109,24 +111,53 @@ contains
 !
   pure elemental function tree_parent_pointer(this) result(res)
     class(tree), intent(in) :: this
-    integer(IK)             :: res
+    integer(IK)             :: ip, res
     res = 0
     if (ALLOCATED(this%breadthes)) then
-      if (this%iscope < 1) return
-      if (this%breadthes(this%iscope)%inod < 1) return
-      res = this%nodes(this%breadthes(this%iscope)%inod)%p
+      if (this%iscope < 2) return
+      ip = this%iscope - 1
+      ip = this%breadthes(ip)%inod
+      if (ip < 1) return
+      res = this%nodes(ip)%p
     end if
   end function tree_parent_pointer
 !
-  pure elemental function tree_parent_index(this) result(res)
+  pure elemental function tree_current_pointer(this) result(res)
     class(tree), intent(in) :: this
-    integer(IK)             :: res
+    integer(IK)             :: ip, res
     res = 0
     if (ALLOCATED(this%breadthes)) then
       if (this%iscope < 1) return
-      if (this%breadthes(this%iscope)%inod < 1) return
-      res = this%breadthes(this%iscope)%inod - &
-     &      this%breadthes(this%iscope)%lowd
+      ip = this%iscope
+      ip = this%breadthes(ip)%inod
+      if (ip < 1) return
+      res = this%nodes(ip)%p
+    end if
+  end function tree_current_pointer
+!
+  pure elemental function tree_current_index(this) result(res)
+    class(tree), intent(in) :: this
+    integer(IK)             :: ip, res
+    res = 0
+    if (ALLOCATED(this%breadthes)) then
+      if (this%iscope < 1) return
+      ip = this%iscope
+      ip = this%breadthes(ip)%inod - &
+     &     this%breadthes(ip)%lowd
+      if (ip > 0) res = ip
+    end if
+  end function tree_current_index
+!
+  pure elemental function tree_parent_index(this) result(res)
+    class(tree), intent(in) :: this
+    integer(IK)             :: ip, res
+    res = 0
+    if (ALLOCATED(this%breadthes)) then
+      if (this%iscope < 2) return
+      ip = this%iscope - 1
+      ip = this%breadthes(ip)%inod - &
+     &     this%breadthes(ip)%lowd
+      if (ip > 0) res = ip
     end if
   end function tree_parent_index
 !

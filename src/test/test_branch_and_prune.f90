@@ -1,6 +1,7 @@
 program main
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
+  use mod_Kabsch
   use mod_molecular_rotation
   use mod_branch_and_prune
   use mod_unittest
@@ -27,7 +28,8 @@ contains
     type(branch_and_prune)      :: bra
     type(mol_block_list)        :: blk
     type(molecular_rotation)    :: rot(s)
-    real(RK)                    :: X(d, mn), Y(d, mn)
+    real(RK)                    :: X(d, mn), Y(d, mn), Z(d, mn)
+    real(RK)                    :: C(d, d), R(d, d)
     real(RK), allocatable       :: W(:)
     integer                     :: i
 !
@@ -37,13 +39,29 @@ contains
     blk = mol_block_list(d, s, b)
 !
     X = sample(d,mn)
-    !Y = 0.9D0 * X + 0.1D0 * sample(d, mn)
-    Y = sample(d, mn)
+    Y = 0.3D0 * X + 0.7D0 * sample(d, mn)
+    !Y = sample(d, mn)
 !
     bra = branch_and_prune(blk, 1, rot)
     allocate (W(bra%memsize()))
     call bra%setup(X, Y, W)
     call bra%run(W)
+!
+    Z=Y
+    call bra%swap(Z)
+print'(3f9.3)', Z(:,:15)-Y(:,:15)
+print*
+print'(3f9.3)', Z(:,16:27)-Y(:,16:27)
+print*
+print'(3f9.3)', Z(:,28:62)-Y(:,28:62)
+print*
+!
+    print'(F9.3)', bra%upperbound(W)
+!
+    C = MATMUL(Z, TRANSPOSE(X))
+    call Kabsch(d, C, R, W)
+    print'(3f9.3)', R
+    print'(F9.3)', SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
 !
   end subroutine test1
 !
