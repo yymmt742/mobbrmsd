@@ -14,6 +14,7 @@ module mod_group_permutation
     integer(IK), allocatable :: p(:, :)
     integer(IK), allocatable :: q(:)
   contains
+    procedure          :: init         => group_permutation_init
     procedure          :: nfree        => group_permutation_nfree
     procedure          :: free_indices => group_permutation_free_indices
     procedure          :: swap         => group_permutation_swap_real
@@ -63,9 +64,16 @@ contains
     integer(IK)                             :: i, j, k, l
 !
     if (n < 2) return
+    if (n == 2) then
+      if(prm(1)==2)then
+        p = RESHAPE([1, 1, 2], [3, 1])
+        q = [2, 1]
+      endif
+      return
+    endif
 !
     w(1) = -1
-    w(:3*n) = -1
+    w(:3 * n) = -1
     do k = 1, n
       if (prm(k) < 1 .or. n < prm(k)) return
       w(k) = prm(k)
@@ -283,7 +291,8 @@ contains
 !
   pure elemental subroutine group_permutation_destroy(this)
     type(group_permutation), intent(inout) :: this
-    call this%clear()
+    if (ALLOCATED(this%p)) deallocate (this%p)
+    if (ALLOCATED(this%q)) deallocate (this%q)
   end subroutine group_permutation_destroy
 !
 !!!
