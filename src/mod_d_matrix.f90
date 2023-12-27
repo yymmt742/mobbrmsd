@@ -182,18 +182,18 @@ contains
 !
     if (p == 0) return
     if (iprm < 1 .or. a%g < iprm) return
-    if (isym < 1 .or. a%s < isym) return
+    if (isym < 0 .or. a%s <= isym) return
 !
     block
       integer(IK) :: ih, ic, nw
       ih = a%c + (iprm - 1) * a%cb + (p - 1) * a%cb * a%g
-      ic = ih + 1 + a%dd * (isym - 1)
+      ic = ih + 1 + a%dd * isym
       nw = 1 + a%dd * 2 + a%nk
       if (PRESENT(LF)) then
-        call partial_eval(a%d, a%s, a%g, a%dd, nw, p, iprm, isym, W(ih), W(ic), LF, H, C, R)
+        call partial_eval(a%d, a%s, a%g, a%dd, nw, p, W(ih), W(ic), LF, H, C, R)
         LT = LT + LF
       else
-        call partial_eval(a%d, a%s, a%g, a%dd, nw, p, iprm, isym, W(ih), W(ic), LT, H, C, R)
+        call partial_eval(a%d, a%s, a%g, a%dd, nw, p, W(ih), W(ic), LT, H, C, R)
       end if
     end block
 !
@@ -232,9 +232,9 @@ contains
 !
     end subroutine setminus_eval
 !
-    pure subroutine partial_eval(d, s, n, dd, nw, p, iprm, isym, H, C, LF, HP, CP, R)
+    pure subroutine partial_eval(d, s, n, dd, nw, p, H, C, LF, HP, CP, R)
       integer(IK), intent(in) :: d, s, n, dd, nw
-      integer(IK), intent(in) :: p, iprm, isym
+      integer(IK), intent(in) :: p
       real(RK), intent(in)    :: H, C(*)
       real(RK), intent(inout) :: LF, HP, CP(*)
       real(RK), intent(inout), optional :: R(*)

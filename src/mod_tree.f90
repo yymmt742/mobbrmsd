@@ -36,6 +36,7 @@ module mod_tree
     procedure         :: parent_index     => tree_parent_index
     procedure         :: current_pointer  => tree_current_pointer
     procedure         :: current_index    => tree_current_index
+    procedure         :: alive_nodes      => tree_alive_nodes
     procedure         :: open_node        => tree_open_node
     procedure         :: close_node       => tree_close_node
     procedure         :: finished         => tree_finished
@@ -147,6 +148,17 @@ contains
       if (ip > 0) res = ip
     end if
   end function tree_current_index
+!
+  pure function tree_alive_nodes(this) result(res)
+    class(tree), intent(in) :: this
+    logical, allocatable    :: res(:)
+    integer(IK)             :: l, u
+    allocate(res(0))
+    if (this%iscope < 1 .or. this%n_depth() < this%iscope) return
+    l = this%breadthes(this%iscope)%lowd + 1
+    u = this%breadthes(this%iscope)%uppd
+    res = this%nodes(l:u)%alive
+  end function tree_alive_nodes
 !
   pure elemental function tree_parent_index(this) result(res)
     class(tree), intent(in) :: this
