@@ -41,6 +41,7 @@ module mod_tree
     procedure         :: close_node       => tree_close_node
     procedure         :: finished         => tree_finished
     procedure         :: unfinished       => tree_unfinished
+    procedure         :: clear            => tree_clear
     final             :: tree_destroy
   end type tree
 !
@@ -266,10 +267,15 @@ contains
 !
   end subroutine tree_prune
 !
-  pure elemental subroutine tree_destroy(this)
-    type(tree), intent(inout) :: this
+  pure elemental subroutine tree_clear(this)
+    class(tree), intent(inout) :: this
     if (ALLOCATED(this%nodes)) deallocate (this%nodes)
     if (ALLOCATED(this%breadthes)) deallocate (this%breadthes)
+  end subroutine tree_clear
+!
+  pure elemental subroutine tree_destroy(this)
+    type(tree), intent(inout) :: this
+    call tree_clear(this)
   end subroutine tree_destroy
 !
 end module mod_tree
