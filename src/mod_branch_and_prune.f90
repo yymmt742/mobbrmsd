@@ -79,15 +79,15 @@ contains
 !
     allocate (res%p(res%dm%l))
     res%p(1) = 1
-    do i=2,res%dm%l
+    do i = 2, res%dm%l
       res%p(i) = res%p(i - 1) + res%dm%m(i - 1)%g
-    enddo
+    end do
 !
     allocate (res%q(res%dm%l))
     res%q(1) = 1
-    do i=2,res%dm%l
+    do i = 2, res%dm%l
       res%q(i) = res%q(i - 1) + res%dm%d * res%dm%m(i - 1)%m * res%dm%m(i - 1)%n
-    enddo
+    end do
 !
     allocate (res%gp(res%dm%l))
     allocate (res%mr(res%dm%l))
@@ -114,16 +114,15 @@ contains
 !
     call this%dm%eval(this%mr, X, Y, W)
     call this%tr%reset()
-    call this%tr%open_node()
-!
     W(this%tr%upperbound) = RHUGE
 !
-    p = this%tr%parent_pointer()
+    p = this%tr%nodes_pointer()
     W(p) = W(this%dm%o)
     p = p + 1
     W(p) = W(this%dm%h)
     p = p + 1
     call copy(this%dm%dd, W(this%dm%c), W(p))
+!
     call this%tr%set_parent_node(W)
 !
     k = 0
@@ -132,60 +131,72 @@ contains
         k = k + 1
         this%bi(k)%iper = i
         this%bi(k)%jper = i
-        this%bi(k)%isym = 1
-        this%bi(k)%jsym = 1
+        this%bi(k)%isym = 0
+        this%bi(k)%jsym = 0
       end do
     end do
 !
   end subroutine branch_and_prune_setup
 !
-  pure subroutine branch_and_prune_run(this, W)
+  subroutine branch_and_prune_run(this, W)
     class(branch_and_prune), intent(inout) :: this
     real(RK), intent(inout)                :: W(*)
     integer(IK)                            :: cur
 !
-    cur = this%tr%current_depth() - 1
+    print*, this%tr%nodes_pointer()
 !
     do
-!
       do
+        call this%tr%open_node()
         cur = this%tr%current_depth() - 1
-        call set_hc(this%dm, this%tr, this%bi, cur, this%bs, W)
+        call set_hc(this%dm, this%tr, this%bi, cur, this%nd, this%bs, W)
+        !call this%tr%prune(W)
+!print'(11f9.3)',W(195:337)
+        if (this%tr%finished()) exit
         call this%tr%set_parent_node(W)
         block
           integer(IK) :: cix
           cix = this%tr%current_index()
           this%bi(cur)%isym = (cix - 1) / this%bi(cur)%nper
           call swap_iper(this%nd, cur, cix, this%bi)
+!print '(A,6i4,2f9.3)', ' cisn', this%bi%iper, this%bi%isym
         end block
-        if(cur==this%nd) exit
-        call this%tr%open_node()
-        call this%tr%prune(W)
-      end do
+        if (cur == this%nd) then
+          block
+            integer(IK) :: i, pp
+            pp = this%tr%current_pointer()
+print '(A,6i4,2f9.3)', ' open', this%bi%iper, this%bi%isym, W(this%tr%upperbound), W(pp)
 !
-      block
-        integer(IK) :: i, pp
-        pp = this%tr%current_pointer()
-!
-        if (W(this%tr%upperbound) > W(pp)) then
-          W(this%tr%upperbound) = W(pp)
-          do concurrent(i=1:this%nd)
-            this%bi(i)%jper = this%bi(i)%iper
-            this%bi(i)%jsym = this%bi(i)%isym
-          end do
+            if (W(this%tr%upperbound) > W(pp)) then
+              W(this%tr%upperbound) = W(pp)
+              do concurrent(i=1:this%nd)
+                this%bi(i)%jper = this%bi(i)%iper
+                this%bi(i)%jsym = this%bi(i)%isym
+              end do
+              print *, 'save', W(this%tr%upperbound)
+            end if
+          end block
+          exit
         end if
-!
-      end block
-!
-      do while (this%tr%finished())
-        call this%tr%close_node()
-        cur = this%tr%current_depth() - 1
-        if (cur == 0) exit
-        call paws_iper(this%nd, cur, this%bi)
       end do
+!
+      do while (this%tr%finished() .and. cur > 0)
+        call this%tr%close_node()
+        call paws_iper(this%nd, cur, this%bi)
+        !call this%tr%prune(W)
+        cur = cur - 1
+      end do
+!
       if (cur == 0) exit
 !
       call this%tr%set_parent_node(W)
+      block
+        integer(IK) :: cix
+        cix = this%tr%current_index()
+        this%bi(cur)%isym = (cix - 1) / this%bi(cur)%nper
+        call swap_iper(this%nd, cur, cix, this%bi)
+!print '(A,6i4,2f9.3)', ' cisn', this%bi%iper, this%bi%isym
+      end block
 !
     end do
 !
@@ -223,45 +234,45 @@ contains
 !
     end subroutine swap_iper
 !
-    pure subroutine paws_iper(nd, cur, b)
+    pure subroutine paws_iper(nd, cur, bi)
       integer(IK), intent(in)                :: nd, cur
-      type(breadth_indicator), intent(inout) :: b(nd)
+      type(breadth_indicator), intent(inout) :: bi(nd)
       integer(IK)                            :: sw, i
 !
-      sw = b(cur)%iper
-      do i = cur + 1, nd
-        if (i == nd .or. b(i)%ispc /= b(cur)%ispc .or. sw < b(i)%iper) then
-          b(i - 1)%iper = sw
-          exit
-        end if
-        b(i - 1)%iper = b(i)%iper
+      if (cur < 2) return
+      do i = cur, nd - 1
+        if (bi(i - 1)%ispc /= bi(i)%ispc .or. bi(i - 1)%iper < bi(i)%iper) return
+        sw = bi(i - 1)%iper
+        bi(i - 1)%iper = bi(i)%iper
+        bi(i)%iper = sw
       end do
 !
     end subroutine paws_iper
 !
-    pure subroutine set_hc(dm, tr, b, cur, bs, W)
+    pure subroutine set_hc(dm, tr, bi, cur, nd, bs, W)
+      integer(IK), intent(in)             :: cur, nd, bs
       type(d_matrix_list), intent(in)     :: dm
       type(tree), intent(in)              :: tr
-      type(breadth_indicator), intent(in) :: b(:)
-      integer(IK), intent(in)             :: cur, bs
+      type(breadth_indicator), intent(in) :: bi(nd)
       real(RK), intent(inout)             :: W(*)
-      integer(IK)                         :: i, j, p, q, ph, pc
+      integer(IK)                         :: iper(nd)
+      integer(IK)                         :: i, j, p, q, ph, nx
 !
       p = tr%parent_pointer()
       ph = p + 1
-      pc = p + 2
-      q = tr%nodes_pointer()
+      q = tr%nodes_pointer() - bs
+      iper = bi%iper
+      nx = dm%dd + 1
 !
-      do concurrent(i=1:b(cur)%nper, j=0:b(cur)%nsym - 1)
+      do concurrent(i=1:bi(cur)%nper, j=0:bi(cur)%nsym - 1)
         block
-          integer(IK) :: k, t, h, c
-          k = i + b(cur)%nper * j
-          t = q + bs * (k - 1)
+          integer(IK) :: t, h, c
+          t = q + bs * (i + bi(cur)%nper * j)
           h = t + 1
           c = t + 2
-          w(h) = W(ph)
-          call copy(dm%dd, W(pc), W(c))
-          call dm%partial_eval(cur, b%iper, i, j, W, W(t), W(h), W(c))
+          W(t) = ZERO
+          call copy(nx, W(ph), W(h))
+          call dm%partial_eval(cur, iper, i, j, W, W(t), W(h), W(c))
         end block
       end do
 !
@@ -295,10 +306,10 @@ contains
       type(group_permutation), intent(in)  :: gp
       real(RK), intent(inout)              :: X(d, m, g)
       integer(IK)                          :: i
+      call gp%swap(d * m, X)
       do concurrent(i=1:g)
         call mr%swap(d, X(1, 1, i), bi(i)%jsym)
       end do
-      call gp%swap(d * m, X)
     end subroutine swap
 !
   end subroutine branch_and_prune_swap
