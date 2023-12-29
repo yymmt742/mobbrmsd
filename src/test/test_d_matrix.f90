@@ -2,6 +2,7 @@ program main
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_molecular_rotation
+  use mod_Kabsch
   use mod_d_matrix
   use mod_unittest
   implicit none
@@ -10,6 +11,7 @@ program main
   call u%init('test d_matrix')
   call test1()
   call test2()
+  call test3()
 !
   call u%finish_and_terminate()
 !
@@ -17,13 +19,13 @@ contains
 !
   subroutine test1()
     integer, parameter         :: d = 3
-    integer, parameter         :: s = 3
+    integer, parameter         :: s = 2
     integer, parameter         :: m = 5
     integer, parameter         :: n = 7
     integer, parameter         :: f = 3
     integer, parameter         :: g = 5
     integer, parameter         :: mn = m * n
-    integer, parameter         :: swp(m, s - 1) = RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m, s - 1])
+    integer, parameter         :: swp(m, s - 1) = RESHAPE([1, 2, 3, 4, 5], [m, s - 1])
     type(mol_block), parameter :: b = mol_block(1, s, m, n, f, g)
     type(molecular_rotation)   :: rot
     type(d_matrix)             :: a
@@ -164,6 +166,68 @@ contains
 !
   end subroutine test2
 !
+  subroutine test3()
+    integer, parameter       :: d = 3
+    integer, parameter       :: s = 1
+    integer, parameter       :: m = 5, n = 5, f = 3, g = 3
+    integer, parameter       :: mn = m * n
+    type(mol_block)          :: b = mol_block(0, 2, m, n, f, g)
+    type(d_matrix_list)      :: dm
+    type(mol_block_list)     :: blk
+    type(molecular_rotation) :: rot(s)
+    real(RK)                 :: X(d, mn), Y(d, mn)
+    real(RK)                 :: R1(6, 2, 2, 2), R2(6, 2, 2, 2)
+    real(RK), allocatable    :: W(:)
+    integer                  :: i, j, k
+!
+    rot(1) = molecular_rotation(RESHAPE([2, 1, 3, 4, 5], [m, 1]))
+    blk = mol_block_list(d, s, [b])
+    dm = d_matrix_list(blk, 1)
+    allocate (w(dm%memsize()))
+    W(:)=999
+!
+    X = sample(d, mn)
+    Y = sample(d, mn)
+!
+    call dm%eval(rot, X, Y, W)
+!
+    do k = 1, 2
+    do j = 1, 2
+    do i = 1, 2
+      R1(1, i, j, k) = sd(d, X, swp(d, m, n, [1, 2, 3], [i, j, k] - 1, rot(1), Y))
+      R1(2, i, j, k) = sd(d, X, swp(d, m, n, [1, 3, 2], [i, j, k] - 1, rot(1), Y))
+      R1(3, i, j, k) = sd(d, X, swp(d, m, n, [2, 1, 3], [i, j, k] - 1, rot(1), Y))
+      R1(4, i, j, k) = sd(d, X, swp(d, m, n, [2, 3, 1], [i, j, k] - 1, rot(1), Y))
+      R1(5, i, j, k) = sd(d, X, swp(d, m, n, [3, 1, 2], [i, j, k] - 1, rot(1), Y))
+      R1(6, i, j, k) = sd(d, X, swp(d, m, n, [3, 2, 1], [i, j, k] - 1, rot(1), Y))
+      R2(1, i, j, k) = pe(dm, d, 3, [1, 2, 3, 1, 2, 3, 1, 2, 3], [1, 1, 1], [i, j, k] - 1, W)
+      R2(2, i, j, k) = pe(dm, d, 3, [1, 2, 3, 1, 2, 3, 1, 3, 2], [1, 2, 1], [i, j, k] - 1, W)
+      R2(3, i, j, k) = pe(dm, d, 3, [1, 2, 3, 2, 1, 3, 2, 1, 3], [2, 1, 1], [i, j, k] - 1, W)
+      R2(4, i, j, k) = pe(dm, d, 3, [1, 2, 3, 2, 1, 3, 2, 3, 1], [2, 2, 1], [i, j, k] - 1, W)
+      R2(5, i, j, k) = pe(dm, d, 3, [1, 2, 3, 3, 1, 2, 3, 1, 2], [3, 1, 1], [i, j, k] - 1, W)
+      R2(6, i, j, k) = pe(dm, d, 3, [1, 2, 3, 3, 1, 2, 3, 2, 1], [3, 2, 1], [i, j, k] - 1, W)
+    end do
+    end do
+    end do
+    call u%assert_almost_equal([R1 - R2], ZERO, 'det_sign d=100')
+!
+  end subroutine test3
+!
+  function pe(dm, d, l, iper, jper, isym, W) result(res)
+    type(d_matrix_list), intent(in) :: dm
+    integer, intent(in)             :: d, l, iper(l, l), jper(l), isym(l)
+    real(RK), intent(in)            :: W(*)
+    real(RK)                        :: C(d,d), H, T, LF, LB, res
+    integer                         :: i
+    H = W(dm%h)
+    call copy(d * d, W(dm%c), C)
+    do i = 1, l
+      call dm%partial_eval(i, iper(1, i), jper(i), isym(i), W, T, H, C, LF=LF, LB=LB)
+    end do
+    res = LF
+    !res = T
+  end function pe
+!
   function sample(d, n) result(res)
     integer, intent(in)  :: d, n
     real(RK)             :: cnt(d)
@@ -184,5 +248,38 @@ contains
     res(:, 2) = [a(1) * a(2) + a(3), a(2) * a(2), a(2) * a(3) - a(1)]
     res(:, 3) = [a(1) * a(3) - a(2), a(2) * a(3) + a(1), a(3) * a(3)]
   end function SO3
+!
+  pure function swp(d, m, n, per, sym, rot, X) result(res)
+    integer(IK), intent(in) :: d, m, n, per(:), sym(:)
+    type(molecular_rotation), intent(in) :: rot
+    real(RK), intent(in)    :: X(d, m, n)
+    real(RK)                :: tmp(d, m, n), res(d, m * n)
+    integer(IK)             :: i
+    tmp = X
+    do i = 1, SIZE(per)
+      tmp(:, :, per(i)) = X(:, :, i)
+      call rot%swap(d, tmp(:, :, per(i)), sym(i))
+    end do
+    res = RESHAPE(tmp, [d, m * n])
+  end function swp
+!
+  pure function sd(d, X, Y) result(res)
+    integer(IK), intent(in) :: d
+    real(RK), intent(in)    :: X(:, :), Y(:, :)
+    real(RK)                :: C(d, d), R(d, d), W(100), res
+    C = MATMUL(Y, TRANSPOSE(X))
+    call Kabsch(d, C, R, W)
+    res = SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
+  end function sd
+!
+  pure subroutine copy(d, source, dest)
+    integer(IK), intent(in) :: d
+    real(RK), intent(in)    :: source(*)
+    real(RK), intent(inout) :: dest(*)
+    integer(IK)             :: i
+    do concurrent(i=1:d)
+      dest(i) = source(i)
+    end do
+  end subroutine copy
 !
 end program main

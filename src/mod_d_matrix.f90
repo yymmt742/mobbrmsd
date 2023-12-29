@@ -16,7 +16,7 @@ module mod_d_matrix
     private
     sequence
     integer(IK), public :: s, m, n, g
-    integer(IK)         :: d, dd, gg, dm, cb
+    integer(IK)         :: d, dd, gg, dm, cb, cl, nw
     integer(IK)         :: x, z, c, nk
   end type d_matrix
 !
@@ -70,10 +70,14 @@ contains
     res%gg = res%g * res%g
     res%dm = res%d * res%m
     res%cb = res%dd * res%s + 1
+    res%cl = res%cb * res%g
+!
     res%x  = b%p
     res%z  = p
     res%c  = res%z + res%gg
     res%nk = Kabsch_worksize(d)
+    res%nw = 1 + res%dd * 2 + res%nk
+!
   end function d_matrix_new
 !
   pure elemental function d_matrix_memsize(a) result(res)
@@ -91,63 +95,63 @@ contains
 !
     call eval(a%d, a%s, a%m, a%g, a%dd, a%dm, a%cb, a%nk, rot, X(a%x), Y(a%x), W(a%z), W(a%c))
 !
-  end subroutine d_matrix_eval
+  contains
 !
-  pure subroutine eval(d, s, m, g, dd, dm, cb, nk, r, X, Y, Z, C)
-    integer(IK), intent(in)              :: d, s, m, g
-    integer(IK), intent(in)              :: dd, dm, cb, nk
-    type(molecular_rotation), intent(in) :: r
-    real(RK), intent(in)                 :: X(d, m, g)
-    real(RK), intent(in)                 :: Y(d, m, g)
-    real(RK), intent(inout)              :: Z(g, g)
-    real(RK), intent(inout)              :: C(cb, g, g)
-    integer(IK), parameter               :: ib = 1
-    integer(IK), parameter               :: it = 2
-    integer(IK), parameter               :: ih = 3
-    integer(IK), parameter               :: ix = 4
-    integer(IK)                          :: iy, ic, ir, iw
-    integer(IK)                          :: j, k, nw
+    pure subroutine eval(d, s, m, g, dd, dm, cb, nk, r, X, Y, Z, C)
+      integer(IK), intent(in)              :: d, s, m, g
+      integer(IK), intent(in)              :: dd, dm, cb, nk
+      type(molecular_rotation), intent(in) :: r
+      real(RK), intent(in)                 :: X(d, m, g)
+      real(RK), intent(in)                 :: Y(d, m, g)
+      real(RK), intent(inout)              :: Z(g, g)
+      real(RK), intent(inout)              :: C(cb, g, g)
+      integer(IK), parameter               :: ib = 1
+      integer(IK), parameter               :: it = 2
+      integer(IK), parameter               :: ih = 3
+      integer(IK), parameter               :: ix = 4
+      integer(IK)                          :: iy, ic, ir, iw
+      integer(IK)                          :: j, k, nw
 !
-    if (g < 1) return
+      if (g < 1) return
 !
-    nw = 3 + 2 * d * d + dm + dm + nk
-    iy = ix + dm
-    ic = iy + dm
-    ir = ic + dd
-    iw = ir + dd
+      nw = 3 + 2 * d * d + dm + dm + nk
+      iy = ix + dm
+      ic = iy + dm
+      ir = ic + dd
+      iw = ir + dd
 !
-    do concurrent(j=1:g, k=1:g)
-      block
-        integer(IK) :: i, ip
-        real(RK)    :: W(nw)
+      do concurrent(j=1:g, k=1:g)
+        block
+          integer(IK) :: i, ip
+          real(RK)    :: W(nw)
 !
-        call copy(dm, X(1, 1, j), W(ix))
-        call copy(dm, Y(1, 1, k), W(iy))
+          call copy(dm, X(1, 1, j), W(ix))
+          call copy(dm, Y(1, 1, k), W(iy))
 !
 !!!     trace of self correlation matrix
-        call ddot(dm + dm, W(ix), W(ix), w(ih)) ! tr[X, X^t] + tr[Y, Y^t]
-        C(1, j, k) = w(ih)
+          call ddot(dm + dm, W(ix), W(ix), w(ih)) ! tr[X, X^t] + tr[Y, Y^t]
+          C(1, j, k) = w(ih)
 !
-        ip = 2
-        call calc_lb(d, m, dd, dm, w(ih), w(ix), W(it), W(ic), W(ir), W(iw))
-        call copy(dd, W(ic), C(ip, j, k))
-        w(ib) = w(it)
-!
-        do i = 1, s - 1
-          call r%swap(d, W(iy), i)
-          ip = ip + dd
-          call calc_lb(d, m, dd, dm, W(ih), W(ix), W(it), W(ic), W(ir), W(iw))
+          ip = 2
+          call calc_lb(d, m, dd, dm, w(ih), w(ix), W(it), W(ic), W(ir), W(iw))
           call copy(dd, W(ic), C(ip, j, k))
-          w(ib) = MIN(w(ib), w(it))
-          call r%reverse(d, W(iy), i)
-        end do
+          w(ib) = w(it)
 !
-        Z(j, k) = w(ib)
+          do i = 1, s - 1
+            call r%swap(d, W(iy), i)
+            ip = ip + dd
+            call calc_lb(d, m, dd, dm, W(ih), W(ix), W(it), W(ic), W(ir), W(iw))
+            call copy(dd, W(ic), C(ip, j, k))
+            w(ib) = MIN(w(ib), w(it))
+            call r%reverse(d, W(iy), i)
+          end do
 !
-      end block
-    enddo
+          Z(j, k) = w(ib)
 !
-  contains
+        end block
+      end do
+!
+    end subroutine eval
 !
     pure subroutine calc_lb(d, m, dd, dm, H, XY, T, C, R, W)
       integer(IK), intent(in) :: d, m, dd, dm
@@ -162,7 +166,7 @@ contains
       T = H - T
     end subroutine calc_lb
 !
-  end subroutine eval
+  end subroutine d_matrix_eval
 !
   pure subroutine d_matrix_partial_eval(a, p, iprm, isym, ires, W, LT, H, C, LF, LB, R)
     type(d_matrix), intent(in)        :: a
@@ -185,15 +189,14 @@ contains
     if (isym < 0 .or. a%s <= isym) return
 !
     block
-      integer(IK) :: ih, ic, nw
-      ih = a%c + (iprm - 1) * a%cb + (p - 1) * a%cb * a%g
+      integer(IK) :: ih, ic
+      ih = a%c + (iprm - 1) * a%cb + (p - 1) * a%cl
       ic = ih + 1 + a%dd * isym
-      nw = 1 + a%dd * 2 + a%nk
       if (PRESENT(LF)) then
-        call partial_eval(a%d, a%s, a%g, a%dd, nw, p, W(ih), W(ic), LF, H, C, R)
+        call partial_eval(a%d, a%s, a%g, a%dd, a%nw, p, W(ih), W(ic), LF, H, C, R)
         LT = LT + LF
       else
-        call partial_eval(a%d, a%s, a%g, a%dd, nw, p, W(ih), W(ic), LT, H, C, R)
+        call partial_eval(a%d, a%s, a%g, a%dd, a%nw, p, W(ih), W(ic), LT, H, C, R)
       end if
     end block
 !
@@ -451,7 +454,7 @@ contains
     nres = this%m(ispc)%g - iofs
     block
       integer(IK) :: i, jper, ires(nres)
-      jper = perm(p + iprm - 1)
+      jper = perm(p - 1 + iprm)
       do concurrent(i=1:iprm - 1)
         ires(i) = perm(p + i - 1)
       end do
