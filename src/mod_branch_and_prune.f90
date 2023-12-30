@@ -143,15 +143,12 @@ contains
     real(RK), intent(inout)                :: W(*)
     integer(IK)                            :: cur
 !
-    print*, this%tr%nodes_pointer()
-!
     do
       do
         call this%tr%open_node()
         cur = this%tr%current_depth() - 1
         call set_hc(this%dm, this%tr, this%bi, cur, this%nd, this%bs, W)
         !call this%tr%prune(W)
-!print'(11f9.3)',W(195:337)
         if (this%tr%finished()) exit
         call this%tr%set_parent_node(W)
         block
@@ -195,7 +192,6 @@ print '(A,6i4,2f9.3)', ' open', this%bi%iper, this%bi%isym, W(this%tr%upperbound
         cix = this%tr%current_index()
         this%bi(cur)%isym = (cix - 1) / this%bi(cur)%nper
         call swap_iper(this%nd, cur, cix, this%bi)
-!print '(A,6i4,2f9.3)', ' cisn', this%bi%iper, this%bi%isym
       end block
 !
     end do
@@ -249,12 +245,13 @@ print '(A,6i4,2f9.3)', ' open', this%bi%iper, this%bi%isym, W(this%tr%upperbound
 !
     end subroutine paws_iper
 !
-    pure subroutine set_hc(dm, tr, bi, cur, nd, bs, W)
+    subroutine set_hc(dm, tr, bi, cur, nd, bs, W)
       integer(IK), intent(in)             :: cur, nd, bs
       type(d_matrix_list), intent(in)     :: dm
       type(tree), intent(in)              :: tr
       type(breadth_indicator), intent(in) :: bi(nd)
       real(RK), intent(inout)             :: W(*)
+      real(RK)                            :: lb, lf
       integer(IK)                         :: iper(nd)
       integer(IK)                         :: i, j, p, q, ph, nx
 !
@@ -270,11 +267,12 @@ print '(A,6i4,2f9.3)', ' open', this%bi%iper, this%bi%isym, W(this%tr%upperbound
           t = q + bs * (i + bi(cur)%nper * j)
           h = t + 1
           c = t + 2
-          W(t) = ZERO
           call copy(nx, W(ph), W(h))
-          call dm%partial_eval(cur, iper, i, j, W, W(t), W(h), W(c))
+          call dm%partial_eval(cur, iper, i, j, W, W(t), W(h), W(c), LB=LB, LF=LF)
+          w(t) = LF
         end block
       end do
+!print'(4x,*(f7.3))',W(q+bs:q+bs+10)
 !
     end subroutine set_hc
 !

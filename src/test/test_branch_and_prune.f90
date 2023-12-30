@@ -30,7 +30,7 @@ contains
     integer                     :: i, j, k
 !
 !   rot(1) = molecular_rotation(RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m, 0]))
-    rot(1) = molecular_rotation(RESHAPE([2, 1, 3, 4, 5], [m, 1]))
+    rot(1) = molecular_rotation(RESHAPE([1, 2, 3, 4, 5], [m, 1]))
 !   rot(1) = molecular_rotation(RESHAPE([(i, i=1, 0)], [m, 0]))
     blk = mol_block_list(d, s, [b])
 !
@@ -131,7 +131,7 @@ print*
     tmp = X
     do i = 1, SIZE(per)
       tmp(:, :, per(i)) = X(:, :, i)
-      call rot%swap(d, tmp(:, :, i), sym(i))
+      call rot%swap(d, tmp(:, :, per(i)), sym(i))
     end do
     res = RESHAPE(tmp, [d, m * n])
   end function swp
