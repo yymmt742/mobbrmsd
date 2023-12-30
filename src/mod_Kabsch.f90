@@ -8,10 +8,10 @@ module mod_Kabsch
   private
   public :: Kabsch_worksize, Kabsch
 !
-  real(RK), parameter :: DEF_threshold = 1.0E-8_RK
-!
   interface
+    include 'dcopy.h'
     include 'dgemm.h'
+    include 'dgesvd.h'
   end interface
 !
 contains
@@ -20,12 +20,14 @@ contains
   pure elemental function Kabsch_worksize(d) result(res)
     integer(IK), intent(in)           :: d
     !! matrix collumn dimension.
-    integer(IK)                       :: res
+    real(RK)                          :: dum(1)
+    integer(IK)                       :: res, info
 !
     if (d < 1) then
       res = 0
     else
-      res = svd_worksize(d) + d * d * 3 + d
+      call DGESVD('A', 'A', d, d, dum, d, dum, dum, d, dum, d, dum, -1, info)
+      res =  NINT(dum(1)) + d * d * 3 + d
     end if
 !
   end function Kabsch_worksize
@@ -42,7 +44,7 @@ contains
     !! work array, must be larger than Kabsch_worksize(d)
     !! if row_major, must be larger than Kabsch_worksize(n)
     integer(IK), intent(in), optional :: ldcov
-    integer(IK)                   :: dd, m, s, u, vt, iw
+    integer(IK)                   :: dd, m, s, u, vt, iw, lw, info
 !
     if (d < 1) RETURN
     if (d == 1)then
@@ -57,8 +59,11 @@ contains
     s = vt + dd
     iw = s + d
 !
-    call copy(dd, cov, w(m))
-    call svd(d, w(m), w(s), w(u), w(vt), w(iw), ldx=ldcov)
+    call dgesvd('A', 'A', d, d, w(m), d, w(s), w(u), d, w(vt), d, w(iw), -1, info)
+    lw = NINT(w(iw))
+!
+    call dcopy(dd, cov, 1, w(m), 1)
+    call dgesvd('A', 'A', d, d, w(m), d, w(s), w(u), d, w(vt), d, w(iw), lw, info)
 !
     call DGEMM('N', 'N', d, d, d, ONE, w(u), d, w(vt), d, ZERO, w(s), d)
     call det_sign(d, w(s:s + dd - 1))
@@ -68,15 +73,5 @@ contains
     rot(:dd) = w(s:s+dd-1)
 !
   end subroutine Kabsch
-!
-  pure subroutine copy(d, src, dst)
-    integer(IK), intent(in) :: d
-    real(RK), intent(in)    :: src(d)
-    real(RK), intent(inout) :: dst(d)
-    integer(IK)             :: i
-    do concurrent(i=1:d)
-      dst(i) = src(i)
-    end do
-  end subroutine copy
 !
 end module mod_Kabsch

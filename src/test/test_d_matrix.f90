@@ -209,7 +209,7 @@ contains
     end do
     end do
     end do
-    call u%assert_almost_equal([R1 - R2], ZERO, 'det_sign d=100')
+    call u%assert_almost_equal([R1 - R2], ZERO, 'R1 - R2')
 !
   end subroutine test3
 !

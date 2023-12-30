@@ -48,6 +48,8 @@ module mod_d_matrix
 !
   interface
     include 'dgemm.h'
+    include 'ddot.h'
+    include 'dcopy.h'
   end interface
 !
 contains
@@ -110,7 +112,7 @@ contains
       integer(IK), parameter               :: ih = 3
       integer(IK), parameter               :: ix = 4
       integer(IK)                          :: iy, ic, ir, iw
-      integer(IK)                          :: j, k, nw
+      integer(IK)                          :: j, k, nw, dm2
 !
       if (g < 1) return
 !
@@ -119,29 +121,30 @@ contains
       ic = iy + dm
       ir = ic + dd
       iw = ir + dd
+      dm2 = dm + dm
 !
       do concurrent(j=1:g, k=1:g)
         block
           integer(IK) :: i, ip
           real(RK)    :: W(nw)
 !
-          call copy(dm, X(1, 1, j), W(ix))
-          call copy(dm, Y(1, 1, k), W(iy))
+          call dcopy(dm, X(1, 1, j), 1, W(ix), 1)
+          call dcopy(dm, Y(1, 1, k), 1, W(iy), 1)
 !
 !!!     trace of self correlation matrix
-          call ddot(dm + dm, W(ix), W(ix), w(ih)) ! tr[X, X^t] + tr[Y, Y^t]
+          w(ih) = ddot(dm2, W(ix), 1, W(ix), 1)
           C(1, j, k) = w(ih)
 !
           ip = 2
           call calc_lb(d, m, dd, dm, w(ih), w(ix), W(it), W(ic), W(ir), W(iw))
-          call copy(dd, W(ic), C(ip, j, k))
+          call dcopy(dd, W(ic), 1, C(ip, j, k), 1)
           w(ib) = w(it)
 !
           do i = 1, s - 1
             call r%swap(d, W(iy), i)
             ip = ip + dd
             call calc_lb(d, m, dd, dm, W(ih), W(ix), W(it), W(ic), W(ir), W(iw))
-            call copy(dd, W(ic), C(ip, j, k))
+            call dcopy(dd, W(ic), 1, C(ip, j, k), 1)
             w(ib) = MIN(w(ib), w(it))
             call r%reverse(d, W(iy), i)
           end do
@@ -161,7 +164,7 @@ contains
       call DGEMM('N', 'T', d, d, m, ONE, XY(1, 2), d, XY(1, 1), d, ZERO, C, d)
       call Kabsch(d, C, R, W)
 !!!   get squared displacement
-      call ddot(dd, C, R, T) ! tr[C, R^t]
+      T = ddot(dd, C, 1, R, 1)
       T = T + T
       T = H - T
     end subroutine calc_lb
@@ -253,17 +256,17 @@ contains
       w(it) = HP + H
       HP = w(it)
       call add(dd, CP, C, W(ic))
-      call copy(dd, w(ic), CP)
+      call dcopy(dd, W(ic), 1, CP, 1)
 !
 !!! get correlation matrix C = Y^t@X and optimal rotation R^t
       call Kabsch(d, w(ic), w(ir), W(iw))
 !!! get squared displacement
-      call ddot(dd, W(ic), W(ir), W(it)) ! tr[C, R^t]
+      W(it) = ddot(dd, W(ic), 1, W(ir), 1)
       W(it) = W(it) + W(it)
       LF = LF + HP - w(it)
 !
 !!! summarize to memory
-      if (PRESENT(R)) call copy(dd, w(ir), R)
+      if (PRESENT(R)) call dcopy(dd, W(ir), 1, R, 1)
 !
     end subroutine partial_eval
 !
@@ -373,7 +376,7 @@ contains
       integer(IK), parameter     :: ih = 1
       integer(IK), parameter     :: iv = 2
       integer(IK), parameter     :: ic = 3
-      integer(IK)                :: i, dd, nk, ir, iw, ix, iy, mn, dmn, nw
+      integer(IK)                :: i, dd, nk, ir, iw, ix, iy, mn, dmn, dmn2, nw
 !
       do concurrent(i=1:l)
         t(i) = m(i)%m * (m(i)%n - m(i)%g)
@@ -383,6 +386,7 @@ contains
       dd = d * d
       mn = SUM(t)
       dmn = d * mn
+      dmn2 = dmn + dmn
 !
       ir = ic + dd
       iw = ir + dd
@@ -408,23 +412,23 @@ contains
           block
             integer(IK) :: px
             px = p(i) + ix
-            call copy(t(i), X(q(i)), W(px))
+            call dcopy(t(i), X(q(i)), 1, W(px), 1)
           end block
         end do
         do concurrent(i=1:l)
           block
             integer(IK) :: py
             py = p(i) + iy
-            call copy(t(i), Y(q(i)), W(py))
+            call dcopy(t(i), Y(q(i)), 1, W(py), 1)
           end block
         end do
 !
-        call ddot(dmn + dmn, W(ix), W(ix), W(ih))
+        W(ih) = ddot(dmn2, W(ix), 1, W(ix), 1)
 !
         if (mn > 0) then
           call DGEMM('N', 'T', d, d, mn, ONE, W(iy), d, W(ix), d, ZERO, W(ic), d)
           call Kabsch(d, w(ic), w(ir), W(iw))
-          call ddot(dd, w(ic), w(ir), w(iv))
+          w(iv) = ddot(dd, w(ic), 1, w(ir), 1)
         else
           call zfill(dd, W(ic))
           w(iv) = ZERO
@@ -432,7 +436,7 @@ contains
 !
         H = W(ih)
         V = W(ih) - W(iv) - W(iv)
-        call copy(dd, W(ic), C)
+        call dcopy(dd, W(ic), 1, C, 1)
 !
       end block
 !
@@ -504,40 +508,6 @@ contains
   end subroutine d_matrix_list_destroy
 !
 !!! util
-!
-  pure subroutine ddot(d, X, Y, res)
-    integer(IK), intent(in) :: d
-    real(RK), intent(in)    :: X(*), Y(*)
-    real(RK), intent(inout) :: res
-    if(d==1)then
-      res = X(1) * Y(1)
-    elseif(d==4)then
-      res = X(1) * Y(1) + X(2) * Y(2) + &
-        &   X(3) * Y(3) + X(4) * Y(4)
-    elseif(d==9)then
-      res = X(1) * Y(1) + X(2) * Y(2) + X(3) * Y(3) +&
-        &   X(4) * Y(4) + X(5) * Y(5) + X(6) * Y(6) +&
-        &   X(7) * Y(7) + X(8) * Y(8) + X(9) * Y(9)
-    else
-      block
-        integer(IK) :: i
-        res = ZERO
-        do i = 1, d
-          res = res + X(i) * Y(i)
-        end do
-      end block
-    endif
-  end subroutine ddot
-!
-  pure subroutine copy(d, source, dest)
-    integer(IK), intent(in) :: d
-    real(RK), intent(in)    :: source(*)
-    real(RK), intent(inout) :: dest(*)
-    integer(IK)             :: i
-    do concurrent(i=1:d)
-      dest(i) = source(i)
-    end do
-  end subroutine copy
 !
   pure subroutine add(d, A, B, C)
     integer(IK), intent(in) :: d
