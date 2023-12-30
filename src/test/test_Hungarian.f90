@@ -5,7 +5,7 @@ program main
   implicit none
   type(unittest) :: z
 !
-  call z%init('test pca d=3')
+  call z%init('test Hungarian')
   call test1()
   call test2()
 !
