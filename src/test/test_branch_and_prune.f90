@@ -18,54 +18,46 @@ contains
 !
   subroutine test1()
     integer, parameter          :: d = 3
-    integer, parameter          :: s = 1
+    integer, parameter          :: l = 1
+    integer, parameter          :: s = 2
     integer, parameter          :: m = 5, n = 3, f = 5, g = 3
     integer, parameter          :: mn = m * n
-    type(mol_block)             :: b = mol_block(0, 2, m, n, f, g)
+    type(mol_block)             :: b = mol_block(0, s, m, n, f, g)
     type(branch_and_prune)      :: bra
     type(mol_block_list)        :: blk
-    type(molecular_rotation)    :: rot(s)
+    type(molecular_rotation)    :: rot(l)
     real(RK)                    :: X(d, mn), Y(d, mn), Z(d, mn), isd, msd
     real(RK), allocatable       :: W(:)
     integer                     :: i, j, k
 !
-!   rot(1) = molecular_rotation(RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m, 0]))
-    rot(1) = molecular_rotation(RESHAPE([1, 2, 3, 4, 5], [m, 1]))
-!   rot(1) = molecular_rotation(RESHAPE([(i, i=1, 0)], [m, 0]))
-    blk = mol_block_list(d, s, [b])
+    rot(1) = molecular_rotation(RESHAPE([2, 3, 1, 4, 5], [m, 1]))
+    blk = mol_block_list(d, l, [b])
 !
-    X = sample(d,mn)
-    !Y = 0.0D0 * X + 1.0D0 * sample(d, mn)
+    X = sample(d, mn)
     Y = sample(d, mn)
 !
     bra = branch_and_prune(blk, 1, rot)
     allocate (W(bra%memsize()))
-    W(:)=999
     call bra%setup(X, Y, W)
     call bra%run(W)
 !
     msd = 999D0
-    do k=0,1
-    do j=0,1
-    do i=0,1
+    do k=0,s-1
+    do j=0,s-1
+    do i=0,s-1
       isd = sd(d, X, swp(d, m, n, [1, 2, 3], [i, j, k], rot(1), Y)) ; msd = MIN(msd, isd)
-      print'(6I4, f9.3)', 1, 2, 3, i, j, k, isd
       isd = sd(d, X, swp(d, m, n, [1, 3, 2], [i, j, k], rot(1), Y)) ; msd = MIN(msd, isd)
-      print'(6I4, f9.3)', 1, 3, 2, i, j, k, isd
       isd = sd(d, X, swp(d, m, n, [2, 1, 3], [i, j, k], rot(1), Y)) ; msd = MIN(msd, isd)
-      print'(6I4, f9.3)', 2, 1, 3, i, j, k, isd
       isd = sd(d, X, swp(d, m, n, [2, 3, 1], [i, j, k], rot(1), Y)) ; msd = MIN(msd, isd)
-      print'(6I4, f9.3)', 2, 3, 1, i, j, k, isd
       isd = sd(d, X, swp(d, m, n, [3, 1, 2], [i, j, k], rot(1), Y)) ; msd = MIN(msd, isd)
-      print'(6I4, f9.3)', 3, 1, 2, i, j, k, isd
       isd = sd(d, X, swp(d, m, n, [3, 2, 1], [i, j, k], rot(1), Y)) ; msd = MIN(msd, isd)
-      print'(6I4, f9.3)', 3, 2, 1, i, j, k, isd
     enddo
     enddo
     enddo
 !
-    Z=Y
+    Z = Y
     call bra%swap(Z)
+    print'(3f9.3)', Y-Z
     print'(f9.3)', sd(d, X, Z)
     print'(F9.3)', bra%upperbound(W)
     print'(f9.3)', msd

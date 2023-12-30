@@ -46,6 +46,12 @@ module mod_branch_and_prune
 !
 contains
 !
+  pure elemental subroutine breadth_indicator_save(this)
+    type(breadth_indicator), intent(inout) :: this
+    this%jper = this%iper
+    this%jsym = this%isym
+  end subroutine breadth_indicator_save
+!
 !| generate node instance
   pure function branch_and_prune_new(blk, p, rot) result(res)
     type(mol_block_list), intent(in)     :: blk
@@ -141,38 +147,28 @@ contains
   subroutine branch_and_prune_run(this, W)
     class(branch_and_prune), intent(inout) :: this
     real(RK), intent(inout)                :: W(*)
-    integer(IK)                            :: cur
+    integer(IK)                            :: cur, pp, cix
 !
     do
       do
         call this%tr%open_node()
         cur = this%tr%current_depth() - 1
         call set_hc(this%dm, this%tr, this%bi, cur, this%nd, this%bs, W)
-        !call this%tr%prune(W)
+        call this%tr%prune(W)
         if (this%tr%finished()) exit
         call this%tr%set_parent_node(W)
-        block
-          integer(IK) :: cix
-          cix = this%tr%current_index()
-          this%bi(cur)%isym = (cix - 1) / this%bi(cur)%nper
-          call swap_iper(this%nd, cur, cix, this%bi)
-!print '(A,6i4,2f9.3)', ' cisn', this%bi%iper, this%bi%isym
-        end block
+        cix = this%tr%current_index()
+        this%bi(cur)%isym = (cix - 1) / this%bi(cur)%nper
+        call swap_iper(this%nd, cur, cix, this%bi)
         if (cur == this%nd) then
-          block
-            integer(IK) :: i, pp
-            pp = this%tr%current_pointer()
-print '(A,6i4,2f9.3)', ' open', this%bi%iper, this%bi%isym, W(this%tr%upperbound), W(pp)
+          pp = this%tr%nodes_pointer()
+          print '(A,6i4,3f9.3)', ' open', this%bi%iper, this%bi%isym, W(this%tr%upperbound), W(pp), W(this%bs + pp)
+          pp = this%tr%current_pointer()
 !
-            if (W(this%tr%upperbound) > W(pp)) then
-              W(this%tr%upperbound) = W(pp)
-              do concurrent(i=1:this%nd)
-                this%bi(i)%jper = this%bi(i)%iper
-                this%bi(i)%jsym = this%bi(i)%isym
-              end do
-              print *, 'save', W(this%tr%upperbound)
-            end if
-          end block
+          if (W(this%tr%upperbound) > W(pp)) then
+            W(this%tr%upperbound) = W(pp)
+            call breadth_indicator_save(this%bi)
+          end if
           exit
         end if
       end do
@@ -180,7 +176,7 @@ print '(A,6i4,2f9.3)', ' open', this%bi%iper, this%bi%isym, W(this%tr%upperbound
       do while (this%tr%finished() .and. cur > 0)
         call this%tr%close_node()
         call paws_iper(this%nd, cur, this%bi)
-        !call this%tr%prune(W)
+        call this%tr%prune(W)
         cur = cur - 1
       end do
 !
@@ -200,52 +196,32 @@ print '(A,6i4,2f9.3)', ' open', this%bi%iper, this%bi%isym, W(this%tr%upperbound
 !
   contains
 !
-    pure subroutine set_gp(l, g, p, bi, gp)
-      integer(IK), intent(in)                :: l, g(l), p(l)
-      type(breadth_indicator), intent(in)    :: bi(*)
-      type(group_permutation), intent(inout) :: gp(l)
-      integer(IK)                            :: i
-      do concurrent(i=1:l)
-        block
-          integer(IK) :: iper(g(i))
-          iper = bi(p(i):p(i) + g(i) - 1)%jper
-          gp(i) = group_permutation(iper)
-        end block
-      end do
-    end subroutine set_gp
-!
     pure subroutine swap_iper(nd, cur, inod, b)
       integer(IK), intent(in)                :: nd, cur, inod
       type(breadth_indicator), intent(inout) :: b(nd)
       integer(IK)                            :: ip, sw, i
-!
       ip = MODULO(inod - 1, b(cur)%nper)
-      if (ip < 1) return
-!
       sw = b(cur + ip)%iper
       do i = cur + ip - 1, cur, -1
         b(i + 1)%iper = b(i)%iper
       end do
       b(cur)%iper = sw
-!
     end subroutine swap_iper
 !
     pure subroutine paws_iper(nd, cur, bi)
       integer(IK), intent(in)                :: nd, cur
       type(breadth_indicator), intent(inout) :: bi(nd)
       integer(IK)                            :: sw, i
-!
       if (cur < 2) return
-      do i = cur, nd - 1
+      do i = cur, nd
         if (bi(i - 1)%ispc /= bi(i)%ispc .or. bi(i - 1)%iper < bi(i)%iper) return
         sw = bi(i - 1)%iper
         bi(i - 1)%iper = bi(i)%iper
         bi(i)%iper = sw
       end do
-!
     end subroutine paws_iper
 !
-    subroutine set_hc(dm, tr, bi, cur, nd, bs, W)
+    pure subroutine set_hc(dm, tr, bi, cur, nd, bs, W)
       integer(IK), intent(in)             :: cur, nd, bs
       type(d_matrix_list), intent(in)     :: dm
       type(tree), intent(in)              :: tr
@@ -272,9 +248,22 @@ print '(A,6i4,2f9.3)', ' open', this%bi%iper, this%bi%isym, W(this%tr%upperbound
           w(t) = LF
         end block
       end do
-!print'(4x,*(f7.3))',W(q+bs:q+bs+10)
 !
     end subroutine set_hc
+!
+    pure subroutine set_gp(l, g, p, bi, gp)
+      integer(IK), intent(in)                :: l, g(l), p(l)
+      type(breadth_indicator), intent(in)    :: bi(*)
+      type(group_permutation), intent(inout) :: gp(l)
+      integer(IK)                            :: i
+      do concurrent(i=1:l)
+        block
+          integer(IK) :: iper(g(i))
+          iper = bi(p(i):p(i) + g(i) - 1)%jper
+          gp(i) = group_permutation(iper)
+        end block
+      end do
+    end subroutine set_gp
 !
   end subroutine branch_and_prune_run
 !
@@ -292,7 +281,8 @@ print '(A,6i4,2f9.3)', ' open', this%bi%iper, this%bi%isym, W(this%tr%upperbound
 !
     do i = 1, this%dm%l
       call swap(this%dm%d, this%dm%m(i)%m, this%dm%m(i)%g, &
-     &          this%bi(this%p(i)), this%mr(i), this%gp(i), X(this%q(i)))
+     &          this%bi(this%p(i)), this%mr(i), this%gp(i), &
+     &          X(this%q(i)))
     end do
 !
   contains
