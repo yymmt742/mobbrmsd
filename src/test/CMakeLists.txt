@@ -76,10 +76,12 @@ target_include_directories( test_det PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_det PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                  test_det.f90 )
+target_include_directories( test_det PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_det PRIVATE unittest )
-target_include_directories( test_det PRIVATE ${purelapack_DIR}/mod_files )
-target_include_directories( test_det PRIVATE ${purelapack_DIR}/include )
-target_link_libraries( test_det PRIVATE purelapack )
+#target_include_directories( test_det PRIVATE ${purelapack_DIR}/mod_files )
+#target_include_directories( test_det PRIVATE ${purelapack_DIR}/include )
+#target_link_libraries( test_det PRIVATE purelapack )
+target_link_libraries( test_det PRIVATE blas )
 add_test( NAME test_det COMMAND test_det )
 
 add_executable( test_svd )
@@ -88,10 +90,9 @@ target_sources( test_svd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
                                  test_svd.f90 )
+target_include_directories( test_svd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_svd PRIVATE unittest )
-target_include_directories( test_svd PRIVATE ${purelapack_DIR}/mod_files )
-target_include_directories( test_svd PRIVATE ${purelapack_DIR}/include )
-target_link_libraries( test_svd PRIVATE purelapack )
+target_link_libraries( test_svd PRIVATE blas )
 add_test( NAME test_svd COMMAND test_svd )
 
 add_executable( test_Kabsch )
@@ -102,10 +103,9 @@ target_sources( test_Kabsch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f9
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
                                     test_Kabsch.f90 )
+target_include_directories( test_Kabsch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_Kabsch PRIVATE unittest )
-target_include_directories( test_Kabsch PRIVATE ${purelapack_DIR}/mod_files )
-target_include_directories( test_Kabsch PRIVATE ${purelapack_DIR}/include )
-target_link_libraries( test_Kabsch PRIVATE purelapack )
+target_link_libraries( test_Kabsch PRIVATE blas )
 add_test( NAME test_Kabsch COMMAND test_Kabsch )
 
 add_executable( test_procrustes )
@@ -115,10 +115,9 @@ target_sources( test_procrustes PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_param
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_svd.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_procrustes.f90
                                     test_procrustes.f90 )
+target_include_directories( test_procrustes PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_procrustes PRIVATE unittest )
-target_include_directories( test_procrustes PRIVATE ${purelapack_DIR}/mod_files )
-target_include_directories( test_procrustes PRIVATE ${purelapack_DIR}/include )
-target_link_libraries( test_procrustes PRIVATE purelapack )
+target_link_libraries( test_procrustes PRIVATE blas )
 add_test( NAME test_procrustes COMMAND test_procrustes )
 
 add_executable( test_lower_bound )
@@ -134,10 +133,9 @@ target_sources( test_lower_bound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_para
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_lower_bound.f90
                                       test_lower_bound.f90 )
+target_include_directories( test_lower_bound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_lower_bound PRIVATE unittest )
-target_include_directories( test_lower_bound PRIVATE ${purelapack_DIR}/mod_files )
-target_include_directories( test_lower_bound PRIVATE ${purelapack_DIR}/include )
-target_link_libraries( test_lower_bound PRIVATE purelapack )
+target_link_libraries( test_lower_bound PRIVATE blas )
 add_test( NAME test_lower_bound COMMAND test_lower_bound )
 
 add_executable( test_d_matrix )
@@ -153,10 +151,9 @@ target_sources( test_d_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_d_matrix.f90
                                       test_d_matrix.f90 )
+target_include_directories( test_d_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_d_matrix PRIVATE unittest )
-target_include_directories( test_d_matrix PRIVATE ${purelapack_DIR}/mod_files )
-target_include_directories( test_d_matrix PRIVATE ${purelapack_DIR}/include )
-target_link_libraries( test_d_matrix PRIVATE purelapack )
+target_link_libraries( test_d_matrix PRIVATE blas )
 add_test( NAME test_d_matrix COMMAND test_d_matrix )
 
 add_executable( test_block_lower_bound )
@@ -176,10 +173,9 @@ target_sources( test_block_lower_bound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mo
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_block_lower_bound.f90
                                       test_block_lower_bound.f90 )
+target_include_directories( test_block_lower_bound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_block_lower_bound PRIVATE unittest )
-target_include_directories( test_block_lower_bound PRIVATE ${purelapack_DIR}/mod_files )
-target_include_directories( test_block_lower_bound PRIVATE ${purelapack_DIR}/include )
-target_link_libraries( test_block_lower_bound PRIVATE purelapack )
+target_link_libraries( test_block_lower_bound PRIVATE blas )
 add_test( NAME test_block_lower_bound COMMAND test_block_lower_bound )
 
 add_executable( test_partial_rmsd )
@@ -197,10 +193,9 @@ target_sources( test_partial_rmsd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_par
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_partial_rmsd.f90
                                       test_partial_rmsd.f90 )
+target_include_directories( test_partial_rmsd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_partial_rmsd PRIVATE unittest )
-target_include_directories( test_partial_rmsd PRIVATE ${purelapack_DIR}/mod_files )
-target_include_directories( test_partial_rmsd PRIVATE ${purelapack_DIR}/include )
-target_link_libraries( test_partial_rmsd PRIVATE purelapack )
+target_link_libraries( test_partial_rmsd PRIVATE blas )
 add_test( NAME test_partial_rmsd COMMAND test_partial_rmsd )
 
 add_executable( test_tree )
@@ -229,8 +224,7 @@ target_sources( test_branch_and_prune PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_branch_and_prune.f90
                                   test_branch_and_prune.f90 )
+target_include_directories( test_branch_and_prune PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_branch_and_prune PRIVATE unittest )
-target_include_directories( test_branch_and_prune PRIVATE ${purelapack_DIR}/mod_files )
-target_include_directories( test_branch_and_prune PRIVATE ${purelapack_DIR}/include )
-target_link_libraries( test_branch_and_prune PRIVATE purelapack )
+target_link_libraries( test_branch_and_prune PRIVATE blas )
 add_test( NAME test_branch_and_prune COMMAND test_branch_and_prune )

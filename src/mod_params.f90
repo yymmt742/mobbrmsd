@@ -12,7 +12,7 @@ module mod_params
     &                I8 => INT64
   implicit none
   private
-  public  :: R4, I8, RQ
+  public  :: R4, R8, RQ
   public  :: I1, I2, I4, I8
   public  :: RK, IK, LK
   public  :: STDIN, STDOUT, STDERR

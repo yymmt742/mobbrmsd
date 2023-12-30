@@ -11,7 +11,6 @@ module mod_Kabsch
   real(RK), parameter :: DEF_threshold = 1.0E-8_RK
 !
   interface
-    include 'dsyev.h'
     include 'dgemm.h'
   end interface
 !
