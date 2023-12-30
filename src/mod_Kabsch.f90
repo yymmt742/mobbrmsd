@@ -2,7 +2,6 @@
 !  Here, RR^T=I and det(R)=1 are satisfied.
 module mod_Kabsch
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
-  use mod_svd
   use mod_det
   implicit none
   private
@@ -33,7 +32,7 @@ contains
   end function Kabsch_worksize
 !
 !| Calculate the rotation matrix from covariance matrix.
-  pure subroutine Kabsch(d, cov, rot, w, ldcov)
+  pure subroutine Kabsch(d, cov, rot, w)
     integer(IK), intent(in)       :: d
     !! matrix collumn dimension.
     real(RK), intent(in)          :: cov(*)
@@ -43,7 +42,6 @@ contains
     real(RK), intent(inout)       :: w(*)
     !! work array, must be larger than Kabsch_worksize(d)
     !! if row_major, must be larger than Kabsch_worksize(n)
-    integer(IK), intent(in), optional :: ldcov
     integer(IK)                   :: dd, m, s, u, vt, iw, lw, info
 !
     if (d < 1) RETURN
