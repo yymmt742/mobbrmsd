@@ -144,7 +144,7 @@ contains
 !
   end subroutine branch_and_prune_setup
 !
-  subroutine branch_and_prune_run(this, W)
+  pure subroutine branch_and_prune_run(this, W)
     class(branch_and_prune), intent(inout) :: this
     real(RK), intent(inout)                :: W(*)
     integer(IK)                            :: cur, pp, cix
@@ -162,7 +162,7 @@ contains
         call swap_iper(this%nd, cur, cix, this%bi)
         if (cur == this%nd) then
           pp = this%tr%nodes_pointer()
-          print '(A,6i4,3f9.3)', ' open', this%bi%iper, this%bi%isym, W(this%tr%upperbound), W(pp), W(this%bs + pp)
+          !print '(A,6i4,3f9.3)', ' open', this%bi%iper, this%bi%isym, W(this%tr%upperbound), W(pp), W(this%bs + pp)
           pp = this%tr%current_pointer()
 !
           if (W(this%tr%upperbound) > W(pp)) then
@@ -294,10 +294,10 @@ contains
       type(group_permutation), intent(in)  :: gp
       real(RK), intent(inout)              :: X(d, m, g)
       integer(IK)                          :: i
-      call gp%swap(d * m, X)
       do concurrent(i=1:g)
         call mr%swap(d, X(1, 1, i), bi(i)%jsym)
       end do
+      call gp%reverse(d * m, X)
     end subroutine swap
 !
   end subroutine branch_and_prune_swap

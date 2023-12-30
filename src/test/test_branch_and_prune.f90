@@ -7,12 +7,18 @@ program main
   use mod_unittest
   implicit none
   type(unittest) :: u
+  integer, parameter :: NTEST=25
+  integer            :: itest
 !
-  call u%init('test node')
-  call test1()
-! call test2()
+  call u%init('test branch_and_prune')
+  do itest = 1, NTEST
+    call test1()
+  end do
+  do itest = 1, NTEST
+    call test2()
+  end do
 !
-  call u%finish_and_terminate()
+    call u%finish_and_terminate()
 !
 contains
 !
@@ -20,7 +26,7 @@ contains
     integer, parameter          :: d = 3
     integer, parameter          :: l = 1
     integer, parameter          :: s = 2
-    integer, parameter          :: m = 5, n = 3, f = 5, g = 3
+    integer, parameter          :: m = 5, n = 8, f = 5, g = 3
     integer, parameter          :: mn = m * n
     type(mol_block)             :: b = mol_block(0, s, m, n, f, g)
     type(branch_and_prune)      :: bra
@@ -57,10 +63,8 @@ contains
 !
     Z = Y
     call bra%swap(Z)
-    print'(3f9.3)', Y-Z
-    print'(f9.3)', sd(d, X, Z)
-    print'(F9.3)', bra%upperbound(W)
-    print'(f9.3)', msd
+    call u%assert_almost_equal(msd,         bra%upperbound(W), 'branchcut vs brute')
+    call u%assert_almost_equal(sd(d, X, Z), bra%upperbound(W), 'swap')
 !
   end subroutine test1
 !
@@ -78,7 +82,6 @@ contains
     type(mol_block_list)        :: blk
     type(molecular_rotation)    :: rot(s)
     real(RK)                    :: X(d, mn), Y(d, mn), Z(d, mn)
-    real(RK)                    :: C(d, d), R(d, d)
     real(RK), allocatable       :: W(:)
     integer                     :: i
 !
@@ -87,9 +90,8 @@ contains
     rot(3) = molecular_rotation(RESHAPE([7, 6, 5, 4, 3, 2, 1], [m3, 1]))
     blk = mol_block_list(d, s, b)
 !
-    X = sample(d,mn)
-    Y = 0.3D0 * X + 0.7D0 * sample(d, mn)
-    !Y = sample(d, mn)
+    X = sample(d, mn)
+    Y = sample(d, mn)
 !
     bra = branch_and_prune(blk, 1, rot)
     allocate (W(bra%memsize()))
@@ -98,19 +100,7 @@ contains
 !
     Z=Y
     call bra%swap(Z)
-print'(3f9.3)', Z(:,:15)-Y(:,:15)
-print*
-print'(3f9.3)', Z(:,16:27)-Y(:,16:27)
-print*
-print'(3f9.3)', Z(:,28:62)-Y(:,28:62)
-print*
-!
-    print'(F9.3)', bra%upperbound(W)
-!
-    C = MATMUL(Z, TRANSPOSE(X))
-    call Kabsch(d, C, R, W)
-    print'(3f9.3)', R
-    print'(F9.3)', SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
+    call u%assert_almost_equal(sd(d, X, Z), bra%upperbound(W), 'multiple swap')
 !
   end subroutine test2
 !
