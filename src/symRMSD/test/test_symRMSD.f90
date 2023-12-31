@@ -41,7 +41,7 @@ contains
     sr = symRMSD(inp, 1)
     call sr%run(1, .true., X, Y, res)
 !
-    print'(3f9.3)', x - y
+!   print'(3f9.3)', x - y
     print *, SQRT(res / (m * n)), sr%lowerbound(), sr%upperbound()
 !
   end subroutine test1
