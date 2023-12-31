@@ -44,6 +44,10 @@ module mod_branch_and_prune
     module procedure branch_and_prune_new
   end interface branch_and_prune
 !
+  interface
+    include 'dcopy.h'
+  end interface
+!
 contains
 !
   pure elemental subroutine breadth_indicator_save(this)
@@ -127,7 +131,7 @@ contains
     p = p + 1
     W(p) = W(this%dm%h)
     p = p + 1
-    call copy(this%dm%dd, W(this%dm%c), W(p))
+    call dcopy(this%dm%dd, W(this%dm%c), 1, W(p), 1)
 !
     call this%tr%set_parent_node(W)
 !
@@ -243,7 +247,7 @@ contains
           t = q + bs * (i + bi(cur)%nper * j)
           h = t + 1
           c = t + 2
-          call copy(nx, W(ph), W(h))
+          call dcopy(nx, W(ph), 1, W(h), 1)
           call dm%partial_eval(cur, iper, i, j, W, W(t), W(h), W(c), LB=LB, LF=LF)
           w(t) = LF
         end block
@@ -301,16 +305,6 @@ contains
     end subroutine swap
 !
   end subroutine branch_and_prune_swap
-!
-  pure subroutine copy(d, source, dest)
-    integer(IK), intent(in) :: d
-    real(RK), intent(in)    :: source(*)
-    real(RK), intent(inout) :: dest(*)
-    integer(IK)             :: i
-    do concurrent(i=1:d)
-      dest(i) = source(i)
-    end do
-  end subroutine copy
 !
   pure elemental subroutine branch_and_prune_clear(this)
     class(branch_and_prune), intent(inout) :: this
