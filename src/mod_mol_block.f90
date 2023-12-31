@@ -48,6 +48,7 @@ module mod_mol_block
     procedure         :: n_res       => mol_block_list_n_res
     procedure         :: res_pointer => mol_block_list_res_pointer
     procedure         :: has_child   => mol_block_list_has_child
+    procedure         :: clear       => mol_block_list_clear
     final             :: mol_block_list_destroy
   end type mol_block_list
 !
@@ -204,6 +205,11 @@ contains
     logical                     :: res
     res = (b%m < 1) .or. (b%n < 1) .or. (b%m < b%f) .or. (b%n < b%g)
   end function mol_block_invalid
+!
+  pure elemental subroutine mol_block_list_clear(this)
+    class(mol_block_list), intent(inout) :: this
+    if (ALLOCATED(this%b)) deallocate (this%b)
+  end subroutine mol_block_list_clear
 !
   pure elemental subroutine mol_block_list_destroy(this)
     type(mol_block_list), intent(inout) :: this

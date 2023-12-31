@@ -61,7 +61,7 @@ list( APPEND f90_src mod_Hungarian.f90 )
 list( APPEND f90_src mod_d_matrix.f90 )
 list( APPEND f90_src mod_tree.f90 )
 list( APPEND f90_src mod_branch_and_prune.f90 )
-#list( APPEND f90_src mod_symRMSD.f90 )
+list( APPEND f90_src mod_symRMSD.f90 )
 
 target_sources( symRMSD PRIVATE ${f90_src} )
 target_link_libraries( symRMSD PRIVATE blas )

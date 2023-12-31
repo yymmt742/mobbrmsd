@@ -24,6 +24,7 @@ module mod_branch_and_prune
 !
   type branch_and_prune
     integer(IK)                :: bs, nd
+    integer(IK)                :: lowerbound
     integer(IK), allocatable   :: p(:), q(:)
     type(d_matrix_list)        :: dm
     type(tree)                 :: tr
@@ -62,7 +63,7 @@ contains
     integer(IK), intent(in)                  :: p
     type(mol_symmetry), intent(in), optional :: ms(*)
     type(branch_and_prune)                   :: res
-    integer(IK)                              :: i, j
+    integer(IK)                              :: i, j, pi
 !
     res%dm = d_matrix_list(blk, p)
     res%nd = res%dm%n_depth()
@@ -85,7 +86,10 @@ contains
     end do
 !
     res%bs = res%dm%dd + 2
-    res%tr = tree(p + res%dm%memsize(), res%bs, res%nd + 1, [1, res%bi%nnod])
+    pi = p + res%dm%memsize()
+    res%lowerbound = pi
+    pi = pi + 1
+    res%tr = tree(pi, res%bs, res%nd + 1, [1, res%bi%nnod])
 !
     allocate (res%p(res%dm%l))
     res%p(1) = 1
@@ -112,7 +116,7 @@ contains
   pure elemental function branch_and_prune_memsize(this) result(res)
     class(branch_and_prune), intent(in) :: this
     integer(IK)                         :: res
-    res = this%dm%memsize() + this%tr%memsize
+    res = this%dm%memsize() + this%tr%memsize + 1
   end function branch_and_prune_memsize
 !
   pure subroutine branch_and_prune_setup(this, X, Y, W)
@@ -124,7 +128,6 @@ contains
 !
     call this%dm%eval(this%ms, X, Y, W)
     call this%tr%reset()
-    W(this%tr%upperbound) = RHUGE
 !
     p = this%tr%nodes_pointer()
     W(p) = W(this%dm%o)
@@ -132,6 +135,9 @@ contains
     W(p) = W(this%dm%h)
     p = p + 1
     call dcopy(this%dm%dd, W(this%dm%c), 1, W(p), 1)
+!
+    W(this%tr%upperbound) = RHUGE
+    W(this%lowerbound)    = W(this%dm%o)
 !
     call this%tr%set_parent_node(W)
 !
@@ -166,7 +172,6 @@ contains
         call swap_iper(this%nd, cur, cix, this%bi)
         if (cur == this%nd) then
           pp = this%tr%nodes_pointer()
-          !print '(A,6i4,3f9.3)', ' open', this%bi%iper, this%bi%isym, W(this%tr%upperbound), W(pp), W(this%bs + pp)
           pp = this%tr%current_pointer()
 !
           if (W(this%tr%upperbound) > W(pp)) then
@@ -277,6 +282,13 @@ contains
     real(RK)                            :: res
     res = W(this%tr%upperbound)
   end function branch_and_prune_upperbound
+!
+  pure function branch_and_prune_lowerbound(this, W) result(res)
+    class(branch_and_prune), intent(in) :: this
+    real(RK), intent(in)                :: W(*)
+    real(RK)                            :: res
+    res = W(this%lowerbound)
+  end function branch_and_prune_lowerbound
 !
   pure subroutine branch_and_prune_swap(this, X)
     class(branch_and_prune), intent(in) :: this
