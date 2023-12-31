@@ -1,12 +1,6 @@
 find_package( BLAS REQUIRED )
 
 add_compile_options(
-  $<$<COMPILE_LANG_AND_ID:C,GNU>:-O2>
-  $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wall>
-  $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wextra>
-  )
-
-add_compile_options(
   $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-O2>
   $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-std=f2008>
   $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fimplicit-none>
@@ -21,15 +15,6 @@ add_compile_options(
   )
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
-
-  add_compile_options(
-    $<$<COMPILE_LANG_AND_ID:C,GNU>:-g>
-    $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wshadow>
-    $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wconversion>
-    $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wfloat-equal>
-    $<$<COMPILE_LANG_AND_ID:C,GNU>:-ftrapv>
-    $<$<COMPILE_LANG_AND_ID:C,GNU>:-fstack-protector-all>
-    )
   add_compile_options(
     $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-Wuninitialized>
     $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fbounds-check>
@@ -42,7 +27,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
     $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:bounds>
     $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-traceback>
   )
-
 endif()
 
 add_subdirectory( symRMSD )
