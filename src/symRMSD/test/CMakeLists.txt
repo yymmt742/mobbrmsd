@@ -1,14 +1,6 @@
 find_package( unittest REQUIRED )
 find_package( purelapack REQUIRED )
 
-add_executable( test_optarg )
-target_include_directories( test_optarg PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_optarg PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
-                                    test_optarg.f90 )
-target_link_libraries( test_optarg PRIVATE unittest )
-add_test( NAME test_optarg COMMAND test_optarg )
-
 add_executable( test_group_permutation )
 target_include_directories( test_group_permutation PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_group_permutation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
@@ -38,7 +30,6 @@ add_test( NAME test_det COMMAND test_det )
 add_executable( test_estimate_rotation_matrix )
 target_include_directories( test_estimate_rotation_matrix PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_estimate_rotation_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_estimate_rotation_matrix.f90
                                     test_estimate_rotation_matrix.f90 )
@@ -50,7 +41,6 @@ add_test( NAME test_estimate_rotation_matrix COMMAND test_estimate_rotation_matr
 add_executable( test_d_matrix )
 target_include_directories( test_d_matrix PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_d_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_estimate_rotation_matrix.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -75,7 +65,6 @@ add_test( NAME test_tree COMMAND test_tree )
 add_executable( test_branch_and_prune )
 target_include_directories( test_branch_and_prune PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_branch_and_prune PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_estimate_rotation_matrix.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -94,7 +83,6 @@ add_test( NAME test_branch_and_prune COMMAND test_branch_and_prune )
 add_executable( test_symRMSD )
 target_include_directories( test_symRMSD PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_symRMSD PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_estimate_rotation_matrix.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
