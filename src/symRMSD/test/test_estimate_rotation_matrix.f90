@@ -10,84 +10,31 @@ program main
   E3 = eye(3)
   E6 = eye(6)
 !
-  call z%init('test Kabsch d=3')
-  call test0(2, 1)
-  call test0(10, 1)
-  call z%init('test Kabsch d=2')
-! call test9(2, 1)
-  call test9(10, 1)
+  call z%init('test quartanion d=2')
+  call test0(2, 10)
+  call test0(10, 10)
 !
-! call z%init('test Kabsch d=3')
-! call test1(1, 2)
-! call test1(2, 2)
-! call test1(3, 2)
-! call test1(5, 4)
-! call test1(100, 10)
+  call z%init('test quartanion d=3')
+  call test1(1, 2)
+  call test1(2, 10)
+  call test1(3, 2)
+  call test1(5, 4)
+  call test1(10, 10)
+  call test1(100, 10)
 !
-! call z%init('test Kabsch d=6')
-! call test2(1, 2)
-! call test2(2, 2)
-! call test2(3, 2)
-! call test2(5, 4)
-! call test2(100, 10)
-!
-! call z%init('test Kabsch row major n=3')
-! call test3(1, 2)
-! call test3(2, 2)
-! call test3(3, 2)
-! call test3(8, 4)
-! call test3(100, 10)
-!
-! call z%init('test Kabsch row major n=6')
-! call test4(1, 2)
-! call test4(2, 2)
-! call test4(3, 2)
-! call test4(8, 4)
-! call test4(100, 10)
+  call z%init('test kabsch d=6')
+  call test2(1, 2)
+  call test2(2, 2)
+  call test2(3, 2)
+  call test2(5, 4)
+  call test2(100, 10)
 !
   call z%finish_and_terminate()
 !
 contains
+!
 !quartenion_operation(cov, rot, w)
   subroutine test0(n, n_test)
-    integer, intent(in)   :: n, n_test
-    integer, parameter    :: d = 3
-    real(RK)              :: Y(d, n), X(d, n), cov(d, d)
-    real(RK)              :: rot(d, d), krot(d, d)
-    real(RK), allocatable :: w(:)
-    integer               :: i
-!
-    call estimate_rotation_matrix(-d, X(1, 1), x, x, x)
-    allocate (w(NINT(x(1,1))))
-!
-    call random_number(X)
-!
-    do i=1,N_TEST
-!
-      rot = SO3()
-      Y = MATMUL(rot, X)
-      cov = MATMUL(X, TRANSPOSE(Y))
-      call estimate_rotation_matrix(d, SUM(X * X) + SUM(Y * Y), cov, krot, w)
-      call z%assert_almost_equal([X - MATMUL(krot, Y)], 0D0, 'X = YR  ')
-      call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(d)], 0D0, 'R@RT = I')
-!
-    enddo
-!
-    call random_number(Y)
-!
-    do i=1,N_TEST
-!
-      cov = MATMUL(X, TRANSPOSE(Y))
-      call estimate_rotation_matrix(d, SUM(X * X) + SUM(Y * Y), cov, krot, w)
-      call z%assert_greater_equal(SUM(cov * krot), SUM(cov * SO3()), 'CR >= CQ ')
-      call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(d)], 0D0, 'R@RT = I')
-!
-    enddo
-!
-  end subroutine test0
-!
-!quartenion_operation(cov, rot, w)
-  subroutine test9(n, n_test)
     integer, intent(in)   :: n, n_test
     integer, parameter    :: d = 2
     real(RK)              :: Y(d, n), X(d, n), cov(d, d)
@@ -122,101 +69,70 @@ contains
 !
     enddo
 !
-  end subroutine test9
+  end subroutine test0
 !
-! subroutine test1(n, n_test)
-!   integer, intent(in) :: n, n_test
-!   integer, parameter  :: d = 3
-!   real(RK)            :: Y(d, n), X(d, n), cov(d, d)
-!   real(RK)            :: rot(d, d), krot(d, d)
-!   real(RK)            :: w(Kabsch_worksize(d))
-!   integer             :: i
+!quartenion_operation(cov, rot, w)
+  subroutine test1(n, n_test)
+    integer, intent(in)   :: n, n_test
+    integer, parameter    :: d = 3
+    real(RK)              :: Y(d, n), X(d, n), cov(d, d)
+    real(RK)              :: rot(d, d), krot(d, d)
+    real(RK), allocatable :: w(:)
+    integer               :: i
 !
-!   call random_number(X)
+    call estimate_rotation_matrix(-d, X(1, 1), x, x, x)
+    allocate (w(NINT(x(1,1))))
 !
-!   do i=1,N_TEST
+    call random_number(X)
 !
-!     rot = SO3()
-!     Y = MATMUL(rot, X)
-!     cov = MATMUL(X, TRANSPOSE(Y))
-!     call Kabsch(3, cov, krot, w)
-!     call z%assert_almost_equal([X - MATMUL(krot, Y)], 0D0, 'X = RY  ')
-!     call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - E3], 0D0, 'R@RT = I')
+    do i=1,N_TEST
 !
-!   enddo
+      rot = SO3()
+      Y = MATMUL(rot, X)
+      cov = MATMUL(X, TRANSPOSE(Y))
+      call estimate_rotation_matrix(d, SUM(X * X) + SUM(Y * Y), cov, krot, w)
+      call z%assert_almost_equal([X - MATMUL(krot, Y)], 0D0, 'X = YR  ')
+      call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(d)], 0D0, 'R@RT = I')
 !
-! end subroutine test1
+    enddo
 !
-! subroutine test2(n, n_test)
-!   integer, intent(in) :: n, n_test
-!   real(RK)            :: Y(6, n), X(6, n), cov(6, 6)
-!   real(RK)            :: rot(6, 6), krot(6, 6)
-!   real(RK)            :: w(Kabsch_worksize(6))
-!   integer             :: i
+    call random_number(Y)
 !
-!   call random_number(X)
+    do i=1,N_TEST
 !
-!   do i = 1, N_TEST
+      cov = MATMUL(X, TRANSPOSE(Y))
+      call estimate_rotation_matrix(d, SUM(X * X) + SUM(Y * Y), cov, krot, w)
+      call z%assert_greater_equal(SUM(cov * krot), SUM(cov * SO3()), 'CR >= CQ ')
+      call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(d)], 0D0, 'R@RT = I')
 !
-!     rot = SO6()
-!     Y = MATMUL(rot, X)
-!     cov = MATMUL(X, TRANSPOSE(Y))
-!     call Kabsch(6, cov, krot, w)
-!     call z%assert_almost_equal([X - MATMUL(krot, Y)], 0D0, 'X = RY  ')
-!     call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - E6], 0D0, 'R@RT = I')
+    enddo
 !
-!   enddo
+  end subroutine test1
 !
-! end subroutine test2
+  subroutine test2(n, n_test)
+    integer, intent(in)   :: n, n_test
+    real(RK)              :: Y(6, n), X(6, n), cov(6, 6)
+    real(RK)              :: rot(6, 6), krot(6, 6)
+    real(RK), allocatable :: w(:)
+    integer               :: i
 !
-! subroutine test3(d, n_test)
-!   integer, intent(in) :: d, n_test
-!   integer, parameter  :: n = 3
-!   real(RK)            :: Y(d, n), X(d, n), cov(n, n)
-!   real(RK)            :: rot(n, n), krot(n, n)
-!   real(RK)            :: w(Kabsch_worksize(n))
-!   integer             :: i
+    call estimate_rotation_matrix(-6, X(1, 1), x, x, x)
+    allocate (w(NINT(x(1,1))))
 !
-!   call random_number(X)
+    call random_number(X)
 !
-!   do i=1,N_TEST
+    do i = 1, N_TEST
 !
-!     rot = SO3()
-!     Y = MATMUL(X, rot)
-!     cov = MATMUL(TRANSPOSE(X), Y)
-!     call Kabsch(n, cov, krot, w)
-!     call z%assert_almost_equal([X - MATMUL(Y, TRANSPOSE(krot))], 0D0, 'X = YR  ')
-!     call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(n)], 0D0, 'R@RT = I')
+      rot = SO6()
+      Y = MATMUL(rot, X)
+      cov = MATMUL(X, TRANSPOSE(Y))
+      call estimate_rotation_matrix(6, SUM(X * X) + SUM(Y * Y), cov, krot, w)
+      call z%assert_almost_equal([X - MATMUL(krot, Y)], 0D0, 'X = RY  ')
+      call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - E6], 0D0, 'R@RT = I')
 !
-!   enddo
+    enddo
 !
-! end subroutine test3
-!
-! subroutine test4(d, n_test)
-!   integer, intent(in) :: d, n_test
-!   integer, parameter  :: n = 6
-!   real(RK)            :: Y(d, n), X(d, n), cov(n, n)
-!   real(RK)            :: rot(n, n), krot(n, n)
-!   real(RK)            :: w(Kabsch_worksize(n))
-!   integer             :: i
-!
-!   call random_number(X)
-!   do i = 1, n
-!     X(:, i) = X(:, i) - SUM(X, 2)
-!   end do
-!
-!   do i=1,N_TEST
-!
-!     rot = SO6()
-!     Y = MATMUL(X, rot)
-!     cov = MATMUL(TRANSPOSE(X), Y)
-!     call Kabsch(n, cov, krot, w)
-!     call z%assert_almost_equal([X - MATMUL(Y, TRANSPOSE(krot))], 0D0, 'X = YR  ')
-!     call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(n)], 0D0, 'R@RT = I')
-!
-!   enddo
-!
-! end subroutine test4
+  end subroutine test2
 !
   function SO2() result(res)
     real(RK) :: a(1), res(2, 2)
@@ -249,17 +165,6 @@ contains
     res = MATMUL(res, tmp)
 !
   end function SO6
-!
-  function SO6_part() result(res)
-    real(RK) :: res(6, 6)
-!
-    res = eye(6)
-    !res(2:4, 2) = [0, 0, 1]
-    !res(2:4, 3) = [1, 0, 0]
-    !res(2:4, 4) = [0, 1, 0]
-    res(3:5,3:5) = SO3()
-!
-  end function SO6_part
 !
   pure function eye(d) result(res)
     integer,intent(in) :: d
