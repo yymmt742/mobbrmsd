@@ -13,6 +13,9 @@ program main
   call z%init('test Kabsch d=3')
   call test0(2, 1)
   call test0(10, 1)
+  call z%init('test Kabsch d=2')
+! call test9(2, 1)
+  call test9(10, 1)
 !
 ! call z%init('test Kabsch d=3')
 ! call test1(1, 2)
@@ -61,7 +64,7 @@ contains
       rot = SO3()
       Y = MATMUL(rot, X)
       cov = MATMUL(X, TRANSPOSE(Y))
-      call quartenion_operation(SUM(X * X) + SUM(Y * Y), cov, krot, w)
+      call estimate_rotation_matrix(d, SUM(X * X) + SUM(Y * Y), cov, krot, w)
       call z%assert_almost_equal([X - MATMUL(krot, Y)], 0D0, 'X = YR  ')
       call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(d)], 0D0, 'R@RT = I')
 !
@@ -72,13 +75,48 @@ contains
     do i=1,N_TEST
 !
       cov = MATMUL(X, TRANSPOSE(Y))
-      call quartenion_operation(SUM(X * X) + SUM(Y * Y), cov, krot, w)
+      call estimate_rotation_matrix(d, SUM(X * X) + SUM(Y * Y), cov, krot, w)
       call z%assert_greater_equal(SUM(cov * krot), SUM(cov * SO3()), 'CR >= CQ ')
       call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(d)], 0D0, 'R@RT = I')
 !
     enddo
 !
   end subroutine test0
+!
+!quartenion_operation(cov, rot, w)
+  subroutine test9(n, n_test)
+    integer, intent(in) :: n, n_test
+    integer, parameter  :: d = 2
+    real(RK)            :: Y(d, n), X(d, n), cov(d, d)
+    real(RK)            :: rot(d, d), krot(d, d)
+    real(RK)            :: w(Kabsch_worksize(d))
+    integer             :: i
+!
+    call random_number(X)
+!
+    do i=1,N_TEST
+!
+      rot = SO2()
+      Y = MATMUL(rot, X)
+      cov = MATMUL(X, TRANSPOSE(Y))
+      call estimate_rotation_matrix(d, SUM(X * X) + SUM(Y * Y), cov, krot, w)
+      call z%assert_almost_equal([X - MATMUL(krot(:2,:2), Y)], 0D0, 'X = YR  ')
+      call z%assert_almost_equal([MATMUL(krot(:2,:2), TRANSPOSE(krot(:2,:2))) - eye(d)], 0D0, 'R@RT = I')
+!
+    enddo
+!
+    call random_number(Y)
+!
+    do i=1,N_TEST
+!
+      cov = MATMUL(X, TRANSPOSE(Y))
+      call estimate_rotation_matrix(d, SUM(X * X) + SUM(Y * Y), cov, krot, w)
+      call z%assert_greater_equal(SUM(cov * krot(:2,:2)), SUM(cov * SO2()), 'CR >= CQ ')
+      call z%assert_almost_equal([MATMUL(krot(:2,:2), TRANSPOSE(krot(:2,:2))) - eye(d)], 0D0, 'R@RT = I')
+!
+    enddo
+!
+  end subroutine test9
 !
   subroutine test1(n, n_test)
     integer, intent(in) :: n, n_test
