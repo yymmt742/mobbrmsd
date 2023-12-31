@@ -24,6 +24,7 @@ module mod_branch_and_prune
 !
   type branch_and_prune
     integer(IK)                :: bs, nd
+    integer(IK)                :: lowerbound
     integer(IK), allocatable   :: p(:), q(:)
     type(d_matrix_list)        :: dm
     type(tree)                 :: tr
@@ -87,6 +88,11 @@ contains
 !
     res%bs = res%dm%dd + 2
     pi = p + res%dm%memsize()
+<<<<<<< HEAD:src/symRMSD/mod_branch_and_prune.f90
+=======
+    res%lowerbound = pi
+    pi = pi + 1
+>>>>>>> 7811775b93593618fdeab6d2be0a4b9f299b919d:src/mod_branch_and_prune.f90
     res%tr = tree(pi, res%bs, res%nd + 1, [1, res%bi%nnod])
 !
     allocate (res%p(res%dm%l))
@@ -103,7 +109,10 @@ contains
 !
     allocate (res%gp(res%dm%l))
     allocate (res%ms(res%dm%l))
+<<<<<<< HEAD:src/symRMSD/mod_branch_and_prune.f90
 !
+=======
+>>>>>>> 7811775b93593618fdeab6d2be0a4b9f299b919d:src/mod_branch_and_prune.f90
     if (PRESENT(ms)) then
       do concurrent(i=1:res%dm%l)
         res%ms(i) = ms(i)
@@ -136,7 +145,11 @@ contains
     call dcopy(this%dm%dd, W(this%dm%c), 1, W(p), 1)
 !
     W(this%tr%upperbound) = RHUGE
+<<<<<<< HEAD:src/symRMSD/mod_branch_and_prune.f90
     W(this%tr%lowerbound)    = W(this%dm%o)
+=======
+    W(this%lowerbound)    = W(this%dm%o)
+>>>>>>> 7811775b93593618fdeab6d2be0a4b9f299b919d:src/mod_branch_and_prune.f90
 !
     call this%tr%set_parent_node(W)
 !
@@ -172,6 +185,12 @@ contains
         cix = this%tr%current_index()
         this%bi(cur)%isym = (cix - 1) / this%bi(cur)%nper
         call swap_iper(this%nd, cur, cix, this%bi)
+<<<<<<< HEAD:src/symRMSD/mod_branch_and_prune.f90
+=======
+        if (cur == this%nd) then
+          pp = this%tr%nodes_pointer()
+          pp = this%tr%current_pointer()
+>>>>>>> 7811775b93593618fdeab6d2be0a4b9f299b919d:src/mod_branch_and_prune.f90
 !
         pp = this%tr%current_pointer()
 !
@@ -292,7 +311,11 @@ contains
     class(branch_and_prune), intent(in) :: this
     real(RK), intent(in)                :: W(*)
     real(RK)                            :: res
+<<<<<<< HEAD:src/symRMSD/mod_branch_and_prune.f90
     res = W(this%tr%lowerbound)
+=======
+    res = W(this%lowerbound)
+>>>>>>> 7811775b93593618fdeab6d2be0a4b9f299b919d:src/mod_branch_and_prune.f90
   end function branch_and_prune_lowerbound
 !
   pure subroutine branch_and_prune_swap(this, X)
