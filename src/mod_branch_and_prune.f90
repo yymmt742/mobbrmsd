@@ -2,7 +2,7 @@ module mod_branch_and_prune
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mol_block
   use mod_group_permutation
-  use mod_molecular_rotation
+  use mod_mol_symmetry
   use mod_d_matrix
   use mod_tree
   implicit none
@@ -27,12 +27,13 @@ module mod_branch_and_prune
     integer(IK), allocatable   :: p(:), q(:)
     type(d_matrix_list)        :: dm
     type(tree)                 :: tr
-    type(breadth_indicator), allocatable  :: bi(:)
-    type(molecular_rotation), allocatable :: mr(:)
-    type(group_permutation), allocatable  :: gp(:)
+    type(breadth_indicator), allocatable :: bi(:)
+    type(mol_symmetry), allocatable      :: ms(:)
+    type(group_permutation), allocatable :: gp(:)
   contains
     procedure :: memsize    => branch_and_prune_memsize
     procedure :: upperbound => branch_and_prune_upperbound
+    procedure :: lowerbound => branch_and_prune_lowerbound
     procedure :: setup      => branch_and_prune_setup
     procedure :: run        => branch_and_prune_run
     procedure :: swap       => branch_and_prune_swap
@@ -44,6 +45,10 @@ module mod_branch_and_prune
     module procedure branch_and_prune_new
   end interface branch_and_prune
 !
+  interface
+    include 'dcopy.h'
+  end interface
+!
 contains
 !
   pure elemental subroutine breadth_indicator_save(this)
@@ -53,12 +58,12 @@ contains
   end subroutine breadth_indicator_save
 !
 !| generate node instance
-  pure function branch_and_prune_new(blk, p, rot) result(res)
-    type(mol_block_list), intent(in)     :: blk
-    integer(IK), intent(in)              :: p
-    type(molecular_rotation), intent(in), optional :: rot(*)
-    type(branch_and_prune)               :: res
-    integer(IK)                          :: i, j
+  pure function branch_and_prune_new(blk, p, ms) result(res)
+    type(mol_block_list), intent(in)         :: blk
+    integer(IK), intent(in)                  :: p
+    type(mol_symmetry), intent(in), optional :: ms(*)
+    type(branch_and_prune)                   :: res
+    integer(IK)                              :: i, j, pi
 !
     res%dm = d_matrix_list(blk, p)
     res%nd = res%dm%n_depth()
@@ -81,7 +86,8 @@ contains
     end do
 !
     res%bs = res%dm%dd + 2
-    res%tr = tree(p + res%dm%memsize(), res%bs, res%nd + 1, [1, res%bi%nnod])
+    pi = p + res%dm%memsize()
+    res%tr = tree(pi, res%bs, res%nd + 1, [1, res%bi%nnod])
 !
     allocate (res%p(res%dm%l))
     res%p(1) = 1
@@ -96,10 +102,11 @@ contains
     end do
 !
     allocate (res%gp(res%dm%l))
-    allocate (res%mr(res%dm%l))
-    if (PRESENT(rot)) then
+    allocate (res%ms(res%dm%l))
+!
+    if (PRESENT(ms)) then
       do concurrent(i=1:res%dm%l)
-        res%mr(i) = rot(i)
+        res%ms(i) = ms(i)
       end do
     end if
 !
@@ -108,7 +115,7 @@ contains
   pure elemental function branch_and_prune_memsize(this) result(res)
     class(branch_and_prune), intent(in) :: this
     integer(IK)                         :: res
-    res = this%dm%memsize() + this%tr%memsize
+    res = this%dm%memsize() + this%tr%memsize + 1
   end function branch_and_prune_memsize
 !
   pure subroutine branch_and_prune_setup(this, X, Y, W)
@@ -118,16 +125,18 @@ contains
     real(RK), intent(inout)                :: W(*)
     integer(IK)                            :: p, i, j, k
 !
-    call this%dm%eval(this%mr, X, Y, W)
+    call this%dm%eval(this%ms, X, Y, W)
     call this%tr%reset()
-    W(this%tr%upperbound) = RHUGE
 !
     p = this%tr%nodes_pointer()
     W(p) = W(this%dm%o)
     p = p + 1
     W(p) = W(this%dm%h)
     p = p + 1
-    call copy(this%dm%dd, W(this%dm%c), W(p))
+    call dcopy(this%dm%dd, W(this%dm%c), 1, W(p), 1)
+!
+    W(this%tr%upperbound) = RHUGE
+    W(this%tr%lowerbound)    = W(this%dm%o)
 !
     call this%tr%set_parent_node(W)
 !
@@ -151,27 +160,32 @@ contains
 !
     do
       do
+!
         call this%tr%open_node()
         cur = this%tr%current_depth() - 1
         call set_hc(this%dm, this%tr, this%bi, cur, this%nd, this%bs, W)
         call this%tr%prune(W)
+!
         if (this%tr%finished()) exit
+!
         call this%tr%set_parent_node(W)
         cix = this%tr%current_index()
         this%bi(cur)%isym = (cix - 1) / this%bi(cur)%nper
         call swap_iper(this%nd, cur, cix, this%bi)
-        if (cur == this%nd) then
-          pp = this%tr%nodes_pointer()
-          !print '(A,6i4,3f9.3)', ' open', this%bi%iper, this%bi%isym, W(this%tr%upperbound), W(pp), W(this%bs + pp)
-          pp = this%tr%current_pointer()
 !
+        pp = this%tr%current_pointer()
+!
+        if (cur == this%nd) then
           if (W(this%tr%upperbound) > W(pp)) then
             W(this%tr%upperbound) = W(pp)
             call breadth_indicator_save(this%bi)
           end if
           exit
         end if
+!
       end do
+!
+      call this%tr%set_lowerbound(W)
 !
       do while (this%tr%finished() .and. cur > 0)
         call this%tr%close_node()
@@ -243,7 +257,7 @@ contains
           t = q + bs * (i + bi(cur)%nper * j)
           h = t + 1
           c = t + 2
-          call copy(nx, W(ph), W(h))
+          call dcopy(nx, W(ph), 1, W(h), 1)
           call dm%partial_eval(cur, iper, i, j, W, W(t), W(h), W(c), LB=LB, LF=LF)
           w(t) = LF
         end block
@@ -274,6 +288,13 @@ contains
     res = W(this%tr%upperbound)
   end function branch_and_prune_upperbound
 !
+  pure function branch_and_prune_lowerbound(this, W) result(res)
+    class(branch_and_prune), intent(in) :: this
+    real(RK), intent(in)                :: W(*)
+    real(RK)                            :: res
+    res = W(this%tr%lowerbound)
+  end function branch_and_prune_lowerbound
+!
   pure subroutine branch_and_prune_swap(this, X)
     class(branch_and_prune), intent(in) :: this
     real(RK), intent(inout)             :: X(*)
@@ -281,36 +302,26 @@ contains
 !
     do i = 1, this%dm%l
       call swap(this%dm%d, this%dm%m(i)%m, this%dm%m(i)%g, &
-     &          this%bi(this%p(i)), this%mr(i), this%gp(i), &
+     &          this%bi(this%p(i)), this%ms(i), this%gp(i), &
      &          X(this%q(i)))
     end do
 !
   contains
 !
-    pure subroutine swap(d, m, g, bi, mr, gp, X)
-      integer(IK), intent(in)              :: d, m, g
-      type(breadth_indicator), intent(in)  :: bi(g)
-      type(molecular_rotation), intent(in) :: mr
-      type(group_permutation), intent(in)  :: gp
-      real(RK), intent(inout)              :: X(d, m, g)
-      integer(IK)                          :: i
+    pure subroutine swap(d, m, g, bi, ms, gp, X)
+      integer(IK), intent(in)             :: d, m, g
+      type(breadth_indicator), intent(in) :: bi(g)
+      type(mol_symmetry), intent(in)      :: ms
+      type(group_permutation), intent(in) :: gp
+      real(RK), intent(inout)             :: X(d, m, g)
+      integer(IK)                         :: i
       do concurrent(i=1:g)
-        call mr%swap(d, X(1, 1, i), bi(i)%jsym)
+        call ms%swap(d, X(1, 1, i), bi(i)%jsym)
       end do
       call gp%reverse(d * m, X)
     end subroutine swap
 !
   end subroutine branch_and_prune_swap
-!
-  pure subroutine copy(d, source, dest)
-    integer(IK), intent(in) :: d
-    real(RK), intent(in)    :: source(*)
-    real(RK), intent(inout) :: dest(*)
-    integer(IK)             :: i
-    do concurrent(i=1:d)
-      dest(i) = source(i)
-    end do
-  end subroutine copy
 !
   pure elemental subroutine branch_and_prune_clear(this)
     class(branch_and_prune), intent(inout) :: this
@@ -318,7 +329,7 @@ contains
     call this%tr%clear()
     if (ALLOCATED(this%p)) deallocate (this%p)
     if (ALLOCATED(this%q)) deallocate (this%q)
-    if (ALLOCATED(this%mr)) deallocate (this%mr)
+    if (ALLOCATED(this%ms)) deallocate (this%ms)
     if (ALLOCATED(this%gp)) deallocate (this%gp)
   end subroutine branch_and_prune_clear
 !

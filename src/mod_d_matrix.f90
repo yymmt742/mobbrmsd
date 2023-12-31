@@ -1,6 +1,6 @@
 module mod_d_matrix
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
-  use mod_molecular_rotation
+  use mod_mol_symmetry
   use mod_mol_block
   use mod_estimate_rotation_matrix
   use mod_Hungarian
@@ -90,21 +90,21 @@ contains
     res = (a%cb + 1) * a%gg
   end function d_matrix_memsize
 !
-  pure subroutine d_matrix_eval(a, rot, X, Y, W)
-    type(d_matrix), intent(in)            :: a
-    class(molecular_rotation), intent(in) :: rot
-    real(RK), intent(in)                  :: X(*)
-    real(RK), intent(in)                  :: Y(*)
-    real(RK), intent(inout)               :: W(*)
+  pure subroutine d_matrix_eval(a, ms, X, Y, W)
+    type(d_matrix), intent(in)      :: a
+    class(mol_symmetry), intent(in) :: ms
+    real(RK), intent(in)            :: X(*)
+    real(RK), intent(in)            :: Y(*)
+    real(RK), intent(inout)         :: W(*)
 !
-    call eval(a%d, a%s, a%m, a%g, a%dd, a%dm, a%cb, a%nw1, rot, X(a%x), Y(a%x), W(a%z), W(a%c))
+    call eval(a%d, a%s, a%m, a%g, a%dd, a%dm, a%cb, a%nw1, ms, X(a%x), Y(a%x), W(a%z), W(a%c))
 !
   contains
 !
     pure subroutine eval(d, s, m, g, dd, dm, cb, nw, r, X, Y, Z, C)
       integer(IK), intent(in)              :: d, s, m, g
       integer(IK), intent(in)              :: dd, dm, cb, nw
-      type(molecular_rotation), intent(in) :: r
+      type(mol_symmetry), intent(in) :: r
       real(RK), intent(in)                 :: X(d, m, g)
       real(RK), intent(in)                 :: Y(d, m, g)
       real(RK), intent(inout)              :: Z(g, g)
@@ -344,11 +344,11 @@ contains
   end function d_matrix_list_n_depth
 !
   pure subroutine d_matrix_list_eval(this, rot, X, Y, W)
-    class(d_matrix_list), intent(in)     :: this
-    type(molecular_rotation), intent(in) :: rot(*)
-    real(RK), intent(in)                 :: X(*), Y(*)
-    real(RK), intent(inout)              :: W(*)
-    integer(IK)                          :: i
+    class(d_matrix_list), intent(in) :: this
+    type(mol_symmetry), intent(in)   :: rot(*)
+    real(RK), intent(in)             :: X(*), Y(*)
+    real(RK), intent(inout)          :: W(*)
+    integer(IK)                      :: i
 !
     if (.not. ALLOCATED(this%m)) return
 !

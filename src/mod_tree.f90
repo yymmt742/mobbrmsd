@@ -22,6 +22,7 @@ module mod_tree
     integer(IK)                :: iscope = 0
     integer(IK), public        :: memsize = 0
     integer(IK), public        :: upperbound = 0
+    integer(IK), public        :: lowerbound = 0
     type(node), allocatable    :: nodes(:)
     type(breadth), allocatable :: breadthes(:)
   contains
@@ -30,6 +31,7 @@ module mod_tree
     procedure         :: current_depth    => tree_current_depth
     procedure         :: reset            => tree_reset
     procedure         :: set_parent_node  => tree_set_parent_node
+    procedure         :: set_lowerbound   => tree_set_lowerbound
     procedure         :: prune            => tree_prune
     procedure         :: nodes_pointer    => tree_nodes_pointer
     procedure         :: parent_pointer   => tree_parent_pointer
@@ -58,12 +60,13 @@ contains
 !
     n = SUM(n_breadths)
     res%upperbound = pw
+    res%lowerbound = pw + 1
     allocate (res%nodes(n))
     do concurrent(i=1:n)
-      res%nodes(i) = node(.true., pw + 1 + (i - 1) * memnode)
+      res%nodes(i) = node(.true., pw + 2 + (i - 1) * memnode)
     end do
 !
-    res%memsize = n * memnode + 1
+    res%memsize = n * memnode + 2
 !
     allocate (res%breadthes(ndepth))
     j = 0
@@ -177,6 +180,7 @@ contains
   pure subroutine tree_reset(this)
     class(tree), intent(inout) :: this
     this%iscope = 0
+    if (ALLOCATED(this%nodes)) this%nodes%alive = .false.
     call this%open_node()
   end subroutine tree_reset
 !
@@ -209,6 +213,10 @@ contains
     integer(IK)                :: i, l, u
 !
     if (this%iscope < 0 .or. this%n_depth() <= this%iscope) return
+    if (this%iscope > 0) then
+      l = this%breadthes(this%iscope)%inod
+      if (l > 0) this%nodes(l)%alive = .false.
+    end if
     this%iscope = this%iscope + 1
     l = this%breadthes(this%iscope)%lowd + 1
     u = this%breadthes(this%iscope)%uppd
@@ -221,6 +229,20 @@ contains
 !
   end subroutine tree_open_node
 !
+  pure subroutine tree_set_lowerbound(this, W)
+    class(tree), intent(in) :: this
+    real(RK), intent(inout) :: W(*)
+    integer(IK)             :: i, nnod
+!
+    w(this%lowerbound) = w(this%upperbound)
+    if (.not. ALLOCATED(this%nodes)) return
+    nnod = SIZE(this%nodes)
+    do i = 1, nnod
+      if (this%nodes(i)%alive) w(this%lowerbound) = MIN(w(this%lowerbound), w(this%nodes(i)%p))
+    end do
+!
+  end subroutine tree_set_lowerbound
+!
   pure elemental subroutine tree_close_node(this)
     class(tree), intent(inout) :: this
     integer(IK)                :: p
@@ -228,7 +250,6 @@ contains
     if (this%iscope <= 1 .or. this%n_depth() < this%iscope) return
     this%iscope = this%iscope - 1
     p = this%breadthes(this%iscope)%inod
-    this%nodes(p)%alive = .false.
 !
   end subroutine tree_close_node
 !
