@@ -35,24 +35,24 @@ target_link_libraries( test_det PRIVATE unittest )
 target_link_libraries( test_det PRIVATE purelapack )
 add_test( NAME test_det COMMAND test_det )
 
-add_executable( test_Kabsch )
-target_include_directories( test_Kabsch PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_Kabsch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+add_executable( test_estimate_rotation_matrix )
+target_include_directories( test_estimate_rotation_matrix PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_estimate_rotation_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
-                                    test_Kabsch.f90 )
-target_include_directories( test_Kabsch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
-target_link_libraries( test_Kabsch PRIVATE unittest )
-target_link_libraries( test_Kabsch PRIVATE purelapack )
-add_test( NAME test_Kabsch COMMAND test_Kabsch )
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_estimate_rotation_matrix.f90
+                                    test_estimate_rotation_matrix.f90 )
+target_include_directories( test_estimate_rotation_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_link_libraries( test_estimate_rotation_matrix PRIVATE unittest )
+target_link_libraries( test_estimate_rotation_matrix PRIVATE purelapack )
+add_test( NAME test_estimate_rotation_matrix COMMAND test_estimate_rotation_matrix )
 
 add_executable( test_d_matrix )
 target_include_directories( test_d_matrix PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_d_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_estimate_rotation_matrix.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_molecular_rotation.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
@@ -77,7 +77,7 @@ target_include_directories( test_branch_and_prune PRIVATE ${unittest_DIR}/mod_fi
 target_sources( test_branch_and_prune PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Kabsch.f90
+                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_estimate_rotation_matrix.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_molecular_rotation.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90

@@ -2,7 +2,7 @@ program main
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_molecular_rotation
-  use mod_Kabsch
+  use mod_estimate_rotation_matrix
   use mod_d_matrix
   use mod_unittest
   implicit none
@@ -36,7 +36,7 @@ contains
     rot = molecular_rotation(swp)
     C = 0D0
     H = 0D0
-    a = d_matrix(1, d, b)
+    a = d_matrix(1, d, 28, b)
     X = sample(d, mn)
     Y = 0.9D0 * MATMUL(SO3(), X) + 0.1D0 * sample(d, mn)
     print *, d_matrix_memsize(a)
@@ -97,7 +97,7 @@ contains
         perm(k) = i
       end do
     end do
-    print*,perm
+    print'(10I4)',perm
 !
     blk = mol_block_list(d, l, b)
     a = d_matrix_list(blk, 1)
@@ -268,7 +268,7 @@ contains
     real(RK), intent(in)    :: X(:, :), Y(:, :)
     real(RK)                :: C(d, d), R(d, d), W(100), res
     C = MATMUL(Y, TRANSPOSE(X))
-    call Kabsch(d, C, R, W)
+    call estimate_rotation_matrix(d, SUM(X * X) + SUM(Y * Y), C, R, W)
     res = SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
   end function sd
 !

@@ -2,7 +2,7 @@ module mod_d_matrix
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_molecular_rotation
   use mod_mol_block
-  use mod_Kabsch
+  use mod_estimate_rotation_matrix
   use mod_Hungarian
   implicit none
   private
@@ -16,8 +16,8 @@ module mod_d_matrix
     private
     sequence
     integer(IK), public :: s, m, n, g
-    integer(IK)         :: d, dd, gg, dm, cb, cl, nw
-    integer(IK)         :: x, z, c, nk
+    integer(IK)         :: d, dd, gg, dm, cb, cl, nw1, nw2
+    integer(IK)         :: x, z, c
   end type d_matrix
 !
   interface d_matrix
@@ -32,6 +32,7 @@ module mod_d_matrix
     integer(IK)                           :: d = 0
     integer(IK)                           :: l = 0
     integer(IK)                           :: dd = 0
+    integer(IK)                           :: nk
     type(d_matrix), allocatable           :: m(:)
   contains
     procedure :: n_depth      => d_matrix_list_n_depth
@@ -55,10 +56,11 @@ module mod_d_matrix
 contains
 !
 !| generator
-  pure elemental function d_matrix_new(p, d, b) result(res)
-    integer(IK), intent(in)     :: p, d
+  pure elemental function d_matrix_new(p, d, nk, b) result(res)
+    integer(IK), intent(in)     :: p, d, nk
     type(mol_block), intent(in) :: b
     type(d_matrix)              :: res
+!
     res%d = MAX(d, 1)
     res%s = MAX(b%s, 1)
     res%m = MAX(b%m, 0)
@@ -77,8 +79,8 @@ contains
     res%x  = b%p
     res%z  = p
     res%c  = res%z + res%gg
-    res%nk = Kabsch_worksize(d)
-    res%nw = 1 + res%dd * 2 + res%nk
+    res%nw1 = 3 + res%dm * 2 + res%dd * 2 + nk
+    res%nw2 = 1 + res%dd * 2 + nk
 !
   end function d_matrix_new
 !
@@ -95,13 +97,13 @@ contains
     real(RK), intent(in)                  :: Y(*)
     real(RK), intent(inout)               :: W(*)
 !
-    call eval(a%d, a%s, a%m, a%g, a%dd, a%dm, a%cb, a%nk, rot, X(a%x), Y(a%x), W(a%z), W(a%c))
+    call eval(a%d, a%s, a%m, a%g, a%dd, a%dm, a%cb, a%nw1, rot, X(a%x), Y(a%x), W(a%z), W(a%c))
 !
   contains
 !
-    pure subroutine eval(d, s, m, g, dd, dm, cb, nk, r, X, Y, Z, C)
+    pure subroutine eval(d, s, m, g, dd, dm, cb, nw, r, X, Y, Z, C)
       integer(IK), intent(in)              :: d, s, m, g
-      integer(IK), intent(in)              :: dd, dm, cb, nk
+      integer(IK), intent(in)              :: dd, dm, cb, nw
       type(molecular_rotation), intent(in) :: r
       real(RK), intent(in)                 :: X(d, m, g)
       real(RK), intent(in)                 :: Y(d, m, g)
@@ -112,11 +114,10 @@ contains
       integer(IK), parameter               :: ih = 3
       integer(IK), parameter               :: ix = 4
       integer(IK)                          :: iy, ic, ir, iw
-      integer(IK)                          :: j, k, nw, dm2
+      integer(IK)                          :: j, k, dm2
 !
       if (g < 1) return
 !
-      nw = 3 + 2 * d * d + dm + dm + nk
       iy = ix + dm
       ic = iy + dm
       ir = ic + dd
@@ -162,7 +163,8 @@ contains
       real(RK), intent(inout) :: T, C(d, d), R(d, d), W(*)
 !!!   get correlation matrix C = Y^t@X and optimal rotation R^t
       call DGEMM('N', 'T', d, d, m, ONE, XY(1, 2), d, XY(1, 1), d, ZERO, C, d)
-      call Kabsch(d, C, R, W)
+      !call Kabsch(d, C, R, W)
+      call estimate_rotation_matrix(d, H, C, R, W)
 !!!   get squared displacement
       T = ddot(dd, C, 1, R, 1)
       T = T + T
@@ -196,10 +198,10 @@ contains
       ih = a%c + (iprm - 1) * a%cb + (p - 1) * a%cl
       ic = ih + 1 + a%dd * isym
       if (PRESENT(LF)) then
-        call partial_eval(a%d, a%s, a%g, a%dd, a%nw, p, W(ih), W(ic), LF, H, C, R)
+        call partial_eval(a%d, a%s, a%g, a%dd, a%nw1, p, W(ih), W(ic), LF, H, C, R)
         LT = LT + LF
       else
-        call partial_eval(a%d, a%s, a%g, a%dd, a%nw, p, W(ih), W(ic), LT, H, C, R)
+        call partial_eval(a%d, a%s, a%g, a%dd, a%nw1, p, W(ih), W(ic), LT, H, C, R)
       end if
     end block
 !
@@ -259,7 +261,8 @@ contains
       call dcopy(dd, W(ic), 1, CP, 1)
 !
 !!! get correlation matrix C = Y^t@X and optimal rotation R^t
-      call Kabsch(d, w(ic), w(ir), W(iw))
+      call estimate_rotation_matrix(d, w(it), w(ic), w(ir), W(iw))
+      !call Kabsch(d, w(ic), w(ir), W(iw))
 !!! get squared displacement
       W(it) = ddot(dd, W(ic), 1, W(ir), 1)
       W(it) = W(it) + W(it)
@@ -297,6 +300,7 @@ contains
     integer(IK), intent(in)              :: p
     type(d_matrix_list)                  :: res
     integer(IK)                          :: i, ip
+    real(RK)                             :: dum(1)
 !
     res%d = b%nspatial()
     res%l = b%nspecies()
@@ -307,10 +311,13 @@ contains
     res%o = res%c + res%dd ! O(L+1)
     ip = res%o + res%l + 1
 !
+    call estimate_rotation_matrix(-res%d, dum(1), dum(1), dum(1), dum(1))
+    res%nk = NINT(dum(1))
+!
     allocate (res%m(res%l))
 !
     do i = 1, res%l
-      res%m(i) = d_matrix(ip, res%d, b%b(i))
+      res%m(i) = d_matrix(ip, res%d, res%nk, b%b(i))
       ip = ip + d_matrix_memsize(res%m(i))
     end do
 !
@@ -345,7 +352,7 @@ contains
 !
     if (.not. ALLOCATED(this%m)) return
 !
-    call fixpoints_eval(this%d, this%l, this%m, X, Y, W(this%h), W(this%v), W(this%c))
+    call fixpoints_eval(this%d, this%nk, this%l, this%m, X, Y, W(this%h), W(this%v), W(this%c))
 !
     do concurrent(i=1:this%l)
       call d_matrix_eval(this%m(i), rot(i), X, Y, W)
@@ -367,8 +374,8 @@ contains
 !
   contains
 !
-    pure subroutine fixpoints_eval(d, l, m, X, Y, H, V, C)
-      integer(IK), intent(in)    :: d, l
+    pure subroutine fixpoints_eval(d, nk, l, m, X, Y, H, V, C)
+      integer(IK), intent(in)    :: d, nk, l
       type(d_matrix), intent(in) :: m(l)
       real(RK), intent(in)       :: X(*), Y(*)
       real(RK), intent(inout)    :: H, V, C(*)
@@ -376,13 +383,12 @@ contains
       integer(IK), parameter     :: ih = 1
       integer(IK), parameter     :: iv = 2
       integer(IK), parameter     :: ic = 3
-      integer(IK)                :: i, dd, nk, ir, iw, ix, iy, mn, dmn, dmn2, nw
+      integer(IK)                :: i, dd, ir, iw, ix, iy, mn, dmn, dmn2, nw
 !
       do concurrent(i=1:l)
         t(i) = m(i)%m * (m(i)%n - m(i)%g)
       end do
 !
-      nk = Kabsch_worksize(d)
       dd = d * d
       mn = SUM(t)
       dmn = d * mn
@@ -427,7 +433,8 @@ contains
 !
         if (mn > 0) then
           call DGEMM('N', 'T', d, d, mn, ONE, W(iy), d, W(ix), d, ZERO, W(ic), d)
-          call Kabsch(d, w(ic), w(ir), W(iw))
+          call estimate_rotation_matrix(d, W(ih), W(ic), w(ir), W(iw))
+          !call Kabsch(d, w(ic), w(ir), W(iw))
           w(iv) = ddot(dd, w(ic), 1, w(ir), 1)
         else
           call zfill(dd, W(ic))

@@ -1,7 +1,7 @@
 program main
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
-  use mod_Kabsch
+  use mod_estimate_rotation_matrix
   use mod_molecular_rotation
   use mod_branch_and_prune
   use mod_unittest
@@ -123,7 +123,7 @@ contains
     real(RK), intent(in)    :: X(:, :), Y(:, :)
     real(RK)                :: C(d, d), R(d, d), W(100), res
     C = MATMUL(Y, TRANSPOSE(X))
-    call Kabsch(d, C, R, W)
+    call estimate_rotation_matrix(d, SUM(X * X) + SUM(Y * Y), C, R, W)
     res = SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
   end function sd
 !

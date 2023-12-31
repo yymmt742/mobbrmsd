@@ -1,11 +1,11 @@
 !| Calculate the rotation matrix that minimizes |X-RY|^2 using the Kabsch-Umeyama algorithm.
 !  Here, RR^T=I and det(R)=1 are satisfied.
-module mod_Kabsch
+module mod_estimate_rotation_matrix
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, HALF => RHALF
   use mod_det
   implicit none
   private
-  public :: Kabsch_worksize, Kabsch, estimate_rotation_matrix
+  public :: estimate_rotation_matrix
 !
   interface
     include 'dcopy.h'
@@ -17,7 +17,7 @@ module mod_Kabsch
 !
 contains
 !
-  subroutine estimate_rotation_matrix(d, g, cov, rot, w)
+  pure subroutine estimate_rotation_matrix(d, g, cov, rot, w)
     integer(IK), intent(in) :: d
     !! spatial dimension
     real(RK), intent(in)    :: g
@@ -213,20 +213,20 @@ contains
   end subroutine quartenion_operation_d3
 !
 !| Calculate work array size for d*d matrix.
-  pure elemental function Kabsch_worksize(d) result(res)
-    integer(IK), intent(in)           :: d
-    !! matrix collumn dimension.
-    real(RK)                          :: dum(1)
-    integer(IK)                       :: res, info
+! pure elemental function Kabsch_worksize(d) result(res)
+!   integer(IK), intent(in)           :: d
+!   !! matrix collumn dimension.
+!   real(RK)                          :: dum(1)
+!   integer(IK)                       :: res, info
 !
-    if (d < 1) then
-      res = 0
-    else
-      call DGESVD('A', 'A', d, d, dum, d, dum, dum, d, dum, d, dum, -1, info)
-      res =  NINT(dum(1)) + d * d * 3 + d
-    end if
+!   if (d < 1) then
+!     res = 0
+!   else
+!     call DGESVD('A', 'A', d, d, dum, d, dum, dum, d, dum, d, dum, -1, info)
+!     res =  NINT(dum(1)) + d * d * 3 + d
+!   end if
 !
-  end function Kabsch_worksize
+! end function Kabsch_worksize
 !
 !| Calculate the rotation matrix R^T from covariance matrix.
   pure subroutine Kabsch(d, cov, rot, w)
@@ -277,4 +277,4 @@ contains
     rot(:dd) = w(s:s+dd-1)
 !
   end subroutine Kabsch
-end module mod_Kabsch
+end module mod_estimate_rotation_matrix
