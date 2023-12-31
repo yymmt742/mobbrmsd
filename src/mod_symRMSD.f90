@@ -22,6 +22,8 @@ module mod_symRMSD
     real(RK), allocatable  :: w(:, :)
   contains
     procedure :: run        => symRMSD_run
+    procedure :: lowerbound => symRMSD_lowerbound
+    procedure :: upperbound => symRMSD_upperbound
     procedure :: clear      => symRMSD_clear
     final     :: symRMSD_destroy
   end type symRMSD
@@ -81,6 +83,18 @@ contains
     if(yswap) call this%bra%swap(y)
 !
   end subroutine symRMSD_run
+!
+  pure elemental function symRMSD_lowerbound(this) result(res)
+    class(symRMSD), intent(in) :: this
+    real(RK)                   :: res
+    res = this%bra%lowerbound(this%W)
+  end function symRMSD_lowerbound
+!
+  pure elemental function symRMSD_upperbound(this) result(res)
+    class(symRMSD), intent(in) :: this
+    real(RK)                   :: res
+    res = this%bra%upperbound(this%W)
+  end function symRMSD_upperbound
 !
   pure elemental subroutine symRMSD_clear(this)
     class(symRMSD), intent(inout) :: this

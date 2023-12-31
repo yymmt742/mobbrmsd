@@ -92,20 +92,20 @@ target_link_libraries( test_branch_and_prune PRIVATE purelapack )
 add_test( NAME test_branch_and_prune COMMAND test_branch_and_prune )
 
 add_executable( test_symRMSD )
-target_include_directories( test_branch_and_prune PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_branch_and_prune PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_estimate_rotation_matrix.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_symmetry.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_d_matrix.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_branch_and_prune.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_symRMSD.f90
-                                  test_symRMSD.f90 )
+target_include_directories( test_symRMSD PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_symRMSD PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_estimate_rotation_matrix.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_symmetry.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_d_matrix.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_branch_and_prune.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_symRMSD.f90
+                                     test_symRMSD.f90 )
 target_include_directories( test_symRMSD PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_symRMSD PRIVATE unittest )
 target_link_libraries( test_symRMSD PRIVATE purelapack )
