@@ -1,7 +1,7 @@
 program main
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
-  use mod_molecular_rotation
+  use mod_mol_symmetry
   use mod_estimate_rotation_matrix
   use mod_d_matrix
   use mod_unittest
@@ -27,13 +27,13 @@ contains
     integer, parameter         :: mn = m * n
     integer, parameter         :: swp(m, s - 1) = RESHAPE([1, 2, 3, 4, 5], [m, s - 1])
     type(mol_block), parameter :: b = mol_block(1, s, m, n, f, g)
-    type(molecular_rotation)   :: rot
+    type(mol_symmetry)         :: ms
     type(d_matrix)             :: a
     real(RK)                   :: X(d, mn), Y(d, mn)
     real(RK)                   :: LT, LF, LB, H, C(d, d), R(d, d)
     real(RK), allocatable      :: w(:)
 !
-    rot = molecular_rotation(swp)
+    ms = mol_symmetry(swp)
     C = 0D0
     H = 0D0
     a = d_matrix(1, d, 28, b)
@@ -41,7 +41,7 @@ contains
     Y = 0.9D0 * MATMUL(SO3(), X) + 0.1D0 * sample(d, mn)
     print *, d_matrix_memsize(a)
     allocate (w(d_matrix_memsize(a)))
-    call d_matrix_eval(a, rot, X, Y, W)
+    call d_matrix_eval(a, ms, X, Y, W)
     call d_matrix_partial_eval(a, 1, 1, 1, [2, 3, 4, 5], W, LT, H, C, LF, LB, R)
     print'(4f9.3)', LF, LB, LF + LB, LT
     call d_matrix_partial_eval(a, 2, 2, 1, [3, 4, 5], W, LT, H, C, LF, LB, R)
@@ -75,7 +75,7 @@ contains
     integer                  :: perm(3 * g - 6)
     type(mol_block_list)     :: blk
     type(mol_block)          :: b(l)
-    type(molecular_rotation) :: rot(l)
+    type(mol_symmetry) :: ms(l)
     type(d_matrix_list)      :: a
     real(RK)                 :: X(d, mnl), Y(d, mnl)
     real(RK), allocatable    :: w(:)
@@ -83,11 +83,11 @@ contains
     integer                  :: i, j, k
 !
     do concurrent(i=1:l)
-      rot(i) = molecular_rotation(swp(:, :i - 1))
+      ms(i) = mol_symmetry(swp(:, :i - 1))
     end do
 !
     do i = 1, l
-      b(i) = mol_block(0, rot(i)%n_sym() + 1, m + i, n, f, g - i)
+      b(i) = mol_block(0, ms(i)%n_sym() + 1, m + i, n, f, g - i)
     end do
 !
     k = 0
@@ -109,7 +109,7 @@ contains
 !
     allocate (w(a%memsize()))
 !
-    call a%eval(rot, X, Y, W)
+    call a%eval(ms, X, Y, W)
     print *, W(1)
     print'(3f9.3)', W(2:10)
     print'(*(f9.3))', W(a%o:a%o+l-1)
@@ -174,13 +174,13 @@ contains
     type(mol_block)          :: b = mol_block(0, 2, m, n, f, g)
     type(d_matrix_list)      :: dm
     type(mol_block_list)     :: blk
-    type(molecular_rotation) :: rot(s)
+    type(mol_symmetry) :: ms(s)
     real(RK)                 :: X(d, mn), Y(d, mn)
     real(RK)                 :: R1(6, 2, 2, 2), R2(6, 2, 2, 2)
     real(RK), allocatable    :: W(:)
     integer                  :: i, j, k
 !
-    rot(1) = molecular_rotation(RESHAPE([2, 1, 3, 4, 5], [m, 1]))
+    ms(1) = mol_symmetry(RESHAPE([2, 1, 3, 4, 5], [m, 1]))
     blk = mol_block_list(d, s, [b])
     dm = d_matrix_list(blk, 1)
     allocate (w(dm%memsize()))
@@ -189,17 +189,17 @@ contains
     X = sample(d, mn)
     Y = sample(d, mn)
 !
-    call dm%eval(rot, X, Y, W)
+    call dm%eval(ms, X, Y, W)
 !
     do k = 1, 2
     do j = 1, 2
     do i = 1, 2
-      R1(1, i, j, k) = sd(d, X, swp(d, m, n, [1, 2, 3], [i, j, k] - 1, rot(1), Y))
-      R1(2, i, j, k) = sd(d, X, swp(d, m, n, [1, 3, 2], [i, j, k] - 1, rot(1), Y))
-      R1(3, i, j, k) = sd(d, X, swp(d, m, n, [2, 1, 3], [i, j, k] - 1, rot(1), Y))
-      R1(4, i, j, k) = sd(d, X, swp(d, m, n, [2, 3, 1], [i, j, k] - 1, rot(1), Y))
-      R1(5, i, j, k) = sd(d, X, swp(d, m, n, [3, 1, 2], [i, j, k] - 1, rot(1), Y))
-      R1(6, i, j, k) = sd(d, X, swp(d, m, n, [3, 2, 1], [i, j, k] - 1, rot(1), Y))
+      R1(1, i, j, k) = sd(d, X, swp(d, m, n, [1, 2, 3], [i, j, k] - 1, ms(1), Y))
+      R1(2, i, j, k) = sd(d, X, swp(d, m, n, [1, 3, 2], [i, j, k] - 1, ms(1), Y))
+      R1(3, i, j, k) = sd(d, X, swp(d, m, n, [2, 1, 3], [i, j, k] - 1, ms(1), Y))
+      R1(4, i, j, k) = sd(d, X, swp(d, m, n, [2, 3, 1], [i, j, k] - 1, ms(1), Y))
+      R1(5, i, j, k) = sd(d, X, swp(d, m, n, [3, 1, 2], [i, j, k] - 1, ms(1), Y))
+      R1(6, i, j, k) = sd(d, X, swp(d, m, n, [3, 2, 1], [i, j, k] - 1, ms(1), Y))
       R2(1, i, j, k) = pe(dm, d, 3, [1, 2, 3, 1, 2, 3, 1, 2, 3], [1, 1, 1], [i, j, k] - 1, W)
       R2(2, i, j, k) = pe(dm, d, 3, [1, 2, 3, 1, 2, 3, 1, 3, 2], [1, 2, 1], [i, j, k] - 1, W)
       R2(3, i, j, k) = pe(dm, d, 3, [1, 2, 3, 2, 1, 3, 2, 1, 3], [2, 1, 1], [i, j, k] - 1, W)
@@ -249,16 +249,16 @@ contains
     res(:, 3) = [a(1) * a(3) - a(2), a(2) * a(3) + a(1), a(3) * a(3)]
   end function SO3
 !
-  pure function swp(d, m, n, per, sym, rot, X) result(res)
+  pure function swp(d, m, n, per, sym, ms, X) result(res)
     integer(IK), intent(in) :: d, m, n, per(:), sym(:)
-    type(molecular_rotation), intent(in) :: rot
+    type(mol_symmetry), intent(in) :: ms
     real(RK), intent(in)    :: X(d, m, n)
     real(RK)                :: tmp(d, m, n), res(d, m * n)
     integer(IK)             :: i
     tmp = X
     do i = 1, SIZE(per)
       tmp(:, :, per(i)) = X(:, :, i)
-      call rot%swap(d, tmp(:, :, per(i)), sym(i))
+      call ms%swap(d, tmp(:, :, per(i)), sym(i))
     end do
     res = RESHAPE(tmp, [d, m * n])
   end function swp

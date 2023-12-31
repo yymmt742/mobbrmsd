@@ -2,7 +2,7 @@ module mod_branch_and_prune
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mol_block
   use mod_group_permutation
-  use mod_molecular_rotation
+  use mod_mol_symmetry
   use mod_d_matrix
   use mod_tree
   implicit none
@@ -27,9 +27,9 @@ module mod_branch_and_prune
     integer(IK), allocatable   :: p(:), q(:)
     type(d_matrix_list)        :: dm
     type(tree)                 :: tr
-    type(breadth_indicator), allocatable  :: bi(:)
-    type(molecular_rotation), allocatable :: mr(:)
-    type(group_permutation), allocatable  :: gp(:)
+    type(breadth_indicator), allocatable :: bi(:)
+    type(mol_symmetry), allocatable      :: ms(:)
+    type(group_permutation), allocatable :: gp(:)
   contains
     procedure :: memsize    => branch_and_prune_memsize
     procedure :: upperbound => branch_and_prune_upperbound
@@ -53,12 +53,12 @@ contains
   end subroutine breadth_indicator_save
 !
 !| generate node instance
-  pure function branch_and_prune_new(blk, p, rot) result(res)
-    type(mol_block_list), intent(in)     :: blk
-    integer(IK), intent(in)              :: p
-    type(molecular_rotation), intent(in), optional :: rot(*)
-    type(branch_and_prune)               :: res
-    integer(IK)                          :: i, j
+  pure function branch_and_prune_new(blk, p, ms) result(res)
+    type(mol_block_list), intent(in)         :: blk
+    integer(IK), intent(in)                  :: p
+    type(mol_symmetry), intent(in), optional :: ms(*)
+    type(branch_and_prune)                   :: res
+    integer(IK)                              :: i, j
 !
     res%dm = d_matrix_list(blk, p)
     res%nd = res%dm%n_depth()
@@ -96,10 +96,10 @@ contains
     end do
 !
     allocate (res%gp(res%dm%l))
-    allocate (res%mr(res%dm%l))
-    if (PRESENT(rot)) then
+    allocate (res%ms(res%dm%l))
+    if (PRESENT(ms)) then
       do concurrent(i=1:res%dm%l)
-        res%mr(i) = rot(i)
+        res%ms(i) = ms(i)
       end do
     end if
 !
@@ -118,7 +118,7 @@ contains
     real(RK), intent(inout)                :: W(*)
     integer(IK)                            :: p, i, j, k
 !
-    call this%dm%eval(this%mr, X, Y, W)
+    call this%dm%eval(this%ms, X, Y, W)
     call this%tr%reset()
     W(this%tr%upperbound) = RHUGE
 !
@@ -281,21 +281,21 @@ contains
 !
     do i = 1, this%dm%l
       call swap(this%dm%d, this%dm%m(i)%m, this%dm%m(i)%g, &
-     &          this%bi(this%p(i)), this%mr(i), this%gp(i), &
+     &          this%bi(this%p(i)), this%ms(i), this%gp(i), &
      &          X(this%q(i)))
     end do
 !
   contains
 !
-    pure subroutine swap(d, m, g, bi, mr, gp, X)
-      integer(IK), intent(in)              :: d, m, g
-      type(breadth_indicator), intent(in)  :: bi(g)
-      type(molecular_rotation), intent(in) :: mr
-      type(group_permutation), intent(in)  :: gp
-      real(RK), intent(inout)              :: X(d, m, g)
-      integer(IK)                          :: i
+    pure subroutine swap(d, m, g, bi, ms, gp, X)
+      integer(IK), intent(in)             :: d, m, g
+      type(breadth_indicator), intent(in) :: bi(g)
+      type(mol_symmetry), intent(in)      :: ms
+      type(group_permutation), intent(in) :: gp
+      real(RK), intent(inout)             :: X(d, m, g)
+      integer(IK)                         :: i
       do concurrent(i=1:g)
-        call mr%swap(d, X(1, 1, i), bi(i)%jsym)
+        call ms%swap(d, X(1, 1, i), bi(i)%jsym)
       end do
       call gp%reverse(d * m, X)
     end subroutine swap
@@ -318,7 +318,7 @@ contains
     call this%tr%clear()
     if (ALLOCATED(this%p)) deallocate (this%p)
     if (ALLOCATED(this%q)) deallocate (this%q)
-    if (ALLOCATED(this%mr)) deallocate (this%mr)
+    if (ALLOCATED(this%ms)) deallocate (this%ms)
     if (ALLOCATED(this%gp)) deallocate (this%gp)
   end subroutine branch_and_prune_clear
 !

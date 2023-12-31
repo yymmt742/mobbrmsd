@@ -1,7 +1,8 @@
 module mod_symRMSD
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
-  use mod_tree
+  use mod_branch_and_cut
   implicit none
+!
 !
 contains
 !
