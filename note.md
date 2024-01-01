@@ -2,13 +2,13 @@
 
 ## 分子座標表現
 
-$m$分子からなる同種分子が $N$ 個からなる分子集合体の原子座標を考える。分子座標を
+$m$ 分子からなる同種分子が $N$ 個からなる分子集合体の原子座標を考える。分子座標を
 
 $$
 X_I=\{x_{jI}\}_{j}\in\mathbb{R}^{d\times m}
 $$
 
-で表す。ここで$x_{jI}\in\mathbb{R}^d$は $I$ 番目の分子の $j$ 番目の原子である。指示ベクトル $e_I$ を
+で表す。ここで $x_{jI}\in\mathbb{R}^d$は $I$ 番目の分子の $j$ 番目の原子である。指示ベクトル $e_I$ を
 
 $$
 e_I=\{\delta_{IK}\}_K\in\mathbb{R}^{1\times N}
@@ -24,17 +24,18 @@ $$
 などが成り立つ。分子集合体の原子座標は
 
 $$
-X=\sum_{I=1}^Ne_I\otimes X_I\in\R^{d\times Nm}
+X=\sum_{I=1}^Ne_I\otimes X_I\in\mathbb{R}^{d\times Nm}
 $$
 
 で表わす。ここで $\otimes$ はクロネッカー積である。
 
 ## 分子対称性補正最小化RMSD
 
-分子集合体座標の組 $X,Y\in\R^{d\times mN}$ に対して、分子対称性補正RMSDを以下で定義する。
+分子集合体座標の組 $X,Y\in\mathbb{R}^{d\times mN}$ に対して、分子対称性補正RMSDを以下で定義する。
 
 $$
-\text{RMSD}(X,Y)=\min_{R\in\text{SO}_d,\mu\in\mathcal M,\nu\in\mathcal N}\sqrt{\frac{1}{NM}\sum_{I=1}^N\sum_{j=1}^m\|x_{jI}-Ry_{\mu(j)\nu(I)}\|^2}
+\text{RMSD}(X,Y)=\\
+\min_{R, \mu,\nu } \sqrt{\frac{1}{Nm}\sum_{I=1}^N\sum_{j=1}^m\|x_{jI}-Ry_{\mu(j)\nu(I)}\|^2}
 $$
 
 ここで$R\in\mathbb R^{d\times d}$は $d$ 次元回転行列、すなわち
@@ -44,24 +45,26 @@ RR^T=E_d, \det R=1
 $$
 
 を満たす。
-ここで $E_n$ は $n$ 次元単位行列を表す。$\nu,\mu$ はそれぞれ同一のインデックス集合を始域と終域とする単射 $\nu:\{1,2,\dots,N\}\mapsto\{1,2,\dots,N\},\mu:\{1,2,\dots,m\}\mapsto\{1,2,\dots,m\}$ である。
+ここで $E_n$ は $n$ 次元単位行列を表す。 $\nu,\mu$ はそれぞれ同一のインデックス集合を始域と終域とする単射 $\nu:\{1,2,\dots,N\}\mapsto\{1,2,\dots,N\}$ , $\mu:\{1,2,\dots,m\}\mapsto\{1,2,\dots,m\}$ である。
 考慮する置換の集合を $\mathcal{N}\subset S_N,\mu\in\mathcal{M}\subset S_m$ と記載する。
-ここで$S_n$は$n$次の置換全体の集合である。
+ここで $S_n$ は $n$ 次の置換全体の集合である。
 最小化RMSDは
 
 $$
-&&\underset{R,\nu,\mu}{\min}\text{\ RMSD}(X,Y,R,\nu,\mu)\\
+\begin{split}
+\underset{R,\nu,\mu}{\min}\text{\ RMSD}(X,Y,R,\nu,\mu)
 &=&\underset{R,\nu,\mu}{\min}\sqrt{\frac{1}{Nm}\sum_{I=1}^N\sum_{j=1}^m\|x_{jI}-Ry_{\mu(j)\nu(I)}\|^2}\\
 &=&\underset{R,\nu,\mu}{\min}\sum_{I=1}^N\sum_{j=1}^m\|x_{jI}-Ry_{\mu(j)\nu(I)}\|^2\\
 &=&\underset{R,\nu,\mu}{\min}\sum_{I=1}^N\sum_{j=1}^m\left(\text{tr}\left[x_{jI}^Tx_{jI}\right]+\text{tr}\left[y_{\mu(j)\nu(I)}^TR^TRy_{\mu(j)\nu(I)}\right]\right.\\
 &&\left.-\text{tr}\left[x_{jI}^TRy_{\mu(j)\nu(I)}\right]-\text{tr}\left[y_{\mu(j)\nu(I)}^TR^Tx_{jI}\right]\right)\\
 &=&\text{tr}[X^TX]+\text{tr}[Y^TY]-2\underset{R,\nu,\mu}{\max}\sum_{I=1}^M\sum_{j=1}^N\text{tr}[x_{jI}^TRy_{\mu(j)\nu(I)}]\\
+\end{split}
 $$
 
 と変形できるから、問題は右辺第三項の最大化問題となり、
 
 $$
-R^*,\nu^*,\mu^*=\underset{R,\nu,\mu}{\arg\max}\sum_{I=1}^N\sum_{j=1}^m\text{tr}[x_{jI}^TRy_{\mu(j)\nu(I)}]
+R^{\*},\nu^{\*},\mu^{\*} = \underset{R,\nu,\mu}{\arg\max} \sum_{I=1}^N \sum_{j=1}^m \text{tr}\left[ x_{jI}^TRy_{\mu(j)\nu(I)} \right]
 $$
 
 が求まればよいことになる。
