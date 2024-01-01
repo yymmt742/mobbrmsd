@@ -1,7 +1,6 @@
 module mod_mol_symmetry
   use mod_params, only: IK, RK
   use mod_group_permutation
-  use mod_optarg
   use mod_group_permutation
   implicit none
   private
