@@ -71,7 +71,7 @@ $$
 
 ## 分子置換
 
-分子集合体構造 $X\in\mathbb{R}^{d\times mN}$ に対して、その分子間置換行列と分子内置換は置換行列 $P\in\R^{N\times N},Q_I\in\R^{m\times m}$ を用いて
+分子集合体構造 $X\in\mathbb{R}^{d\times mN}$ に対して、その分子間置換行列と分子内置換は置換行列 $P\in\mathbb{R}^{N\times N},Q_I\in\mathbb{R}^{m\times m}$ を用いて
 
 $$
 P^{(mN)}=P\otimes E_M
@@ -96,15 +96,18 @@ $$
 と書き直しておく。任意の分子置換操作はこれらの積
 
 $$
-P^{(mN)}Q^{(mN)}&=&
-\left(P\otimes E_M\right)\left(\sum_{I=1}^N\sum_{s=1}^S\delta_{s\sigma(I)}\cdot e_I^Te_I\otimes Q^{(s)}\right)\\
+\begin{split}
+&&P^{(mN)}Q^{(mN)}\\
+&=&\left(P\otimes E_M\right)\left(\sum_{I=1}^N\sum_{s=1}^S\delta_{s\sigma(I)}\cdot e_I^Te_I\otimes Q^{(s)}\right)\\
 &=&\sum_{I=1}^N\sum_{s=1}^S\delta_{s\sigma(I)}\cdot Pe_I^Te_I\otimes Q_I\\
 &=&\sum_{I=1}^N\sum_{s=1}^S\delta_{s\sigma(I)}\cdot P_I\otimes Q_I
+\end{split}
 $$
 
 で表現できる。
 
-一般に $P^{(mN)},Q^{(nN)}$ は非可換で$Q^{(mN)}=E_N\otimes Q$ のとき、つまり $Q_1=Q_2=\dots=Q_N$ のときのみ可換になる
+一般に $P^{(mN)},Q^{(nN)}$ は非可換で $Q^{(mN)}=E_N\otimes Q$ のとき、つまり $Q_1=Q_2=\dots=Q_N$ のときのみ可換になる。
+
 $$
 P^{(MN)}Q^{(MN)}=(P\otimes E_M)(E_N\otimes Q)=(E_N\otimes Q)(P\otimes E_M)=Q^{(MN)}P^{(MN)}
 $$
@@ -116,30 +119,33 @@ $$
 $$
 \begin{split}
 &\textrm{tr}\left[X^TRYP^{(mN)}Q^{(mN)}\right]\\
-=&\textrm{tr}\left[\left(\sum_{I=1}^Ne_I\otimes X_I\right)^T\left(E_1\otimes R\right)\left(\sum_{J=1}^Ne_J\otimes Y_J\right)\left(\sum_{K=1}^N\sum_{s=1}^S\delta_{s\sigma(K)}\cdot P_K\otimes Q^{(s)}\right)\right]\leftarrow 定義より\\
-=&\sum_{I=1}^N\sum_{J=1}^N\sum_{K=1}^N\textrm{tr}\left[\left(e_I\otimes X_I\right)^T\left(E_1\otimes R\right)\left(e_J\otimes Y_J\right)\left(P_K\otimes Q^{(s)}\right)\right]\leftarrowトレースの線形性\\
-=&\sum_{I=1}^N\sum_{J=1}^N\sum_{K=1}^N\sum_{s=1}^S \delta_{s\sigma(K)} \textrm{tr}\left[e_I^Te_JP_K\otimes X_I^TRY_JQ^{(s)}\right]\leftarrow クロネッカー積の混合積性\\
-=&\sum_{I=1}^N\sum_{K=1}^N\sum_{s=1}^S \delta_{s\sigma(K)}\textrm{tr}\left[\sum_{J=1}^Np_{JK}\left(e_I^Te_K\otimes X_I^TRY_JQ^{(s)}\right)\right]\leftarrow e_JP_K=p_{JK}e_K\\
-=&\sum_{I=1}^N\sum_{K=1}^N\sum_{s=1}^S \delta_{s\sigma(K)}\textrm{tr}\left[(e_I^Te_K)\otimes \sum_{J=1}^Np_{JK}\left(X_I^TRY_JQ^{(s)}\right)\right]\leftarrow クロネッカー積の線形性\\
-=&\sum_{I=1}^N\sum_{K=1}^N\sum_{s=1}^S \delta_{s\sigma(K)}\delta_{IK}\cdot \textrm{tr}\left[ \sum_{J=1}^Np_{JK}X_I^TRY_JQ^{(s)}\right]\leftarrow \textrm{tr}[(e_I^Te_K)\otimes A]=\delta_{IK}\textrm{tr}[A]\\
-=&\sum_{I=1}^N\sum_{J=1}^N\sum_{s=1}^S \delta_{s\sigma(I)}p_{JI}\cdot\textrm{tr}\left[X_I^TRY_JQ^{(s)}\right]\leftarrow\textrm{tr}[(e_I^Te_K)\otimes A]=\delta_{IK}\textrm{tr}[A]\\
-=&\sum_{I=1}^N\sum_{J=1}^N\sum_{s=1}^S \delta_{s\sigma(I)}p_{JI}\cdot\textrm{tr}\left[RY_JQ^{(s)}X_I^T\right]\leftarrow 行列の線形性とトレースの循環性\\
-=&\sum_{I=1}^N\sum_{J=1}^N\sum_{s=1}^S \delta_{s\sigma(I)}\delta_{I\nu^{-1}(J)}\cdot\textrm{tr}\left[RY_JQ^{(s)}X_I^T\right]\leftarrow Pは置換行列\\
-=&\sum_{I=1}^N\sum_{J=1}^N\sum_{s=1}^S \delta_{s\sigma(I)}\delta_{I\nu^{-1}(J)}\cdot\textrm{tr}\left[RC_{sIJ}\right]\leftarrow 定義\ C_{sIJ}:=Y_JQ^{(s)}X_I^T\\
+=&\textrm{tr}\left[\left(\sum_{I=1}^Ne_I\otimes X_I\right)^T\left(E_1\otimes R\right)\left(\sum_{J=1}^Ne_J\otimes Y_J\right)\left(\sum_{K=1}^N\sum_{s=1}^S\delta_{s\sigma(K)}\cdot P_K\otimes Q^{(s)}\right)\right]&\leftarrow 定義より\\
+=&\sum_{I=1}^N\sum_{J=1}^N\sum_{K=1}^N\textrm{tr}\left[\left(e_I\otimes X_I\right)^T\left(E_1\otimes R\right)\left(e_J\otimes Y_J\right)\left(P_K\otimes Q^{(s)}\right)\right]&\leftarrowトレースの線形性\\
+=&\sum_{I=1}^N\sum_{J=1}^N\sum_{K=1}^N\sum_{s=1}^S \delta_{s\sigma(K)} \textrm{tr}\left[e_I^Te_JP_K\otimes X_I^TRY_JQ^{(s)}\right]&\leftarrow クロネッカー積の混合積性\\
+=&\sum_{I=1}^N\sum_{K=1}^N\sum_{s=1}^S \delta_{s\sigma(K)}\textrm{tr}\left[\sum_{J=1}^Np_{JK}\left(e_I^Te_K\otimes X_I^TRY_JQ^{(s)}\right)\right]&\leftarrow e_JP_K=p_{JK}e_K\\
+=&\sum_{I=1}^N\sum_{K=1}^N\sum_{s=1}^S \delta_{s\sigma(K)}\textrm{tr}\left[(e_I^Te_K)\otimes \sum_{J=1}^Np_{JK}\left(X_I^TRY_JQ^{(s)}\right)\right]&\leftarrow クロネッカー積の線形性\\
+=&\sum_{I=1}^N\sum_{K=1}^N\sum_{s=1}^S \delta_{s\sigma(K)}\delta_{IK}\cdot \textrm{tr}\left[ \sum_{J=1}^Np_{JK}X_I^TRY_JQ^{(s)}\right]&\leftarrow \textrm{tr}[(e_I^Te_K)\otimes A]=\delta_{IK}\textrm{tr}[A]\\
+=&\sum_{I=1}^N\sum_{J=1}^N\sum_{s=1}^S \delta_{s\sigma(I)}p_{JI}\cdot\textrm{tr}\left[X_I^TRY_JQ^{(s)}\right]&\leftarrow\textrm{tr}[(e_I^Te_K)\otimes A]=\delta_{IK}\textrm{tr}[A]\\
+=&\sum_{I=1}^N\sum_{J=1}^N\sum_{s=1}^S \delta_{s\sigma(I)}p_{JI}\cdot\textrm{tr}\left[RY_JQ^{(s)}X_I^T\right]&\leftarrow 行列の線形性とトレースの循環性\\
+=&\sum_{I=1}^N\sum_{J=1}^N\sum_{s=1}^S \delta_{s\sigma(I)}\delta_{I\nu^{-1}(J)}\cdot\textrm{tr}\left[RY_JQ^{(s)}X_I^T\right]&\leftarrow Pは置換行列\\
+=&\sum_{I=1}^N\sum_{J=1}^N\sum_{s=1}^S \delta_{s\sigma(I)}\delta_{I\nu^{-1}(J)}\cdot\textrm{tr}\left[RC_{sIJ}\right]&\leftarrow 定義\ C_{sIJ}:=Y_JQ^{(s)}X_I^T\\
 =&\sum_{I=1}^N\textrm{tr}\left[RC_{\sigma(I)I\nu(I)}\right]\\
 \end{split}
 $$
 
-ここで登場した共分散行列 $C_{sIJ}\in\R^{d\times d}$ は分子内置換 $Q^{(s)}$ が既知なら与えられた構造に対して簡単に評価できる。したがって、まず与えられた構造に対して分散共分散テンソルを計算しておいて、その後 $R,\sigma,\nu$ を変分的に最大化すると効率が良い。 
+ここで登場した共分散行列 $C_{sIJ}\in\mathbb{R}^{d\times d}$ は分子内置換 $Q^{(s)}$ が既知なら与えられた構造に対して簡単に評価できる。したがって、まず与えられた構造に対して分散共分散テンソルを計算しておいて、その後 $R,\sigma,\nu$ を変分的に最大化すると効率が良い。 
 
 ## 変分下限
 
 組み合わせ最適化のため、分枝計画法を用いる。分枝計画法に必要なのは部分集合への分割と部分集合に対する下限（上限）の計算である。そこで、話を再びRMSD値の最小化へと戻し、分割しやすい形へと変形する。評価関数式Xは$N$個の定数と行列トレースの和であり、そのインデックス毎に割当 $\sigma,\nu$ を一つずつ重複組合せと順列で選んでいけば、重複なく木構造を作ることができる。
 
 $$
-\text{\ RMSD}(X,Y,R,\sigma,\mu)&=&\text{tr}[X^TX]+\text{tr}[Y^TY]-2\sum_{I=1}^N\textrm{tr}\left[RC_{\sigma(I)I\nu(I)}\right]\\
+\begin{split}
+&&\text{\ RMSD}(X,Y,R,\sigma,\mu)\\
+&=&\text{tr}[X^TX]+\text{tr}[Y^TY]-2\sum_{I=1}^N\textrm{tr}\left[RC_{\sigma(I)I\nu(I)}\right]\\
 &=&\sum_{I=1}^N\left(\text{tr}[X_I^TX_I]+\text{tr}[Y_{\nu(I)}^TY_{\nu(I)}]-2\text{tr}\left[RC_{\sigma(I)I\nu(I)}\right]\right)\\
-&=&\sum_{I=1}^N\left(S_{I\nu(I)}-2\text{tr}\left[RC_{\sigma(I)I\nu(I)}\right]\right)\\
+&=&\sum_{I=1}^N\left(S_{I\nu(I)}-2\text{tr}[RC_{\sigma(I)I\nu(I)}]\right)\\
+\end{split}
 $$
 
 ここで定義した自己相関関数のトレース $S_{IJ}:=\text{tr}[X_I^TX_I]+\text{tr}[Y_{J}^TY_{J}]$ も $C_{sIJ}$ と同様に事前に計算しておくことができる。
@@ -147,12 +153,14 @@ $$
 まず、全体の下限を求める。下限の作り方は任意性があるが、ここでは回転行列をインデックス毎に分割することで確認する。
 
 $$
+\begin{split}
 &&\min_{R,\sigma,\nu}\sum_{I=1}^N\left(S_{I\nu(I)}-2\text{tr}\left[RC_{\sigma(I)I\nu(I)}\right]\right)&\\
-&\ge&\min_{R_1,R_2,\dots,R_N,\sigma,\nu}\sum_{I=1}^N\left(S_{I\nu(I)}-2\text{tr}\left[R_IC_{\sigma(I)I\nu(I)}\right]\right)&\leftarrow 変分空間を広げた\\
 &=&\min_{\nu}\sum_{I=1}^N\left(S_{I\nu(I)}-2\max_{R_I,\sigma}\text{tr}\left[R_IC_{\sigma(I)I\nu(I)}\right]\right)&\leftarrow 最小値の線形性\\
-&=&\min_{\nu}\sum_{I=1}^N\left(S_{I\nu(I)}-2\text{tr}\left[R^*_IC_{\sigma^*(I)I\nu(I)}\right]\right)&\leftarrow \arg\maxの代入\\
-&=&\min_{\nu}\sum_{I=1}^N\left(S_{I\nu(I)}-2T_{I\nu(I)}\right)&\leftarrow T_{IJ}:=\text{tr}\left[R^*_IC_{\sigma^*(I)IJ}\right]\\
+&=&\min_{\nu}\sum_{I=1}^N S_{I\nu(I)}-2\text{tr}\left[R^b_IC_{\sigma^b(I)I\nu(I)}\right]&\leftarrow\arg\maxの代入\\
+&=&\min_{\nu}\sum_{I=1}^N\left(S_{I\nu(I)}-2T_{I\nu(I)}\right)&\leftarrow T_{IJ}:=\text{tr}\left[R^b_IC_{\sigma^b(I)IJ}\right]\\
+\end{split}
 $$
+
 
 行列のトレースを最大化する元 $R_I^*,\sigma^*$ はKabschのアルゴリズム、あるいは四元数を用いたキー行列の最大固有値の推定によって簡単に求まる。また、行列 
 
@@ -160,11 +168,12 @@ $$
 L=\{S_{IJ}-2T_{IJ}\}_{IJ}
 $$
 
-を定義してハンガリアンアルゴリズムを用いることによって、これを最小化する組み合わせ $\nu_0^*$ は効率的に発見できる。これより
+を定義してハンガリアンアルゴリズムを用いることによって、これを最小化する組み合わせ $\nu_0^{\*}$ は効率的に発見できる。これより
 
 $$
 \text{\ RMSD}(X,Y,R,\sigma,\mu)\ge\sum_{I=1}^N L_{I\nu_0^*(I)}
 $$
+
 が示され、解は必ずこの数値以上であることを保証できる。
 
 ## 分枝
