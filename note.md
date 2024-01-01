@@ -217,22 +217,20 @@ $$
 $$
 
 $$
-\mathcal{N}\_{J}=\mathcal{N}\_{J1}\cup\mathcal{N}\_{J1}\cup\dots\cup\mathcal{N}\_{J(N-1)}
-
+\mathcal{N}\_{J}=\mathcal{N}\_{J1}\cup\mathcal{N}\_{J2}\cup\dots\cup\mathcal{N}\_{J(N-1)}
 $$
 
-
-となる分割を考えて、下限を $\sigma\in\Sigma_{ss'},\nu\in\mathcal{N}_{JJ'}$
+となる分割を考えて、下限を $\sigma\in\Sigma_{ss'},\nu\in\mathcal{N}_{JJ'}$ に対して
 
 $$
 \begin{split}
 &&\min_{R,\sigma,\nu}\left(S_{1J}+S_{2J'}-2\text{tr}\left[RC_{s1J}\right]-2\text{tr}\left[RC_{s'2J'}\right]+\sum_{I=3}^N\left(S_{I\nu(I)}-2\text{tr}\left[RC_{\sigma(I)I\nu(I)}\right]\right)\right)\\
-&\ge&S_{1J}+S_{2J'}-2\max_{R_2}\text{tr}\left[R_2\left(C_{s1J}+C_{s'2J'}\right)\right]+
+&\ge&S_{1J}+S_{2J'}-2\max_{R_2}\text{tr}\left\[R\_2\left(C\_{s1J}+C_{s'2J'}\right)\right\]+\min_{\nu\in\mathcal{N}\_{JJ'}}\sum\_{I=3}^N\left(S_{I\nu(I)}-2\max_{R_I,\sigma}\text{tr}\left\[R\_IC\_{\sigma(I)I\nu(I)}\right\]\right)\\
+&=&S_{1J}+S_{2J'}-2\text{tr}\left[R_2^b\left(C_{s1J}+C_{s'2J'}\right)\right]+\sum_{I=3}^NL_{I\nu^b_2(I)}\\
 \end{split}
 $$
 
-\min_{\nu\in\mathcal{N}_{JJ'}}\sum_{I=3}^N\left(S_{I\nu(I)}-2\max_{R_I,\sigma}\text{tr}\left[R_IC_{\sigma(I)I\nu(I)}\right]\right)\\
-&=&S_{1J}+S_{2J'}-2\text{tr}\left[R_2^*\left(C_{s1J}+C_{s'2J'}\right)\right]+\sum_{I=3}^NL_{I\nu^*_2(I)}\\
+
 
 と定めれば、必ず親集合よりも大きな値を持つことが確認できる。
 
