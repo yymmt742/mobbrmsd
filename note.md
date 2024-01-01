@@ -179,7 +179,7 @@ $$
 
 ## 分枝
 
-$\Sigma$ を $\sigma$ 全体の集合、$\mathcal N$ を $\nu$ 全体の集合（ $=S_N$ ）として、次の分割を考える。
+$\Sigma$ を $\sigma$ 全体の集合、 $\mathcal{N}$ を $\nu$ 全体の集合（ $=S_N$ ）として、次の分割を考える。
 
 $$
 \Sigma_s=\{\sigma\in\Sigma;\sigma(1)=s\}
@@ -192,38 +192,47 @@ $$
 このとき $\Sigma=\Sigma_1\cup\Sigma_2\cup\dots\cup\Sigma_S, \mathcal{N}=\mathcal{N}_1\cup\mathcal{N}_2\cup\dots\cup\mathcal{N}_N$ となっており、それぞれの部分集合に重複はない。 
 したがって、これらの組集合 $(\sigma_s,\nu_J)\in(\Sigma_s,\mathcal{N}_J)$ も重複はなく、それらの直積集合の和集合は $\sigma,\nu$ 全体と一致する。
 この分割は $SN$ 個 の部分集合を与える。
-$\sigma\in\Sigma_s,\nu\in\mathcal{N}_J$ に対する評価関数は
+$\sigma\in\Sigma_s,\nu\in\mathcal{N}_J$ に対する評価関数は $\sigma\in\Sigma_s,\nu\in\mathcal{N}_J$ に対して
 
 $$
-&&\min_{R,\sigma\in\Sigma_s,\nu\in\mathcal{N}_J}\left(S_{1J}-2\text{tr}\left[RC_{s1J}\right]+\sum_{I=2}^N\left(S_{I\nu(I)}-2\text{tr}\left[RC_{\sigma(I)I\nu(I)}\right]\right)\right)\\
-&\ge&S_{1J}-2\max_{R_1}\text{tr}\left[R_1C_{s1J}\right]+\min_{\nu\in\mathcal{N}_J}\sum_{I=2}^N\left(S_{I\nu(I)}-2\max_{R_I,\sigma}\text{tr}\left[R_IC_{\sigma(I)I\nu(I)}\right]\right)\\
-&=&S_{1J}-2\text{tr}\left[R_1^*C_{s1J}\right]+\sum_{I=2}^NL_{I\nu^*_1(I)}\\
+\begin{split}
+&\min_{R,\sigma,\nu} \left(S_{1J}-2\text{tr}\left[RC_{s1J}\right]+\sum_{I=2}^N\left(S_{I\nu(I)}-2\text{tr}\left[RC_{\sigma(I)I\nu(I)}\right]\right)\right)\\
+\ge& S_{1J}-2\max_{R_1}\text{tr}\left[R_1C_{s1J}\right]+\min_{\nu}\sum_{I=2}^N\left(S_{I\nu(I)}-2\max_{R_I,\sigma}\text{tr}[R_IC_{\sigma(I)I\nu(I)}]\right)\\
+=&S_{1J}-2\text{tr}\left[R_1^bC_{s1J}\right]+\sum_{I=2}^NL_{I\nu^b_1(I)}\\
+\end{split}
 $$
 
 で与えられる。この右辺第二項もKabschアルゴリズムとハンガリアンアルゴリズムによって簡単に計算できるから、容易に評価可能である。また、この値は
 
 $$
-S_{IJ}-2\text{tr}\left[R_1^*C_{sIJ}\right]+\sum_{I=2}^NL_{I\nu^*_1(I)}=L_{IJ}+\sum_{I=2}^NL_{I\nu^*_1(I)}=\sum_{I=1}^NL_{I\nu^*_1(I)}\ge\sum_{I=1}^NL_{I\nu^*_0(I)}
+S_{IJ}-2\text{tr}\left[R_1^bC_{sIJ}\right]+\sum_{I=2}^NL_{I\nu^b_1(I)}=L_{IJ}+\sum_{I=2}^NL_{I\nu^b_1(I)}=\sum_{I=1}^NL_{I\nu^b_1(I)}\ge\sum_{I=1}^NL_{I\nu^b_0(I)}
 $$
 
 だから、部分集合の下限は集合全体の下限よりも大きな値を持つことが確認できる。
 
 同様に 
+
 $$
 \Sigma_s=\Sigma_{s1}\cup\Sigma_{s2}\cup\dots\cup\Sigma_{sS}
 $$
 
 $$
-\mathcal{N}_J=\mathcal{N}_{J1}\cup\mathcal{N}_{J1}\cup\dots\cup\mathcal{N}_{J(N-1)}
-$$
-
-となる分割を考えて、下限を
+\mathcal{N}\_{J}=\mathcal{N}\_{J1}\cup\mathcal{N}\_{J1}\cup\dots\cup\mathcal{N}\_{J(N-1)}
 
 $$
-&&\min_{R,\sigma\in\Sigma_{ss'},\nu\in\mathcal{N}_{JJ'}}\left(S_{1J}+S_{2J'}-2\text{tr}\left[RC_{s1J}\right]-2\text{tr}\left[RC_{s'2J'}\right]+\sum_{I=3}^N\left(S_{I\nu(I)}-2\text{tr}\left[RC_{\sigma(I)I\nu(I)}\right]\right)\right)\\
-&\ge&S_{1J}+S_{2J'}-2\max_{R_2}\text{tr}\left[R_2\left(C_{s1J}+C_{s'2J'}\right)\right]+\min_{\nu\in\mathcal{N}_{JJ'}}\sum_{I=3}^N\left(S_{I\nu(I)}-2\max_{R_I,\sigma}\text{tr}\left[R_IC_{\sigma(I)I\nu(I)}\right]\right)\\
+
+
+となる分割を考えて、下限を $\sigma\in\Sigma_{ss'},\nu\in\mathcal{N}_{JJ'}$
+
+$$
+\begin{split}
+&&\min_{R,\sigma,\nu}\left(S_{1J}+S_{2J'}-2\text{tr}\left[RC_{s1J}\right]-2\text{tr}\left[RC_{s'2J'}\right]+\sum_{I=3}^N\left(S_{I\nu(I)}-2\text{tr}\left[RC_{\sigma(I)I\nu(I)}\right]\right)\right)\\
+&\ge&S_{1J}+S_{2J'}-2\max_{R_2}\text{tr}\left[R_2\left(C_{s1J}+C_{s'2J'}\right)\right]+
+\end{split}
+$$
+
+\min_{\nu\in\mathcal{N}_{JJ'}}\sum_{I=3}^N\left(S_{I\nu(I)}-2\max_{R_I,\sigma}\text{tr}\left[R_IC_{\sigma(I)I\nu(I)}\right]\right)\\
 &=&S_{1J}+S_{2J'}-2\text{tr}\left[R_2^*\left(C_{s1J}+C_{s'2J'}\right)\right]+\sum_{I=3}^NL_{I\nu^*_2(I)}\\
-$$
 
 と定めれば、必ず親集合よりも大きな値を持つことが確認できる。
 
