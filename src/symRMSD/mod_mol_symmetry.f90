@@ -29,7 +29,7 @@ contains
   pure function mol_symmetry_new(sym) result(res)
     integer(IK), intent(in), optional :: sym(:, :)
     !! symmetry indices
-    type(mol_symmetry)          :: res
+    type(mol_symmetry)                :: res
     integer(IK)                       :: i, n
 !
     if (PRESENT(sym)) then

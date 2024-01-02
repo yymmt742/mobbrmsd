@@ -7,13 +7,12 @@ interface
 !
   module driver
 !
-    subroutine hello()
-    end subroutine hello()
-!
-!   subroutine add_molecule(arg, ios)
-!     character(*), intent(in)      :: arg
-!     integer(kind=ik), intent(out) :: ios
-!   end subroutine add_molecule
+  subroutine add_molecule(m, n, s, sym)
+    integer(kind=IK), intent(in) :: m
+    integer(kind=IK), intent(in) :: n
+    integer(kind=IK), intent(in) :: s
+    integer(kind=IK), intent(in) :: sym(*)
+  end subroutine add_molecule
 !
   end module driver
 !

@@ -11,7 +11,8 @@ module mod_symRMSD
     type(mol_block_list)             :: blk
     type(mol_symmetry), allocatable  :: ms(:)
   contains
-    procedure :: clear      => symRMSD_input_clear
+    procedure :: add_molecule => symRMSD_input_add_molecule
+    procedure :: clear        => symRMSD_input_clear
     final     :: symRMSD_input_destroy
   end type symRMSD_input
 !
@@ -34,6 +35,29 @@ module mod_symRMSD
 !
 contains
 !
+  pure subroutine symRMSD_input_add_molecule(this, b, s)
+    class(symRMSD_input), intent(inout) :: this
+    type(mol_block), intent(in)         :: b
+    integer(IK), intent(in)             :: s(*)
+    type(mol_symmetry), allocatable     :: ms(:)
+    integer(IK)                         :: l, i, n, h(2)
+!
+    call this%blk%add_molecule(b)
+!
+    l = this%blk%nspecies()
+    h(1) = this%blk%b(l)%m
+    h(2) = this%blk%b(l)%s
+    n = h(1) * h(2)
+!
+    allocate (ms(l))
+    do concurrent(i=1:l - 1)
+      ms(i) = this%ms(i)
+    end do
+    ms(l) = mol_symmetry(RESHAPE(s(:n), h))
+    call move_alloc(from=ms, to=this%ms)
+!
+  end subroutine symRMSD_input_add_molecule
+
   pure elemental subroutine symRMSD_input_clear(this)
     class(symRMSD_input), intent(inout) :: this
     call this%blk%clear()

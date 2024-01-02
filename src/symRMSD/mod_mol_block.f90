@@ -6,6 +6,8 @@ module mod_mol_block
   public :: mol_block
   public :: mol_block_list
 !
+  integer(IK), parameter :: def_d = 3
+!
 !| molecular block indicator
 !  atomic coordinates vector must be stored in the following format.
 !    X(d,m,n)
@@ -38,17 +40,18 @@ module mod_mol_block
     type(mol_block), allocatable          :: b(:)
     !  mol_blocks
   contains
-    procedure         :: child       => mol_block_list_child
-    procedure         :: invalid     => mol_block_list_invalid
-    procedure         :: natom       => mol_block_list_natom
-    procedure         :: nspatial    => mol_block_list_nspatial
-    procedure         :: nspecies    => mol_block_list_nspecies
-    procedure         :: ispecies    => mol_block_list_ispecies
-    procedure         :: ipointer    => mol_block_list_ipointer
-    procedure         :: n_res       => mol_block_list_n_res
-    procedure         :: res_pointer => mol_block_list_res_pointer
-    procedure         :: has_child   => mol_block_list_has_child
-    procedure         :: clear       => mol_block_list_clear
+    procedure         :: add_molecule => mol_block_list_add_molecule
+    procedure         :: child        => mol_block_list_child
+    procedure         :: invalid      => mol_block_list_invalid
+    procedure         :: natom        => mol_block_list_natom
+    procedure         :: nspatial     => mol_block_list_nspatial
+    procedure         :: nspecies     => mol_block_list_nspecies
+    procedure         :: ispecies     => mol_block_list_ispecies
+    procedure         :: ipointer     => mol_block_list_ipointer
+    procedure         :: n_res        => mol_block_list_n_res
+    procedure         :: res_pointer  => mol_block_list_res_pointer
+    procedure         :: has_child    => mol_block_list_has_child
+    procedure         :: clear        => mol_block_list_clear
     final             :: mol_block_list_destroy
   end type mol_block_list
 !
@@ -68,7 +71,7 @@ contains
     !  molecular block
     type(mol_block_list)        :: res
     integer(IK)                 :: i, p
-    res%d = d
+    res%d = MAX(d, 1)
     if (l < 1) then
       allocate (res%b(0))
       return
@@ -85,11 +88,35 @@ contains
     p = 1
     do i = 1, l
       res%b(i)%p = p
-      p = p + d * res%b(i)%n * res%b(i)%m
+      p = p + res%d * res%b(i)%n * res%b(i)%m
     end do
     res%mg = SUM(res%b%m * res%b%g)
     res%mn = SUM(res%b%m * res%b%n)
   end function mol_block_list_new
+!
+  pure subroutine mol_block_list_add_molecule(this, b)
+    class(mol_block_list), intent(inout) :: this
+    type(mol_block), intent(in)          :: b
+    integer(IK)                          :: nb
+    if(allocated(this%b))then
+      this%b = [this%b, b]
+    else
+      this%b = [b]
+    endif
+    nb = SIZE(this%b)
+    this%b(nb)%s = MAX(1, this%b(nb)%s)
+    this%b(nb)%m = MAX(0, this%b(nb)%m)
+    this%b(nb)%n = MAX(0, this%b(nb)%n)
+    this%b(nb)%f = MAX(0, MIN(this%b(nb)%m, this%b(nb)%f))
+    this%b(nb)%g = MAX(0, MIN(this%b(nb)%n, this%b(nb)%g))
+    this%mg = this%mg + this%b(nb)%m * this%b(nb)%g
+    this%mn = this%mn + this%b(nb)%m * this%b(nb)%n
+    if (nb < 2) then
+      this%b(nb)%p = 1
+    else
+      this%b(nb)%p = this%b(nb - 1)%p + this%d * this%b(nb - 1)%n * this%b(nb - 1)%m
+    end if
+  end subroutine mol_block_list_add_molecule
 !
   pure elemental function mol_block_list_natom(this) result(res)
     class(mol_block_list), intent(in) :: this

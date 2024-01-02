@@ -25,6 +25,7 @@ add_custom_command(
       -I${CMAKE_CURRENT_BINARY_DIR}/..
       -L${CMAKE_CURRENT_BINARY_DIR}/..
       -lsymRMSD
+      -lblas
       --opt=-O2
       --f90flags='
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-std=f2008">
