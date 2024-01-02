@@ -48,12 +48,11 @@ $$
 ここで $E_n$ は $n$ 次元単位行列を表す。 $\nu,\mu$ はそれぞれ同一のインデックス集合を始域と終域とする単射 $\nu:\{1,2,\dots,N\}\mapsto\{1,2,\dots,N\}$ , $\mu:\{1,2,\dots,m\}\mapsto\{1,2,\dots,m\}$ である。
 考慮する置換の集合を $\mathcal{N}\subset S_N,\mu\in\mathcal{M}\subset S_m$ と記載する。
 ここで $S_n$ は $n$ 次の置換全体の集合である。
-最小化RMSDは
+RMSDの最小化は二乗和誤差SDの最小化と等価なので、ここからはSDの最小化を考える。
 
 $$
 \begin{split}
-\underset{R,\nu,\mu}{\min}\text{\ RMSD}(X,Y,R,\nu,\mu)
-&=&\underset{R,\nu,\mu}{\min}\sqrt{\frac{1}{Nm}\sum_{I=1}^N\sum_{j=1}^m\|x_{jI}-Ry_{\mu(j)\nu(I)}\|^2}\\
+\underset{R,\nu,\mu}{\min}\text{\ SD}(X,Y,R,\nu,\mu)
 &=&\underset{R,\nu,\mu}{\min}\sum_{I=1}^N\sum_{j=1}^m\|x_{jI}-Ry_{\mu(j)\nu(I)}\|^2\\
 &=&\underset{R,\nu,\mu}{\min}\sum_{I=1}^N\sum_{j=1}^m\left(\text{tr}\left[x_{jI}^Tx_{jI}\right]+\text{tr}\left[y_{\mu(j)\nu(I)}^TR^TRy_{\mu(j)\nu(I)}\right]\right.\\
 &&\left.-\text{tr}\left[x_{jI}^TRy_{\mu(j)\nu(I)}\right]-\text{tr}\left[y_{\mu(j)\nu(I)}^TR^Tx_{jI}\right]\right)\\
