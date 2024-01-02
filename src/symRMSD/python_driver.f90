@@ -8,8 +8,8 @@ module driver
   public add_molecule
   public clear
 !
-  type(symRMSD_input) :: inp
-  type(symRMSD)       :: sym
+  type(symRMSD_input), save :: inp
+  type(symRMSD), save       :: sym
 !
 contains
 !
@@ -27,21 +27,5 @@ contains
     call inp%clear()
     call sym%clear()
   end subroutine clear
-!
-! subroutine load(arg, ios)
-!   integer(IK)              :: unit, nn(2)
-!
-!   open (NEWUNIT=unit, FILE=arg, STATUS='OLD', IOSTAT=ios)
-!   if (ios > 0) stop
-!   read (unit, *, IOSTAT=ios) d
-!   if (ios > 0) stop
-!   close (unit, IOSTAT=ios)
-!
-!   call ip%copy(d%ip)
-!   n = d%nstate()
-!   nn = [n, n]
-!   ip = d%ip%index_pointer()
-!
-! end subroutine load
 !
 end module driver
