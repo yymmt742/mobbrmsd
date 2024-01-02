@@ -101,6 +101,9 @@ contains
     if(allocated(this%b))then
       this%b = [this%b, b]
     else
+      this%d = def_d
+      this%mg = 0
+      this%mn = 0
       this%b = [b]
     endif
     nb = SIZE(this%b)

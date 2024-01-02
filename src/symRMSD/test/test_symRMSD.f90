@@ -51,7 +51,7 @@ contains
     end do
 !
     sr = symRMSD(inp, 1)
-    call sr%run(1, .true., X, Y, res)
+    call sr%run(1, .false., X, Y, res)
 !
     print *, SQRT(res / (m * n)), sr%lowerbound(), sr%upperbound()
 !

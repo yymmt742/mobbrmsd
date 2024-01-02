@@ -33,6 +33,10 @@ module mod_symRMSD
     module procedure symRMSD_new
   end interface symRMSD
 !
+  interface
+    include 'dcopy.h'
+  end interface
+!
 contains
 !
   pure subroutine symRMSD_input_add_molecule(this, b, s)
@@ -78,9 +82,9 @@ contains
     integer(IK)                     :: nmem
 !
     if (ALLOCATED(inp%ms)) then
-      res%bra = branch_and_prune(inp%blk, 1, inp%ms)
+      res%bra = branch_and_prune(inp%blk, inp%ms)
     else
-      res%bra = branch_and_prune(inp%blk, 1)
+      res%bra = branch_and_prune(inp%blk)
     end if
 !
     nmem = res%bra%memsize()
@@ -89,22 +93,21 @@ contains
 !
   end function symRMSD_new
 !
-  pure subroutine symRMSD_run(this, ijob, yswap, x, y, res)
+  pure subroutine symRMSD_run(this, ijob, swap_y, x, y, res)
     class(symRMSD), intent(inout) :: this
     integer(IK), intent(in)       :: ijob
-    logical, intent(in)           :: yswap
+    logical, intent(in)           :: swap_y
     real(RK), intent(in)          :: x(*)
-    real(RK), intent(inout)       :: y(*), res
+    real(RK), intent(inout)       :: y(*)
+    real(RK), intent(inout)       :: res
 !
-    if(ijob<1.or.this%njob<ijob) return
+    if (ijob < 1 .or. this%njob < ijob) return
 !
-    call this%bra%setup(x, y, this%w)
-!
-    call this%bra%run(this%w)
-!
-    res = this%bra%upperbound(this%W)
-!
-    if(yswap) call this%bra%swap(y)
+    call this%bra%setup(x, y, this%w(1, ijob))
+    call this%bra%run(this%w(1, ijob), swap_y)
+    res = this%bra%upperbound(this%W(1, ijob))
+    if (swap_y) call dcopy(this%bra%dmn, this%w(1, ijob), 1, y, 1)
+!   call this%bra%swap(y)
 !
   end subroutine symRMSD_run
 !

@@ -31,7 +31,7 @@ contains
     type(branch_and_prune) :: bra
     type(mol_block_list)   :: blk
     type(mol_symmetry)     :: ms(l)
-    real(RK)               :: X(d, mn), Y(d, mn), Z(d, mn), isd, msd
+    real(RK)               :: X(d, mn), Y(d, mn), isd, msd
     real(RK), allocatable  :: W(:)
     integer                :: i, j, k
 !
@@ -41,10 +41,10 @@ contains
     X = sample(d, mn)
     Y = sample(d, mn)
 !
-    bra = branch_and_prune(blk, 1, ms)
+    bra = branch_and_prune(blk, ms)
     allocate (W(bra%memsize()))
     call bra%setup(X, Y, W)
-    call bra%run(W)
+    call bra%run(W, .true.)
 !
     msd = 999D0
     do k=0,s-1
@@ -60,10 +60,8 @@ contains
     enddo
     enddo
 !
-    Z = Y
-    call bra%swap(Z)
     call u%assert_almost_equal(msd,         bra%upperbound(W), 'branchcut vs brute')
-    call u%assert_almost_equal(sd(d, X, Z), bra%upperbound(W), 'swap')
+    call u%assert_almost_equal(sd(d, X, RESHAPE(W(:d * mn), [d, mn])), bra%upperbound(W), 'swap')
 !
   end subroutine test1
 !
@@ -80,7 +78,7 @@ contains
     type(branch_and_prune) :: bra
     type(mol_block_list)   :: blk
     type(mol_symmetry)     :: ms(s)
-    real(RK)               :: X(d, mn), Y(d, mn), Z(d, mn)
+    real(RK)               :: X(d, mn), Y(d, mn)
     real(RK), allocatable  :: W(:)
     integer                :: i
 !
@@ -92,14 +90,11 @@ contains
     X = sample(d, mn)
     Y = sample(d, mn)
 !
-    bra = branch_and_prune(blk, 1, ms)
+    bra = branch_and_prune(blk, ms)
     allocate (W(bra%memsize()))
     call bra%setup(X, Y, W)
-    call bra%run(W)
-!
-    Z = Y
-    call bra%swap(Z)
-    call u%assert_almost_equal(sd(d, X, Z), bra%upperbound(W), 'multiple swap')
+    call bra%run(W, .true.)
+    call u%assert_almost_equal(sd(d, X, RESHAPE(W(:d * mn), [d, mn])), bra%upperbound(W), 'multiple swap')
 !
   end subroutine test2
 !
