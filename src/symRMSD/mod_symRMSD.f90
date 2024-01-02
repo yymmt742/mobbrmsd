@@ -107,7 +107,6 @@ contains
     call this%bra%run(this%w(1, ijob), swap_y)
     res = this%bra%upperbound(this%W(1, ijob))
     if (swap_y) call dcopy(this%bra%dmn, this%w(1, ijob), 1, y, 1)
-!   call this%bra%swap(y)
 !
   end subroutine symRMSD_run
 !

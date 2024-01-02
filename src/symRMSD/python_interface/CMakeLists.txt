@@ -1,6 +1,22 @@
 find_package( F2PY REQUIRED )
 find_package( Python 3.8 REQUIRED COMPONENTS NumPy )
 
+# Grab the variables from a local Python installation
+# NumPy headers
+execute_process(
+  COMMAND "${PYTHON_EXECUTABLE}"
+    -c "import numpy; print(numpy.get_include())"
+  OUTPUT_VARIABLE NumPy_INCLUDE_DIRS
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+# F2PY headers
+execute_process(
+  COMMAND "${PYTHON_EXECUTABLE}"
+  -c "import numpy.f2py; print(numpy.f2py.get_include())"
+  OUTPUT_VARIABLE F2PY_INCLUDE_DIR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
 set (initpy "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py")
 set (f2cmap "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap")
 set (sofile "${CMAKE_CURRENT_BINARY_DIR}/symrmsd.${Python_SOABI}.so")
