@@ -44,6 +44,7 @@ add_custom_command(
       -lblas
       --opt=-O2
       --f90flags='
+      "${OpenMP_Fortran_FLAGS}"
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-std=f2008">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fimplicit-none">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fall-intrinsics">

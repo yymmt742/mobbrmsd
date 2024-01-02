@@ -24,7 +24,7 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
     $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fbounds-check>
     $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-Wunused>
     $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fbacktrace>
-    $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fcheck=array-temps,bounds,do,mem,pointer,recursion>
+    $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fcheck=array-temps,bounds,do,mem,pointer>
     $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-warn>
     $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:all>
     $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-check>

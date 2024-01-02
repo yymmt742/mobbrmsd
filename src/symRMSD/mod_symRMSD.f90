@@ -1,5 +1,5 @@
 module mod_symRMSD
-  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_branch_and_prune
   use mod_mol_block
   use mod_mol_symmetry
@@ -18,13 +18,10 @@ module mod_symRMSD
 !
   type symRMSD
     private
-    integer(IK)            :: njob = 1
+    integer(IK), public    :: nmem = 0
     type(branch_and_prune) :: bra
-    real(RK), allocatable  :: w(:, :)
   contains
     procedure :: run        => symRMSD_run
-    procedure :: lowerbound => symRMSD_lowerbound
-    procedure :: upperbound => symRMSD_upperbound
     procedure :: clear      => symRMSD_clear
     final     :: symRMSD_destroy
   end type symRMSD
@@ -50,7 +47,7 @@ contains
 !
     l = this%blk%nspecies()
     h(1) = this%blk%b(l)%m
-    h(2) = this%blk%b(l)%s
+    h(2) = this%blk%b(l)%s - 1
     n = h(1) * h(2)
 !
     allocate (ms(l))
@@ -75,11 +72,9 @@ contains
 !
 !!!
 !
-  pure function symRMSD_new(inp, njob) result(res)
+  pure function symRMSD_new(inp) result(res)
     type(symRMSD_input), intent(in) :: inp
-    integer(IK), intent(in)         :: njob
     type(symRMSD)                   :: res
-    integer(IK)                     :: nmem
 !
     if (ALLOCATED(inp%ms)) then
       res%bra = branch_and_prune(inp%blk, inp%ms)
@@ -87,45 +82,28 @@ contains
       res%bra = branch_and_prune(inp%blk)
     end if
 !
-    nmem = res%bra%memsize()
-    res%njob = MAX(njob, 1)
-    allocate (res%w(nmem, res%njob))
+    res%nmem = res%bra%memsize()
 !
   end function symRMSD_new
 !
-  pure subroutine symRMSD_run(this, ijob, swap_y, x, y, res)
-    class(symRMSD), intent(inout) :: this
-    integer(IK), intent(in)       :: ijob
-    logical, intent(in)           :: swap_y
-    real(RK), intent(in)          :: x(*)
-    real(RK), intent(inout)       :: y(*)
-    real(RK), intent(inout)       :: res
+  pure subroutine symRMSD_run(this, swap_y, x, y, w, res)
+    class(symRMSD), intent(in) :: this
+    logical, intent(in)        :: swap_y
+    real(RK), intent(in)       :: x(*)
+    real(RK), intent(inout)    :: y(*)
+    real(RK), intent(inout)    :: w(*)
+    real(RK), intent(inout)    :: res
 !
-    if (ijob < 1 .or. this%njob < ijob) return
-!
-    call this%bra%setup(x, y, this%w(1, ijob))
-    call this%bra%run(this%w(1, ijob), swap_y)
-    res = this%bra%upperbound(this%W(1, ijob))
-    if (swap_y) call dcopy(this%bra%dmn, this%w(1, ijob), 1, y, 1)
+    call this%bra%setup(x, y, w)
+    call this%bra%run(w, swap_y)
+    res = this%bra%upperbound(w)
+    if (swap_y) call dcopy(this%bra%dmn, w, 1, y, 1)
 !
   end subroutine symRMSD_run
-!
-  pure elemental function symRMSD_lowerbound(this) result(res)
-    class(symRMSD), intent(in) :: this
-    real(RK)                   :: res
-    res = this%bra%lowerbound(this%W)
-  end function symRMSD_lowerbound
-!
-  pure elemental function symRMSD_upperbound(this) result(res)
-    class(symRMSD), intent(in) :: this
-    real(RK)                   :: res
-    res = this%bra%upperbound(this%W)
-  end function symRMSD_upperbound
 !
   pure elemental subroutine symRMSD_clear(this)
     class(symRMSD), intent(inout) :: this
     call this%bra%clear()
-    if (ALLOCATED(this%w)) deallocate (this%w)
   end subroutine symRMSD_clear
 !
   pure elemental subroutine symRMSD_destroy(this)

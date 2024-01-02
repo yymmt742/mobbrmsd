@@ -37,6 +37,7 @@ contains
     type(symRMSD_input)        :: inp
     type(symRMSD)              :: sr
     real(RK)                   :: X(d, m, n), Y(d, m, n), res
+    real(RK), allocatable      :: W(:)
     integer                    :: i, j, k
 !
     inp%blk = mol_block_list(d, 1, [b])
@@ -50,10 +51,9 @@ contains
       end do
     end do
 !
-    sr = symRMSD(inp, 1)
-    call sr%run(1, .false., X, Y, res)
-!
-    print *, SQRT(res / (m * n)), sr%lowerbound(), sr%upperbound()
+    sr = symRMSD(inp)
+    allocate(w(sr%nmem))
+    call sr%run(.false., X, Y, w, res)
 !
   end subroutine test1
 !

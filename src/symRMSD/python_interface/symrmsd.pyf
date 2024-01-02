@@ -7,7 +7,6 @@ interface
 !
   module driver
 !
-  integer(kind=ik) :: njob
   logical          :: swap_y
 !
   subroutine add_molecule(m, n, s, sym)
@@ -20,10 +19,11 @@ interface
   subroutine setup()
   end subroutine setup
 !
-  subroutine run(x, y, res)
+  subroutine run(x, y, n, res)
     real(kind=rk), intent(in)    :: x(*)
     real(kind=rk), intent(inout) :: y(*)
-    real(kind=rk), intent(out)   :: res
+    integer(kind=ik), intent(in) :: n
+    real(kind=rk), intent(out)   :: res(n)
   end subroutine run
 !
   subroutine clear()

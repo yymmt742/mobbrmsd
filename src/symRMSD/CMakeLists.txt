@@ -16,6 +16,7 @@ list( APPEND f90_src python_driver.f90 )
 
 target_sources( symRMSD PRIVATE ${f90_src} )
 target_link_libraries( symRMSD PRIVATE blas )
+target_link_libraries( symRMSD PRIVATE OpenMP )
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_subdirectory( test )
