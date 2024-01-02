@@ -1,0 +1,20 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+!
+python module symrmsd
+!
+interface
+!
+  module driver
+!
+    subroutine hello()
+    end subroutine hello()
+!
+!   subroutine add_molecule(arg, ios)
+!     character(*), intent(in)      :: arg
+!     integer(kind=ik), intent(out) :: ios
+!   end subroutine add_molecule
+!
+  end module driver
+!
+end python module symrmsd
