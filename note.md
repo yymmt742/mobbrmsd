@@ -5,13 +5,13 @@
 $m$ 分子からなる同種分子が $N$ 個からなる分子集合体の原子座標を考える。分子座標を
 
 $$
-X_I=\{x_{jI}\}_{j}\in\mathbb{R}^{d\times m}
+X_I=\\{x_{jI}\\}_{j}\in\mathbb{R}^{d\times m}
 $$
 
 で表す。ここで $x_{jI}\in\mathbb{R}^d$は $I$ 番目の分子の $j$ 番目の原子である。指示ベクトル $e_I$ を
 
 $$
-e_I=\{\delta_{IK}\}_K\in\mathbb{R}^{1\times N}
+e_I=\\{\delta_{IK}\\}_K\in\mathbb{R}^{1\times N}
 $$
 
 で定義する。ここで $\delta_{IK}$ はクロネッカーのデルタである。指示ベクトルに対して
@@ -80,7 +80,7 @@ $$
 Q^{(mN)}=\sum_{I=1}^Ne_I^Te_I\otimes Q_I
 $$
 
-で表現できる。さらに、分子内置換 $Q_I$ の候補が全て同一で、簡単に列挙できるとする。
+で表現できる。さらに、分子内置換 $Q_I$ の候補は $I$ に依存せず、列挙できるとする。
 
 $$
 Q_I\in \{Q^{(s)};s=1,\dots,S\}
@@ -92,7 +92,7 @@ $$
 Q^{(mN)}=\sum_{I=1}^N\sum_{s=1}^S\delta_{s\sigma(I)}\cdot e_I^Te_I\otimes Q^{(s)}
 $$
 
-と書き直しておく。任意の分子置換操作はこれらの積
+と書き直しておく。任意の分子置換操作は置換の積
 
 $$
 \begin{split}
