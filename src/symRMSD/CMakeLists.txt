@@ -21,4 +21,7 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_subdirectory( test )
 endif()
 
-add_subdirectory( python_interface )
+if( CMAKE_BUILD_TYPE MATCHES "Release" )
+  add_subdirectory( python_interface )
+endif()
+

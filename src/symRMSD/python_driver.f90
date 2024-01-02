@@ -6,6 +6,7 @@ module driver
   implicit none
   private
   public add_molecule
+  public clear
 !
   type(symRMSD_input) :: inp
   type(symRMSD)       :: sym

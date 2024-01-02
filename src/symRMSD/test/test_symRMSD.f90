@@ -9,6 +9,8 @@ program main
   integer            :: itest
 !
   call u%init('test symRMSD')
+  call test0()
+!
   do itest = 1, NTEST
     call test1()
   end do
@@ -16,6 +18,16 @@ program main
   call u%finish_and_terminate()
 !
 contains
+!
+  subroutine test0()
+    type(symRMSD_input)    :: inp
+    integer(IK), parameter :: s(10) = [1, 3, 4, 5, 2, 2, 3, 5, 4, 1]
+    call inp%add_molecule(mol_block(0, 1, 5, 4, 5, 4), s)
+    call inp%add_molecule(mol_block(0, 2, 5, 4, 5, 4), s)
+    call inp%add_molecule(mol_block(0, 3, 5, 4, 5, 4), s)
+    print'(6i4)', inp%blk%b
+    print*,size(inp%ms)
+  end subroutine test0
 !
   subroutine test1()
     integer, parameter         :: d = 3
@@ -41,7 +53,6 @@ contains
     sr = symRMSD(inp, 1)
     call sr%run(1, .true., X, Y, res)
 !
-!   print'(3f9.3)', x - y
     print *, SQRT(res / (m * n)), sr%lowerbound(), sr%upperbound()
 !
   end subroutine test1
