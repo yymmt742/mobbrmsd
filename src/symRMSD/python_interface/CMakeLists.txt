@@ -1,6 +1,9 @@
 find_package( F2PY REQUIRED )
 find_package( Python 3.8 REQUIRED COMPONENTS NumPy )
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 # Grab the variables from a local Python installation
 # NumPy headers
 execute_process(
@@ -26,8 +29,11 @@ add_custom_target( symrmsd ALL
 )
 
 include_directories(${PYTHON_INCLUDE_DIR})
-include_directories(${F2PY_INCLUDE_DIR})
 include_directories(${NumPy_INCLUDE_DIRS})
+
+foreach(loop_var IN ITEMS ${OpenMP_Fortran_LIB_NAMES})
+  list( APPEND lomp "-l${loop_var} " )
+endforeach()
 
 add_custom_command(
     OUTPUT ${sofile}
@@ -42,12 +48,14 @@ add_custom_command(
       -L${CMAKE_CURRENT_BINARY_DIR}/..
       -lsymRMSD
       -lblas
+      ${lomp}
       --opt=-O2
       --f90flags='
       "${OpenMP_Fortran_FLAGS}"
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-std=f2008">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fimplicit-none">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fall-intrinsics">
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fopenmp">
       $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-Wuninitialized">>
       $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fbounds-check">>
       $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-Wunused">>
@@ -63,7 +71,6 @@ add_custom_command(
       $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-traceback">>
       '
       $<$<CONFIG:Debug>:--debug>
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS symrmsd
             "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap"
             "${CMAKE_CURRENT_SOURCE_DIR}/symrmsd.pyf"

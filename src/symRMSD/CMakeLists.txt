@@ -1,5 +1,4 @@
 add_library( symRMSD )
-target_include_directories( symRMSD PRIVATE include )
 
 list( APPEND f90_src mod_params.f90 )
 list( APPEND f90_src mod_group_permutation.f90 )
@@ -15,6 +14,9 @@ list( APPEND f90_src mod_symRMSD.f90 )
 list( APPEND f90_src python_driver.f90 )
 
 target_sources( symRMSD PRIVATE ${f90_src} )
+target_include_directories( symRMSD PRIVATE include )
+target_include_directories( symRMSD PRIVATE ${OpenMP_Fortran_INCLUDE_DIRS} )
+
 target_link_libraries( symRMSD PRIVATE blas )
 target_link_libraries( symRMSD PRIVATE OpenMP )
 

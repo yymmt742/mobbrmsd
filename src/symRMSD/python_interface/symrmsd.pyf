@@ -4,7 +4,6 @@
 python module symrmsd
 !
 interface
-!
   module driver
 !
   logical          :: swap_y
@@ -31,4 +30,5 @@ interface
 !
   end module driver
 !
+end interface
 end python module symrmsd
