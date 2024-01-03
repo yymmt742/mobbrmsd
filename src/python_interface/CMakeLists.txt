@@ -1,5 +1,5 @@
-find_package( F2PY REQUIRED )
-find_package( Python 3.8 REQUIRED COMPONENTS NumPy )
+find_package(F2PY REQUIRED)
+find_package(Python 3.8 REQUIRED COMPONENTS NumPy)
 find_package(OpenMP REQUIRED)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -32,8 +32,8 @@ add_custom_target( symrmsd ALL
 include_directories(${PYTHON_INCLUDE_DIR})
 include_directories(${NumPy_INCLUDE_DIRS})
 
-foreach(loop_var IN ITEMS ${OpenMP_Fortran_LIB_NAMES})
-  list( APPEND lomp "-l${loop_var} " )
+foreach(var IN ITEMS ${OpenMP_Fortran_LIB_NAMES})
+  list( APPEND lomp "-l${var} " )
 endforeach()
 
 add_custom_command(
@@ -45,8 +45,8 @@ add_custom_command(
       $<$<CONFIG:Debug>:--debug-capi>
       --f2cmap ${f2cmap}
       "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
-      -I${CMAKE_CURRENT_BINARY_DIR}/..
-      -L${CMAKE_CURRENT_BINARY_DIR}/..
+      -I${CMAKE_CURRENT_BINARY_DIR}/../symRMSD
+      -L${CMAKE_CURRENT_BINARY_DIR}/../symRMSD
       -lsymRMSD
       -lblas
       ${lomp}

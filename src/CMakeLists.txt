@@ -31,3 +31,7 @@ endif()
 
 add_subdirectory( symRMSD )
 
+if( CMAKE_BUILD_TYPE MATCHES "Release" )
+  add_subdirectory( python_interface )
+endif()
+
