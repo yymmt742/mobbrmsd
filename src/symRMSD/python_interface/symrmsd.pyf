@@ -2,8 +2,9 @@
 ! Note: the context of this file is case sensitive.
 !
 python module symrmsd
+use driver
 !
-interface
+  interface
   module driver
 !
   logical          :: swap_y
@@ -30,5 +31,5 @@ interface
 !
   end module driver
 !
-end interface
+ end interface
 end python module symrmsd

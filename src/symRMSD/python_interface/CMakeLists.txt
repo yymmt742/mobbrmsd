@@ -1,5 +1,6 @@
 find_package( F2PY REQUIRED )
 find_package( Python 3.8 REQUIRED COMPONENTS NumPy )
+find_package(OpenMP REQUIRED)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -43,7 +44,7 @@ add_custom_command(
       --no-wrap-functions
       $<$<CONFIG:Debug>:--debug-capi>
       --f2cmap ${f2cmap}
-      "${CMAKE_CURRENT_SOURCE_DIR}/symrmsd.pyf"
+      "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
       -I${CMAKE_CURRENT_BINARY_DIR}/..
       -L${CMAKE_CURRENT_BINARY_DIR}/..
       -lsymRMSD
@@ -73,7 +74,7 @@ add_custom_command(
       $<$<CONFIG:Debug>:--debug>
     DEPENDS symrmsd
             "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap"
-            "${CMAKE_CURRENT_SOURCE_DIR}/symrmsd.pyf"
+            "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
   )
 
 install( FILES ${sofile} DESTINATION symrmsd )
