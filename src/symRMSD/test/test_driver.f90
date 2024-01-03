@@ -20,36 +20,37 @@ contains
 !
   subroutine test1()
     integer, parameter         :: d = 3
-    integer, parameter         :: s = 1
-    integer, parameter         :: threads = 10
-    integer, parameter         :: m = 50, n = 18, f = 12, g = 18
+    integer, parameter         :: s = 2
+    integer, parameter         :: threads = 400
+    integer, parameter         :: m = 52, n = 8, f = 12, g = 8
     real(RK)                   :: X(d, m, n), Y(d, m, n, threads)
     real(RK)                   :: res(threads)
     integer                    :: i, j, k, l
 !
-    call add_molecule(m, n, s, [(i, i=1, 0)])
+    call add_molecule(m, n, s, [[5, 6, 7, 8, 1, 2, 3, 4], [(i, i=9, m)]])
     call setup()
 !
     do k = -1, 1, 2
-      do j = -1, 1
-        do i = -1, 1
-          X(:, :, (i + 1) * 6 + (j + 1) * 2 + (k + 1) / 2 + 1) = sample(d, m, [i, j, k])
+      do j = -1, 1, 2
+        do i = -1, 1, 2
+          X(:, :, (i + 1) * 2 + (j + 1) + (k + 1) / 2 + 1) = sample(d, m, [i, j, k])
         end do
       end do
     end do
 !
     do l = 1, threads
       do k = -1, 1, 2
-        do j = -1, 1
-          do i = -1, 1
-            Y(:, :, (k + 1) / 2 * 9 + (j + 1) * 3 + (i + 1) + 1, l) = sample(d, m, [i, j, k])
+        do j = -1, 1, 2
+          do i = -1, 1, 2
+            Y(:, :, (k + 1) * 2 + (i + 1) + (j + 1) / 2 + 1, l) = sample(d, m, [i, j, k])
           end do
         end do
       end do
     end do
 !
     call run(X, Y, threads, res)
-    print*,res
+    print'(5f9.3)', SQRT(res / (m * n))
+    call clear()
 !
   end subroutine test1
 !

@@ -34,11 +34,12 @@ contains
 !
   subroutine setup()
     integer(IK) :: i
-    call clear()
+    if (ALLOCATED(sym)) then
+      deallocate (sym)
+    end if
     !$omp parallel
-    njob = omp_get_num_threads()
+    njob = MAX(omp_get_num_threads(), 1)
     !$omp end parallel
-    print*,njob
     ALLOCATE(sym(njob))
     do concurrent(i=1:njob)
       sym(i) = symRMSD(inp)
@@ -60,7 +61,6 @@ contains
         integer(IK) :: ijob, pnt
         pnt = (i - 1) * dmn + 1
         ijob = omp_get_thread_num() + 1
-        print *, i, "Hello! N =", omp_get_num_threads(), " and I am ", omp_get_thread_num()
         call sym(ijob)%run(swap_y, x, y(pnt), w(1, ijob), res(i))
       end block
     end do

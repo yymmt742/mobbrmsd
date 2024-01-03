@@ -103,6 +103,7 @@ contains
 !
   pure elemental subroutine symRMSD_clear(this)
     class(symRMSD), intent(inout) :: this
+    this%nmem = 0
     call this%bra%clear()
   end subroutine symRMSD_clear
 !
