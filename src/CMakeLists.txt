@@ -1,5 +1,9 @@
 find_package(BLAS REQUIRED)
 
+if(BLAS_FOUND)
+  add_compile_options(${BLAS_LINKER_FLAGS})
+endif()
+
 add_compile_options(
   $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-O2>
   $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-std=f2008>

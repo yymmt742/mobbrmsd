@@ -42,18 +42,17 @@ add_custom_command(
       $<$<CONFIG:Debug>:--debug-capi>
       --f2cmap ${f2cmap}
       "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
+      "${CMAKE_CURRENT_BINARY_DIR}/../symRMSD/libsymRMSD.a"
       -I${CMAKE_CURRENT_BINARY_DIR}/../symRMSD/mod_files
-      -L${CMAKE_CURRENT_BINARY_DIR}/../symRMSD
-      -lsymRMSD
       ${BLAS_LIBRARIES}
       ${lomp}
       --opt=-O2
       --f90flags='
+      "${BLAS_LINKER_FLAGS}"
       "${OpenMP_Fortran_FLAGS}"
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-std=f2008">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fimplicit-none">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fall-intrinsics">
-      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fopenmp">
       $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-Wuninitialized">>
       $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fbounds-check">>
       $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-Wunused">>
