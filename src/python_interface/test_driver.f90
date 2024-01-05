@@ -4,28 +4,28 @@ program main
   use mod_unittest
   implicit none
   type(unittest) :: u
-! integer, parameter :: NTEST=25
-! integer            :: itest
+  integer, parameter :: NTEST=2
+  integer            :: itest
 !
-  call u%init('test symRMSD')
-  call test1()
+  call u%init('test python_driver')
 !
-! do itest = 1, NTEST
-!   call test1()
-! end do
+  do itest = 1, NTEST
+    call test1()
+  end do
 !
   call u%finish_and_terminate()
 !
 contains
 !
   subroutine test1()
-    integer, parameter         :: d = 3
-    integer, parameter         :: s = 2
-    integer, parameter         :: threads = 400
-    integer, parameter         :: m = 52, n = 8, f = 12, g = 8
-    real(RK)                   :: X(d, m, n), Y(d, m, n, threads)
-    real(RK)                   :: res(threads)
-    integer                    :: i, j, k, l
+    integer(IK), parameter :: d = 3
+    integer(IK), parameter :: s = 1
+    integer(IK), parameter :: threads = 2
+    integer(IK), parameter :: m = 52, n = 8, f = 12, g = 8
+    real(RK)               :: X(d, m, n), Y(d, m, n, threads)
+    real(RK)               :: res(threads), ratio(threads)
+    integer(IK)            :: nsearch(threads)
+    integer(IK)            :: i, j, k, l
 !
     call add_molecule(m, n, s, [[5, 6, 7, 8, 1, 2, 3, 4], [(i, i=9, m)]])
     call setup()
@@ -46,10 +46,12 @@ contains
           end do
         end do
       end do
+      Y(:, :, :, l) = 0.8 * X + 0.2 * Y(:, :, :, l)
     end do
 !
-    call run(X, Y, threads, res)
-    print'(5f9.3)', SQRT(res / (m * n))
+    call run(X, Y, threads, res, ratio, nsearch)
+    print'(5f9.3)', res
+    print'(5f9.3)', ratio
     call clear()
 !
   end subroutine test1
@@ -60,7 +62,7 @@ contains
     integer              :: i
     call RANDOM_NUMBER(res)
     do concurrent(i=1:n)
-      res(:, i) = res(:, i) + 5 * com
+      res(:, i) = res(:, i) + 8 * com
     enddo
   end function sample
 !
