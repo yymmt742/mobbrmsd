@@ -11,7 +11,7 @@ program main
   E6 = eye(6)
 !
   call z%init('test quartanion d=2')
-! call test1(2, 10, 100)
+  call test1(2, 10, 100)
 ! call test1(2, 20, 100)
 ! call test1(2, 100, 100)
 !

@@ -33,18 +33,18 @@ contains
       W(1) = ZERO
     elseif (d == -1) then
       W(1) = 0
-    elseif (d == -2) then
-      W(1) = 3
+!   elseif (d == -2) then
+!     W(1) = 3
     elseif (d == -3) then
       W(1) = 10
     elseif (d == 1) then
       W(1) = g - cov(1) - cov(1)
-    elseif (d == 2) then
-      if (g < THRESHOLD) then
-        w(1) = ZERO
-        return
-      end if
-      call quartenion_sdmin_d2(g, cov, w)
+!   elseif (d == 2) then
+!     if (g < THRESHOLD) then
+!       w(1) = ZERO
+!       return
+!     end if
+!     call quartenion_sdmin_d2(g, cov, w)
     elseif (d == 3) then
       if (g < THRESHOLD) then
         w(1) = ZERO
