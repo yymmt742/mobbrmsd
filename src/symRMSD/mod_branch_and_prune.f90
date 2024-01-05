@@ -28,14 +28,13 @@ module mod_branch_and_prune
     integer(IK)                :: bs, nd, mem
     integer(IK), public        :: mn, dmn, memsize
     integer(IK), public        :: ratio, nsrch, lncmb, xp, yp
+    integer(IK), public        :: upperbound, lowerbound
     integer(IK), allocatable   :: p(:), q(:)
     type(d_matrix_list)        :: dx
     type(tree)                 :: tr
     type(breadth_indicator), allocatable :: bi(:)
     type(mol_symmetry), allocatable      :: ms(:)
   contains
-    procedure :: upperbound => branch_and_prune_upperbound
-    procedure :: lowerbound => branch_and_prune_lowerbound
     procedure :: setup      => branch_and_prune_setup
     procedure :: run        => branch_and_prune_run
     procedure :: clear      => branch_and_prune_clear
@@ -95,6 +94,9 @@ contains
     end do
 !
     res%tr = tree(pi, res%bs, res%nd + 1, [1, res%bi%nnod]); pi = pi + res%tr%memsize
+!
+    res%upperbound = res%tr%upperbound
+    res%lowerbound = res%tr%lowerbound
 !
     allocate (res%p(res%dx%l))
     res%p(1) = 1
@@ -205,9 +207,9 @@ contains
 !
     W(this%nsrch) = REAL(ncount, RK)
     if (ncount < 1) then
-      W(this%ratio) = ZERO
+      W(this%ratio) = -RHUGE
     else
-      W(this%ratio) = EXP(LOG(W(this%nsrch)) - W(this%lncmb))
+      W(this%ratio) = LOG(W(this%nsrch)) - W(this%lncmb)
     end if
 !
     if(.not.swap_y) return
@@ -318,20 +320,6 @@ contains
     end subroutine rotation
 !
   end subroutine branch_and_prune_run
-!
-  pure function branch_and_prune_upperbound(this, W) result(res)
-    class(branch_and_prune), intent(in) :: this
-    real(RK), intent(in)                :: W(*)
-    real(RK)                            :: res
-    res = W(this%tr%upperbound)
-  end function branch_and_prune_upperbound
-!
-  pure function branch_and_prune_lowerbound(this, W) result(res)
-    class(branch_and_prune), intent(in) :: this
-    real(RK), intent(in)                :: W(*)
-    real(RK)                            :: res
-    res = W(this%tr%lowerbound)
-  end function branch_and_prune_lowerbound
 !
   pure elemental subroutine branch_and_prune_clear(this)
     class(branch_and_prune), intent(inout) :: this

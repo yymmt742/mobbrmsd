@@ -64,9 +64,9 @@ contains
 !
     Y = RESHAPE(W(bra%yp:bra%yp + d * mn), [d, mn])
 !
-    call u%assert_almost_equal(msd,         bra%upperbound(W),   'branchcut vs brute')
-    call u%assert_almost_equal(SUM((X-Y)**2), bra%upperbound(W), 'swap a            ')
-    call u%assert_almost_equal(sd(d, X, Y), bra%upperbound(W),   'swap b            ')
+    call u%assert_almost_equal(msd, W(bra%upperbound),             'branchcut vs brute')
+    call u%assert_almost_equal(SUM((X - Y)**2), W(bra%upperbound), 'swap a            ')
+    call u%assert_almost_equal(sd(d, X, Y), W(bra%upperbound),     'swap b            ')
 !
   end subroutine test1
 !
@@ -101,7 +101,7 @@ contains
     call bra%run(W, .true.)
     print'(*(f16.9))', w(bra%lncmb), w(bra%nsrch), w(bra%ratio)
     Y = RESHAPE(W(bra%yp:bra%yp + d * mn), [d, mn])
-    call u%assert_almost_equal(sd(d, X, Y), bra%upperbound(W), 'multiple swap')
+    call u%assert_almost_equal(sd(d, X, Y), W(bra%upperbound), 'multiple swap')
 !
   end subroutine test2
 !

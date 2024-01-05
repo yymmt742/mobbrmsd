@@ -55,7 +55,8 @@ contains
     sr = symRMSD(inp)
     allocate(w(sr%nmem))
     call sr%run(.true., X, Y, w, res)
-    print *, SQRT(ABS(res) / (m * n)), SQRT(SUM((X - Y)**2) / (m * n))
+    print *, SQRT(ABS(res) / (m * n)), SQRT(SUM((X - Y)**2) / (m * n)), sr%sd(W), sr%rmsd(W)
+    print *, sr%search_ratio(W)
 !
   end subroutine test1
 !

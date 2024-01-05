@@ -19,10 +19,15 @@ module mod_symRMSD
   type symRMSD
     private
     integer(IK), public    :: nmem = 0
+    integer(IK), public    :: ndim = 0
+    integer(IK), public    :: natm = 0
     type(branch_and_prune) :: bra
   contains
-    procedure :: run        => symRMSD_run
-    procedure :: clear      => symRMSD_clear
+    procedure :: run          => symRMSD_run
+    procedure :: sd           => symRMSD_sd
+    procedure :: rmsd         => symRMSD_rmsd
+    procedure :: search_ratio => symRMSD_search_ratio
+    procedure :: clear        => symRMSD_clear
     final     :: symRMSD_destroy
   end type symRMSD
 !
@@ -83,11 +88,12 @@ contains
     end if
 !
     res%nmem = res%bra%memsize
+    res%ndim = inp%blk%d
+    res%natm = inp%blk%mn
 !
   end function symRMSD_new
 !
-  subroutine symRMSD_run(this, swap_y, x, y, w, res)
-  !pure subroutine symRMSD_run(this, swap_y, x, y, w, res)
+  pure subroutine symRMSD_run(this, swap_y, x, y, w, res)
     class(symRMSD), intent(in) :: this
     logical, intent(in)        :: swap_y
     real(RK), intent(in)       :: x(*)
@@ -97,10 +103,37 @@ contains
 !
     call this%bra%setup(x, y, w)
     call this%bra%run(w, swap_y)
-    res = this%bra%upperbound(w)
+    res = W(this%bra%upperbound)
     if (swap_y) call dcopy(this%bra%dmn, w(this%bra%yp), 1, y, 1)
 !
   end subroutine symRMSD_run
+!
+  pure function symRMSD_sd(this, W) result(res)
+    class(symRMSD), intent(in) :: this
+    real(RK), intent(in)       :: w(*)
+    real(RK)                   :: res
+    res = W(this%bra%upperbound)
+  end function symRMSD_sd
+!
+  pure function symRMSD_rmsd(this, W) result(res)
+    class(symRMSD), intent(in) :: this
+    real(RK), intent(in)       :: w(*)
+    real(RK)                   :: res
+    if (this%natm > 0) then
+      res = SQRT(W(this%bra%upperbound) / this%natm)
+    else
+      res = ZERO
+    end if
+  end function symRMSD_rmsd
+!
+  pure function symRMSD_search_ratio(this, W) result(res)
+    class(symRMSD), intent(in) :: this
+    real(RK), intent(in)       :: w(*)
+    real(RK)                   :: res(3)
+    res(1) = w(this%bra%ratio)
+    res(2) = w(this%bra%nsrch)
+    res(3) = w(this%bra%lncmb)
+  end function symRMSD_search_ratio
 !
   pure elemental subroutine symRMSD_clear(this)
     class(symRMSD), intent(inout) :: this
