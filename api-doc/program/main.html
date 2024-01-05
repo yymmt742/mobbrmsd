@@ -10,89 +10,114 @@
 
     <title>main &ndash; symRMSD</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
     <link href="../css/font-awesome.min.css" rel="stylesheet">
     <link href="../css/local.css" rel="stylesheet">
       <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
 
-    <script src="https://code.jquery.com/jquery-3.7.0.slim.min.js" integrity="sha256-tG5mcZUtJsZvyKAxYLVXrmjKBVLd6VpVccqz/r4ypFE=" crossorigin="anonymous"></script>
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+        <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+         <script src="../js/jquery-2.1.3.min.js"></script>
+         <script src="../js/svg-pan-zoom.min.js"></script>
+
   </head>
 
   <body>
 
     <!-- Fixed navbar -->
-    <div class="container-fluid mb-sm-4 mb-xl-2">
-      <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
-        <div class="container">
-          <a class="navbar-brand" href="../index.html">symRMSD </a>
-          <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar"
-                  aria-expanded="false" aria-controls="navbar" aria-label="Toggle navigation">
-                  <span class="navbar-toggler-icon">
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
           </button>
-
-          <div id="navbar" class="navbar-collapse collapse">
-            <ul class="navbar-nav">
-                  <li class="nav-item">
-                    <a class="nav-link" href="../lists/files.html">Source Files</a>
-                  </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="../lists/modules.html">Modules</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="../lists/procedures.html">Procedures</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="../lists/programs.html">Programs</a>
-                </li>
-            </ul>
-              <div class="d-flex align-items-end flex-grow-1">
-                <form action="../search.html" role="search" class="ms-auto">
-                  <input type="text" class="form-control" aria-label="Search" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
-                </form>
-              </div>
-          </div><!--/.nav-collapse -->
+          <a class="navbar-brand" href="../index.html">symRMSD </a>
         </div>
-      </nav>
-    </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+                 data-toggle="dropdown" role="button"
+                 aria-haspopup="true"
+                 aria-expanded="false">
+                 Contents <span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu">
+                    <li><a href="../lists/files.html">Source Files</a></li>
+                  <li><a href="../lists/modules.html">Modules</a></li>
+                  <li><a href="../lists/procedures.html">Procedures</a></li>
+                  <li><a href="../lists/types.html">Derived Types</a></li>
+                  <li><a href="../lists/programs.html">Programs</a></li>
+              </ul>
+            </li>
+                <li class="visible-xs hidden-sm visible-lg">
+                  <a href="../lists/files.html">Source Files</a>
+                </li>
+              <li class="visible-xs hidden-sm visible-lg">
+                <a href="../lists/modules.html">Modules</a>
+              </li>
+              <li class="visible-xs hidden-sm visible-lg">
+                <a href="../lists/procedures.html">Procedures</a>
+              </li>
+              <li class="visible-xs hidden-sm visible-lg">
+                <a href="../lists/types.html">Derived Types</a>
+              </li>
+              <li class="visible-xs hidden-sm visible-lg">
+                <a href="../lists/programs.html">Programs</a>
+              </li>
+          </ul>
+            <form action="../search.html" class="navbar-form navbar-right" role="search">
+              <div class="form-group">
+                <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+              </div>
+              <!--
+                  <button type="submit" class="btn btn-default">Submit</button>
+                  -->
+            </form>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
 
     <div class="container">
   <div class="row">
     <h1>main      <small>Program</small>
       
     </h1>
-      <div class="container p-2 mb-4 bg-light border rounded-3">
-    <div class="row align-items-center justify-content-between" id="info-bar">
-      <div class="col">
+      <div class="row" id="info-bar">
+    <div class="col-lg-12">
+      <div class="well well-sm">
         <ul class="list-inline" style="margin-bottom:0px;display:inline">
-            <li class="list-inline-item" id="meta-license"><i class="fa fa-legal"></i> <a rel="license" href="https://opensource.org/licenses/MIT">MIT</a></li>
+            <li id="meta-license"><i class="fa fa-legal"></i> <a rel="license" href="https://opensource.org/licenses/MIT">MIT</a></li>
 
-            <li class="list-inline-item" id="statements"><i class="fa fa-list-ol"></i>
-              <a data-bs-toggle="tooltip"
-                 data-bs-placement="bottom" data-html="true"
-                 title="14.4% of total for programs.">137 statements</a>
-            </li>
+          <li id="statements"><i class="fa fa-list-ol"></i>
+            <a data-toggle="tooltip"
+               data-placement="bottom" data-html="true"
+               title="13.1% of total for programs.">125 statements</a>
+          </li>
 
-            <li class="list-inline-item" id="source-file">
+            <li id="source-file">
               <i class="fa fa-code"></i>
-              <a href="../src/test_Kabsch.f90"> Source File</a>
+              <a href="../src/test_branch_and_prune.f90"> Source File</a>
             </li>
         </ul>
-      </div>
-      <div class="col">
-        <nav aria-label="breadcrumb">
-          <ol class="breadcrumb justify-content-end mb-0">
-                <li class="breadcrumb-item"><a href='../sourcefile/test_kabsch.f90.html'>test_Kabsch.f90</a></li>
-            <li class="breadcrumb-item active" aria-current="page">main</li>
-          </ol>
-        </nav>
+        <ol class="breadcrumb in-well text-right">
+              <li><a href='../sourcefile/test_branch_and_prune.f90.html'>test_branch_and_prune.f90</a></li>
+          <li class="active">main</li>
+        </ol>
       </div>
     </div>
   </div>
   <script>
     $(function () {
-    $('[data-bs-toggle="tooltip"]').tooltip()
+    $('[data-toggle="tooltip"]').tooltip()
     })
   </script>
 
@@ -103,17 +128,17 @@
       <div id="sidebar">
       <h3>Contents</h3>
   
-      <div class="card mb-4">
-      <a data-bs-toggle="collapse" href="#vars-0"
-         aria-expanded="false" aria-controls="vars-0">
-         <h4 class="card-header bg-primary text-white">Variables</h4>
-      </a>
-      <div id="vars-0" class="collapse">
-        <div class="list-group list-group-flush">
-            <a class="list-group-item" href="../program/main.html#variable-z">z</a>
-            <a class="list-group-item" href="../program/main.html#variable-e2">E2</a>
-            <a class="list-group-item" href="../program/main.html#variable-e3">E3</a>
-            <a class="list-group-item" href="../program/main.html#variable-e6">E6</a>
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#vars-0">Variables</a>
+        </h3>
+      </div>
+      <div id="vars-0" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../program/main.html#variable-u">u</a>
+            <a class="list-group-item" href="../program/main.html#variable-ntest">NTEST</a>
+            <a class="list-group-item" href="../program/main.html#variable-itest">itest</a>
         </div>
       </div>
     </div>
@@ -127,37 +152,35 @@
   
   
   
-      <div class="card mb-4">
-      <a data-bs-toggle="collapse" href="#funcs-0"
-         aria-expanded="false" aria-controls="funcs-0">
-         <h4 class="card-header bg-primary text-white">Functions</h4>
-      </a>
-      <div id="funcs-0" class="collapse">
-        <div class="list-group list-group-flush">
-            <a class="list-group-item" href="../program/main.html#proc-so2">SO2</a>
-            <a class="list-group-item" href="../program/main.html#proc-so3">SO3</a>
-            <a class="list-group-item" href="../program/main.html#proc-so6">SO6</a>
-            <a class="list-group-item" href="../program/main.html#proc-eye">eye</a>
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#funcs-0">Functions</a>
+        </h3>
+      </div>
+      <div id="funcs-0" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../program/main.html#proc-swp">swp</a>
+            <a class="list-group-item" href="../program/main.html#proc-sd">sd</a>
+            <a class="list-group-item" href="../program/main.html#proc-sample">sample</a>
         </div>
       </div>
     </div>
 
-      <div class="card mb-4">
-      <a data-bs-toggle="collapse" href="#subs-0"
-         aria-expanded="false" aria-controls="subs-0">
-         <h4 class="card-header bg-primary text-white">Subroutines</h4>
-      </a>
-      <div id="subs-0" class="collapse">
-        <div class="list-group list-group-flush">
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#subs-0">Subroutines</a>
+        </h3>
+      </div>
+      <div id="subs-0" class="panel-collapse collapse">
+        <div class="list-group">
             <a class="list-group-item" href="../program/main.html#proc-test1">test1</a>
             <a class="list-group-item" href="../program/main.html#proc-test2">test2</a>
-            <a class="list-group-item" href="../program/main.html#proc-test3">test3</a>
-            <a class="list-group-item" href="../program/main.html#proc-test4">test4</a>
         </div>
       </div>
     </div>
 
-  
   
   
   
@@ -171,22 +194,92 @@
     </div>
     
     <div class="col-md-9" id='text'>
-        <div class="card mb-4">
-      <h3 class="card-header card-title bg-light">Uses</h3>
-      <div class="card-body">
-        <ul class="list-group list-group-flush">
-            <li class="list-group-item">
-              <ul class="list-inline">
-                  <li class="list-inline-item"><a href='../module/mod_kabsch.html'>mod_Kabsch</a></li>
-                  <li class="list-inline-item"><a href='../module/mod_params.html'>mod_params</a></li>
-                  <li class="list-inline-item">mod_unittest</li>
-              </ul>
-            </li>
-        </ul>
+        <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Uses</h3>
       </div>
+      <ul class="list-group">
+          <li class="list-group-item">
+            <ul class="list-inline">
+                <li><a href='../module/mod_params.html'>mod_params</a></li>
+                <li><a href='../module/mod_mol_block.html'>mod_mol_block</a></li>
+                <li><a href='../module/mod_estimate_rotation_matrix.html'>mod_estimate_rotation_matrix</a></li>
+                <li><a href='../module/mod_mol_symmetry.html'>mod_mol_symmetry</a></li>
+                <li><a href='../module/mod_branch_and_prune.html'>mod_branch_and_prune</a></li>
+                <li>mod_unittest</li>
+            </ul>
+          </li>
+      </ul>
     </div>
 
     
+
+     <section class="visible-xs visible-sm hidden-md">
+         <h3>Contents</h3>
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#vars-1">Variables</a>
+        </h3>
+      </div>
+      <div id="vars-1" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../program/main.html#variable-u">u</a>
+            <a class="list-group-item" href="../program/main.html#variable-ntest">NTEST</a>
+            <a class="list-group-item" href="../program/main.html#variable-itest">itest</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#funcs-1">Functions</a>
+        </h3>
+      </div>
+      <div id="funcs-1" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../program/main.html#proc-swp">swp</a>
+            <a class="list-group-item" href="../program/main.html#proc-sd">sd</a>
+            <a class="list-group-item" href="../program/main.html#proc-sample">sample</a>
+        </div>
+      </div>
+    </div>
+
+      <div class="panel panel-primary">
+      <div class="panel-heading text-left">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" href="#subs-1">Subroutines</a>
+        </h3>
+      </div>
+      <div id="subs-1" class="panel-collapse collapse">
+        <div class="list-group">
+            <a class="list-group-item" href="../program/main.html#proc-test1">test1</a>
+            <a class="list-group-item" href="../program/main.html#proc-test2">test2</a>
+        </div>
+      </div>
+    </div>
+
+  
+  
+  
+  
+  
+  
+
+
+     </section>
+     <br class="visible-xs visible-sm hidden-md">
 
 
     <section>
@@ -194,23 +287,23 @@
       <table class="table table-striped varlist">
     <thead>
       <tr>
-        <th scope="col">Type</th>
-        <th scope="col">Attributes</th>
-        <th scope="col"></th>
-        <th scope="col">Name</th>
-<th></th><th scope="col">Initial</th>        <th scope="col"></th>
+        <th>Type</th>
+        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+<th></th><th>Initial</th>        <th></th>
     </thead>
     <tbody>
         <tr>
             <td>
-              <span class="anchor" id="variable-z"></span>
+              <span class="anchor" id="variable-u"></span>
               type(unittest)
             </td>
             <td>
               
             </td>
             <td>::</td>
-            <td><strong>z</strong></td>
+            <td><strong>u</strong></td>
                 <td></td>
                 <td></td>
             <td>
@@ -219,46 +312,30 @@
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-e2"></span>
-              real(kind=RK)
+              <span class="anchor" id="variable-ntest"></span>
+              integer,
             </td>
             <td>
-              
+parameter               
             </td>
             <td>::</td>
-            <td><strong>E2</strong>(2,2)</td>
-                <td></td>
-                <td></td>
+            <td><strong>NTEST</strong></td>
+<td> =</td>
+                <td>25</td>
             <td>
                 
             </td>
         </tr>
         <tr>
             <td>
-              <span class="anchor" id="variable-e3"></span>
-              real(kind=RK)
+              <span class="anchor" id="variable-itest"></span>
+              integer
             </td>
             <td>
               
             </td>
             <td>::</td>
-            <td><strong>E3</strong>(3,3)</td>
-                <td></td>
-                <td></td>
-            <td>
-                
-            </td>
-        </tr>
-        <tr>
-            <td>
-              <span class="anchor" id="variable-e6"></span>
-              real(kind=RK)
-            </td>
-            <td>
-              
-            </td>
-            <td>::</td>
-            <td><strong>E6</strong>(6,6)</td>
+            <td><strong>itest</strong></td>
                 <td></td>
                 <td></td>
             <td>
@@ -278,64 +355,10 @@
  
     <section>
     <h2>Functions</h2>
-      <div class="card">
-    <div class="card-header codesum"><span class="anchor" id="proc-so2"></span><h3> function <a href='../proc/so2.html'>SO2</a>() result(res)  
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-swp"></span><h3>pure function <a href='../proc/swp.html'>swp</a>(d, m, n, per, sym, ms, X) result(res)  
 </h3></div>
-    <div class="card-body">
-          
-  
-
-  <h4>Arguments</h4>
-    <em>None</em>
-    <h4>
-    Return Value
-    <small>real(kind=RK), (2,2)</small>
-    </h4>
-    
-
-    </div>
-  </div>
-
-      <div class="card">
-    <div class="card-header codesum"><span class="anchor" id="proc-so3"></span><h3> function <a href='../proc/so3.html'>SO3</a>() result(res)  
-</h3></div>
-    <div class="card-body">
-          
-  
-
-  <h4>Arguments</h4>
-    <em>None</em>
-    <h4>
-    Return Value
-    <small>real(kind=RK), (3,3)</small>
-    </h4>
-    
-
-    </div>
-  </div>
-
-      <div class="card">
-    <div class="card-header codesum"><span class="anchor" id="proc-so6"></span><h3> function <a href='../proc/so6.html'>SO6</a>() result(res)  
-</h3></div>
-    <div class="card-body">
-          
-  
-
-  <h4>Arguments</h4>
-    <em>None</em>
-    <h4>
-    Return Value
-    <small>real(kind=RK), (6,6)</small>
-    </h4>
-    
-
-    </div>
-  </div>
-
-      <div class="card">
-    <div class="card-header codesum"><span class="anchor" id="proc-eye"></span><h3>pure function <a href='../proc/eye.html'>eye</a>(d) result(res)  
-</h3></div>
-    <div class="card-body">
+    <div class="panel-body">
           
   
 
@@ -343,16 +366,226 @@
       <table class="table table-striped varlist">
     <thead>
       <tr>
-        <th scope="col">Type</th>
-<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
-        <th scope="col"></th>
-        <th scope="col">Name</th>
-        <th scope="col"></th>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
     </thead>
     <tbody>
         <tr>
             <td>
-              <span class="anchor" id="variable-d~22"></span>
+              <span class="anchor" ></span>
+              integer(kind=IK),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>d</strong></td>
+            <td>
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer(kind=IK),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>m</strong></td>
+            <td>
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer(kind=IK),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>n</strong></td>
+            <td>
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer(kind=IK),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>per</strong>(:)</td>
+            <td>
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer(kind=IK),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>sym</strong>(:)</td>
+            <td>
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              type(<a href='../type/mol_symmetry.html'>mol_symmetry</a>),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>ms</strong></td>
+            <td>
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=RK),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>X</strong>(d,m,n)</td>
+            <td>
+
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    <h4>
+    Return Value
+    <small>real(kind=RK), (d,m*n)</small>
+    </h4>
+    
+
+    </div>
+  </div>
+
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-sd"></span><h3>pure function <a href='../proc/sd.html'>sd</a>(d, X, Y) result(res)  
+</h3></div>
+    <div class="panel-body">
+          
+  
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer(kind=IK),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>d</strong></td>
+            <td>
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=RK),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>X</strong>(:,:)</td>
+            <td>
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              real(kind=RK),
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>Y</strong>(:,:)</td>
+            <td>
+
+            </td>
+        </tr>
+    </tbody>
+  </table>
+
+    <h4>
+    Return Value
+    <small>real(kind=RK)</small>
+    </h4>
+    
+
+    </div>
+  </div>
+
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-sample"></span><h3> function <a href='../proc/sample.html'>sample</a>(d, n) result(res)  
+</h3></div>
+    <div class="panel-body">
+          
+  
+
+  <h4>Arguments</h4>
+      <table class="table table-striped varlist">
+    <thead>
+      <tr>
+        <th>Type</th>
+<th>Intent</th><th>Optional</th>        <th>Attributes</th>
+        <th></th>
+        <th>Name</th>
+        <th></th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
               integer,
             </td>
 <td>intent(in)</td>
@@ -365,12 +598,27 @@
 
             </td>
         </tr>
+        <tr>
+            <td>
+              <span class="anchor" ></span>
+              integer,
+            </td>
+<td>intent(in)</td>
+              <td></td>            <td>
+              
+            </td>
+            <td>::</td>
+            <td><strong>n</strong></td>
+            <td>
+
+            </td>
+        </tr>
     </tbody>
   </table>
 
     <h4>
     Return Value
-    <small>real(kind=RK), (d,d)</small>
+    <small>real(kind=RK), (d,n)</small>
     </h4>
     
 
@@ -383,229 +631,34 @@
 
     <section>
     <h2>Subroutines</h2>
-      <div class="card">
-    <div class="card-header codesum"><span class="anchor" id="proc-test1"></span><h3> subroutine <a href='../proc/test1.html'>test1</a>(n, n_test)  
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-test1"></span><h3> subroutine <a href='../proc/test1.html'>test1</a>()  
 </h3></div>
-    <div class="card-body">
+    <div class="panel-body">
           
   
 
   <h4>Arguments</h4>
-      <table class="table table-striped varlist">
-    <thead>
-      <tr>
-        <th scope="col">Type</th>
-<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
-        <th scope="col"></th>
-        <th scope="col">Name</th>
-        <th scope="col"></th>
-    </thead>
-    <tbody>
-        <tr>
-            <td>
-              <span class="anchor" id="variable-n~10"></span>
-              integer,
-            </td>
-<td>intent(in)</td>
-              <td></td>            <td>
-              
-            </td>
-            <td>::</td>
-            <td><strong>n</strong></td>
-            <td>
-
-            </td>
-        </tr>
-        <tr>
-            <td>
-              <span class="anchor" id="variable-n_test"></span>
-              integer,
-            </td>
-<td>intent(in)</td>
-              <td></td>            <td>
-              
-            </td>
-            <td>::</td>
-            <td><strong>n_test</strong></td>
-            <td>
-
-            </td>
-        </tr>
-    </tbody>
-  </table>
-
+    <em>None</em>
 
     </div>
   </div>
 
-      <div class="card">
-    <div class="card-header codesum"><span class="anchor" id="proc-test2"></span><h3> subroutine <a href='../proc/test2.html'>test2</a>(n, n_test)  
+      <div class="panel panel-default">
+    <div class="panel-heading codesum"><span class="anchor" id="proc-test2"></span><h3> subroutine <a href='../proc/test2.html'>test2</a>()  
 </h3></div>
-    <div class="card-body">
+    <div class="panel-body">
           
   
 
   <h4>Arguments</h4>
-      <table class="table table-striped varlist">
-    <thead>
-      <tr>
-        <th scope="col">Type</th>
-<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
-        <th scope="col"></th>
-        <th scope="col">Name</th>
-        <th scope="col"></th>
-    </thead>
-    <tbody>
-        <tr>
-            <td>
-              <span class="anchor" id="variable-n~11"></span>
-              integer,
-            </td>
-<td>intent(in)</td>
-              <td></td>            <td>
-              
-            </td>
-            <td>::</td>
-            <td><strong>n</strong></td>
-            <td>
-
-            </td>
-        </tr>
-        <tr>
-            <td>
-              <span class="anchor" id="variable-n_test~2"></span>
-              integer,
-            </td>
-<td>intent(in)</td>
-              <td></td>            <td>
-              
-            </td>
-            <td>::</td>
-            <td><strong>n_test</strong></td>
-            <td>
-
-            </td>
-        </tr>
-    </tbody>
-  </table>
-
-
-    </div>
-  </div>
-
-      <div class="card">
-    <div class="card-header codesum"><span class="anchor" id="proc-test3"></span><h3> subroutine <a href='../proc/test3.html'>test3</a>(d, n_test)  
-</h3></div>
-    <div class="card-body">
-          
-  
-
-  <h4>Arguments</h4>
-      <table class="table table-striped varlist">
-    <thead>
-      <tr>
-        <th scope="col">Type</th>
-<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
-        <th scope="col"></th>
-        <th scope="col">Name</th>
-        <th scope="col"></th>
-    </thead>
-    <tbody>
-        <tr>
-            <td>
-              <span class="anchor" id="variable-d~23"></span>
-              integer,
-            </td>
-<td>intent(in)</td>
-              <td></td>            <td>
-              
-            </td>
-            <td>::</td>
-            <td><strong>d</strong></td>
-            <td>
-
-            </td>
-        </tr>
-        <tr>
-            <td>
-              <span class="anchor" id="variable-n_test~3"></span>
-              integer,
-            </td>
-<td>intent(in)</td>
-              <td></td>            <td>
-              
-            </td>
-            <td>::</td>
-            <td><strong>n_test</strong></td>
-            <td>
-
-            </td>
-        </tr>
-    </tbody>
-  </table>
-
-
-    </div>
-  </div>
-
-      <div class="card">
-    <div class="card-header codesum"><span class="anchor" id="proc-test4"></span><h3> subroutine <a href='../proc/test4.html'>test4</a>(d, n_test)  
-</h3></div>
-    <div class="card-body">
-          
-  
-
-  <h4>Arguments</h4>
-      <table class="table table-striped varlist">
-    <thead>
-      <tr>
-        <th scope="col">Type</th>
-<th scope="col">Intent</th><th scope="col">Optional</th>        <th scope="col">Attributes</th>
-        <th scope="col"></th>
-        <th scope="col">Name</th>
-        <th scope="col"></th>
-    </thead>
-    <tbody>
-        <tr>
-            <td>
-              <span class="anchor" id="variable-d~24"></span>
-              integer,
-            </td>
-<td>intent(in)</td>
-              <td></td>            <td>
-              
-            </td>
-            <td>::</td>
-            <td><strong>d</strong></td>
-            <td>
-
-            </td>
-        </tr>
-        <tr>
-            <td>
-              <span class="anchor" id="variable-n_test~4"></span>
-              integer,
-            </td>
-<td>intent(in)</td>
-              <td></td>            <td>
-              
-            </td>
-            <td>::</td>
-            <td><strong>n_test</strong></td>
-            <td>
-
-            </td>
-        </tr>
-    </tbody>
-  </table>
-
+    <em>None</em>
 
     </div>
   </div>
 
     </section>    
     
-
     
     </div>
   </div>
@@ -614,12 +667,12 @@
     </div> <!-- /container -->
     <footer>
       <div class="container">
-        <div class="row justify-content-between">
-          <div class="col"><p>symRMSD was developed by yymmt742<br>&copy; 2023 <a rel="license" href="https://opensource.org/licenses/MIT">MIT</a>
+        <div class="row">
+          <div class="col-xs-6 col-md-6"><p>symRMSD was developed by yymmt742<br>&copy; 2024 <a rel="license" href="https://opensource.org/licenses/MIT">MIT</a>
 </p>
           </div>
-          <div class="col">
-            <p class="text-end">
+          <div class="col-xs-6 col-md-6">
+            <p class="text-right">
               Documentation generated by
               <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
             </p>
@@ -629,12 +682,17 @@
       </div> <!-- /container -->
     </footer>
 
-    <!-- Bootstrap core JavaScript -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>    
+    <!-- Bootstrap core JavaScript
+         ================================================== -->
+         <!-- Placed at the end of the document so the pages load faster -->
+    <!--
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        -->
+        <script src="../js/bootstrap.min.js"></script>
+        <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+        <script src="../js/ie10-viewport-bug-workaround.js"></script>
 
-    <!-- MathJax JavaScript
+        <!-- MathJax JavaScript
              ================================================== -->
              <!-- Placed at the end of the document so the pages load faster -->
         <script type="text/x-mathjax-config">

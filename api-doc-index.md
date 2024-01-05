@@ -1,11 +1,6 @@
-molecular symmetry corrected RMSD by branch and plune
-
-@warning
-Work in progress
-@endwarning
+molecular symmetry corrected RMSD by branch and bound
 
 ## Algorithm
-now loading
 
 @note
 note
