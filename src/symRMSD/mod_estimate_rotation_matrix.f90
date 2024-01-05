@@ -30,62 +30,50 @@ contains
     !! work array, must be larger than worksize(d).
 !
     if (d == 0) then
-      W(1) = ZERO
+      W(1) = 1
     elseif (d == -1) then
-      W(1) = 0
-!   elseif (d == -2) then
-!     W(1) = 3
+      W(1) = 1
+    elseif (d == -2) then
+      W(1) = 2
     elseif (d == -3) then
       W(1) = 10
     elseif (d == 1) then
       W(1) = g - cov(1) - cov(1)
-!   elseif (d == 2) then
-!     if (g < THRESHOLD) then
-!       w(1) = ZERO
-!       return
-!     end if
-!     call quartenion_sdmin_d2(g, cov, w)
+    elseif (d == 2) then
+      if (g < THRESHOLD) then
+        w(1) = ZERO
+        return
+      end if
+      call quartenion_sdmin_d2(g, cov, w)
     elseif (d == 3) then
       if (g < THRESHOLD) then
         w(1) = ZERO
         return
       end if
       call quartenion_sdmin_d3(g, cov, w)
-    elseif (d==-2.or.d < -3) then
-      call Kabsch(d, cov, w, w)
-      w(1) = w(1) + d * d + 1
+    elseif (d < -3) then
+    call Kabsch(d, cov, w, w)
+    w(1) = w(1) + d * d + 1
     else
-      call Kabsch(d, cov, w(2), w(d * d + 2))
-      w(1) = ddot(d * d, cov, 1, w(2), 1)
-      w(1) = w(1) + w(1)
-      w(1) = g - w(1)
-    end if
+    call Kabsch(d, cov, w(2), w(d * d + 2))
+    w(1) = ddot(d * d, cov, 1, w(2), 1)
+    w(1) = w(1) + w(1)
+    w(1) = g - w(1)
+  end if
 !
   end subroutine estimate_sdmin
 !
   pure subroutine quartenion_sdmin_d2(g, c, w)
     real(RK), intent(in)    :: g, c(*)
     real(RK), intent(inout) :: w(*)
-    integer(IK), parameter  :: k22 = 1, k11 = 2, k41 = 3
-    integer(IK), parameter  :: a = 3, l = 1
 !
-    w(k22) = c(1) - c(4)
-    w(k22) = w(k22) * w(k22)
-    w(k11) = c(3) + c(2)
-    w(k11) = w(k11) * w(k11)
-    w(k22) = w(k22) + w(k11)
-    w(k11) = c(1) + c(4)
-    w(k41) = c(3) - c(2)
-!
-    w(l) = (w(k11) * w(k11) + w(k41) * w(k41)) * w(k22)
-    w(a) = c(1) * c(1) + c(2) * c(2) + c(3) * c(3) + c(4) * c(4)
-    w(a) = w(a) + w(a)
-    w(l) = w(l) + w(l)
-    w(l) = w(l) + w(l)
-    w(l) = SQRT(HALF * (SQRT(ABS(w(a) * w(a) - w(l))) + w(a)))
-!
-    w(l) = w(l) + w(l)
-    w(l) = g - w(l)
+    w(1) = c(1) + c(4)
+    w(1) = w(1) * w(1)
+    w(2) = c(2) - c(3)
+    w(2) = w(2) * w(2)
+    w(1) = SQRT(w(1) + w(2))
+    w(1) = w(1) + w(1)
+    w(1) = g - w(1)
 !
   end subroutine quartenion_sdmin_d2
 !
@@ -167,27 +155,27 @@ contains
     !! if row_major, must be larger than Kabsch_worksize(n)
 !
     if (d == 0) then
-      W(1) = ZERO
+      W(1) = 0
     elseif (d == -1) then
-      W(1) = ZERO
-!   elseif (d == -2) then
-!     W(1) = 6
+      W(1) = 0
+    elseif (d == -2) then
+      W(1) = 0
     elseif (d == -3) then
       W(1) = 28
     elseif (d == 1) then
       rot(1) = ONE
     elseif (d == 2) then
       if (g < THRESHOLD) then
-        rot(1) = ONE; rot(2) = ZERO
+        rot(1) =  ONE; rot(2) = ZERO
         rot(3) = ZERO; rot(4) = ONE
         return
       end if
-      call quartenion_rotmatrix_d2(cov, rot, w)
+      call quartenion_rotmatrix_d2(cov, rot)
     elseif (d == 3) then
       if (g < THRESHOLD) then
-        rot(1) = ONE; rot(2) = ZERO; rot(3) = ZERO
-        rot(4) = ZERO; rot(5) = ONE; rot(6) = ZERO
-        rot(7) = ZERO; rot(8) = ZERO; rot(9) = ONE
+        rot(1) =  ONE; rot(2) = ZERO; rot(3) = ZERO
+        rot(4) = ZERO; rot(5) =  ONE; rot(6) = ZERO
+        rot(7) = ZERO; rot(8) = ZERO; rot(9) =  ONE
         return
       end if
       w(9) = (ONE + ONE) / g
@@ -201,51 +189,32 @@ contains
 !
   end subroutine estimate_rotation_matrix
 !
-  pure subroutine quartenion_rotmatrix_d2(s, rot, w)
-    real(RK), intent(in)    :: s(*)
-    !! target d*n array
+  pure subroutine quartenion_rotmatrix_d2(c, rot)
+    real(RK), intent(in)    :: c(*)
     real(RK), intent(inout) :: rot(*)
-    !! rotation d*d matrix
-    real(RK), intent(inout) :: w(*)
-    integer(IK), parameter  :: c0 = 1
-    integer(IK), parameter  :: k11 = 2, k41 = 3
-    integer(IK), parameter  :: k22 = 1, k32 = 2
-    integer(IK), parameter  :: q1 = 2, q4 = 1
-    integer(IK), parameter  :: a = 4, c = 5, l = 6
-    integer(IK), parameter  :: q0 = 3, p11 = 4, p44 = 5, p41 = 6
-    real(RK)                :: tmp
 !
-    w(k22) = s(1) - s(4)
-    w(k32) = s(3) + s(2)
-    w(c0) = w(k22) * w(k22) + w(k32) * w(k32)
-    w(k11) = s(1) + s(4)
-    w(k41) = s(3) - s(2)
+    rot(1) = c(1) + c(4)
+    rot(2) = c(3) - c(2)
+    rot(3) = rot(1) * rot(1) + rot(2) * rot(2)
 !
-    w(a) = s(1) * s(1) + s(2) * s(2) + s(3) * s(3) + s(4) * s(4)
-    w(a) = w(a) + w(a)
-    w(c) = (w(k11) * w(k11) + w(k41) * w(k41)) * w(c0)
-    w(l) = w(c) + w(c)
-    w(l) = w(l) + w(l)
-    w(l) = SQRT(ABS(HALF * (SQRT(ABS(w(a) * w(a) - w(l))) + w(a))))
-    tmp = w(l)
+    if (rot(3) < Threshold) then
+      rot(1) = ONE;  rot(2) = ZERO
+      rot(3) = ZERO; rot(4) = ONE
+      return
+    end if
 !
-    w(c0) = w(c0) - w(l) * w(l)
-    w(q1) = (w(k11) + w(l)) * w(c0)
-    w(q4) = w(k41) * w(c0)
-!
-    w(p11) = w(q1) * w(q1)
-    w(p44) = w(q4) * w(q4)
-    w(q0) = ONE / (w(p11) + w(p44))
-    w(p11) = w(p11) * w(q0)
-    w(p44) = w(p44) * w(q0)
-    w(q0) = w(q0) + w(q0)
-    w(p41) = w(q1) * w(q4) * w(q0)
-!
-    rot(1) = w(p11) - w(p44)
-    rot(2) = -w(p41)
+    rot(3) = SQRT(ONE / rot(3))
+    rot(1) = rot(1) * rot(3)       ! cos theta
+    rot(3) = HALF + HALF * rot(1)  ! cos^2 theta/2
+    rot(4) = rot(3) - ONE          ! - sin^2 theta/2
+    rot(1) = rot(4) + rot(3)       ! cos^2 theta/2 - sin^2 theta/2
+    rot(4) = rot(4) * rot(3)       ! cos^2 theta/2 * sin^2 theta/2
+    rot(4) = rot(4) + rot(4)       ! 2 * cos^2 theta/2 * sin^2 theta/2
+    rot(4) = rot(4) + rot(4)       ! 4 * cos^2 theta/2 * sin^2 theta/2
+    rot(2) = rot(4) * rot(2)
+    rot(2) = SIGN(ONE, rot(2)) * SQRT(ABS(rot(4)))
     rot(3) = -rot(2)
     rot(4) = rot(1)
-    w(1) = tmp
 !
   end subroutine quartenion_rotmatrix_d2
 !
