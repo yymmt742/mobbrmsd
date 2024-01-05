@@ -26,14 +26,14 @@ module mod_branch_and_prune
   type branch_and_prune
     private
     integer(IK)                :: bs, nd, mem
-    integer(IK), public        :: mn, dmn, xp, yp
+    integer(IK), public        :: mn, dmn, memsize
+    integer(IK), public        :: ratio, nsrch, lncmb, xp, yp
     integer(IK), allocatable   :: p(:), q(:)
     type(d_matrix_list)        :: dx
     type(tree)                 :: tr
     type(breadth_indicator), allocatable :: bi(:)
     type(mol_symmetry), allocatable      :: ms(:)
   contains
-    procedure :: memsize    => branch_and_prune_memsize
     procedure :: upperbound => branch_and_prune_upperbound
     procedure :: lowerbound => branch_and_prune_lowerbound
     procedure :: setup      => branch_and_prune_setup
@@ -62,11 +62,14 @@ contains
 !
     res%mn = blk%mn
     res%dmn = blk%d * blk%mn
-    res%mem = res%dmn * 2
+    res%mem = res%dmn * 2 + 3
 !
     pi = 1
-    res%xp = pi; pi = pi + res%dmn
-    res%yp = pi; pi = pi + res%dmn
+    res%ratio = pi; pi = pi + 1
+    res%nsrch = pi; pi = pi + 1
+    res%lncmb = pi; pi = pi + 1
+    res%xp = pi;    pi = pi + res%dmn
+    res%yp = pi;    pi = pi + res%dmn
 !
     res%dx = d_matrix_list(blk, pi); pi = pi + res%dx%memsize()
 !
@@ -91,7 +94,7 @@ contains
       end block
     end do
 !
-    res%tr = tree(pi, res%bs, res%nd + 1, [1, res%bi%nnod])
+    res%tr = tree(pi, res%bs, res%nd + 1, [1, res%bi%nnod]); pi = pi + res%tr%memsize
 !
     allocate (res%p(res%dx%l))
     res%p(1) = 1
@@ -114,13 +117,9 @@ contains
 !
     call res%tr%reset()
 !
-  end function branch_and_prune_new
+    res%memsize = pi
 !
-  pure elemental function branch_and_prune_memsize(this) result(res)
-    class(branch_and_prune), intent(in) :: this
-    integer(IK)                         :: res
-    res = this%dx%memsize() + this%tr%memsize + this%mem
-  end function branch_and_prune_memsize
+  end function branch_and_prune_new
 !
   pure subroutine branch_and_prune_setup(this, X, Y, W)
     class(branch_and_prune), intent(in) :: this
@@ -142,6 +141,7 @@ contains
 !
     W(this%tr%upperbound) = RHUGE
     W(this%tr%lowerbound) = W(this%dx%o)
+    W(this%lncmb) = this%tr%log_ncomb()
 !
   end subroutine branch_and_prune_setup
 !
@@ -151,10 +151,11 @@ contains
     logical, intent(in)                  :: swap_y
     type(tree)                           :: tr
     type(breadth_indicator), allocatable :: bi(:)
-    integer(IK)                          :: cur, pp, cix
+    integer(IK)                          :: cur, pp, cix, ncount
 !
     tr = this%tr
     bi = this%bi
+    ncount = 0
 !
     call tr%set_parent_node(W)
 !
@@ -172,6 +173,7 @@ contains
         bi(cur)%isym = (cix - 1) / bi(cur)%nper
         call swap_iper(this%nd, cur, cix, bi)
         if (cur == this%nd) then
+          ncount = ncount + 1
           pp = tr%current_pointer()
           if (W(tr%upperbound) > W(pp)) then
             call breadth_indicator_save(bi)
@@ -200,6 +202,13 @@ contains
         call swap_iper(this%nd, cur, cix, bi)
       end block
     end do
+!
+    W(this%nsrch) = REAL(ncount, RK)
+    if (ncount < 1) then
+      W(this%ratio) = ZERO
+    else
+      W(this%ratio) = EXP(LOG(W(this%nsrch)) - W(this%lncmb))
+    end if
 !
     if(.not.swap_y) return
 !

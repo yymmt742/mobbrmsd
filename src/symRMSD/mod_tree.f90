@@ -43,6 +43,7 @@ module mod_tree
     procedure         :: alive_nodes      => tree_alive_nodes
     procedure         :: open_node        => tree_open_node
     procedure         :: close_node       => tree_close_node
+    procedure         :: log_ncomb        => tree_log_ncomb
     procedure         :: finished         => tree_finished
     procedure         :: unfinished       => tree_unfinished
     procedure         :: clear            => tree_clear
@@ -258,6 +259,16 @@ contains
     p = this%breadthes(this%iscope)%inod
 !
   end subroutine tree_close_node
+!
+  pure elemental function tree_log_ncomb(this) result(res)
+    class(tree), intent(in) :: this
+    real(RK)                :: res
+    if (ALLOCATED(this%breadthes)) then
+      res = SUM(LOG(REAL(this%breadthes%uppd - this%breadthes%lowd, RK)))
+    else
+      res = ZERO
+    end if
+  end function tree_log_ncomb
 !
   pure elemental function tree_finished(this) result(res)
     class(tree), intent(in) :: this

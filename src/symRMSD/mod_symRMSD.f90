@@ -82,7 +82,7 @@ contains
       res%bra = branch_and_prune(inp%blk)
     end if
 !
-    res%nmem = res%bra%memsize()
+    res%nmem = res%bra%memsize
 !
   end function symRMSD_new
 !
