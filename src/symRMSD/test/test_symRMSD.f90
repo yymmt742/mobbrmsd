@@ -32,7 +32,7 @@ contains
   subroutine test1()
     integer, parameter         :: d = 3
     integer, parameter         :: s = 1
-    integer, parameter         :: m = 50, n = 18, f = 12, g = 18
+    integer, parameter         :: m = 5, n = 18, f = 12, g = 18
     type(mol_block), parameter :: b = mol_block(0, s, m, n, f, g)
     type(symRMSD_input)        :: inp
     type(symRMSD)              :: sr
@@ -53,7 +53,8 @@ contains
 !
     sr = symRMSD(inp)
     allocate(w(sr%nmem))
-    call sr%run(.false., X, Y, w, res)
+    call sr%run(.true., X, Y, w, res)
+    print'(3f9.3)', X - Y
 !
   end subroutine test1
 !
@@ -63,7 +64,7 @@ contains
     integer              :: i
     call RANDOM_NUMBER(res)
     do concurrent(i=1:n)
-      res(:, i) = res(:, i) + 5 * com
+      res(:, i) = res(:, i) + 8 * com
     enddo
   end function sample
 !
