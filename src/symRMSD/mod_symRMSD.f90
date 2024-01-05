@@ -93,17 +93,15 @@ contains
 !
   end function symRMSD_new
 !
-  pure subroutine symRMSD_run(this, swap_y, x, y, w, res)
+  pure subroutine symRMSD_run(this, swap_y, x, y, w)
     class(symRMSD), intent(in) :: this
     logical, intent(in)        :: swap_y
     real(RK), intent(in)       :: x(*)
     real(RK), intent(inout)    :: y(*)
     real(RK), intent(inout)    :: w(*)
-    real(RK), intent(inout)    :: res
 !
     call this%bra%setup(x, y, w)
     call this%bra%run(w, swap_y)
-    res = W(this%bra%upperbound)
     if (swap_y) call dcopy(this%bra%dmn, w(this%bra%yp), 1, y, 1)
 !
   end subroutine symRMSD_run
@@ -131,8 +129,8 @@ contains
     real(RK), intent(in)       :: w(*)
     real(RK)                   :: res(3)
     res(1) = w(this%bra%ratio)
-    res(2) = w(this%bra%nsrch)
-    res(3) = w(this%bra%lncmb)
+    res(2) = w(this%bra%lncmb)
+    res(3) = w(this%bra%nsrch)
   end function symRMSD_search_ratio
 !
   pure elemental subroutine symRMSD_clear(this)

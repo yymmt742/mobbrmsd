@@ -61,7 +61,8 @@ contains
         integer(kind=ik) :: ijob, pnt
         pnt = (i - 1) * dmn + 1
         ijob = omp_get_thread_num() + 1
-        call sym(ijob)%run(swap_y, x, y(pnt), w(1, ijob), res(i))
+        call sym(ijob)%run(swap_y, x, y(pnt), w(1, ijob))
+        res(i) = sym(ijob)%rmsd(w(1, ijob))
       end block
     end do
     !$omp end parallel do

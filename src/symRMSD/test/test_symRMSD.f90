@@ -36,7 +36,7 @@ contains
     type(mol_block), parameter :: b = mol_block(0, s, m, n, f, g)
     type(symRMSD_input)        :: inp
     type(symRMSD)              :: sr
-    real(RK)                   :: X(d, m, n), Y(d, m, n), res
+    real(RK)                   :: X(d, m, n), Y(d, m, n)
     real(RK), allocatable      :: W(:)
     integer                    :: i, j, k
 !
@@ -54,8 +54,8 @@ contains
     Y = 0.2 * X + 0.8 * Y
     sr = symRMSD(inp)
     allocate(w(sr%nmem))
-    call sr%run(.true., X, Y, w, res)
-    print *, SQRT(ABS(res) / (m * n)), SQRT(SUM((X - Y)**2) / (m * n)), sr%sd(W), sr%rmsd(W)
+    call sr%run(.true., X, Y, w)
+    print *, SQRT(SUM((X - Y)**2) / (m * n)), sr%sd(W), sr%rmsd(W)
     print *, sr%search_ratio(W)
 !
   end subroutine test1
