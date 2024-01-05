@@ -86,7 +86,8 @@ contains
 !
   end function symRMSD_new
 !
-  pure subroutine symRMSD_run(this, swap_y, x, y, w, res)
+  subroutine symRMSD_run(this, swap_y, x, y, w, res)
+  !pure subroutine symRMSD_run(this, swap_y, x, y, w, res)
     class(symRMSD), intent(in) :: this
     logical, intent(in)        :: swap_y
     real(RK), intent(in)       :: x(*)
@@ -97,7 +98,7 @@ contains
     call this%bra%setup(x, y, w)
     call this%bra%run(w, swap_y)
     res = this%bra%upperbound(w)
-    if (swap_y) call dcopy(this%bra%dmn, w, 1, y, 1)
+    if (swap_y) call dcopy(this%bra%dmn, w(this%bra%yp), 1, y, 1)
 !
   end subroutine symRMSD_run
 !

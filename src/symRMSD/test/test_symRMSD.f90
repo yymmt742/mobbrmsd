@@ -5,7 +5,7 @@ program main
   use mod_unittest
   implicit none
   type(unittest) :: u
-  integer, parameter :: NTEST=25
+  integer, parameter :: NTEST=1
   integer            :: itest
 !
   call u%init('test symRMSD')
@@ -51,10 +51,11 @@ contains
       end do
     end do
 !
+    Y = 0.2 * X + 0.8 * Y
     sr = symRMSD(inp)
     allocate(w(sr%nmem))
     call sr%run(.true., X, Y, w, res)
-    print'(3f9.3)', X - Y
+    print *, SQRT(ABS(res) / (m * n)), SQRT(SUM((X - Y)**2) / (m * n))
 !
   end subroutine test1
 !
@@ -64,7 +65,7 @@ contains
     integer              :: i
     call RANDOM_NUMBER(res)
     do concurrent(i=1:n)
-      res(:, i) = res(:, i) + 8 * com
+      res(:, i) = res(:, i) + 6 * com
     enddo
   end function sample
 !

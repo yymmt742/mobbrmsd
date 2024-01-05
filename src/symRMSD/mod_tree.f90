@@ -20,6 +20,8 @@ module mod_tree
   type tree
     private
     integer(IK)                :: iscope = 0
+    integer(IK), public        :: ubnode = 0
+    integer(IK), public        :: memnode = 0
     integer(IK), public        :: memsize = 0
     integer(IK), public        :: upperbound = 0
     integer(IK), public        :: lowerbound = 0
@@ -55,18 +57,22 @@ contains
 !
   pure function tree_new(pw, memnode, ndepth, n_breadths) result(res)
     integer(IK), intent(in) :: pw, memnode, ndepth, n_breadths(ndepth)
-    integer(IK)             :: n, i, j, k
     type(tree)              :: res
+    integer(IK)             :: pq, n, i, j, k
 !
     n = SUM(n_breadths)
-    res%upperbound = pw
-    res%lowerbound = pw + 1
+    res%memnode = MAX(memnode, 1)
+!
+    pq = pw
+    res%lowerbound = pq; pq = pq + 1
+    res%ubnode     = pq; pq = pq + res%memnode
+    res%upperbound = res%ubnode
     allocate (res%nodes(n))
     do concurrent(i=1:n)
-      res%nodes(i) = node(.true., pw + 2 + (i - 1) * memnode)
+      res%nodes(i) = node(.true., pq + (i - 1) * res%memnode)
     end do
 !
-    res%memsize = n * memnode + 2
+    res%memsize = (n + 1) * res%memnode + 1
 !
     allocate (res%breadthes(ndepth))
     j = 0

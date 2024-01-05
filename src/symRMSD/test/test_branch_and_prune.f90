@@ -17,7 +17,7 @@ program main
 !
   call test2()
 !
-    call u%finish_and_terminate()
+  call u%finish_and_terminate()
 !
 contains
 !
@@ -42,6 +42,7 @@ contains
     Y = sample(d, mn)
 !
     bra = branch_and_prune(blk, ms)
+!
     allocate (W(bra%memsize()))
     call bra%setup(X, Y, W)
     call bra%run(W, .true.)
@@ -60,8 +61,11 @@ contains
     enddo
     enddo
 !
-    call u%assert_almost_equal(msd,         bra%upperbound(W), 'branchcut vs brute')
-    call u%assert_almost_equal(sd(d, X, RESHAPE(W(:d * mn), [d, mn])), bra%upperbound(W), 'swap')
+    Y = RESHAPE(W(bra%yp:bra%yp + d * mn), [d, mn])
+!
+    call u%assert_almost_equal(msd,         bra%upperbound(W),   'branchcut vs brute')
+    call u%assert_almost_equal(SUM((X-Y)**2), bra%upperbound(W), 'swap a')
+    call u%assert_almost_equal(sd(d, X, Y), bra%upperbound(W),   'swap b')
 !
   end subroutine test1
 !
@@ -94,7 +98,8 @@ contains
     allocate (W(bra%memsize()))
     call bra%setup(X, Y, W)
     call bra%run(W, .true.)
-    call u%assert_almost_equal(sd(d, X, RESHAPE(W(:d * mn), [d, mn])), bra%upperbound(W), 'multiple swap')
+    Y = RESHAPE(W(bra%yp:bra%yp + d * mn), [d, mn])
+    call u%assert_almost_equal(sd(d, X, Y), bra%upperbound(W), 'multiple swap')
 !
   end subroutine test2
 !

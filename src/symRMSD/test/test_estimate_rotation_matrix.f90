@@ -51,11 +51,11 @@ contains
       g = SUM(X * X) + SUM(Y * Y)
       cov = MATMUL(X, TRANSPOSE(Y))
       call estimate_rotation_matrix(d, g, cov, krot, w)
-      call z%assert_almost_equal([X - MATMUL(krot, Y)], ZERO, 'X = YR  ')
-      if (d <= n) call z%assert_almost_equal([MATMUL(rot, krot) - eye(d)], ZERO, 'S@RT = I')
-      call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(d)], ZERO, 'R@RT = I')
+      call z%assert_almost_equal([X - MATMUL(krot, Y)], ZERO, 'X = YR   ')
+      if (d <= n) call z%assert_almost_equal([MATMUL(rot, krot) - eye(d)], ZERO, 'S@RT = I ')
+      call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(d)], ZERO, 'R@RT = I ')
       call estimate_sdmin(d, g, cov, w)
-      call z%assert_almost_equal(w(1), ZERO, 'sdmin=0 ')
+      call z%assert_almost_equal(w(1), ZERO, 'sdmin=0  ')
     end do
 !
     do i = 1, N_TEST

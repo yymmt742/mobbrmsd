@@ -52,14 +52,14 @@ contains
       end if
       call quartenion_sdmin_d3(g, cov, w)
     elseif (d < -3) then
-    call Kabsch(d, cov, w, w)
-    w(1) = w(1) + d * d + 1
+      call Kabsch(d, cov, w, w)
+      w(1) = w(1) + d * d + 1
     else
-    call Kabsch(d, cov, w(2), w(d * d + 2))
-    w(1) = ddot(d * d, cov, 1, w(2), 1)
-    w(1) = w(1) + w(1)
-    w(1) = g - w(1)
-  end if
+      call Kabsch(d, cov, w(2), w(d * d + 2))
+      w(1) = ddot(d * d, cov, 1, w(2), 1)
+      w(1) = w(1) + w(1)
+      w(1) = g - w(1)
+    end if
 !
   end subroutine estimate_sdmin
 !
@@ -328,22 +328,6 @@ contains
 !
   end subroutine quartenion_rotmatrix_d3
 !
-!| Calculate work array size for d*d matrix.
-! pure elemental function Kabsch_worksize(d) result(res)
-!   integer(IK), intent(in)           :: d
-!   !! matrix collumn dimension.
-!   real(RK)                          :: dum(1)
-!   integer(IK)                       :: res, info
-!
-!   if (d < 1) then
-!     res = 0
-!   else
-!     call DGESVD('A', 'A', d, d, dum, d, dum, dum, d, dum, d, dum, -1, info)
-!     res =  NINT(dum(1)) + d * d * 3 + d
-!   end if
-!
-! end function Kabsch_worksize
-!
 !| Calculate the rotation matrix R^T from covariance matrix.
   pure subroutine Kabsch(d, cov, rot, w)
     integer(IK), intent(in)       :: d
@@ -361,17 +345,15 @@ contains
     if (d == 0) then
       w(1) = ZERO
       return
+    elseif (d == 1)then
+      rot(1) = ONE
+      RETURN
     elseif (d < 0) then
       s = ABS(d)
       call DGESVD('A', 'A', s, s, w, s, w, w, s, w, s, w, -1, info)
       w(1) = w(1) + s * s * 3 + s
       return
     end if
-!
-    if (d == 1)then
-      rot(1) = ONE
-      RETURN
-    endif
 !
     dd = d * d
     u = m + dd
@@ -393,4 +375,5 @@ contains
     rot(:dd) = w(s:s+dd-1)
 !
   end subroutine Kabsch
+!
 end module mod_estimate_rotation_matrix
