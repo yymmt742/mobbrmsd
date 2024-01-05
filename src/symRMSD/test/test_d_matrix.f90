@@ -30,7 +30,7 @@ contains
     type(mol_symmetry)         :: ms
     type(d_matrix)             :: a
     real(RK)                   :: X(d, mn), Y(d, mn)
-    real(RK)                   :: LT, LF, LB, H, C(d, d), R(d, d)
+    real(RK)                   :: LT, LF, LB, H, C(d, d)
     real(RK), allocatable      :: w(:)
 !
     ms = mol_symmetry(swp)
@@ -42,22 +42,22 @@ contains
     print *, d_matrix_memsize(a)
     allocate (w(d_matrix_memsize(a)))
     call d_matrix_eval(a, ms, X, Y, W)
-    call d_matrix_partial_eval(a, 1, 1, 1, [2, 3, 4, 5], W, LT, H, C, LF, LB, R)
+    call d_matrix_partial_eval(a, 1, 1, 1, [2, 3, 4, 5], W, LT, H, C, LF, LB)
     print'(4f9.3)', LF, LB, LF + LB, LT
-    call d_matrix_partial_eval(a, 2, 2, 1, [3, 4, 5], W, LT, H, C, LF, LB, R)
+    call d_matrix_partial_eval(a, 2, 2, 1, [3, 4, 5], W, LT, H, C, LF, LB)
     print'(4f9.3)', LF, LB, LF + LB, LT
-    call d_matrix_partial_eval(a, 3, 3, 1, [4, 5], W, LT, H, C, LF, LB, R)
+    call d_matrix_partial_eval(a, 3, 3, 1, [4, 5], W, LT, H, C, LF, LB)
     print'(4f9.3)', LF, LB, LF + LB, LT
-    call d_matrix_partial_eval(a, 4, 4, 1, [5], W, LT, H, C, LF, LB, R)
+    call d_matrix_partial_eval(a, 4, 4, 1, [5], W, LT, H, C, LF, LB)
     print'(4f9.3)', LF, LB, LF + LB, LT
-    call d_matrix_partial_eval(a, 5, 5, 1, [5], W, LT, H, C, LF, LB, R)
+    call d_matrix_partial_eval(a, 5, 5, 1, [5], W, LT, H, C, LF, LB)
     print'(4f9.3)', LF, LB, LF + LB, LT
     print *
-    call d_matrix_partial_eval(a, 1, 1, 2, [2, 3, 4, 5], W, LT, H, C, LF, LB, R)
+    call d_matrix_partial_eval(a, 1, 1, 2, [2, 3, 4, 5], W, LT, H, C, LF, LB)
     print'(4f9.3)', LF, LB, LF + LB, LT
-    call d_matrix_partial_eval(a, 1, 2, 1, [1, 3, 4, 5], W, LT, H, C, LF, LB, R)
+    call d_matrix_partial_eval(a, 1, 2, 1, [1, 3, 4, 5], W, LT, H, C, LF, LB)
     print'(4f9.3)', LF, LB, LF + LB, LT
-    call d_matrix_partial_eval(a, 1, 2, 2, [1, 3, 4, 5], W, LT, H, C, LF, LB, R)
+    call d_matrix_partial_eval(a, 1, 2, 2, [1, 3, 4, 5], W, LT, H, C, LF, LB)
     print'(4f9.3)', LF, LB, LF + LB, LT
 !
   end subroutine test1
@@ -79,7 +79,7 @@ contains
     type(d_matrix_list)      :: a
     real(RK)                 :: X(d, mnl), Y(d, mnl)
     real(RK), allocatable    :: w(:)
-    real(RK)                 :: C(d * d), R(d * d), H, LT, LF, LB
+    real(RK)                 :: C(d * d), H, LT, LF, LB
     integer                  :: i, j, k
 !
     do concurrent(i=1:l)
@@ -117,68 +117,68 @@ contains
 !
     H = W(a%h)
     C = W(a%c:a%c + a%dd - 1)
-    call a%partial_eval(1, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(1, perm, 1, 1, W, LT, H, C, LF, LB)
     print'(3f9.3)',H, LT
-    call a%partial_eval(2, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(2, perm, 1, 1, W, LT, H, C, LF, LB)
     print'(3f9.3)',H, LT
-    call a%partial_eval(3, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(3, perm, 1, 1, W, LT, H, C, LF, LB)
     print'(3f9.3)',H, LT
-    call a%partial_eval(4, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(4, perm, 1, 1, W, LT, H, C, LF, LB)
     print'(3f9.3)',H, LT
-    call a%partial_eval(5, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(5, perm, 1, 1, W, LT, H, C, LF, LB)
     print'(3f9.3)',H, LT
-    call a%partial_eval(6, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(6, perm, 1, 1, W, LT, H, C, LF, LB)
     print'(3f9.3)',H, LT
-    call a%partial_eval(7, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(7, perm, 1, 1, W, LT, H, C, LF, LB)
     print'(3f9.3)',H, LT
-    call a%partial_eval(8, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(8, perm, 1, 1, W, LT, H, C, LF, LB)
     print'(3f9.3)',H, LT
-    call a%partial_eval(9, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(9, perm, 1, 1, W, LT, H, C, LF, LB)
     print'(3f9.3)',H, LT
     print*
 !
     H = W(a%h)
     C = W(a%c:a%c + a%dd - 1)
-    call a%partial_eval(1, perm, 4, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(1, perm, 4, 1, W, LT, H, C, LF, LB)
     perm(:4) = [4,1,2,3]
     print'(3f9.3)',H, LT
-    call a%partial_eval(2, perm, 3, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(2, perm, 3, 1, W, LT, H, C, LF, LB)
     perm(:4) = [4,3,1,2]
     print'(3f9.3)',H, LT
-    call a%partial_eval(3, perm, 2, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(3, perm, 2, 1, W, LT, H, C, LF, LB)
     perm(:4) = [4,3,2,1]
     print'(3f9.3)',H, LT
-    call a%partial_eval(4, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(4, perm, 1, 1, W, LT, H, C, LF, LB)
     print'(3f9.3)',H, LT
-    call a%partial_eval(5, perm, 3, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(5, perm, 3, 1, W, LT, H, C, LF, LB)
     perm(5:7) = [3,1,2]
     print'(3f9.3)',H, LT
-    call a%partial_eval(6, perm, 2, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(6, perm, 2, 1, W, LT, H, C, LF, LB)
     perm(5:7) = [3,2,1]
     print'(3f9.3)',H, LT
-    call a%partial_eval(7, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(7, perm, 1, 1, W, LT, H, C, LF, LB)
     print'(3f9.3)',H, LT
-    call a%partial_eval(8, perm, 2, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(8, perm, 2, 1, W, LT, H, C, LF, LB)
     perm(8:9) = [2,1]
     print'(3f9.3)',H, LT
-    call a%partial_eval(9, perm, 1, 1, W, LT, H, C, LF, LB, R)
+    call a%partial_eval(9, perm, 1, 1, W, LT, H, C, LF, LB)
     print'(3f9.3)',H, LT
 !
   end subroutine test2
 !
   subroutine test3()
-    integer, parameter       :: d = 3
-    integer, parameter       :: s = 1
-    integer, parameter       :: m = 5, n = 5, f = 3, g = 3
-    integer, parameter       :: mn = m * n
-    type(mol_block)          :: b = mol_block(0, 2, m, n, f, g)
-    type(d_matrix_list)      :: dm
-    type(mol_block_list)     :: blk
-    type(mol_symmetry) :: ms(s)
-    real(RK)                 :: X(d, mn), Y(d, mn)
-    real(RK)                 :: R1(6, 2, 2, 2), R2(6, 2, 2, 2)
-    real(RK), allocatable    :: W(:)
-    integer                  :: i, j, k
+    integer, parameter    :: d = 3
+    integer, parameter    :: s = 1
+    integer, parameter    :: m = 5, n = 5, f = 3, g = 3
+    integer, parameter    :: mn = m * n
+    type(mol_block)       :: b = mol_block(0, 2, m, n, f, g)
+    type(d_matrix_list)   :: dm
+    type(mol_block_list)  :: blk
+    type(mol_symmetry)    :: ms(s)
+    real(RK)              :: X(d, mn), Y(d, mn)
+    real(RK)              :: R1(6, 2, 2, 2), R2(6, 2, 2, 2)
+    real(RK), allocatable :: W(:)
+    integer               :: i, j, k
 !
     ms(1) = mol_symmetry(RESHAPE([2, 1, 3, 4, 5], [m, 1]))
     blk = mol_block_list(d, s, [b])
