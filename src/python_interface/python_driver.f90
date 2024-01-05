@@ -47,22 +47,31 @@ contains
     nmem = sym(1)%nmem
   end subroutine setup
 !
-  subroutine run(x, y, n, res)
-    real(kind=rk), intent(in)    :: x(*)
-    real(kind=rk), intent(inout) :: y(*)
-    integer(kind=ik), intent(in) :: n
-    real(kind=rk), intent(out)   :: res(n)
-    real(kind=rk)                :: w(nmem, njob)
-    integer(kind=ik)             :: i
+  subroutine run(x, y, n, rmsd, log_ratio, nsearch)
+    real(kind=rk), intent(in)     :: x(*)
+    real(kind=rk), intent(inout)  :: y(*)
+    integer(kind=ik), intent(in)  :: n
+    real(kind=rk), intent(out)    :: rmsd(n)
+    real(kind=rk), intent(out)    :: log_ratio(n)
+    integer(kind=ik), intent(out) :: nsearch(n)
+    real(kind=rk)                 :: w(nmem, njob)
+    integer(kind=ik)              :: i
 !
     !$omp parallel do
     do i = 1, n
       block
         integer(kind=ik) :: ijob, pnt
+        real(kind=rk)    :: rat(3)
+!
         pnt = (i - 1) * dmn + 1
         ijob = omp_get_thread_num() + 1
         call sym(ijob)%run(swap_y, x, y(pnt), w(1, ijob))
-        res(i) = sym(ijob)%rmsd(w(1, ijob))
+!
+        rmsd(i) = sym(ijob)%rmsd(w(1, ijob))
+        rat = sym(ijob)%search_ratio(w(1, ijob))
+        log_ratio(i) = rat(1)
+        nsearch(i) = NINT(rat(3))
+!
       end block
     end do
     !$omp end parallel do
