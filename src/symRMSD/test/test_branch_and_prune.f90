@@ -46,7 +46,7 @@ contains
     allocate (W(bra%memsize))
     call bra%setup(X, Y, W)
     call bra%run(W, .true.)
-    print'(*(f16.9))', w(bra%lncmb), w(bra%nsrch), w(bra%ratio)
+    print'(*(f16.9))', w(bra%lncmb), w(bra%nsrch), EXP(w(bra%ratio))
 !
     msd = 999D0
     do k=0,s-1
@@ -99,7 +99,7 @@ contains
     allocate (W(bra%memsize))
     call bra%setup(X, Y, W)
     call bra%run(W, .true.)
-    print'(*(f16.9))', w(bra%lncmb), w(bra%nsrch), w(bra%ratio)
+    print'(*(f16.9))', w(bra%lncmb), w(bra%nsrch), EXP(w(bra%ratio))
     Y = RESHAPE(W(bra%yp:bra%yp + d * mn), [d, mn])
     call u%assert_almost_equal(sd(d, X, Y), W(bra%upperbound), 'multiple swap')
 !

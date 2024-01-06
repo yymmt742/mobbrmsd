@@ -167,6 +167,7 @@ contains
         cur = tr%current_depth() - 1
         call set_hc(this%dx, tr, bi, cur, this%nd, this%bs, W)
         call tr%prune(W)
+        ncount = ncount + tr%n_breadth()
 !
         if (tr%finished()) exit
 !
@@ -175,7 +176,6 @@ contains
         bi(cur)%isym = (cix - 1) / bi(cur)%nper
         call swap_iper(this%nd, cur, cix, bi)
         if (cur == this%nd) then
-          ncount = ncount + 1
           pp = tr%current_pointer()
           if (W(tr%upperbound) > W(pp)) then
             call breadth_indicator_save(bi)
