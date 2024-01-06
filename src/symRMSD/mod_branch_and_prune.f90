@@ -10,6 +10,8 @@ module mod_branch_and_prune
   private
   public :: branch_and_prune
 !
+  integer(IK), parameter :: DEF_maxeval = -1
+!
   type breadth_indicator
     sequence
     private
@@ -25,8 +27,8 @@ module mod_branch_and_prune
 !
   type branch_and_prune
     private
-    integer(IK)                :: bs, nd, mem
-    integer(IK), public        :: mn, dmn, memsize
+    integer(IK)                :: bs, nd
+    integer(IK), public        :: mn, dmn, memsize, maxeval
     integer(IK), public        :: ratio, nsrch, lncmb, xp, yp
     integer(IK), public        :: upperbound, lowerbound
     integer(IK), allocatable   :: p(:), q(:)
@@ -53,15 +55,15 @@ module mod_branch_and_prune
 contains
 !
 !| generate node instance
-  pure function branch_and_prune_new(blk, ms) result(res)
+  pure function branch_and_prune_new(blk, ms, maxeval) result(res)
     type(mol_block_list), intent(in)         :: blk
     type(mol_symmetry), intent(in), optional :: ms(*)
+    integer(IK), intent(in), optional        :: maxeval
     type(branch_and_prune)                   :: res
     integer(IK)                              :: i, j, pi
 !
     res%mn = blk%mn
     res%dmn = blk%d * blk%mn
-    res%mem = res%dmn * 2 + 3
 !
     pi = 1
     res%ratio = pi; pi = pi + 1
@@ -97,6 +99,12 @@ contains
 !
     res%upperbound = res%tr%upperbound
     res%lowerbound = res%tr%lowerbound
+!
+    if (PRESENT(maxeval)) then
+      res%maxeval = maxeval
+    else
+      res%maxeval = DEF_maxeval
+    end if
 !
     allocate (res%p(res%dx%l))
     res%p(1) = 1
@@ -194,6 +202,7 @@ contains
         cur = cur - 1
       end do
 !
+      if (this%maxeval > 0 .and. this%maxeval < ncount) exit
       if (cur == 0) exit
 !
       call tr%set_parent_node(W)
