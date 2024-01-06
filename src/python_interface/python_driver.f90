@@ -35,7 +35,7 @@ contains
     dmn = inp%blk%mn * inp%blk%d
   end subroutine add_molecule
 !
-  subroutine setup(maxeval)
+  subroutine setup()
     integer(kind=ik)             :: i
     inp%maxeval = maxeval
     if (ALLOCATED(sym)) then
