@@ -1,4 +1,4 @@
-module mod_branch_and_prune
+module mod_branch_and_bound
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mol_block
   use mod_group_permutation
@@ -8,7 +8,7 @@ module mod_branch_and_prune
   use mod_tree
   implicit none
   private
-  public :: branch_and_prune
+  public :: branch_and_bound, DEF_maxeval
 !
   integer(IK), parameter :: DEF_maxeval = -1
 !
@@ -25,7 +25,7 @@ module mod_branch_and_prune
     integer(IK) :: nnod
   end type breadth_indicator
 !
-  type branch_and_prune
+  type branch_and_bound
     private
     integer(IK)                :: bs, nd
     integer(IK), public        :: mn, dmn, memsize, maxeval
@@ -37,15 +37,15 @@ module mod_branch_and_prune
     type(breadth_indicator), allocatable :: bi(:)
     type(mol_symmetry), allocatable      :: ms(:)
   contains
-    procedure :: setup      => branch_and_prune_setup
-    procedure :: run        => branch_and_prune_run
-    procedure :: clear      => branch_and_prune_clear
-    final     :: branch_and_prune_destroy
-  end type branch_and_prune
+    procedure :: setup      => branch_and_bound_setup
+    procedure :: run        => branch_and_bound_run
+    procedure :: clear      => branch_and_bound_clear
+    final     :: branch_and_bound_destroy
+  end type branch_and_bound
 !
-  interface branch_and_prune
-    module procedure branch_and_prune_new
-  end interface branch_and_prune
+  interface branch_and_bound
+    module procedure branch_and_bound_new
+  end interface branch_and_bound
 !
   interface
     include 'dgemm.h'
@@ -55,11 +55,11 @@ module mod_branch_and_prune
 contains
 !
 !| generate node instance
-  pure function branch_and_prune_new(blk, ms, maxeval) result(res)
+  pure function branch_and_bound_new(blk, ms, maxeval) result(res)
     type(mol_block_list), intent(in)         :: blk
     type(mol_symmetry), intent(in), optional :: ms(*)
     integer(IK), intent(in), optional        :: maxeval
-    type(branch_and_prune)                   :: res
+    type(branch_and_bound)                   :: res
     integer(IK)                              :: i, j, pi
 !
     res%mn = blk%mn
@@ -129,10 +129,10 @@ contains
 !
     res%memsize = pi
 !
-  end function branch_and_prune_new
+  end function branch_and_bound_new
 !
-  pure subroutine branch_and_prune_setup(this, X, Y, W)
-    class(branch_and_prune), intent(in) :: this
+  pure subroutine branch_and_bound_setup(this, X, Y, W)
+    class(branch_and_bound), intent(in) :: this
     real(RK), intent(in)                :: X(*)
     real(RK), intent(in)                :: Y(*)
     real(RK), intent(inout)             :: W(*)
@@ -153,10 +153,10 @@ contains
     W(this%tr%lowerbound) = W(this%dx%o)
     W(this%lncmb) = this%tr%log_ncomb()
 !
-  end subroutine branch_and_prune_setup
+  end subroutine branch_and_bound_setup
 !
-  pure subroutine branch_and_prune_run(this, W, swap_y)
-    class(branch_and_prune), intent(in)  :: this
+  pure subroutine branch_and_bound_run(this, W, swap_y)
+    class(branch_and_bound), intent(in)  :: this
     real(RK), intent(inout)              :: W(*)
     logical, intent(in)                  :: swap_y
     type(tree)                           :: tr
@@ -328,21 +328,21 @@ contains
 !
     end subroutine rotation
 !
-  end subroutine branch_and_prune_run
+  end subroutine branch_and_bound_run
 !
-  pure elemental subroutine branch_and_prune_clear(this)
-    class(branch_and_prune), intent(inout) :: this
+  pure elemental subroutine branch_and_bound_clear(this)
+    class(branch_and_bound), intent(inout) :: this
     call this%dx%clear()
     call this%tr%clear()
     if (ALLOCATED(this%p)) deallocate (this%p)
     if (ALLOCATED(this%q)) deallocate (this%q)
     if (ALLOCATED(this%ms)) deallocate (this%ms)
-  end subroutine branch_and_prune_clear
+  end subroutine branch_and_bound_clear
 !
-  pure elemental subroutine branch_and_prune_destroy(this)
-    type(branch_and_prune), intent(inout) :: this
-    call branch_and_prune_clear(this)
-  end subroutine branch_and_prune_destroy
+  pure elemental subroutine branch_and_bound_destroy(this)
+    type(branch_and_bound), intent(inout) :: this
+    call branch_and_bound_clear(this)
+  end subroutine branch_and_bound_destroy
 !
 !!!
 !
@@ -352,4 +352,4 @@ contains
     this%jsym = this%isym
   end subroutine breadth_indicator_save
 !
-end module mod_branch_and_prune
+end module mod_branch_and_bound
