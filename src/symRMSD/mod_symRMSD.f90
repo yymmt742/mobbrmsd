@@ -119,7 +119,7 @@ contains
     real(RK), intent(in)       :: w(*)
     real(RK)                   :: res
     if (this%natm > 0) then
-      res = SQRT(W(this%bra%upperbound) / this%natm)
+      res = SQRT(ABS(W(this%bra%upperbound)) / this%natm)
     else
       res = ZERO
     end if
