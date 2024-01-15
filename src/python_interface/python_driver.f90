@@ -2,16 +2,19 @@ module driver
   !$ use omp_lib
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
   use mod_symRMSD
+  use mod_branch_and_bound, only: DEF_maxeval
   use mod_mol_block
   use mod_mol_symmetry
   implicit none
   private
+  public maxeval
   public swap_y
   public add_molecule
   public setup
   public run
   public clear
 !
+  integer(kind=ik), save     :: maxeval = DEF_maxeval
   integer(kind=ik), save     :: dmn = 0
   integer(kind=ik), save     :: nmem = 0
   integer(kind=ik), save     :: njob = 0
@@ -33,7 +36,8 @@ contains
   end subroutine add_molecule
 !
   subroutine setup()
-    integer(kind=ik) :: i
+    integer(kind=ik)             :: i
+    inp%maxeval = maxeval
     if (ALLOCATED(sym)) then
       deallocate (sym)
     end if

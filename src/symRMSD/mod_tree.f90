@@ -262,13 +262,25 @@ contains
 !
   pure elemental function tree_log_ncomb(this) result(res)
     class(tree), intent(in) :: this
-    real(RK)                :: res
-    if (ALLOCATED(this%breadthes)) then
-      res = SUM(LOG(REAL(this%breadthes%uppd - this%breadthes%lowd, RK)))
-    else
-      res = ZERO
-    end if
+    real(RK)                :: tmp, res
+    integer(IK)             :: i, n
+    res = ZERO
+    if (.not. ALLOCATED(this%breadthes)) return
+    n = SIZE(this%breadthes)
+    if (n < 1) return
+    tmp = ZERO
+    do i = n, 2, -1
+      tmp = tmp - log_nnod(this%breadthes(i))
+      res = res + EXP(tmp)
+    end do
+    res = log_nnod(this%breadthes(1)) - tmp + LOG(ONE + res)
   end function tree_log_ncomb
+!
+  pure elemental function log_nnod(b) result(res)
+    type(breadth), intent(in) :: b
+    real(RK)                  :: res
+    res = LOG(REAL(b%uppd - b%lowd, RK))
+  end function log_nnod
 !
   pure elemental function tree_finished(this) result(res)
     class(tree), intent(in) :: this

@@ -17,14 +17,20 @@ contains
     real(RK), allocatable :: W(:)
     integer(IK)           :: i
 !
-    t = tree(1, 1, 4, [1,5,3,2])
-    print*,t%memsize
+    t = tree(1, 1, 1, [1])
+    call u%assert_almost_equal(t%log_ncomb(),     LOG(ONE), 'log_ncomb [1]      ')
+    t = tree(1, 1, 1, [5])
+    call u%assert_almost_equal(t%log_ncomb(),  LOG(5.0_RK), 'log_ncomb [5]      ')
+    t = tree(1, 1, 3, [8,3,2])
+    call u%assert_almost_equal(t%log_ncomb(), LOG(80.0_RK), 'log_ncomb [8,3,2]  ')
+    t = tree(1, 1, 4, [1, 5, 3, 2])
+    call u%assert_almost_equal(t%log_ncomb(), LOG(51.0_RK), 'log_ncomb [1,5,3,2]')
+!
     allocate(W(t%memsize))
     do i = 1, t%memsize
       W(i) = COS(i**2*3D0)
     end do
-    print'(10f9.3)', W
-
+!
     call t%open_node()
     call t%set_parent_node(W)
     print *, t%nodes_pointer(), t%parent_pointer(), t%unfinished()

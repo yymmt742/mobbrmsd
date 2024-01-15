@@ -1,6 +1,6 @@
 module mod_symRMSD
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
-  use mod_branch_and_prune
+  use mod_branch_and_bound, only: branch_and_bound, DEF_maxeval
   use mod_mol_block
   use mod_mol_symmetry
   implicit none
@@ -8,6 +8,7 @@ module mod_symRMSD
   public :: symRMSD_input
 !
   type symRMSD_input
+    integer(IK)                      :: maxeval = DEF_maxeval
     type(mol_block_list)             :: blk
     type(mol_symmetry), allocatable  :: ms(:)
   contains
@@ -21,7 +22,7 @@ module mod_symRMSD
     integer(IK), public    :: nmem = 0
     integer(IK), public    :: ndim = 0
     integer(IK), public    :: natm = 0
-    type(branch_and_prune) :: bra
+    type(branch_and_bound) :: bra
   contains
     procedure :: run          => symRMSD_run
     procedure :: sd           => symRMSD_sd
@@ -82,9 +83,9 @@ contains
     type(symRMSD)                   :: res
 !
     if (ALLOCATED(inp%ms)) then
-      res%bra = branch_and_prune(inp%blk, inp%ms)
+      res%bra = branch_and_bound(inp%blk, ms=inp%ms, maxeval=inp%maxeval)
     else
-      res%bra = branch_and_prune(inp%blk)
+      res%bra = branch_and_bound(inp%blk, maxeval=inp%maxeval)
     end if
 !
     res%nmem = res%bra%memsize
@@ -118,7 +119,7 @@ contains
     real(RK), intent(in)       :: w(*)
     real(RK)                   :: res
     if (this%natm > 0) then
-      res = SQRT(W(this%bra%upperbound) / this%natm)
+      res = SQRT(ABS(W(this%bra%upperbound)) / this%natm)
     else
       res = ZERO
     end if

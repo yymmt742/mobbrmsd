@@ -3,14 +3,14 @@ program main
   use mod_mol_block
   use mod_estimate_rotation_matrix
   use mod_mol_symmetry
-  use mod_branch_and_prune
+  use mod_branch_and_bound
   use mod_unittest
   implicit none
   type(unittest) :: u
   integer, parameter :: NTEST=25
   integer            :: itest
 !
-  call u%init('test branch_and_prune')
+  call u%init('test branch_and_bound')
   do itest = 1, NTEST
     call test1()
   end do
@@ -28,7 +28,7 @@ contains
     integer, parameter     :: m = 5, n = 8, f = 5, g = 3
     integer, parameter     :: mn = m * n
     type(mol_block)        :: b = mol_block(0, s, m, n, f, g)
-    type(branch_and_prune) :: bra
+    type(branch_and_bound) :: bra
     type(mol_block_list)   :: blk
     type(mol_symmetry)     :: ms(l)
     real(RK)               :: X(d, mn), Y(d, mn), isd, msd
@@ -41,12 +41,12 @@ contains
     X = sample(d, mn)
     Y = sample(d, mn)
 !
-    bra = branch_and_prune(blk, ms)
+    bra = branch_and_bound(blk, ms)
 !
     allocate (W(bra%memsize))
     call bra%setup(X, Y, W)
     call bra%run(W, .true.)
-    print'(*(f16.9))', w(bra%lncmb), w(bra%nsrch), w(bra%ratio)
+    print'(*(f16.3))', w(bra%lncmb), w(bra%nsrch), EXP(w(bra%ratio))
 !
     msd = 999D0
     do k=0,s-1
@@ -80,7 +80,7 @@ contains
     type(mol_block)        :: b(3) = [mol_block(0, 3, m1, n1, f1, g1), &
                                    &  mol_block(0, 1, m2, n2, f2, g2), &
                                    &  mol_block(0, 2, m3, n3, f3, g3)]
-    type(branch_and_prune) :: bra
+    type(branch_and_bound) :: bra
     type(mol_block_list)   :: blk
     type(mol_symmetry)     :: ms(s)
     real(RK)               :: X(d, mn), Y(d, mn)
@@ -95,11 +95,11 @@ contains
     X = sample(d, mn)
     Y = sample(d, mn)
 !
-    bra = branch_and_prune(blk, ms)
+    bra = branch_and_bound(blk, ms)
     allocate (W(bra%memsize))
     call bra%setup(X, Y, W)
     call bra%run(W, .true.)
-    print'(*(f16.9))', w(bra%lncmb), w(bra%nsrch), w(bra%ratio)
+    print'(*(f16.3))', w(bra%lncmb), w(bra%nsrch), EXP(w(bra%ratio))
     Y = RESHAPE(W(bra%yp:bra%yp + d * mn), [d, mn])
     call u%assert_almost_equal(sd(d, X, Y), W(bra%upperbound), 'multiple swap')
 !
