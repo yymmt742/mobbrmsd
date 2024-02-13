@@ -64,11 +64,12 @@ contains
     res%s = MAX(b%s, 1)
     res%m = MAX(b%m, 0)
     res%n = MAX(b%n, 0)
-    if (b%g == 1 .and. res%s == 1) then
-      res%g = 0
-    else
-      res%g = MIN(res%n, MAX(b%g, 0))
-    end if
+!   if (b%g == 1 .and. res%s == 1) then
+!     res%g = 0
+!   else
+!     res%g = MIN(res%n, MAX(b%g, 0))
+!   end if
+    res%g = MIN(res%n, MAX(b%g, 0))
     res%dd = res%d * res%d
     res%gg = res%g * res%g
     res%dm = res%d * res%m

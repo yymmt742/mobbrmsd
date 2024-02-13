@@ -10,6 +10,7 @@ program main
 !
   call u%init('test symRMSD')
   call test0()
+  call test2()
 !
   do itest = 1, NTEST
     call test1()
@@ -59,6 +60,30 @@ contains
     print *, sr%search_ratio(W)
 !
   end subroutine test1
+!
+  subroutine test2()
+    integer, parameter         :: d = 3
+    integer, parameter         :: s = 1
+    integer, parameter         :: m = 5, n = 1, f = 12, g = 18
+    type(mol_block), parameter :: b = mol_block(0, s, m, n, f, g)
+    type(symRMSD_input)        :: inp
+    type(symRMSD)              :: sr
+    real(RK)                   :: X(d, m, n), Y(d, m, n)
+    real(RK), allocatable      :: W(:)
+!
+    inp%blk = mol_block_list(d, 1, [b])
+!
+    X(:, :, 1) = sample(d, m, [0, 0, 0])
+    Y(:, :, 1) = sample(d, m, [0, 0, 0])
+!
+    Y = 0.2 * X + 0.8 * Y
+    sr = symRMSD(inp)
+    allocate(w(sr%nmem))
+    call sr%run(.true., X, Y, w)
+    print *, SQRT(SUM((X - Y)**2) / (m * n)), sr%sd(W), sr%rmsd(W)
+    print *, sr%search_ratio(W)
+!
+  end subroutine test2
 !
   function sample(d, n, com) result(res)
     integer, intent(in)  :: d, n, com(d)
