@@ -2,7 +2,7 @@ module driver
   !$ use omp_lib
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
   use mod_symRMSD
-  use mod_branch_and_bound, only: DEF_maxeval
+  use mod_branch_and_bound, only: DEF_maxeval, DEF_cutoff
   use mod_mol_block
   use mod_mol_symmetry
   implicit none
@@ -15,6 +15,7 @@ module driver
   public clear
 !
   integer(kind=ik), save     :: maxeval = DEF_maxeval
+  real(kind=rk), save        :: cutoff  = DEF_cutoff
   integer(kind=ik), save     :: dmn = 0
   integer(kind=ik), save     :: nmem = 0
   integer(kind=ik), save     :: njob = 0
@@ -36,8 +37,9 @@ contains
   end subroutine add_molecule
 !
   subroutine setup()
-    integer(kind=ik)             :: i
+    integer(kind=ik) :: i
     inp%maxeval = maxeval
+    inp%cutoff  = cutoff
     if (ALLOCATED(sym)) then
       deallocate (sym)
     end if

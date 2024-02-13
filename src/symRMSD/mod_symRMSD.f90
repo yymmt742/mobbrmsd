@@ -1,6 +1,6 @@
 module mod_symRMSD
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
-  use mod_branch_and_bound, only: branch_and_bound, DEF_maxeval
+  use mod_branch_and_bound, only: branch_and_bound, DEF_maxeval, DEF_cutoff
   use mod_mol_block
   use mod_mol_symmetry
   implicit none
@@ -8,9 +8,10 @@ module mod_symRMSD
   public :: symRMSD_input
 !
   type symRMSD_input
-    integer(IK)                      :: maxeval = DEF_maxeval
-    type(mol_block_list)             :: blk
-    type(mol_symmetry), allocatable  :: ms(:)
+    integer(IK)                     :: maxeval = DEF_maxeval
+    real(RK)                        :: cutoff  = DEF_cutoff
+    type(mol_block_list)            :: blk
+    type(mol_symmetry), allocatable :: ms(:)
   contains
     procedure :: add_molecule => symRMSD_input_add_molecule
     procedure :: clear        => symRMSD_input_clear
@@ -85,9 +86,9 @@ contains
     type(symRMSD)                   :: res
 !
     if (ALLOCATED(inp%ms)) then
-      res%bra = branch_and_bound(inp%blk, ms=inp%ms, maxeval=inp%maxeval)
+      res%bra = branch_and_bound(inp%blk, ms=inp%ms, maxeval=inp%maxeval, cutoff=inp%cutoff)
     else
-      res%bra = branch_and_bound(inp%blk, maxeval=inp%maxeval)
+      res%bra = branch_and_bound(inp%blk, maxeval=inp%maxeval, cutoff=inp%cutoff)
     end if
 !
     res%nmem = res%bra%memsize

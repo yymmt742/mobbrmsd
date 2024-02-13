@@ -8,9 +8,10 @@ module mod_branch_and_bound
   use mod_tree
   implicit none
   private
-  public :: branch_and_bound, DEF_maxeval
+  public :: branch_and_bound, DEF_maxeval, DEF_cutoff
 !
   integer(IK), parameter :: DEF_maxeval = -1
+  real(RK), parameter    :: DEF_cutoff  = -RHUGE
 !
   type breadth_indicator
     sequence
@@ -31,6 +32,7 @@ module mod_branch_and_bound
     integer(IK), public        :: mn, dmn, memsize, maxeval
     integer(IK), public        :: ratio, nsrch, lncmb, xp, yp
     integer(IK), public        :: upperbound, lowerbound
+    real(RK), public           :: cutoff
     integer(IK), allocatable   :: p(:), q(:)
     type(d_matrix_list)        :: dx
     type(tree)                 :: tr
@@ -55,10 +57,11 @@ module mod_branch_and_bound
 contains
 !
 !| generate node instance
-  pure function branch_and_bound_new(blk, ms, maxeval) result(res)
+  pure function branch_and_bound_new(blk, ms, maxeval, cutoff) result(res)
     type(mol_block_list), intent(in)         :: blk
     type(mol_symmetry), intent(in), optional :: ms(*)
     integer(IK), intent(in), optional        :: maxeval
+    real(RK), intent(in), optional           :: cutoff
     type(branch_and_bound)                   :: res
     integer(IK)                              :: i, j, pi
 !
@@ -104,6 +107,12 @@ contains
       res%maxeval = maxeval
     else
       res%maxeval = DEF_maxeval
+    end if
+!
+    if (PRESENT(cutoff)) then
+      res%cutoff = cutoff
+    else
+      res%cutoff = DEF_cutoff
     end if
 !
     allocate (res%p(res%dx%l))
@@ -202,8 +211,9 @@ contains
         cur = cur - 1
       end do
 !
-      if (this%maxeval > 0 .and. this%maxeval < ncount) exit
       if (cur == 0) exit
+      if (this%maxeval > 0 .and. this%maxeval < ncount) exit
+      if (this%cutoff < W(this%lowerbound)) exit
 !
       call tr%set_parent_node(W)
       block
