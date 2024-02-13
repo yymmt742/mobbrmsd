@@ -24,11 +24,13 @@ module mod_symRMSD
     integer(IK), public    :: natm = 0
     type(branch_and_bound) :: bra
   contains
-    procedure :: run          => symRMSD_run
-    procedure :: sd           => symRMSD_sd
-    procedure :: rmsd         => symRMSD_rmsd
-    procedure :: search_ratio => symRMSD_search_ratio
-    procedure :: clear        => symRMSD_clear
+    procedure :: run             => symRMSD_run
+    procedure :: sd              => symRMSD_sd
+    procedure :: sd_with_error   => symRMSD_sd_with_error
+    procedure :: rmsd            => symRMSD_rmsd
+    procedure :: rmsd_with_error => symRMSD_rmsd_with_error
+    procedure :: search_ratio    => symRMSD_search_ratio
+    procedure :: clear           => symRMSD_clear
     final     :: symRMSD_destroy
   end type symRMSD
 !
@@ -124,6 +126,30 @@ contains
       res = ZERO
     end if
   end function symRMSD_rmsd
+!
+  pure function symRMSD_sd_with_error(this, W) result(res)
+    class(symRMSD), intent(in) :: this
+    real(RK), intent(in)       :: w(*)
+    real(RK)                   :: res(2)
+    if (this%natm > 0) then
+      res(1) = W(this%bra%lowerbound)
+      res(2) = W(this%bra%upperbound)
+    else
+      res = ZERO
+    end if
+  end function symRMSD_sd_with_error
+!
+  pure function symRMSD_rmsd_with_error(this, W) result(res)
+    class(symRMSD), intent(in) :: this
+    real(RK), intent(in)       :: w(*)
+    real(RK)                   :: res(2)
+    if (this%natm > 0) then
+      res(1) = SQRT(ABS(W(this%bra%lowerbound)) / this%natm)
+      res(2) = SQRT(ABS(W(this%bra%upperbound)) / this%natm)
+    else
+      res = ZERO
+    end if
+  end function symRMSD_rmsd_with_error
 !
   pure function symRMSD_search_ratio(this, W) result(res)
     class(symRMSD), intent(in) :: this

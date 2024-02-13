@@ -51,13 +51,14 @@ contains
     nmem = sym(1)%nmem
   end subroutine setup
 !
-  subroutine run(x, y, n, rmsd, log_ratio, nsearch)
+  subroutine run(x, y, n, rmsd, log_ratio, nsearch, rmsd_with_error)
     real(kind=rk), intent(in)     :: x(*)
     real(kind=rk), intent(inout)  :: y(*)
     integer(kind=ik), intent(in)  :: n
     real(kind=rk), intent(out)    :: rmsd(n)
     real(kind=rk), intent(out)    :: log_ratio(n)
     integer(kind=ik), intent(out) :: nsearch(n)
+    real(kind=rk), intent(out)    :: rmsd_with_error(2, n)
     real(kind=rk)                 :: w(nmem, njob)
     integer(kind=ik)              :: i
 !
@@ -75,6 +76,7 @@ contains
         rat = sym(ijob)%search_ratio(w(1, ijob))
         log_ratio(i) = rat(1)
         nsearch(i) = NINT(rat(3))
+        rmsd_with_error(:,i) = sym(ijob)%rmsd_with_error(w(1, ijob))
 !
       end block
     end do
