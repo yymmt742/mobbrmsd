@@ -11,7 +11,7 @@ module mod_branch_and_bound
   public :: branch_and_bound, DEF_maxeval, DEF_cutoff
 !
   integer(IK), parameter :: DEF_maxeval = -1
-  real(RK), parameter    :: DEF_cutoff  = -RHUGE
+  real(RK), parameter    :: DEF_cutoff  = RHUGE
 !
   type breadth_indicator
     sequence

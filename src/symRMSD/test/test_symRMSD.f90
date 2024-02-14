@@ -23,9 +23,9 @@ contains
   subroutine test0()
     type(symRMSD_input)    :: inp
     integer(IK), parameter :: s(10) = [1, 3, 4, 5, 2, 2, 3, 5, 4, 1]
-    call inp%add_molecule(mol_block(0, 1, 5, 4, 5, 4), s)
-    call inp%add_molecule(mol_block(0, 2, 5, 4, 5, 4), s)
-    call inp%add_molecule(mol_block(0, 3, 5, 4, 5, 4), s)
+    call inp%add_molecule(mol_block(0, 1, 5, 4, 4), s)
+    call inp%add_molecule(mol_block(0, 2, 5, 4, 4), s)
+    call inp%add_molecule(mol_block(0, 3, 5, 4, 4), s)
     print'(6i4)', inp%blk%b
     print*,size(inp%ms)
   end subroutine test0
@@ -33,8 +33,8 @@ contains
   subroutine test1()
     integer, parameter         :: d = 3
     integer, parameter         :: s = 1
-    integer, parameter         :: m = 5, n = 18, f = 12, g = 18
-    type(mol_block), parameter :: b = mol_block(0, s, m, n, f, g)
+    integer, parameter         :: m = 5, n = 18, g = 18
+    type(mol_block), parameter :: b = mol_block(0, s, m, n, g)
     type(symRMSD_input)        :: inp
     type(symRMSD)              :: sr
     real(RK)                   :: X(d, m, n), Y(d, m, n)
@@ -64,8 +64,8 @@ contains
   subroutine test2()
     integer, parameter         :: d = 3
     integer, parameter         :: s = 1
-    integer, parameter         :: m = 5, n = 1, f = 12, g = 18
-    type(mol_block), parameter :: b = mol_block(0, s, m, n, f, g)
+    integer, parameter         :: m = 5, n = 1, g = 18
+    type(mol_block), parameter :: b = mol_block(0, s, m, n, g)
     type(symRMSD_input)        :: inp
     type(symRMSD)              :: sr
     real(RK)                   :: X(d, m, n), Y(d, m, n)

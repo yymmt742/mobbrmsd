@@ -25,9 +25,9 @@ contains
     integer, parameter     :: d = 3
     integer, parameter     :: l = 1
     integer, parameter     :: s = 2
-    integer, parameter     :: m = 5, n = 8, f = 5, g = 3
+    integer, parameter     :: m = 5, n = 8, g = 3
     integer, parameter     :: mn = m * n
-    type(mol_block)        :: b = mol_block(0, s, m, n, f, g)
+    type(mol_block)        :: b = mol_block(0, s, m, n, g)
     type(branch_and_bound) :: bra
     type(mol_block_list)   :: blk
     type(mol_symmetry)     :: ms(l)
@@ -73,13 +73,13 @@ contains
   subroutine test2()
     integer, parameter     :: d = 3
     integer, parameter     :: s = 3
-    integer, parameter     :: m1 = 5, n1 = 3, f1 = 3, g1 = 2
-    integer, parameter     :: m2 = 3, n2 = 4, f2 = 2, g2 = 4
-    integer, parameter     :: m3 = 7, n3 = 6, f3 = 7, g3 = 5
+    integer, parameter     :: m1 = 5, n1 = 3, g1 = 2
+    integer, parameter     :: m2 = 3, n2 = 4, g2 = 4
+    integer, parameter     :: m3 = 7, n3 = 6, g3 = 5
     integer, parameter     :: mn = m1 * n1 + m2 * n2 + m3 * n3
-    type(mol_block)        :: b(3) = [mol_block(0, 3, m1, n1, f1, g1), &
-                                   &  mol_block(0, 1, m2, n2, f2, g2), &
-                                   &  mol_block(0, 2, m3, n3, f3, g3)]
+    type(mol_block)        :: b(3) = [mol_block(0, 3, m1, n1, g1), &
+                                   &  mol_block(0, 1, m2, n2, g2), &
+                                   &  mol_block(0, 2, m3, n3, g3)]
     type(branch_and_bound) :: bra
     type(mol_block_list)   :: blk
     type(mol_symmetry)     :: ms(s)

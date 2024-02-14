@@ -22,11 +22,10 @@ contains
     integer, parameter         :: s = 2
     integer, parameter         :: m = 5
     integer, parameter         :: n = 7
-    integer, parameter         :: f = 3
     integer, parameter         :: g = 5
     integer, parameter         :: mn = m * n
     integer, parameter         :: swp(m, s - 1) = RESHAPE([1, 2, 3, 4, 5], [m, s - 1])
-    type(mol_block), parameter :: b = mol_block(1, s, m, n, f, g)
+    type(mol_block), parameter :: b = mol_block(1, s, m, n, g)
     type(mol_symmetry)         :: ms
     type(d_matrix)             :: a
     real(RK)                   :: X(d, mn), Y(d, mn)
@@ -87,7 +86,7 @@ contains
     end do
 !
     do i = 1, l
-      b(i) = mol_block(0, ms(i)%n_sym() + 1, m + i, n, f, g - i)
+      b(i) = mol_block(0, ms(i)%n_sym() + 1, m + i, n, g - i)
     end do
 !
     k = 0
@@ -169,9 +168,9 @@ contains
   subroutine test3()
     integer, parameter    :: d = 3
     integer, parameter    :: s = 1
-    integer, parameter    :: m = 5, n = 5, f = 3, g = 3
+    integer, parameter    :: m = 5, n = 5, g = 3
     integer, parameter    :: mn = m * n
-    type(mol_block)       :: b = mol_block(0, 2, m, n, f, g)
+    type(mol_block)       :: b = mol_block(0, 2, m, n, g)
     type(d_matrix_list)   :: dm
     type(mol_block_list)  :: blk
     type(mol_symmetry)    :: ms(s)

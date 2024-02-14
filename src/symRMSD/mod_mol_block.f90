@@ -26,7 +26,7 @@ module mod_mol_block
     !  m :: number of atom in a molecule
     integer(IK) :: n = 1
     !  n :: number of molecule
-    integer(IK) :: f = 1
+    !integer(IK) :: f = 1
     !  f :: number of free atom in a molecule, must be f<=m.
     integer(IK) :: g = 1
     !  g :: number of free molecule, must be g<=n
@@ -82,7 +82,7 @@ contains
       res%b(i)%s = MAX(1, res%b(i)%s)
       res%b(i)%m = MAX(0, res%b(i)%m)
       res%b(i)%n = MAX(0, res%b(i)%n)
-      res%b(i)%f = MAX(0, MIN(res%b(i)%m, res%b(i)%f))
+      !res%b(i)%f = MAX(0, MIN(res%b(i)%m, res%b(i)%f))
       res%b(i)%g = MAX(0, MIN(res%b(i)%n, res%b(i)%g))
     end do
     p = 1
@@ -110,7 +110,7 @@ contains
     this%b(nb)%s = MAX(1, this%b(nb)%s)
     this%b(nb)%m = MAX(0, this%b(nb)%m)
     this%b(nb)%n = MAX(0, this%b(nb)%n)
-    this%b(nb)%f = MAX(0, MIN(this%b(nb)%m, this%b(nb)%f))
+    !this%b(nb)%f = MAX(0, MIN(this%b(nb)%m, this%b(nb)%f))
     this%b(nb)%g = MAX(0, MIN(this%b(nb)%n, this%b(nb)%g))
     this%mg = this%mg + this%b(nb)%m * this%b(nb)%g
     this%mn = this%mn + this%b(nb)%m * this%b(nb)%n
@@ -233,7 +233,8 @@ contains
   pure elemental function mol_block_invalid(b) result(res)
     type(mol_block), intent(in) :: b
     logical                     :: res
-    res = (b%m < 1) .or. (b%n < 1) .or. (b%m < b%f) .or. (b%n < b%g)
+    res = (b%m < 1) .or. (b%n < 1) .or. (b%n < b%g)
+    !res = (b%m < 1) .or. (b%n < 1) .or. (b%m < b%f) .or. (b%n < b%g)
   end function mol_block_invalid
 !
   pure elemental subroutine mol_block_list_clear(this)
