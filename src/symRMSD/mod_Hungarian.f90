@@ -33,8 +33,7 @@ contains
   end function Hungarian_value
 !
 !| Calculate linear assignment minimum cost using Hungarian method with pivot.
-  subroutine Hungarian(m, n, C, W)
-  !pure subroutine Hungarian(m, n, C, W, piv)
+  pure subroutine Hungarian(m, n, C, W)
     integer(IK), intent(in)    :: m
     !! matrix dimension 1, must be m > 0.
     integer(IK), intent(in)    :: n

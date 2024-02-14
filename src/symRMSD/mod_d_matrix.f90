@@ -215,7 +215,7 @@ contains
         nw = nwork(a%g)
         block
           real(RK) :: T(nw)
-          call Hungarian(a%g, W(a%z), T(1))
+          call Hungarian(a%g, a%g, W(a%z), T(1))
           res = T(1)
         end block
       else
@@ -228,7 +228,7 @@ contains
           iw = 1 + rr
           iz = a%z + a%g * (p - 1)
           call pack_Z(a%g, nr, ires, W(a%z), T(1))
-          call Hungarian(nr, T(1), T(iw))
+          call Hungarian(nr, nr, T(1), T(iw))
           res = T(iw)
         end block
       end if
@@ -263,7 +263,7 @@ contains
       integer(IK), intent(in) :: np
       real(RK)                :: W(1)
       integer(IK)             :: res
-      call Hungarian(-np, W, W)
+      call Hungarian(-np, -np, W, W)
       res = NINT(W(1), IK)
     end function nwork
 !
