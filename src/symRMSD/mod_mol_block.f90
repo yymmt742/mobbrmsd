@@ -6,31 +6,45 @@ module mod_mol_block
   public :: mol_block
   public :: mol_block_list
 !
-  integer(IK), parameter :: def_d = 3
-!
 !| molecular block indicator
-!  atomic coordinates vector must be stored in the following format.
-!    X(d,m,n)
-!    - d :: spatial dimension.
-!    - m :: number of atom in a molecule.
-!    - n :: number of molecule.
-!    - where X(d,:f,:g)     :: Free rotatable.
-!    -       X(d,f+1:,g+1:) :: Fixed.
+!  atomic coordinates vector must be stored in the following format.<br>
+!    X(d,m,n)<br>
+!    - d :: spatial dimension.<br>
+!    - m :: number of atom in a molecule.<br>
+!    - n :: number of molecule.<br>
+!    - where X(d,:,:g)   :: Free rotatable.<br>
+!    -       X(d,:,g+1:) :: Fixed.
   type mol_block
     sequence
+    !| p :: pointer to memory
     integer(IK) :: p = 1
-    !  p :: pointer to memory
+    !| s :: number of molecular symmetry
     integer(IK) :: s = 1
-    !  s :: number of molecular symmetry
+    !| m :: number of atom in a molecule
     integer(IK) :: m = 1
-    !  m :: number of atom in a molecule
+    !| n :: number of molecule
     integer(IK) :: n = 1
-    !  n :: number of molecule
-    !integer(IK) :: f = 1
-    !  f :: number of free atom in a molecule, must be f<=m.
+    !| g :: number of free molecule, must be g<=n
     integer(IK) :: g = 1
-    !  g :: number of free molecule, must be g<=n
   end type mol_block
+!
+  type mol_block_pair
+    sequence
+    !| p :: pointer to memory
+    integer(IK) :: px = 1
+    !| p :: pointer to memory
+    integer(IK) :: py = 1
+    !| s :: number of molecular symmetry
+    integer(IK) :: s = 1
+    !| m :: number of atom in a molecule
+    integer(IK) :: m = 1
+    !| n :: number of molecule
+    integer(IK) :: nx = 1
+    !| n :: number of molecule
+    integer(IK) :: ny = 1
+    !| g :: number of free molecule, must be g<=n
+    integer(IK) :: g = 1
+  end type mol_block_pair
 !
   type mol_block_list
     integer(IK)                           :: mg = 0
@@ -66,7 +80,7 @@ contains
     type(mol_block), intent(in) :: b(l)
     !  molecular block
     type(mol_block_list)        :: res
-    integer(IK)                 :: i, p
+    integer(IK)                 :: i
     if (l < 1) then
       allocate (res%b(0))
       return
@@ -77,17 +91,23 @@ contains
       res%b(i)%s = MAX(1, res%b(i)%s)
       res%b(i)%m = MAX(0, res%b(i)%m)
       res%b(i)%n = MAX(0, res%b(i)%n)
-      !res%b(i)%f = MAX(0, MIN(res%b(i)%m, res%b(i)%f))
       res%b(i)%g = MAX(0, MIN(res%b(i)%n, res%b(i)%g))
     end do
-    p = 1
-    do i = 1, l
-      res%b(i)%p = p
-      p = p + D * res%b(i)%n * res%b(i)%m
-    end do
+    call mol_block_init(res%b, 1)
     res%mg = SUM(res%b%m * res%b%g)
     res%mn = SUM(res%b%m * res%b%n)
   end function mol_block_list_new
+!
+  pure subroutine mol_block_init(b, p)
+    type(mol_block), intent(inout) :: b(:)
+    integer(IK), intent(in)        :: p
+    integer(IK)                    :: i, q
+    q = p
+    do i = 1, SIZE(b)
+      b(i)%p = q
+      q = q + D * b(i)%n * b(i)%m
+    end do
+  end subroutine mol_block_init
 !
   pure subroutine mol_block_list_add_molecule(this, b)
     class(mol_block_list), intent(inout) :: this
