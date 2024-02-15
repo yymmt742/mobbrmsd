@@ -21,7 +21,6 @@ module mod_symRMSD
   type symRMSD
     private
     integer(IK), public    :: nmem = 0
-    integer(IK), public    :: ndim = 0
     integer(IK), public    :: natm = 0
     type(branch_and_bound) :: bra
   contains
@@ -92,7 +91,6 @@ contains
     end if
 !
     res%nmem = res%bra%memsize
-    res%ndim = inp%blk%d
     res%natm = inp%blk%mn
 !
   end function symRMSD_new

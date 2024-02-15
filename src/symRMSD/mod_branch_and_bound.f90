@@ -1,5 +1,5 @@
 module mod_branch_and_bound
-  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mol_block
   use mod_group_permutation
   use mod_mol_symmetry
@@ -66,7 +66,7 @@ contains
     integer(IK)                              :: i, j, pi
 !
     res%mn = blk%mn
-    res%dmn = blk%d * blk%mn
+    res%dmn = D * blk%mn
 !
     pi = 1
     res%ratio = pi; pi = pi + 1
@@ -78,7 +78,7 @@ contains
     res%dx = d_matrix_list(blk, pi); pi = pi + res%dx%memsize()
 !
     res%nd = res%dx%n_depth()
-    res%bs = res%dx%dd + 2
+    res%bs = DD + 2
 !
     allocate (res%bi(res%nd))
 !
@@ -124,7 +124,7 @@ contains
     allocate (res%q(res%dx%l))
     res%q(1) = res%yp
     do i = 2, res%dx%l
-      res%q(i) = res%q(i - 1) + res%dx%d * res%dx%m(i - 1)%m * res%dx%m(i - 1)%n
+      res%q(i) = res%q(i - 1) + D * res%dx%m(i - 1)%m * res%dx%m(i - 1)%n
     end do
 !
     allocate (res%ms(res%dx%l))
@@ -156,7 +156,7 @@ contains
     p = p + 1
     W(p) = W(this%dx%h)
     p = p + 1
-    call DCOPY(this%dx%dd, W(this%dx%c), 1, W(p), 1)
+    call DCOPY(DD, W(this%dx%c), 1, W(p), 1)
 !
     W(this%tr%upperbound) = RHUGE
     W(this%tr%lowerbound) = W(this%dx%o)
@@ -237,13 +237,13 @@ contains
       integer(IK) :: ig, ic
       ig = tr%ubnode + 1
       ic = tr%ubnode + 2
-      call rotation(this%dx%d, this%dx%dd, this%mn, this%dmn, W(ig), W(ic), W(this%yp))
+      call rotation(this%mn, this%dmn, W(ig), W(ic), W(this%yp))
     end block
 !
     block
       integer(IK) :: i
       do concurrent(i = 1:this%dx%l)
-        call swap(this%dx%d, this%dx%m(i)%m, this%dx%m(i)%g, &
+        call swap(this%dx%m(i)%m, this%dx%m(i)%g, &
        &          bi(this%p(i):this%p(i)+this%dx%m(i)%g-1)%jper, &
        &          bi(this%p(i):this%p(i)+this%dx%m(i)%g-1)%jsym, &
        &          this%ms(i), W(this%q(i)))
@@ -290,7 +290,7 @@ contains
       ph = p + 1
       q = tr%nodes_pointer() - bs
       iper = bi%iper
-      nx = dm%dd + 1
+      nx = DD + 1
 !
       do concurrent(i=1:bi(cur)%nper, j=0:bi(cur)%nsym - 1)
         block
@@ -305,8 +305,8 @@ contains
 !
     end subroutine set_hc
 !
-    pure subroutine swap(d, m, g, iper, isym, ms, X)
-      integer(IK), intent(in)             :: d, m, g
+    pure subroutine swap(m, g, iper, isym, ms, X)
+      integer(IK), intent(in)             :: m, g
       integer(IK), intent(in)             :: iper(g), isym(g)
       type(mol_symmetry), intent(in)      :: ms
       real(RK), intent(inout)             :: X(d, m, g)
@@ -314,26 +314,24 @@ contains
       integer(IK)                         :: i
       gp = group_permutation(iper)
       do concurrent(i=1:g)
-        call ms%swap(d, X(1, 1, i), isym(i))
+        call ms%swap(D, X(1, 1, i), isym(i))
       end do
-      call gp%reverse(d * m, X)
+      call gp%reverse(D * m, X)
     end subroutine swap
 !
-    pure subroutine rotation(d, dd, mn, dmn, H, C, Y)
-      integer(IK), intent(in) :: d, dd, mn, dmn
+    pure subroutine rotation(mn, dmn, H, C, Y)
+      integer(IK), intent(in) :: mn, dmn
       real(RK), intent(in)    :: H, C(d, d)
       real(RK), intent(inout) :: Y(d, mn)
-      real(RK)                :: V(1)
       integer(IK)             :: nw
 !
-      call estimate_rotation_matrix(-d, V(1), V, V, V)
-      nw = dd + MAX(dmn, NINT(V(1)))
+      nw = dd + MAX(dmn, worksize_rotation_matrix())
 !
       block
         real(RK) :: WL(nw)
-        call estimate_rotation_matrix(d, H, C, WL(1), WL(dd + 1))
-        call DGEMM('T', 'N', d, mn, d, ONE, WL, d, Y, d, ZERO, WL(dd + 1), d)
-        call DCOPY(dmn, WL(dd + 1), 1, Y, 1)
+        call estimate_rotation_matrix(H, C, WL(1), WL(dd + 1))
+        call DGEMM('T', 'N', D, mn, D, ONE, WL, D, Y, D, ZERO, WL(dd + 1), D)
+        call DCOPY(dmn, WL(DD + 1), 1, Y, 1)
       end block
 !
     end subroutine rotation

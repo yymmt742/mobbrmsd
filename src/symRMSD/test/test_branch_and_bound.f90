@@ -1,5 +1,5 @@
 program main
-  use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: D, DD, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_estimate_rotation_matrix
   use mod_mol_symmetry
@@ -11,6 +11,8 @@ program main
   integer            :: itest
 !
   call u%init('test branch_and_bound')
+  D = 3
+  DD = 9
   do itest = 1, NTEST
     call test1()
   end do
@@ -22,7 +24,6 @@ program main
 contains
 !
   subroutine test1()
-    integer, parameter     :: d = 3
     integer, parameter     :: l = 1
     integer, parameter     :: s = 2
     integer, parameter     :: m = 5, n = 8, g = 3
@@ -36,7 +37,7 @@ contains
     integer                :: i, j, k
 !
     ms(1) = mol_symmetry(RESHAPE([2, 3, 1, 4, 5], [m, 1]))
-    blk = mol_block_list(d, l, [b])
+    blk = mol_block_list(l, [b])
 !
     X = sample(d, mn)
     Y = sample(d, mn)
@@ -52,12 +53,12 @@ contains
     do k=0,s-1
     do j=0,s-1
     do i=0,s-1
-      isd = sd(d, X, swp(d, m, n, [1, 2, 3], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
-      isd = sd(d, X, swp(d, m, n, [1, 3, 2], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
-      isd = sd(d, X, swp(d, m, n, [2, 1, 3], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
-      isd = sd(d, X, swp(d, m, n, [2, 3, 1], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
-      isd = sd(d, X, swp(d, m, n, [3, 1, 2], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
-      isd = sd(d, X, swp(d, m, n, [3, 2, 1], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
+      isd = sd(X, swp(m, n, [1, 2, 3], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
+      isd = sd(X, swp(m, n, [1, 3, 2], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
+      isd = sd(X, swp(m, n, [2, 1, 3], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
+      isd = sd(X, swp(m, n, [2, 3, 1], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
+      isd = sd(X, swp(m, n, [3, 1, 2], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
+      isd = sd(X, swp(m, n, [3, 2, 1], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
     enddo
     enddo
     enddo
@@ -66,12 +67,11 @@ contains
 !
     call u%assert_almost_equal(msd, W(bra%upperbound),             'branchcut vs brute')
     call u%assert_almost_equal(SUM((X - Y)**2), W(bra%upperbound), 'swap a            ')
-    call u%assert_almost_equal(sd(d, X, Y), W(bra%upperbound),     'swap b            ')
+    call u%assert_almost_equal(sd(X, Y), W(bra%upperbound),     'swap b            ')
 !
   end subroutine test1
 !
   subroutine test2()
-    integer, parameter     :: d = 3
     integer, parameter     :: s = 3
     integer, parameter     :: m1 = 5, n1 = 3, g1 = 2
     integer, parameter     :: m2 = 3, n2 = 4, g2 = 4
@@ -90,10 +90,10 @@ contains
     ms(1) = mol_symmetry(RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m1, 2]))
     ms(2) = mol_symmetry(RESHAPE([(i, i=1,0)], [0, 1]))
     ms(3) = mol_symmetry(RESHAPE([7, 6, 5, 4, 3, 2, 1], [m3, 1]))
-    blk = mol_block_list(d, s, b)
+    blk = mol_block_list(s, b)
 !
-    X = sample(d, mn)
-    Y = sample(d, mn)
+    X = sample(D, mn)
+    Y = sample(D, mn)
 !
     bra = branch_and_bound(blk, ms)
     allocate (W(bra%memsize))
@@ -101,12 +101,12 @@ contains
     call bra%run(W, .true.)
     print'(*(f16.3))', w(bra%lncmb), w(bra%nsrch), EXP(w(bra%ratio))
     Y = RESHAPE(W(bra%yp:bra%yp + d * mn), [d, mn])
-    call u%assert_almost_equal(sd(d, X, Y), W(bra%upperbound), 'multiple swap')
+    call u%assert_almost_equal(sd(X, Y), W(bra%upperbound), 'multiple swap')
 !
   end subroutine test2
 !
-  pure function swp(d, m, n, per, sym, ms, X) result(res)
-    integer(IK), intent(in)        :: d, m, n, per(:), sym(:)
+  pure function swp(m, n, per, sym, ms, X) result(res)
+    integer(IK), intent(in)        :: m, n, per(:), sym(:)
     type(mol_symmetry), intent(in) :: ms
     real(RK), intent(in)           :: X(d, m, n)
     real(RK)                       :: tmp(d, m, n), res(d, m * n)
@@ -114,17 +114,16 @@ contains
     tmp = X
     do i = 1, SIZE(per)
       tmp(:, :, per(i)) = X(:, :, i)
-      call ms%swap(d, tmp(:, :, per(i)), sym(i))
+      call ms%swap(D, tmp(:, :, per(i)), sym(i))
     end do
-    res = RESHAPE(tmp, [d, m * n])
+    res = RESHAPE(tmp, [D, m * n])
   end function swp
 !
-  pure function sd(d, X, Y) result(res)
-    integer(IK), intent(in) :: d
+  pure function sd(X, Y) result(res)
     real(RK), intent(in)    :: X(:, :), Y(:, :)
-    real(RK)                :: C(d, d), R(d, d), W(100), res
+    real(RK)                :: C(D, D), R(D, D), W(100), res
     C = MATMUL(Y, TRANSPOSE(X))
-    call estimate_rotation_matrix(d, SUM(X * X) + SUM(Y * Y), C, R, W)
+    call estimate_rotation_matrix(SUM(X * X) + SUM(Y * Y), C, R, W)
     res = SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
   end function sd
 !
