@@ -1,3 +1,5 @@
+!
+!| Calculate the minimum linear assignment cost using Hungarian method.
 module mod_Hungarian
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   implicit none
@@ -6,16 +8,16 @@ module mod_Hungarian
 !
 contains
 !
-!| Calculate the minimum linear assignment cost using Hungarian method.\n
+!| Calculate the minimum linear assignment cost using Hungarian method.
 !  If m and n are different, the sum of the linear assignments of the smaller is returned.
 !  If m>0 and n>0, W(1) stores the minimum linear assignment cost.
 !  If m==0 or n==0, do nothing.
 !  If (m<0 or n<0) and (|m|>0 and |n|>0), W(1) stores the required memory size for C(|m|,|n|).
   pure subroutine Hungarian(m, n, C, W)
     integer(IK), intent(in)    :: m
-    !! matrix dimension 1, must be m > 0.
+    !! matrix dimension 1.
     integer(IK), intent(in)    :: n
-    !! matrix dimension 2, must be n > 0.
+    !! matrix dimension 2.
     real(RK), intent(in)       :: C(*)
     !! score matrix C(m, n).
     real(RK), intent(inout)    :: W(*)

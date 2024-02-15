@@ -1,11 +1,13 @@
 !| Calculate the rotation matrix that minimizes |X-RY|^2 using the Kabsch-Umeyama algorithm.
 !  Here, RR^T=I and det(R)=1 are satisfied.
 module mod_estimate_rotation_matrix
-  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, HALF => RHALF
+  use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, HALF => RHALF
   use mod_det
   implicit none
   private
+  public :: worksize_sdmin
   public :: estimate_sdmin
+  public :: worksize_rotation_matrix
   public :: estimate_rotation_matrix
 !
   interface
@@ -19,25 +21,32 @@ module mod_estimate_rotation_matrix
 !
 contains
 !
-  pure subroutine estimate_sdmin(d, g, cov, w)
-    integer(IK), intent(in) :: d
-    !! spatial dimension
+!| Inquire function for memory size of estimate_sdmin.
+  pure elemental function worksize_sdmin() result(res)
+    integer(IK) :: res
+    if (d <= 0) then
+      res = 0
+    elseif (d == 1) then
+      res = 1
+    elseif (d == 2) then
+      res = 2
+    elseif (d == 3) then
+      res = 10
+    else
+      res = worksize_Kabsch() + dd + 1
+    endif
+  end function worksize_sdmin
+!
+!| Compute the least-squares sum_i^n |x_i-Ry_i|^2 from cov = YX^T and g = tr[XX^T] + tr[YY^T].
+  pure subroutine estimate_sdmin(g, cov, w)
     real(RK), intent(in)    :: g
     !! sum of auto covariance matrix
     real(RK), intent(in)    :: cov(*)
     !! target d*n array
     real(RK), intent(inout) :: w(*)
-    !! work array, must be larger than worksize(d).
+    !! work array, must be larger than worksize_sdmin().
 !
-    if (d == 0) then
-      W(1) = 1
-    elseif (d == -1) then
-      W(1) = 1
-    elseif (d == -2) then
-      W(1) = 2
-    elseif (d == -3) then
-      W(1) = 10
-    elseif (d == 1) then
+    if (d == 1) then
       W(1) = g - cov(1) - cov(1)
     elseif (d == 2) then
       if (g < THRESHOLD) then
@@ -51,12 +60,9 @@ contains
         return
       end if
       call quartenion_sdmin_d3(g, cov, w)
-    elseif (d < -3) then
-      call Kabsch(d, cov, w, w)
-      w(1) = w(1) + d * d + 1
-    else
-      call Kabsch(d, cov, w(2), w(d * d + 2))
-      w(1) = ddot(d * d, cov, 1, w(2), 1)
+    elseif (d > 3) then
+      call Kabsch(cov, w(2), w(d * d + 2))
+      w(1) = ddot(DD, cov, 1, w(2), 1)
       w(1) = w(1) + w(1)
       w(1) = g - w(1)
     end if
@@ -141,28 +147,34 @@ contains
 !
   end subroutine quartenion_sdmin_d3
 !
-  pure subroutine estimate_rotation_matrix(d, g, cov, rot, w)
-    integer(IK), intent(in) :: d
-    !! spatial dimension
-    real(RK), intent(in)    :: g
-    !! sum of auto covariance matrix
-    real(RK), intent(in)    :: cov(*)
-    !! target d*n array
-    real(RK), intent(inout) :: rot(*)
-    !! rotation d*d matrix
-    real(RK), intent(inout) :: w(*)
-    !! work array, must be larger than Kabsch_worksize(d)
-    !! if row_major, must be larger than Kabsch_worksize(n)
-!
-    if (d == 0) then
-      W(1) = 0
-    elseif (d == -1) then
-      W(1) = 0
-    elseif (d == -2) then
-      W(1) = 0
-    elseif (d == -3) then
-      W(1) = 28
+!| Inquire function for memory size of rotation_matrix.
+  pure elemental function worksize_rotation_matrix() result(res)
+    integer(IK) :: res
+    if (d <= 0) then
+      res = 0
     elseif (d == 1) then
+      res = 0
+    elseif (d == 2) then
+      res = 0
+    elseif (d == 3) then
+      res = 28
+    else
+      res = worksize_Kabsch()
+    endif
+  end function worksize_rotation_matrix
+!
+!| Compute the transpose rotation matrix for minimize tr[CR] from cov = YX^T and g = tr[XX^T] + tr[YY^T].
+  pure subroutine estimate_rotation_matrix(g, cov, rot, w)
+    real(RK), intent(in)    :: g
+    !! g = tr[XX^T] + tr[YY^T]
+    real(RK), intent(in)    :: cov(*)
+    !! covariance dxd matrix, YX^T
+    real(RK), intent(inout) :: rot(*)
+    !! rotation dxd matrix
+    real(RK), intent(inout) :: w(*)
+    !! work array, must be larger than worksize_rotation_matrix().
+!
+    if (d == 1) then
       rot(1) = ONE
     elseif (d == 2) then
       if (g < THRESHOLD) then
@@ -184,7 +196,7 @@ contains
       w(7) = w(9) * cov(7); w(8) = w(9) * cov(8); w(9) = w(9) * cov(9)
       call quartenion_rotmatrix_d3(g, w(1), rot, w(10))
     else
-      call Kabsch(d, cov, rot, w)
+      call Kabsch(cov, rot, w)
     end if
 !
   end subroutine estimate_rotation_matrix
@@ -328,10 +340,18 @@ contains
 !
   end subroutine quartenion_rotmatrix_d3
 !
+  !| work array size for Kabsch algorithm.
+  pure elemental function worksize_Kabsch() result(res)
+    real(RK)    :: w(1)
+    integer(IK) :: res, info
+!
+    call DGESVD('A', 'A', D, D, w, D, w, w, D, w, D, w, -1, info)
+    res = NINT(w(1)) + DD * 3 + D
+!
+  end function worksize_Kabsch
+!
 !| Calculate the rotation matrix R^T from covariance matrix.
-  pure subroutine Kabsch(d, cov, rot, w)
-    integer(IK), intent(in)       :: d
-    !! matrix collumn dimension.
+  pure subroutine Kabsch(cov, rot, w)
     real(RK), intent(in)          :: cov(*)
     !! target d*n array
     real(RK), intent(inout)       :: rot(*)
@@ -340,39 +360,24 @@ contains
     !! work array, must be larger than Kabsch_worksize(d)
     !! if row_major, must be larger than Kabsch_worksize(n)
     integer(IK), parameter        :: m = 1
-    integer(IK)                   :: dd, s, u, vt, iw, lw, info
+    integer(IK)                   :: s, u, vt, iw, lw, info
 !
-    if (d == 0) then
-      w(1) = ZERO
-      return
-    elseif (d == 1)then
-      rot(1) = ONE
-      RETURN
-    elseif (d < 0) then
-      s = ABS(d)
-      call DGESVD('A', 'A', s, s, w, s, w, w, s, w, s, w, -1, info)
-      w(1) = w(1) + s * s * 3 + s
-      return
-    end if
-!
-    dd = d * d
     u = m + dd
     vt = u + dd
     s = vt + dd
     iw = s + d
 !
-    call dgesvd('A', 'A', d, d, w(m), d, w(s), w(u), d, w(vt), d, w(iw), -1, info)
+    call DGESVD('A', 'A', d, d, w(m), d, w(s), w(u), d, w(vt), d, w(iw), -1, info)
     lw = NINT(w(iw))
 !
-    call dcopy(dd, cov, 1, w(m), 1)
-    call dgesvd('A', 'A', d, d, w(m), d, w(s), w(u), d, w(vt), d, w(iw), lw, info)
+    call DCOPY(dd, cov, 1, w(m), 1)
+    call DGESVD('A', 'A', d, d, w(m), d, w(s), w(u), d, w(vt), d, w(iw), lw, info)
 !
     call DGEMM('N', 'N', d, d, d, ONE, w(u), d, w(vt), d, ZERO, w(s), d)
-    call det_sign(d, w(s:s + dd - 1))
+    call det_sign(w(s:s + dd - 1))
     if (w(s) < ZERO) w(u + dd - d:u + dd - 1) = -w(u + dd - d:u + dd - 1)
     call DGEMM('N', 'N', d, d, d, ONE, w(u), d, w(vt), d, ZERO, w(s), d)
-!
-    rot(:dd) = w(s:s+dd-1)
+    call DCOPY(dd, w(s), 1, rot(1), 1)
 !
   end subroutine Kabsch
 !

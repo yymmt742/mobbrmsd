@@ -1,5 +1,5 @@
 program main
-  use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: D, DD, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_estimate_rotation_matrix
   use mod_unittest
   implicit none
@@ -11,37 +11,41 @@ program main
   E6 = eye(6)
 !
   call z%init('test quartanion d=2')
-  call test1(2, 10, 10)
-  call test1(2, 20, 10)
-  call test1(2, 100, 10)
+  D = 2
+  DD = 4
+  call test1(10, 10)
+  call test1(20, 10)
+  call test1(100, 10)
 !
   call z%init('test quartanion d=3')
-  call test1(3, 3, 10)
-  call test1(3, 5, 10)
-  call test1(3, 10, 10)
-  call test1(3, 100, 10)
+  D = 3
+  DD = 9
+  call test1(3, 10)
+  call test1(5, 10)
+  call test1(10, 10)
+  call test1(100, 10)
 !
   call z%init('test kabsch d=6')
-  call test1(6, 1, 2)
-  call test1(6, 2, 2)
-  call test1(6, 3, 2)
-  call test1(6, 5, 4)
-  call test1(6, 100, 10)
+  D = 6
+  DD = 36
+  call test1(1, 2)
+  call test1(2, 2)
+  call test1(3, 2)
+  call test1(5, 4)
+  call test1(100, 10)
 !
   call z%finish_and_terminate()
 !
 contains
 !
-  subroutine test1(d, n, n_test)
-    integer, intent(in)   :: d, n, n_test
+  subroutine test1(n, n_test)
+    integer, intent(in)   :: n, n_test
     real(RK)              :: Y(d, n), X(d, n), cov(d, d), g
     real(RK)              :: rot(d, d), krot(d, d), sd, kd
     real(RK), allocatable :: w(:)
     integer               :: i
 !
-    call estimate_rotation_matrix(-d, g, x, x, x)
-    call estimate_sdmin(-d, g, x, x(2, 1))
-    allocate (w(NINT(MAX(x(1, 1), x(2, 1)))))
+    allocate (w(MAX(worksize_rotation_matrix(), worksize_sdmin())))
 !
     call RANDOM_NUMBER(X)
 !
@@ -50,11 +54,11 @@ contains
       Y = MATMUL(rot, X)
       g = SUM(X * X) + SUM(Y * Y)
       cov = MATMUL(X, TRANSPOSE(Y))
-      call estimate_rotation_matrix(d, g, cov, krot, w)
+      call estimate_rotation_matrix(g, cov, krot, w)
       call z%assert_almost_equal([X - MATMUL(krot, Y)], ZERO, 'X = YR   ')
       if (d <= n) call z%assert_almost_equal([MATMUL(rot, krot) - eye(d)], ZERO, 'S@RT = I ')
       call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(d)], ZERO, 'R@RT = I ')
-      call estimate_sdmin(d, g, cov, w)
+      call estimate_sdmin(g, cov, w)
       call z%assert_almost_equal(w(1), ZERO, 'sdmin=0  ')
     end do
 !
@@ -63,9 +67,9 @@ contains
       call RANDOM_NUMBER(Y)
       cov = MATMUL(X, TRANSPOSE(Y))
       g = SUM(X**2) + SUM(Y**2)
-      call estimate_rotation_matrix(d, g, cov, krot, w)
+      call estimate_rotation_matrix(g, cov, krot, w)
       call z%assert_greater_equal(SUM(cov * krot), SUM(cov * SO(d)), 'CR >= CQ ')
-      call estimate_sdmin(d, g, cov, w)
+      call estimate_sdmin(g, cov, w)
 !
       sd = SUM((X - MATMUL(krot, Y))**2)
       kd = SUM(cov * krot)
@@ -124,7 +128,7 @@ contains
     real(RK)           :: res(d, d)
     integer            :: i, j
     do concurrent(j=1:d, i=1:d)
-      res(i, j) = MERGE(1D0, 0D0, i == j)
+      res(i, j) = MERGE(ONE, ZERO, i == j)
     enddo
   end function eye
 !
