@@ -1,5 +1,5 @@
 program main
-  use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: D, DD, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_symRMSD
   use mod_unittest
@@ -9,6 +9,8 @@ program main
   integer            :: itest
 !
   call u%init('test symRMSD')
+  D = 3
+  DD = 9
   call test0()
   call test2()
 !
@@ -31,7 +33,6 @@ contains
   end subroutine test0
 !
   subroutine test1()
-    integer, parameter         :: d = 3
     integer, parameter         :: s = 1
     integer, parameter         :: m = 5, n = 18, g = 18
     type(mol_block), parameter :: b = mol_block(0, s, m, n, g)
@@ -41,7 +42,7 @@ contains
     real(RK), allocatable      :: W(:)
     integer                    :: i, j, k
 !
-    inp%blk = mol_block_list(d, 1, [b])
+    inp%blk = mol_block_list(1, [b])
 !
     do k = -1, 1, 2
       do j = -1, 1
@@ -62,7 +63,6 @@ contains
   end subroutine test1
 !
   subroutine test2()
-    integer, parameter         :: d = 3
     integer, parameter         :: s = 1
     integer, parameter         :: m = 5, n = 1, g = 18
     type(mol_block), parameter :: b = mol_block(0, s, m, n, g)
@@ -71,7 +71,7 @@ contains
     real(RK)                   :: X(d, m, n), Y(d, m, n)
     real(RK), allocatable      :: W(:)
 !
-    inp%blk = mol_block_list(d, 1, [b])
+    inp%blk = mol_block_list(1, [b])
 !
     X(:, :, 1) = sample(d, m, [0, 0, 0])
     Y(:, :, 1) = sample(d, m, [0, 0, 0])
