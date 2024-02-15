@@ -1,5 +1,5 @@
 program main
-  use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: D, DD, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_mol_symmetry
   use mod_estimate_rotation_matrix
@@ -9,6 +9,10 @@ program main
   type(unittest) :: u
 !
   call u%init('test d_matrix')
+!
+  D = 3
+  DD = 9
+!
   call test1()
   call test2()
   call test3()
@@ -18,7 +22,6 @@ program main
 contains
 !
   subroutine test1()
-    integer, parameter         :: d = 3
     integer, parameter         :: s = 2
     integer, parameter         :: m = 5
     integer, parameter         :: n = 7
@@ -35,7 +38,7 @@ contains
     ms = mol_symmetry(swp)
     C = 0D0
     H = 0D0
-    a = d_matrix(1, d, 28, b)
+    a = d_matrix(1, 28, b)
     X = sample(d, mn)
     Y = 0.9D0 * MATMUL(SO3(), X) + 0.1D0 * sample(d, mn)
     print *, d_matrix_memsize(a)
@@ -62,24 +65,23 @@ contains
   end subroutine test1
 !
   subroutine test2()
-    integer, parameter       :: l = 3
-    integer, parameter       :: d = 3
-    integer, parameter       :: s = 3
-    integer, parameter       :: m = 5
-    integer, parameter       :: n = 7
-    integer, parameter       :: f = 3
-    integer, parameter       :: g = 5
-    integer, parameter       :: mnl = (3 * m + 6) * n
-    integer, parameter       :: swp(m, s - 1) = RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m, s - 1])
-    integer                  :: perm(3 * g - 6)
-    type(mol_block_list)     :: blk
-    type(mol_block)          :: b(l)
-    type(mol_symmetry) :: ms(l)
-    type(d_matrix_list)      :: a
-    real(RK)                 :: X(d, mnl), Y(d, mnl)
-    real(RK), allocatable    :: w(:)
-    real(RK)                 :: C(d * d), H, LT, LF, LB
-    integer                  :: i, j, k
+    integer, parameter    :: l = 3
+    integer, parameter    :: s = 3
+    integer, parameter    :: m = 5
+    integer, parameter    :: n = 7
+    integer, parameter    :: f = 3
+    integer, parameter    :: g = 5
+    integer, parameter    :: mnl = (3 * m + 6) * n
+    integer, parameter    :: swp(m, s - 1) = RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m, s - 1])
+    integer               :: perm(3 * g - 6)
+    type(mol_block_list)  :: blk
+    type(mol_block)       :: b(l)
+    type(mol_symmetry)    :: ms(l)
+    type(d_matrix_list)   :: a
+    real(RK)              :: X(d, mnl), Y(d, mnl)
+    real(RK), allocatable :: w(:)
+    real(RK)              :: C(d * d), H, LT, LF, LB
+    integer               :: i, j, k
 !
     do concurrent(i=1:l)
       ms(i) = mol_symmetry(swp(:, :i - 1))
@@ -98,7 +100,7 @@ contains
     end do
     print'(10I4)',perm
 !
-    blk = mol_block_list(d, l, b)
+    blk = mol_block_list(l, b)
     a = d_matrix_list(blk, 1)
 !
     X = sample(d, mnl)
@@ -115,7 +117,7 @@ contains
     print*
 !
     H = W(a%h)
-    C = W(a%c:a%c + a%dd - 1)
+    C = W(a%c:a%c + DD - 1)
     call a%partial_eval(1, perm, 1, 1, W, LT, H, C, LF, LB)
     print'(3f9.3)',H, LT
     call a%partial_eval(2, perm, 1, 1, W, LT, H, C, LF, LB)
@@ -137,7 +139,7 @@ contains
     print*
 !
     H = W(a%h)
-    C = W(a%c:a%c + a%dd - 1)
+    C = W(a%c:a%c + DD - 1)
     call a%partial_eval(1, perm, 4, 1, W, LT, H, C, LF, LB)
     perm(:4) = [4,1,2,3]
     print'(3f9.3)',H, LT
@@ -166,7 +168,6 @@ contains
   end subroutine test2
 !
   subroutine test3()
-    integer, parameter    :: d = 3
     integer, parameter    :: s = 1
     integer, parameter    :: m = 5, n = 5, g = 3
     integer, parameter    :: mn = m * n
@@ -180,7 +181,7 @@ contains
     integer               :: i, j, k
 !
     ms(1) = mol_symmetry(RESHAPE([2, 1, 3, 4, 5], [m, 1]))
-    blk = mol_block_list(d, s, [b])
+    blk = mol_block_list(s, [b])
     dm = d_matrix_list(blk, 1)
     allocate (w(dm%memsize()))
     W(:)=999
@@ -267,7 +268,7 @@ contains
     real(RK), intent(in)    :: X(:, :), Y(:, :)
     real(RK)                :: C(d, d), R(d, d), W(100), res
     C = MATMUL(Y, TRANSPOSE(X))
-    call estimate_rotation_matrix(d, SUM(X * X) + SUM(Y * Y), C, R, W)
+    call estimate_rotation_matrix(SUM(X * X) + SUM(Y * Y), C, R, W)
     res = SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
   end function sd
 !

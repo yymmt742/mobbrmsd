@@ -1,6 +1,6 @@
 !| molecular coodinate block indicator
 module mod_mol_block
-  use mod_params, only: IK, RK, ONE => RONE, FOUR => RFOUR, ZERO => RZERO, RHUGE
+  use mod_params, only: D, DD, IK, RK, ONE => RONE, FOUR => RFOUR, ZERO => RZERO, RHUGE
   implicit none
   private
   public :: mol_block
@@ -33,7 +33,6 @@ module mod_mol_block
   end type mol_block
 !
   type mol_block_list
-    integer(IK)                           :: d = 0
     integer(IK)                           :: mg = 0
     integer(IK)                           :: mn = 0
     !  d :: spatial dimension
@@ -44,7 +43,6 @@ module mod_mol_block
     procedure         :: child        => mol_block_list_child
     procedure         :: invalid      => mol_block_list_invalid
     procedure         :: natom        => mol_block_list_natom
-    procedure         :: nspatial     => mol_block_list_nspatial
     procedure         :: nspecies     => mol_block_list_nspecies
     procedure         :: ispecies     => mol_block_list_ispecies
     procedure         :: ipointer     => mol_block_list_ipointer
@@ -62,16 +60,13 @@ module mod_mol_block
 contains
 !
 ! Constructer
-  pure function mol_block_list_new(d, l, b) result(res)
-    integer(IK), intent(in)     :: d
-    !  d :: spatial dimension
+  pure function mol_block_list_new(l, b) result(res)
     integer(IK), intent(in)     :: l
     !  s :: number of species
     type(mol_block), intent(in) :: b(l)
     !  molecular block
     type(mol_block_list)        :: res
     integer(IK)                 :: i, p
-    res%d = MAX(d, 1)
     if (l < 1) then
       allocate (res%b(0))
       return
@@ -88,7 +83,7 @@ contains
     p = 1
     do i = 1, l
       res%b(i)%p = p
-      p = p + res%d * res%b(i)%n * res%b(i)%m
+      p = p + D * res%b(i)%n * res%b(i)%m
     end do
     res%mg = SUM(res%b%m * res%b%g)
     res%mn = SUM(res%b%m * res%b%n)
@@ -101,7 +96,6 @@ contains
     if(allocated(this%b))then
       this%b = [this%b, b]
     else
-      this%d = def_d
       this%mg = 0
       this%mn = 0
       this%b = [b]
@@ -117,7 +111,7 @@ contains
     if (nb < 2) then
       this%b(nb)%p = 1
     else
-      this%b(nb)%p = this%b(nb - 1)%p + this%d * this%b(nb - 1)%n * this%b(nb - 1)%m
+      this%b(nb)%p = this%b(nb - 1)%p + D * this%b(nb - 1)%n * this%b(nb - 1)%m
     end if
   end subroutine mol_block_list_add_molecule
 !
@@ -127,17 +121,10 @@ contains
     res = this%mn
   end function mol_block_list_natom
 !
-  pure elemental function mol_block_list_nspatial(this) result(res)
-    class(mol_block_list), intent(in) :: this
-    integer(IK)                       :: res
-    res = this%d
-  end function mol_block_list_nspatial
-!
   pure elemental function mol_block_list_child(b) result(res)
     class(mol_block_list), intent(in) :: b
     type(mol_block_list)              :: res
     integer(IK)                       :: i
-    res%d = b%d
     res%mg = b%mg
     res%mn = b%mn
     if (.not. ALLOCATED(b%b)) then
@@ -175,7 +162,7 @@ contains
         if (b%b(i)%g == 0) cycle
         res = b%b(i)%p
         if (imol < 1 .or. b%b(i)%n < imol) return
-        res = res + (imol - 1) * b%d * b%b(i)%m
+        res = res + (imol - 1) * D * b%b(i)%m
         return
       end do
     end if
@@ -199,7 +186,7 @@ contains
     if (ALLOCATED(b%b)) then
       if (ispc < 1 .or. SIZE(b%b) < ispc) return
       if (b%b(ispc)%n <= b%b(ispc)%g) return
-      res = b%b(ispc)%p + b%d * b%b(ispc)%m * (b%b(ispc)%n - b%b(ispc)%g); return
+      res = b%b(ispc)%p + D * b%b(ispc)%m * (b%b(ispc)%n - b%b(ispc)%g); return
     end if
   end function mol_block_list_res_pointer
 !
@@ -216,7 +203,7 @@ contains
   pure elemental function mol_block_list_invalid(this) result(res)
     class(mol_block_list), intent(in) :: this
     logical                           :: res
-    if (this%d < 1 .or. .not. ALLOCATED(this%b)) then
+    if (.not. ALLOCATED(this%b)) then
       res = .false.
     else
       res = ANY(mol_block_invalid(this%b))

@@ -16,7 +16,7 @@ module mod_d_matrix
     private
     sequence
     integer(IK), public :: s, m, n, g
-    integer(IK)         :: d, dd, gg, dm, cb, cl, nw1, nw2
+    integer(IK)         :: gg, dm, cb, cl, nw1, nw2
     integer(IK)         :: x, z, c
   end type d_matrix
 !
@@ -29,9 +29,7 @@ module mod_d_matrix
     integer(IK)                           :: v = 0
     integer(IK)                           :: c = 0
     integer(IK)                           :: o = 0
-    integer(IK)                           :: d = 0
     integer(IK)                           :: l = 0
-    integer(IK)                           :: dd = 0
     integer(IK)                           :: nk
     type(d_matrix), allocatable           :: m(:)
   contains
@@ -55,27 +53,25 @@ module mod_d_matrix
 !
 contains
 !| generator
-  pure elemental function d_matrix_new(p, d, nk, b) result(res)
-    integer(IK), intent(in)     :: p, d, nk
+  pure elemental function d_matrix_new(p, nk, b) result(res)
+    integer(IK), intent(in)     :: p, nk
     type(mol_block), intent(in) :: b
     type(d_matrix)              :: res
 !
-    res%d = MAX(d, 1)
     res%s = MAX(b%s, 1)
     res%m = MAX(b%m, 0)
     res%n = MAX(b%n, 0)
     res%g = MIN(res%n, MAX(b%g, 0))
-    res%dd = res%d * res%d
     res%gg = res%g * res%g
-    res%dm = res%d * res%m
-    res%cb = res%dd * res%s + 1
+    res%dm = D * res%m
+    res%cb = DD * res%s + 1
     res%cl = res%cb * res%g
 !
     res%x = b%p
     res%z = p
     res%c = res%z + res%gg
-    res%nw1 = 3 + res%dm * 2 + res%dd + nk
-    res%nw2 = 1 + res%dd + nk
+    res%nw1 = 3 + res%dm * 2 + DD + nk
+    res%nw2 = 1 + DD + nk
 !
   end function d_matrix_new
 !
@@ -92,16 +88,16 @@ contains
     real(RK), intent(in)            :: Y(*)
     real(RK), intent(inout)         :: W(*)
 !
-    call eval(a%d, a%s, a%m, a%g, a%dd, a%dm, a%cb, a%nw1, ms, X(a%x), Y(a%x), W(a%z), W(a%c))
+    call eval(a%s, a%m, a%g, a%dm, a%cb, a%nw1, ms, X(a%x), Y(a%x), W(a%z), W(a%c))
 !
   contains
 !
-    pure subroutine eval(d, s, m, g, dd, dm, cb, nw, r, X, Y, Z, C)
-      integer(IK), intent(in)        :: d, s, m, g
-      integer(IK), intent(in)        :: dd, dm, cb, nw
+    pure subroutine eval(s, m, g, dm, cb, nw, r, X, Y, Z, C)
+      integer(IK), intent(in)        :: s, m, g
+      integer(IK), intent(in)        :: dm, cb, nw
       type(mol_symmetry), intent(in) :: r
-      real(RK), intent(in)           :: X(d, m, g)
-      real(RK), intent(in)           :: Y(d, m, g)
+      real(RK), intent(in)           :: X(D, m, g)
+      real(RK), intent(in)           :: Y(D, m, g)
       real(RK), intent(inout)        :: Z(g, g)
       real(RK), intent(inout)        :: C(cb, g, g)
       integer(IK), parameter         :: ib = 1
@@ -123,25 +119,25 @@ contains
           integer(IK) :: i, ip
           real(RK)    :: W(nw)
 !
-          call dcopy(dm, X(1, 1, j), 1, W(ix), 1)
-          call dcopy(dm, Y(1, 1, k), 1, W(iy), 1)
+          call DCOPY(dm, X(1, 1, j), 1, W(ix), 1)
+          call DCOPY(dm, Y(1, 1, k), 1, W(iy), 1)
 !
 !!!       trace of self correlation matrix
-          w(ih) = ddot(dm2, W(ix), 1, W(ix), 1)
+          w(ih) = DDOT(dm2, W(ix), 1, W(ix), 1)
           C(1, j, k) = w(ih)
 !
           ip = 2
-          call calc_lb(d, m, dd, dm, w(ih), w(ix), W(it), W(ic), W(iw))
-          call dcopy(dd, W(ic), 1, C(ip, j, k), 1)
+          call calc_lb(m, dm, w(ih), w(ix), W(it), W(ic), W(iw))
+          call DCOPY(DD, W(ic), 1, C(ip, j, k), 1)
           w(ib) = w(it)
 !
           do i = 1, s - 1
-            call r%swap(d, W(iy), i)
+            call r%swap(D, W(iy), i)
             ip = ip + dd
-            call calc_lb(d, m, dd, dm, W(ih), W(ix), W(it), W(ic), W(iw))
-            call dcopy(dd, W(ic), 1, C(ip, j, k), 1)
+            call calc_lb(m, dm, W(ih), W(ix), W(it), W(ic), W(iw))
+            call DCOPY(dd, W(ic), 1, C(ip, j, k), 1)
             w(ib) = MIN(w(ib), w(it))
-            call r%reverse(d, W(iy), i)
+            call r%reverse(D, W(iy), i)
           end do
 !
           Z(j, k) = w(ib)
@@ -151,14 +147,14 @@ contains
 !
     end subroutine eval
 !
-    pure subroutine calc_lb(d, m, dd, dm, H, XY, T, C, W)
-      integer(IK), intent(in) :: d, m, dd, dm
+    pure subroutine calc_lb(m, dm, H, XY, T, C, W)
+      integer(IK), intent(in) :: m, dm
       real(RK), intent(in)    :: H, XY(dm, *)
-      real(RK), intent(inout) :: T, C(d, d), W(*)
+      real(RK), intent(inout) :: T, C(*), W(*)
 !!!   get correlation matrix C = Y^t@X and optimal rotation R^t
-      call DGEMM('N', 'T', d, d, m, ONE, XY(1, 2), d, XY(1, 1), d, ZERO, C, d)
+      call DGEMM('N', 'T', D, D, m, ONE, XY(1, 2), D, XY(1, 1), D, ZERO, C, D)
 !!!   get squared displacement
-      call estimate_sdmin(d, H, C, W)
+      call estimate_sdmin(H, C, W)
       T = W(1)
     end subroutine calc_lb
 !
@@ -186,12 +182,12 @@ contains
     block
       integer(IK) :: ih, ic
       ih = a%c + (iprm - 1) * a%cb + (p - 1) * a%cl
-      ic = ih + 1 + a%dd * isym
+      ic = ih + 1 + DD * isym
       if (PRESENT(LF)) then
-        call partial_eval(a%d, a%s, a%g, a%dd, a%nw2, p, W(ih), W(ic), LF, H, C)
+        call partial_eval(a%s, a%g, a%nw2, p, W(ih), W(ic), LF, H, C)
         LT = LT + LF
       else
-        call partial_eval(a%d, a%s, a%g, a%dd, a%nw2, p, W(ih), W(ic), LT, H, C)
+        call partial_eval(a%s, a%g, a%nw2, p, W(ih), W(ic), LT, H, C)
       end if
     end block
 !
@@ -230,8 +226,8 @@ contains
 !
     end subroutine setminus_eval
 !
-    pure subroutine partial_eval(d, s, n, dd, nw, p, H, C, LF, HP, CP)
-      integer(IK), intent(in) :: d, s, n, dd, nw
+    pure subroutine partial_eval(s, n, nw, p, H, C, LF, HP, CP)
+      integer(IK), intent(in) :: s, n, nw
       integer(IK), intent(in) :: p
       real(RK), intent(in)    :: H, C(*)
       real(RK), intent(inout) :: LF, HP, CP(*)
@@ -240,16 +236,16 @@ contains
       integer(IK), parameter  :: ic = 2
       integer(IK)             :: iw
 !
-      iw = ic + dd
+      iw = ic + DD
 !
 !!! update H and C
       w(it) = HP + H
       HP = w(it)
-      call add(dd, CP, C, W(ic))
-      call dcopy(dd, W(ic), 1, CP, 1)
+      call add(DD, CP, C, W(ic))
+      call DCOPY(DD, W(ic), 1, CP, 1)
 !
 !!! get squared displacement
-      call estimate_sdmin(d, w(it), w(ic), W(iw))
+      call estimate_sdmin(w(it), w(ic), W(iw))
       LF = LF + w(iw)
 !
     end subroutine partial_eval
@@ -276,29 +272,26 @@ contains
 !
 !!! d_matrix_list
 !
+!| Constructor of d_matrix_list
   pure function d_matrix_list_new(b, p) result(res)
     type(mol_block_list), intent(in)     :: b
     integer(IK), intent(in)              :: p
     type(d_matrix_list)                  :: res
     integer(IK)                          :: i, ip
-    real(RK)                             :: dum(1)
 !
-    res%d = b%nspatial()
     res%l = b%nspecies()
-    res%dd = res%d**2
     res%h = p              ! H(1)
     res%v = res%h + 1      ! V(1)
     res%c = res%v + 1      ! C(d*d)
-    res%o = res%c + res%dd ! O(L+1)
+    res%o = res%c + DD     ! O(L+1)
     ip = res%o + res%l + 1
 !
-    call estimate_sdmin(-res%d, dum(1), dum(1), dum(1))
-    res%nk = NINT(dum(1))
+    res%nk = worksize_sdmin()
 !
     allocate (res%m(res%l))
 !
     do i = 1, res%l
-      res%m(i) = d_matrix(ip, res%d, res%nk, b%b(i))
+      res%m(i) = d_matrix(ip, res%nk, b%b(i))
       ip = ip + d_matrix_memsize(res%m(i))
     end do
 !
@@ -308,7 +301,7 @@ contains
     class(d_matrix_list), intent(in) :: this
     integer(IK)                      :: res
     if (ALLOCATED(this%m)) then
-      res = SUM(d_matrix_memsize(this%m)) + (this%l + 1) + this%d**2 + 2
+      res = SUM(d_matrix_memsize(this%m)) + (this%l + 1) + DD + 2
     else
       res = 0
     end if
@@ -336,7 +329,7 @@ contains
 !!! estimate H_fix, V_fix, C_fix. (mol_blocks for g<n or (g=1, s=1))
 !!! if set is empty, H_fix=0, V_fix=0, C_fix=0.
 !
-    call fixpoints_eval(this%d, this%dd, this%nk, this%l, this%m, X, Y,  &
+    call fixpoints_eval(this%nk, this%l, this%m, X, Y,  &
    &                    W(this%h), W(this%v), W(this%c))
 !
 !!! estimate floating mol blocks.
@@ -364,8 +357,8 @@ contains
 !
   contains
 !
-    pure subroutine fixpoints_eval(d, dd, nk, l, m, X, Y, H, V, C)
-      integer(IK), intent(in)    :: d, dd, nk, l
+    pure subroutine fixpoints_eval(nk, l, m, X, Y, H, V, C)
+      integer(IK), intent(in)    :: nk, l
       type(d_matrix), intent(in) :: m(l)
       real(RK), intent(in)       :: X(*), Y(*)
       real(RK), intent(inout)    :: H, V, C(*)
@@ -380,16 +373,16 @@ contains
       end do
 !
       mn = SUM(t)
-      dmn = d * mn
+      dmn = D * mn
       dmn2 = dmn + dmn
 !
-      iw = ic + dd
-      ix = ic + dd
+      iw = ic + DD
+      ix = ic + DD
       iy = ix + dmn
-      nw = 2 + dd + MAX(dmn + dmn, dd + nk)
+      nw = 2 + DD + MAX(dmn + dmn, DD + nk)
 !
       do concurrent(i=1:l)
-        t(i) = t(i) * d
+        t(i) = t(i) * D
       end do
       p(1) = 0
       do i = 2, l
@@ -406,31 +399,31 @@ contains
           block
             integer(IK) :: px
             px = p(i) + ix
-            call dcopy(t(i), X(q(i)), 1, W(px), 1)
+            call DCOPY(t(i), X(q(i)), 1, W(px), 1)
           end block
         end do
         do concurrent(i=1:l)
           block
             integer(IK) :: py
             py = p(i) + iy
-            call dcopy(t(i), Y(q(i)), 1, W(py), 1)
+            call DCOPY(t(i), Y(q(i)), 1, W(py), 1)
           end block
         end do
 !
         W(ig) = ddot(dmn2, W(ix), 1, W(ix), 1)
 !
         if (mn > 0) then
-          call DGEMM('N', 'T', d, d, mn, ONE, W(iy), d, W(ix), d, ZERO, W(ic), d)
-          call estimate_sdmin(d, W(ig), W(ic), W(iw))
+          call DGEMM('N', 'T', D, D, mn, ONE, W(iy), D, W(ix), D, ZERO, W(ic), D)
+          call estimate_sdmin(W(ig), W(ic), W(iw))
           w(iv) = w(iw)
         else
-          call zfill(dd, W(ic))
+          call zfill(DD, W(ic))
           w(iv) = ZERO
         end if
 !
         H = W(ig)
         V = W(ig) - W(iv) - W(iv)
-        call dcopy(dd, W(ic), 1, C, 1)
+        call DCOPY(DD, W(ic), 1, C, 1)
 !
       end block
 !
@@ -492,7 +485,6 @@ contains
   pure elemental subroutine d_matrix_list_clear(this)
     class(d_matrix_list), intent(inout) :: this
     this%l = 0
-    this%d = 0
     if (ALLOCATED(this%m)) deallocate (this%m)
   end subroutine d_matrix_list_clear
 !
