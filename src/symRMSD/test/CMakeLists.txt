@@ -17,6 +17,14 @@ target_sources( test_Hungarian PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params
 target_link_libraries( test_Hungarian PRIVATE unittest )
 add_test( NAME test_Hungarian COMMAND test_Hungarian )
 
+add_executable( test_mol_block )
+target_include_directories( test_mol_block PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_mol_block PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
+                                       test_mol_block.f90 )
+target_link_libraries( test_mol_block PRIVATE unittest )
+add_test( NAME test_mol_block COMMAND test_mol_block )
+
 add_executable( test_det )
 target_include_directories( test_det PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_det PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
