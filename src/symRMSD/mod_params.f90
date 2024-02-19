@@ -19,10 +19,7 @@ module mod_params
   public  :: STDIN, STDOUT, STDERR
   public  :: RZERO, RONE, RHALF, RFOUR, RHUGE
   public  :: D, DD
-! public  :: NEWLINE, CNULL, CARRET, ESCSEQ
-! public  :: FS_BOLD, FS_WEAK, FS_UNDER_LINE, FS_INVERT, FS_CROSSED_OUT, FS_RESET
-! public  :: FC_BLACK, FC_RED, FC_GREEN, FC_YELLOW
-! public  :: FC_MAGENTA, FC_CYAN, FC_WHITE
+  public  :: setup_dimension
 !
 !&<
 !
@@ -45,36 +42,22 @@ module mod_params
   real(RK), parameter         :: RHUGE = HUGE(RZERO)
   !! Real large number.
 !
-! character(*), parameter     :: NEWLINE        = NEW_LINE(' ')
-! !! Line break char.
-! character(*), parameter     :: CNULL          = CHAR(0)
-! !! Null char.
-! character(*), parameter     :: CARRET         = CHAR(13)
-! !! Carriage return.
-! character(*), parameter     :: ESCSEQ         = CHAR(27)
-! !! Escape sequence.
-!
-! character(*), parameter     :: FS_BOLD        = ESCSEQ//'[1m'
-! character(*), parameter     :: FS_WEAK        = ESCSEQ//'[2m'
-! character(*), parameter     :: FS_UNDER_LINE  = ESCSEQ//'[4m'
-! character(*), parameter     :: FS_INVERT      = ESCSEQ//'[7m'
-! character(*), parameter     :: FS_CROSSED_OUT = ESCSEQ//'[9m'
-! character(*), parameter     :: FS_RESET       = ESCSEQ//'[0m'
-!
-! character(*), parameter     :: FC_BLACK       = ESCSEQ//'[30m'
-! character(*), parameter     :: FC_RED         = ESCSEQ//'[31m'
-! character(*), parameter     :: FC_GREEN       = ESCSEQ//'[32m'
-! character(*), parameter     :: FC_YELLOW      = ESCSEQ//'[33m'
-! character(*), parameter     :: FC_BLUE        = ESCSEQ//'[34m'
-! character(*), parameter     :: FC_MAGENTA     = ESCSEQ//'[35m'
-! character(*), parameter     :: FC_CYAN        = ESCSEQ//'[36m'
-! character(*), parameter     :: FC_WHITE       = ESCSEQ//'[37m'
-!
-  integer, save               :: D  = 3
+  integer(IK), save, protected :: D  = 3
   !! Spatial dimension
-  integer, save               :: DD = 9
+  integer(IK), save, protected :: DD = 9
   !! Square spatial dimension
 !
 !&>
 !
+contains
+!
+!| Sets the dimensions of the space. <br>
+!  Caution, this routine affects global.
+  subroutine setup_dimension(d_)
+    integer(IK), intent(in) :: d_
+    D = MAX(1, d_)
+    DD = D * D
+  end subroutine setup_dimension
+!
 end module mod_params
+
