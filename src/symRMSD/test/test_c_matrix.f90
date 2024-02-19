@@ -1,17 +1,16 @@
 program main
-  use mod_params, only: D, DD, RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_mol_symmetry
   use mod_estimate_rotation_matrix
-  use mod_d_matrix
+  use mod_c_matrix
   use mod_unittest
   implicit none
   type(unittest) :: u
 !
   call u%init('test d_matrix')
 !
-  D = 3
-  DD = 9
+  call setup_dimension(3)
 !
   call test0()
 ! call test1()
@@ -25,13 +24,13 @@ contains
   subroutine test0()
     type(mol_block)    :: b(3)
     type(mol_symmetry) :: ms
-    type(d_matrix)     :: a(3)
+    type(c_matrix)     :: a(3)
 !
     b(1) = mol_block(1, 5, 3, 3)
     b(2) = mol_block(2, 3, 4, 2)
     b(3) = mol_block(1, 8, 3, 5)
     call mol_block_list_init(b)
-    a = d_matrix(b)
+    a = c_matrix(b, 1)
 !
   end subroutine test0
 !
