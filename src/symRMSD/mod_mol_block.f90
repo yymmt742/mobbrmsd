@@ -1,17 +1,16 @@
 !| Module for molecular coodinate block indicator.<br>
 !  Coordinates must be stored in the following format.<br>
 !    X(d,m,n)<br>
-!    - d :: spatial dimension.<br>
-!    - m :: number of atom in a molecule.<br>
-!    - n :: number of molecule. If n<0, n_X > n_Y. Otherwize, n_X <= n_Y.<br>
-!    - where X(d,:,:g)   :: Free rotatable.<br>
-!    -       X(d,:,g+1:) :: Fixed.
+!    - d     :: spatial dimension.<br>
+!    - m     :: number of atom in a molecule.<br>
+!    - nx/ny :: number of molecule.
 module mod_mol_block
   use mod_params, only: D, DD, IK, RK, ONE => RONE, FOUR => RFOUR, ZERO => RZERO, RHUGE
   implicit none
   private
   public :: mol_pointer
   public :: mol_block
+  public :: mol_block_list_init
 ! public :: mol_block_list
 !
 !| molecular block indicator
@@ -33,8 +32,6 @@ module mod_mol_block
     integer(IK)       :: s = 1
     !| m :: number of atom in a molecule
     integer(IK)       :: m = 1
-    !| g :: number of free molecule, must be g<=n
-    integer(IK)       :: g = 1
   end type mol_block
 !
   interface mol_block
@@ -71,13 +68,11 @@ contains
 ! Constructer
   pure elemental function mol_block_new(s, m, nx, ny) result(res)
     integer(IK), intent(in) :: s, m, nx, ny
-    integer(IK)             :: i, q
     type(mol_block)         :: res
       res%s = MAX(1, s)
       res%m = MAX(1, m)
       res%x%n = MAX(1, nx)
       res%y%n = MAX(1, ny)
-      res%g = MIN(res%x%n, res%y%n)
   end function mol_block_new
 !
 ! Initializer of mol_block array.

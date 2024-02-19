@@ -8,7 +8,6 @@ module mod_c_matrix
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mol_symmetry
   use mod_mol_block
-  use mod_estimate_rotation_matrix
   implicit none
   private
   public :: c_matrix
@@ -32,7 +31,7 @@ module mod_c_matrix
     integer(IK)         :: m
     !| nx :: number of molecule in X.
     integer(IK)         :: nx
-    !| nx :: number of molecule in Y.
+    !| ny :: number of molecule in Y.
     integer(IK)         :: ny
     !| nn :: nx * ny
     integer(IK)         :: nn
@@ -42,16 +41,10 @@ module mod_c_matrix
     integer(IK)         :: cb
     !| cl :: number of elements in a line. cl = cb * MAX(nx, ny)
     integer(IK)         :: cl
-    !| w1 :: nwork1, w1 = 3 + res%dm * 2 + DD + worksize_sdmin()
-    integer(IK)         :: w1
-    !| w2 :: nwork2, w2 = 1 + DD + worksize_sdmin()
-    integer(IK)         :: w2
     !| px :: pointer to x.
     integer(IK)         :: px
     !| py :: pointer to y.
     integer(IK)         :: py
-    !| pz :: pointer to z (sorted y).
-    integer(IK)         :: pz
     !| pc :: pointer to C.
     integer(IK)         :: pc
   end type c_matrix
@@ -87,10 +80,7 @@ contains
 !
     res%px = b%x%p
     res%py = b%y%p
-    res%pz = p
-    res%pc = res%pz
-    res%w1 = 3 + res%dm * 2 + DD + worksize_sdmin()
-    res%w2 = 1 + DD + worksize_sdmin()
+    res%pc = p
 !
   end function c_matrix_new
 !
