@@ -55,6 +55,7 @@ target_sources( test_c_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_symmetry.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
+                                      mod_testutil.f90
                                       test_c_matrix.f90 )
 target_include_directories( test_c_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_c_matrix PRIVATE unittest )
@@ -71,6 +72,7 @@ target_sources( test_d_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_d_matrix.f90
+                                      mod_testutil.f90
                                       test_d_matrix.f90 )
 target_include_directories( test_d_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_d_matrix PRIVATE unittest )
