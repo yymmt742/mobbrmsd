@@ -12,12 +12,6 @@ module mod_lowerbound
   public :: worksize_lowerbound
   public :: lowerbound
 !
-  interface
-    include 'dgemm.h'
-    include 'ddot.h'
-    include 'dcopy.h'
-  end interface
-!
 contains
 !
   pure elemental function worksize_lowerbound(p, b) result(res)
