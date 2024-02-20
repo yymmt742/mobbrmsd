@@ -1,5 +1,5 @@
 program main
-  use mod_params, only: D, setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: D, DD, setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_mol_symmetry
   use mod_rotation_matrix
@@ -14,7 +14,6 @@ program main
   call u%init('test d_matrix')
 !
   call setup_dimension(3)
-!
   call test1()
 ! call test2()
 ! call test3()
@@ -27,12 +26,19 @@ contains
     type(mol_block)       :: b
     type(mol_symmetry)    :: ms
     type(c_matrix)        :: cm
-    type(d_matrix)        :: dm
-!   real(RK)              :: X(d, mn), Y(d, mn)
+    real(RK)              :: G, C(DD), R(5, 3)
+    real(RK)              :: X(D, 8 * 3), Y(D, 8 * 5)
     real(RK), allocatable :: w(:)
 !
-!   C = 0D0
-!   H = 0D0
+    b = mol_block(2, 8, 3, 5)
+    ms = mol_symmetry(RESHAPE([2, 3, 1, 4, 5, 6, 7, 8], [8, 1]))
+    cm = c_matrix(b)
+    allocate (W(memsize_c_matrix(cm) + worksize_c_matrix(cm)))
+    W(:) = 999
+    call c_matrix_eval(cm, b, ms, X, Y, W)
+    G = 0D0
+    C = 0D0
+!
 !   a = d_matrix(1, 28, b)
 !   X = sample(d, mn)
 !   Y = 0.9D0 * MATMUL(SO3(), X) + 0.1D0 * sample(d, mn)
