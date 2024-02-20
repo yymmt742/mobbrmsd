@@ -1,5 +1,5 @@
 program main
-  use mod_params, only: setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: D, setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_mol_symmetry
   use mod_rotation_matrix
@@ -28,7 +28,7 @@ contains
     type(mol_symmetry)    :: ms
     type(c_matrix)        :: cm
     type(d_matrix)        :: dm
-    real(RK)              :: X(d, mn), Y(d, mn)
+!   real(RK)              :: X(d, mn), Y(d, mn)
     real(RK), allocatable :: w(:)
 !
 !   C = 0D0

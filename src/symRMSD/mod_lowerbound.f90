@@ -3,6 +3,7 @@
 !    - D_IJ = min_{R,s} Tr[C_IJs @ R]<br>
 module mod_lowerbound
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use mod_params, only: gemm=>DGEMM, dot=>DDOT, copy=>DCOPY
   use mod_mol_block
   use mod_rotation_matrix
   use mod_Hungarian

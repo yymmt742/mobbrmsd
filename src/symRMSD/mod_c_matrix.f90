@@ -40,7 +40,7 @@ module mod_c_matrix
     !| p  :: pointer to C.
     integer(IK), public :: p
     !| cb :: number of elements in a sell. cb = DD * res%b%s + 1
-    integer(IK)         :: cb
+    integer(IK), public :: cb
     !| cl :: number of elements in a line. cl = cb * MAX(nx, ny)
     integer(IK)         :: cl
     !| nn :: number of matrix elements. nn = nx * ny.
@@ -187,6 +187,7 @@ contains
 !
   end subroutine c_matrix_eval
 !
+!| Ad CIJs to partial covariance matrix C.
   pure subroutine c_matrix_add(this, b, i, j, s, W, C)
     !| this :: c_matrix
     type(c_matrix), intent(in)  :: this
