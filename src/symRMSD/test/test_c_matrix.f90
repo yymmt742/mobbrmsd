@@ -22,15 +22,37 @@ program main
 contains
 !
   subroutine test0()
-    type(mol_block)    :: b(3)
-    type(mol_symmetry) :: ms
-    type(c_matrix)     :: a(3)
+    type(mol_block)       :: b(3)
+    type(mol_symmetry)    :: ms(3)
+    type(c_matrix)        :: a(3)
+    real(RK)              :: X(3, 5 * 3 + 3 * 4 + 8 * 3)
+    real(RK)              :: Y(3, 5 * 3 + 3 * 2 + 8 * 5)
+    real(RK), allocatable :: W(:)
+!
+    X = sample(3, SIZE(X, 2))
+    Y = sample(3, SIZE(Y, 2))
 !
     b(1) = mol_block(1, 5, 3, 3)
-    b(2) = mol_block(2, 3, 4, 2)
-    b(3) = mol_block(1, 8, 3, 5)
+    b(2) = mol_block(3, 3, 4, 2)
+    b(3) = mol_block(2, 8, 3, 5)
     call mol_block_list_init(b)
-    a = c_matrix(b, 1)
+!
+    print*,b(1)
+    ms(2) = mol_symmetry(RESHAPE([2, 3, 1, 3, 1, 2], [3, 2]))
+    ms(3) = mol_symmetry(RESHAPE([1, 2, 3, 4, 5, 6, 7, 8], [8, 1]))
+!
+    a = c_matrix(b)
+    print*,c_matrix_memsize(a)
+    print*,c_matrix_worksize(a)
+    call c_matrix_init(a(1))
+    call c_matrix_init(a(2), c_matrix_memsize(a(1)) + 1)
+    call c_matrix_init(a(3), c_matrix_memsize(a(1)) + c_matrix_memsize(a(2)) + 1)
+    allocate (W(SUM(c_matrix_memsize(a)) + SUM(c_matrix_worksize(a))))
+    W(:) = 999
+    call c_matrix_eval(a(1), ms(1), X, Y, W)
+    call c_matrix_eval(a(2), ms(2), X, Y, W)
+    call c_matrix_eval(a(3), ms(3), X, Y, W)
+    print'(10f9.3)',W
 !
   end subroutine test0
 !
@@ -253,46 +275,46 @@ contains
     enddo
   end function sample
 !
-  function SO3() result(res)
-    real(RK) :: a(3), res(3, 3)
-    call RANDOM_NUMBER(a)
-    a = a / SQRT(DOT_PRODUCT(a, a))
-    res(:, 1) = [a(1) * a(1), a(1) * a(2) - a(3), a(1) * a(3) + a(2)]
-    res(:, 2) = [a(1) * a(2) + a(3), a(2) * a(2), a(2) * a(3) - a(1)]
-    res(:, 3) = [a(1) * a(3) - a(2), a(2) * a(3) + a(1), a(3) * a(3)]
-  end function SO3
+! function SO3() result(res)
+!   real(RK) :: a(3), res(3, 3)
+!   call RANDOM_NUMBER(a)
+!   a = a / SQRT(DOT_PRODUCT(a, a))
+!   res(:, 1) = [a(1) * a(1), a(1) * a(2) - a(3), a(1) * a(3) + a(2)]
+!   res(:, 2) = [a(1) * a(2) + a(3), a(2) * a(2), a(2) * a(3) - a(1)]
+!   res(:, 3) = [a(1) * a(3) - a(2), a(2) * a(3) + a(1), a(3) * a(3)]
+! end function SO3
 !
-  pure function swp(d, m, n, per, sym, ms, X) result(res)
-    integer(IK), intent(in) :: d, m, n, per(:), sym(:)
-    type(mol_symmetry), intent(in) :: ms
-    real(RK), intent(in)    :: X(d, m, n)
-    real(RK)                :: tmp(d, m, n), res(d, m * n)
-    integer(IK)             :: i
-    tmp = X
-    do i = 1, SIZE(per)
-      tmp(:, :, per(i)) = X(:, :, i)
-      call ms%swap(d, tmp(:, :, per(i)), sym(i))
-    end do
-    res = RESHAPE(tmp, [d, m * n])
-  end function swp
+! pure function swp(d, m, n, per, sym, ms, X) result(res)
+!   integer(IK), intent(in) :: d, m, n, per(:), sym(:)
+!   type(mol_symmetry), intent(in) :: ms
+!   real(RK), intent(in)    :: X(d, m, n)
+!   real(RK)                :: tmp(d, m, n), res(d, m * n)
+!   integer(IK)             :: i
+!   tmp = X
+!   do i = 1, SIZE(per)
+!     tmp(:, :, per(i)) = X(:, :, i)
+!     call ms%swap(d, tmp(:, :, per(i)), sym(i))
+!   end do
+!   res = RESHAPE(tmp, [d, m * n])
+! end function swp
 !
-  pure function sd(d, X, Y) result(res)
-    integer(IK), intent(in) :: d
-    real(RK), intent(in)    :: X(:, :), Y(:, :)
-    real(RK)                :: C(d, d), R(d, d), W(100), res
-    C = MATMUL(Y, TRANSPOSE(X))
-    call estimate_rotation_matrix(SUM(X * X) + SUM(Y * Y), C, R, W)
-    res = SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
-  end function sd
+! pure function sd(d, X, Y) result(res)
+!   integer(IK), intent(in) :: d
+!   real(RK), intent(in)    :: X(:, :), Y(:, :)
+!   real(RK)                :: C(d, d), R(d, d), W(100), res
+!   C = MATMUL(Y, TRANSPOSE(X))
+!   call estimate_rotation_matrix(SUM(X * X) + SUM(Y * Y), C, R, W)
+!   res = SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
+! end function sd
 !
-  pure subroutine copy(d, source, dest)
-    integer(IK), intent(in) :: d
-    real(RK), intent(in)    :: source(*)
-    real(RK), intent(inout) :: dest(*)
-    integer(IK)             :: i
-    do concurrent(i=1:d)
-      dest(i) = source(i)
-    end do
-  end subroutine copy
+! pure subroutine copy(d, source, dest)
+!   integer(IK), intent(in) :: d
+!   real(RK), intent(in)    :: source(*)
+!   real(RK), intent(inout) :: dest(*)
+!   integer(IK)             :: i
+!   do concurrent(i=1:d)
+!     dest(i) = source(i)
+!   end do
+! end subroutine copy
 !
 end program main
