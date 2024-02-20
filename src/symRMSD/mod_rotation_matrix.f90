@@ -2,6 +2,7 @@
 !  Here, RR^T=I and det(R)=1 are satisfied.
 module mod_rotation_matrix
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, HALF => RHALF
+  use mod_params, only: dot => DDOT, copy => DCOPY,gemm => dgemm, gesvd => DGESVD
   use mod_det
   implicit none
   private
@@ -9,13 +10,6 @@ module mod_rotation_matrix
   public :: estimate_sdmin
   public :: worksize_rotation_matrix
   public :: estimate_rotation_matrix
-!
-  interface
-    include 'ddot.h'
-    include 'dcopy.h'
-    include 'dgemm.h'
-    include 'dgesvd.h'
-  end interface
 !
   real(RK), parameter :: THRESHOLD = 1E-8_RK
 !
@@ -62,7 +56,7 @@ contains
       call quartenion_sdmin_d3(g, cov, w)
     elseif (d > 3) then
       call Kabsch(cov, w(2), w(d * d + 2))
-      w(1) = ddot(DD, cov, 1, w(2), 1)
+      w(1) = dot(DD, cov, 1, w(2), 1)
       w(1) = w(1) + w(1)
       w(1) = g - w(1)
     end if
@@ -345,7 +339,7 @@ contains
     real(RK)    :: w(1)
     integer(IK) :: res, info
 !
-    call DGESVD('A', 'A', D, D, w, D, w, w, D, w, D, w, -1, info)
+    call gesvd('A', 'A', D, D, w, D, w, w, D, w, D, w, -1, info)
     res = NINT(w(1)) + DD * 3 + D
 !
   end function worksize_Kabsch
@@ -367,17 +361,17 @@ contains
     s = vt + dd
     iw = s + d
 !
-    call DGESVD('A', 'A', d, d, w(m), d, w(s), w(u), d, w(vt), d, w(iw), -1, info)
+    call gesvd('A', 'A', d, d, w(m), d, w(s), w(u), d, w(vt), d, w(iw), -1, info)
     lw = NINT(w(iw))
 !
-    call DCOPY(dd, cov, 1, w(m), 1)
-    call DGESVD('A', 'A', d, d, w(m), d, w(s), w(u), d, w(vt), d, w(iw), lw, info)
+    call copy(dd, cov, 1, w(m), 1)
+    call gesvd('A', 'A', d, d, w(m), d, w(s), w(u), d, w(vt), d, w(iw), lw, info)
 !
-    call DGEMM('N', 'N', d, d, d, ONE, w(u), d, w(vt), d, ZERO, w(s), d)
+    call gemm('N', 'N', d, d, d, ONE, w(u), d, w(vt), d, ZERO, w(s), d)
     call det_sign(w(s:s + dd - 1))
     if (w(s) < ZERO) w(u + dd - d:u + dd - 1) = -w(u + dd - d:u + dd - 1)
-    call DGEMM('N', 'N', d, d, d, ONE, w(u), d, w(vt), d, ZERO, w(s), d)
-    call DCOPY(dd, w(s), 1, rot(1), 1)
+    call gemm('N', 'N', d, d, d, ONE, w(u), d, w(vt), d, ZERO, w(s), d)
+    call copy(dd, w(s), 1, rot(1), 1)
 !
   end subroutine Kabsch
 !

@@ -1,15 +1,15 @@
 program main
-  use mod_params, only: D, DD, RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_det
   use mod_unittest
   implicit none
   type(unittest) :: u
 !
-  call test1()
-  call test2()
-  call test3()
-  call test4()
-  call test5()
+  call setup_dimension(1); call test1()
+  call setup_dimension(2); call test2()
+  call setup_dimension(3); call test3()
+  call setup_dimension(4); call test4()
+  call setup_dimension(100); call test5()
 !
   call u%finish_and_terminate()
 !
@@ -21,9 +21,6 @@ contains
     integer            :: i
 !
     call u%init('test det d=1')
-!
-    D = 1
-    DD = 1
 !
     do i=1,N_TEST
       call random_number(X)
@@ -42,9 +39,6 @@ contains
     integer            :: i
 !
     call u%init('test det d=2')
-!
-    D = 2
-    DD = 4
 !
     do i = 1, N_TEST
       call RANDOM_NUMBER(X)
@@ -65,9 +59,6 @@ contains
 !
     call u%init('test det d=3')
 !
-    D = 3
-    DD = 9
-!
     do i=1,N_TEST
       call random_number(X)
       da = X(1)*X(5)*X(9)+X(2)*X(6)*X(7)+X(3)*X(4)*X(8) &
@@ -87,9 +78,6 @@ contains
 !
     call u%init('test det d=4')
 !
-    D = 4
-    DD = 16
-!
     do i=1,N_TEST
       call random_number(X)
       W=X ; call det(W)
@@ -105,9 +93,6 @@ contains
     integer            :: i
 !
     call u%init('test det d=100')
-!
-    D = 100
-    DD = 10000
 !
     do i=1,N_TEST
       call random_number(X)

@@ -1,6 +1,7 @@
 program main
-  use mod_params, only: D, DD, RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: D, setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_rotation_matrix
+  use mod_testutil
   use mod_unittest
   implicit none
   type(unittest) :: z
@@ -11,23 +12,20 @@ program main
   E6 = eye(6)
 !
   call z%init('test quartanion d=2')
-  D = 2
-  DD = 4
+  call setup_dimension(2)
   call test1(10, 10)
   call test1(20, 10)
   call test1(100, 10)
 !
   call z%init('test quartanion d=3')
-  D = 3
-  DD = 9
+  call setup_dimension(3)
   call test1(3, 10)
   call test1(5, 10)
   call test1(10, 10)
   call test1(100, 10)
 !
   call z%init('test kabsch d=6')
-  D = 6
-  DD = 36
+  call setup_dimension(6)
   call test1(1, 2)
   call test1(2, 2)
   call test1(3, 2)
@@ -122,14 +120,5 @@ contains
     end if
 !
   end function SO
-!
-  pure function eye(d) result(res)
-    integer,intent(in) :: d
-    real(RK)           :: res(d, d)
-    integer            :: i, j
-    do concurrent(j=1:d, i=1:d)
-      res(i, j) = MERGE(ONE, ZERO, i == j)
-    enddo
-  end function eye
 !
 end program main

@@ -40,6 +40,7 @@ target_include_directories( test_rotation_matrix PRIVATE ${unittest_DIR}/mod_fil
 target_sources( test_rotation_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
+                                    mod_testutil.f90
                                     test_rotation_matrix.f90 )
 target_include_directories( test_rotation_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_rotation_matrix PRIVATE unittest )

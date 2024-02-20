@@ -2,13 +2,10 @@
 !| Module for calculating determinants.
 module mod_det
   use mod_params, only : D, DD, IK, RK, ONE => RONE, ZERO => RZERO
+  use mod_params, only : getrf=>DGETRF
   implicit none
   private
   public :: det, det_, det_sign
-!
-  interface
-    include 'dgetrf.h'
-  end interface
 !
   interface det
     module procedure :: det_full, det_part
@@ -99,7 +96,7 @@ contains
        block
          integer(IK) :: i, j, k, ipiv(d)
          k = MAX(D, ld)
-         call DGETRF(D, D, x, k, ipiv(1:D), j)
+         call getrf(D, D, x, k, ipiv(1:D), j)
          if (MODULO(COUNT([(ipiv(i) == i, i=1, D)]), 2) == 1) x(1) = -x(1)
          ipiv(1) = k + 1
          k = k * D
@@ -200,7 +197,7 @@ contains
        block
          integer(IK) :: i, j, k, ipiv(d)
          k = MAX(D, ld)
-         call DGETRF(D, D, x, k, ipiv, j)
+         call getrf(D, D, x, k, ipiv, j)
          ipiv(1) = COUNT([(ipiv(i) == i, i=1, D)])
          j = 1
          k = k + 1
