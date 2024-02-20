@@ -1,6 +1,6 @@
 program main
   use mod_params, only: D, DD, RK, IK, ONE => RONE, ZERO => RZERO
-  use mod_estimate_rotation_matrix
+  use mod_rotation_matrix
   use mod_unittest
   implicit none
   type(unittest) :: z

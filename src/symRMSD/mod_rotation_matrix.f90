@@ -1,6 +1,6 @@
 !| Calculate the rotation matrix that minimizes |X-RY|^2 using the Kabsch-Umeyama algorithm.
 !  Here, RR^T=I and det(R)=1 are satisfied.
-module mod_estimate_rotation_matrix
+module mod_rotation_matrix
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, HALF => RHALF
   use mod_det
   implicit none
@@ -381,4 +381,4 @@ contains
 !
   end subroutine Kabsch
 !
-end module mod_estimate_rotation_matrix
+end module mod_rotation_matrix

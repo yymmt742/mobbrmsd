@@ -5,7 +5,7 @@ module mod_d_matrix
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_c_matrix
   use mod_mol_block
-  use mod_estimate_rotation_matrix
+  use mod_rotation_matrix
   implicit none
   private
   public :: d_matrix
