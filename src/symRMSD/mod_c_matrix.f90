@@ -1,3 +1,4 @@
+!
 !| Module for manage C matrix.<br>
 !  {C_IJs} :: Covariance matrices.<br>
 !    C_IJs(d,d) = Y_J @ Q_s @ X_I^T<br>
@@ -5,7 +6,8 @@
 !    - Y_J :: J-th molecule in Y.<br>
 !    - Q_s :: Permutation matrix on m.
 module mod_c_matrix
-  use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE, &
+    &                   gemm=>DGEMM, dot=>DDOT, copy=>DCOPY, axpy=>DAXPY
   use mod_mol_symmetry
   use mod_mol_block
   implicit none
@@ -14,6 +16,7 @@ module mod_c_matrix
   public :: memsize_c_matrix
   public :: worksize_c_matrix
   public :: c_matrix_eval
+  public :: c_matrix_add
 !
 !|   c_matrix<br>
 !    C_IJs is the d x d matrix and {C_IJs} is the third-order tensor of nx x ny x s.<br>
@@ -32,14 +35,14 @@ module mod_c_matrix
   type c_matrix
     private
     sequence
-    !| cb :: number of elements in a sell. cb = DD * res%b%s + 1
-    integer(IK), public :: cb
-    !| cl :: number of elements in a line. cl = cb * MAX(nx, ny)
-    integer(IK), public :: cl
     !| nl :: number of row. nl = MIN(nx, ny)
     integer(IK), public :: nl
     !| p  :: pointer to C.
     integer(IK), public :: p
+    !| cb :: number of elements in a sell. cb = DD * res%b%s + 1
+    integer(IK)         :: cb
+    !| cl :: number of elements in a line. cl = cb * MAX(nx, ny)
+    integer(IK)         :: cl
     !| nn :: number of matrix elements. nn = nx * ny.
     integer(IK)         :: nn
     !| nn :: number of work array. nw = nx * ny
@@ -49,12 +52,6 @@ module mod_c_matrix
   interface c_matrix
     module procedure c_matrix_new
   end interface c_matrix
-!
-  interface
-    include 'dgemm.h'
-    include 'ddot.h'
-    include 'dcopy.h'
-  end interface
 !
 contains
 !
@@ -129,10 +126,10 @@ contains
       integer(IK)                    :: i, j
 !
       do concurrent(i=1:nx)
-        GX(i) = DDOT(dm, X(1, i), 1, X(1, i), 1)
+        GX(i) = dot(dm, X(1, i), 1, X(1, i), 1)
       end do
       do concurrent(i=1:ny)
-        GY(i) = DDOT(dm, Y(1, i), 1, Y(1, i), 1)
+        GY(i) = dot(dm, Y(1, i), 1, Y(1, i), 1)
       end do
 !
       do concurrent(i=1:nx, j=1:ny)
@@ -155,10 +152,10 @@ contains
       real(RK), intent(inout)        :: WX(dm), WY(dm, ny)
       integer(IK)                    :: j, k
 !
-      call DCOPY(dm * ny, Y, 1, WY, 1)
+      call copy(dm * ny, Y, 1, WY, 1)
 !
       do j = 1, nx
-        call DCOPY(dm, X(1, j), 1, WX, 1)
+        call copy(dm, X(1, j), 1, WX, 1)
         do concurrent(k=1:ny)
           block
             integer(IK) :: ic
@@ -173,22 +170,44 @@ contains
     pure subroutine calc_cov(s, m, dm, ms, WX, WY, C)
       integer(IK), intent(in)        :: s, m, dm
       type(mol_symmetry), intent(in) :: ms
-      real(RK), intent(in)           :: WX(*)
-      real(RK), intent(inout)        :: WY(*)
-      real(RK), intent(inout)        :: C(DD, *)
+      real(RK), intent(in)           :: WX(D, *)
+      real(RK), intent(inout)        :: WY(D, *)
+      real(RK), intent(inout)        :: C(D, D, *)
       integer(IK)                    :: i
 !
-        call DGEMM('N', 'T', D, D, m, ONE, WY, D, WX, D, ZERO, C(1, 1), D)
+        call gemm('N', 'T', D, D, m, ONE, WY, D, WX, D, ZERO, C(1, 1, 1), D)
 !
         do concurrent(i=2:s)
           call ms%swap(D, WY, i - 1)
-          call DGEMM('N', 'T', D, D, m, ONE, WY, D, WX, D, ZERO, C(1, i), D)
+          call gemm('N', 'T', D, D, m, ONE, WY, D, WX, D, ZERO, C(1, 1, i), D)
           call ms%reverse(D, WY, i - 1)
         end do
 !
     end subroutine calc_cov
 !
   end subroutine c_matrix_eval
+!
+  pure subroutine c_matrix_add(this, b, i, j, s, W, C)
+    !| this :: c_matrix
+    type(c_matrix), intent(in)  :: this
+    !| b    :: mol_block
+    type(mol_block), intent(in) :: b
+    !| i    :: row index
+    integer(IK), intent(in)     :: i
+    !| j    :: collumn index
+    integer(IK), intent(in)     :: j
+    !| s    :: symmetry index
+    integer(IK), intent(in)     :: s
+    !| W    :: work array
+    real(RK), intent(in)        :: W(*)
+    !| C    :: partial covariance matrix
+    real(RK), intent(inout)     :: C(*)
+    integer(IK)                 :: k
+!
+    k = this%p + this%cb * (i - 1) + this%cl * (j - 1) + DD * (s - 1) + 1
+    call axpy(DD, ONE, W(k), 1, C, 1 )
+!
+  end subroutine c_matrix_add
 !
 end module mod_c_matrix
 

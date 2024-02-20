@@ -29,12 +29,6 @@ module mod_d_matrix
     module procedure d_matrix_new
   end interface d_matrix
 !
-  interface
-    include 'dgemm.h'
-    include 'ddot.h'
-    include 'dcopy.h'
-  end interface
-!
 contains
 !
 !| Constructer

@@ -1,38 +1,15 @@
 !| Module for manage D matrix.<br>
 !  D(nx, ny) :: Residue matrices.<br>
 !    - D_IJ = min_{R,s} Tr[C_IJs @ R]<br>
-module mod_d_matrix
+module mod_lowerbound
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
-  use mod_mol_symmetry
   use mod_mol_block
-  use mod_estimate_rotation_matrix
+  use mod_rotation_matrix
   use mod_Hungarian
   implicit none
   private
-  public :: d_matrix
-! public :: d_matrix_memsize
-! public :: d_matrix_eval
-! public :: d_matrix_partial_eval
-!
-  !| d_matrix
-  type d_matrix
-    private
-    sequence
-    !| nx :: number of molecule in X.
-    integer(IK)         :: nx
-    !| ny :: number of molecule in Y.
-    integer(IK)         :: ny
-    !| nn :: nx * ny
-    integer(IK)         :: nn
-    !| n  :: n = min(nx, ny)
-    integer(IK)         :: n
-    !| pd :: pointer to D.
-    integer(IK)         :: pd
-  end type d_matrix
-!
-  interface d_matrix
-    module procedure d_matrix_new
-  end interface d_matrix
+  public :: worksize_lowerbound
+  public :: lowerbound
 !
   interface
     include 'dgemm.h'
@@ -42,116 +19,46 @@ module mod_d_matrix
 !
 contains
 !
-!| Constructer of d_matrix
-  pure elemental function d_matrix_new(b) result(res)
-    type(mol_block), intent(in) :: b
-    type(d_matrix)              :: res
+  pure elemental function worksize_lowerbound(p, b) result(res)
+    !| p :: level
+    integer(IK), intent(in)    :: p
+    !| b :: mol_block
+    type(mol_block),intent(in) :: b
+    integer(IK)                :: res
+    integer(IK)                :: n1, n2
+    n1 = MAX(b%x%n, b%y%n) - p
+    n2 = MIN(b%x%n, b%y%n) - p
+    res = MAX(worksize_Hungarian(n1, n2), 1 + worksize_sdmin())
+  end function worksize_lowerbound
 !
-    res%b = b
-!   res%n = MAX(b%n, 0)
-!   res%g = MIN(res%n, MAX(b%g, 0))
-    res%gg = res%b%g * res%b%g
-    res%dm = D * res%b%m
-    res%cb = DD * res%b%s + 1
-    res%cl = res%cb * res%b%g
+!| lowerbound function.
+  pure subroutine lowerbound(p, b, G, C, D, W)
+    !| p :: level
+    integer(IK), intent(in)    :: p
+    !| b :: mol_block
+    type(mol_block),intent(in) :: b
+    !| G :: partial variance, G
+    real(RK), intent(in)       :: G
+    !| C :: partial covariance matrix, C(d, d)
+    real(RK), intent(in)       :: C(*)
+    !| D :: residual matrix, D(n1, n2), here n1 = MAX(nx, ny) - p and n2 = MIN(nx, ny) - p.
+    real(RK), intent(in)       :: D(*)
+    !| W :: workarray
+    real(RK), intent(inout)    :: W(*)
+    integer(IK)                :: n1, n2
 !
-!   res%x = b%p
-!   res%z = p
-!   res%c = res%z + res%gg
-!   res%nw1 = 3 + res%dm * 2 + DD + nk
-!   res%nw2 = 1 + DD + nk
+    W(1) = ZERO
+    n1 = MAX(b%x%n, b%y%n) - p
+    n2 = MIN(b%x%n, b%y%n) - p
 !
-  end function d_matrix_new
+    if (p < 0 .or. n2 < 0) return
+    if (0 < n2) call Hungarian(n1, n2, D, W)
+    if (0 < p) then
+      call estimate_sdmin(G, C, W(2))
+      W(1) = W(1) + W(2)
+    end if
 !
-  pure elemental subroutine d_matrix_list_init(this)
-    type(mol_block), intent(inout) :: this
-
-  end subroutine d_matrix_list_init
-!
-! pure elemental function d_matrix_memsize(a) result(res)
-!   type(d_matrix), intent(in) :: a
-!   integer(IK)                :: res
-!   res = (a%cb + 1) * a%gg
-! end function d_matrix_memsize
-!
-! pure subroutine d_matrix_eval(a, ms, X, Y, W)
-!   type(d_matrix), intent(in)      :: a
-!   class(mol_symmetry), intent(in) :: ms
-!   real(RK), intent(in)            :: X(*)
-!   real(RK), intent(in)            :: Y(*)
-!   real(RK), intent(inout)         :: W(*)
-!
-!   call eval(a%s, a%m, a%g, a%dm, a%cb, a%nw1, ms, X(a%x), Y(a%x), W(a%z), W(a%c))
-!
-! contains
-!
-!   pure subroutine eval(s, m, g, dm, cb, nw, r, X, Y, Z, C)
-!     integer(IK), intent(in)        :: s, m, g
-!     integer(IK), intent(in)        :: dm, cb, nw
-!     type(mol_symmetry), intent(in) :: r
-!     real(RK), intent(in)           :: X(D, m, g)
-!     real(RK), intent(in)           :: Y(D, m, g)
-!     real(RK), intent(inout)        :: Z(g, g)
-!     real(RK), intent(inout)        :: C(cb, g, g)
-!     integer(IK), parameter         :: ib = 1
-!     integer(IK), parameter         :: it = 2
-!     integer(IK), parameter         :: ih = 3
-!     integer(IK), parameter         :: ix = 4
-!     integer(IK)                    :: iy, ic, iw
-!     integer(IK)                    :: j, k, dm2
-!
-!     if (g < 1) return
-!
-!     iy = ix + dm
-!     ic = iy + dm
-!     iw = ic + dd
-!     dm2 = dm + dm
-!
-!     do concurrent(j=1:g, k=1:g)
-!       block
-!         integer(IK) :: i, ip
-!         real(RK)    :: W(nw)
-!
-!         call DCOPY(dm, X(1, 1, j), 1, W(ix), 1)
-!         call DCOPY(dm, Y(1, 1, k), 1, W(iy), 1)
-!
-!!!       trace of self correlation matrix
-!         w(ih) = DDOT(dm2, W(ix), 1, W(ix), 1)
-!         C(1, j, k) = w(ih)
-!
-!         ip = 2
-!         call calc_lb(m, dm, w(ih), w(ix), W(it), W(ic), W(iw))
-!         call DCOPY(DD, W(ic), 1, C(ip, j, k), 1)
-!         w(ib) = w(it)
-!
-!         do i = 1, s - 1
-!           call r%swap(D, W(iy), i)
-!           ip = ip + dd
-!           call calc_lb(m, dm, W(ih), W(ix), W(it), W(ic), W(iw))
-!           call DCOPY(dd, W(ic), 1, C(ip, j, k), 1)
-!           w(ib) = MIN(w(ib), w(it))
-!           call r%reverse(D, W(iy), i)
-!         end do
-!
-!         Z(j, k) = w(ib)
-!
-!       end block
-!     end do
-!
-!   end subroutine eval
-!
-!   pure subroutine calc_lb(m, dm, H, XY, T, C, W)
-!     integer(IK), intent(in) :: m, dm
-!     real(RK), intent(in)    :: H, XY(dm, *)
-!     real(RK), intent(inout) :: T, C(*), W(*)
-!!!   get correlation matrix C = Y^t@X and optimal rotation R^t
-!     call DGEMM('N', 'T', D, D, m, ONE, XY(1, 2), D, XY(1, 1), D, ZERO, C, D)
-!!!   get squared displacement
-!     call estimate_sdmin(H, C, W)
-!     T = W(1)
-!   end subroutine calc_lb
-!
-! end subroutine d_matrix_eval
+  end subroutine lowerbound
 !
 ! pure subroutine d_matrix_partial_eval(a, p, iprm, isym, ires, W, LT, H, C, LF, LB)
 !   type(d_matrix), intent(in)        :: a
@@ -507,5 +414,5 @@ contains
 !   end do
 ! end subroutine zfill
 !
-end module mod_d_matrix
+end module mod_lowerbound
 

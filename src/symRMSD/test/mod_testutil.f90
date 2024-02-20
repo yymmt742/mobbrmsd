@@ -5,6 +5,7 @@ module mod_testutil
   implicit none
   private
   public :: sample
+  public :: SO3
 !
 contains
 !
@@ -20,4 +21,18 @@ contains
     end do
   end function sample
 !
+  function SO3() result(res)
+    real(RK) :: a(4), c, t, s, res(3, 3)
+    call RANDOM_NUMBER(a)
+    a(:3) = a(:3) / SQRT(DOT_PRODUCT(a(:3), a(:3)))
+    a(4) = (a(4) + a(4)) * ACOS(0.0_RK)
+    c = COS(a(4))
+    t = ONE - c
+    s = SIN(a(4))
+    res(:, 1) = [c + t * a(1) * a(1), t * a(1) * a(2) - s * a(3), t * a(1) * a(3) + s * a(2)]
+    res(:, 2) = [t * a(1) * a(2) + s * a(3), c + t * a(2) * a(2), t * a(2) * a(3) - s * a(1)]
+    res(:, 3) = [t * a(1) * a(3) - s * a(2), t * a(2) * a(3) + s * a(1), c + t * a(3) * a(3)]
+  end function SO3
+!
 end module mod_testutil
+

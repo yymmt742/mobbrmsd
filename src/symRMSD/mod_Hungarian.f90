@@ -4,9 +4,24 @@ module mod_Hungarian
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   implicit none
   private
+  public :: worksize_Hungarian
   public :: Hungarian
 !
 contains
+!
+!| query work array size
+  pure elemental function worksize_Hungarian(m, n) result(res)
+    !| matrix dimension 1.
+    integer(IK), intent(in) :: m
+    !| matrix dimension 2.
+    integer(IK), intent(in) :: n
+    integer(IK)             :: res
+    if (n > 0 .and. m > 0) then
+      res = MAX(n, m) * 2 + 5
+    else
+      res = 0
+    end if
+  end function worksize_Hungarian
 !
 !| Calculate the minimum linear assignment cost using Hungarian method.
 !  If m and n are different, the sum of the linear assignments of the smaller is returned.
@@ -14,14 +29,14 @@ contains
 !  If m==0 or n==0, do nothing.
 !  If (m<0 or n<0) and (|m|>0 and |n|>0), W(1) stores the required memory size for C(|m|,|n|).
   pure subroutine Hungarian(m, n, C, W)
+    !| matrix dimension 1.
     integer(IK), intent(in)    :: m
-    !! matrix dimension 1.
+    !| matrix dimension 2.
     integer(IK), intent(in)    :: n
-    !! matrix dimension 2.
+    !| score matrix C(m, n).
     real(RK), intent(in)       :: C(*)
-    !! score matrix C(m, n).
+    !| work array.
     real(RK), intent(inout)    :: W(*)
-    !! work array.
 !
     if (n == 0 .or. m == 0) then
       return

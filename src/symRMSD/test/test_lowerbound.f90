@@ -1,9 +1,12 @@
 program main
-  use mod_params, only: D, DD, RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_mol_symmetry
-  use mod_estimate_rotation_matrix
+  use mod_rotation_matrix
+  use mod_c_matrix
   use mod_d_matrix
+  use mod_lowerbound
+  use mod_testutil
   use mod_unittest
   implicit none
   type(unittest) :: u
@@ -12,8 +15,7 @@ program main
 !
   call setup_dimension(3)
 !
-  call test0()
-! call test1()
+  call test1()
 ! call test2()
 ! call test3()
 !
@@ -21,34 +23,14 @@ program main
 !
 contains
 !
-  subroutine test0()
-    type(mol_block)    :: b(3)
-    type(mol_symmetry) :: ms
-    type(d_matrix)     :: a(3)
+  subroutine test1()
+    type(mol_block)       :: b
+    type(mol_symmetry)    :: ms
+    type(c_matrix)        :: cm
+    type(d_matrix)        :: dm
+    real(RK)              :: X(d, mn), Y(d, mn)
+    real(RK), allocatable :: w(:)
 !
-    b(1) = mol_block(1, 5, 3, 3)
-    b(2) = mol_block(2, 3, 4, 2)
-    b(3) = mol_block(1, 8, 3, 5)
-    call mol_block_list_init(b)
-    a = d_matrix(b)
-!
-  end subroutine test0
-!
-! subroutine test1()
-!   integer, parameter         :: s = 2
-!   integer, parameter         :: m = 5
-!   integer, parameter         :: n = 7
-!   integer, parameter         :: g = 5
-!   integer, parameter         :: mn = m * n
-!   integer, parameter         :: swp(m, s - 1) = RESHAPE([1, 2, 3, 4, 5], [m, s - 1])
-!   type(mol_block), parameter :: b = mol_block(1, s, m, n, g)
-!   type(mol_symmetry)         :: ms
-!   type(d_matrix)             :: a
-!   real(RK)                   :: X(d, mn), Y(d, mn)
-!   real(RK)                   :: LT, LF, LB, H, C(d, d)
-!   real(RK), allocatable      :: w(:)
-!
-!   ms = mol_symmetry(swp)
 !   C = 0D0
 !   H = 0D0
 !   a = d_matrix(1, 28, b)
@@ -75,7 +57,7 @@ contains
 !   call d_matrix_partial_eval(a, 1, 2, 2, [1, 3, 4, 5], W, LT, H, C, LF, LB)
 !   print'(4f9.3)', LF, LB, LF + LB, LT
 !
-! end subroutine test1
+  end subroutine test1
 !
 ! subroutine test2()
 !   integer, parameter    :: l = 3
@@ -240,27 +222,6 @@ contains
 !   res = LF
 !   !res = T
 ! end function pe
-!
-  function sample(d, n) result(res)
-    integer, intent(in)  :: d, n
-    real(RK)             :: cnt(d)
-    real(RK)             :: res(d, n)
-    integer              :: i
-    call RANDOM_NUMBER(res)
-    cnt = SUM(res, 2) / n
-    do concurrent(i=1:n)
-      res(:, i) = res(:, i) - cnt
-    enddo
-  end function sample
-!
-  function SO3() result(res)
-    real(RK) :: a(3), res(3, 3)
-    call RANDOM_NUMBER(a)
-    a = a / SQRT(DOT_PRODUCT(a, a))
-    res(:, 1) = [a(1) * a(1), a(1) * a(2) - a(3), a(1) * a(3) + a(2)]
-    res(:, 2) = [a(1) * a(2) + a(3), a(2) * a(2), a(2) * a(3) - a(1)]
-    res(:, 3) = [a(1) * a(3) - a(2), a(2) * a(3) + a(1), a(3) * a(3)]
-  end function SO3
 !
   pure function swp(d, m, n, per, sym, ms, X) result(res)
     integer(IK), intent(in) :: d, m, n, per(:), sym(:)

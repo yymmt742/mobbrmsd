@@ -80,6 +80,25 @@ target_link_libraries( test_d_matrix PRIVATE unittest )
 target_link_libraries( test_d_matrix PRIVATE purelapack )
 add_test( NAME test_d_matrix COMMAND test_d_matrix )
 
+add_executable( test_lowerbound )
+target_include_directories( test_lowerbound PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_lowerbound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_symmetry.f90
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_d_matrix.f90
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_lowerbound.f90
+                                        mod_testutil.f90
+                                        test_lowerbound.f90 )
+target_include_directories( test_lowerbound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_link_libraries( test_lowerbound PRIVATE unittest )
+target_link_libraries( test_lowerbound PRIVATE purelapack )
+add_test( NAME test_lowerbound COMMAND test_lowerbound )
+
 add_executable( test_tree )
 target_include_directories( test_tree PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_tree PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90

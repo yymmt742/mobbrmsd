@@ -20,6 +20,7 @@ module mod_params
   public  :: RZERO, RONE, RHALF, RFOUR, RHUGE
   public  :: D, DD
   public  :: setup_dimension
+  public  :: DCOPY, DAXPY, DDOT, DGEMM, DGESVD, DGETRF, DSYMM
 !
 !&<
 !
@@ -48,6 +49,34 @@ module mod_params
   !! Square spatial dimension
 !
 !&>
+!
+  interface
+    include 'daxpy.h'
+  end interface
+!
+  interface
+    include 'ddot.h'
+  end interface
+!
+  interface
+    include 'dcopy.h'
+  end interface
+!
+  interface
+    include 'dgemm.h'
+  end interface
+!
+  interface
+    include 'dgesvd.h'
+  end interface
+!
+  interface
+    include 'dgetrf.h'
+  end interface
+!
+  interface
+    include 'dsymm.h'
+  end interface
 !
 contains
 !

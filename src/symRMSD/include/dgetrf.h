@@ -1,5 +1,5 @@
 pure subroutine DGETRF( M, N, A, LDA, IPIV, INFO )
-  use mod_params, only :  wp=>R8
+  use, intrinsic :: ISO_FORTRAN_ENV, only: wp=>REAL64
   integer,intent(in)      :: LDA, M, N
   integer,intent(out)     :: INFO
   integer,intent(out)     :: IPIV( * )
