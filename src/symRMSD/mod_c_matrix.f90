@@ -11,50 +11,39 @@ module mod_c_matrix
   implicit none
   private
   public :: c_matrix
-  public :: c_matrix_memsize
-  public :: c_matrix_worksize
-  public :: c_matrix_init
+  public :: memsize_c_matrix
+  public :: worksize_c_matrix
   public :: c_matrix_eval
 !
-  !| c_matrix<br>
-  !  C_IJs is the d x d matrix and {C_IJs} is the third-order tensor of nx x ny x s.<br>
-  !  To quickly find the rotation matrix, C is stored with G_IJ given by<br>
-  !    G_IJ = Tr[X_I @ X_I^T] + Tr[Y_J @ Y_J^T].<br>
-  !  G does not change with respect to s.<br>
-  !  If nx >= ny, {C_IJs} is stored as C(cb,nx,ny), otherwise, C(cb,ny,nx), <br>
-  !  where cb = 1 + s * d * d.<br>
-  !  C(:,I,J) = [G_IJ, C_IJ1, C_IJ2, ..., C_IJS] with C_IJs(D,D) := Y_J @ Q_s @ X_I^T.
+!|   c_matrix<br>
+!    C_IJs is the d x d matrix and {C_IJs} is the third-order tensor of nx x ny x s.<br>
+!    To quickly find the rotation matrix, C is stored with G_IJ given by<br>
+!      G_IJ = Tr[X_I @ X_I^T] + Tr[Y_J @ Y_J^T].<br>
+!    G does not change with respect to s.<br>
+!    If nx >= ny, {C_IJs} is stored as C(cb,nx,ny), otherwise, C(cb,ny,nx), <br>
+!    where cb = 1 + s * d * d.<br>
+!    C(:,I,J) = [G_IJ, C_IJ1, C_IJ2, ..., C_IJS] with C_IJs(D,D) := Y_J @ Q_s @ X_I^T.<br>
+!    <br>
+!    By default, memory is allocated as follows.<br>
+!    |-C1-|----W1----|<br>
+!    |----|--C2--|--------W2-------|<br>
+!    |-----------|--C3--|-W3-|<br>
+!    Therefore, the maximum memory allocation size is MAX( SUM_i^I |Ci| + |W_I| ).
   type c_matrix
     private
     sequence
-    !| s  :: number of molecular symmetry.
-    integer(IK)         :: s
-    !| m  :: number of atoms in a molecule.
-    integer(IK)         :: m
-    !| nx :: number of molecule in X.
-    integer(IK)         :: nx
-    !| ny :: number of molecule in Y.
-    integer(IK)         :: ny
     !| cb :: number of elements in a sell. cb = DD * res%b%s + 1
     integer(IK), public :: cb
     !| cl :: number of elements in a line. cl = cb * MAX(nx, ny)
     integer(IK), public :: cl
     !| nl :: number of row. nl = MIN(nx, ny)
     integer(IK), public :: nl
-    !| px :: pointer to x.
-    integer(IK)         :: px
-    !| py :: pointer to y.
-    integer(IK)         :: py
-    !| gx :: pointer to GX.
-    integer(IK)         :: gx
-    !| gy :: pointer to GY.
-    integer(IK)         :: gy
-    !| wx :: pointer to WX.
-    integer(IK)         :: wx
-    !| wy :: pointer to WY.
-    integer(IK)         :: wy
-    !| pc :: pointer to C.
-    integer(IK), public :: pc
+    !| p  :: pointer to C.
+    integer(IK), public :: p
+    !| nn :: number of matrix elements. nn = nx * ny.
+    integer(IK)         :: nn
+    !| nn :: number of work array. nw = nx * ny
+    integer(IK)         :: nw
   end type c_matrix
 !
   interface c_matrix
@@ -75,66 +64,38 @@ contains
     type(mol_block), intent(in) :: b
     type(c_matrix)              :: res
 !
-    res%s = b%s
-    res%m = b%m
-    res%nx = b%x%n
-    res%ny = b%x%n
-    res%cb = 1 + DD * res%s
-    res%cl = res%cb * MAX(res%nx, res%ny)
-    res%nl = MIN(res%nx, res%ny)
-!
-    res%px = b%x%p
-    res%py = b%y%p
-!
-    call c_matrix_init(res)
+    res%p  = 1
+    res%cb = 1 + DD * b%s
+    res%cl = res%cb * MAX(b%x%n, b%y%n)
+    res%nl = MIN(b%x%n, b%y%n)
+    res%nn = b%x%n * b%y%n
+    res%nw = MAX(D * b%m * (1 + b%y%n), b%x%n + b%y%n)
 !
   end function c_matrix_new
 !
 !| Inquire memsize of c_matrix.
-  pure elemental function c_matrix_memsize(this) result(res)
+  pure elemental function memsize_c_matrix(this) result(res)
     !| this :: c_matrix
     type(c_matrix), intent(in) :: this
     integer(IK)                :: res
-    res = this%cb * this%nx * this%ny
-  end function c_matrix_memsize
+    res = this%cb * this%nn
+  end function memsize_c_matrix
 !
 !| Inquire worksize of c_matrix.
-  pure elemental function c_matrix_worksize(this) result(res)
+  pure elemental function worksize_c_matrix(this) result(res)
     !| this :: c_matrix
     type(c_matrix), intent(in) :: this
     integer(IK)                :: res
-    res = MAX(D * this%m * (1 + this%ny), this%nx + this%ny)
-  end function c_matrix_worksize
-!
-!| Initializer of c_matrix array.<br>
-!  By default, memory is allocated as follows.<br>
-!  |-C1-|----W1----|<br>
-!  |----|--C2--|--------W2-------|<br>
-!  |-----------|--C3--|-W3-|<br>
-!  Therefore, the maximum memory allocation size is MAX( SUM_i^I |Ci| + |W_I| ).
-  pure subroutine c_matrix_init(this, p)
-    type(c_matrix), intent(inout)     :: this
-    integer(IK), intent(in), optional :: p
-    integer(IK)                       :: q
-!
-    if (PRESENT(p)) then; q = p
-    else; q = 1
-    end if
-!
-    this%pc = q
-    q = q + c_matrix_memsize(this)
-    this%gx = q
-    this%gy = this%gx + this%nx
-    this%wx = q
-    this%wy = this%wx + D * this%m
-!
-  end subroutine c_matrix_init
+    res = this%nw
+  end function worksize_c_matrix
 !
 !| Evaluation the C matrix; G matrix is also calculated at the same time.<br>
 !  If nx>=ny C(cb,nx,ny), else C(cb,ny,nx)
-  pure subroutine c_matrix_eval(this, ms, X, Y, W)
+  pure subroutine c_matrix_eval(this, b, ms, X, Y, W)
     !| this :: c_matrix
     type(c_matrix), intent(in)      :: this
+    !| b    :: mol_block
+    type(mol_block), intent(in)     :: b
     !| ms   :: mol_symmetry
     class(mol_symmetry), intent(in) :: ms
     !| X    :: reference coordinate
@@ -143,15 +104,19 @@ contains
     real(RK), intent(inout)         :: Y(*)
     !| W    :: work memory
     real(RK), intent(inout)         :: W(*)
-    integer(IK)                     :: dm
+    integer(IK)                     :: dm, gx, gy, wx, wy
 !
-    dm = D * this%m
+    dm = D * b%m
+    gx = this%p + memsize_c_matrix(this)
+    gy = gx + b%x%n
+    wx = gx
+    wy = wx + dm
 !
-    call eval_g_matrix(dm, this%cb, this%nx, this%ny, &
-   &                   X(this%px), Y(this%py), W(this%pc), W(this%gx), W(this%gy))
+    call eval_g_matrix(dm, this%cb, b%x%n, b%y%n, X(b%x%p), Y(b%y%p), &
+   &                   W(this%p), W(gx), W(gy))
 !
-    call eval_c_matrix(this%s, this%m, dm, this%nx, this%ny, this%cb, ms, &
-  &                    X(this%px), Y(this%py), W(this%pc), W(this%wx), W(this%wy))
+    call eval_c_matrix(b%s, b%m, dm, b%x%n, b%y%n, this%cb, ms, X(b%x%p), Y(b%y%p), &
+  &                    W(this%p), W(wx), W(wy))
 !
   contains
 !

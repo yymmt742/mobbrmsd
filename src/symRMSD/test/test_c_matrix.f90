@@ -45,9 +45,9 @@ contains
     a = c_matrix(b)
     print*,memsize_c_matrix(a)
     print*,worksize_c_matrix(a)
-    a(1)%pc = 1
-    a(2)%pc = memsize_c_matrix(a(1)) + 1
-    a(3)%pc = memsize_c_matrix(a(1)) + memsize_c_matrix(a(2)) + 1
+    a(1)%p = 1
+    a(2)%p = memsize_c_matrix(a(1)) + 1
+    a(3)%p = memsize_c_matrix(a(1)) + memsize_c_matrix(a(2)) + 1
     allocate (W(SUM(memsize_c_matrix(a)) + SUM(worksize_c_matrix(a))))
     W(:) = 999
     call c_matrix_eval(a(1), b(1), ms(1), X, Y, W)
