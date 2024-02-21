@@ -1,8 +1,7 @@
 !
 !| Module for calculating determinants.
 module mod_det
-  use mod_params, only : D, DD, IK, RK, ONE => RONE, ZERO => RZERO
-  use mod_params, only : getrf=>DGETRF
+  use mod_params, only : D, DD, IK, RK, ONE => RONE, ZERO => RZERO, getrf
   implicit none
   private
   public :: det, det_, det_sign

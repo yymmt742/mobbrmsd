@@ -7,7 +7,7 @@
 !    - Q_s :: Permutation matrix on m.
 module mod_c_matrix
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE, &
-    &                   gemm=>DGEMM, dot=>DDOT, copy=>DCOPY, axpy=>DAXPY
+    &                   gemm, dot, copy, axpy
   use mod_mol_symmetry
   use mod_mol_block
   implicit none
@@ -27,11 +27,6 @@ module mod_c_matrix
 !    where cb = 1 + s * d * d.<br>
 !    C(:,I,J) = [G_IJ, C_IJ1, C_IJ2, ..., C_IJS] with C_IJs(D,D) := Y_J @ Q_s @ X_I^T.<br>
 !    <br>
-!    By default, memory is allocated as follows.<br>
-!    |-C1-|----W1----|<br>
-!    |----|--C2--|--------W2-------|<br>
-!    |-----------|--C3--|-W3-|<br>
-!    Therefore, the maximum memory allocation size is MAX( SUM_i^I |Ci| + |W_I| ).
   type c_matrix
     private
     sequence

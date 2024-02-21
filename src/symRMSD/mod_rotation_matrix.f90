@@ -2,7 +2,7 @@
 !  Here, RR^T=I and det(R)=1 are satisfied.
 module mod_rotation_matrix
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, HALF => RHALF
-  use mod_params, only: dot => DDOT, copy => DCOPY,gemm => dgemm, gesvd => DGESVD
+  use mod_params, only: dot, copy, gemm, gesvd
   use mod_det
   implicit none
   private
