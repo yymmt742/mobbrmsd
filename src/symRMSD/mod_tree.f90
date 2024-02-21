@@ -6,30 +6,41 @@ module mod_tree
   public :: breadth
   public :: tree
   public :: memsize_tree
+  public :: setup_tree
+  public :: n_breadth
 !
+!| Node.
   type node
     private
     sequence
-    logical     :: alive
+!|  p : pointer to memory. if p<0, the node has been explored.
     integer(IK) :: p
   end type node
 !
+!| A collection of nodes in a hierarchy.
   type breadth
     private
     sequence
-    integer(IK) :: inod, lowd, uppd
+!|  inod : current pointer
+    integer(IK) :: inod
+!|  lowd : (Pointer to the first node) - 1.
+    integer(IK) :: lowd
+!|  uppd : Pointer to the last node.
+    integer(IK) :: uppd
   end type breadth
 !
+!| Tree.
   type tree
     private
     sequence
-    integer(IK)                :: p
-    integer(IK)                :: iscope
-    integer(IK), public        :: ubnode
-    integer(IK), public        :: memnode
-    integer(IK), public        :: memsize
-    integer(IK), public        :: upperbound
-    integer(IK), public        :: lowerbound
+!|  number of hierarchy.
+    integer(IK)       :: ndepth
+!|  number of nodes.
+    integer(IK)       :: nnodes
+!|  current hierarchy.
+    integer(IK)       :: idepth
+!|  Memory size per node.
+    integer(IK)       :: memnode
 ! contains
 !   procedure         :: n_depth          => tree_n_depth
 !   procedure         :: n_breadth        => tree_n_breadth
@@ -70,7 +81,6 @@ contains
   pure elemental function node_new() result(res)
     type(node) :: res
     res%p = 0
-    res%alive = .TRUE.
   end function node_new
 !
   pure elemental function breadth_new(n_nodes) result(res)
@@ -82,36 +92,17 @@ contains
     res%uppd = MAX(1, n_nodes)
   end function breadth_new
 !
-  pure function tree_new(memnode, n_breadths) result(res)
+  pure function tree_new(b, memnode) result(res)
+!|  b :: breadth list, must be intiialized.
+    type(breadth), intent(in) :: b(:)
 !|  memnode :: memory size of each node.
-    integer(IK), intent(in) :: memnode
-!|  n_breadths :: number of nodes for each level.
-    integer(IK), intent(in) :: n_breadths(:)
-    type(tree)              :: res
-    integer(IK)             :: pq, n
+    integer(IK), intent(in)   :: memnode
+    type(tree)                :: res
 !
-    n = SUM(n_breadths)
-    res%p       = 1
+    res%idepth  = 1
+    res%nnodes  = SUM(b%uppd - b%lowd)
+    res%ndepth  = SIZE(b)
     res%memnode = MAX(memnode, 1)
-    res%memsize = n * res%memnode + 1
-!
-    pq = 1
-    res%lowerbound = pq; pq = pq + 1
-    res%ubnode     = pq; pq = pq + res%memnode
-    res%upperbound = res%ubnode
-!
-!   allocate (res%nodes(n))
-!   do concurrent(i=1:n)
-!     res%nodes(i) = node(.true., pq + (i - 1) * res%memnode)
-!   end do
-!
-!   allocate (res%breadthes(ndepth))
-!   j = 0
-!   do i = 1, ndepth
-!     k = j + n_breadths(i)
-!     res%breadthes(i) = breadth(0, j, k)
-!     j = k
-!   end do
 !
   end function tree_new
 !
@@ -119,63 +110,43 @@ contains
 !| n_nodes :: number of nodes in breadth, n_nodes>0.
     type(tree), intent(in) :: this
     integer(IK)            :: res
-    res = this%memsize
+    res = this%nnodes * this%memnode
   end function memsize_tree
 !
-! pure subroutine tree_setup(this, b, n)
-!   class(tree), intent(in)        :: this
-!| b :: breadthes
-!   type(breadthes), intent(inout) :: b(:)
-!| n :: nodes
-!   type(breadthes), intent(inout) :: n(:)
-!   integer(IK)                    :: i, j, k
-!   j = 0
-!   do i = 1, SIZE(b)
-!     k = j + b(i)%uppd - b(i)%lowd
-!     b(i)%lowd = j
-!     b(i)%uppd = k
-!     j = k
-!   end do
-! end subroutine breadthes_setup
+  pure subroutine setup_tree(this, b, n, p)
+    type(tree), intent(in)       :: this
+!|  b :: breadthes
+    type(breadth), intent(inout) :: b(*)
+!|  n :: nodes
+    type(node), intent(inout)    :: n(*)
+!|  p :: pointer
+    integer(IK), intent(in)      :: p
+    integer(IK)                  :: i, j, k
 !
-! pure subroutine nodes_setup(n, b)
-!   type(nodes), intent(inout)     :: n(:)
-!   type(breadthes), intent(inout) :: b(:)
-!   integer(IK)                    :: i, j, k
-!   j = 0
-!   do i = 1, SIZE(b)
-!     k = j + b(i)%uppd - b(i)%lowd
-!     b(i)%lowd = j
-!     b(i)%uppd = k
-!     j = k
-!   end do
-! end subroutine nodes_setup
+    do concurrent(i=1:this%nnodes)
+      n(i)%p = p + (i - 1) * this%memnode
+    end do
 !
-! pure elemental function tree_n_depth(this) result(res)
-!   class(tree), intent(in) :: this
-!   integer(IK)             :: res
-!   if (ALLOCATED(this%breadthes)) then
-!     res = SIZE(this%breadthes)
-!   else
-!     res = 0
-!   end if
-! end function tree_n_depth
+    j = 0
+    do i = 1, this%nnodes
+      k = j + b(i)%uppd - b(i)%lowd
+      b(i)%lowd = j
+      b(i)%uppd = k
+      j = k
+    end do
 !
-! pure elemental function tree_current_depth(this) result(res)
-!   class(tree), intent(in) :: this
-!   integer(IK)             :: res
-!   res = this%iscope
-! end function tree_current_depth
+  end subroutine setup_tree
 !
-! pure elemental function tree_n_breadth(this) result(res)
-!   class(tree), intent(in) :: this
-!   integer(IK)             :: res
-!   res = 0
-!   if (ALLOCATED(this%breadthes)) then
-!     if (this%iscope < 1) return
-!     res = this%breadthes(this%iscope)%uppd - this%breadthes(this%iscope)%lowd
-!   end if
-! end function tree_n_breadth
+  pure function n_breadth(t, b) result(res)
+!|  t :: tree
+    type(tree), intent(in)    :: t
+!|  b :: breadth list
+    type(breadth), intent(in) :: b(*)
+    integer(IK)               :: res
+    res = 0
+    if (t%idepth < 1) return
+    res = b(t%idepth)%uppd - b(t%idepth)%lowd
+  end function n_breadth
 !
 ! pure elemental function tree_nodes_pointer(this) result(res)
 !   class(tree), intent(in) :: this
@@ -395,3 +366,4 @@ contains
 ! end subroutine tree_destroy
 !
 end module mod_tree
+
