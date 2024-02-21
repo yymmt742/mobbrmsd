@@ -1,54 +1,8 @@
-!| Module with constant collection.
-module mod_params
-  use, intrinsic :: ISO_FORTRAN_ENV, only:  &
-    &                R4 => REAL32,  &
-    &                R8 => REAL64,  &
-    &                RQ => REAL128, &
-    &                I1 => INT8,    &
-    &                I2 => INT16,   &
-    &                I4 => INT32,   &
-    &                I8 => INT64,   &
-    &                STDIN => INPUT_UNIT,   &
-    &                STDOUT => OUTPUT_UNIT, &
-    &                STDERR => ERROR_UNIT
+!| Module for blas lapack interface
+module blas_lapack_interface
   implicit none
   private
-  public  :: I1, I2, I4, I8
-  public  :: R4, R8, RQ
-  public  :: RK, IK, LK
-  public  :: STDIN, STDOUT, STDERR
-  public  :: RZERO, RONE, RHALF, RFOUR, RHUGE
-  public  :: D, DD
-  public  :: setup_dimension
   public  :: DCOPY, DAXPY, DDOT, DGEMM, DGESVD, DGETRF, DSYMM
-!
-!&<
-!
-  integer, parameter          :: IK = KIND(0)
-  !! Selected integer kind.
-  integer, parameter          :: RK = KIND(0.0_R8)
-  !! Selected real kind.
-  integer, parameter          :: LK = KIND(.true.)
-  !! Selected logical kind.
-!
-  real(RK), parameter         :: RZERO = 0.0_RK
-  !! Real zero.
-  real(RK), parameter         :: RONE  = 1.0_RK
-  !! Real one.
-  real(RK), parameter         :: RHALF = 0.5_RK
-  !! Real 1/2.
-  real(RK), parameter         :: RFOUR = 4.0_RK
-  !! Real four.
-!
-  real(RK), parameter         :: RHUGE = HUGE(RZERO)
-  !! Real large number.
-!
-  integer(IK), save, protected :: D  = 3
-  !! Spatial dimension
-  integer(IK), save, protected :: DD = 9
-  !! Square spatial dimension
-!
-!&>
 !
   interface
     include 'daxpy.h'
@@ -77,6 +31,75 @@ module mod_params
   interface
     include 'dsymm.h'
   end interface
+!
+end module blas_lapack_interface
+!
+!| Module with constant collection.
+module mod_params
+!
+!&<
+!
+  use, intrinsic :: ISO_FORTRAN_ENV, only:  &
+    &                R4     => REAL32,      &
+    &                R8     => REAL64,      &
+    &                RQ     => REAL128,     &
+    &                I1     => INT8,        &
+    &                I2     => INT16,       &
+    &                I4     => INT32,       &
+    &                I8     => INT64,       &
+    &                STDIN  => INPUT_UNIT,  &
+    &                STDOUT => OUTPUT_UNIT, &
+    &                STDERR => ERROR_UNIT
+!
+  use :: blas_lapack_interface, only : &
+    &                copy  => DCOPY,   &
+    &                axpy  => DAXPY,   &
+    &                dot   => DDOT,    &
+    &                gemm  => DGEMM,   &
+    &                gesvd => DGESVD,  &
+    &                getrf => DGETRF,  &
+    &                symm  => DSYMM
+!
+!&>
+!
+  implicit none
+  private
+  public  :: I1, I2, I4, I8
+  public  :: R4, R8, RQ
+  public  :: RK, IK, LK
+  public  :: STDIN, STDOUT, STDERR
+  public  :: RZERO, RONE, RHALF, RFOUR, RHUGE
+  public  :: D, DD
+  public  :: setup_dimension
+  public  :: copy, axpy, dot, gemm, gesvd, getrf, symm
+!
+!&<
+!
+  integer, parameter          :: IK = KIND(0)
+  !! Selected integer kind.
+  integer, parameter          :: RK = KIND(0.0_R8)
+  !! Selected real kind.
+  integer, parameter          :: LK = KIND(.true.)
+  !! Selected logical kind.
+!
+  real(RK), parameter         :: RZERO = 0.0_RK
+  !! Real zero.
+  real(RK), parameter         :: RONE  = 1.0_RK
+  !! Real one.
+  real(RK), parameter         :: RHALF = 0.5_RK
+  !! Real 1/2.
+  real(RK), parameter         :: RFOUR = 4.0_RK
+  !! Real four.
+!
+  real(RK), parameter         :: RHUGE = HUGE(RZERO)
+  !! Real large number.
+!
+  integer(IK), save, protected :: D  = 3
+  !! Spatial dimension
+  integer(IK), save, protected :: DD = 9
+  !! Square spatial dimension
+!
+!&>
 !
 contains
 !
