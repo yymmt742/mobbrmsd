@@ -35,12 +35,14 @@ module mod_c_matrix
   type c_matrix
     private
     sequence
-    !| nl :: number of row. nl = MIN(nx, ny)
-    integer(IK), public :: nl
     !| p  :: pointer to C.
     integer(IK), public :: p
+    !| w  :: pointer to work.
+    integer(IK), public :: w
+    !| nl :: number of row. nl = MIN(nx, ny)
+    integer(IK)         :: nl
     !| cb :: number of elements in a sell. cb = DD * res%b%s + 1
-    integer(IK), public :: cb
+    integer(IK)         :: cb
     !| cl :: number of elements in a line. cl = cb * MAX(nx, ny)
     integer(IK)         :: cl
     !| nn :: number of matrix elements. nn = nx * ny.
@@ -62,6 +64,7 @@ contains
     type(c_matrix)              :: res
 !
     res%p  = 1
+    res%w  = 1
     res%cb = 1 + DD * b%s
     res%cl = res%cb * MAX(b%x%n, b%y%n)
     res%nl = MIN(b%x%n, b%y%n)
@@ -88,7 +91,7 @@ contains
 !
 !| Evaluation the C matrix; G matrix is also calculated at the same time.<br>
 !  If nx>=ny C(cb,nx,ny), else C(cb,ny,nx)
-  pure subroutine c_matrix_eval(this, b, ms, X, Y, W)
+  pure subroutine c_matrix_eval(this, b, ms, X, Y, C, W)
     !| this :: c_matrix
     type(c_matrix), intent(in)      :: this
     !| b    :: mol_block
@@ -96,24 +99,26 @@ contains
     !| ms   :: mol_symmetry
     class(mol_symmetry), intent(in) :: ms
     !| X    :: reference coordinate
-    real(RK), intent(inout)         :: X(*)
+    real(RK), intent(in)            :: X(*)
     !| Y    :: target coordinate
-    real(RK), intent(inout)         :: Y(*)
+    real(RK), intent(in)            :: Y(*)
+    !| C    :: main memory
+    real(RK), intent(inout)         :: C(*)
     !| W    :: work memory
     real(RK), intent(inout)         :: W(*)
     integer(IK)                     :: dm, gx, gy, wx, wy
 !
     dm = D * b%m
-    gx = this%p + memsize_c_matrix(this)
+    gx = this%w
     gy = gx + b%x%n
     wx = gx
     wy = wx + dm
 !
     call eval_g_matrix(dm, this%cb, b%x%n, b%y%n, X(b%x%p), Y(b%y%p), &
-   &                   W(this%p), W(gx), W(gy))
+   &                   C(this%p), W(gx), W(gy))
 !
     call eval_c_matrix(b%s, b%m, dm, b%x%n, b%y%n, this%cb, ms, X(b%x%p), Y(b%y%p), &
-  &                    W(this%p), W(wx), W(wy))
+  &                    C(this%p), W(wx), W(wy))
 !
   contains
 !

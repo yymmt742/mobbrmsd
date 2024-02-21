@@ -1,20 +1,19 @@
 program main
-  use mod_params, only: D, DD, setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: D, setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_mol_symmetry
   use mod_rotation_matrix
-  use mod_c_matrix
-  use mod_d_matrix
   use mod_lowerbound
   use mod_testutil
   use mod_unittest
   implicit none
   type(unittest) :: u
 !
-  call u%init('test d_matrix')
+  call u%init('test lowerbound')
 !
   call setup_dimension(3)
-  call test1()
+  call test0()
+! call test1()
 ! call test2()
 ! call test3()
 !
@@ -22,48 +21,96 @@ program main
 !
 contains
 !
-  subroutine test1()
-    type(mol_block)       :: b
-    type(mol_symmetry)    :: ms
-    type(c_matrix)        :: cm
-    real(RK)              :: G, C(DD), R(5, 3)
-    real(RK)              :: X(D, 8 * 3), Y(D, 8 * 5)
-    real(RK), allocatable :: w(:)
+  subroutine test0()
+    real(RK)        :: GC(10, 15), S(15), W(100), G, C(9)
+    type(mol_block) :: b
+    integer(IK)     :: i
 !
-    b = mol_block(2, 8, 3, 5)
-    ms = mol_symmetry(RESHAPE([2, 3, 1, 4, 5, 6, 7, 8], [8, 1]))
-    cm = c_matrix(b)
-    allocate (W(memsize_c_matrix(cm) + worksize_c_matrix(cm)))
-    W(:) = 999
-    call c_matrix_eval(cm, b, ms, X, Y, W)
-    G = 0D0
-    C = 0D0
+    b = mol_block(1, 8, 3, 5)
 !
-!   a = d_matrix(1, 28, b)
+    do i = 1, 15
+      GC(:, i) = gcov(D, 8)
+      call estimate_sdmin(GC(1, i), GC(2, i), W)
+      S(i) = W(1)
+    end do
+!
+    G = ZERO
+    C = ZERO
+!
+    call lowerbound(0, b, G, C, S, W)
+    print*,0, W(1)
+    G = G + GC(1, 1)
+    C = C + GC(2:, 1)
+    call lowerbound(1, b, G, C, S([7,8,9,10,12,13,14,15]), W)
+    print*,1, W(1)
+    G = G + GC(1, 7)
+    C = C + GC(2:, 7)
+    call lowerbound(2, b, G, C, S([13,14,15]), W)
+    print*,2, W(1)
+    G = G + GC(1, 13)
+    C = C + GC(2:, 13)
+    call lowerbound(3, b, G, C, S, W)
+    print*,3, W(1)
+!
+    G = ZERO
+    C = ZERO
+    G = G + GC(1, 3)
+    C = C + GC(2:, 3)
+    call lowerbound(1, b, G, C, S([6,7,9,10,11,12,14,15]), W)
+    print*,1, W(1)
+    G = G + GC(1, 9)
+    C = C + GC(2:, 9)
+    call lowerbound(2, b, G, C, S([11,12,15]), W)
+    print*,2, W(1)
+    G = G + GC(1, 15)
+    C = C + GC(2:, 15)
+    call lowerbound(3, b, G, C, S, W)
+    print*,3, W(1)
+!
+  end subroutine test0
+!
+! subroutine test1()
+!   type(mol_block)       :: b
+!   type(mol_symmetry)    :: ms
+!   type(c_matrix)        :: cm
+!   real(RK)              :: G, C(DD), R(5, 3)
+!   real(RK)              :: X(D, 8 * 3), Y(D, 8 * 5)
+!   real(RK), allocatable :: w(:)
+!
+!   b = mol_block(2, 8, 3, 5)
+!   ms = mol_symmetry(RESHAPE([2, 3, 1, 4, 5, 6, 7, 8], [8, 1]))
+!   cm = c_matrix(b)
+!   allocate (W(memsize_c_matrix(cm) + worksize_c_matrix(cm)))
+!   W(:) = 999
+!   call c_matrix_eval(cm, b, ms, X, Y, W)
+!   G = 0D0
+!   C = 0D0
+!
+!   a = s_matrix(1, 28, b)
 !   X = sample(d, mn)
 !   Y = 0.9D0 * MATMUL(SO3(), X) + 0.1D0 * sample(d, mn)
-!   print *, d_matrix_memsize(a)
-!   allocate (w(d_matrix_memsize(a)))
-!   call d_matrix_eval(a, ms, X, Y, W)
-!   call d_matrix_partial_eval(a, 1, 1, 1, [2, 3, 4, 5], W, LT, H, C, LF, LB)
+!   print *, s_matrix_memsize(a)
+!   allocate (w(s_matrix_memsize(a)))
+!   call s_matrix_eval(a, ms, X, Y, W)
+!   call s_matrix_partial_eval(a, 1, 1, 1, [2, 3, 4, 5], W, LT, H, C, LF, LB)
 !   print'(4f9.3)', LF, LB, LF + LB, LT
-!   call d_matrix_partial_eval(a, 2, 2, 1, [3, 4, 5], W, LT, H, C, LF, LB)
+!   call s_matrix_partial_eval(a, 2, 2, 1, [3, 4, 5], W, LT, H, C, LF, LB)
 !   print'(4f9.3)', LF, LB, LF + LB, LT
-!   call d_matrix_partial_eval(a, 3, 3, 1, [4, 5], W, LT, H, C, LF, LB)
+!   call s_matrix_partial_eval(a, 3, 3, 1, [4, 5], W, LT, H, C, LF, LB)
 !   print'(4f9.3)', LF, LB, LF + LB, LT
-!   call d_matrix_partial_eval(a, 4, 4, 1, [5], W, LT, H, C, LF, LB)
+!   call s_matrix_partial_eval(a, 4, 4, 1, [5], W, LT, H, C, LF, LB)
 !   print'(4f9.3)', LF, LB, LF + LB, LT
-!   call d_matrix_partial_eval(a, 5, 5, 1, [5], W, LT, H, C, LF, LB)
+!   call s_matrix_partial_eval(a, 5, 5, 1, [5], W, LT, H, C, LF, LB)
 !   print'(4f9.3)', LF, LB, LF + LB, LT
 !   print *
-!   call d_matrix_partial_eval(a, 1, 1, 2, [2, 3, 4, 5], W, LT, H, C, LF, LB)
+!   call s_matrix_partial_eval(a, 1, 1, 2, [2, 3, 4, 5], W, LT, H, C, LF, LB)
 !   print'(4f9.3)', LF, LB, LF + LB, LT
-!   call d_matrix_partial_eval(a, 1, 2, 1, [1, 3, 4, 5], W, LT, H, C, LF, LB)
+!   call s_matrix_partial_eval(a, 1, 2, 1, [1, 3, 4, 5], W, LT, H, C, LF, LB)
 !   print'(4f9.3)', LF, LB, LF + LB, LT
-!   call d_matrix_partial_eval(a, 1, 2, 2, [1, 3, 4, 5], W, LT, H, C, LF, LB)
+!   call s_matrix_partial_eval(a, 1, 2, 2, [1, 3, 4, 5], W, LT, H, C, LF, LB)
 !   print'(4f9.3)', LF, LB, LF + LB, LT
 !
-  end subroutine test1
+! end subroutine test1
 !
 ! subroutine test2()
 !   integer, parameter    :: l = 3
@@ -78,7 +125,7 @@ contains
 !   type(mol_block_list)  :: blk
 !   type(mol_block)       :: b(l)
 !   type(mol_symmetry)    :: ms(l)
-!   type(d_matrix_list)   :: a
+!   type(s_matrix_list)   :: a
 !   real(RK)              :: X(d, mnl), Y(d, mnl)
 !   real(RK), allocatable :: w(:)
 !   real(RK)              :: C(d * d), H, LT, LF, LB
@@ -102,12 +149,12 @@ contains
 !   print'(10I4)',perm
 !
 !   blk = mol_block_list(l, b)
-!   a = d_matrix_list(blk, 1)
+!   a = s_matrix_list(blk, 1)
 !
 !   X = sample(d, mnl)
 !   Y = 0.99D0 * MATMUL(SO3(), X) + 0.01D0 * sample(d, mnl)
 !   print *, a%memsize()
-!   print *, d_matrix_memsize(a%m)
+!   print *, s_matrix_memsize(a%m)
 !
 !   allocate (w(a%memsize()))
 !
@@ -173,7 +220,7 @@ contains
 !   integer, parameter    :: m = 5, n = 5, g = 3
 !   integer, parameter    :: mn = m * n
 !   type(mol_block)       :: b = mol_block(0, 2, m, n, g)
-!   type(d_matrix_list)   :: dm
+!   type(s_matrix_list)   :: dm
 !   type(mol_block_list)  :: blk
 !   type(mol_symmetry)    :: ms(s)
 !   real(RK)              :: X(d, mn), Y(d, mn)
@@ -183,7 +230,7 @@ contains
 !
 !   ms(1) = mol_symmetry(RESHAPE([2, 1, 3, 4, 5], [m, 1]))
 !   blk = mol_block_list(s, [b])
-!   dm = d_matrix_list(blk, 1)
+!   dm = s_matrix_list(blk, 1)
 !   allocate (w(dm%memsize()))
 !   W(:)=999
 !
@@ -215,7 +262,7 @@ contains
 ! end subroutine test3
 !
 ! function pe(dm, d, l, iper, jper, isym, W) result(res)
-!   type(d_matrix_list), intent(in) :: dm
+!   type(s_matrix_list), intent(in) :: dm
 !   integer, intent(in)             :: d, l, iper(l, l), jper(l), isym(l)
 !   real(RK), intent(in)            :: W(*)
 !   real(RK)                        :: C(d,d), H, T, LF, LB, res
@@ -228,38 +275,5 @@ contains
 !   res = LF
 !   !res = T
 ! end function pe
-!
-  pure function swp(d, m, n, per, sym, ms, X) result(res)
-    integer(IK), intent(in) :: d, m, n, per(:), sym(:)
-    type(mol_symmetry), intent(in) :: ms
-    real(RK), intent(in)    :: X(d, m, n)
-    real(RK)                :: tmp(d, m, n), res(d, m * n)
-    integer(IK)             :: i
-    tmp = X
-    do i = 1, SIZE(per)
-      tmp(:, :, per(i)) = X(:, :, i)
-      call ms%swap(d, tmp(:, :, per(i)), sym(i))
-    end do
-    res = RESHAPE(tmp, [d, m * n])
-  end function swp
-!
-  pure function sd(d, X, Y) result(res)
-    integer(IK), intent(in) :: d
-    real(RK), intent(in)    :: X(:, :), Y(:, :)
-    real(RK)                :: C(d, d), R(d, d), W(100), res
-    C = MATMUL(Y, TRANSPOSE(X))
-    call estimate_rotation_matrix(SUM(X * X) + SUM(Y * Y), C, R, W)
-    res = SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
-  end function sd
-!
-  pure subroutine copy(d, source, dest)
-    integer(IK), intent(in) :: d
-    real(RK), intent(in)    :: source(*)
-    real(RK), intent(inout) :: dest(*)
-    integer(IK)             :: i
-    do concurrent(i=1:d)
-      dest(i) = source(i)
-    end do
-  end subroutine copy
 !
 end program main

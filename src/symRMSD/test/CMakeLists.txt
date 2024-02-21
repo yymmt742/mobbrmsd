@@ -63,9 +63,9 @@ target_link_libraries( test_c_matrix PRIVATE unittest )
 target_link_libraries( test_c_matrix PRIVATE purelapack )
 add_test( NAME test_c_matrix COMMAND test_c_matrix )
 
-add_executable( test_d_matrix )
-target_include_directories( test_d_matrix PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_d_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+add_executable( test_s_matrix )
+target_include_directories( test_s_matrix PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_s_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -73,13 +73,13 @@ target_sources( test_d_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_d_matrix.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_s_matrix.f90
                                       mod_testutil.f90
-                                      test_d_matrix.f90 )
-target_include_directories( test_d_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
-target_link_libraries( test_d_matrix PRIVATE unittest )
-target_link_libraries( test_d_matrix PRIVATE purelapack )
-add_test( NAME test_d_matrix COMMAND test_d_matrix )
+                                      test_s_matrix.f90 )
+target_include_directories( test_s_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_link_libraries( test_s_matrix PRIVATE unittest )
+target_link_libraries( test_s_matrix PRIVATE purelapack )
+add_test( NAME test_s_matrix COMMAND test_s_matrix )
 
 add_executable( test_lowerbound )
 target_include_directories( test_lowerbound PRIVATE ${unittest_DIR}/mod_files )
@@ -91,7 +91,7 @@ target_sources( test_lowerbound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_param
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_d_matrix.f90
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_s_matrix.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_lowerbound.f90
                                         mod_testutil.f90
                                         test_lowerbound.f90 )
@@ -118,7 +118,7 @@ target_sources( test_branch_and_bound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_d_matrix.f90
+                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_s_matrix.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_branch_and_bound.f90
                                   test_branch_and_bound.f90 )
@@ -137,7 +137,7 @@ target_sources( test_symRMSD PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_d_matrix.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_s_matrix.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_branch_and_bound.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_symRMSD.f90

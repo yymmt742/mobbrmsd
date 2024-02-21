@@ -5,6 +5,8 @@ module mod_testutil
   implicit none
   private
   public :: sample
+  public :: covmat
+  public :: gcov
   public :: SO3
   public :: eye
 !
@@ -21,6 +23,22 @@ contains
       res(:, i) = res(:, i) - cnt
     end do
   end function sample
+!
+  function covmat(d, n) result(res)
+    integer(IK), intent(in) :: d, n
+    real(RK)                :: res(d, d)
+    res(:, :) = MATMUL(sample(d, n), TRANSPOSE(sample(d, n)))
+  end function covmat
+!
+  function gcov(d, n) result(res)
+    integer(IK), intent(in) :: d, n
+    real(RK)                :: res(d * d + 1)
+    real(RK)                :: x(d, n), y(d, n)
+    x = sample(d, n)
+    y = sample(d, n)
+    res(1) = SUM(x * x) + SUM(y * y)
+    res(2:) = [MATMUL(y, TRANSPOSE(x))]
+  end function gcov
 !
   function SO3() result(res)
     real(RK) :: a(4), c, t, s, res(3, 3)
@@ -43,6 +61,29 @@ contains
       res(i, j) = MERGE(ONE, ZERO, i == j)
     enddo
   end function eye
+!
+! pure function swp(d, m, n, per, sym, ms, X) result(res)
+!   integer(IK), intent(in) :: d, m, n, per(:), sym(:)
+!   type(mol_symmetry), intent(in) :: ms
+!   real(RK), intent(in)    :: X(d, m, n)
+!   real(RK)                :: tmp(d, m, n), res(d, m * n)
+!   integer(IK)             :: i
+!   tmp = X
+!   do i = 1, SIZE(per)
+!     tmp(:, :, per(i)) = X(:, :, i)
+!     call ms%swap(d, tmp(:, :, per(i)), sym(i))
+!   end do
+!   res = RESHAPE(tmp, [d, m * n])
+! end function swp
+!
+! pure function sd(d, X, Y) result(res)
+!   integer(IK), intent(in) :: d
+!   real(RK), intent(in)    :: X(:, :), Y(:, :)
+!   real(RK)                :: C(d, d), R(d, d), W(100), res
+!   C = MATMUL(Y, TRANSPOSE(X))
+!   call estimate_rotation_matrix(SUM(X * X) + SUM(Y * Y), C, R, W)
+!   res = SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
+! end function sd
 !
 end module mod_testutil
 
