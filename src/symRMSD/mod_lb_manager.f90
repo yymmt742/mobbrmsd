@@ -1,15 +1,16 @@
 !| Module for manage lowerbound matrices.
 module mod_lb_manager
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
-  use mod_params, only: gemm=>DGEMM, dot=>DDOT, copy=>DCOPY
+  use mod_params, only: gemm, dot, copy
   use mod_mol_block
   use mod_c_matrix
   use mod_s_matrix
   use mod_lowerbound
   implicit none
   private
-  public :: worksize_lb_manager
   public :: lb_manager
+  public :: memsize_lb_manager
+  public :: worksize_lb_manager
 !
 !| lb_manager<br>
 !    By default, memory is allocated as follows.<br>
@@ -20,8 +21,8 @@ module mod_lb_manager
   type lb_manager
     private
     sequence
-    type(c_matrix) :: c
-    type(s_matrix) :: s
+    type(c_matrix), public :: c
+    type(s_matrix), public :: s
   end type lb_manager
 !
   interface lb_manager
@@ -34,7 +35,7 @@ contains
   pure elemental function lb_manager_new(b) result(res)
     !| b :: mol_block, must be initialized.
     type(mol_block), intent(in) :: b
-    type(c_matrix)              :: res
+    type(lb_manager)            :: res
 !
     res%c  = c_matrix(b)
     res%s  = s_matrix(b)
@@ -42,17 +43,20 @@ contains
   end function lb_manager_new
 !
 !| Inquire worksize of s_matrix.
-  pure elemental function worksize_lowerbound(p, b) result(res)
-    !| p :: level
-    integer(IK), intent(in)    :: p
-    !| b :: mol_block
-    type(mol_block),intent(in) :: b
-    integer(IK)                :: res
-    integer(IK)                :: n1, n2
-    n1 = MAX(b%x%n, b%y%n) - p
-    n2 = MIN(b%x%n, b%y%n) - p
-    res = MAX(worksize_Hungarian(n1, n2), 1 + worksize_sdmin())
-  end function worksize_lowerbound
+  pure elemental function memsize_lb_manager(this) result(res)
+    !| this :: lb_manager.
+    type(lb_manager), intent(in) :: this
+    integer(IK)                  :: res
+    res = memsize_s_matrix(this%s) + memsize_s_matrix(this%s)
+  end function memsize_lb_manager
+!
+!| Inquire worksize of s_matrix.
+  pure elemental function worksize_lb_manager(this) result(res)
+    !| this :: lb_manager.
+    type(lb_manager), intent(in) :: this
+    integer(IK)                  :: res
+    res = MAX(worksize_c_matrix(this%c) - memsize_s_matrix(this%s), worksize_s_matrix(this%s))
+  end function worksize_lb_manager
 !
 ! pure subroutine d_matrix_partial_eval(a, p, iprm, isym, ires, W, LT, H, C, LF, LB)
 !   type(d_matrix), intent(in)        :: a
