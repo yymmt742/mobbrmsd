@@ -1,7 +1,7 @@
-pure subroutine DCOPY(N, DX, INCX, DY, INCY)
-  use, intrinsic :: ISO_FORTRAN_ENV, only: wp => REAL64
+pure subroutine DCOPY(N, X, INCX, Y, INCY)
+  use, intrinsic :: ISO_FORTRAN_ENV, only: rk => REAL64
   integer, intent(in)   :: INCX, INCY, N
-  real(wp), intent(in)  :: DX(*)
-  real(wp), intent(out) :: DY(*)
+  real(rk), intent(in)  :: X(*)
+  real(rk), intent(out) :: Y(*)
 end subroutine DCOPY
 

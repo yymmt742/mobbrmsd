@@ -1,7 +1,7 @@
-pure function DDOT(N, DX, INCX, DY, INCY)
-  use, intrinsic :: ISO_FORTRAN_ENV, only: wp => REAL64
+pure function DDOT(N, X, INCX, Y, INCY)
+  use, intrinsic :: ISO_FORTRAN_ENV, only: rk => REAL64
   integer, intent(in)  :: INCX, INCY, N
-  real(wp), intent(in) :: DX(*), DY(*)
-  real(wp)             :: DDOT
+  real(rk), intent(in) :: X(*), Y(*)
+  real(rk)             :: DDOT
 end function DDOT
 
