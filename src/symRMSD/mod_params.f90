@@ -2,24 +2,37 @@
 module blas_lapack_interface
   implicit none
   private
-  public  :: DCOPY, DAXPY, DDOT, DGEMM, DGESVD, DGETRF, DSYMM
-  public  :: SCOPY, SAXPY, SDOT, SGEMM, SGESVD, SGETRF, SSYMM
+  public  :: SCOPY,  DCOPY
+  public  :: SAXPY,  DAXPY
+  public  :: SDOT,   DDOT
+  public  :: SSYMM,  DSYMM
+  public  :: SGEMM,  DGEMM
+  public  :: SGESVD, DGESVD
+  public  :: SGETRF, DGETRF
 !
   interface
+!
     include 'daxpy.h'
-    include 'ddot.h'
-    include 'dcopy.h'
-    include 'dgemm.h'
-    include 'dgesvd.h'
-    include 'dgetrf.h'
-    include 'dsymm.h'
     include 'saxpy.h'
+!
+    include 'ddot.h'
     include 'sdot.h'
+!
+    include 'dcopy.h'
     include 'scopy.h'
-    include 'sgemm.h'
-    include 'sgesvd.h'
-    include 'sgetrf.h'
+!
+    include 'dsymm.h'
     include 'ssymm.h'
+!
+    include 'dgemm.h'
+    include 'sgemm.h'
+!
+    include 'dgesvd.h'
+    include 'sgesvd.h'
+!
+    include 'dgetrf.h'
+    include 'sgetrf.h'
+!
   end interface
 !
 end module blas_lapack_interface
@@ -45,19 +58,19 @@ module mod_params
     &                copy   => DCOPY,       &
     &                axpy   => DAXPY,       &
     &                dot    => DDOT,        &
+    &                symm   => DSYMM,       &
     &                gemm   => DGEMM,       &
     &                gesvd  => DGESVD,      &
-    &                getrf  => DGETRF,      &
-    &                symm   => DSYMM
+    &                getrf  => DGETRF
 !
 ! use :: blas_lapack_interface, only : &
 !   &                copy   => SCOPY,       &
 !   &                axpy   => SAXPY,       &
 !   &                dot    => SDOT,        &
+!   &                symm   => SSYMM,       &
 !   &                gemm   => SGEMM,       &
 !   &                gesvd  => SGESVD,      &
-!   &                getrf  => SGETRF,      &
-!   &                symm   => SSYMM
+!   &                getrf  => SGETRF
 !
 !&>
 !
