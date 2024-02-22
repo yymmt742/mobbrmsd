@@ -1,5 +1,5 @@
-!| Module for manage lowerbound matrices.
-module mod_lb_manager
+!| Module for manage lowerbound matrices and tree.
+module mod_bb_manager
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_params, only: gemm, dot, copy
   use mod_mol_block
@@ -9,56 +9,56 @@ module mod_lb_manager
   use mod_tree
   implicit none
   private
-  public :: lb_manager
-  public :: memsize_lb_manager
-  public :: worksize_lb_manager
+  public :: bb_manager
+  public :: memsize_bb_manager
+  public :: worksize_bb_manager
 !
-!| lb_manager<br>
+!| bb_manager<br>
 !    By default, memory is allocated as follows.<br>
 !    |-C1-|----W1----|<br>
 !    |----|--C2--|--------W2-------|<br>
 !    |-----------|--C3--|-W3-|<br>
 !    Therefore, the maximum memory allocation size is MAX( SUM_i^I |Ci| + |W_I| ).
-  type lb_manager
+  type bb_manager
     private
     sequence
     type(c_matrix), public :: c
     type(s_matrix), public :: s
     type(tree), public     :: t
-  end type lb_manager
+  end type bb_manager
 !
-  interface lb_manager
-    module procedure lb_manager_new
-  end interface lb_manager
+  interface bb_manager
+    module procedure bb_manager_new
+  end interface bb_manager
 !
 contains
 !
 !| Constructer
-  pure elemental function lb_manager_new(b) result(res)
+  pure elemental function bb_manager_new(b) result(res)
     !| b :: mol_block, must be initialized.
     type(mol_block), intent(in) :: b
-    type(lb_manager)            :: res
+    type(bb_manager)            :: res
 !
     res%c  = c_matrix(b)
     res%s  = s_matrix(b)
 !
-  end function lb_manager_new
+  end function bb_manager_new
 !
 !| Inquire worksize of s_matrix.
-  pure elemental function memsize_lb_manager(this) result(res)
-    !| this :: lb_manager.
-    type(lb_manager), intent(in) :: this
+  pure elemental function memsize_bb_manager(this) result(res)
+    !| this :: bb_manager.
+    type(bb_manager), intent(in) :: this
     integer(IK)                  :: res
     res = memsize_s_matrix(this%s) + memsize_s_matrix(this%s)
-  end function memsize_lb_manager
+  end function memsize_bb_manager
 !
 !| Inquire worksize of s_matrix.
-  pure elemental function worksize_lb_manager(this) result(res)
-    !| this :: lb_manager.
-    type(lb_manager), intent(in) :: this
+  pure elemental function worksize_bb_manager(this) result(res)
+    !| this :: bb_manager.
+    type(bb_manager), intent(in) :: this
     integer(IK)                  :: res
     res = MAX(worksize_c_matrix(this%c) - memsize_s_matrix(this%s), worksize_s_matrix(this%s))
-  end function worksize_lb_manager
+  end function worksize_bb_manager
 !
 ! pure subroutine d_matrix_partial_eval(a, p, iprm, isym, ires, W, LT, H, C, LF, LB)
 !   type(d_matrix), intent(in)        :: a
@@ -414,5 +414,5 @@ contains
 !   end do
 ! end subroutine zfill
 !
-end module mod_lb_manager
+end module mod_bb_manager
 

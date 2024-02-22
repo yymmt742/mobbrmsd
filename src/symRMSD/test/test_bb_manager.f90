@@ -4,6 +4,7 @@ program main
   use mod_mol_symmetry
   use mod_rotation_matrix
   use mod_lowerbound
+  use mod_bb_manager
   use mod_testutil
   use mod_unittest
   implicit none
@@ -22,9 +23,10 @@ program main
 contains
 !
   subroutine test0()
-    real(RK)        :: GC(10, 15), S(15), W(100), G, C(9)
-    type(mol_block) :: b
-    integer(IK)     :: i
+    real(RK)         :: GC(10, 15), S(15), W(100), G, C(9)
+    type(mol_block)  :: b
+    type(bb_manager) :: bm
+    integer(IK)      :: i
 !
     b = mol_block(1, 8, 3, 5)
 !
