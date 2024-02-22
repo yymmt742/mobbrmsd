@@ -1,3 +1,4 @@
+
 module mod_branch_and_bound
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mol_block
@@ -361,3 +362,4 @@ contains
   end subroutine breadth_indicator_save
 !
 end module mod_branch_and_bound
+

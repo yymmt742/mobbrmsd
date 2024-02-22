@@ -114,6 +114,7 @@ target_sources( test_lb_manager PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_param
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_symmetry.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_s_matrix.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_lowerbound.f90

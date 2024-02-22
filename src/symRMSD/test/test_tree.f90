@@ -24,7 +24,7 @@ contains
     call u%assert_equal(NINT(EXP(log_ncomb(q(:2)))),  3, 'log_ncomb [1,2]    ')
     call u%assert_equal(NINT(EXP(log_ncomb(q(:3)))),  9, 'log_ncomb [1,2,3]  ')
     call u%assert_equal(NINT(EXP(log_ncomb(q(:4)))), 33, 'log_ncomb [1,2,3,4]')
-    call u%assert_equal(memsize_tree(t, q),          10, 'memsize_tree       ')
+    call u%assert_equal(memsize_tree(t),             10, 'memsize_tree       ')
 !
     q = queue([1, 5, 3, 1])
     call setup_tree(t, q, 1, 2)
@@ -32,7 +32,7 @@ contains
     call u%assert_equal(NINT(EXP(log_ncomb(q(:2)))),  6, 'log_ncomb [1,5]    ')
     call u%assert_equal(NINT(EXP(log_ncomb(q(:3)))), 21, 'log_ncomb [1,5,3]  ')
     call u%assert_equal(NINT(EXP(log_ncomb(q(:4)))), 36, 'log_ncomb [1,5,3,1]')
-    call u%assert_equal(memsize_tree(t, q),          20, 'memsize_tree       ')
+    call u%assert_equal(memsize_tree(t),             20, 'memsize_tree       ')
 !
     q = queue([2, 3, 3, 2])
     call setup_tree(t, q, 1, 3)
@@ -40,9 +40,9 @@ contains
     call u%assert_equal(NINT(EXP(log_ncomb(q(:2)))),  8, 'log_ncomb [2,3]    ')
     call u%assert_equal(NINT(EXP(log_ncomb(q(:3)))), 26, 'log_ncomb [2,3,3]  ')
     call u%assert_equal(NINT(EXP(log_ncomb(q(:4)))), 62, 'log_ncomb [2,3,3,2]')
-    call u%assert_equal(memsize_tree(t, q),          30, 'memsize_tree       ')
+    call u%assert_equal(memsize_tree(t),             30, 'memsize_tree       ')
 !
-    allocate(W(memsize_tree(t, q)))
+    allocate(W(memsize_tree(t)))
     do i = 1, SIZE(W)
       W(i) = COS(i**2 * 3.0_RK)
     end do

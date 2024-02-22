@@ -6,6 +6,7 @@ module mod_lb_manager
   use mod_c_matrix
   use mod_s_matrix
   use mod_lowerbound
+  use mod_tree
   implicit none
   private
   public :: lb_manager
@@ -23,6 +24,7 @@ module mod_lb_manager
     sequence
     type(c_matrix), public :: c
     type(s_matrix), public :: s
+    type(tree), public     :: t
   end type lb_manager
 !
   interface lb_manager

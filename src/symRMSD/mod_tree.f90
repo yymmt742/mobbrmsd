@@ -71,16 +71,6 @@ contains
     res = SUM(nnode(q))
   end function nnodes
 !
-!| Inquire memsize of tree.
-  pure function memsize_tree(t, q) result(res)
-!|  t :: tree
-    type(tree), intent(in)  :: t
-!|  q :: queue list
-    type(queue), intent(in) :: q(:)
-    integer(IK)             :: res
-    res = nnodes(q) * t%nmnode
-  end function memsize_tree
-!
 !| Set up the tree.
   pure subroutine setup_tree(t, q, p, nmnode)
 !|  t :: tree
@@ -104,6 +94,14 @@ contains
     end do
 !
   end subroutine setup_tree
+!
+!| Inquire memsize of tree.
+  pure function memsize_tree(t) result(res)
+!|  t :: tree
+    type(tree), intent(in)  :: t
+    integer(IK)             :: res
+    res = t%nnodes * t%nmnode
+  end function memsize_tree
 !
 !| Returns a pointer to the current queue.
   pure elemental function queue_pointer(q) result(res)

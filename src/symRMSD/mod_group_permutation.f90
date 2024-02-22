@@ -1,3 +1,5 @@
+!
+!| Module for permutation.
 module mod_group_permutation
   use mod_params, only: IK, RK
   implicit none
@@ -6,12 +8,15 @@ module mod_group_permutation
   public :: group_permutation_init
   public :: group_permutation_swap
 !
-  integer(IK), parameter :: DEF_n = 1
-  !! default number of components.
+  integer(IK), parameter :: DEF_n = 1 ! default number of components.
 !
+!| Module for permutation.<br>
+!  The specified permutation is decomposed into rotation groups.
   type :: group_permutation
     private
+!| pointers.
     integer(IK), allocatable :: p(:, :)
+!| permutation index lists.
     integer(IK), allocatable :: q(:)
   contains
     procedure          :: init         => group_permutation_init
@@ -33,10 +38,10 @@ module mod_group_permutation
 !
 contains
 !
-!| Constructer
+  !| Constructer
   pure function group_permutation_new(prm) result(res)
+    !| permutation indices
     integer(IK), intent(in) :: prm(:)
-    !! permutation indices
     type(group_permutation) :: res
 !
     allocate (res%p(0, 0))
@@ -45,10 +50,12 @@ contains
 !
   end function group_permutation_new
 !
+  !| Initializer
   pure subroutine group_permutation_init(this, prm)
+    !| group_permutation, this
     class(group_permutation), intent(inout) :: this
+    !| permutation indices
     integer(IK), intent(in) :: prm(:)
-    !! permutation indices
 !
     call group_permutation_clear(this)
     allocate (this%p(0, 0))
@@ -295,7 +302,7 @@ contains
     if (ALLOCATED(this%q)) deallocate (this%q)
   end subroutine group_permutation_destroy
 !
-!!!
+! !!
 !
 ! pure subroutine cyclic_swap_int(d, s, q, X)
 !   integer(IK), intent(in)    :: d, s, q(*)
@@ -351,7 +358,7 @@ contains
     end do
   end subroutine cyclic_reverse_real
 !
-!! returns uniq integer list without 1.
+!| returns uniq integer list without 1.
   pure subroutine uniq(n, a, u, res)
     integer(IK), intent(in)    :: n, a(*)
     integer(IK), intent(inout) :: u, res(*)
@@ -411,3 +418,4 @@ contains
   end subroutine qsi
 !
 end module mod_group_permutation
+
