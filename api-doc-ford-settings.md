@@ -1,4 +1,4 @@
-src_dir: ./src
+src_dir: ./src/symRMSD
 output_dir: ./api-doc
 project: symRMSD
 summary: molecular symmetry corrected RMSD
