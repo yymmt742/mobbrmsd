@@ -2,32 +2,30 @@ module mod_tree
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   implicit none
   private
-  public :: node
-  public :: breadth
+  public :: queue
+  public :: nnode
+  public :: nnodes
   public :: tree
-  public :: memsize_tree
   public :: setup_tree
-  public :: n_breadth
-!
-!| Node.
-  type node
-    private
-    sequence
-!|  p : pointer to memory. if p<0, the node has been explored.
-    integer(IK) :: p
-  end type node
+  public :: memsize_tree
+  public :: set_top_node
+  public :: current_sequence
+  public :: queue_pointer
+  public :: node_pointer
+  public :: is_empty
+  public :: log_ncomb
 !
 !| A collection of nodes in a hierarchy.
-  type breadth
+  type queue
     private
     sequence
-!|  inod : current pointer
-    integer(IK) :: inod
-!|  lowd : (Pointer to the first node) - 1.
-    integer(IK) :: lowd
-!|  uppd : Pointer to the last node.
-    integer(IK) :: uppd
-  end type breadth
+!|  i : Current pointer
+    integer(IK) :: i
+!|  p : pointer to memory.
+    integer(IK) :: p
+!|  n : nnodes.
+    integer(IK) :: n
+  end type queue
 !
 !| Tree.
   type tree
@@ -37,135 +35,173 @@ module mod_tree
     integer(IK)       :: ndepth
 !|  number of nodes.
     integer(IK)       :: nnodes
-!|  current hierarchy.
-    integer(IK)       :: idepth
 !|  Memory size per node.
-    integer(IK)       :: memnode
-! contains
-!   procedure         :: n_depth          => tree_n_depth
-!   procedure         :: n_breadth        => tree_n_breadth
-!   procedure         :: current_depth    => tree_current_depth
-!   procedure         :: reset            => tree_reset
-!   procedure         :: set_parent_node  => tree_set_parent_node
-!   procedure         :: set_lowerbound   => tree_set_lowerbound
-!   procedure         :: prune            => tree_prune
-!   procedure         :: nodes_pointer    => tree_nodes_pointer
-!   procedure         :: parent_pointer   => tree_parent_pointer
-!   procedure         :: parent_index     => tree_parent_index
-!   procedure         :: current_pointer  => tree_current_pointer
-!   procedure         :: current_index    => tree_current_index
-!   procedure         :: alive_nodes      => tree_alive_nodes
-!   procedure         :: open_node        => tree_open_node
-!   procedure         :: close_node       => tree_close_node
-!   procedure         :: log_ncomb        => tree_log_ncomb
-!   procedure         :: finished         => tree_finished
-!   procedure         :: unfinished       => tree_unfinished
-!   procedure         :: clear            => tree_clear
-!   final             :: tree_destroy
+    integer(IK)       :: nmnode
   end type tree
 !
-  interface node
-    module procedure node_new
-  end interface node
-!
-  interface breadth
-    module procedure breadth_new
-  end interface breadth
-!
-  interface tree
-    module procedure tree_new
-  end interface tree
+  interface queue
+    module procedure queue_new
+  end interface queue
 !
 contains
 !
-  pure elemental function node_new() result(res)
-    type(node) :: res
-    res%p = 0
-  end function node_new
-!
-  pure elemental function breadth_new(n_nodes) result(res)
-!| n_nodes :: number of nodes in breadth, n_nodes>0.
+!| Constructer of queue
+  pure elemental function queue_new(n_nodes) result(res)
+!|  n_nodes :: number of nodes in queue, n_nodes>0.
     integer(IK), intent(in) :: n_nodes
-    type(breadth)           :: res
-    res%inod = 0
-    res%lowd = 0
-    res%uppd = MAX(1, n_nodes)
-  end function breadth_new
+    type(queue)             :: res
+    res%i = -1
+    res%p = 1
+    res%n = MAX(1, n_nodes)
+  end function queue_new
 !
-  pure function tree_new(b, memnode) result(res)
-!|  b :: breadth list, must be intiialized.
-    type(breadth), intent(in) :: b(:)
-!|  memnode :: memory size of each node.
-    integer(IK), intent(in)   :: memnode
-    type(tree)                :: res
+!| Count number of nodes in a queue.
+  pure elemental function nnode(q) result(res)
+!|  q :: queue
+    type(queue), intent(in) :: q
+    integer(IK)             :: res
+    res = q%n
+  end function nnode
 !
-    res%idepth  = 1
-    res%nnodes  = SUM(b%uppd - b%lowd)
-    res%ndepth  = SIZE(b)
-    res%memnode = MAX(memnode, 1)
+!| Count number of nodes
+  pure function nnodes(q) result(res)
+!|  q :: queue list
+    type(queue), intent(in) :: q(:)
+    integer(IK)             :: res
+    res = SUM(nnode(q))
+  end function nnodes
 !
-  end function tree_new
-!
-  pure elemental function memsize_tree(this) result(res)
-!| n_nodes :: number of nodes in breadth, n_nodes>0.
-    type(tree), intent(in) :: this
-    integer(IK)            :: res
-    res = this%nnodes * this%memnode
+!| Inquire memsize of tree.
+  pure function memsize_tree(t, q) result(res)
+!|  t :: tree
+    type(tree), intent(in)  :: t
+!|  q :: queue list
+    type(queue), intent(in) :: q(:)
+    integer(IK)             :: res
+    res = nnodes(q) * t%nmnode
   end function memsize_tree
 !
-  pure subroutine setup_tree(this, b, n, p)
-    type(tree), intent(in)       :: this
-!|  b :: breadthes
-    type(breadth), intent(inout) :: b(*)
-!|  n :: nodes
-    type(node), intent(inout)    :: n(*)
+!| Set up the tree.
+  pure subroutine setup_tree(t, q, p, nmnode)
+!|  t :: tree
+    type(tree), intent(inout)  :: t
+!|  q :: queue list, must be intiialized.
+    type(queue), intent(inout) :: q(:)
 !|  p :: pointer
-    integer(IK), intent(in)      :: p
-    integer(IK)                  :: i, j, k
+    integer(IK), intent(in)    :: p
+!|  nmnode :: memory size of each node.
+    integer(IK), intent(in)    :: nmnode
+    integer(IK)                :: i
 !
-    do concurrent(i=1:this%nnodes)
-      n(i)%p = p + (i - 1) * this%memnode
-    end do
+    t%ndepth = SIZE(q)
+    t%nnodes = nnodes(q)
+    t%nmnode = MAX(nmnode, 1)
 !
-    j = 0
-    do i = 1, this%nnodes
-      k = j + b(i)%uppd - b(i)%lowd
-      b(i)%lowd = j
-      b(i)%uppd = k
-      j = k
+    if (t%nnodes < 1) return
+    q(1)%p = p
+    do i = 2, t%ndepth
+      q(i)%p = t%nmnode * q(i - 1)%n + q(i - 1)%p
     end do
 !
   end subroutine setup_tree
 !
-  pure function n_breadth(t, b) result(res)
-!|  t :: tree
-    type(tree), intent(in)    :: t
-!|  b :: breadth list
-    type(breadth), intent(in) :: b(*)
-    integer(IK)               :: res
-    res = 0
-    if (t%idepth < 1) return
-    res = b(t%idepth)%uppd - b(t%idepth)%lowd
-  end function n_breadth
+!| Returns a pointer to the current queue.
+  pure elemental function queue_pointer(q) result(res)
+!|  q :: queue
+    type(queue), intent(in) :: q
+    integer(IK)             :: res
+    res = q%p
+  end function queue_pointer
 !
-! pure elemental function tree_nodes_pointer(this) result(res)
-!   class(tree), intent(in) :: this
-!   integer(IK)             :: res
-!   res = 0
-!   if (ALLOCATED(this%breadthes)) then
-!     if (this%iscope < 1) return
-!     res = this%nodes(this%breadthes(this%iscope)%lowd + 1)%p
-!   end if
-! end function tree_nodes_pointer
+!| Returns a pointer to the current best node.
+  pure elemental function node_pointer(t, q) result(res)
+!|  t :: tree
+    type(tree), intent(in)  :: t
+!|  q :: queue
+    type(queue), intent(in) :: q
+    integer(IK)             :: res
+    res = q%p + q%i * t%nmnode
+  end function node_pointer
+!
+!| Returns a pointer to the current queue.
+  pure function current_sequence(q) result(res)
+!|  q :: queue
+    type(queue), intent(in) :: q(:)
+    integer(IK)             :: i, res(SIZE(q))
+    do concurrent(i=1:SIZE(q))
+      res(i) = q(i)%i + 1
+    end do
+  end function current_sequence
+!
+!| Set top node
+  pure subroutine set_top_node(t, q, UB, W, reset)
+!|  t :: tree
+    type(tree), intent(in)     :: t
+!|  q :: queue
+    type(queue), intent(inout) :: q
+!|  UB :: upperbound
+    real(RK), intent(in)       :: UB
+!|  W :: work array
+    real(RK), intent(in)       :: W(*)
+!|  reset :: If true, treat all nodes as unexplored.
+    logical, intent(in)        :: reset
+    real(RK)                   :: uv, lv
+    integer(IK)                :: i, p
+!
+    if (q%i < 0 .or. reset) then
+      lv = - RHUGE
+    else
+      lv = W(q%p + q%i * t%nmnode)
+    end if
+!
+    q%i = -1
+    uv = UB
+!
+    if (uv < lv) return
+!
+    do i = 0, q%n-1
+      p = q%p + i * t%nmnode
+      if (lv < W(p) .and. W(p) < uv) then
+        q%i = i
+        uv = W(p)
+      end if
+    end do
+!
+  end subroutine set_top_node
+!
+  pure function log_ncomb(q) result(res)
+    type(queue), intent(in) :: q(:)
+    real(RK)                :: tmp, res
+    integer(IK)             :: i
+!
+    res = ZERO
+    tmp = ZERO
+    do i = SIZE(q), 1, -1
+      tmp = tmp - LOG(REAL(q(i)%n, RK))
+      res = res + EXP(tmp)
+    end do
+    res = ONE + res - EXP(tmp)
+!
+    if (res < 1.E-24_RK) then; res = -RHUGE
+    else; res = LOG(res) - tmp
+    end if
+!
+  end function log_ncomb
+!
+  pure elemental function is_empty(q) result(res)
+    type(queue), intent(in) :: q
+    logical                 :: res
+    res = q%i < 0
+  end function is_empty
 !
 ! pure elemental function tree_parent_pointer(this) result(res)
 !   class(tree), intent(in) :: this
 !   integer(IK)             :: ip, res
 !   res = 0
-!   if (ALLOCATED(this%breadthes)) then
+!   if (ALLOCATED(this%queuees)) then
 !     if (this%iscope < 2) return
 !     ip = this%iscope - 1
-!     ip = this%breadthes(ip)%inod
+!     ip = this%queuees(ip)%inod
 !     if (ip < 1) return
 !     res = this%nodes(ip)%p
 !   end if
@@ -175,10 +211,10 @@ contains
 !   class(tree), intent(in) :: this
 !   integer(IK)             :: ip, res
 !   res = 0
-!   if (ALLOCATED(this%breadthes)) then
+!   if (ALLOCATED(this%queuees)) then
 !     if (this%iscope < 1) return
 !     ip = this%iscope
-!     ip = this%breadthes(ip)%inod
+!     ip = this%queuees(ip)%inod
 !     if (ip < 1) return
 !     res = this%nodes(ip)%p
 !   end if
@@ -188,11 +224,11 @@ contains
 !   class(tree), intent(in) :: this
 !   integer(IK)             :: ip, res
 !   res = 0
-!   if (ALLOCATED(this%breadthes)) then
+!   if (ALLOCATED(this%queuees)) then
 !     if (this%iscope < 1) return
 !     ip = this%iscope
-!     ip = this%breadthes(ip)%inod - &
-!    &     this%breadthes(ip)%lowd
+!     ip = this%queuees(ip)%inod - &
+!    &     this%queuees(ip)%lowd
 !     if (ip > 0) res = ip
 !   end if
 ! end function tree_current_index
@@ -203,8 +239,8 @@ contains
 !   integer(IK)             :: l, u
 !   allocate(res(0))
 !   if (this%iscope < 1 .or. this%n_depth() < this%iscope) return
-!   l = this%breadthes(this%iscope)%lowd + 1
-!   u = this%breadthes(this%iscope)%uppd
+!   l = this%queuees(this%iscope)%lowd + 1
+!   u = this%queuees(this%iscope)%uppd
 !   res = this%nodes(l:u)%alive
 ! end function tree_alive_nodes
 !
@@ -212,11 +248,11 @@ contains
 !   class(tree), intent(in) :: this
 !   integer(IK)             :: ip, res
 !   res = 0
-!   if (ALLOCATED(this%breadthes)) then
+!   if (ALLOCATED(this%queuees)) then
 !     if (this%iscope < 2) return
 !     ip = this%iscope - 1
-!     ip = this%breadthes(ip)%inod - &
-!    &     this%breadthes(ip)%lowd
+!     ip = this%queuees(ip)%inod - &
+!    &     this%queuees(ip)%lowd
 !     if (ip > 0) res = ip
 !   end if
 ! end function tree_parent_index
@@ -227,51 +263,6 @@ contains
 !   if (ALLOCATED(this%nodes)) this%nodes%alive = .false.
 !   call this%open_node()
 ! end subroutine tree_reset
-!
-! pure subroutine tree_set_parent_node(this, W)
-!   class(tree), intent(inout) :: this
-!   real(RK), intent(in)       :: W(*)
-!   real(RK)                   :: lv
-!   integer(IK)                :: i, l, u
-!
-!   if (this%iscope < 1 .or. this%n_depth() < this%iscope) return
-!   l = this%breadthes(this%iscope)%lowd + 1
-!   u = this%breadthes(this%iscope)%uppd
-!
-!   this%breadthes(this%iscope)%inod = l
-!
-!   lv = RHUGE
-!   do i = l, u
-!     if (this%nodes(i)%alive .and. W(this%nodes(i)%p) < lv) then
-!       this%breadthes(this%iscope)%inod = i
-!       lv = W(this%nodes(i)%p)
-!     end if
-!   end do
-!
-!   if(this%iscope==this%n_depth()) this%nodes(l:u)%alive = .false.
-!
-! end subroutine tree_set_parent_node
-!
-! pure elemental subroutine tree_open_node(this)
-!   class(tree), intent(inout) :: this
-!   integer(IK)                :: i, l, u
-!
-!   if (this%iscope < 0 .or. this%n_depth() <= this%iscope) return
-!   if (this%iscope > 0) then
-!     l = this%breadthes(this%iscope)%inod
-!     if (l > 0) this%nodes(l)%alive = .false.
-!   end if
-!   this%iscope = this%iscope + 1
-!   l = this%breadthes(this%iscope)%lowd + 1
-!   u = this%breadthes(this%iscope)%uppd
-!
-!   do concurrent(i=l:u)
-!     this%nodes(i)%alive = .true.
-!   end do
-!
-!   this%breadthes(this%iscope)%inod = l
-!
-! end subroutine tree_open_node
 !
 ! pure subroutine tree_set_lowerbound(this, W)
 !   class(tree), intent(in) :: this
@@ -287,83 +278,29 @@ contains
 !
 ! end subroutine tree_set_lowerbound
 !
-! pure elemental subroutine tree_close_node(this)
-!   class(tree), intent(inout) :: this
-!   integer(IK)                :: p
+! pure subroutine climb(t, q, n)
+!   type(tree), intent(inout)  :: t
+!   type(queue), intent(inout) :: q(:)
+!   type(node), intent(inout)  :: n(:)
+!   integer(IK)                :: i
 !
-!   if (this%iscope <= 1 .or. this%n_depth() < this%iscope) return
-!   this%iscope = this%iscope - 1
-!   p = this%breadthes(this%iscope)%inod
+!   if (t%ndepth <= t%idepth) return
 !
-! end subroutine tree_close_node
+!   t%idepth = t%idepth + 1
+!   q(t%idepth)%i = q(t%idepth)%l
 !
-! pure elemental function tree_log_ncomb(this) result(res)
-!   class(tree), intent(in) :: this
-!   real(RK)                :: tmp, res
-!   integer(IK)             :: i, n
-!   res = ZERO
-!   if (.not. ALLOCATED(this%breadthes)) return
-!   n = SIZE(this%breadthes)
-!   if (n < 1) return
-!   tmp = ZERO
-!   do i = n, 2, -1
-!     tmp = tmp - log_nnod(this%breadthes(i))
-!     res = res + EXP(tmp)
-!   end do
-!   res = log_nnod(this%breadthes(1)) - tmp + LOG(ONE + res)
-! end function tree_log_ncomb
-!
-! pure elemental function log_nnod(b) result(res)
-!   type(breadth), intent(in) :: b
-!   real(RK)                  :: res
-!   res = LOG(REAL(b%uppd - b%lowd, RK))
-! end function log_nnod
-!
-! pure elemental function tree_finished(this) result(res)
-!   class(tree), intent(in) :: this
-!   logical                 :: res
-!
-!   res = .not. this%unfinished()
-!
-! end function tree_finished
-!
-! pure elemental function tree_unfinished(this) result(res)
-!   class(tree), intent(in) :: this
-!   logical                 :: res
-!   integer(IK)             :: i, l, u
-!
-!   res = .true.
-!   if (this%iscope < 1 .or. this%n_depth() < this%iscope) return
-!   l = this%breadthes(this%iscope)%lowd + 1
-!   u = this%breadthes(this%iscope)%uppd
-!   res = ANY([(this%nodes(i)%alive, i=l, u)])
-!
-! end function tree_unfinished
-!
-! pure subroutine tree_prune(this, W)
-!   class(tree), intent(inout) :: this
-!   real(RK), intent(in)       :: W(*)
-!   integer(IK)                :: i, l, u
-!
-!   if (this%iscope < 1 .or. this%n_depth() < this%iscope) return
-!   l = this%breadthes(this%iscope)%lowd + 1
-!   u = this%breadthes(this%iscope)%uppd
-!   do concurrent(i=l:u)
-!     this%nodes(i)%alive = this%nodes(i)%alive .and. (W(this%nodes(i)%p) < W(this%upperbound))
+!   do concurrent(i=q(t%idepth)%l:q(t%idepth)%u)
+!     n(i)%p = ABS(n(i)%p)
 !   end do
 !
-! end subroutine tree_prune
+! end subroutine climb
 !
-! pure elemental subroutine tree_clear(this)
-!   class(tree), intent(inout) :: this
-!   if (ALLOCATED(this%nodes)) deallocate (this%nodes)
-!   if (ALLOCATED(this%breadthes)) deallocate (this%breadthes)
-! end subroutine tree_clear
+! pure elemental subroutine go_down(t)
+!   type(tree), intent(inout) :: t
 !
-! pure elemental subroutine tree_destroy(this)
-!   type(tree), intent(inout) :: this
-!   call tree_clear(this)
-! end subroutine tree_destroy
+!   if (t%idepth > 0) t%idepth = t%idepth - 1
+!
+! end subroutine go_down
 !
 end module mod_tree
 
