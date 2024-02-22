@@ -1,11 +1,13 @@
+!
+!| Module for molecular permutation.
 module mod_mol_symmetry
   use mod_params, only: IK, RK
-  use mod_group_permutation
   use mod_group_permutation
   implicit none
   private
   public :: mol_symmetry
 !
+!| molecular permutation.
   type mol_symmetry
     private
     integer(IK)                          :: m = 0
@@ -43,12 +45,14 @@ contains
 !
   end function mol_symmetry_new
 !
+!| number of atoms in molecule.
   pure elemental function mol_symmetry_n_atom(this) result(res)
     class(mol_symmetry), intent(in) :: this
     integer(IK)                           :: res
     res = this%m
   end function mol_symmetry_n_atom
 !
+!| number of symmetry in molecule.
   pure elemental function mol_symmetry_n_sym(this) result(res)
     class(mol_symmetry), intent(in) :: this
     integer(IK)                           :: res
@@ -59,6 +63,7 @@ contains
     end if
   end function mol_symmetry_n_sym
 !
+!| molecular swap operation.
   pure subroutine mol_symmetry_swap(this, d, X, isym)
     class(mol_symmetry), intent(in) :: this
     integer(IK), intent(in)               :: d, isym
@@ -67,6 +72,7 @@ contains
     call this%p(isym)%swap(d, X)
   end subroutine mol_symmetry_swap
 !
+!| molecular reverse swap operation.
   pure subroutine mol_symmetry_reverse(this, d, X, isym)
     class(mol_symmetry), intent(in) :: this
     integer(IK), intent(in)               :: d, isym
@@ -75,12 +81,14 @@ contains
     call this%p(isym)%reverse(d, X)
   end subroutine mol_symmetry_reverse
 !
+!| memory clear
   pure elemental subroutine mol_symmetry_clear(this)
     class(mol_symmetry), intent(inout) :: this
     this%m = 0
     if (ALLOCATED(this%p)) deallocate (this%p)
   end subroutine mol_symmetry_clear
 !
+!| destractor
   pure elemental subroutine mol_symmetry_destroy(this)
     type(mol_symmetry), intent(inout) :: this
     call this%clear()

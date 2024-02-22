@@ -1,3 +1,4 @@
+!| Tree structure for branch and bound.
 module mod_tree
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   implicit none
