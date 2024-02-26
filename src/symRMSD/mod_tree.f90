@@ -4,11 +4,9 @@ module mod_tree
   implicit none
   private
   public :: queue
-  public :: nnode
-  public :: nnodes
-  public :: setup_queue
   public :: tree
-  public :: memsize_tree
+  public :: setup_queue
+  public :: memsize_queue
   public :: set_top_node
   public :: current_sequence
   public :: current_permutation
@@ -28,18 +26,20 @@ module mod_tree
     integer(IK) :: p
 !|  n :: nnodes.
     integer(IK) :: n
+!|  x :: Memory size per node.
+    integer(IK) :: x
   end type queue
 !
 !| Factorial tree.
   type tree
     private
     sequence
+!|  p :: pointer to work array.
+    integer(IK), public :: p
 !|  m :: number of hierarchy.
-    integer(IK)       :: m
+    integer(IK)         :: m
 !|  s :: scaling factor.
-    integer(IK)       :: s
-!|  x :: Memory size per node.
-    integer(IK)       :: x
+    integer(IK)         :: s
   end type tree
 !
   interface queue
@@ -53,72 +53,51 @@ module mod_tree
 contains
 !
 !| Constructer of queue
-  pure elemental function queue_new(n_nodes) result(res)
+  pure elemental function queue_new(n_nodes, n_mnode) result(res)
 !|  n_nodes :: number of nodes in queue, n_nodes>0.
     integer(IK), intent(in) :: n_nodes
+!|  nmnode :: memory size of each node.
+    integer(IK), intent(in) :: n_mnode
     type(queue)             :: res
     res%i = -1
     res%p = 1
     res%n = MAX(1, n_nodes)
+    res%x = MAX(1, n_mnode)
   end function queue_new
-!
-!| Count number of nodes in a queue.
-  pure elemental function nnode(q) result(res)
-!|  q :: queue
-    type(queue), intent(in) :: q
-    integer(IK)             :: res
-    res = q%n
-  end function nnode
-!
-!| Count number of nodes
-  pure function nnodes(q) result(res)
-!|  q :: queue list
-    type(queue), intent(in) :: q(:)
-    integer(IK)             :: res
-    res = SUM(q%n)
-  end function nnodes
-!
-!| Set up queue list.
-  pure subroutine setup_queue(t, p, q)
-!|  t :: tree
-    type(tree), intent(in)     :: t
-!|  p :: pointer
-    integer(IK), intent(in)    :: p
-!|  q :: queue list, must be intiialized.
-    type(queue), intent(inout) :: q(*)
-    integer(IK)                :: i
-!
-    q(1)%p = p
-    do i = 2, t%m
-      q(i)%p = t%x * q(i - 1)%n + q(i - 1)%p
-    end do
-!
-  end subroutine setup_queue
 !
 !| Constructer of factorial tree.<br>
 !  [s*m, s*(m-1),..., s*2, s]
-  pure function tree_new(m, s, nmnode) result(res)
+  pure function tree_new(m, s) result(res)
 !| m :: natural number.
     integer(IK), intent(in) :: m
 !| s :: natural number.
     integer(IK), intent(in) :: s
-!|  nmnode :: memory size of each node.
-    integer(IK), intent(in) :: nmnode
     type(tree)              :: res
-!
     res%m = MAX(m, 1)
     res%s = MAX(s, 1)
-    res%x = MAX(nmnode, 1)
-!
+    res%p = 1
   end function tree_new
 !
-!| Inquire memsize of tree.
-  pure function memsize_tree(t) result(res)
+!| Set up queue list.
+  pure subroutine setup_queue(t, q)
 !|  t :: tree
-    type(tree), intent(in)  :: t
-    integer(IK)             :: res
-    res = t%x * t%s * t%m * (t%m + 1) / 2
-  end function memsize_tree
+    type(tree), intent(in)     :: t
+!|  q :: queue list, must be intiialized.
+    type(queue), intent(inout) :: q(*)
+    integer(IK)                :: i
+    q(1)%p = t%p
+    do i = 2, t%m
+      q(i)%p = q(i - 1)%x * q(i - 1)%n + q(i - 1)%p
+    end do
+  end subroutine setup_queue
+!
+!| Inquire memsize of tree.
+  pure elemental function memsize_queue(q) result(res)
+!|  t :: tree
+    type(queue), intent(in)  :: q
+    integer(IK)              :: res
+    res = q%x * q%n
+  end function memsize_queue
 !
 !| Returns a pointer to the current queue.
   pure elemental function queue_pointer(q) result(res)
@@ -129,21 +108,21 @@ contains
   end function queue_pointer
 !
 !| Returns a pointer to the current best node.
-  pure elemental function node_pointer(t, q) result(res)
-!|  t :: tree
-    type(tree), intent(in)  :: t
+  pure elemental function node_pointer(q) result(res)
 !|  q :: queue
     type(queue), intent(in) :: q
     integer(IK)             :: res
-    res = q%p + q%i * t%x
+    res = q%p + q%i * q%x
   end function node_pointer
 !
 !| Returns current sequence.
-  pure function current_sequence(q) result(res)
+  pure function current_sequence(t, q) result(res)
+!|  t :: tree
+    type(tree), intent(in)  :: t
 !|  q :: queue
-    type(queue), intent(in) :: q(:)
-    integer(IK)             :: i, res(SIZE(q))
-    do concurrent(i=1:SIZE(q))
+    type(queue), intent(in) :: q(*)
+    integer(IK)             :: i, res(t%m)
+    do concurrent(i=1:t%m)
       res(i) = q(i)%i + 1
     end do
   end function current_sequence
@@ -178,9 +157,7 @@ contains
   end function current_mapping
 !
 !| Set top node
-  pure subroutine set_top_node(t, q, UB, W, reset)
-!|  t :: tree
-    type(tree), intent(in)     :: t
+  pure subroutine set_top_node(q, UB, W, reset)
 !|  q :: queue
     type(queue), intent(inout) :: q
 !|  UB :: upperbound
@@ -195,7 +172,7 @@ contains
     if (q%i < 0 .or. reset) then
       lv = - RHUGE
     else
-      lv = W(q%p + q%i * t%x)
+      lv = W(q%p + q%i * q%x)
     end if
 !
     q%i = -1
@@ -204,7 +181,7 @@ contains
     if (uv < lv) return
 !
     do i = 0, q%n-1
-      p = q%p + i * t%x
+      p = q%p + i * q%x
       if (lv < W(p) .and. W(p) < uv) then
         q%i = i
         uv = W(p)
