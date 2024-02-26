@@ -187,7 +187,7 @@ contains
 !
   end subroutine c_matrix_eval
 !
-!| Ad CIJs to partial covariance matrix C.
+!| Add CIJs to partial covariance matrix C.
   pure subroutine c_matrix_add(this, b, i, j, s, W, C)
     !| this :: c_matrix
     type(c_matrix), intent(in)  :: this

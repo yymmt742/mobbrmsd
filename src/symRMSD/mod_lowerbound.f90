@@ -14,7 +14,7 @@ module mod_lowerbound
 !
 contains
 !
-!| Inquire worksize of s_matrix.
+!| Inquire worksize of f_matrix.
   pure elemental function worksize_lowerbound(p, b) result(res)
     !| p :: level
     integer(IK), intent(in)    :: p

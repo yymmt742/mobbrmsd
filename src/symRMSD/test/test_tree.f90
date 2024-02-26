@@ -1,5 +1,6 @@
 program main
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_mol_block
   use mod_unittest
   use mod_tree
   implicit none
@@ -13,21 +14,24 @@ program main
 contains
 !
   subroutine test1()
-    type(tree)  :: t
-    type(queue) :: q(4)
+    type(mol_block) :: b
+    type(tree)      :: t
+    type(queue)     :: q(4)
     real(RK), allocatable :: W(:)
     integer(IK)           :: i
 !
+    b = mol_block(1, 10, 4, 6)
     q = queue([4, 3, 2, 1], [2, 3, 4, 5])
-    t = tree(4, 1)
+    t = tree(b)
     call u%assert_equal(NINT(EXP(log_ncomb(q(:1)))),      4, 'a. log_ncomb [4]       ')
     call u%assert_equal(NINT(EXP(log_ncomb(q(:2)))),     16, 'a. log_ncomb [4,3]     ')
     call u%assert_equal(NINT(EXP(log_ncomb(q(:3)))),     40, 'a. log_ncomb [4,3,2]   ')
     call u%assert_equal(NINT(EXP(log_ncomb(q(:4)))),     64, 'a. log_ncomb [4,3,2,1] ')
     call u%assert_equal(memsize_queue(q),         [8,9,8,5], 'a. memsize_queue       ')
 !
+    b = mol_block(2, 10, 6, 4)
     q = queue([8, 6, 4, 2], [1, 1, 2, 4])
-    t = tree(4, 2)
+    t = tree(b)
     call u%assert_equal(NINT(EXP(log_ncomb(q(:1)))),      8, 'b. log_ncomb [8]       ')
     call u%assert_equal(NINT(EXP(log_ncomb(q(:2)))),     56, 'b. log_ncomb [8,6]     ')
     call u%assert_equal(NINT(EXP(log_ncomb(q(:3)))),    248, 'b. log_ncomb [8,6,4]   ')
