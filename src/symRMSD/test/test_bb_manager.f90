@@ -28,8 +28,8 @@ contains
     integer(IK)      :: i
 !
     b = mol_block(1, 8, 3, 5)
-    bm = bb_manager(b)
-    print*,memsize_bb_manager(bm),worksize_bb_manager(bm)
+    bm = bb_manager(b, 1)
+    print *, memsize_bb_manager(bm), worksize_bb_manager(bm)
 !
   end subroutine test0
 !

@@ -41,14 +41,14 @@ contains
     real(RK), intent(in)       :: D(*)
     !| W :: workarray
     real(RK), intent(inout)    :: W(*)
-    integer(IK)                :: n1, n2
+    integer(IK)                :: m1, m2
 !
     W(1) = ZERO
-    n1 = MAX(b%x%n, b%y%n) - p
-    n2 = MIN(b%x%n, b%y%n) - p
+    m1 = b%n1 - p
+    m2 = b%n2 - p
 !
-    if (p < 0 .or. n2 < 0) return
-    if (0 < n2) call Hungarian(n1, n2, D, W)
+    if (p < 0 .or. m2 < 0) return
+    if (0 < m2) call Hungarian(m1, m2, D, W)
     if (0 < p) then
       call estimate_sdmin(G, C, W(2))
       W(1) = W(1) + W(2)

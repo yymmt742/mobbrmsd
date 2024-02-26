@@ -32,6 +32,10 @@ module mod_mol_block
     integer(IK)       :: s = 1
     !| m :: number of atom in a molecule
     integer(IK)       :: m = 1
+    !| n1 :: MAX(x%n, y%n)
+    integer(IK)       :: n1 = 1
+    !| n2 :: MIN(x%n, y%n)
+    integer(IK)       :: n2 = 1
   end type mol_block
 !
   interface mol_block
@@ -73,6 +77,8 @@ contains
       res%m = MAX(1, m)
       res%x%n = MAX(1, nx)
       res%y%n = MAX(1, ny)
+      res%n1 = MAX(res%x%n, res%y%n)
+      res%n2 = MIN(res%x%n, res%y%n)
   end function mol_block_new
 !
 ! Initializer of mol_block array.

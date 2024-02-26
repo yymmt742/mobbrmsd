@@ -1,6 +1,7 @@
 !| Tree structure for branch and bound.
 module mod_tree
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use mod_mol_block
   implicit none
   private
   public :: queue
@@ -13,6 +14,7 @@ module mod_tree
   public :: current_mapping
   public :: queue_pointer
   public :: node_pointer
+  public :: n_depth
   public :: is_empty
   public :: log_ncomb
 !
@@ -36,8 +38,8 @@ module mod_tree
     sequence
 !|  p :: pointer to work array.
     integer(IK), public :: p
-!|  m :: number of hierarchy.
-    integer(IK)         :: m
+!|  n :: number of hierarchy.
+    integer(IK)         :: n
 !|  s :: scaling factor.
     integer(IK)         :: s
   end type tree
@@ -67,14 +69,12 @@ contains
 !
 !| Constructer of factorial tree.<br>
 !  [s*m, s*(m-1),..., s*2, s]
-  pure function tree_new(m, s) result(res)
-!| m :: natural number.
-    integer(IK), intent(in) :: m
-!| s :: natural number.
-    integer(IK), intent(in) :: s
-    type(tree)              :: res
-    res%m = MAX(m, 1)
-    res%s = MAX(s, 1)
+  pure function tree_new(b) result(res)
+!|  b :: mol_block.
+    type(mol_block), intent(in) :: b
+    type(tree)                  :: res
+    res%n = MAX(MIN(b%x%n, b%y%n), 1)
+    res%s = MAX(b%s, 1)
     res%p = 1
   end function tree_new
 !
@@ -86,7 +86,7 @@ contains
     type(queue), intent(inout) :: q(*)
     integer(IK)                :: i
     q(1)%p = t%p
-    do i = 2, t%m
+    do i = 2, t%n
       q(i)%p = q(i - 1)%x * q(i - 1)%n + q(i - 1)%p
     end do
   end subroutine setup_queue
@@ -121,8 +121,8 @@ contains
     type(tree), intent(in)  :: t
 !|  q :: queue
     type(queue), intent(in) :: q(*)
-    integer(IK)             :: i, res(t%m)
-    do concurrent(i=1:t%m)
+    integer(IK)             :: i, res(t%n)
+    do concurrent(i=1:t%n)
       res(i) = q(i)%i + 1
     end do
   end function current_sequence
@@ -133,11 +133,11 @@ contains
     type(tree), intent(in)  :: t
 !|  q :: queue
     type(queue), intent(in) :: q(*)
-    integer(IK)             :: i, p, res(t%m)
-    do concurrent(i=1:t%m)
+    integer(IK)             :: i, p, res(t%n)
+    do concurrent(i=1:t%n)
       res(i) = i
     end do
-    do i = 1, t%m - 1
+    do i = 1, t%n - 1
       if(q(i)%i<0) return
       p = i + q(i)%i / t%s
       res(i:p) = [res(p), res(i:p - 1)]
@@ -150,8 +150,8 @@ contains
     type(tree), intent(in)  :: t
 !|  q :: queue
     type(queue), intent(in) :: q(:)
-    integer(IK)             :: i, res(t%m)
-    do concurrent(i=1:t%m)
+    integer(IK)             :: i, res(t%n)
+    do concurrent(i=1:t%n)
       res(i) = MODULO(q(i)%i, t%s)
     end do
   end function current_mapping
@@ -190,7 +190,15 @@ contains
 !
   end subroutine set_top_node
 !
+  pure elemental function n_depth(t) result(res)
+!|  t :: tree.
+    type(tree), intent(in) :: t
+    integer(IK)            :: res
+    res = t%n
+  end function n_depth
+
   pure function log_ncomb(q) result(res)
+!|  q :: queue list.
     type(queue), intent(in) :: q(:)
     real(RK)                :: tmp, res
     integer(IK)             :: i
@@ -210,6 +218,7 @@ contains
   end function log_ncomb
 !
   pure elemental function is_empty(q) result(res)
+!|  q :: queue.
     type(queue), intent(in) :: q
     logical                 :: res
     res = q%i < 0

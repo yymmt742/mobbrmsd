@@ -3,8 +3,11 @@ module mod_bb_manager
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_params, only: gemm, dot, copy
   use mod_mol_block
+  use mod_mol_symmetry
   use mod_c_matrix
-  use mod_s_matrix
+  use mod_f_matrix
+  use mod_rotation_matrix
+  use mod_Hungarian
   use mod_lowerbound
   use mod_tree
   implicit none
@@ -22,9 +25,14 @@ module mod_bb_manager
   type bb_manager
     private
     sequence
-    type(c_matrix), public :: c
-    type(s_matrix), public :: s
-    type(tree), public     :: t
+    type(c_matrix) :: c
+    type(f_matrix) :: f
+    type(tree)     :: t
+    integer(IK)    :: w
+    integer(IK)    :: l0
+    integer(IK)    :: f0
+    integer(IK)    :: g0
+    integer(IK)    :: c0
   end type bb_manager
 !
   interface bb_manager
@@ -34,31 +42,90 @@ module mod_bb_manager
 contains
 !
 !| Constructer
-  pure elemental function bb_manager_new(b) result(res)
+  pure elemental function bb_manager_new(b, w) result(res)
     !| b :: mol_block, must be initialized.
     type(mol_block), intent(in) :: b
+    !| w :: pointer to work array.
+    integer(IK), intent(in)     :: w
     type(bb_manager)            :: res
+    integer(IK)                 :: n, p, p1, p2
 !
-    res%c  = c_matrix(b)
-    res%s  = s_matrix(b)
+    res%c = c_matrix(b)
+    res%f = f_matrix(b)
+    res%t = tree(b)
+!
+    res%c%p = w
+    res%f%p = res%c%p + memsize_c_matrix(res%c)
+    res%l0 = res%f%p + memsize_f_matrix(res%f)
+    res%f0 = res%l0 + 1
+    res%g0 = res%f0 + 1
+    res%c0 = res%g0 + 1
+    res%t%p = res%c0 + DD
+!
+    p1 = MAX(b%x%n, b%y%n)
+    p2 = MIN(b%x%n, b%y%n)
+    n = p2
+!
+    res%w = 0
+    do p = 1, n
+      p1 = p1 - 1
+      p2 = p2 - 1
+      res%w = res%w + b%s * (p1 + 1) * &
+     &        (1 + p1 * p2 + MAX(1 + DD + worksize_sdmin(), worksize_Hungarian(p1, p2)))
+    end do
 !
   end function bb_manager_new
 !
-!| Inquire worksize of s_matrix.
+!| Inquire worksize of f_matrix.
   pure elemental function memsize_bb_manager(this) result(res)
     !| this :: bb_manager.
     type(bb_manager), intent(in) :: this
     integer(IK)                  :: res
-    res = memsize_s_matrix(this%s) + memsize_s_matrix(this%s)
+!
+    res = memsize_c_matrix(this%c) + memsize_f_matrix(this%f) + this%w + 3 + DD
+!
   end function memsize_bb_manager
 !
-!| Inquire worksize of s_matrix.
+!| Inquire worksize of bb_manager.
   pure elemental function worksize_bb_manager(this) result(res)
     !| this :: bb_manager.
     type(bb_manager), intent(in) :: this
     integer(IK)                  :: res
-    res = MAX(worksize_c_matrix(this%c) - memsize_s_matrix(this%s), worksize_s_matrix(this%s))
+    res = MAX(worksize_c_matrix(this%c) - memsize_f_matrix(this%f) - this%w, &
+   &          worksize_f_matrix(this%f) - this%w, &
+   &          0)
   end function worksize_bb_manager
+!
+  pure subroutine setup_bb_manager(this, b, ms, X, Y, W)
+    !| this :: bb_manager
+    type(bb_manager), intent(in)   :: this
+    !| b    :: mol_block
+    type(mol_block), intent(in)    :: b
+    !| ms   :: mol_symmetry
+    type(mol_symmetry), intent(in) :: ms
+    !| X    :: reference coordinate
+    real(RK), intent(in)           :: X(*)
+    !| Y    :: target coordinate
+    real(RK), intent(in)           :: Y(*)
+    !| W    :: work memory
+    real(RK), intent(inout)        :: W(*)
+    integer(IK)                    :: mn
+!
+    call c_matrix_eval(this%c, b, ms, X, Y, W(this%c%p), W)
+    call f_matrix_eval(this%f, b, W(this%c%p), W(this%f%p), W)
+    call Hungarian(b%n1, b%n2, W(this%f%p), W(this%f0))
+!
+  end subroutine setup_bb_manager
+!
+  pure subroutine succeed_bb_manager(this, upper, W)
+    !| this :: bb_manager
+    type(bb_manager), intent(in) :: this
+    !| upper :: bb_manager list
+    type(bb_manager), intent(in) :: upper(:)
+    !| W    :: work memory
+    real(RK), intent(inout)        :: W(*)
+!
+  end subroutine succeed_bb_manager
 !
 ! pure subroutine d_matrix_partial_eval(a, p, iprm, isym, ires, W, LT, H, C, LF, LB)
 !   type(d_matrix), intent(in)        :: a

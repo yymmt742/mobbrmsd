@@ -6,6 +6,7 @@ module mod_f_matrix
   use mod_c_matrix
   use mod_mol_block
   use mod_rotation_matrix
+  use mod_Hungarian
   implicit none
   private
   public :: f_matrix
@@ -21,7 +22,7 @@ module mod_f_matrix
     integer(IK), public :: p
     !| w  :: pointer to work.
     integer(IK), public :: w
-    !| nn :: memory size.
+    !| nn :: nx * ny
     integer(IK)         :: nn
     !| nw :: work memory size.
     integer(IK)         :: nw
@@ -41,7 +42,7 @@ contains
 !
     res%p  = 1
     res%w  = 1
-    res%nn = b%x%n * b%y%n
+    res%nn = b%n1 * b%n2
     res%nw = worksize_sdmin()
 !
   end function f_matrix_new
@@ -64,36 +65,36 @@ contains
 !
 !| Evaluation the D matrix.<br>
 !  If nx>=ny D(nx,ny), else D(ny,nx)
-  pure subroutine f_matrix_eval(this, b, C, S, W)
+  pure subroutine f_matrix_eval(this, b, C, F, W)
     !| this :: f_matrix
     type(f_matrix), intent(in)  :: this
     !| b    :: mol_block
     type(mol_block), intent(in) :: b
     !| C    :: covariacne matrix C(cb, n1, n2)
     real(RK), intent(in)        :: C(*)
-    !| S    :: main memory
-    real(RK), intent(inout)     :: S(*)
+    !| F    :: main memory
+    real(RK), intent(inout)     :: F(*)
     !| W    :: work array
     real(RK), intent(inout)     :: W(*)
     integer(IK)                 :: cb
 !
     cb = 1 + DD * b%s
-    call eval_f_matrix(cb, this%nn, C, S(this%p), W(this%w))
+    call eval_f_matrix(cb, this%nn, C, F(this%p), W(this%w))
 !
   contains
 !
-    pure subroutine eval_f_matrix(cb, nn, C, S, W)
+    pure subroutine eval_f_matrix(cb, nn, C, F, W)
       integer(IK), intent(in) :: cb, nn
       real(RK), intent(in)    :: C(cb, *)
-      real(RK), intent(inout) :: S(*), W(*)
+      real(RK), intent(inout) :: F(*), W(*)
       integer(IK)             :: i, j
 !
 !!!   get squared displacement
       do j = 1, nn
-        S(j) = RHUGE
+        F(j) = RHUGE
         do i = 2, cb, DD
           call estimate_sdmin(C(1, j), C(i, j), W)
-          S(j) = MIN(S(j), W(1))
+          F(j) = MIN(F(j), W(1))
         end do
       end do
 !
