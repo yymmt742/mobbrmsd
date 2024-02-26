@@ -24,15 +24,19 @@ module mod_bb_manager
 !    Therefore, the maximum memory allocation size is MAX( SUM_i^I |Ci| + |W_I| ).
   type bb_manager
     private
-    sequence
-    type(c_matrix) :: c
-    type(f_matrix) :: f
-    type(tree)     :: t
-    integer(IK)    :: w
-    integer(IK)    :: l0
-    integer(IK)    :: f0
-    integer(IK)    :: g0
-    integer(IK)    :: c0
+    type(mol_block)    :: b
+    type(mol_symmetry) :: ms
+    type(c_matrix)     :: c
+    type(f_matrix)     :: f
+    type(tree)         :: t
+    integer(IK)        :: w
+    integer(IK)        :: l0
+    integer(IK)        :: f0
+    integer(IK)        :: f_
+    integer(IK)        :: g0
+    integer(IK)        :: c0
+  contains
+    procedure          :: setup => bb_manager_setup
   end type bb_manager
 !
   interface bb_manager
@@ -42,34 +46,36 @@ module mod_bb_manager
 contains
 !
 !| Constructer
-  pure elemental function bb_manager_new(b, w) result(res)
+  pure elemental function bb_manager_new(b, ms, w) result(res)
     !| b :: mol_block, must be initialized.
-    type(mol_block), intent(in) :: b
+    type(mol_block), intent(in)              :: b
+    !| b :: mol_block, must be initialized.
+    type(mol_symmetry), intent(in), optional :: ms
     !| w :: pointer to work array.
-    integer(IK), intent(in)     :: w
-    type(bb_manager)            :: res
-    integer(IK)                 :: n, p, p1, p2
+    integer(IK), intent(in), optional        :: w
+    type(bb_manager)                         :: res
+    integer(IK)                              :: p, p1, p2
 !
+    res%b = b
     res%c = c_matrix(b)
     res%f = f_matrix(b)
     res%t = tree(b)
 !
-    res%c%p = w
+    if (PRESENT(ms)) res%ms = ms
+    if (PRESENT(w)) res%c%p = w
+!
     res%f%p = res%c%p + memsize_c_matrix(res%c)
     res%l0 = res%f%p + memsize_f_matrix(res%f)
     res%f0 = res%l0 + 1
-    res%g0 = res%f0 + 1
+    res%f_ = res%f0 + 1
+    res%g0 = res%f_ + 1
     res%c0 = res%g0 + 1
     res%t%p = res%c0 + DD
 !
-    p1 = MAX(b%x%n, b%y%n)
-    p2 = MIN(b%x%n, b%y%n)
-    n = p2
-!
-    res%w = 0
-    do p = 1, n
-      p1 = p1 - 1
-      p2 = p2 - 1
+    res%w = 4 + DD
+    do p = 1, b%n2
+      p1 = b%n1 - p
+      p2 = b%n2 - p
       res%w = res%w + b%s * (p1 + 1) * &
      &        (1 + p1 * p2 + MAX(1 + DD + worksize_sdmin(), worksize_Hungarian(p1, p2)))
     end do
@@ -82,7 +88,7 @@ contains
     type(bb_manager), intent(in) :: this
     integer(IK)                  :: res
 !
-    res = memsize_c_matrix(this%c) + memsize_f_matrix(this%f) + this%w + 3 + DD
+    res = memsize_c_matrix(this%c) + memsize_f_matrix(this%f) + this%w
 !
   end function memsize_bb_manager
 !
@@ -96,36 +102,66 @@ contains
    &          0)
   end function worksize_bb_manager
 !
-  pure subroutine setup_bb_manager(this, b, ms, X, Y, W)
+!| Setup C matrix and F matrix.
+  pure subroutine bb_manager_setup(this, X, Y, W)
     !| this :: bb_manager
-    type(bb_manager), intent(in)   :: this
-    !| b    :: mol_block
-    type(mol_block), intent(in)    :: b
-    !| ms   :: mol_symmetry
-    type(mol_symmetry), intent(in) :: ms
+    class(bb_manager), intent(in) :: this
     !| X    :: reference coordinate
-    real(RK), intent(in)           :: X(*)
+    real(RK), intent(in)          :: X(*)
     !| Y    :: target coordinate
-    real(RK), intent(in)           :: Y(*)
+    real(RK), intent(in)          :: Y(*)
     !| W    :: work memory
-    real(RK), intent(inout)        :: W(*)
-    integer(IK)                    :: mn
+    real(RK), intent(inout)       :: W(*)
 !
-    call c_matrix_eval(this%c, b, ms, X, Y, W(this%c%p), W)
-    call f_matrix_eval(this%f, b, W(this%c%p), W(this%f%p), W)
-    call Hungarian(b%n1, b%n2, W(this%f%p), W(this%f0))
+    call c_matrix_eval(this%c, this%b, this%ms, X, Y, W(this%c%p), W)
+    call f_matrix_eval(this%f, this%b, W(this%c%p), W(this%f%p), W)
+    call Hungarian(this%b%n1, this%b%n2, W(this%f%p), W(this%f0))
+    call zfill(DD + 2, W(this%f_))
 !
-  end subroutine setup_bb_manager
+  end subroutine bb_manager_setup
 !
-  pure subroutine succeed_bb_manager(this, upper, W)
+!| Setup C matrix and F matrix.
+  pure subroutine bb_manager_run(this, W)
     !| this :: bb_manager
-    type(bb_manager), intent(in) :: this
-    !| upper :: bb_manager list
-    type(bb_manager), intent(in) :: upper(:)
+    class(bb_manager), intent(in) :: this
     !| W    :: work memory
-    real(RK), intent(inout)        :: W(*)
+    real(RK), intent(inout)       :: W(*)
 !
-  end subroutine succeed_bb_manager
+!
+  end subroutine bb_manager_run
+!
+  pure subroutine eval_child(b, p, inode, Wp, Wc)
+    type(mol_block), intent(in) :: b
+    integer(IK), intent(in)     :: p, inode
+    real(RK), intent(in)        :: Wp(*)
+    real(RK), intent(inout)     :: Wc(*)
+    integer(IK), parameter      :: l = 1
+    integer(IK), parameter      :: f = 2
+    integer(IK), parameter      :: g = 3
+    integer(IK)                 :: c
+!
+    c = g + b%n1 * b%n2
+    call copy(1 + DD, Wp(c), 1, Wc(c), 1)
+    call subm(b%n1, b%n2, inode, Wp(f), Wc(f))
+!
+  contains
+!
+    pure subroutine subm(m, n, r, X, Y)
+    integer(IK), intent(in) :: m, n, r
+    real(RK), intent(in)    :: X(m, n)
+    real(RK), intent(inout) :: Y(m-1, n-1)
+    integer(IK)             :: i, j
+      do concurrent(j = 2: n)
+        do concurrent(i=1:r - 1)
+          Y(i, j - 1) = X(i, j)
+        end do
+        do concurrent(i=r + 1:m)
+          Y(i - 1, j - 1) = X(i, j)
+        end do
+      end do
+    end subroutine subm
+
+  end subroutine eval_child
 !
 ! pure subroutine d_matrix_partial_eval(a, p, iprm, isym, ires, W, LT, H, C, LF, LB)
 !   type(d_matrix), intent(in)        :: a
@@ -472,14 +508,14 @@ contains
 !   end do
 ! end subroutine add
 !
-! pure subroutine zfill(d, x)
-!   integer(IK), intent(in) :: d
-!   real(RK), intent(inout) :: x(*)
-!   integer(IK)             :: i
-!   do concurrent(i=1:d)
-!     x(i) = ZERO
-!   end do
-! end subroutine zfill
+  pure subroutine zfill(d, x)
+    integer(IK), intent(in) :: d
+    real(RK), intent(inout) :: x(*)
+    integer(IK)             :: i
+    do concurrent(i=1:d)
+      x(i) = ZERO
+    end do
+  end subroutine zfill
 !
 end module mod_bb_manager
 
