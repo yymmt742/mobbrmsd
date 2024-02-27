@@ -13,10 +13,17 @@ module mod_bb_manager
   implicit none
   private
   public :: bb_manager
+  public :: bb_manager_list_setup
   public :: memsize_bb_manager
   public :: worksize_bb_manager
 !
 !| bb_manager<br>
+!    Node data<br>
+!    0    L      : lowerbound.<br>
+!    1    G      : partial sum of auto variance.<br>
+!    2    C(D,D) : partial sum of covariance.<br>
+!    2+DD F(m,n) : Free rotate score matrix.<br>
+!         W(*)   : work space.<br>
 !    By default, memory is allocated as follows.<br>
 !    |-C1-|----W1----|<br>
 !    |----|--C2--|--------W2-------|<br>
@@ -24,19 +31,28 @@ module mod_bb_manager
 !    Therefore, the maximum memory allocation size is MAX( SUM_i^I |Ci| + |W_I| ).
   type bb_manager
     private
-    type(mol_block)    :: b
-    type(mol_symmetry) :: ms
-    type(c_matrix)     :: c
-    type(f_matrix)     :: f
-    type(tree)         :: t
-    integer(IK)        :: w
-    integer(IK)        :: l0
-    integer(IK)        :: f0
-    integer(IK)        :: f_
-    integer(IK)        :: g0
-    integer(IK)        :: c0
+    !| mol_block
+    type(mol_block)          :: b
+    !| mol_symmetry
+    type(mol_symmetry)       :: ms
+    !| c_matrix
+    type(c_matrix)           :: c
+    !| f_matrix
+    type(f_matrix)           :: f
+    !| tree
+    type(tree)               :: t
+    !| queue
+    type(queue), allocatable :: q(:)
+    !| w
+    integer(IK)              :: w
+    !| f0 = sum_{k=l+1}^L F0(k), fixed in bb.
+    integer(IK)              :: f0
+    !| g0 = sum_{k=1}^{l-1} G(k)
+    integer(IK)              :: g0
+    !| l0 = sum_{k=1}^{l-1} C(k)
+    integer(IK)              :: c0
   contains
-    procedure          :: setup => bb_manager_setup
+    !procedure          :: setup => bb_manager_setup
   end type bb_manager
 !
   interface bb_manager
@@ -64,15 +80,15 @@ contains
     if (PRESENT(ms)) res%ms = ms
     if (PRESENT(w)) res%c%p = w
 !
-    res%f%p = res%c%p + memsize_c_matrix(res%c)
-    res%l0 = res%f%p + memsize_f_matrix(res%f)
-    res%f0 = res%l0 + 1
-    res%f_ = res%f0 + 1
-    res%g0 = res%f_ + 1
+    res%c%w = res%c%p + memsize_c_matrix(res%c)
+    res%f%p = res%c%w
+    res%f%w = res%f%p + memsize_f_matrix(res%f)
+    res%f0 = res%f%w
+    res%g0 = res%f0 + 1
     res%c0 = res%g0 + 1
     res%t%p = res%c0 + DD
 !
-    res%w = 4 + DD
+    res%w = 2 + DD
     do p = 1, b%n2
       p1 = b%n1 - p
       p2 = b%n2 - p
@@ -102,33 +118,92 @@ contains
    &          0)
   end function worksize_bb_manager
 !
-!| Setup C matrix and F matrix.
-  pure subroutine bb_manager_setup(this, X, Y, W)
+  pure subroutine bb_manager_list_setup(bb, X, Y, W)
     !| this :: bb_manager
-    class(bb_manager), intent(in) :: this
+    type(bb_manager), intent(in) :: bb(:)
     !| X    :: reference coordinate
-    real(RK), intent(in)          :: X(*)
+    real(RK), intent(in)         :: X(*)
     !| Y    :: target coordinate
-    real(RK), intent(in)          :: Y(*)
+    real(RK), intent(in)         :: Y(*)
     !| W    :: work memory
-    real(RK), intent(inout)       :: W(*)
+    real(RK), intent(inout)      :: W(*)
+    integer(IK)                  :: k, l
 !
-    call c_matrix_eval(this%c, this%b, this%ms, X, Y, W(this%c%p), W)
-    call f_matrix_eval(this%f, this%b, W(this%c%p), W(this%f%p), W)
-    call Hungarian(this%b%n1, this%b%n2, W(this%f%p), W(this%f0))
-    call zfill(DD + 2, W(this%f_))
+    do k = 1, SIZE(bb)
+      call c_matrix_eval(bb(k)%c, bb(k)%b, bb(k)%ms, X, Y, W, W)
+      call f_matrix_eval(bb(k)%f, bb(k)%b, W(bb(k)%c%p), W, W)
+      if (k > 1) call Hungarian(bb(k)%b%n1, bb(k)%b%n2, W(bb(k)%f%p), W(bb(k)%f0))
+      do concurrent(l=1:k - 1)
+        W(bb(l)%f0) = W(bb(l)%f0) + W(bb(k)%f0)
+      end do
+      call zfill(DD + 2, W(bb(k)%f0))
+    end do
 !
-  end subroutine bb_manager_setup
+  end subroutine bb_manager_list_setup
 !
-!| Setup C matrix and F matrix.
-  pure subroutine bb_manager_run(this, W)
+!| Setup C matrix and F matrix in root node.
+  pure subroutine bb_manager_setup_root(this, G0, C0, W)
     !| this :: bb_manager
     class(bb_manager), intent(in) :: this
+    !| G0 :: sum of auto variances.
+    real(RK), intent(in)          :: G0
+    !| C0 :: sum of covariance matrices.
+    real(RK), intent(in)          :: C0(*)
     !| W    :: work memory
     real(RK), intent(inout)       :: W(*)
 !
+    W(this%g0) = G0
+    call copy(DD, C0, 1, W(this%c0), 1)
 !
-  end subroutine bb_manager_run
+  end subroutine bb_manager_setup_root
+!
+!| Expand top node in queue.
+  pure subroutine bb_manager_expand(this, p, q_cur, q_nex, W)
+    !| this :: bb_manager
+    class(bb_manager), intent(in) :: this
+    !| p :: current level.
+    integer(IK), intent(in)       :: p
+    !| q_cur :: current queue.
+    type(queue), intent(in)       :: q_cur
+    !| q_nex :: next queue.
+    type(queue), intent(in)       :: q_nex
+    !| W    :: work memory
+    real(RK), intent(inout)       :: W(*)
+    integer(IK)                   :: f
+    integer(IK)                   :: fc, fn
+    integer(IK)                   :: i, cq, nq, nper
+!
+     f = 2 + DD
+     cq = node_pointer(q_cur)
+     fc = cq + f
+     nper = n_perm(this%t, q_nex)
+!
+     do iper = 0, nper - 1
+       do imap = 0, this%b%s - 1
+         nq = node_pointer(q_nex, i, j)
+         fn = nq + f
+         call subm(m, n, iper, W(fc), W(fn))
+       end do
+     end do
+!
+  contains
+!
+    pure subroutine subm(m, n, r, X, Y)
+    integer(IK), intent(in) :: m, n, r
+    real(RK), intent(in)    :: X(m, n)
+    real(RK), intent(inout) :: Y(m-1, n-1)
+    integer(IK)             :: i, j
+      do concurrent(j = 2: n)
+        do concurrent(i=1:r - 1)
+          Y(i, j - 1) = X(i, j)
+        end do
+        do concurrent(i=r + 1:m)
+          Y(i - 1, j - 1) = X(i, j)
+        end do
+      end do
+    end subroutine subm
+!
+  end subroutine bb_manager_expand
 !
   pure subroutine eval_child(b, p, inode, Wp, Wc)
     type(mol_block), intent(in) :: b
@@ -516,6 +591,11 @@ contains
       x(i) = ZERO
     end do
   end subroutine zfill
+!
+  pure elemental subroutine bb_manager_destroy(this)
+    type(bb_manager), intent(inout) :: this
+    if(ALLOCATED(this%q)) deallocate(q)
+  end subroutine bb_manager_destroy
 !
 end module mod_bb_manager
 

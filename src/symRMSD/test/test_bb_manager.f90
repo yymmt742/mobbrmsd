@@ -1,5 +1,5 @@
 program main
-  use mod_params, only: setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: D, setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_mol_symmetry
   use mod_rotation_matrix
@@ -24,12 +24,21 @@ contains
 !
   subroutine test0()
     type(mol_block)  :: b
-    type(bb_manager) :: bm
+    type(bb_manager) :: bm(1)
     integer(IK)      :: i
+    real(RK)         :: X(D, 8 * 3), Y(D, 8 * 5)
+    real(RK), allocatable :: w(:)
 !
     b = mol_block(1, 8, 3, 5)
     bm = bb_manager(b)
     print *, memsize_bb_manager(bm), worksize_bb_manager(bm)
+    X = sample(D, 8 * 3)
+    Y = sample(D, 8 * 5)
+    allocate (W(memsize_bb_manager(bm(1)) + worksize_bb_manager(bm(1))))
+    w = 999
+    call bb_manager_list_setup(bm, X, Y, W)
+!   call bm%setup(X, Y, W)
+    print'(10f9.4)', W
 !
   end subroutine test0
 !
