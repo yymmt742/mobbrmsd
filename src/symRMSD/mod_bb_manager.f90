@@ -32,34 +32,44 @@ module mod_bb_manager
   type bb_manager
     private
     !| mol_block
-    type(mol_block)          :: b
+    type(mol_block)    :: b
     !| mol_symmetry
-    type(mol_symmetry)       :: ms
+    type(mol_symmetry) :: ms
     !| c_matrix
-    type(c_matrix)           :: c
+    type(c_matrix)     :: c
     !| f_matrix
-    type(f_matrix)           :: f
+    type(f_matrix)     :: f
     !| tree
-    type(tree)               :: t
-    !| queue
-    type(queue), allocatable :: q(:)
-    !| w
-    integer(IK)              :: w
-    !| f0 = sum_{k=l+1}^L F0(k), fixed in bb.
-    integer(IK)              :: f0
-    !| g0 = sum_{k=1}^{l-1} G(k)
-    integer(IK)              :: g0
-    !| l0 = sum_{k=1}^{l-1} C(k)
-    integer(IK)              :: c0
+    type(tree)         :: t
   contains
-    !procedure          :: setup => bb_manager_setup
+    procedure          :: setup_root => bb_manager_setup_root
+    procedure          :: expand     => bb_manager_expand
+    final              :: bb_manager_destroy
   end type bb_manager
 !
   interface bb_manager
     module procedure bb_manager_new
   end interface bb_manager
 !
+  integer(IK), parameter :: mmap_l = 0
+  integer(IK), parameter :: mmap_o = 1
+  integer(IK), parameter :: mmap_f = 2
+!
 contains
+!
+  pure elemental function mmap_g(b, p) result(res)
+    type(mol_block), intent(in) :: b
+    integer(IK), intent(in)     :: p
+    integer(IK)                 :: res
+    res = mmap_f + (b%n1 - p) * (b%n2 - p)
+  end function mmap_g
+!
+  pure elemental function mmap_c(b, p) result(res)
+    type(mol_block), intent(in) :: b
+    integer(IK), intent(in)     :: p
+    integer(IK)                 :: res
+    res = 1 + mmap_g(b, p)
+  end function mmap_c
 !
 !| Constructer
   pure elemental function bb_manager_new(b, ms, w) result(res)
@@ -70,12 +80,11 @@ contains
     !| w :: pointer to work array.
     integer(IK), intent(in), optional        :: w
     type(bb_manager)                         :: res
-    integer(IK)                              :: p, p1, p2
 !
     res%b = b
     res%c = c_matrix(b)
     res%f = f_matrix(b)
-    res%t = tree(b)
+    res%t = tree(b, memsize)
 !
     if (PRESENT(ms)) res%ms = ms
     if (PRESENT(w)) res%c%p = w
@@ -83,18 +92,18 @@ contains
     res%c%w = res%c%p + memsize_c_matrix(res%c)
     res%f%p = res%c%w
     res%f%w = res%f%p + memsize_f_matrix(res%f)
-    res%f0 = res%f%w
-    res%g0 = res%f0 + 1
-    res%c0 = res%g0 + 1
-    res%t%p = res%c0 + DD
+    res%t%p = res%f%w
 !
-    res%w = 2 + DD
-    do p = 1, b%n2
+  contains
+!
+    pure function memsize(b, p) result(res)
+      type(mol_block), intent(in) :: b
+      integer(IK), intent(in)     :: p
+      integer(IK)                 :: res, p1, p2
       p1 = b%n1 - p
       p2 = b%n2 - p
-      res%w = res%w + b%s * (p1 + 1) * &
-     &        (1 + p1 * p2 + MAX(1 + DD + worksize_sdmin(), worksize_Hungarian(p1, p2)))
-    end do
+      res = 1 + p1 * p2 + MAX(1 + DD + worksize_sdmin(), worksize_Hungarian(p1, p2))
+    end function memsize
 !
   end function bb_manager_new
 !
@@ -103,9 +112,7 @@ contains
     !| this :: bb_manager.
     type(bb_manager), intent(in) :: this
     integer(IK)                  :: res
-!
-    res = memsize_c_matrix(this%c) + memsize_f_matrix(this%f) + this%w
-!
+    res = memsize_c_matrix(this%c) + memsize_f_matrix(this%f) + this%t%memsize()
   end function memsize_bb_manager
 !
 !| Inquire worksize of bb_manager.
@@ -113,11 +120,12 @@ contains
     !| this :: bb_manager.
     type(bb_manager), intent(in) :: this
     integer(IK)                  :: res
-    res = MAX(worksize_c_matrix(this%c) - memsize_f_matrix(this%f) - this%w, &
-   &          worksize_f_matrix(this%f) - this%w, &
-   &          0)
+    res = memsize_f_matrix(this%f)
+    res = MAX(worksize_c_matrix(this%c) - res, res)
+    res = MAX(res - this%t%memsize(), 0)
   end function worksize_bb_manager
 !
+!| Setup.
   pure subroutine bb_manager_list_setup(bb, X, Y, W)
     !| this :: bb_manager
     type(bb_manager), intent(in) :: bb(:)
@@ -132,11 +140,13 @@ contains
     do k = 1, SIZE(bb)
       call c_matrix_eval(bb(k)%c, bb(k)%b, bb(k)%ms, X, Y, W, W)
       call f_matrix_eval(bb(k)%f, bb(k)%b, W(bb(k)%c%p), W, W)
-      if (k > 1) call Hungarian(bb(k)%b%n1, bb(k)%b%n2, W(bb(k)%f%p), W(bb(k)%f0))
+      call Hungarian(bb(k)%b%n1, bb(k)%b%n2, W(bb(k)%f%p), W(bb(k)%t%p))
       do concurrent(l=1:k - 1)
-        W(bb(l)%f0) = W(bb(l)%f0) + W(bb(k)%f0)
+        W(bb(l)%t%p + mmap_o) = W(bb(l)%t%p + mmap_o) + W(bb(k)%t%p)
       end do
-      call zfill(DD + 2, W(bb(k)%f0))
+      W(bb(k)%t%p + mmap_o) = ZERO
+      call copy(bb(k)%b%n1 * bb(k)%b%n2, W(bb(k)%f%p), 1, W(bb(k)%t%p + mmap_f), 1)
+      call zfill(DD + 1, W(bb(k)%t%p + mmap_g(bb(k)%b, 0)))
     end do
 !
   end subroutine bb_manager_list_setup
@@ -151,38 +161,38 @@ contains
     real(RK), intent(in)          :: C0(*)
     !| W    :: work memory
     real(RK), intent(inout)       :: W(*)
+    integer(IK)                   :: t
 !
-    W(this%g0) = G0
-    call copy(DD, C0, 1, W(this%c0), 1)
+    t = this%t%p + mmap_g(this%b, 0)
+    W(t) = G0
+    t = this%t%p + mmap_c(this%b, 0)
+    call copy(DD, C0, 1, W(t), 1)
 !
   end subroutine bb_manager_setup_root
 !
 !| Expand top node in queue.
-  pure subroutine bb_manager_expand(this, p, q_cur, q_nex, W)
-    !| this :: bb_manager
-    class(bb_manager), intent(in) :: this
-    !| p :: current level.
-    integer(IK), intent(in)       :: p
-    !| q_cur :: current queue.
-    type(queue), intent(in)       :: q_cur
-    !| q_nex :: next queue.
-    type(queue), intent(in)       :: q_nex
-    !| W    :: work memory
-    real(RK), intent(inout)       :: W(*)
-    integer(IK)                   :: f
-    integer(IK)                   :: fc, fn
-    integer(IK)                   :: i, cq, nq, nper
+  pure subroutine bb_manager_expand(this, W)
+    class(bb_manager), intent(inout) :: this
+    !! this :: bb_manager
+    real(RK), intent(inout)          :: W(*)
+    !! W    :: work memory
+    integer(IK)                      :: fc, nper, iper, imap
+    integer(IK)                      :: m, n
 !
-     f = 2 + DD
-     cq = node_pointer(q_cur)
-     fc = cq + f
-     nper = n_perm(this%t, q_nex)
+     m = this%b%n1 - this%t%current_level()
+     n = this%b%n2 - this%t%current_level()
+!
+     fc = this%t%current_pointer() + mmap_f
+     nper = this%t%n_perm()
+     call this%t%expand()
 !
      do iper = 0, nper - 1
        do imap = 0, this%b%s - 1
-         nq = node_pointer(q_nex, i, j)
-         fn = nq + f
-         call subm(m, n, iper, W(fc), W(fn))
+         block
+           integer(IK) :: fn
+           fn = this%t%node_pointer(iper, imap) + mmap_f
+           call subm(m, n, iper, W(fc), W(fn))
+         end block
        end do
      end do
 !
@@ -205,38 +215,38 @@ contains
 !
   end subroutine bb_manager_expand
 !
-  pure subroutine eval_child(b, p, inode, Wp, Wc)
-    type(mol_block), intent(in) :: b
-    integer(IK), intent(in)     :: p, inode
-    real(RK), intent(in)        :: Wp(*)
-    real(RK), intent(inout)     :: Wc(*)
-    integer(IK), parameter      :: l = 1
-    integer(IK), parameter      :: f = 2
-    integer(IK), parameter      :: g = 3
-    integer(IK)                 :: c
+! pure subroutine eval_child(b, p, inode, Wp, Wc)
+!   type(mol_block), intent(in) :: b
+!   integer(IK), intent(in)     :: p, inode
+!   real(RK), intent(in)        :: Wp(*)
+!   real(RK), intent(inout)     :: Wc(*)
+!   integer(IK), parameter      :: l = 1
+!   integer(IK), parameter      :: f = 2
+!   integer(IK), parameter      :: g = 3
+!   integer(IK)                 :: c
 !
-    c = g + b%n1 * b%n2
-    call copy(1 + DD, Wp(c), 1, Wc(c), 1)
-    call subm(b%n1, b%n2, inode, Wp(f), Wc(f))
+!   c = g + b%n1 * b%n2
+!   call copy(1 + DD, Wp(c), 1, Wc(c), 1)
+!   call subm(b%n1, b%n2, inode, Wp(f), Wc(f))
 !
-  contains
+! contains
 !
-    pure subroutine subm(m, n, r, X, Y)
-    integer(IK), intent(in) :: m, n, r
-    real(RK), intent(in)    :: X(m, n)
-    real(RK), intent(inout) :: Y(m-1, n-1)
-    integer(IK)             :: i, j
-      do concurrent(j = 2: n)
-        do concurrent(i=1:r - 1)
-          Y(i, j - 1) = X(i, j)
-        end do
-        do concurrent(i=r + 1:m)
-          Y(i - 1, j - 1) = X(i, j)
-        end do
-      end do
-    end subroutine subm
+!   pure subroutine subm(m, n, r, X, Y)
+!   integer(IK), intent(in) :: m, n, r
+!   real(RK), intent(in)    :: X(m, n)
+!   real(RK), intent(inout) :: Y(m-1, n-1)
+!   integer(IK)             :: i, j
+!     do concurrent(j = 2: n)
+!       do concurrent(i=1:r - 1)
+!         Y(i, j - 1) = X(i, j)
+!       end do
+!       do concurrent(i=r + 1:m)
+!         Y(i - 1, j - 1) = X(i, j)
+!       end do
+!     end do
+!   end subroutine subm
 
-  end subroutine eval_child
+! end subroutine eval_child
 !
 ! pure subroutine d_matrix_partial_eval(a, p, iprm, isym, ires, W, LT, H, C, LF, LB)
 !   type(d_matrix), intent(in)        :: a
@@ -594,7 +604,6 @@ contains
 !
   pure elemental subroutine bb_manager_destroy(this)
     type(bb_manager), intent(inout) :: this
-    if(ALLOCATED(this%q)) deallocate(q)
   end subroutine bb_manager_destroy
 !
 end module mod_bb_manager

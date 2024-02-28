@@ -39,6 +39,7 @@ module mod_tree
     type(queue), allocatable :: q(:)
   contains
     procedure :: memsize             => tree_memsize
+    procedure :: current_level       => tree_current_level
     procedure :: queue_pointer       => tree_queue_pointer
     procedure :: current_pointer     => tree_current_pointer
     procedure :: node_pointer        => tree_node_pointer
@@ -129,6 +130,14 @@ contains
     integer(IK)              :: res
     res = SUM(memsize_queue(this%q))
   end function tree_memsize
+!
+!| Returns a pointer to the queue.
+  pure elemental function tree_current_level(this) result(res)
+!|  this :: tree
+    class(tree), intent(in)  :: this
+    integer(IK)              :: res
+    res = this%l - 1
+  end function tree_current_level
 !
 !| Returns a pointer to the queue.
   pure elemental function tree_queue_pointer(this) result(res)

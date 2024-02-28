@@ -120,12 +120,5 @@ contains
     res = 1 + p
   end function memsize1
 !
-  pure function memsize2(b, p) result(res)
-    type(mol_block), intent(in) :: b
-    integer(IK), intent(in)     :: p
-    integer(IK)                 :: res
-    res = 1 + p**2
-  end function memsize2
-!
 end program main
 
