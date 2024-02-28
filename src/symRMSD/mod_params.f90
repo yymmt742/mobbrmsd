@@ -80,31 +80,39 @@ module mod_params
   public  :: R4, R8, RQ
   public  :: RK, IK, LK
   public  :: STDIN, STDOUT, STDERR
-  public  :: RZERO, RONE, RHALF, RFOUR, RHUGE
+  public  :: RZERO, RONE, RHALF, RFOUR, RTEN
+  public  :: RNAPIER, RHUGE, LN_TO_L10
+!
   public  :: D, DD
   public  :: setup_dimension
   public  :: copy, axpy, dot, gemm, gesvd, getrf, symm
 !
 !&<
 !
-  integer, parameter          :: IK = KIND(0)
+  integer, parameter           :: IK = KIND(0)
   !! Selected integer kind.
-  integer, parameter          :: RK = KIND(0.0_R8)
+  integer, parameter           :: RK = KIND(0.0_R8)
   !! Selected real kind.
-  integer, parameter          :: LK = KIND(.true.)
+  integer, parameter           :: LK = KIND(.true.)
   !! Selected logical kind.
 !
-  real(RK), parameter         :: RZERO = 0.0_RK
+  real(RK), parameter          :: RZERO = 0.0_RK
   !! Real zero.
-  real(RK), parameter         :: RONE  = 1.0_RK
+  real(RK), parameter          :: RONE  = 1.0_RK
   !! Real one.
-  real(RK), parameter         :: RHALF = 0.5_RK
+  real(RK), parameter          :: RHALF = 0.5_RK
   !! Real 1/2.
-  real(RK), parameter         :: RFOUR = 4.0_RK
+  real(RK), parameter          :: RFOUR = 4.0_RK
   !! Real four.
+  real(RK), parameter          :: RTEN  = 10.0_RK
+  !! Real ten.
 !
-  real(RK), parameter         :: RHUGE = HUGE(RZERO)
+  real(RK), parameter          :: RNAPIER = 2.71828182846_RK
+  !! Napier constant.
+  real(RK), parameter          :: RHUGE = HUGE(RZERO)
   !! Real large number.
+  real(RK), parameter          :: LN_TO_L10 = LOG10(RNAPIER)
+  !! Scaling factor, LOG10(x) =LN_TO_L10 * LN(x)
 !
   integer(IK), save, protected :: D  = 3
   !! Spatial dimension
