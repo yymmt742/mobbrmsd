@@ -34,10 +34,11 @@ contains
     print *, memsize_bb_manager(bm), worksize_bb_manager(bm)
     X = sample(D, 8 * 3)
     Y = sample(D, 8 * 5)
+    Y(:,8+1:8*4) = X
     allocate (W(memsize_bb_manager(bm(1)) + worksize_bb_manager(bm(1))))
     w = 999
     call bb_manager_list_setup(bm, X, Y, W)
-!   call bm%setup(X, Y, W)
+    call bm(1)%expand(W)
     print'(10f9.4)', W
 !
   end subroutine test0

@@ -188,7 +188,7 @@ contains
   end subroutine c_matrix_eval
 !
 !| Add CIJs to partial covariance matrix C.
-  pure subroutine c_matrix_add(this, b, i, j, s, W, C)
+  pure subroutine c_matrix_add(this, b, i, j, s, W, G, C)
     !| this :: c_matrix
     type(c_matrix), intent(in)  :: this
     !| b    :: mol_block
@@ -201,12 +201,16 @@ contains
     integer(IK), intent(in)     :: s
     !| W    :: work array
     real(RK), intent(in)        :: W(*)
+    !| G    :: partial auto variance matrix
+    real(RK), intent(inout)     :: G
     !| C    :: partial covariance matrix
     real(RK), intent(inout)     :: C(*)
     integer(IK)                 :: k
 !
-    k = this%p + this%cb * (i - 1) + this%cl * (j - 1) + DD * (s - 1) + 1
-    call axpy(DD, ONE, W(k), 1, C, 1 )
+    k = this%p + this%cb * (i - 1) + this%cl * (j - 1)
+    G = G + W(k)
+    k = k + DD * (s - 1) + 1
+    call axpy(DD, ONE, W(k), 1, C, 1)
 !
   end subroutine c_matrix_add
 !

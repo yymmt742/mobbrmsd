@@ -95,15 +95,14 @@ contains
       end function memsize
     end interface
     type(tree)                  :: res
-    integer(IK)                 :: n, i
+    integer(IK)                 :: i
     res%p = 1
     res%s = MAX(b%s, 1)
-    n = MAX(MIN(b%x%n, b%y%n), 1)
-    allocate (res%q(n + 1))
+    allocate (res%q(b%n2 + 1))
 !
     res%q(1) = queue_new(1, MAX(memsize(b, 0), 1), 0) ! root node
-    do i = 1, n
-      res%q(i + 1) = queue_new(res%s * (n - i + 1), MAX(memsize(b, i), 1),&
+    do i = 1, b%n2
+      res%q(i + 1) = queue_new(res%s * (b%n1 - i + 1), MAX(memsize(b, i), 1),&
      &                         res%q(i)%x * res%q(i)%n + res%q(i)%p)
     end do
 !

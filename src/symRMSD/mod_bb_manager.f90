@@ -176,22 +176,28 @@ contains
     !! this :: bb_manager
     real(RK), intent(inout)          :: W(*)
     !! W    :: work memory
-    integer(IK)                      :: fc, nper, iper, imap
+    integer(IK)                      :: cl, fc, gc
+    integer(IK)                      :: nper, iper, imap
     integer(IK)                      :: m, n
 !
-     m = this%b%n1 - this%t%current_level()
-     n = this%b%n2 - this%t%current_level()
-!
+     cl = this%t%current_level()
+     m = this%b%n1 - cl
+     n = this%b%n2 - cl
      fc = this%t%current_pointer() + mmap_f
-     nper = this%t%n_perm()
+     gc = this%t%current_pointer() + mmap_g(this%b, cl)
      call this%t%expand()
+     nper = this%t%n_perm()
+     cl = this%t%current_level()
 !
      do iper = 0, nper - 1
        do imap = 0, this%b%s - 1
          block
-           integer(IK) :: fn
+           integer(IK) :: fn, gn
            fn = this%t%node_pointer(iper, imap) + mmap_f
-           call subm(m, n, iper, W(fc), W(fn))
+           call subm(m, n, iper + 1, W(fc), W(fn))
+           gn = this%t%node_pointer(iper, imap) + mmap_g(this%b, cl)
+           call copy(DD + 1, W(gc), 1, W(gn), 1)
+           call c_matrix_add(this%c, this%b, iper + 1, cl, imap + 1, W, W(gn), W(gn+1))
          end block
        end do
      end do
@@ -203,7 +209,7 @@ contains
     real(RK), intent(in)    :: X(m, n)
     real(RK), intent(inout) :: Y(m-1, n-1)
     integer(IK)             :: i, j
-      do concurrent(j = 2: n)
+      do concurrent(j=2:n)
         do concurrent(i=1:r - 1)
           Y(i, j - 1) = X(i, j)
         end do
