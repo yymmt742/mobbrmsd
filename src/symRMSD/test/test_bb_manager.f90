@@ -29,7 +29,7 @@ contains
     real(RK)         :: X(D, 8 * 3), Y(D, 8 * 5)
     real(RK), allocatable :: w(:)
 !
-    b = mol_block(1, 8, 3, 5)
+    b = mol_block(2, 8, 3, 5)
     bm = bb_manager(b)
     print *, memsize_bb_manager(bm), worksize_bb_manager(bm)
     X = sample(D, 8 * 3)

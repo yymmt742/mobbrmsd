@@ -39,6 +39,8 @@ module mod_bb_manager
     type(c_matrix)     :: c
     !| f_matrix
     type(f_matrix)     :: f
+    !| offset
+    integer(IK)        :: o
     !| tree
     type(tree)         :: t
   contains
@@ -52,8 +54,7 @@ module mod_bb_manager
   end interface bb_manager
 !
   integer(IK), parameter :: mmap_l = 0
-  integer(IK), parameter :: mmap_o = 1
-  integer(IK), parameter :: mmap_f = 2
+  integer(IK), parameter :: mmap_f = 1
 !
 contains
 !
@@ -92,7 +93,8 @@ contains
     res%c%w = res%c%p + memsize_c_matrix(res%c)
     res%f%p = res%c%w
     res%f%w = res%f%p + memsize_f_matrix(res%f)
-    res%t%p = res%f%w
+    res%o   = res%f%w
+    res%t%p = res%o + 1
 !
   contains
 !
@@ -112,7 +114,7 @@ contains
     !| this :: bb_manager.
     type(bb_manager), intent(in) :: this
     integer(IK)                  :: res
-    res = memsize_c_matrix(this%c) + memsize_f_matrix(this%f) + this%t%memsize()
+    res = memsize_c_matrix(this%c) + memsize_f_matrix(this%f) + this%t%memsize() + 1
   end function memsize_bb_manager
 !
 !| Inquire worksize of bb_manager.
@@ -142,9 +144,9 @@ contains
       call f_matrix_eval(bb(k)%f, bb(k)%b, W(bb(k)%c%p), W, W)
       call Hungarian(bb(k)%b%n1, bb(k)%b%n2, W(bb(k)%f%p), W(bb(k)%t%p))
       do concurrent(l=1:k - 1)
-        W(bb(l)%t%p + mmap_o) = W(bb(l)%t%p + mmap_o) + W(bb(k)%t%p)
+        W(bb(l)%o) = W(bb(l)%o) + W(bb(k)%t%p)
       end do
-      W(bb(k)%t%p + mmap_o) = ZERO
+      W(bb(k)%o) = ZERO
       call copy(bb(k)%b%n1 * bb(k)%b%n2, W(bb(k)%f%p), 1, W(bb(k)%t%p + mmap_f), 1)
       call zfill(DD + 1, W(bb(k)%t%p + mmap_g(bb(k)%b, 0)))
     end do
@@ -171,7 +173,7 @@ contains
   end subroutine bb_manager_setup_root
 !
 !| Expand top node in queue.
-  pure subroutine bb_manager_expand(this, W)
+  subroutine bb_manager_expand(this, W)
     class(bb_manager), intent(inout) :: this
     !! this :: bb_manager
     real(RK), intent(inout)          :: W(*)
@@ -192,12 +194,24 @@ contains
      do iper = 0, nper - 1
        do imap = 0, this%b%s - 1
          block
-           integer(IK) :: fn, gn
-           fn = this%t%node_pointer(iper, imap) + mmap_f
+           integer(IK) :: ln, fn, gn, cn, wn
+!
+           ln = this%t%node_pointer(iper, imap)
+           fn = ln + mmap_f
+           gn = ln + mmap_g(this%b, cl)
+           cn = gn + 1
+           wn = cn + DD
+!
            call subm(m, n, iper + 1, W(fc), W(fn))
-           gn = this%t%node_pointer(iper, imap) + mmap_g(this%b, cl)
+           call Hungarian(m, n, W(fn), W(gn))
+           W(ln) = W(this%o) + W(gn)
+!
            call copy(DD + 1, W(gc), 1, W(gn), 1)
            call c_matrix_add(this%c, this%b, iper + 1, cl, imap + 1, W, W(gn), W(gn+1))
+           call estimate_sdmin(W(gn), W(cn), W(wn))
+           W(ln) = W(ln) + W(wn)
+print*,iper,imap
+print'(10f9.3)', W(ln:ln+20)
          end block
        end do
      end do

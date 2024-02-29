@@ -3,9 +3,11 @@ find_package( purelapack REQUIRED )
 
 add_executable( test_group_permutation )
 target_include_directories( test_group_permutation PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_group_permutation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                    test_group_permutation.f90 )
+target_sources( test_group_permutation PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
+  test_group_permutation.f90 )
+target_include_directories( test_group_permutation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_group_permutation PRIVATE unittest )
 add_test( NAME test_group_permutation COMMAND test_group_permutation )
 
@@ -14,14 +16,18 @@ target_include_directories( test_Hungarian PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_Hungarian PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                        test_Hungarian.f90 )
+target_include_directories( test_Hungarian PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_Hungarian PRIVATE unittest )
 add_test( NAME test_Hungarian COMMAND test_Hungarian )
 
 add_executable( test_mol_block )
 target_include_directories( test_mol_block PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_mol_block PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
+                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_symmetry.f90
                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                        test_mol_block.f90 )
+target_include_directories( test_mol_block PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_mol_block PRIVATE unittest )
 add_test( NAME test_mol_block COMMAND test_mol_block )
 
@@ -165,3 +171,4 @@ target_include_directories( test_symRMSD PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../
 target_link_libraries( test_symRMSD PRIVATE unittest )
 target_link_libraries( test_symRMSD PRIVATE purelapack )
 add_test( NAME test_symRMSD COMMAND test_symRMSD )
+
