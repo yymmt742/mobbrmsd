@@ -14,8 +14,10 @@ contains
   subroutine test1()
     type(mol_block) :: b
 !
-    b = mol_block(1, 10, 5, 4)
-    print*,b
+    b = mol_block(10, 5)
+    print*,mol_block_nmol(b)
+    print*,mol_block_napm(b)
+    print*,mol_block_nsym(b)
 !
   end subroutine test1
 !

@@ -28,13 +28,16 @@ module mod_group_permutation
 !| A structure that references an array representing a replacement operation. <br>
 !  It is possible to hold s permutation mapping of starting from [1,2,...,N].
   type :: group_permutation
-    private
     sequence
-    integer(IK), public :: p = 1
+    integer(IK) :: p = 1
     !! pointers.
-    integer(IK)         :: s = 0
+    integer(IK) :: s = 0
     !! number of permutation. if s==0, gp only has identity mapping.
   end type group_permutation
+!
+  interface group_permutation
+    module procedure group_permutation_new
+  end interface group_permutation
 !
 !| A set of t and w arrays. <br>
 !  This is mainly used for passing during initialization.
@@ -49,35 +52,36 @@ module mod_group_permutation
 !
   interface group_permutation_tuple
     module procedure group_permutation_tuple_new
-  end interface
+  end interface group_permutation_tuple
 !
 contains
 !
+  pure function group_permutation_new(perm) result(res)
+    integer(IK), intent(in), optional :: perm(:, :)
+    !! codomains, [[a1,a2,...,am],[b1,b2,...,bm],...].
+    type(group_permutation) :: res
+    if (PRESENT(perm)) res%s = SIZE(perm, 2)
+  end function group_permutation_new
+!
 !| Constructor. <br>
   pure function group_permutation_tuple_new(perm) result(res)
-    integer(IK), intent(in)       :: perm(:, :)
+    integer(IK), intent(in), optional :: perm(:, :)
     !! codomains, [[a1,a2,...,am],[b1,b2,...,bm],...].
     type(group_permutation_tuple) :: res
     !! return value.
     integer(IK), allocatable      :: t(:)
-    integer(IK)                   :: i, n, s, p
+    integer(IK)                   :: i, p
 !
-    n = SIZE(perm, 1)
-    s = SIZE(perm, 2)
+    res%t = group_permutation(perm)
+    allocate (res%w(MAX(res%t%s - 1, 0)))
+    if (res%t%s < 1) return
 !
-    res%t = group_permutation(1, s)
-    allocate (res%w(MAX(s - 1, 0)))
-!
-    if (s < 1) return
-!
-    p = 0
-    t = decompose_to_cyclic(perm(:, 1))
-    res%w = [res%w, t]
-!
-    do i = 2, s
+    res%w = [(0, i=1, res%t%s)]
+    p = res%t%s + 1
+    do i = 1, res%t%s
+      res%w(i) = p
+      t = decompose_to_cyclic(perm(:, i))
       p = p + SIZE(t)
-      res%w(i - s) = p
-      t = decompose_to_cyclic(perm(:, 1))
       res%w = [res%w, t]
     end do
 !
@@ -353,9 +357,11 @@ contains
     !! leading dimension of x
     real(RK), intent(inout) :: X(*)
     !! data array.
+    integer(IK)             :: p
 !
     if (s < 1 .or. this%s < s) return ! identity map
-    call swap_real(w(this%p + s - 1), d, X)
+    p = w(this%p + s - 1)
+    call swap_real(w(p), d, X)
 !
   end subroutine group_permutation_swap
 !
@@ -399,9 +405,11 @@ contains
     !! leading dimension of x
     real(RK), intent(inout) :: X(*)
     !! data array.
+    integer(IK)             :: p
 !
     if (s < 1 .or. this%s < s) return ! identity map
-    call inverse_real(w(this%p + s - 1), d, X)
+    p = w(this%p + s - 1)
+    call inverse_real(w(p), d, X)
 !
   end subroutine group_permutation_inverse
 !

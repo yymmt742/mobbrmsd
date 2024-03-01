@@ -1,6 +1,5 @@
 list( APPEND f90_src mod_params.f90 )
 list( APPEND f90_src mod_group_permutation.f90 )
-list( APPEND f90_src mod_mol_symmetry.f90 )
 list( APPEND f90_src mod_det.f90 )
 list( APPEND f90_src mod_rotation_matrix.f90 )
 list( APPEND f90_src mod_mol_block.f90 )

@@ -18,8 +18,9 @@ contains
     real(RK)                :: X(n), Y(2, n)
     integer                 :: s(n)
     integer                 :: i
+!
     s = [2, 4, 6, 1, 3, 5, 9, 8, 7, 11, 13, 10, 12]
-    g = group_permutation_tuple(reshape(s,[13,1]))
+    g = group_permutation_tuple(RESHAPE(s, [n, 1]))
     do concurrent(i=1:n)
       X(i) = i
       Y(:, i) = i
@@ -27,9 +28,9 @@ contains
 !
     call group_permutation_swap(g%t, g%w, 1, 1, X)
     call group_permutation_swap(g%t, g%w, 1, 2, Y)
-    call u%assert_almost_equal(real(s, RK), X,       'swap    s = X ')
-    call u%assert_almost_equal(real(s, RK), Y(1, :), 'swap    s = Y1')
-    call u%assert_almost_equal(real(s, RK), Y(2, :), 'swap    s = Y2')
+    call u%assert_equal(s, NINT(X, IK),       'swap    s = X ')
+    call u%assert_equal(s, NINT(Y(1, :), IK), 'swap    s = Y1')
+    call u%assert_equal(s, NINT(Y(2, :), IK), 'swap    s = Y2')
 !
     call group_permutation_inverse(g%t, g%w, 1, 1, X)
     call group_permutation_inverse(g%t, g%w, 1, 2, Y)

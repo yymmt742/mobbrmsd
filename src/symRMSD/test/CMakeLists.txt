@@ -24,7 +24,6 @@ add_executable( test_mol_block )
 target_include_directories( test_mol_block PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_mol_block PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_symmetry.f90
                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                        test_mol_block.f90 )
 target_include_directories( test_mol_block PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
@@ -84,7 +83,6 @@ target_sources( test_c_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_symmetry.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
                                       mod_testutil.f90
@@ -100,7 +98,6 @@ target_sources( test_f_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_symmetry.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
@@ -118,7 +115,6 @@ target_sources( test_bb_manager PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_param
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_symmetry.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
@@ -139,7 +135,6 @@ target_sources( test_branch_and_bound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_symmetry.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
@@ -158,7 +153,6 @@ target_sources( test_symRMSD PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_symmetry.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90

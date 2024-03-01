@@ -8,7 +8,6 @@
 module mod_c_matrix
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE, &
     &                   gemm, dot, copy, axpy
-  use mod_mol_symmetry
   use mod_mol_block
   implicit none
   private
@@ -60,11 +59,12 @@ contains
 !
     res%p  = 1
     res%w  = 1
-    res%cb = 1 + DD * b%s
-    res%cl = res%cb * MAX(b%x%n, b%y%n)
-    res%nl = MIN(b%x%n, b%y%n)
-    res%nn = b%x%n * b%y%n
-    res%nw = MAX(D * b%m * (1 + b%y%n), b%x%n + b%y%n)
+    res%cb = 1 + DD * mol_block_nsym(b)
+    res%nl = mol_block_nmol(b)
+    res%cl = res%cb * res%nl
+    res%nn = res%nl**2
+    res%nw = MAX(mol_block_each_size(b) + mol_block_total_size(b), &
+           &     mol_block_nmol(b) * 2)
 !
   end function c_matrix_new
 !
@@ -88,55 +88,60 @@ contains
 !  If nx>=ny C(cb,nx,ny), else C(cb,ny,nx)
   pure subroutine c_matrix_eval(this, b, ms, X, Y, C, W)
     !| this :: c_matrix
-    type(c_matrix), intent(in)      :: this
+    type(c_matrix), intent(in)  :: this
     !| b    :: mol_block
-    type(mol_block), intent(in)     :: b
-    !| ms   :: mol_symmetry
-    class(mol_symmetry), intent(in) :: ms
+    type(mol_block), intent(in) :: b
+    !| ms   :: mol symmetry array
+    integer(IK), intent(in)     :: ms(*)
     !| X    :: reference coordinate
-    real(RK), intent(in)            :: X(*)
+    real(RK), intent(in)        :: X(*)
     !| Y    :: target coordinate
-    real(RK), intent(in)            :: Y(*)
+    real(RK), intent(in)        :: Y(*)
     !| C    :: main memory
-    real(RK), intent(inout)         :: C(*)
+    real(RK), intent(inout)     :: C(*)
     !| W    :: work memory
-    real(RK), intent(inout)         :: W(*)
-    integer(IK)                     :: dm, gx, gy, wx, wy
+    real(RK), intent(inout)     :: W(*)
+    integer(IK)                 :: s, m, n, dm, px, gx, gy, wx, wy
 !
-    dm = D * b%m
+    s = mol_block_nsym(b)
+    m = mol_block_napm(b)
+    n = mol_block_nmol(b)
+!
+    dm = mol_block_each_size(b)
+    px = mol_block_pointer(b)
     gx = this%w
-    gy = gx + b%x%n
+    gy = gx + n
     wx = gx
     wy = wx + dm
 !
-    call eval_g_matrix(dm, this%cb, b%x%n, b%y%n, X(b%x%p), Y(b%y%p), &
+    call eval_g_matrix(dm, this%cb, n, X(px), Y(px), &
    &                   C(this%p), W(gx), W(gy))
 !
-    call eval_c_matrix(b%s, b%m, dm, b%x%n, b%y%n, this%cb, ms, X(b%x%p), Y(b%y%p), &
+    call eval_c_matrix(b, s, m, n, dm, this%cb, ms, X(px), Y(px), &
   &                    C(this%p), W(wx), W(wy))
 !
   contains
 !
 !   trace of self correlation matrix
-    pure subroutine eval_g_matrix(dm, cb, nx, ny, X, Y, C, GX, GY)
-      integer(IK), intent(in)        :: dm, cb, nx, ny
+    pure subroutine eval_g_matrix(dm, cb, n, X, Y, C, GX, GY)
+      integer(IK), intent(in)        :: dm, cb, n
       real(RK), intent(in)           :: X(dm, *), Y(dm, *)
       real(RK), intent(inout)        :: C(cb, *)
-      real(RK), intent(inout)        :: GX(nx), GY(ny)
+      real(RK), intent(inout)        :: GX(n), GY(n)
       integer(IK)                    :: i, j
 !
-      do concurrent(i=1:nx)
+      do concurrent(i=1:n)
         GX(i) = dot(dm, X(1, i), 1, X(1, i), 1)
       end do
-      do concurrent(i=1:ny)
+      do concurrent(i=1:n)
         GY(i) = dot(dm, Y(1, i), 1, Y(1, i), 1)
       end do
 !
-      do concurrent(i=1:nx, j=1:ny)
+      do concurrent(i=1:n, j=1:n)
         block
           integer(IK) :: ic
 !         if nx>=ny, C(s,nx,ny). else C(s,ny,nx)
-          ic = MERGE(i + (j - 1) * nx, j + (i - 1) * ny, nx >= ny)
+          ic = i + (j - 1) * n
           C(1, ic) = GX(i) + GY(j)
         end block
       end do
@@ -144,43 +149,43 @@ contains
     end subroutine eval_g_matrix
 !
 !   get correlation matrix C = Y^t@X and optimal rotation R^t
-    pure subroutine eval_c_matrix(s, m, dm, nx, ny, cb, ms, X, Y, C, WX, WY)
-      integer(IK), intent(in)        :: s, m, dm, nx, ny, cb
-      type(mol_symmetry), intent(in) :: ms
-      real(RK), intent(in)           :: X(dm, nx), Y(dm, ny)
-      real(RK), intent(inout)        :: C(cb, *)
-      real(RK), intent(inout)        :: WX(dm), WY(dm, ny)
-      integer(IK)                    :: j, k
+    pure subroutine eval_c_matrix(b, s, m, n, dm, cb, ms, X, Y, C, WX, WY)
+      type(mol_block), intent(in) :: b
+      integer(IK), intent(in)     :: s, m, dm, n, cb, ms(*)
+      real(RK), intent(in)        :: X(dm, *), Y(dm, *)
+      real(RK), intent(inout)     :: C(cb, *)
+      real(RK), intent(inout)     :: WX(dm), WY(dm, n)
+      integer(IK)                 :: i, j
 !
-      call copy(dm * ny, Y, 1, WY, 1)
+      call copy(dm * n, Y, 1, WY, 1)
 !
-      do j = 1, nx
-        call copy(dm, X(1, j), 1, WX, 1)
-        do concurrent(k=1:ny)
+      do i = 1, n
+        call copy(dm, X(1, i), 1, WX, 1)
+        do concurrent(j=1:n)
           block
             integer(IK) :: ic
-            ic = MERGE(j + (k - 1) * nx, k + (j - 1) * ny, nx >= ny)
-            call calc_cov(s, m, dm, ms, WX, WY(1, k), C(2, ic))
+            ic = i + (j - 1) * n
+            call calc_cov(b, s, m, dm, ms, WX, WY(1, j), C(2, ic))
           end block
         end do
       end do
 !
     end subroutine eval_c_matrix
 !
-    pure subroutine calc_cov(s, m, dm, ms, WX, WY, C)
-      integer(IK), intent(in)        :: s, m, dm
-      type(mol_symmetry), intent(in) :: ms
-      real(RK), intent(in)           :: WX(D, *)
-      real(RK), intent(inout)        :: WY(D, *)
-      real(RK), intent(inout)        :: C(D, D, *)
-      integer(IK)                    :: i
+    pure subroutine calc_cov(b, s, m, dm, ms, WX, WY, C)
+      type(mol_block), intent(in) :: b
+      integer(IK), intent(in)     :: s, m, dm, ms(*)
+      real(RK), intent(in)        :: WX(D, *)
+      real(RK), intent(inout)     :: WY(D, *)
+      real(RK), intent(inout)     :: C(DD, *)
+      integer(IK)                 :: i
 !
-        call gemm('N', 'T', D, D, m, ONE, WY, D, WX, D, ZERO, C(1, 1, 1), D)
+        call gemm('N', 'T', D, D, m, ONE, WY, D, WX, D, ZERO, C(1, 1), D)
 !
         do concurrent(i=2:s)
-          call ms%swap(D, WY, i - 1)
-          call gemm('N', 'T', D, D, m, ONE, WY, D, WX, D, ZERO, C(1, 1, i), D)
-          call ms%reverse(D, WY, i - 1)
+          call mol_block_swap(b, i - 1, ms, WY)
+          call gemm('N', 'T', D, D, m, ONE, WY, D, WX, D, ZERO, C(1, i), D)
+          call mol_block_inverse_swap(b, i - 1, ms, WY)
         end do
 !
     end subroutine calc_cov
