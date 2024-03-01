@@ -7,26 +7,32 @@ module mod_group_permutation
   public :: group_permutation
   public :: group_permutation_tuple
   public :: group_permutation_swap
-  public :: group_permutation_reverse
+  public :: group_permutation_inverse
 !
 !| Module for permutation by decomposed cyclic groups. <br>
+!  gp are stored in work array, in the following. <br>
+!  - [p2, ..., ps, swp_1, swp_2, ..., swp_s]
+!  - pi (s-1)  :: pointer to swp_2 to swp_s. <br>
+!  - p1 is calculated in p + s - 1 <br>
+!  - pi is calculated in p + w(i-2) <br>
 !  Swap indeces are stored in work array, in the following. <br>
-!  - [[ p2, ..., pm ],  [ b1, b2, ..., bi, ..., bm ]] <br>
-!  - pi (m-1)  :: pointer to bi. p1 is calculated by this%p + m - 1. <br>
-!  - bi (m)    :: body. <br>
+!  - [[p1, p2, ..., pm],  [ b1, b2, ..., bi, ..., bm ]] <br>
+!  - m         :: number of order - 1. <br>
+!  - pi (m)    :: pointer to bi+1. Note that m = p1 - 1. <br>
+!  - bi (m+1)  :: body. <br>
 !  body is constructed as follows. <br>
 !  - [n, s, s1, s2, ..., sj, ..., sn] <br>
 !  - n  :: number of permutation. <br>
 !  - s  :: order of cycle. <br>
 !  - sj :: mapping sequence. <br>
-!  - Total memsize is 2 + m*s
+!  - Total memsize is 2 + m * s
   type :: group_permutation
     private
     sequence
     !| pointers.
     integer(IK), public :: p = 1
-    !| number of type cyclic orders.
-    integer(IK)         :: m = 0
+    !| number of permutation. if s==0, gp only has identity mapping.
+    integer(IK)         :: s = 0
   end type group_permutation
 !
 !| A set of t and w arrays. <br>
@@ -46,48 +52,65 @@ module mod_group_permutation
 !
 contains
 !
-  pure function group_permutation_tuple_new(perm) result(res)
-    integer(IK), intent(in)       :: perm(:)
+!| Constructor. <br>
+  function group_permutation_tuple_new(perm) result(res)
+    integer(IK), intent(in)       :: perm(:, :)
+    !! codomains, [[a1,a2,...,am],[b1,b2,...,bm],...].
     type(group_permutation_tuple) :: res
-    integer(IK)                   :: n
+    !! return value.
+    integer(IK), allocatable      :: t(:)
+    integer(IK)                   :: i, n, s, p
 !
-    n = SIZE(perm)
+    n = SIZE(perm, 1)
+    s = SIZE(perm, 2)
+!
+    res%t = group_permutation(1, s)
+    allocate (res%w(MAX(s - 1, 0)))
+!
+    if (s < 1) return
+!
+    p = 0
+    t = decompose_to_cyclic(perm(:, 1))
+    res%w = [res%w, t]
+!
+    do i = 2, s
+      p = p + SIZE(t)
+      res%w(i - s) = p
+      t = decompose_to_cyclic(perm(:, 1))
+      res%w = [res%w, t]
+    end do
+!
+  end function group_permutation_tuple_new
+!
+  function decompose_to_cyclic(perm) result(res)
+    integer(IK), intent(in)  :: perm(:)
+    integer(IK), allocatable :: res(:)
+    integer(IK)              :: n
 !
 !   early return
 !
+    n = SIZE(perm)
+    ALLOCATE(res, source=[0])
+!
     if (n < 2) then
-      res%t = group_permutation(1, 0)
       return
     elseif (n == 2) then
-      if (ALL(perm(1:2) == [2, 1])) then
-        res%t = group_permutation(1, 1)
-        res%w = [1, 2, 2, 1]
-      else
-        res%t = group_permutation(1, 0)
-      end if
+      if (ALL(perm(1:2) == [2, 1])) res = [1, 1, 2, 2, 1]
       return
     elseif (n == 3) then
       if (ALL(perm(1:3) == [1, 3, 2])) then
-        res%t = group_permutation(1, 1)
-        res%w = [1, 2, 3, 2]
+        res = [1, 1, 2, 3, 2]
       elseif (ALL(perm(1:3) == [2, 1, 3])) then
-        res%t = group_permutation(1, 1)
-        res%w = [1, 2, 2, 1]
+        res = [1, 1, 2, 2, 1]
       elseif (ALL(perm(1:3) == [2, 3, 1])) then
-        res%t = group_permutation(1, 1)
-        res%w = [1, 3, 2, 3, 1]
+        res = [1, 1, 3, 2, 3, 1]
       elseif (ALL(perm(1:3) == [3, 1, 2])) then
-        res%t = group_permutation(1, 1)
-        res%w = [1, 3, 3, 1, 2]
+        res = [1, 1, 3, 3, 1, 2]
       elseif (ALL(perm(1:3) == [3, 2, 1])) then
-        res%t = group_permutation(1, 1)
-        res%w = [1, 2, 3, 1]
-      else
-        res%t = group_permutation(1, 0)
+        res = [1, 1, 2, 3, 1]
       end if
       return
     elseif (is_not_permutation(n, perm)) then
-      res%t = group_permutation(1, 0)
       return
     end if
 !
@@ -132,29 +155,56 @@ contains
 !
 !     w is now stored [b1, b2, ..., bl, s1, s2, ..., sl, t1, ..., tk, n1, ..., nk]
 !
-      res%t = group_permutation(1, k)
-      if (res%t%m < 1) return
-      j = res%t%m - 1
-      do i = 1, k
-        j = j + w(n + l + i) * w(n + l + k + i) + 2
-      end do
-      ALLOCATE(res%w(j))
+      if (k < 1) return
 !
-      res%w(k) = w(n + l + k + 1)
-      res%w(k + 1) = w(n + l + 1)
-      call proc(n, l, w(n + l + 1), w, w(n + 1), res%w(k+2))
-      j = k
-      do i = 2, k
-        j = j + 2 + w(n + l + i - 1) * w(n + l + k + i - 1)
-        res%w(i - 1) = j
-        res%w(j) = w(n + l + k + i)
-        res%w(j + 1) = w(n + l + i)
-        call proc(n, l, w(n + l + i), w, w(n + 1), res%w(j+2))
-      end do
+!     count array size
+      j = 3 * k + SUM([(w(n + l + i) * w(n + l + k + i), i=1,k)])
+!
+!     pack w to array.
+      res = proc_w(n, j, k, l, w(1), w(n + 1), w(n + l + k + 1), w(n + l + 1))
 !
     end block
 !
-  end function group_permutation_tuple_new
+  end function decompose_to_cyclic
+!
+  pure function proc_w(nd, nj, nk, nl, b, s, n, t) result(res)
+    integer(IK), intent(in) :: nd, nj, nk, nl
+    integer(IK), intent(in) :: n(nk), t(nk), b(nd), s(nl)
+    integer(IK)             :: res(nj)
+    integer(IK)             :: i, j
+!
+      res(1) = nk + 1
+      res(nk + 1) = n(1)
+      res(nk + 2) = t(1)
+      call proc(nd, nl, t(1), b, s(1), res(nk + 3))
+      j = nk + 1
+      do i = 2, nk
+        j = j + 2 + t(i - 1) * n(i - 1)
+        res(i) = j
+        res(j) = n(i)
+        res(j + 1) = t(i)
+        call proc(nd, nl, t(i), b, s, res(j + 2))
+      end do
+!
+  end function proc_w
+!
+  pure subroutine proc(nd, l, t, b, s, res)
+    integer(IK), intent(in)    :: nd, l, t, b(nd), s(l)
+    integer(IK), intent(inout) :: res(*)
+    integer(IK)                :: i, j, k
+!
+    j = 1
+    k = 1
+!
+    do i = 1, l
+      if (t==s(i))then
+        res(j:j + t - 1) = b(k:k + t - 1)
+        j = j + s(i)
+      endif
+      k = k + s(i)
+    end do
+!
+  end subroutine proc
 !
   pure function is_not_permutation(n, perm) result(res)
     integer(IK), intent(in) :: n, perm(*)
@@ -251,25 +301,6 @@ contains
 !
   end subroutine qsi
 !
-! w is now stored [b1, b2, ..., bl, s1, s2, ..., sl, t1, ..., tk, n1, ..., nk]
-  pure subroutine proc(nd, l, t, b, s, res)
-    integer(IK), intent(in)    :: nd, l, t, b(nd), s(l)
-    integer(IK), intent(inout) :: res(*)
-    integer(IK)                :: i, j, k
-!
-    j = 1
-    k = 1
-!
-    do i = 1, l
-      if (t==s(i))then
-        res(j:j + t - 1) = b(k:k + t - 1)
-        j = j + s(i)
-      endif
-      k = k + s(i)
-    end do
-!
-  end subroutine proc
-!
 ! pure subroutine group_permutation_swap_int_l1(this, X)
 !   class(group_permutation), intent(inout) :: this
 !   integer(IK), intent(inout)              :: X(*)
@@ -309,66 +340,95 @@ contains
 !
 ! end subroutine group_permutation_swap_int_l2
 !
-  pure subroutine group_permutation_swap(this, w, d, X)
+   subroutine group_permutation_swap(this, w, s, d, X)
     type(group_permutation), intent(in) :: this
     !! group_permutation
-    integer(IK), intent(in)             :: w(*)
+    integer(IK), intent(in) :: w(*)
     !! work array.
-    integer(IK), intent(in)             :: d
+    integer(IK), intent(in) :: s
+    !! permutation index.
+    integer(IK), intent(in) :: d
     !! leading dimension of x
-    real(RK), intent(inout)             :: X(*)
+    real(RK), intent(inout) :: X(*)
     !! data array.
-    integer(IK)                         :: i
 !
-    do concurrent(i=1:this%m)
+    if (s < 1 .or. this%s < s) return ! identity map
+    call swap_real(w(this%p + s - 1), d, X)
+!
+  end subroutine group_permutation_swap
+!
+  pure subroutine swap_real(w, d, X)
+    integer(IK), intent(in) :: w(*)
+    !! swap indices.
+    integer(IK), intent(in) :: d
+    !! leading dimension of x
+    real(RK), intent(inout) :: X(*)
+    !! data array.
+    integer(IK)             :: i, m
+!
+    m = w(1) - 1
+!
+    do concurrent(i=1:m)
       block
         integer(IK) :: j, p, n, s, ns
-        if (i == 1) then
-          p = this%p + this%m
-        else
-          p = this%p + w(this%p + i - 2)
-        end if
-        n = w(p - 1)
+        p = w(i)
+        n = w(p)
+        p = p + 1
         s = w(p)
-        ns = p + n * s
-        do concurrent(j=p + 1:ns:s)
+        p = p + 1
+        ns = p + (n - 1) * s
+        do concurrent(j=p:ns:s)
           call cyclic_swap_real(d, s, w(j), X)
         end do
       end block
     end do
 !
-  end subroutine group_permutation_swap
+  end subroutine swap_real
 !
-  pure subroutine group_permutation_reverse(this, w, d, X)
+  pure subroutine group_permutation_inverse(this, w, s, d, X)
     type(group_permutation), intent(in) :: this
     !! group_permutation
-    integer(IK), intent(in)             :: w(*)
+    integer(IK), intent(in) :: w(*)
     !! work array.
-    integer(IK), intent(in)             :: d
+    integer(IK), intent(in) :: s
+    !! permutation index.
+    integer(IK), intent(in) :: d
     !! leading dimension of x
-    real(RK), intent(inout)             :: X(*)
+    real(RK), intent(inout) :: X(*)
     !! data array.
-    integer(IK)                         :: i
 !
-    do concurrent(i=1:this%m)
+    if (s < 1 .or. this%s < s) return ! identity map
+    call inverse_real(w(this%p + s - 1), d, X)
+!
+  end subroutine group_permutation_inverse
+!
+  pure subroutine inverse_real(w, d, X)
+    integer(IK), intent(in) :: w(*)
+    !! swap indices.
+    integer(IK), intent(in) :: d
+    !! leading dimension of x
+    real(RK), intent(inout) :: X(*)
+    !! data array.
+    integer(IK)             :: i, m
+!
+    m = w(1) - 1
+!
+    do concurrent(i=1:m)
       block
         integer(IK) :: j, p, n, s, ns
-        if (i == 1) then
-          p = this%p + this%m
-        else
-          p = this%p + w(this%p + i - 2)
-        end if
-        n = w(p - 1)
+        p = w(i)
+        n = w(p)
+        p = p + 1
         s = w(p)
-        ns = p + n * s
-        do concurrent(j=p + 1:ns:s)
-          call cyclic_reverse_real(d, s, w(j), X)
+        p = p + 1
+        ns = p + (n - 1) * s
+        do concurrent(j=p:ns:s)
+          call cyclic_inverse_real(d, s, w(j), X)
         end do
       end block
     end do
 !
-  end subroutine group_permutation_reverse
-!
+  end subroutine inverse_real
 !
 ! pure subroutine cyclic_swap_int(d, s, q, X)
 !   integer(IK), intent(in)    :: d, s, q(*)
@@ -406,7 +466,7 @@ contains
     end do
   end subroutine cyclic_swap_real
 !
-  pure subroutine cyclic_reverse_real(d, s, q, X)
+  pure subroutine cyclic_inverse_real(d, s, q, X)
     integer(IK), intent(in) :: d, s, q(*)
     real(RK), intent(inout) :: X(d, *)
     real(RK)                :: T(d)
@@ -422,7 +482,7 @@ contains
     do concurrent(i=1:d)
       X(i, q(1)) = T(i)
     end do
-  end subroutine cyclic_reverse_real
+  end subroutine cyclic_inverse_real
 !
   pure elemental subroutine group_permutation_tuple_destroy(this)
     type(group_permutation_tuple), intent(inout) :: this
