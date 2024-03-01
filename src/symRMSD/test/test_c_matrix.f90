@@ -23,10 +23,11 @@ contains
 !
   subroutine test0()
     type(mol_block_tuple) :: b(3)
-    type(c_matrix)        :: a(3)
+    type(c_matrix)        :: c(3)
     real(RK)              :: X(3, 5 * 3 + 3 * 4 + 8 * 3)
     real(RK)              :: Y(3, 5 * 3 + 3 * 2 + 8 * 5)
     real(RK), allocatable :: W(:)
+    integer(IK)           :: p
 !
     X = sample(3, SIZE(X, 2))
     Y = sample(3, SIZE(Y, 2))
@@ -34,23 +35,33 @@ contains
     b(1) = mol_block_tuple(5, 3)
     b(2) = mol_block_tuple(3, 2, sym=RESHAPE([2, 3, 1, 3, 1, 2], [3, 2]))
     b(3) = mol_block_tuple(8, 3, sym=RESHAPE([1, 2, 3, 4, 5, 6, 7, 8], [8, 1]))
-!   call mol_block_list_init(b)
 !
-!   a = c_matrix(b)
-!   print*,memsize_c_matrix(a)
-!   print*,worksize_c_matrix(a)
-!   a(1)%p = 1
-!   a(1)%w = a(1)%p + memsize_c_matrix(a(1))
-!   a(2)%p = a(1)%w
-!   a(2)%w = a(2)%p + memsize_c_matrix(a(2))
-!   a(3)%p = a(2)%w
-!   a(3)%w = a(3)%w + memsize_c_matrix(a(3))
-!   allocate (W(SUM(memsize_c_matrix(a)) + SUM(worksize_c_matrix(a))))
-!   W(:) = 999
-!   call c_matrix_eval(a(1), b(1), ms(1), X, Y, W, W)
-!   call c_matrix_eval(a(2), b(2), ms(2), X, Y, W, W)
-!   call c_matrix_eval(a(3), b(3), ms(3), X, Y, W, W)
-!   print'(10f9.3)',W
+    p = 1 + mol_block_total_size(b(1)%b)
+    call mol_block_set_pointer(b(2)%b, p, 1)
+    p = 1 + mol_block_total_size(b(2)%b)
+    call mol_block_set_pointer(b(3)%b, p, 1)
+!
+print*,mol_block_nsym(b%b)
+    c = c_matrix(b%b)
+    print*,memsize_c_matrix(c)
+    print*,worksize_c_matrix(c)
+    c(1)%p = 1
+    c(1)%w = c(1)%p + memsize_c_matrix(c(1))
+    c(2)%p = c(1)%w
+    c(2)%w = c(2)%p + memsize_c_matrix(c(2))
+    c(3)%p = c(2)%w
+    c(3)%w = c(3)%p + memsize_c_matrix(c(3))
+    allocate (W(SUM(memsize_c_matrix(c)) + worksize_c_matrix(c(3))))
+    W(:) = 999
+    call c_matrix_eval(c(1), b(1)%b, b(1)%w, X, Y, W, W)
+    call c_matrix_eval(c(2), b(2)%b, b(2)%w, X, Y, W, W)
+    call c_matrix_eval(c(3), b(3)%b, b(3)%w, X, Y, W, W)
+    print'(10f5.1)',W(c(1)%p:c(1)%p+89)
+    print*
+    print'(14f5.1)',W(c(2)%p:c(2)%p+111)
+    print*
+    print'(19f5.1)',W(c(3)%p:c(3)%p+170)
+    print*
 !
   end subroutine test0
 !

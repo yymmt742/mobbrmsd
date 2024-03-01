@@ -76,7 +76,7 @@ contains
     !! number of molecules
     integer(IK), intent(in) :: n
     !! number of atoms per molecule
-    integer(IK), intent(in), optional :: sym(:,:)
+    integer(IK), intent(in), optional :: sym(:, :)
     !! symmetric codomains, [[a1,a2,...,am],[b1,b2,...,bm],...].
     type(mol_block)         :: res
     res%m = MAX(m, 1)
@@ -94,7 +94,7 @@ contains
     !! pointer to mol_symmetry.
 !
     b%x = x
-    b%s%s = s
+    b%s%p = s
 !
   end subroutine mol_block_set_pointer
 !
@@ -127,7 +127,7 @@ contains
     type(mol_block), intent(in) :: b
     !! mol_block
     integer(IK)                 :: res
-    res = b%s%s
+    res = b%s%s + 1
   end function mol_block_nsym
 !
 !| memory blocksize per molecule, defined by d*m.

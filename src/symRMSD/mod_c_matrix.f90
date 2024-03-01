@@ -33,15 +33,13 @@ module mod_c_matrix
     integer(IK), public :: p
     !| w  :: pointer to work.
     integer(IK), public :: w
-    !| nl :: number of row. nl = MIN(nx, ny)
+    !| nl :: number of row. nl = n
     integer(IK)         :: nl
     !| cb :: number of elements in a sell. cb = DD * res%b%s + 1
     integer(IK)         :: cb
     !| cl :: number of elements in a line. cl = cb * MAX(nx, ny)
     integer(IK)         :: cl
-    !| nn :: number of matrix elements. nn = nx * ny.
-    integer(IK)         :: nn
-    !| nn :: number of work array. nw = nx * ny
+    !| nw :: number of work array. nw = MAX(dmn + dm, n + n)
     integer(IK)         :: nw
   end type c_matrix
 !
@@ -62,9 +60,8 @@ contains
     res%cb = 1 + DD * mol_block_nsym(b)
     res%nl = mol_block_nmol(b)
     res%cl = res%cb * res%nl
-    res%nn = res%nl**2
     res%nw = MAX(mol_block_each_size(b) + mol_block_total_size(b), &
-           &     mol_block_nmol(b) * 2)
+           &     res%nl + res%nl)
 !
   end function c_matrix_new
 !
@@ -73,7 +70,7 @@ contains
     !| this :: c_matrix
     type(c_matrix), intent(in) :: this
     integer(IK)                :: res
-    res = this%cb * this%nn
+    res = this%cb * this%nl * this%nl
   end function memsize_c_matrix
 !
 !| Inquire worksize of c_matrix.
