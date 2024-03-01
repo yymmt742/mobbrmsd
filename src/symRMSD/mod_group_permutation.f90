@@ -1,15 +1,5 @@
 !
-!| Module for permutation.
-module mod_group_permutation
-  use mod_params, only: IK, RK
-  implicit none
-  private
-  public :: group_permutation
-  public :: group_permutation_tuple
-  public :: group_permutation_swap
-  public :: group_permutation_inverse
-!
-!| Module for permutation by decomposed cyclic groups. <br>
+!| Module for permutation by decomposed cyclic groups.
 !  gp are stored in work array, in the following. <br>
 !  - [p2, ..., ps, swp_1, swp_2, ..., swp_s]
 !  - pi (s-1)  :: pointer to swp_2 to swp_s. <br>
@@ -26,22 +16,33 @@ module mod_group_permutation
 !  - s  :: order of cycle. <br>
 !  - sj :: mapping sequence. <br>
 !  - Total memsize is 2 + m * s
+module mod_group_permutation
+  use mod_params, only: IK, RK
+  implicit none
+  private
+  public :: group_permutation
+  public :: group_permutation_tuple
+  public :: group_permutation_swap
+  public :: group_permutation_inverse
+!
+!| A structure that references an array representing a replacement operation. <br>
+!  It is possible to hold s permutation mapping of starting from [1,2,...,N].
   type :: group_permutation
     private
     sequence
-    !| pointers.
     integer(IK), public :: p = 1
-    !| number of permutation. if s==0, gp only has identity mapping.
+    !! pointers.
     integer(IK)         :: s = 0
+    !! number of permutation. if s==0, gp only has identity mapping.
   end type group_permutation
 !
 !| A set of t and w arrays. <br>
 !  This is mainly used for passing during initialization.
   type :: group_permutation_tuple
-    !| group_permutation.
     type(group_permutation)  :: t
-    !| w array.
+    !! group_permutation.
     integer(IK), allocatable :: w(:)
+    !! w array.
   contains
     final :: group_permutation_tuple_destroy
   end type group_permutation_tuple
@@ -53,7 +54,7 @@ module mod_group_permutation
 contains
 !
 !| Constructor. <br>
-  function group_permutation_tuple_new(perm) result(res)
+  pure function group_permutation_tuple_new(perm) result(res)
     integer(IK), intent(in)       :: perm(:, :)
     !! codomains, [[a1,a2,...,am],[b1,b2,...,bm],...].
     type(group_permutation_tuple) :: res
@@ -82,7 +83,7 @@ contains
 !
   end function group_permutation_tuple_new
 !
-  function decompose_to_cyclic(perm) result(res)
+  pure function decompose_to_cyclic(perm) result(res)
     integer(IK), intent(in)  :: perm(:)
     integer(IK), allocatable :: res(:)
     integer(IK)              :: n
@@ -340,7 +341,8 @@ contains
 !
 ! end subroutine group_permutation_swap_int_l2
 !
-   subroutine group_permutation_swap(this, w, s, d, X)
+!| Replaces an array of real numbers according to the map s. <br>
+  pure subroutine group_permutation_swap(this, w, s, d, X)
     type(group_permutation), intent(in) :: this
     !! group_permutation
     integer(IK), intent(in) :: w(*)
@@ -385,6 +387,7 @@ contains
 !
   end subroutine swap_real
 !
+!| Replaces an array of real numbers according to the inverse map s. <br>
   pure subroutine group_permutation_inverse(this, w, s, d, X)
     type(group_permutation), intent(in) :: this
     !! group_permutation
