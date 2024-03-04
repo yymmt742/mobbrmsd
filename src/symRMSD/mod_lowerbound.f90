@@ -1,6 +1,5 @@
 !| Module for manage D matrix.<br>
-!  D(nx, ny) :: Residue matrices.<br>
-!    - D_IJ = min_{R,s} Tr[C_IJs @ R]<br>
+!  L(G, C, D) = SUM_{i=1,...,p} (G - 2tr[CR]) + min_{nu} SUM_{i=p+1,...,N} D_{i nu(p)}
 module mod_lowerbound
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_params, only: gemm, dot, copy
@@ -9,46 +8,45 @@ module mod_lowerbound
   use mod_Hungarian
   implicit none
   private
-  public :: worksize_lowerbound
+  public :: lowerbound_worksize
   public :: lowerbound
 !
 contains
 !
-!| Inquire worksize of f_matrix.
-  pure elemental function worksize_lowerbound(p, b) result(res)
-    !| p :: level
-    integer(IK), intent(in)    :: p
-    !| b :: mol_block
+!| Inquire worksize of lowerbound.
+  pure elemental function lowerbound_worksize(b, p) result(res)
     type(mol_block),intent(in) :: b
+    !! b :: mol_block
+    integer(IK), intent(in)    :: p
+    !! p :: level
     integer(IK)                :: res
-    integer(IK)                :: n1, n2
-    n1 = MAX(b%x%n, b%y%n) - p
-    n2 = MIN(b%x%n, b%y%n) - p
-    res = MAX(worksize_Hungarian(n1, n2), 1 + worksize_sdmin())
-  end function worksize_lowerbound
+    integer(IK)                :: n
+    n = mol_block_nmol(b) - p
+    res = MAX(worksize_Hungarian(n, n), 1 + worksize_sdmin())
+  end function lowerbound_worksize
 !
 !| lowerbound function.
+!  L(G, C, D) = SUM_{i=1,...,p} (G - 2tr[CR]) + min_{nu} SUM_{i=p+1,...,N} D_{i nu(p)}
   pure subroutine lowerbound(p, b, G, C, D, W)
-    !| p :: level
     integer(IK), intent(in)    :: p
-    !| b :: mol_block
+    !! p :: level
     type(mol_block),intent(in) :: b
-    !| G :: partial variance, G
+    !! b :: mol_block
     real(RK), intent(in)       :: G
-    !| C :: partial covariance matrix, C(d, d)
+    !! G :: partial auto variance, G
     real(RK), intent(in)       :: C(*)
-    !| D :: residual matrix, D(n1, n2), here n1 = MAX(nx, ny) - p and n2 = MIN(nx, ny) - p.
+    !! C :: partial covariance matrix, C(d, d)
     real(RK), intent(in)       :: D(*)
-    !| W :: workarray
+    !! D :: residual matrix, D(n1, n2), here n1 = MAX(nx, ny) - p and n2 = MIN(nx, ny) - p.
     real(RK), intent(inout)    :: W(*)
-    integer(IK)                :: m1, m2
+    !! W :: workarray, must be SIZE(W) > lowerbound_worksize(p, b).
+    integer(IK)                :: n
 !
     W(1) = ZERO
-    m1 = b%n1 - p
-    m2 = b%n2 - p
+    n = mol_block_nmol(b) - p
 !
-    if (p < 0 .or. m2 < 0) return
-    if (0 < m2) call Hungarian(m1, m2, D, W)
+    if (p < 0 .or. n < 0) return
+    if (0 < n) call Hungarian(n, n, D, W)
     if (0 < p) then
       call estimate_sdmin(G, C, W(2))
       W(1) = W(1) + W(2)

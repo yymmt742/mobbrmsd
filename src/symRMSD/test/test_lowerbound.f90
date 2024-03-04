@@ -1,8 +1,8 @@
 program main
   use mod_params, only: D, setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
-  use mod_rotation_matrix
   use mod_lowerbound
+  use mod_rotation_matrix
   use mod_testutil
   use mod_unittest
   implicit none
@@ -22,7 +22,17 @@ contains
     type(mol_block) :: b
     integer(IK)     :: i
 !
-    b = mol_block(1, 8, 3, 5)
+    b = mol_block(8, 10)
+    print*, lowerbound_worksize(b, 0)
+    print*, lowerbound_worksize(b, 1)
+    print*, lowerbound_worksize(b, 2)
+    print*, lowerbound_worksize(b, 3)
+!
+    b = mol_block(8, 3)
+    print*, lowerbound_worksize(b, 0)
+    print*, lowerbound_worksize(b, 1)
+    print*, lowerbound_worksize(b, 2)
+    print*, lowerbound_worksize(b, 3)
 !
     do i = 1, 15
       GC(:, i) = gcov(D, 8)

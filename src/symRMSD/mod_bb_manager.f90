@@ -33,8 +33,6 @@ module mod_bb_manager
     private
     !| mol_block
     type(mol_block)    :: b
-    !| mol_symmetry
-    type(mol_symmetry) :: ms
     !| c_matrix
     type(c_matrix)     :: c
     !| f_matrix
@@ -101,10 +99,9 @@ contains
     pure function memsize(b, p) result(res)
       type(mol_block), intent(in) :: b
       integer(IK), intent(in)     :: p
-      integer(IK)                 :: res, p1, p2
-      p1 = b%n1 - p
-      p2 = b%n2 - p
-      res = 1 + p1 * p2 + MAX(1 + DD + worksize_sdmin(), worksize_Hungarian(p1, p2))
+      integer(IK)                 :: res, n
+      n = mol_block_nmol(b) - p
+      res = 1 + n * n + MAX(Hungarian_worksize(n, n), MAX(1 + DD + worksize_sdmin()))
     end function memsize
 !
   end function bb_manager_new
@@ -234,6 +231,35 @@ print'(10f9.3)', W(ln:ln+20)
     end subroutine subm
 !
   end subroutine bb_manager_expand
+!
+!| lowerbound function.
+!  L(G, C, D) = SUM_{i=1,...,p} (G - 2tr[CR]) + min_{nu} SUM_{i=p+1,...,N} D_{i nu(p)}
+  pure subroutine lowerbound(p, b, G, C, D, W)
+    integer(IK), intent(in)    :: p
+    !! p :: level
+    type(mol_block),intent(in) :: b
+    !! b :: mol_block
+    real(RK), intent(in)       :: G
+    !! G :: partial auto variance, G
+    real(RK), intent(in)       :: C(*)
+    !! C :: partial covariance matrix, C(d, d)
+    real(RK), intent(in)       :: D(*)
+    !! D :: residual matrix, D(n1, n2), here n1 = MAX(nx, ny) - p and n2 = MIN(nx, ny) - p.
+    real(RK), intent(inout)    :: W(*)
+    !! W :: workarray, must be SIZE(W) > lowerbound_worksize(p, b).
+    integer(IK)                :: n
+!
+    W(1) = ZERO
+    n = mol_block_nmol(b) - p
+!
+    if (p < 0 .or. n < 0) return
+    if (0 < n) call Hungarian(n, n, D, W)
+    if (0 < p) then
+      call estimate_sdmin(G, C, W(2))
+      W(1) = W(1) + W(2)
+    end if
+!
+  end subroutine lowerbound
 !
 ! pure subroutine eval_child(b, p, inode, Wp, Wc)
 !   type(mol_block), intent(in) :: b
