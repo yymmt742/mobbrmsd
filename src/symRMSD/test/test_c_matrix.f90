@@ -43,15 +43,15 @@ contains
 !
 print*,mol_block_nsym(b%b)
     c = c_matrix(b%b)
-    print*,memsize_c_matrix(c)
-    print*,worksize_c_matrix(c)
+    print*,c_matrix_memsize(c)
+    print*,c_matrix_worksize(c)
     c(1)%p = 1
-    c(1)%w = c(1)%p + memsize_c_matrix(c(1))
+    c(1)%w = c(1)%p + c_matrix_memsize(c(1))
     c(2)%p = c(1)%w
-    c(2)%w = c(2)%p + memsize_c_matrix(c(2))
+    c(2)%w = c(2)%p + c_matrix_memsize(c(2))
     c(3)%p = c(2)%w
-    c(3)%w = c(3)%p + memsize_c_matrix(c(3))
-    allocate (W(SUM(memsize_c_matrix(c)) + worksize_c_matrix(c(3))))
+    c(3)%w = c(3)%p + c_matrix_memsize(c(3))
+    allocate (W(SUM(c_matrix_memsize(c)) + c_matrix_worksize(c(3))))
     W(:) = 999
     call c_matrix_eval(c(1), b(1)%b, b(1)%w, X, Y, W, W)
     call c_matrix_eval(c(2), b(2)%b, b(2)%w, X, Y, W, W)

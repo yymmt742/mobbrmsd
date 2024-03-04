@@ -12,8 +12,9 @@ module mod_c_matrix
   implicit none
   private
   public :: c_matrix
-  public :: memsize_c_matrix
-  public :: worksize_c_matrix
+  public :: c_matrix_memsize
+  public :: c_matrix_worksize
+  public :: c_matrix_blocksize
   public :: c_matrix_eval
   public :: c_matrix_add
 !
@@ -65,21 +66,29 @@ contains
 !
   end function c_matrix_new
 !
+!| Inquire blocksize of c_matrix.
+  pure elemental function c_matrix_blocksize(this) result(res)
+    type(c_matrix), intent(in) :: this
+    !! this :: c_matrix
+    integer(IK)                :: res
+    res = this%cb
+  end function c_matrix_blocksize
+!
 !| Inquire memsize of c_matrix.
-  pure elemental function memsize_c_matrix(this) result(res)
+  pure elemental function c_matrix_memsize(this) result(res)
     !| this :: c_matrix
     type(c_matrix), intent(in) :: this
     integer(IK)                :: res
     res = this%cb * this%nl * this%nl
-  end function memsize_c_matrix
+  end function c_matrix_memsize
 !
-!| Inquire worksize of c_matrix.
-  pure elemental function worksize_c_matrix(this) result(res)
+!| Inquire worksize of c_matrix evaluation.
+  pure elemental function c_matrix_worksize(this) result(res)
     !| this :: c_matrix
     type(c_matrix), intent(in) :: this
     integer(IK)                :: res
     res = this%nw
-  end function worksize_c_matrix
+  end function c_matrix_worksize
 !
 !| Evaluation the C matrix; G matrix is also calculated at the same time.<br>
 !  If nx>=ny C(cb,nx,ny), else C(cb,ny,nx)
