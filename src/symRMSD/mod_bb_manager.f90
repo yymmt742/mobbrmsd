@@ -3,7 +3,6 @@ module mod_bb_manager
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_params, only: gemm, dot, copy
   use mod_mol_block
-  use mod_mol_symmetry
   use mod_c_matrix
   use mod_f_matrix
   use mod_rotation_matrix
@@ -30,26 +29,34 @@ module mod_bb_manager
 !    |-----------|--C3--|-W3-|<br>
 !    Therefore, the maximum memory allocation size is MAX( SUM_i^I |Ci| + |W_I| ).
   type bb_manager
+    sequence
     private
     !| mol_block
-    type(mol_block)    :: b
+    type(mol_block) :: b
     !| c_matrix
-    type(c_matrix)     :: c
+    type(c_matrix)  :: c
     !| f_matrix
-    type(f_matrix)     :: f
+    type(f_matrix)  :: f
     !| offset
-    integer(IK)        :: o
+    integer(IK)     :: o
     !| tree
-    type(tree)         :: t
+    type(tree)      :: t
   contains
-    procedure          :: setup_root => bb_manager_setup_root
-    procedure          :: expand     => bb_manager_expand
-    final              :: bb_manager_destroy
+    procedure       :: setup_root => bb_manager_setup_root
+    procedure       :: expand     => bb_manager_expand
+    final           :: bb_manager_destroy
   end type bb_manager
 !
   interface bb_manager
     module procedure bb_manager_new
   end interface bb_manager
+!
+!| A set of bb_manager and work arrays. <br>
+!  This is mainly used for passing during initialization.
+  type bb_manager_tuple
+    type(bb_manager)         :: bb
+    integer(IK), allocatable :: w(:)
+  end type bb_manager_tuple
 !
   integer(IK), parameter :: mmap_l = 0
   integer(IK), parameter :: mmap_f = 1

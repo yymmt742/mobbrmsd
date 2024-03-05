@@ -12,6 +12,7 @@ module mod_c_matrix
   implicit none
   private
   public :: c_matrix
+  public :: c_matrix_tuple
   public :: c_matrix_memsize
   public :: c_matrix_worksize
   public :: c_matrix_blocksize
@@ -48,7 +49,34 @@ module mod_c_matrix
     module procedure c_matrix_new
   end interface c_matrix
 !
+!| A set of c_matrix and work arrays. <br>
+!  This is mainly used for passing during initialization.
+  type c_matrix_tuple
+    !| c  :: header
+    type(c_matrix)        :: c
+    !| x  :: main memory.
+    real(RK), allocatable :: x(:)
+    !| w  :: work memory.
+    real(RK), allocatable :: w(:)
+  end type c_matrix_tuple
+!
+  interface c_matrix_tuple
+    module procedure c_matrix_tuple_new
+  end interface c_matrix_tuple
+!
 contains
+!
+!| Constructer
+  pure elemental function c_matrix_tuple_new(b) result(res)
+    !| b :: mol_block, must be initialized.
+    type(mol_block), intent(in) :: b
+    type(c_matrix_tuple)        :: res
+!
+    res%c = c_matrix_new(b)
+    allocate (res%x(c_matrix_memsize(res%c)))
+    allocate (res%w(c_matrix_worksize(res%c)))
+!
+  end function c_matrix_tuple_new
 !
 !| Constructer
   pure elemental function c_matrix_new(b) result(res)
@@ -56,8 +84,8 @@ contains
     type(mol_block), intent(in) :: b
     type(c_matrix)              :: res
 !
-    res%p  = 1
-    res%w  = 1
+    res%p = 1
+    res%w = 1
     res%cb = 1 + DD * mol_block_nsym(b)
     res%nl = mol_block_nmol(b)
     res%cl = res%cb * res%nl
@@ -120,8 +148,7 @@ contains
     wx = gx
     wy = wx + dm
 !
-    call eval_g_matrix(dm, this%cb, n, X(px), Y(px), &
-   &                   C(this%p), W(gx), W(gy))
+    call eval_g_matrix(dm, this%cb, n, X(px), Y(px), C(this%p), W(gx), W(gy))
 !
     call eval_c_matrix(b, s, m, n, dm, this%cb, ms, X(px), Y(px), &
   &                    C(this%p), W(wx), W(wy))
