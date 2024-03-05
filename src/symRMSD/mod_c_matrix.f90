@@ -55,6 +55,8 @@ module mod_c_matrix
     !! main memory.
     real(RK), allocatable :: w(:)
     !! work memory.
+  contains
+    final :: c_matrix_tuple_destroy
   end type c_matrix_tuple
 !
   interface c_matrix_tuple
@@ -248,6 +250,12 @@ contains
     call axpy(DD, ONE, W(k), 1, C, 1)
 !
   end subroutine c_matrix_add
+!
+  pure elemental subroutine c_matrix_tuple_destroy(this)
+    type(c_matrix_tuple), intent(inout) :: this
+    if (ALLOCATED(this%x)) deallocate (this%x)
+    if (ALLOCATED(this%w)) deallocate (this%w)
+  end subroutine c_matrix_tuple_destroy
 !
 end module mod_c_matrix
 

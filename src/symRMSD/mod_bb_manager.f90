@@ -31,35 +31,41 @@ module mod_bb_manager
   type bb_manager
     sequence
     private
-    !| mol_block
-    type(mol_block) :: b
-    !| c_matrix
-    type(c_matrix)  :: c
-    !| f_matrix
-    type(f_matrix)  :: f
-    !| offset
     integer(IK)     :: o
-    !| tree
+    !! offset
+    type(mol_block) :: b
+    !! mol_block
+    type(c_matrix)  :: c
+    !! c_matrix
+    type(f_matrix)  :: f
+    !! f_matrix
     type(tree)      :: t
+    !! tree
   contains
     procedure       :: setup_root => bb_manager_setup_root
     procedure       :: expand     => bb_manager_expand
     final           :: bb_manager_destroy
   end type bb_manager
 !
-  interface bb_manager
-    module procedure bb_manager_new
-  end interface bb_manager
-!
 !| A set of bb_manager and work arrays. <br>
 !  This is mainly used for passing during initialization.
   type bb_manager_tuple
     type(bb_manager)         :: bb
-    integer(IK), allocatable :: w(:)
+    !! bb_manager
+    integer(IK), allocatable :: q(:)
+    !! work integer array
+    real(RK), allocatable    :: x(:)
+    !! main memory
+    real(RK), allocatable    :: w(:)
+    !! work array
   end type bb_manager_tuple
 !
   integer(IK), parameter :: mmap_l = 0
   integer(IK), parameter :: mmap_f = 1
+!
+  interface bb_manager_tuple
+    module procedure bb_manager_tuple_new
+  end interface bb_manager_tuple
 !
 contains
 !
@@ -78,53 +84,75 @@ contains
   end function mmap_c
 !
 !| Constructer
-  pure elemental function bb_manager_new(b, ms, w) result(res)
-    !| b :: mol_block, must be initialized.
-    type(mol_block), intent(in)              :: b
-    !| b :: mol_block, must be initialized.
-    type(mol_symmetry), intent(in), optional :: ms
-    !| w :: pointer to work array.
-    integer(IK), intent(in), optional        :: w
-    type(bb_manager)                         :: res
+  pure function bb_manager_tuple_new(m, n, sym) result(res)
+    integer(IK), intent(in)           :: m
+    !! number of molecules.
+    integer(IK), intent(in)           :: n
+    !! number of atoms per molecule.
+    integer(IK), intent(in), optional :: sym(:,:)
+    !! symmetric codomains, [[a1,a2,...,am], [b1,b2,...,bm], ...].
+    type(mol_block_tuple)             :: b
+    type(c_matrix_tuple)              :: c
+    type(f_matrix_tuple)              :: f
+    type(tree_tuple)                  :: t
+    type(bb_manager_tuple)            :: res
 !
-    res%b = b
-    res%c = c_matrix(b)
-    res%f = f_matrix(b)
-    res%t = tree(b, memsize)
+    b = mol_block_tuple(m, n, sym)
+    c = c_matrix_tuple(b)
+    f = f_matrix_tuple(b)
+    t = tree_tuple(b, node_memsize)
 !
-    if (PRESENT(ms)) res%ms = ms
-    if (PRESENT(w)) res%c%p = w
+    res%bb%b = b%b
+    res%bb%c = c%c
+    res%bb%f = f%f
+    res%bb%t = t%t
 !
+    res%x = [c%x, f%x]
     res%c%w = res%c%p + memsize_c_matrix(res%c)
     res%f%p = res%c%w
     res%f%w = res%f%p + memsize_f_matrix(res%f)
-    res%o   = res%f%w
     res%t%p = res%o + 1
 !
-  contains
+  end function bb_manager_tuple_new
 !
-    pure function memsize(b, p) result(res)
-      type(mol_block), intent(in) :: b
-      integer(IK), intent(in)     :: p
-      integer(IK)                 :: res, n
-      n = mol_block_nmol(b) - p
-      res = 1 + n * n + MAX(Hungarian_worksize(n, n), MAX(1 + DD + worksize_sdmin()))
-    end function memsize
+  pure function node_memsize(b, p) result(res)
+    type(mol_block), intent(in) :: b
+    integer(IK), intent(in)     :: p
+    integer(IK)                 :: res, n
+    n = mol_block_nmol(b) - p
+    res = 1 + n * n + MAX(Hungarian_worksize(n, n), MAX(1 + DD + worksize_sdmin()))
+  end function node_memsize
 !
-  end function bb_manager_new
+! pure elemental function bb_manager_new(b) result(res)
+!   type(mol_block), intent(in) :: b
+!   !! mol_block, must be initialized.
+!   type(bb_manager)            :: res
+!
+!   res%b = b
+!   res%c = c_matrix(b)
+!   res%f = f_matrix(b)
+!   res%t = tree(b, memsize)
+!
+!   res%c%w = res%c%p + memsize_c_matrix(res%c)
+!   res%f%p = res%c%w
+!   res%f%w = res%f%p + memsize_f_matrix(res%f)
+!   res%o   = res%f%w
+!   res%t%p = res%o + 1
+!
+! end function bb_manager_new
 !
 !| Inquire worksize of f_matrix.
   pure elemental function memsize_bb_manager(this) result(res)
-    !| this :: bb_manager.
     type(bb_manager), intent(in) :: this
+    !! bb_manager.
     integer(IK)                  :: res
     res = memsize_c_matrix(this%c) + memsize_f_matrix(this%f) + this%t%memsize() + 1
   end function memsize_bb_manager
 !
 !| Inquire worksize of bb_manager.
   pure elemental function worksize_bb_manager(this) result(res)
-    !| this :: bb_manager.
     type(bb_manager), intent(in) :: this
+    !! bb_manager.
     integer(IK)                  :: res
     res = memsize_f_matrix(this%f)
     res = MAX(worksize_c_matrix(this%c) - res, res)
@@ -133,14 +161,14 @@ contains
 !
 !| Setup.
   pure subroutine bb_manager_list_setup(bb, X, Y, W)
-    !| this :: bb_manager
     type(bb_manager), intent(in) :: bb(:)
-    !| X    :: reference coordinate
+    !! bb_manager
     real(RK), intent(in)         :: X(*)
-    !| Y    :: target coordinate
+    !! reference coordinate
     real(RK), intent(in)         :: Y(*)
-    !| W    :: work memory
+    !! target coordinate
     real(RK), intent(inout)      :: W(*)
+    !! work memory
     integer(IK)                  :: k, l
 !
     do k = 1, SIZE(bb)
@@ -159,15 +187,15 @@ contains
 !
 !| Setup C matrix and F matrix in root node.
   pure subroutine bb_manager_setup_root(this, G0, C0, W)
-    !| this :: bb_manager
-    class(bb_manager), intent(in) :: this
-    !| G0 :: sum of auto variances.
-    real(RK), intent(in)          :: G0
-    !| C0 :: sum of covariance matrices.
-    real(RK), intent(in)          :: C0(*)
-    !| W    :: work memory
-    real(RK), intent(inout)       :: W(*)
-    integer(IK)                   :: t
+    type(bb_manager), intent(in) :: this
+    !! bb_manager
+    real(RK), intent(in)         :: G0
+    !! G0 :: sum of auto variances.
+    real(RK), intent(in)         :: C0(*)
+    !! C0 :: sum of covariance matrices.
+    real(RK), intent(inout)      :: W(*)
+    !! W    :: work memory
+    integer(IK)                  :: t
 !
     t = this%t%p + mmap_g(this%b, 0)
     W(t) = G0
@@ -178,13 +206,13 @@ contains
 !
 !| Expand top node in queue.
   subroutine bb_manager_expand(this, W)
-    class(bb_manager), intent(inout) :: this
-    !! this :: bb_manager
-    real(RK), intent(inout)          :: W(*)
-    !! W    :: work memory
-    integer(IK)                      :: cl, fc, gc
-    integer(IK)                      :: nper, iper, imap
-    integer(IK)                      :: m, n
+    type(bb_manager), intent(inout) :: this
+    !! bb_manager
+    real(RK), intent(inout)         :: W(*)
+    !! work memory
+    integer(IK)                     :: cl, fc, gc
+    integer(IK)                     :: nper, iper, imap
+    integer(IK)                     :: m, n
 !
      cl = this%t%current_level()
      m = this%b%n1 - cl
@@ -243,17 +271,17 @@ print'(10f9.3)', W(ln:ln+20)
 !  L(G, C, D) = SUM_{i=1,...,p} (G - 2tr[CR]) + min_{nu} SUM_{i=p+1,...,N} D_{i nu(p)}
   pure subroutine lowerbound(p, b, G, C, D, W)
     integer(IK), intent(in)    :: p
-    !! p :: level
+    !! level
     type(mol_block),intent(in) :: b
-    !! b :: mol_block
+    !! mol_block
     real(RK), intent(in)       :: G
-    !! G :: partial auto variance, G
+    !! partial auto variance, G
     real(RK), intent(in)       :: C(*)
-    !! C :: partial covariance matrix, C(d, d)
+    !! partial covariance matrix, C(d, d)
     real(RK), intent(in)       :: D(*)
-    !! D :: residual matrix, D(n1, n2), here n1 = MAX(nx, ny) - p and n2 = MIN(nx, ny) - p.
+    !! residual matrix, D(n1, n2), here n1 = MAX(nx, ny) - p and n2 = MIN(nx, ny) - p.
     real(RK), intent(inout)    :: W(*)
-    !! W :: workarray, must be SIZE(W) > lowerbound_worksize(p, b).
+    !! workarray, must be SIZE(W) > lowerbound_worksize(p, b).
     integer(IK)                :: n
 !
     W(1) = ZERO

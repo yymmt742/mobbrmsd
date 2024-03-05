@@ -86,12 +86,15 @@ module mod_tree
 !   module procedure tree_new
 ! end interface tree
 !
+!| A set of tree and work arrays. <br>
+!  This is mainly used for passing during initialization.
   type tree_tuple
     type(tree)               :: t
-!!  t :: tree.
+!!  tree.
     integer(IK), allocatable :: q(:)
-!!  q :: queue, a collection of nodes in a hierarchy.
-!   procedure(memsize), pointer, nopass  :: mem => null()
+!!  queue, a collection of nodes in a hierarchy.
+    real(RK), allocatable    :: x(:)
+!!  main memory.
   contains
     final     :: tree_tuple_destroy
   end type tree_tuple
@@ -631,6 +634,7 @@ contains
   pure elemental subroutine tree_tuple_destroy(this)
     type(tree_tuple), intent(inout) :: this
     if (ALLOCATED(this%q)) deallocate (this%q)
+    if (ALLOCATED(this%x)) deallocate (this%x)
   end subroutine tree_tuple_destroy
 !
 end module mod_tree

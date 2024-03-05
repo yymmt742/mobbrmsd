@@ -44,6 +44,8 @@ module mod_f_matrix
     !! main memory.
     real(RK), allocatable :: w(:)
     !! work memory.
+  contains
+    final :: f_matrix_tuple_destroy
   end type f_matrix_tuple
 !
   interface f_matrix_tuple
@@ -131,6 +133,12 @@ contains
     end do
 !
   end subroutine eval_f_matrix
+!
+  pure elemental subroutine f_matrix_tuple_destroy(this)
+    type(f_matrix_tuple), intent(inout) :: this
+    if (ALLOCATED(this%x)) deallocate (this%x)
+    if (ALLOCATED(this%w)) deallocate (this%w)
+  end subroutine f_matrix_tuple_destroy
 !
 end module mod_f_matrix
 
