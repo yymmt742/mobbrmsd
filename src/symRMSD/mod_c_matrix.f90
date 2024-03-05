@@ -1,10 +1,10 @@
 !
 !| Module for manage C matrix.<br>
 !  {C_IJs} :: Covariance matrices.<br>
-!    C_IJs(d,d) = Y_J @ Q_s @ X_I^T<br>
-!    - X_I :: I-th molecule in X.<br>
-!    - Y_J :: J-th molecule in Y.<br>
-!    - Q_s :: Permutation matrix on m.
+!  - C_IJs(d,d) = Y_J @ Q_s @ X_I^T<br>
+!  - - X_I :: I-th molecule in X.<br>
+!  - - Y_J :: J-th molecule in Y.<br>
+!  - - Q_s :: Permutation matrix on m.
 module mod_c_matrix
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE, &
     &                   gemm, dot, copy, axpy
@@ -19,30 +19,27 @@ module mod_c_matrix
   public :: c_matrix_eval
   public :: c_matrix_add
 !
-!|   c_matrix<br>
-!    C_IJs is the d x d matrix and {C_IJs} is the third-order tensor of nx x ny x s.<br>
-!    To quickly find the rotation matrix, C is stored with G_IJ given by<br>
-!      G_IJ = Tr[X_I @ X_I^T] + Tr[Y_J @ Y_J^T].<br>
-!    G does not change with respect to s.<br>
-!    If nx >= ny, {C_IJs} is stored as C(cb,nx,ny), otherwise, C(cb,ny,nx), <br>
-!    where cb = 1 + s * d * d.<br>
-!    C(:,I,J) = [G_IJ, C_IJ1, C_IJ2, ..., C_IJS] with C_IJs(D,D) := Y_J @ Q_s @ X_I^T.<br>
-!    <br>
+!| c_matrix <br>
+!  - C_IJs is the d x d matrix and {C_IJs} is the third-order tensor of nx x ny x s. <br>
+!  - To quickly find the rotation matrix, C is stored with G_IJ given by <br>
+!  --- G_IJ = Tr[X_I @ X_I^T] + Tr[Y_J @ Y_J^T]. <br>
+!  - G does not change with respect to s. <br>
+!  - C(:,I,J) = [G_IJ, C_IJ1, C_IJ2, ..., C_IJS] with C_IJs(D,D) := Y_J @ Q_s @ X_I^T. <br>
   type c_matrix
     private
     sequence
-    !| p  :: pointer to C.
     integer(IK), public :: p
-    !| w  :: pointer to work.
+    !! pointer to main memory.
     integer(IK), public :: w
-    !| nl :: number of row. nl = n
+    !! pointer to work array.
     integer(IK)         :: nl
-    !| cb :: number of elements in a sell. cb = DD * res%b%s + 1
+    !! number of row. nl = n.
     integer(IK)         :: cb
-    !| cl :: number of elements in a line. cl = cb * MAX(nx, ny)
+    !! number of elements in a sell. cb = DD * res%b%s + 1.
     integer(IK)         :: cl
-    !| nw :: number of work array. nw = MAX(dmn + dm, n + n)
+    !! number of elements in a line. cl = cb * n.
     integer(IK)         :: nw
+    !! number of work array. nw = MAX(dmn + dm, n + n)
   end type c_matrix
 !
   interface c_matrix
@@ -52,12 +49,12 @@ module mod_c_matrix
 !| A set of c_matrix and work arrays. <br>
 !  This is mainly used for passing during initialization.
   type c_matrix_tuple
-    !| c  :: header
     type(c_matrix)        :: c
-    !| x  :: main memory.
+    !! header
     real(RK), allocatable :: x(:)
-    !| w  :: work memory.
+    !! main memory.
     real(RK), allocatable :: w(:)
+    !! work memory.
   end type c_matrix_tuple
 !
   interface c_matrix_tuple
@@ -68,8 +65,8 @@ contains
 !
 !| Constructer
   pure elemental function c_matrix_tuple_new(b) result(res)
-    !| b :: mol_block, must be initialized.
     type(mol_block), intent(in) :: b
+    !! mol_block, must be initialized.
     type(c_matrix_tuple)        :: res
 !
     res%c = c_matrix_new(b)
@@ -80,8 +77,8 @@ contains
 !
 !| Constructer
   pure elemental function c_matrix_new(b) result(res)
-    !| b :: mol_block, must be initialized.
     type(mol_block), intent(in) :: b
+    !! mol_block, must be initialized.
     type(c_matrix)              :: res
 !
     res%p = 1
@@ -97,7 +94,7 @@ contains
 !| Inquire blocksize of c_matrix.
   pure elemental function c_matrix_blocksize(this) result(res)
     type(c_matrix), intent(in) :: this
-    !! this :: c_matrix
+    !! c_matrix
     integer(IK)                :: res
     res = this%cb
   end function c_matrix_blocksize
@@ -112,8 +109,8 @@ contains
 !
 !| Inquire worksize of c_matrix evaluation.
   pure elemental function c_matrix_worksize(this) result(res)
-    !| this :: c_matrix
     type(c_matrix), intent(in) :: this
+    !! this :: c_matrix
     integer(IK)                :: res
     res = this%nw
   end function c_matrix_worksize
@@ -121,20 +118,20 @@ contains
 !| Evaluation the C matrix; G matrix is also calculated at the same time.<br>
 !  If nx>=ny C(cb,nx,ny), else C(cb,ny,nx)
   pure subroutine c_matrix_eval(this, b, ms, X, Y, C, W)
-    !| this :: c_matrix
     type(c_matrix), intent(in)  :: this
-    !| b    :: mol_block
+    !! c_matrix
     type(mol_block), intent(in) :: b
-    !| ms   :: mol symmetry array
+    !! mol_block, b must match the one used for initialization.
     integer(IK), intent(in)     :: ms(*)
-    !| X    :: reference coordinate
+    !! mol symmetry array, associated with b.
     real(RK), intent(in)        :: X(*)
-    !| Y    :: target coordinate
+    !! reference coordinate
     real(RK), intent(in)        :: Y(*)
-    !| C    :: main memory
+    !! target coordinate
     real(RK), intent(inout)     :: C(*)
-    !| W    :: work memory
+    !! main memory
     real(RK), intent(inout)     :: W(*)
+    !! work memory
     integer(IK)                 :: s, m, n, dm, px, gx, gy, wx, wy
 !
     s = mol_block_nsym(b)
@@ -227,22 +224,22 @@ contains
 !
 !| Add CIJs to partial covariance matrix C.
   pure subroutine c_matrix_add(this, b, i, j, s, W, G, C)
-    !| this :: c_matrix
     type(c_matrix), intent(in)  :: this
-    !| b    :: mol_block
+    !! this :: c_matrix
     type(mol_block), intent(in) :: b
-    !| i    :: row index
+    !! b    :: mol_block
     integer(IK), intent(in)     :: i
-    !| j    :: collumn index
+    !! i    :: row index
     integer(IK), intent(in)     :: j
-    !| s    :: symmetry index
+    !! collumn index
     integer(IK), intent(in)     :: s
-    !| W    :: work array
+    !! symmetry index
     real(RK), intent(in)        :: W(*)
-    !| G    :: partial auto variance matrix
+    !! main memory
     real(RK), intent(inout)     :: G
-    !| C    :: partial covariance matrix
+    !! partial auto variance matrix
     real(RK), intent(inout)     :: C(*)
+    !! partial covariance matrix
     integer(IK)                 :: k
 !
     k = this%p + this%cb * (i - 1) + this%cl * (j - 1)

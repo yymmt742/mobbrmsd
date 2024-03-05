@@ -10,11 +10,14 @@ module mod_f_matrix
   implicit none
   private
   public :: f_matrix
+  public :: f_matrix_tuple
   public :: f_matrix_memsize
   public :: f_matrix_worksize
   public :: f_matrix_eval
 !
-  !| f_matrix
+!| f_matrix <br>
+!  - F is the n x n matrix. <br>
+!  - F(I,J) = min_{R, s} tr[R@C_IJS] <br>
   type f_matrix
     private
     sequence
@@ -22,7 +25,7 @@ module mod_f_matrix
     integer(IK), public :: p
     !| w  :: pointer to work.
     integer(IK), public :: w
-    !| nn :: nx * ny
+    !| nn :: n * n
     integer(IK)         :: nn
     !| nw :: work memory size.
     integer(IK)         :: nw
@@ -31,6 +34,21 @@ module mod_f_matrix
   interface f_matrix
     module procedure f_matrix_new
   end interface f_matrix
+!
+!| A set of f_matrix and work arrays. <br>
+!  This is mainly used for passing during initialization.
+  type f_matrix_tuple
+    type(f_matrix)        :: f
+    !! header
+    real(RK), allocatable :: x(:)
+    !! main memory.
+    real(RK), allocatable :: w(:)
+    !! work memory.
+  end type f_matrix_tuple
+!
+  interface f_matrix_tuple
+    module procedure f_matrix_tuple_new
+  end interface f_matrix_tuple
 !
 contains
 !
@@ -46,6 +64,18 @@ contains
     res%nw = worksize_sdmin()
 !
   end function f_matrix_new
+!
+!| Constructer
+  pure elemental function f_matrix_tuple_new(b) result(res)
+    type(mol_block), intent(in) :: b
+    !! mol_block, must be initialized.
+    type(f_matrix_tuple)        :: res
+!
+    res%f = f_matrix(b)
+    allocate (res%x(f_matrix_memsize(res%f)))
+    allocate (res%w(f_matrix_worksize(res%f)))
+!
+  end function f_matrix_tuple_new
 !
 !| Inquire memsize of f_matrix.
   pure elemental function f_matrix_memsize(this) result(res)
@@ -65,21 +95,23 @@ contains
 !
 !| Evaluation the D matrix.<br>
 !  If nx>=ny D(nx,ny), else D(ny,nx)
-  pure subroutine f_matrix_eval(this, b, c, X, W)
+  pure subroutine f_matrix_eval(this, b, c, X, F, W)
     type(f_matrix), intent(in)  :: this
-    !! this :: f_matrix
+    !! f_matrix
     type(mol_block), intent(in) :: b
-    !! b    :: mol_block
+    !! mol_block, b must match the one used for initialization.
     type(c_matrix), intent(in)  :: c
-    !! C    :: covariacne matrix C
+    !! covariacne matrix c.
     real(RK), intent(inout)     :: X(*)
-    !! F    :: main memory
+    !! main memory of C.
+    real(RK), intent(inout)     :: F(*)
+    !! main memory of F.
     real(RK), intent(inout)     :: W(*)
-    !! W    :: work array
+    !! work array.
     integer(IK)                 :: cb
 !
     cb = c_matrix_blocksize(c)
-    call eval_f_matrix(cb, this%nn, X(c%p), X(this%p), W(this%w))
+    call eval_f_matrix(cb, this%nn, X(c%p), F(this%p), W(this%w))
 !
   end subroutine f_matrix_eval
 !
