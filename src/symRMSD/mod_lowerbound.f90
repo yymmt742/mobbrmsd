@@ -22,7 +22,7 @@ contains
     integer(IK)                :: res
     integer(IK)                :: n
     n = mol_block_nmol(b) - p
-    res = MAX(worksize_Hungarian(n, n), 1 + worksize_sdmin())
+    res = MAX(Hungarian_worksize(n, n), 1 + sdmin_worksize())
   end function lowerbound_worksize
 !
 !| lowerbound function.

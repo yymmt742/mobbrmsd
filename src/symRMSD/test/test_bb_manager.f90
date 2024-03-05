@@ -1,7 +1,6 @@
 program main
   use mod_params, only: D, setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
-  use mod_mol_symmetry
   use mod_rotation_matrix
   use mod_lowerbound
   use mod_bb_manager
@@ -23,23 +22,21 @@ program main
 contains
 !
   subroutine test0()
-    type(mol_block)  :: b
-    type(bb_manager) :: bm(1)
-    integer(IK)      :: i
-    real(RK)         :: X(D, 8 * 3), Y(D, 8 * 5)
-    real(RK), allocatable :: w(:)
+    type(bb_manager_tuple) :: bm
+    integer(IK), parameter :: m = 8
+    integer(IK), parameter :: n = 3
+    real(RK)               :: X(D, m * n), Y(D, m * n)
 !
-    b = mol_block(2, 8, 3, 5)
-    bm = bb_manager(b)
-    print *, memsize_bb_manager(bm), worksize_bb_manager(bm)
+    bm = bb_manager_tuple(8, 3, sym=RESHAPE([2, 3, 4, 5, 6, 7, 8, 1], [8, 1]))
+    print'(4I4)',bm%q
+!
+    print *, bb_manager_memsize(bm%bb), bb_manager_worksize(bm%bb)
     X = sample(D, 8 * 3)
-    Y = sample(D, 8 * 5)
-    Y(:,8+1:8*4) = X
-    allocate (W(memsize_bb_manager(bm(1)) + worksize_bb_manager(bm(1))))
-    w = 999
-    call bb_manager_list_setup(bm, X, Y, W)
-    call bm(1)%expand(W)
-    print'(10f9.4)', W
+    Y = sample(D, 8 * 3)
+    Y(:,8+1:8*3) = X(:,8+1:8*3)
+!
+!   call bb_manager_list_setup(bm, X, Y, W)
+!   call bm(1)%expand(W)
 !
   end subroutine test0
 !

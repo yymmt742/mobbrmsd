@@ -4,13 +4,13 @@ module mod_Hungarian
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   implicit none
   private
-  public :: worksize_Hungarian
+  public :: Hungarian_worksize
   public :: Hungarian
 !
 contains
 !
 !| query work array size
-  pure elemental function worksize_Hungarian(m, n) result(res)
+  pure elemental function Hungarian_worksize(m, n) result(res)
     !| matrix dimension 1.
     integer(IK), intent(in) :: m
     !| matrix dimension 2.
@@ -21,7 +21,7 @@ contains
     else
       res = 0
     end if
-  end function worksize_Hungarian
+  end function Hungarian_worksize
 !
 !| Calculate the minimum linear assignment cost using Hungarian method.
 !  If m and n are different, the sum of the linear assignments of the smaller is returned.

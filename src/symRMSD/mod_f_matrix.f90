@@ -63,7 +63,7 @@ contains
     res%p  = 1
     res%w  = 1
     res%nn = mol_block_nmol(b)**2
-    res%nw = worksize_sdmin()
+    res%nw = sdmin_worksize()
 !
   end function f_matrix_new
 !

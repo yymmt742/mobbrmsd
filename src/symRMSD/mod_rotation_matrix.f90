@@ -6,9 +6,9 @@ module mod_rotation_matrix
   use mod_det
   implicit none
   private
-  public :: worksize_sdmin
+  public :: sdmin_worksize
   public :: estimate_sdmin
-  public :: worksize_rotation_matrix
+  public :: rotation_matrix_worksize
   public :: estimate_rotation_matrix
 !
   real(RK), parameter :: THRESHOLD = 1E-8_RK
@@ -16,7 +16,7 @@ module mod_rotation_matrix
 contains
 !
 !| Inquire function for memory size of estimate_sdmin.
-  pure elemental function worksize_sdmin() result(res)
+  pure elemental function sdmin_worksize() result(res)
     integer(IK) :: res
     if (d <= 0) then
       res = 0
@@ -29,7 +29,7 @@ contains
     else
       res = worksize_Kabsch() + dd + 1
     endif
-  end function worksize_sdmin
+  end function sdmin_worksize
 !
 !| Compute the least-squares sum_i^n |x_i-Ry_i|^2 from cov = YX^T and g = tr[XX^T] + tr[YY^T].
   pure subroutine estimate_sdmin(g, cov, w)
@@ -142,7 +142,7 @@ contains
   end subroutine quartenion_sdmin_d3
 !
 !| Inquire function for memory size of rotation_matrix.
-  pure elemental function worksize_rotation_matrix() result(res)
+  pure elemental function rotation_matrix_worksize() result(res)
     integer(IK) :: res
     if (d <= 0) then
       res = 0
@@ -155,7 +155,7 @@ contains
     else
       res = worksize_Kabsch()
     endif
-  end function worksize_rotation_matrix
+  end function rotation_matrix_worksize
 !
 !| Compute the transpose rotation matrix for minimize tr[CR] from cov = YX^T and g = tr[XX^T] + tr[YY^T].
   pure subroutine estimate_rotation_matrix(g, cov, rot, w)

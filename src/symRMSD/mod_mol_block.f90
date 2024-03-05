@@ -25,14 +25,14 @@ module mod_mol_block
   type mol_block
     sequence
     private
-    !| p :: pointer to X.
     integer(IK)     :: x = 1
-    !| m :: number of atom in a molecule
+    !! pointer to X.
     integer(IK)     :: m = 1
-    !| n :: number of molecule
+    !! number of atom in a molecule
     integer(IK)     :: n = 1
-    !| s :: molecular symmetry
+    !! number of molecule
     type(group_permutation) :: s
+    !! molecular symmetry permutation
   end type mol_block
 !
   interface mol_block
@@ -44,7 +44,7 @@ module mod_mol_block
   type mol_block_tuple
     !| m :: number of atom in a molecule
     type (mol_block)         :: b
-    !| iw :: work array.
+    !| w :: work array.
     integer(IK), allocatable :: w(:)
   end type mol_block_tuple
 !
@@ -54,6 +54,7 @@ module mod_mol_block
 !
 contains
 !
+!| Constructer
   pure function mol_block_tuple_new(m, n, sym) result(res)
     integer(IK), intent(in) :: m
     !! number of molecules
