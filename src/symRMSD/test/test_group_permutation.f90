@@ -6,7 +6,9 @@ program main
   type(unittest) :: u
 !
   call u%init('test group_permutation')
+!
   call test1()
+  call test2()
 !
   call u%finish_and_terminate()
 !
@@ -14,10 +16,10 @@ contains
 !
   subroutine test1()
     type(group_permutation_tuple) :: g
-    integer(IK), parameter  :: n = 13
-    real(RK)                :: X(n), Y(2, n)
-    integer                 :: s(n)
-    integer                 :: i
+    integer(IK), parameter        :: n = 13
+    real(RK)                      :: X(n), Y(2, n)
+    integer                       :: s(n)
+    integer                       :: i
 !
     s = [2, 4, 6, 1, 3, 5, 9, 8, 7, 11, 13, 10, 12]
     g = group_permutation_tuple(RESHAPE(s, [n, 1]))
@@ -38,11 +40,45 @@ contains
     call u%assert_almost_equal(real([(i, i=1, n)], RK), Y(1, :), 'inverse I = Y1')
     call u%assert_almost_equal(real([(i, i=1, n)], RK), Y(2, :), 'inverse I = Y2')
 !
-!   g = group_permutation_tuple([1,2,3,4,5,6,7,8,9,10,11,12])
-!   g = group_permutation_tuple([12,1,2,3,4,5,6,7,8,9,10,11])
-!   g = group_permutation_tuple([7,8,9,10,11,12,1,2,3,4,5,6])
-!
   end subroutine test1
+!
+  subroutine test2()
+    type(group_permutation_tuple) :: g
+    integer(IK), parameter        :: n = 8
+    real(RK)                      :: X(n), Y(2, n)
+    integer                       :: s(n, 7), t(n)
+    integer                       :: i
+!
+    s = RESHAPE([2, 3, 4, 5, 6, 7, 8, 1, &
+      &          3, 4, 5, 6, 7, 8, 1, 2, &
+      &          4, 5, 6, 7, 8, 1, 2, 3, &
+      &          5, 6, 7, 8, 1, 2, 3, 4, &
+      &          6, 7, 8, 1, 2, 3, 4, 5, &
+      &          7, 8, 1, 2, 3, 4, 5, 6, &
+      &          8, 1, 2, 3, 4, 5, 6, 7], [8, 7])
+    t = [1, 2, 3, 4, 5, 6, 7, 8]
+    g = group_permutation_tuple(s)
+!
+    do concurrent(i=1:n)
+      X(i) = i
+      Y(:, i) = i
+    end do
+!
+    do i = 1, 7
+      call group_permutation_swap(g%t, g%w, i, 1, X)
+      call group_permutation_swap(g%t, g%w, i, 2, Y)
+      call u%assert_equal(s(:, i), NINT(X, IK),       'swap    s = X ')
+      call u%assert_equal(s(:, i), NINT(Y(1, :), IK), 'swap    s = Y1')
+      call u%assert_equal(s(:, i), NINT(Y(2, :), IK), 'swap    s = Y2')
+!
+      call group_permutation_inverse(g%t, g%w, i, 1, X)
+      call group_permutation_inverse(g%t, g%w, i, 2, Y)
+      call u%assert_equal(t, NINT(X, IK),       'inverse I = X ')
+      call u%assert_equal(t, NINT(Y(1, :), IK), 'inverse I = Y1')
+      call u%assert_equal(t, NINT(Y(2, :), IK), 'inverse I = Y2')
+    end do
+!
+  end subroutine test2
 !
 end program main
 

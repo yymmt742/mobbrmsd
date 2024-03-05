@@ -56,6 +56,7 @@ module mod_group_permutation
 !
 contains
 !
+!| Constructor.
   pure function group_permutation_new(perm) result(res)
     integer(IK), intent(in), optional :: perm(:, :)
     !! codomains, [[a1,a2,...,am],[b1,b2,...,bm],...].
@@ -63,7 +64,7 @@ contains
     if (PRESENT(perm)) res%s = SIZE(perm, 2)
   end function group_permutation_new
 !
-!| Constructor. <br>
+!| Constructor.
   pure function group_permutation_tuple_new(perm) result(res)
     integer(IK), intent(in), optional :: perm(:, :)
     !! codomains, [[a1,a2,...,am],[b1,b2,...,bm],...].
@@ -211,6 +212,7 @@ contains
 !
   end subroutine proc
 !
+!| returns true when perm is not permutation.
   pure function is_not_permutation(n, perm) result(res)
     integer(IK), intent(in) :: n, perm(*)
     logical                 :: res
