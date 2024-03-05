@@ -1,4 +1,10 @@
-!| Tree structure for branch and bound.
+!| Tree structure for branch and bound. <br>
+!   queue, a collection of nodes in a hierarchy. <br>
+!   data is stored in heap by turning S first, [[a_1,...,a_S], [b_1,...,b_S],...] <br>
+!   i :: Current pointer.<br>
+!        i in [0,1,...,n-1] :: current node<br>
+!        i == -1 :: unexplored<br>
+!        i <  -1 :: explored
 module mod_tree
   use mod_params, only: IK, RK, ONE => RONE, TEN => RTEN, ZERO => RZERO, RHUGE, LN_TO_L10
   use mod_mol_block
@@ -24,67 +30,19 @@ module mod_tree
   public :: tree_ncomb_frac
   public :: tree_ncomb_exp
   public :: tree_queue_is_empty
+  public :: tree_queue_is_explored
+  public :: tree_queue_is_unexplored
   public :: tree_queue_is_bottom
-!
-! interface
-!   pure function memsize(b, p) result(res)
-!     use mod_params, only: IK
-!     use mod_mol_block, only: mol_block
-!     type(mol_block), intent(in) :: b
-!     integer(IK), intent(in)     :: p
-!     integer(IK)                 :: res
-!   end function memsize
-! end interface
-!
-!|  queue, a collection of nodes in a hierarchy.
-!   data is stored in heap by turning S first, [[a_1,...,a_S], [b_1,...,b_S],...]
-! type queue
-!   private
-!   sequence
-!|  i :: Current pointer.<br>
-!        i in [0,1,...,n-1] :: current node<br>
-!        i == -1 :: unexplored<br>
-!        i <  -1 :: explored
-!   integer(IK) :: i
-!|  p :: pointer to memory.
-!   integer(IK) :: p
-!|  n :: nnodes.
-!   integer(IK) :: n
-!|  x :: Memory size per node.
-!   integer(IK) :: x
-! end type queue
-!
-! actural pointer is calculated by t%q + q[sdlcr]
-  integer(IK), parameter :: header_memsize = 4
-  integer(IK), parameter :: qs = 1
-  integer(IK), parameter :: qd = 2
-  integer(IK), parameter :: ql = 3
-  integer(IK), parameter :: qc = 4
-  integer(IK), parameter :: qr = 5 ! pointer to root node
-!
-! actural pointer is calculated by t%x + queue_pointer(q)
-  integer(IK), parameter :: queue_blocksize = 4
-  integer(IK), parameter :: qi = 1
-  integer(IK), parameter :: qp = 2
-  integer(IK), parameter :: qn = 3
-  integer(IK), parameter :: qx = 4
-!
-  integer(IK), parameter :: is_unexplored = -1
-  integer(IK), parameter :: is_explored = -2
 !
 !| Factorial tree.
   type tree
     private
     sequence
 !|  x :: pointer to work array.
-    integer(IK) :: x
+    integer(IK), public :: x
 !|  q :: pointer to queue array.
-    integer(IK) :: q
+    integer(IK), public :: q
   end type tree
-!
-! interface tree
-!   module procedure tree_new
-! end interface tree
 !
 !| A set of tree and work arrays. <br>
 !  This is mainly used for passing during initialization.
@@ -102,6 +60,24 @@ module mod_tree
   interface tree_tuple
     module procedure tree_tuple_new
   end interface tree_tuple
+!
+! actural pointer is calculated by t%q + q[sdlcr]
+  integer(IK), parameter :: header_blocksize = 4
+  integer(IK), parameter :: qs = 0 ! scaling.
+  integer(IK), parameter :: qd = 1 ! tree depth.
+  integer(IK), parameter :: ql = 2 ! current level.
+  integer(IK), parameter :: qc = 3 ! current queue pointer.
+  integer(IK), parameter :: qr = 4 ! pointer to root node
+!
+! actural pointer is calculated by q(t%q + q(t%q + qc))
+  integer(IK), parameter :: queue_blocksize = 4
+  integer(IK), parameter :: qi = 1
+  integer(IK), parameter :: qp = 2
+  integer(IK), parameter :: qn = 3
+  integer(IK), parameter :: qx = 4
+!
+  integer(IK), parameter :: is_unexplored = -1
+  integer(IK), parameter :: is_explored = -2
 !
 contains
 !
@@ -185,37 +161,37 @@ contains
       end function memsize
     end interface
     type(tree_tuple)            :: res
-    integer(IK)                 :: n, i, j, k, l
+    integer(IK)                 :: n, s, i, j, k, l
 !
-    res%t = tree(0, 0)
+    res%t = tree(1, 1)
 !
     n = mol_block_nmol(b)
-    allocate (res%q(header_memsize + queue_blocksize * (n + 1)))
+    s = mol_block_nsym(b)
+    allocate (res%q(header_blocksize + queue_blocksize * (n + 1)))
 !
 !   designate root as the current node.
-!   s :: scaling.
-!   l :: current level.
-!   c :: current queue pointer.
-    res%q(res%t%q + qs) = mol_block_nsym(b)
+    res%q(res%t%q + qs) = s
     res%q(res%t%q + qd) = n + 1
     res%q(res%t%q + ql) = 0
-    res%q(res%t%q + qc) = header_memsize + 1 ! pointer to root
+    res%q(res%t%q + qc) = header_blocksize ! pointer to root - 1
 !
     j = 1
     k = 1
-    l = res%q(res%t%q + qc)
+    l = res%t%q + res%q(res%t%q + qc) ! root_pointer
     call queue_init(j, memsize(b, 0), k, res%q(l))
 !   set root state => 1
-    res%q(header_memsize + qi) = 0
+    res%q(l + qi - 1) = 0
 !
-    j = (n + 1) * res%q(res%t%q + qs)
+    j = (n + 1) * s
 !
     do i = 1, n
-      j = j - res%q(res%t%q + qs)
+      j = j - s
       k = k + queue_memsize(res%q(l))
       l = l + queue_blocksize
       call queue_init(j, memsize(b, i), k, res%q(l))
     end do
+!
+    allocate (res%x(tree_memsize(res%t, res%q)))
 !
   end function tree_tuple_new
 !
@@ -251,7 +227,7 @@ contains
     integer(IK), intent(in) :: q(*)
 !!  q :: queue
     integer(IK)             :: res
-    res = queue_pointer(q(t%q + qr))
+    res = t%x + queue_pointer(q(t%q + qr)) - 1
   end function tree_root_pointer
 !
 !| Returns a pointer to the current queue.
@@ -262,7 +238,7 @@ contains
 !!  q :: queue
     integer(IK)             :: res
     res = t%q + q(t%q + qc)
-    res = t%x + queue_pointer(q(res))
+    res = t%x + queue_pointer(q(res)) - 1
   end function tree_queue_pointer
 !
 !| Returns a pointer to the current queue.
@@ -273,7 +249,7 @@ contains
 !!  q :: queue
     integer(IK)             :: res
     res = t%q + q(t%q + qc)
-    res = t%x + queue_state_pointer(q(res))
+    res = t%x + queue_state_pointer(q(res)) - 1
   end function tree_current_pointer
 !
 !| Returns a pointer to the current best node.
@@ -292,7 +268,7 @@ contains
   end function tree_node_pointer
 !
 !| Returns current sequence.
-  function tree_current_sequence(t, q) result(res)
+  pure function tree_current_sequence(t, q) result(res)
     type(tree), intent(in)  :: t
 !!  t :: tree
     integer(IK), intent(in) :: q(*)
@@ -352,9 +328,9 @@ contains
     if(tree_queue_is_empty(t, q).or.tree_queue_is_bottom(t, q)) return
     j = t%q + ql
     k = t%q + qc
-    q(j) = q(j) + 1                          ! l = l + 1
-    q(k) = t%q + qr + q(j) * queue_blocksize ! let current queue be l.
-    call queue_set_state(q(q(k)), is_unexplored)
+    q(j) = q(j) + 1               ! l = l + 1
+    q(k) = q(k) + queue_blocksize ! let current queue be l.
+    call queue_set_state(q(t%q + q(k)), is_unexplored)
   end subroutine tree_expand
 !
 !| Leave current node
@@ -367,8 +343,8 @@ contains
     if (tree_current_level(t, q) < 1) return
     j = t%q + ql
     k = t%q + qc
-    q(j) = q(j) - 1                          ! l = l - 1
-    q(k) = t%q + qr + q(j) * queue_blocksize ! let current queue be l.
+    q(j) = q(j) - 1               ! l = l - 1
+    q(k) = q(k) - queue_blocksize ! let current queue be l.
   end subroutine tree_leave
 !
 !| Select top node
