@@ -34,7 +34,12 @@ contains
     X = sample(D, 8 * 3)
     Y = sample(D, 8 * 3)
     Y(:,8+1:8*3) = X(:,8+1:8*3)
+bm%x(:) = 99
+    call bb_manager_setup(bm%bb, bm%q, X, Y, bm%x)
+    call bb_manager_setup_root(bm%bb, bm%q, bm%x)
 !
+    call bb_manager_expand(bm%bb, bm%q, bm%x)
+print'(19f5.1)',bm%x
 !   call bb_manager_list_setup(bm, X, Y, W)
 !   call bm(1)%expand(W)
 !
