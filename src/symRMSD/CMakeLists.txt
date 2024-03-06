@@ -7,7 +7,7 @@ list( APPEND f90_src mod_Hungarian.f90 )
 list( APPEND f90_src mod_c_matrix.f90 )
 list( APPEND f90_src mod_f_matrix.f90 )
 list( APPEND f90_src mod_tree.f90 )
-list( APPEND f90_src mod_branch_and_bound.f90 )
+list( APPEND f90_src mod_bb_manager.f90 )
 list( APPEND f90_src mod_symRMSD.f90 )
 
 set(LIB_MOD_DIR ${CMAKE_CURRENT_BINARY_DIR}/mod_files)

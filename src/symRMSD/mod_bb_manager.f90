@@ -12,7 +12,6 @@ module mod_bb_manager
   use mod_f_matrix
   use mod_rotation_matrix
   use mod_Hungarian
-  use mod_lowerbound
   use mod_tree
   implicit none
   private
@@ -277,7 +276,6 @@ contains
       end block
     end do
 !
-!
   end subroutine expand
 !
   pure subroutine subm(m, n, r, X, Y)
@@ -294,35 +292,6 @@ contains
       end do
     end do
   end subroutine subm
-!
-!| lowerbound function.
-!  L(G, C, D) = SUM_{i=1,...,p} (G - 2tr[CR]) + min_{nu} SUM_{i=p+1,...,N} D_{i nu(p)}
-! pure subroutine lowerbound(p, b, G, C, D, W)
-!   integer(IK), intent(in)    :: p
-!   !! level
-!   type(mol_block),intent(in) :: b
-!   !! mol_block
-!   real(RK), intent(in)       :: G
-!   !! partial auto variance, G
-!   real(RK), intent(in)       :: C(*)
-!   !! partial covariance matrix, C(d, d)
-!   real(RK), intent(in)       :: D(*)
-!   !! residual matrix, D(n1, n2), here n1 = MAX(nx, ny) - p and n2 = MIN(nx, ny) - p.
-!   real(RK), intent(inout)    :: W(*)
-!   !! workarray, must be SIZE(W) > lowerbound_worksize(p, b).
-!   integer(IK)                :: n
-!
-!   W(1) = ZERO
-!   n = mol_block_nmol(b) - p
-!
-!   if (p < 0 .or. n < 0) return
-!   if (0 < n) call Hungarian(n, n, D, W)
-!   if (0 < p) then
-!     call estimate_sdmin(G, C, W(2))
-!     W(1) = W(1) + W(2)
-!   end if
-!
-! end subroutine lowerbound
 !
 ! pure subroutine eval_child(b, p, inode, Wp, Wc)
 !   type(mol_block), intent(in) :: b
