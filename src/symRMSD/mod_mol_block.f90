@@ -13,6 +13,7 @@ module mod_mol_block
   public :: mol_block_tuple
   public :: mol_block_each_size
   public :: mol_block_total_size
+  public :: mol_block_natm
   public :: mol_block_nmol
   public :: mol_block_napm
   public :: mol_block_nsym
@@ -80,6 +81,14 @@ contains
     res%n = MAX(n, 1)
     res%s = group_permutation(sym)
   end function mol_block_new
+!
+!| number of atoms
+  pure elemental function mol_block_natm(b) result(res)
+    type(mol_block), intent(in) :: b
+    !! mol_block
+    integer(IK)                 :: res
+    res = b%m * b%n
+  end function mol_block_natm
 !
 !| number of molecules
   pure elemental function mol_block_nmol(b) result(res)

@@ -18,10 +18,15 @@ module mod_bb_manager
   public :: bb_manager
   public :: bb_manager_tuple
   public :: bb_manager_memsize
-  public :: bb_manager_setup
-  public :: bb_manager_setup_root
-  public :: bb_manager_expand
   public :: bb_manager_worksize
+  public :: bb_manager_setup
+  public :: bb_manager_set_root
+  public :: bb_manager_expand
+  public :: bb_manager_select_top_node
+  public :: bb_manager_leave
+  public :: bb_manager_queue_is_empty
+  public :: bb_manager_queue_is_bottom
+  public :: bb_manager_current_value
 !
 !| bb_manager<br>
 !    Node data [L, G, C, F, W]<br>
@@ -33,16 +38,14 @@ module mod_bb_manager
   type bb_manager
     sequence
     private
-    integer(IK), public :: x
-    !! pointer offset of rwork.
-    integer(IK), public :: q
-    !! pointer offset of iwork.
     integer(IK)         :: nm
     !! memory size.
     integer(IK)         :: nw
     !! work size.
     type(mol_block)     :: b
     !! mol_block
+    integer(IK)         :: bq
+    !! pointer to mol_block interger array
     integer(IK)         :: cx
     !! pointer to C memory
     integer(IK)         :: cw
@@ -55,8 +58,12 @@ module mod_bb_manager
     !! pointer to F work memory
     type(f_matrix)      :: f
     !! f_matrix
+    integer(IK)         :: tq
+    !! pointer to tree interger array
     integer(IK)         :: tx
     !! pointer to tree memory
+    integer(IK)         :: tw
+    !! pointer to tree work memory
     type(tree)          :: t
     !! tree
   end type bb_manager
@@ -70,6 +77,8 @@ module mod_bb_manager
     !! work integer array
     real(RK), allocatable    :: x(:)
     !! main memory
+    real(RK), allocatable    :: w(:)
+    !! work array
   contains
     final           :: bb_manager_tuple_destroy
   end type bb_manager_tuple
@@ -99,29 +108,27 @@ contains
     f = f_matrix_tuple(b%b)
     t = tree_tuple(b%b, node_memsize)
 !
-    res%bb%x = 1
-    res%bb%q = 1
-!
     res%bb%b = b%b
     res%bb%c = c%c
     res%bb%f = f%f
     res%bb%t = t%t
 !
-    res%bb%nm = SIZE(c%x) + SIZE(f%x) + SIZE(t%x)
-    res%bb%nw = SIZE(f%x)
-    res%bb%nw = MAX(res%bb%nw, SIZE(c%x) - res%bb%nw)
-    res%bb%nw = MAX(res%bb%nw - SIZE(t%x), 0)
+    res%bb%nm = SIZE(c%x) + SIZE(t%x)
+    res%bb%nw = MAX(tree_worksize(b%b), SIZE(c%w) - SIZE(t%x) - tree_worksize(b%b))
 !
-    res%bb%t%q = SIZE(b%w) + 1
+    res%bb%bq = 1
+    res%bb%tq = res%bb%bq + SIZE(b%w)
 !
-    res%bb%c%p = 1
-    res%bb%c%w = res%bb%c%p + c_matrix_memsize(res%bb%c)
-    res%bb%f%p = res%bb%c%w
-    res%bb%f%w = res%bb%f%p + f_matrix_memsize(res%bb%f)
-    res%bb%t%x = res%bb%f%w
+    res%bb%cx = 1
+    res%bb%cw = res%bb%cx + c_matrix_memsize(c%c)
+    res%bb%tx = res%bb%cw
+    res%bb%tw = res%bb%tx + tree_memsize(t%t, t%q)
+    res%bb%fx = res%bb%tx + 2 + DD                 ! F of root node
+    res%bb%fw = res%bb%fx + f_matrix_memsize(f%f)
 !
     allocate (res%q, source=[b%w, t%q])
-    allocate (res%x(res%bb%nm + res%bb%nw))
+    allocate (res%x(res%bb%nm))
+    allocate (res%w(res%bb%nw))
 !
   end function bb_manager_tuple_new
 !
@@ -132,6 +139,21 @@ contains
     n = mol_block_nmol(b) - p
     res = 1 + n * n + 1 + DD
   end function node_memsize
+!
+  pure elemental function tree_worksize(b) result(res)
+    type(mol_block), intent(in) :: b
+    integer(IK)                 :: p, n, m, sw, hw
+    integer(IK)                 :: res
+    sw = sdmin_worksize()
+    res = 1 + mol_block_nsym(b) * sw
+    n = mol_block_nmol(b)
+    m = n
+    do p = 1, n
+      hw = Hungarian_worksize(m, m)
+      res = MAX(hw, res)
+      m = m - 1
+    end do
+  end function tree_worksize
 !
 !| Inquire worksize of f_matrix.
   pure elemental function bb_manager_memsize(this) result(res)
@@ -149,13 +171,6 @@ contains
     res = this%nw
   end function bb_manager_worksize
 !
-  pure function root_pointer(this, Q) result(res)
-    type(bb_manager), intent(in) :: this
-    integer(IK), intent(in)      :: Q(*)
-    integer(IK)                  :: res
-    res = this%x + tree_root_pointer(this%t, Q(this%q))
-  end function root_pointer
-!
 !| Setup C matrix and F matrix in root node.
   pure subroutine bb_manager_setup(this, Q, X, Y, W)
     type(bb_manager), intent(in) :: this
@@ -168,125 +183,138 @@ contains
     !! target coordinate
     real(RK), intent(inout)      :: W(*)
     !! work integer array
-    integer(IK)                  :: ix
 !
-    ix = mol_block_pointer(this%b)
-    call c_matrix_eval(this%c, this%b, Q(this%q), X(ix), Y(ix), W(this%x), W(this%x))
-    call f_matrix_eval(this%f, this%b, this%c, W(this%x), W(this%x), W(this%x))
-!
-    ix = root_pointer(this, Q)
-    W(ix) = ZERO
-    ix = ix + 2 + DD
-    call copy(mol_block_nmol(this%b)**2, W(this%x + this%f%p - 1), 1, W(ix), 1)
+    call c_matrix_eval(this%c, this%b, Q(this%bq), X, Y, W(this%cx), W(this%cw))
+    call f_matrix_eval(this%f, this%b, this%c, W(this%cx), W(this%fx), W(this%fw))
+    call zfill(DD + 2, W(this%tx), 1)
 !
   end subroutine bb_manager_setup
 !
 !| Setup C matrix and F matrix in root node.
-  pure subroutine bb_manager_setup_root(this, Q, W, G0, C0)
-    type(bb_manager), intent(in)   :: this
+  pure subroutine bb_manager_set_root(this, X, parent, QZ, Z)
+    type(bb_manager), intent(in) :: this
     !! bb_manager
-    integer(IK), intent(in)        :: Q(*)
-    !! work integer array
-    real(RK), intent(inout)        :: W(*)
+    real(RK), intent(inout)      :: X(*)
     !! work array
-    real(RK), intent(in), optional :: G0
-    !! partial sum of auto variances.
-    real(RK), intent(in), optional :: C0(*)
-    !! main memory
-    integer(IK)                    :: t
+    type(bb_manager), intent(in) :: parent
+    !! bb_manager
+    integer(IK), intent(in)      :: QZ(*)
+    !! work integer array
+    real(RK), intent(in)         :: Z(*)
+    !! work array
+    integer(IK)                  :: pp
 !
-    t = root_pointer(this, Q) + 1
+    pp = tree_current_pointer(parent%t, QZ(parent%tq))
+    X(this%tx + 1) = Z(pp + 1)
+    call copy(DD, Z(pp + 2), 1, X(this%tx + 2), 1)
 !
-    if (PRESENT(G0)) then; W(t) = G0
-    else; W(t) = ZERO
-    end if
-!
-    if (PRESENT(C0)) then; call copy(DD, C0, 1, W(t + 1), 1)
-    else; call zfill(DD, W(t + 1), 1)
-    end if
-!
-  end subroutine bb_manager_setup_root
+  end subroutine bb_manager_set_root
 !
 !| Expand top node in queue.
-  pure subroutine bb_manager_expand(this, Q, W)
+  subroutine bb_manager_expand(this, Q, X, W)
     type(bb_manager), intent(in) :: this
     !! bb_manager
     integer(IK), intent(inout)   :: Q(*)
     !! work integer array
-    real(RK), intent(inout)      :: W(*)
+    real(RK), intent(inout)      :: X(*)
+    !! main memory
+    real(RK), intent(out)        :: W(*)
     !! work real array
     integer(IK)                  :: nper, nsym
-    integer(IK)                  :: p, n, np, nn, nb
+    integer(IK)                  :: p, n, np, nn, nb, nw
 !
-     np = this%x + tree_current_pointer(this%t, Q(this%q))
-     call tree_expand(this%t, Q(this%q))
-     nn = this%x + tree_queue_pointer(this%t, Q(this%q))
+     np = this%tx - 1 + tree_current_pointer(this%t, Q(this%tq))
+     call tree_expand(this%t, Q(this%tq))
 !
-     p = tree_current_level(this%t, Q(this%q))
+     p = tree_current_level(this%t, Q(this%tq))
      n = mol_block_nmol(this%b)
+     nn = this%tx - 1 + tree_queue_pointer(this%t, Q(this%tq))
      nb = node_memsize(this%b, p)
-     nper = tree_n_perm(this%t, Q(this%q))
+     nper = tree_n_perm(this%t, Q(this%tq))
      nsym = mol_block_nsym(this%b)
+     nw = MAX(Hungarian_worksize(n - p, n - p), sdmin_worksize())
 !
-     call expand(this%c, this%b, p, n, nb, nper, nsym, Q(this%q), W(this%x), W(np), W(nn))
+     block
+       integer(IK) :: s(n)
+       s = tree_current_permutation(this%t, Q(this%tq))
+       if (n == p) then
+         call expand_terminal(this%c, this%b, p, n, nb, nw, nsym, s, X(this%cx), X(np), X(nn), W)
+       else
+         call expand(this%c, this%b, p, n, nb, nw, nper, nsym, s, X(this%cx), X(np), X(nn), W(1), W(2))
+       end if
+     end block
 !
   end subroutine bb_manager_expand
 !
-  pure subroutine expand(cm, b, p, n, nb, nper, nsym, Q, C, NP, NN)
+  subroutine expand(cm, b, p, n, nb, nw, nper, nsym, s, C, NP, NN, W1, W2)
     type(c_matrix), intent(in)  :: cm
     type(mol_block), intent(in) :: b
-    integer(IK), intent(in)     :: p, n, nb, nper, nsym
-    integer(IK), intent(in)     :: Q(*)
+    integer(IK), intent(in)     :: p, n, nb, nw, nper, nsym
+    integer(IK), intent(in)     :: s(*)
     real(RK), intent(in)        :: C(*)
     real(RK), intent(in)        :: NP(*)
     real(RK), intent(inout)     :: NN(nb, nsym, nper)
+    real(RK), intent(out)       :: W1(*)
+    real(RK), intent(out)       :: W2(nw, *)
     integer(IK), parameter      :: mmap_L = 1
     integer(IK), parameter      :: mmap_G = 2
     integer(IK), parameter      :: mmap_C = 3
     integer(IK)                 :: mmap_F
-    integer(IK)                 :: mp, mn, mm, nw1, nw2
+    integer(IK)                 :: mp, mn, mm
     integer(IK)                 :: iper, isym
 !
     mn = n - p
     mm = mn**2
-    mmap_F = 3 + DD
     mp = mn + 1
-    nw1 = MAX(Hungarian_worksize(mn, mn), sdmin_worksize())
-    nw2 = sdmin_worksize()
+!
+    mmap_F = mmap_C + DD
+!
+    do concurrent(iper=1:nper, isym=1:nsym)
+      call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, isym, iper), 1)
+      call c_matrix_add(cm, b, p, s(iper + p - 1), isym, C, NN(mmap_G, isym, iper), NN(mmap_C, isym, iper))
+    end do
 !
     do concurrent(iper=1:nper)
-      block
-        real(RK) :: w1(nw1)
 !
         call subm(mp, mp, iper, NP(mmap_F), NN(mmap_F, 1, iper))
-        call Hungarian(mn, mn, NN(mmap_F, 1, iper), w1)
+        call Hungarian(mn, mn, NN(mmap_F, 1, iper), W1)
         NN(mmap_L, 1, iper) = w1(1)
-!
-        call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, 1, iper), 1)
-        call c_matrix_add(cm, b, iper, p, 1, C, NN(mmap_G, 1, iper), NN(mmap_C, 1, iper))
         call estimate_sdmin(NN(mmap_G, 1, iper), NN(mmap_C, 1, iper), w1)
 !
         do concurrent(isym=2:nsym)
-!
-          block
-            real(RK) :: w2(nw2)
-!
-            call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, isym, iper), 1)
             call copy(mm, NN(mmap_F, 1, iper), 1, NN(mmap_F, isym, iper), 1)
-!
-            call c_matrix_add(cm, b, iper, p, isym, C, NN(mmap_G, isym, iper), NN(mmap_C, isym, iper))
-            call estimate_sdmin(NN(mmap_G, isym, iper), NN(mmap_C, isym, iper), w2)
-            NN(mmap_L, isym, iper) = w2(1) + NN(mmap_L, 1, iper)
-!
-          end block
+            call estimate_sdmin(NN(mmap_G, isym, iper), NN(mmap_C, isym, iper), W2(1, isym - 1))
+            NN(mmap_L, isym, iper) = W2(1, isym - 1) + NN(mmap_L, 1, iper)
         end do
 !
-        NN(mmap_L, 1, iper) = w1(1) + NN(mmap_L, 1, iper)
+        NN(mmap_L, 1, iper) = W1(1) + NN(mmap_L, 1, iper)
 !
-      end block
     end do
 !
   end subroutine expand
+!
+  pure subroutine expand_terminal(cm, b, p, n, nb, nw, nsym, s, C, NP, NN, W)
+    type(c_matrix), intent(in)  :: cm
+    type(mol_block), intent(in) :: b
+    integer(IK), intent(in)     :: p, n, nb, nw, nsym
+    integer(IK), intent(in)     :: s(*)
+    real(RK), intent(in)        :: C(*)
+    real(RK), intent(in)        :: NP(*)
+    real(RK), intent(inout)     :: NN(nb, nsym)
+    real(RK), intent(out)       :: W(nw, *)
+    integer(IK), parameter      :: mmap_L = 1
+    integer(IK), parameter      :: mmap_G = 2
+    integer(IK), parameter      :: mmap_C = 3
+    integer(IK)                 :: isym
+!
+    do concurrent(isym=1:nsym)
+      call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, isym), 1)
+      call c_matrix_add(cm, b, s(n), p, isym, C, NN(mmap_G, isym), NN(mmap_C, isym))
+      call estimate_sdmin(NN(mmap_G, isym), NN(mmap_C, isym), W(1, isym))
+      NN(mmap_L, isym) = W(1, isym)
+    end do
+!
+  end subroutine expand_terminal
 !
   pure subroutine subm(m, n, r, X, Y)
   integer(IK), intent(in) :: m, n, r
@@ -302,6 +330,64 @@ contains
       end do
     end do
   end subroutine subm
+!
+!| Select_top_node.
+  pure subroutine bb_manager_select_top_node(this, Q, X, UB)
+    type(bb_manager), intent(in) :: this
+    !! bb_manager
+    integer(IK), intent(inout)   :: Q(*)
+    !! work integer array
+    real(RK), intent(in)         :: X(*)
+    !! main memory
+    real(RK), intent(in)         :: UB
+    !! upper bound
+    call tree_select_top_node(this%t, Q(this%tq), UB, X(this%tx))
+  end subroutine bb_manager_select_top_node
+!
+!| Leave current node.
+  pure function bb_manager_queue_is_empty(this, Q) result(res)
+    type(bb_manager), intent(in) :: this
+    !! bb_manager
+    integer(IK), intent(in)      :: Q(*)
+    !! work integer array
+    logical                      :: res
+    res = tree_queue_is_empty(this%t, Q(this%tq))
+  end function bb_manager_queue_is_empty
+!
+!| Leave current node.
+  pure function bb_manager_current_value(this, Q, X) result(res)
+    type(bb_manager), intent(in) :: this
+    !! bb_manager
+    integer(IK), intent(in)      :: Q(*)
+    !! work integer array
+    real(RK), intent(in)         :: X(*)
+    !! main memory
+    real(RK)                     :: res
+    integer(IK)                  :: tx
+    tx = this%tx - 1 + tree_current_pointer(this%t, Q(this%tq))
+    res = X(tx)
+  end function bb_manager_current_value
+!
+!| Leave current node.
+  pure function bb_manager_queue_is_bottom(this, Q) result(res)
+    type(bb_manager), intent(in) :: this
+    !! bb_manager
+    integer(IK), intent(in)      :: Q(*)
+    !! work integer array
+    logical                      :: res
+    res = tree_queue_is_bottom(this%t, Q(this%tq))
+  end function bb_manager_queue_is_bottom
+!
+!| Leave current node.
+  pure subroutine bb_manager_leave(this, Q)
+    type(bb_manager), intent(in) :: this
+    !! bb_manager
+    integer(IK), intent(inout)   :: Q(*)
+    !! work integer array
+!
+    call tree_leave(this%t, Q(this%tq))
+!
+  end subroutine bb_manager_leave
 !
 ! pure subroutine eval_child(b, p, inode, Wp, Wc)
 !   type(mol_block), intent(in) :: b
@@ -695,6 +781,7 @@ contains
   pure elemental subroutine bb_manager_tuple_destroy(this)
     type(bb_manager_tuple), intent(inout) :: this
     if (ALLOCATED(this%x)) deallocate (this%x)
+    if (ALLOCATED(this%w)) deallocate (this%w)
     if (ALLOCATED(this%q)) deallocate (this%q)
   end subroutine bb_manager_tuple_destroy
 !

@@ -82,8 +82,7 @@ contains
     res%cb = 1 + DD * mol_block_nsym(b)
     res%nl = mol_block_nmol(b)
     res%cl = res%cb * res%nl
-    res%nw = MAX(mol_block_each_size(b) + mol_block_total_size(b), &
-           &     res%nl + res%nl)
+    res%nw = MAX(mol_block_each_size(b) + mol_block_total_size(b), res%nl + res%nl)
 !
   end function c_matrix_new
 !
@@ -100,7 +99,7 @@ contains
     !| this :: c_matrix
     type(c_matrix), intent(in) :: this
     integer(IK)                :: res
-    res = this%cb * this%nl * this%nl
+    res = this%cl * this%nl
   end function c_matrix_memsize
 !
 !| Inquire worksize of c_matrix evaluation.
@@ -141,9 +140,7 @@ contains
     wy = wx + dm
 !
     call eval_g_matrix(dm, this%cb, n, X, Y, C, W(gx), W(gy))
-!
-    call eval_c_matrix(b, s, m, n, dm, this%cb, ms, X, Y, &
-  &                    C, W(wx), W(wy))
+    call eval_c_matrix(b, s, m, n, dm, this%cb, ms, X, Y, C, W(wx), W(wy))
 !
   contains
 !
@@ -180,19 +177,21 @@ contains
       real(RK), intent(in)        :: X(dm, *), Y(dm, *)
       real(RK), intent(inout)     :: C(cb, *)
       real(RK), intent(inout)     :: WX(dm), WY(dm, n)
-      integer(IK)                 :: i, j
+      integer(IK)                 :: i, j, k
 !
       call copy(dm * n, Y, 1, WY, 1)
 !
+      k = 0
       do i = 1, n
         call copy(dm, X(1, i), 1, WX, 1)
         do concurrent(j=1:n)
           block
             integer(IK) :: ic
-            ic = i + (j - 1) * n
+            ic = j + k
             call calc_cov(b, s, m, dm, ms, WX, WY(1, j), C(2, ic))
           end block
         end do
+        k = k + n
       end do
 !
     end subroutine eval_c_matrix
@@ -237,9 +236,9 @@ contains
     !! partial covariance matrix
     integer(IK)                 :: k
 !
-    k = this%cb * (i - 1) + this%cl * (j - 1) + 1
+    k = this%cl * (i - 1) + this%cb * (j - 1) + 1
     G = G + C(k)
-    k = k + DD * (s - 1) + 1
+    k = k + 1 + DD * (s - 1)
     call axpy(DD, ONE, C(k), 1, Cp, 1)
 !
   end subroutine c_matrix_add

@@ -13,9 +13,6 @@ program main
   call setup_dimension(3)
 !
   call test0()
-  call test1()
-! call test2()
-! call test3()
 !
   call u%finish_and_terminate()
 !
@@ -27,7 +24,8 @@ contains
     real(RK)              :: X(3, 5 * 3 + 3 * 4 + 8 * 3)
     real(RK)              :: Y(3, 5 * 3 + 3 * 2 + 8 * 5)
     real(RK), allocatable :: W(:)
-    integer(IK)           :: p
+    integer(IK)           :: x1, x2, x3
+    integer(IK)           :: p1, p2, p3, w1, w2, w3
 !
     X = sample(3, SIZE(X, 2))
     Y = sample(3, SIZE(Y, 2))
@@ -36,66 +34,32 @@ contains
     b(2) = mol_block_tuple(3, 2, sym=RESHAPE([2, 3, 1, 3, 1, 2], [3, 2]))
     b(3) = mol_block_tuple(8, 3, sym=RESHAPE([1, 2, 3, 4, 5, 6, 7, 8], [8, 1]))
 !
-    p = 1 + mol_block_total_size(b(1)%b)
-    call mol_block_set_pointer(b(2)%b, p, 1)
-    p = 1 + mol_block_total_size(b(2)%b)
-    call mol_block_set_pointer(b(3)%b, p, 1)
+    x1 = 1
+    x2 = x1 + mol_block_natm(b(1)%b)
+    x3 = x2 + mol_block_natm(b(2)%b)
 !
     print*,mol_block_nsym(b%b)
     c = c_matrix(b%b)
     print*,c_matrix_memsize(c)
     print*,c_matrix_worksize(c)
-    c(1)%p = 1
-    c(1)%w = c(1)%p + c_matrix_memsize(c(1))
-    c(2)%p = c(1)%w
-    c(2)%w = c(2)%p + c_matrix_memsize(c(2))
-    c(3)%p = c(2)%w
-    c(3)%w = c(3)%p + c_matrix_memsize(c(3))
+    p1 = 1
+    w1 = p1 + c_matrix_memsize(c(1))
+    p2 = w1
+    w2 = p2 + c_matrix_memsize(c(2))
+    p3 = w2
+    w3 = p3 + c_matrix_memsize(c(3))
     allocate (W(SUM(c_matrix_memsize(c)) + c_matrix_worksize(c(3))))
     W(:) = 999
-    call c_matrix_eval(c(1), b(1)%b, b(1)%w, X, Y, W, W)
-    call c_matrix_eval(c(2), b(2)%b, b(2)%w, X, Y, W, W)
-    call c_matrix_eval(c(3), b(3)%b, b(3)%w, X, Y, W, W)
-    print'(10f5.1)',W(c(1)%p:c(1)%p+89)
+    call c_matrix_eval(c(1), b(1)%b, b(1)%w, X(1, x1), Y(1, x1), W(p1), W(w1))
+    call c_matrix_eval(c(2), b(2)%b, b(2)%w, X(1, x2), Y(1, x2), W(p2), W(w2))
+    call c_matrix_eval(c(3), b(3)%b, b(3)%w, X(1, x3), Y(1, x3), W(p3), W(w3))
+    print'(10f5.1)',W(p1:p1+89)
     print*
-    print'(14f5.1)',W(c(2)%p:c(2)%p+111)
+    print'(14f5.1)',W(p2:p2+111)
     print*
-    print'(19f5.1)',W(c(3)%p:c(3)%p+170)
+    print'(19f5.1)',W(p3:p3+170)
     print*
 !
   end subroutine test0
-!
-  subroutine test1()
-    type(mol_block_tuple) :: b(3)
-    type(c_matrix_tuple)  :: c(3)
-    real(RK)              :: X(3, 5 * 3 + 3 * 4 + 8 * 3)
-    real(RK)              :: Y(3, 5 * 3 + 3 * 2 + 8 * 5)
-    integer(IK)           :: p
-!
-    X = sample(3, SIZE(X, 2))
-    Y = sample(3, SIZE(Y, 2))
-!
-    b(1) = mol_block_tuple(5, 3)
-    b(2) = mol_block_tuple(3, 2, sym=RESHAPE([2, 3, 1, 3, 1, 2], [3, 2]))
-    b(3) = mol_block_tuple(8, 3, sym=RESHAPE([1, 2, 3, 4, 5, 6, 7, 8], [8, 1]))
-!
-    p = 1 + mol_block_total_size(b(1)%b)
-    call mol_block_set_pointer(b(2)%b, p, 1)
-    p = 1 + mol_block_total_size(b(2)%b)
-    call mol_block_set_pointer(b(3)%b, p, 1)
-!
-    print*,mol_block_nsym(b%b)
-    c = c_matrix_tuple(b%b)
-    call c_matrix_eval(c(1)%c, b(1)%b, b(1)%w, X, Y, c(1)%x, c(1)%w)
-    call c_matrix_eval(c(2)%c, b(2)%b, b(2)%w, X, Y, c(2)%x, c(2)%w)
-    call c_matrix_eval(c(3)%c, b(3)%b, b(3)%w, X, Y, c(3)%x, c(3)%w)
-    print'(10f5.1)',c(1)%x
-    print*
-    print'(14f5.1)',c(2)%x
-    print*
-    print'(19f5.1)',c(3)%x
-    print*
-!
-  end subroutine test1
 !
 end program main

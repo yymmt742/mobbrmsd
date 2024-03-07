@@ -21,10 +21,14 @@ contains
     type(mol_block_tuple) :: b(3)
     type(c_matrix)        :: c(3)
     type(f_matrix)        :: f(3)
-    type(f_matrix_tuple)  :: t(3)
     real(RK)              :: X(3, 5 * 3 + 3 * 4 + 8 * 3)
     real(RK)              :: Y(3, 5 * 3 + 3 * 2 + 8 * 5)
     real(RK), allocatable :: W(:)
+    integer(IK)           :: x1, x2, x3
+    integer(IK)           :: c1, c2, c3
+    integer(IK)           :: f1, f2, f3
+    integer(IK)           :: v1, v2, v3
+    integer(IK)           :: w1, w2, w3
 !
     X = sample(3, SIZE(X, 2))
     Y = sample(3, SIZE(Y, 2))
@@ -41,47 +45,37 @@ contains
     print*,f_matrix_memsize(f)
     print*,f_matrix_worksize(f)
 !
-    c(1)%p = 1
-    c(1)%w = c(1)%p + c_matrix_memsize(c(1))
-    f(1)%p = c(1)%w
-    f(1)%w = f(1)%p + f_matrix_memsize(f(1))
-    c(2)%p = f(1)%w
-    c(2)%w = c(2)%p + c_matrix_memsize(c(2))
-    f(2)%p = c(2)%w
-    f(2)%w = f(2)%p + f_matrix_memsize(f(2))
-    c(3)%p = f(2)%w
-    c(3)%w = c(3)%p + c_matrix_memsize(c(3))
-    f(3)%p = c(3)%w
-    f(3)%w = f(3)%p + f_matrix_memsize(f(3))
+    x1 = 1
+    x2 = x1 + mol_block_natm(b(1)%b)
+    x3 = x2 + mol_block_natm(b(2)%b)
+!
+    c1 = 1
+    v1 = c1 + c_matrix_memsize(c(1))
+    f1 = v1
+    w1 = f1 + f_matrix_memsize(f(1))
+    c2 = w1
+    v2 = c2 + c_matrix_memsize(c(2))
+    f2 = v2
+    w2 = f2 + f_matrix_memsize(f(2))
+    c3 = w2
+    v3 = c3 + c_matrix_memsize(c(3))
+    f3 = v3
+    w3 = f3 + f_matrix_memsize(f(3))
 !
     allocate (W(SUM(c_matrix_memsize(c) + c_matrix_worksize(c) &
    &              + f_matrix_memsize(f) + f_matrix_worksize(f))))
 !
     W(:) = 999
-    call c_matrix_eval(c(1), b(1)%b, b(1)%w, X, Y, W, W)
-    call f_matrix_eval(f(1), b(1)%b, c(1), W, W, W)
-    call c_matrix_eval(c(2), b(2)%b, b(2)%w, X, Y, W, W)
-    call f_matrix_eval(f(2), b(2)%b, c(2), W, W, W)
-    call c_matrix_eval(c(3), b(3)%b, b(3)%w, X, Y, W, W)
-    call f_matrix_eval(f(3), b(3)%b, c(3), W, W, W)
+    call c_matrix_eval(c(1), b(1)%b, b(1)%w, X(1, x1), Y(1, x1), W(c1), W(v1))
+    call f_matrix_eval(f(1), b(1)%b, c(1), W(c1), W(f1), W(w1))
+    call c_matrix_eval(c(2), b(2)%b, b(2)%w, X(1, x2), Y(1, x2), W(c2), W(v2))
+    call f_matrix_eval(f(2), b(2)%b, c(2), W(c2), W(f2), W(w2))
+    call c_matrix_eval(c(3), b(3)%b, b(3)%w, X(1, x3), Y(1, x3), W(c3), W(v3))
+    call f_matrix_eval(f(3), b(3)%b, c(3), W(c3), W(f3), W(w3))
 !
-    print'(3f9.3)', W(f(1)%p:f(1)%p + f_matrix_memsize(f(1)) - 1)
-    print'(2f9.3)', W(f(2)%p:f(2)%p + f_matrix_memsize(f(2)) - 1)
-    print'(3f9.3)', W(f(3)%p:f(3)%p + f_matrix_memsize(f(3)) - 1)
-    print*
-!
-    t = f_matrix_tuple(b%b)
-!
-    call c_matrix_eval(c(1), b(1)%b, b(1)%w, X, Y, W, W)
-    call c_matrix_eval(c(2), b(2)%b, b(2)%w, X, Y, W, W)
-    call c_matrix_eval(c(3), b(3)%b, b(3)%w, X, Y, W, W)
-    call f_matrix_eval(t(1)%f, b(1)%b, c(1), W, t(1)%x, t(1)%w)
-    call f_matrix_eval(t(2)%f, b(2)%b, c(2), W, t(2)%x, t(2)%w)
-    call f_matrix_eval(t(3)%f, b(3)%b, c(3), W, t(3)%x, t(3)%w)
-!
-    print'(3f9.3)', t(1)%x
-    print'(2f9.3)', t(2)%x
-    print'(3f9.3)', t(3)%x
+    print'(3f9.3)', W(f1:f1 + f_matrix_memsize(f(1)) - 1)
+    print'(2f9.3)', W(f2:f2 + f_matrix_memsize(f(2)) - 1)
+    print'(3f9.3)', W(f3:f3 + f_matrix_memsize(f(3)) - 1)
     print*
 !
   end subroutine test0

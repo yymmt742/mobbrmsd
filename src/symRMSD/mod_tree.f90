@@ -163,7 +163,7 @@ contains
     type(tree_tuple)            :: res
     integer(IK)                 :: i, j, k, l
 !
-    res%t = tree(mol_block_nsym(b), mol_block_nmol(b)+1)
+    res%t = tree(mol_block_nsym(b), mol_block_nmol(b) + 1)
 !
     allocate (res%q(header_blocksize + queue_blocksize * res%t%d))
 !
@@ -284,7 +284,7 @@ contains
       res(i) = i
     end do
     k = qr
-    do i = 1, SIZE(res)
+    do i = 1, q(ql)
       k = k + queue_blocksize
       p = queue_state(q(k))
       if (p < 0) return
@@ -479,7 +479,7 @@ contains
     integer(IK), intent(in) :: q(*)
 !!  q :: queue
     logical                 :: res
-    res = q(ql) == t%d
+    res = q(ql) == (t%d - 1)
   end function tree_queue_is_bottom
 !
   pure elemental subroutine tree_tuple_destroy(this)

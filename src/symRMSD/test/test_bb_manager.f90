@@ -32,14 +32,30 @@ contains
 !
     print *, bb_manager_memsize(bm%bb), bb_manager_worksize(bm%bb)
     X = sample(D, 8 * 3)
-    Y = sample(D, 8 * 3)
-    Y(:,8+1:8*3) = X(:,8+1:8*3)
-bm%x(:) = 99
+    Y = X
+    !Y = sample(D, 8 * 3)
+    !Y(:,8+1:8*3) = X(:,8+1:8*3)
+    bm%x(:) = 99
     call bb_manager_setup(bm%bb, bm%q, X, Y, bm%x)
-    call bb_manager_setup_root(bm%bb, bm%q, bm%x)
 !
-    call bb_manager_expand(bm%bb, bm%q, bm%x)
-print'(19f5.1)',bm%x
+    call bb_manager_expand(bm%bb, bm%q, bm%x, bm%w)
+    call bb_manager_select_top_node(bm%bb, bm%q, bm%x, 999.0_RK)
+    print'(19f5.1)',bm%x
+    print *, bb_manager_queue_is_empty(bm%bb, bm%q), &
+      &      bb_manager_queue_is_bottom(bm%bb, bm%q), &
+      &      bb_manager_current_value(bm%bb, bm%q, bm%x)
+    call bb_manager_expand(bm%bb, bm%q, bm%x, bm%w)
+    call bb_manager_select_top_node(bm%bb, bm%q, bm%x, 999.0_RK)
+    print'(19f5.1)',bm%x
+    print *, bb_manager_queue_is_empty(bm%bb, bm%q), &
+      &      bb_manager_queue_is_bottom(bm%bb, bm%q), &
+      &      bb_manager_current_value(bm%bb, bm%q, bm%x)
+    call bb_manager_expand(bm%bb, bm%q, bm%x, bm%w)
+    call bb_manager_select_top_node(bm%bb, bm%q, bm%x, 999.0_RK)
+    print'(19f5.1)',bm%x
+    print *, bb_manager_queue_is_empty(bm%bb, bm%q), &
+      &      bb_manager_queue_is_bottom(bm%bb, bm%q), &
+      &      bb_manager_current_value(bm%bb, bm%q, bm%x)
 !   call bb_manager_list_setup(bm, X, Y, W)
 !   call bm(1)%expand(W)
 !
