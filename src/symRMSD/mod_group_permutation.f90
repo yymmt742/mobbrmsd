@@ -29,8 +29,6 @@ module mod_group_permutation
 !  It is possible to hold s permutation mapping of starting from [1,2,...,N].
   type :: group_permutation
     sequence
-    integer(IK) :: p = 1
-    !! pointers.
     integer(IK) :: s = 0
     !! number of permutation. if s==0, gp only has identity mapping.
   end type group_permutation
@@ -359,11 +357,9 @@ contains
     !! leading dimension of x
     real(RK), intent(inout) :: X(*)
     !! data array.
-    integer(IK)             :: p
 !
     if (s < 1 .or. this%s < s) return ! identity map
-    p = w(this%p + s - 1)
-    call swap_real(w(p), d, X)
+    call swap_real(w(w(s)), d, X)
 !
   end subroutine group_permutation_swap
 !
@@ -407,11 +403,9 @@ contains
     !! leading dimension of x
     real(RK), intent(inout) :: X(*)
     !! data array.
-    integer(IK)             :: p
 !
     if (s < 1 .or. this%s < s) return ! identity map
-    p = w(this%p + s - 1)
-    call inverse_real(w(p), d, X)
+    call inverse_real(w(w(s)), d, X)
 !
   end subroutine group_permutation_inverse
 !

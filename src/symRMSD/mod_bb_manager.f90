@@ -43,10 +43,20 @@ module mod_bb_manager
     !! work size.
     type(mol_block)     :: b
     !! mol_block
+    integer(IK)         :: cx
+    !! pointer to C memory
+    integer(IK)         :: cw
+    !! pointer to C work memory
     type(c_matrix)      :: c
     !! c_matrix
+    integer(IK)         :: fx
+    !! pointer to F memory
+    integer(IK)         :: fw
+    !! pointer to F work memory
     type(f_matrix)      :: f
     !! f_matrix
+    integer(IK)         :: tx
+    !! pointer to tree memory
     type(tree)          :: t
     !! tree
   end type bb_manager

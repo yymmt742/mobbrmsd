@@ -28,10 +28,6 @@ module mod_c_matrix
   type c_matrix
     private
     sequence
-    integer(IK), public :: p
-    !! pointer to main memory.
-    integer(IK), public :: w
-    !! pointer to work array.
     integer(IK)         :: nl
     !! number of row. nl = n.
     integer(IK)         :: cb
@@ -83,8 +79,6 @@ contains
     !! mol_block, must be initialized.
     type(c_matrix)              :: res
 !
-    res%p = 1
-    res%w = 1
     res%cb = 1 + DD * mol_block_nsym(b)
     res%nl = mol_block_nmol(b)
     res%cl = res%cb * res%nl
@@ -134,23 +128,22 @@ contains
     !! main memory
     real(RK), intent(inout)     :: W(*)
     !! work memory
-    integer(IK)                 :: s, m, n, dm, px, gx, gy, wx, wy
+    integer(IK), parameter      :: gx = 1
+    integer(IK), parameter      :: wx = 1
+    integer(IK)                 :: s, m, n, dm, gy, wy
 !
     s = mol_block_nsym(b)
     m = mol_block_napm(b)
     n = mol_block_nmol(b)
 !
     dm = mol_block_each_size(b)
-    px = mol_block_pointer(b)
-    gx = this%w
     gy = gx + n
-    wx = gx
     wy = wx + dm
 !
-    call eval_g_matrix(dm, this%cb, n, X(px), Y(px), C(this%p), W(gx), W(gy))
+    call eval_g_matrix(dm, this%cb, n, X, Y, C, W(gx), W(gy))
 !
-    call eval_c_matrix(b, s, m, n, dm, this%cb, ms, X(px), Y(px), &
-  &                    C(this%p), W(wx), W(wy))
+    call eval_c_matrix(b, s, m, n, dm, this%cb, ms, X, Y, &
+  &                    C, W(wx), W(wy))
 !
   contains
 !
@@ -225,7 +218,7 @@ contains
   end subroutine c_matrix_eval
 !
 !| Add CIJs to partial covariance matrix C.
-  pure subroutine c_matrix_add(this, b, i, j, s, W, G, C)
+  pure subroutine c_matrix_add(this, b, i, j, s, C, G, Cp)
     type(c_matrix), intent(in)  :: this
     !! this :: c_matrix
     type(mol_block), intent(in) :: b
@@ -236,18 +229,18 @@ contains
     !! collumn index
     integer(IK), intent(in)     :: s
     !! symmetry index
-    real(RK), intent(in)        :: W(*)
+    real(RK), intent(in)        :: C(*)
     !! main memory
     real(RK), intent(inout)     :: G
     !! partial auto variance matrix
-    real(RK), intent(inout)     :: C(*)
+    real(RK), intent(inout)     :: Cp(*)
     !! partial covariance matrix
     integer(IK)                 :: k
 !
-    k = this%p + this%cb * (i - 1) + this%cl * (j - 1)
-    G = G + W(k)
+    k = this%cb * (i - 1) + this%cl * (j - 1) + 1
+    G = G + C(k)
     k = k + DD * (s - 1) + 1
-    call axpy(DD, ONE, W(k), 1, C, 1)
+    call axpy(DD, ONE, C(k), 1, Cp, 1)
 !
   end subroutine c_matrix_add
 !

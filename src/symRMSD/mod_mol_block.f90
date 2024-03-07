@@ -11,8 +11,6 @@ module mod_mol_block
   private
   public :: mol_block
   public :: mol_block_tuple
-  public :: mol_block_set_pointer
-  public :: mol_block_pointer
   public :: mol_block_each_size
   public :: mol_block_total_size
   public :: mol_block_nmol
@@ -25,8 +23,6 @@ module mod_mol_block
   type mol_block
     sequence
     private
-    integer(IK)     :: x = 1
-    !! pointer to X.
     integer(IK)     :: m = 1
     !! number of atom in a molecule
     integer(IK)     :: n = 1
@@ -84,28 +80,6 @@ contains
     res%n = MAX(n, 1)
     res%s = group_permutation(sym)
   end function mol_block_new
-!
-!| set_pointer.
-  pure subroutine mol_block_set_pointer(b, x, s)
-    type(mol_block), intent(inout) :: b
-    !! mol_block.
-    integer(IK), intent(in)        :: x
-    !! pointer to coordintate.
-    integer(IK), intent(in)        :: s
-    !! pointer to mol_symmetry.
-!
-    b%x = x
-    b%s%p = s
-!
-  end subroutine mol_block_set_pointer
-!
-!| number of molecules
-  pure elemental function mol_block_pointer(b) result(res)
-    type(mol_block), intent(in) :: b
-    !! mol_block
-    integer(IK)                 :: res
-    res = b%x
-  end function mol_block_pointer
 !
 !| number of molecules
   pure elemental function mol_block_nmol(b) result(res)

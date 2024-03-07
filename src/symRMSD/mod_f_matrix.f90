@@ -21,14 +21,10 @@ module mod_f_matrix
   type f_matrix
     private
     sequence
-    !| p  :: pointer to S.
-    integer(IK), public :: p
-    !| w  :: pointer to work.
-    integer(IK), public :: w
-    !| nn :: n * n
     integer(IK)         :: nn
-    !| nw :: work memory size.
+    !! nn :: n * n
     integer(IK)         :: nw
+    !! nw :: work memory size.
   end type f_matrix
 !
   interface f_matrix
@@ -60,8 +56,6 @@ contains
     type(mol_block), intent(in) :: b
     type(f_matrix)              :: res
 !
-    res%p  = 1
-    res%w  = 1
     res%nn = mol_block_nmol(b)**2
     res%nw = sdmin_worksize()
 !
@@ -97,23 +91,23 @@ contains
 !
 !| Evaluation the D matrix.<br>
 !  If nx>=ny D(nx,ny), else D(ny,nx)
-  pure subroutine f_matrix_eval(this, b, c, X, F, W)
+  pure subroutine f_matrix_eval(this, b, cm, C, F, W)
     type(f_matrix), intent(in)  :: this
     !! f_matrix
     type(mol_block), intent(in) :: b
     !! mol_block, b must match the one used for initialization.
-    type(c_matrix), intent(in)  :: c
+    type(c_matrix), intent(in)  :: cm
+    !! header of covariacne matrix C.
+    real(RK), intent(inout)     :: C(*)
     !! covariacne matrix c.
-    real(RK), intent(inout)     :: X(*)
-    !! main memory of C.
     real(RK), intent(inout)     :: F(*)
     !! main memory of F.
     real(RK), intent(inout)     :: W(*)
     !! work array.
     integer(IK)                 :: cb
 !
-    cb = c_matrix_blocksize(c)
-    call eval_f_matrix(cb, this%nn, X(c%p), F(this%p), W(this%w))
+    cb = c_matrix_blocksize(cm)
+    call eval_f_matrix(cb, this%nn, C, F, W)
 !
   end subroutine f_matrix_eval
 !

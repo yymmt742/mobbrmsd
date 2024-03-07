@@ -37,7 +37,8 @@ contains
     b = mol_block_tuple(10, 4, sym=RESHAPE([1, 2, 4, 3], [4, 1]))
 print*,mol_block_nsym(b%b)
     t = tree_tuple(b%b, memsize1)
-print'(4I3)', t%q
+print'(4I3)', t%q(:2)
+print'(4I3)', t%q(3:)
 !
     call u%assert_equal(tree_memsize(t%t, t%q),                61, 'memsize             ')
     call u%assert_equal(NINT(EXP(tree_log_ncomb(t%t, t%q))),  633, 'log_ncomb  [4,3,2,1]')
@@ -60,7 +61,8 @@ print'(4I3)', t%q
 !
     call tree_expand(t%t, t%q)
     call tree_select_top_node(t%t, t%q, 999._RK, t%x)
-print'(4I3)', t%q
+print'(4I3)', t%q(:2)
+print'(4I3)', t%q(3:)
   print *, tree_n_depth(t%t, t%q)
   print *, tree_current_level(t%t, t%q)
   print *, tree_root_pointer(t%t, t%q)
@@ -76,7 +78,8 @@ print'(4I3)', t%q
     call tree_select_top_node(t%t, t%q, 999._RK, t%x)
     call tree_expand(t%t, t%q)
     call tree_select_top_node(t%t, t%q, 999._RK, t%x)
-print'(4I3)', t%q
+print'(4I3)', t%q(:2)
+print'(4I3)', t%q(3:)
   print *, tree_n_depth(t%t, t%q)
   print *, tree_current_level(t%t, t%q)
   print *, tree_root_pointer(t%t, t%q)
