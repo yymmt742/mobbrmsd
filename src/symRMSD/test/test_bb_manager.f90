@@ -26,6 +26,7 @@ contains
     integer(IK), parameter :: m = 8
     integer(IK), parameter :: n = 3
     real(RK)               :: X(D, m * n), Y(D, m * n)
+    real(RK)               :: ub
 !
     bm = bb_manager_tuple(8, 3, sym=RESHAPE([2, 3, 4, 5, 6, 7, 8, 1], [8, 1]))
     print'(4I4)',bm%q
@@ -40,19 +41,26 @@ contains
 !
     call bb_manager_expand(bm%bb, bm%q, bm%x, bm%w)
     call bb_manager_select_top_node(bm%bb, bm%q, bm%x, 999.0_RK)
-    print'(19f5.1)',bm%x
     print *, bb_manager_queue_is_empty(bm%bb, bm%q), &
       &      bb_manager_queue_is_bottom(bm%bb, bm%q), &
       &      bb_manager_current_value(bm%bb, bm%q, bm%x)
     call bb_manager_expand(bm%bb, bm%q, bm%x, bm%w)
     call bb_manager_select_top_node(bm%bb, bm%q, bm%x, 999.0_RK)
-    print'(19f5.1)',bm%x
     print *, bb_manager_queue_is_empty(bm%bb, bm%q), &
       &      bb_manager_queue_is_bottom(bm%bb, bm%q), &
       &      bb_manager_current_value(bm%bb, bm%q, bm%x)
     call bb_manager_expand(bm%bb, bm%q, bm%x, bm%w)
     call bb_manager_select_top_node(bm%bb, bm%q, bm%x, 999.0_RK)
-    print'(19f5.1)',bm%x
+    ub = bb_manager_current_value(bm%bb, bm%q, bm%x)
+    print *, bb_manager_queue_is_empty(bm%bb, bm%q), &
+      &      bb_manager_queue_is_bottom(bm%bb, bm%q), &
+      &      bb_manager_current_value(bm%bb, bm%q, bm%x)
+    call bb_manager_select_top_node(bm%bb, bm%q, bm%x, ub)
+    print *, bb_manager_queue_is_empty(bm%bb, bm%q), &
+      &      bb_manager_queue_is_bottom(bm%bb, bm%q), &
+      &      bb_manager_current_value(bm%bb, bm%q, bm%x)
+    call bb_manager_leave(bm%bb, bm%q)
+    call bb_manager_select_top_node(bm%bb, bm%q, bm%x, ub)
     print *, bb_manager_queue_is_empty(bm%bb, bm%q), &
       &      bb_manager_queue_is_bottom(bm%bb, bm%q), &
       &      bb_manager_current_value(bm%bb, bm%q, bm%x)
