@@ -237,6 +237,7 @@ contains
      block
        integer(IK) :: s(n)
        s = tree_current_permutation(this%t, Q(this%tq))
+       print*,s
        if (n == p) then
          call expand_terminal(this%c, this%b, p, n, nb, nw, nsym, s, X(this%cx), X(np), X(nn), W)
        else
