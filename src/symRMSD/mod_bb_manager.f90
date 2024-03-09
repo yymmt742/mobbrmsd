@@ -137,7 +137,7 @@ contains
     integer(IK), intent(in)     :: p
     integer(IK)                 :: res, n
     n = mol_block_nmol(b) - p
-    res = 1 + n * n + 1 + DD
+    res = 1 + 1 + DD + n * n
   end function node_memsize
 !
   pure elemental function tree_worksize(b) result(res)
@@ -247,7 +247,7 @@ contains
 !
   end subroutine bb_manager_expand
 !
-  subroutine expand(cm, b, p, n, nb, nw, nper, nsym, s, C, NP, NN, W1, W2)
+  pure subroutine expand(cm, b, p, n, nb, nw, nper, nsym, s, C, NP, NN, W1, W2)
     type(c_matrix), intent(in)  :: cm
     type(mol_block), intent(in) :: b
     integer(IK), intent(in)     :: p, n, nb, nw, nper, nsym
@@ -310,7 +310,7 @@ contains
 !
     do concurrent(isym=1:nsym)
       call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, isym), 1)
-      call c_matrix_add(cm, b, s(n), p, isym, C, NN(mmap_G, isym), NN(mmap_C, isym))
+      call c_matrix_add(cm, b, p, s(n), isym, C, NN(mmap_G, isym), NN(mmap_C, isym))
       call estimate_sdmin(NN(mmap_G, isym), NN(mmap_C, isym), W(1, isym))
       NN(mmap_L, isym) = W(1, isym)
     end do
@@ -333,7 +333,7 @@ contains
   end subroutine subm
 !
 !| Select_top_node.
-  pure subroutine bb_manager_select_top_node(this, Q, X, UB)
+  subroutine bb_manager_select_top_node(this, Q, X, UB)
     type(bb_manager), intent(in) :: this
     !! bb_manager
     integer(IK), intent(inout)   :: Q(*)
@@ -343,6 +343,8 @@ contains
     real(RK), intent(in)         :: UB
     !! upper bound
     call tree_select_top_node(this%t, Q(this%tq), UB, X(this%tx))
+     print*,'select top node',Q(this%tq:this%tq+1)
+     print'(4i4)',Q(this%tq+2:this%tq+17)
   end subroutine bb_manager_select_top_node
 !
 !| Leave current node.
