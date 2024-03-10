@@ -32,7 +32,7 @@ contains
 !
     b(1) = mol_block(5, 3)
     b(2) = mol_block(3, 2, sym=RESHAPE([2, 3, 1, 3, 1, 2], [3, 2]))
-    b(3) = mol_block(8, 3, sym=RESHAPE([1, 2, 3, 4, 5, 6, 7, 8], [8, 1]))
+    b(3) = mol_block(8, 3, sym=RESHAPE([1, 2, 6, 3, 7, 4, 5, 8], [8, 1]))
 !
     x1 = 1
     x2 = x1 + mol_block_natm(b(1)%q)
@@ -43,19 +43,22 @@ contains
     c(2) = c_matrix(b(2)%q)
     c(3) = c_matrix(b(3)%q)
 !
-    print*,c_matrix_memsize(c)
-    print*,c_matrix_worksize(c)
+    print *, c_matrix_memsize(c(1)%q), c_matrix_memsize(c(2)%q), c_matrix_memsize(c(3)%q)
+    print *, c_matrix_worksize(c(1)%q), c_matrix_worksize(c(2)%q), c_matrix_worksize(c(3)%q)
     p1 = 1
-    w1 = p1 + c_matrix_memsize(c(1))
+    w1 = p1 + c_matrix_memsize(c(1)%q)
     p2 = w1
-    w2 = p2 + c_matrix_memsize(c(2))
+    w2 = p2 + c_matrix_memsize(c(2)%q)
     p3 = w2
-    w3 = p3 + c_matrix_memsize(c(3))
-    allocate (W(SUM(c_matrix_memsize(c)) + c_matrix_worksize(c(3))))
+    w3 = p3 + c_matrix_memsize(c(3)%q)
+!
+    W = [c(1)%x, c(2)%x, c(3)%x, c(3)%w]
     W(:) = 999
-    call c_matrix_eval(c(1), b(1)%q, X(1, x1), Y(1, x1), W(p1), W(w1))
-    call c_matrix_eval(c(2), b(2)%q, X(1, x2), Y(1, x2), W(p2), W(w2))
-    call c_matrix_eval(c(3), b(3)%q, X(1, x3), Y(1, x3), W(p3), W(w3))
+!
+    call c_matrix_eval(c(1)%q, b(1)%q, X(1, x1), Y(1, x1), W(p1), W(w1))
+    call c_matrix_eval(c(2)%q, b(2)%q, X(1, x2), Y(1, x2), W(p2), W(w2))
+    call c_matrix_eval(c(3)%q, b(3)%q, X(1, x3), Y(1, x3), W(p3), W(w3))
+!
     print'(10f5.1)',W(p1:p1+89)
     print*
     print'(14f5.1)',W(p2:p2+111)

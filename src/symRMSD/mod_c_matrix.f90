@@ -12,12 +12,22 @@ module mod_c_matrix
   implicit none
   private
   public :: c_matrix
-  public :: c_matrix_tuple
   public :: c_matrix_memsize
   public :: c_matrix_worksize
   public :: c_matrix_blocksize
   public :: c_matrix_eval
   public :: c_matrix_add
+!
+  integer(IK), parameter :: header_size = 4
+!
+  integer(IK), parameter :: nl = 1
+  !! number of row. nl = n.
+  integer(IK), parameter :: cb = 2
+  !! number of elements in a sell. cb = DD * res%b%s + 1.
+  integer(IK), parameter :: cl = 3
+  !! number of elements in a line. cl = cb * n.
+  integer(IK), parameter :: nw = 4
+  !! number of work array. nw = MAX(dmn + dm, n + n)
 !
 !| c_matrix <br>
 !  - C_IJs is the d x d matrix and {C_IJs} is the third-order tensor of nx x ny x s. <br>
@@ -25,109 +35,92 @@ module mod_c_matrix
 !  --- G_IJ = Tr[X_I @ X_I^T] + Tr[Y_J @ Y_J^T]. <br>
 !  - G does not change with respect to s. <br>
 !  - C(:,I,J) = [G_IJ, C_IJ1, C_IJ2, ..., C_IJS] with C_IJs(D,D) := Y_J @ Q_s @ X_I^T. <br>
+! type c_matrix
+!   private
+!   sequence
+!   integer(IK)         :: nl
+!   integer(IK)         :: cb
+!   integer(IK)         :: cl
+!   integer(IK)         :: nw
+! end type c_matrix
+!
+!| A set of c_matrix and work arrays. <br>
+!  This is mainly used for passing during initialization.
   type c_matrix
-    private
-    sequence
-    integer(IK)         :: nl
-    !! number of row. nl = n.
-    integer(IK)         :: cb
-    !! number of elements in a sell. cb = DD * res%b%s + 1.
-    integer(IK)         :: cl
-    !! number of elements in a line. cl = cb * n.
-    integer(IK)         :: nw
-    !! number of work array. nw = MAX(dmn + dm, n + n)
+    integer(IK)              :: q(header_size)
+    !! header
+    real(RK), allocatable    :: x(:)
+    !! main memory.
+    real(RK), allocatable    :: w(:)
+    !! work memory.
+  contains
+    final :: c_matrix_destroy
   end type c_matrix
 !
   interface c_matrix
     module procedure c_matrix_new
   end interface c_matrix
 !
-!| A set of c_matrix and work arrays. <br>
-!  This is mainly used for passing during initialization.
-  type c_matrix_tuple
-    type(c_matrix)        :: c
-    !! header
-    real(RK), allocatable :: x(:)
-    !! main memory.
-    real(RK), allocatable :: w(:)
-    !! work memory.
-  contains
-    final :: c_matrix_tuple_destroy
-  end type c_matrix_tuple
-!
-  interface c_matrix_tuple
-    module procedure c_matrix_tuple_new
-  end interface c_matrix_tuple
-!
 contains
-!
-!| Constructer
-  pure function c_matrix_tuple_new(b) result(res)
-    integer(IK), intent(in) :: b(*)
-    !! mol_block, must be initialized.
-    type(c_matrix_tuple)    :: res
-!
-    res%c = c_matrix_new(b)
-    allocate (res%x(c_matrix_memsize(res%c)))
-    allocate (res%w(c_matrix_worksize(res%c)))
-!
-  end function c_matrix_tuple_new
 !
 !| Constructer
   pure function c_matrix_new(b) result(res)
     integer(IK), intent(in) :: b(*)
     !! mol_block, must be initialized.
-    type(c_matrix)          :: res
+    type(c_matrix)    :: res
 !
-    res%cb = 1 + DD * mol_block_nsym(b)
-    res%nl = mol_block_nmol(b)
-    res%cl = res%cb * res%nl
-    res%nw = MAX(mol_block_each_size(b) + mol_block_total_size(b), res%nl + res%nl)
+    res%q(cb) = 1 + DD * mol_block_nsym(b)
+    res%q(nl) = mol_block_nmol(b)
+    res%q(cl) = res%q(cb) * res%q(nl)
+    res%q(nw) = MAX(mol_block_each_size(b) + mol_block_total_size(b), res%q(nl) * 2)
+!
+    allocate (res%x(c_matrix_memsize(res%q)))
+    allocate (res%w(c_matrix_worksize(res%q)))
 !
   end function c_matrix_new
 !
 !| Inquire blocksize of c_matrix.
-  pure elemental function c_matrix_blocksize(this) result(res)
-    type(c_matrix), intent(in) :: this
+  pure function c_matrix_blocksize(q) result(res)
+    integer(IK), intent(in) :: q(*)
     !! c_matrix
-    integer(IK)                :: res
-    res = this%cb
+    integer(IK)             :: res
+    res = q(cb)
   end function c_matrix_blocksize
 !
 !| Inquire memsize of c_matrix.
-  pure elemental function c_matrix_memsize(this) result(res)
-    !| this :: c_matrix
-    type(c_matrix), intent(in) :: this
-    integer(IK)                :: res
-    res = this%cl * this%nl
+  pure function c_matrix_memsize(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! c_matrix
+    integer(IK)             :: res
+    res = q(cl) * q(nl)
   end function c_matrix_memsize
 !
 !| Inquire worksize of c_matrix evaluation.
-  pure elemental function c_matrix_worksize(this) result(res)
-    type(c_matrix), intent(in) :: this
-    !! this :: c_matrix
-    integer(IK)                :: res
-    res = this%nw
+  pure function c_matrix_worksize(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! c_matrix
+    integer(IK)             :: res
+    res = q(nw)
   end function c_matrix_worksize
 !
 !| Evaluation the C matrix; G matrix is also calculated at the same time.<br>
 !  If nx>=ny C(cb,nx,ny), else C(cb,ny,nx)
-  pure subroutine c_matrix_eval(this, b, X, Y, C, W)
-    type(c_matrix), intent(in)  :: this
+  pure subroutine c_matrix_eval(q, b, X, Y, C, W)
+    integer(IK), intent(in) :: q(*)
     !! c_matrix
-    integer(IK), intent(in)     :: b(*)
+    integer(IK), intent(in) :: b(*)
     !! mol symmetry array, associated with b.
-    real(RK), intent(in)        :: X(*)
+    real(RK), intent(in)    :: X(*)
     !! reference coordinate
-    real(RK), intent(in)        :: Y(*)
+    real(RK), intent(in)    :: Y(*)
     !! target coordinate
-    real(RK), intent(inout)     :: C(*)
+    real(RK), intent(inout) :: C(*)
     !! main memory
-    real(RK), intent(inout)     :: W(*)
+    real(RK), intent(inout) :: W(*)
     !! work memory
-    integer(IK), parameter      :: gx = 1
-    integer(IK), parameter      :: wx = 1
-    integer(IK)                 :: s, m, n, dm, gy, wy
+    integer(IK), parameter  :: gx = 1
+    integer(IK), parameter  :: wx = 1
+    integer(IK)             :: s, m, n, dm, gy, wy
 !
     s = mol_block_nsym(b)
     m = mol_block_napm(b)
@@ -137,8 +130,8 @@ contains
     gy = gx + n
     wy = wx + dm
 !
-    call eval_g_matrix(dm, this%cb, n, X, Y, C, W(gx), W(gy))
-    call eval_c_matrix(b, s, m, n, dm, this%cb, X, Y, C, W(wx), W(wy))
+    call eval_g_matrix(dm, q(cb), n, X, Y, C, W(gx), W(gy))
+    call eval_c_matrix(b, s, m, n, dm, q(cb), X, Y, C, W(wx), W(wy))
 !
   contains
 !
@@ -213,35 +206,35 @@ contains
   end subroutine c_matrix_eval
 !
 !| Add CIJs to partial covariance matrix C.
-  pure subroutine c_matrix_add(this, i, j, s, C, G, Cp)
-    type(c_matrix), intent(in)  :: this
+  pure subroutine c_matrix_add(q, i, j, s, C, G, Cp)
+    integer(IK), intent(in) :: q(*)
     !! this :: c_matrix
-    integer(IK), intent(in)     :: i
+    integer(IK), intent(in) :: i
     !! i    :: row index
-    integer(IK), intent(in)     :: j
+    integer(IK), intent(in) :: j
     !! collumn index
-    integer(IK), intent(in)     :: s
+    integer(IK), intent(in) :: s
     !! symmetry index
-    real(RK), intent(in)        :: C(*)
+    real(RK), intent(in)    :: C(*)
     !! main memory
-    real(RK), intent(inout)     :: G
+    real(RK), intent(inout) :: G
     !! partial auto variance matrix
-    real(RK), intent(inout)     :: Cp(*)
+    real(RK), intent(inout) :: Cp(*)
     !! partial covariance matrix
-    integer(IK)                 :: k
+    integer(IK)             :: k
 !
-    k = this%cl * (i - 1) + this%cb * (j - 1) + 1
+    k = q(cl) * (i - 1) + q(cb) * (j - 1) + 1
     G = G + C(k)
     k = k + 1 + DD * (s - 1)
     call axpy(DD, ONE, C(k), 1, Cp, 1)
 !
   end subroutine c_matrix_add
 !
-  pure elemental subroutine c_matrix_tuple_destroy(this)
-    type(c_matrix_tuple), intent(inout) :: this
+  pure elemental subroutine c_matrix_destroy(this)
+    type(c_matrix), intent(inout) :: this
     if (ALLOCATED(this%x)) deallocate (this%x)
     if (ALLOCATED(this%w)) deallocate (this%w)
-  end subroutine c_matrix_tuple_destroy
+  end subroutine c_matrix_destroy
 !
 end module mod_c_matrix
 
