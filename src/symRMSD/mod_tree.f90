@@ -11,7 +11,6 @@ module mod_tree
   implicit none
   private
   public :: tree
-  public :: tree
   public :: tree_memsize
   public :: tree_current_level
   public :: tree_root_pointer
@@ -140,23 +139,24 @@ contains
 !  [s*m, s*(m-1),..., s*2, s]
   pure function tree_new(b, memsize) result(res)
 !|  b :: mol_block.
-    type(mol_block), intent(in) :: b
+    integer(IK), intent(in) :: b(*)
     interface
       pure function memsize(b, p) result(res)
         use mod_params, only: IK
         use mod_mol_block, only: mol_block
-        type(mol_block), intent(in) :: b
-        integer(IK), intent(in)     :: p
-        integer(IK)                 :: res
+        integer(IK), intent(in) :: b(*)
+        integer(IK), intent(in) :: p
+        integer(IK)             :: res
       end function memsize
     end interface
-    type(tree)                  :: res
-    integer(IK)                 :: i, j, k, l
+    type(tree)              :: res
+    integer(IK)             :: i, j, k, l
 !
-    allocate (res%q(header_blocksize + queue_blocksize * res%t%d))
+    l = mol_block_nmol(b) + 1
+    allocate (res%q(header_blocksize + queue_blocksize * l))
 !
     res%q(qs) = mol_block_nsym(b)
-    res%q(qd) = mol_block_nmol(b) + 1
+    res%q(qd) = l
     res%q(ql) = 0  ! designate root as the current node as 0.
     res%q(qc) = qr ! root_pointer
 !
@@ -167,27 +167,25 @@ contains
     k = 1
     l = qr ! root_pointer
 !
-    do i = 1, res%t%d - 1
-      j = j - res%t%s
+    do i = 1, res%q(qd) - 1
+      j = j - res%q(qs)
       k = k + queue_memsize(res%q(l))
       l = l + queue_blocksize
       call queue_init(j, memsize(b, i), k, res%q(l))
     end do
 !
-    allocate (res%x(tree_memsize(res%t, res%q)))
+    allocate (res%x(tree_memsize(res%q)))
 !
   end function tree_new
 !
 !| Inquire total memsize of tree.
-  pure function tree_memsize(t, q) result(res)
-    type(tree), intent(in)  :: t
-!!  t :: tree
+  pure function tree_memsize(q) result(res)
     integer(IK), intent(in) :: q(*)
 !!  q :: queue
     integer(IK)             :: res, i, j
     j = qr
     res = 0
-    do i = 1, t%d
+    do i = 1, q(qd)
       res = res + queue_memsize(q(j))
       j = j + queue_blocksize
     enddo
