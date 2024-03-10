@@ -51,10 +51,10 @@ module mod_f_matrix
 contains
 !
 !| Constructer
-  pure elemental function f_matrix_new(b) result(res)
-    !| b :: mol_block, must be initialized.
-    type(mol_block), intent(in) :: b
-    type(f_matrix)              :: res
+  pure function f_matrix_new(b) result(res)
+    !| mol_block, must be initialized.
+    integer(IK), intent(in) :: b(*)
+    type(f_matrix)          :: res
 !
     res%nn = mol_block_nmol(b)**2
     res%nw = sdmin_worksize()
@@ -62,10 +62,10 @@ contains
   end function f_matrix_new
 !
 !| Constructer
-  pure elemental function f_matrix_tuple_new(b) result(res)
-    type(mol_block), intent(in) :: b
-    !! mol_block, must be initialized.
-    type(f_matrix_tuple)        :: res
+  pure function f_matrix_tuple_new(b) result(res)
+    !| mol_block, must be initialized.
+    integer(IK), intent(in) :: b(*)
+    type(f_matrix_tuple)    :: res
 !
     res%f = f_matrix(b)
     allocate (res%x(f_matrix_memsize(res%f)))
@@ -91,11 +91,9 @@ contains
 !
 !| Evaluation the D matrix.<br>
 !  If nx>=ny D(nx,ny), else D(ny,nx)
-  pure subroutine f_matrix_eval(this, b, cm, C, F, W)
+  pure subroutine f_matrix_eval(this, cm, C, F, W)
     type(f_matrix), intent(in)  :: this
     !! f_matrix
-    type(mol_block), intent(in) :: b
-    !! mol_block, b must match the one used for initialization.
     type(c_matrix), intent(in)  :: cm
     !! header of covariacne matrix C.
     real(RK), intent(inout)     :: C(*)

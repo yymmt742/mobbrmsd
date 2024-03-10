@@ -62,10 +62,10 @@ module mod_c_matrix
 contains
 !
 !| Constructer
-  pure elemental function c_matrix_tuple_new(b) result(res)
-    type(mol_block), intent(in) :: b
+  pure function c_matrix_tuple_new(b) result(res)
+    integer(IK), intent(in) :: b(*)
     !! mol_block, must be initialized.
-    type(c_matrix_tuple)        :: res
+    type(c_matrix_tuple)    :: res
 !
     res%c = c_matrix_new(b)
     allocate (res%x(c_matrix_memsize(res%c)))
@@ -74,10 +74,10 @@ contains
   end function c_matrix_tuple_new
 !
 !| Constructer
-  pure elemental function c_matrix_new(b) result(res)
-    type(mol_block), intent(in) :: b
+  pure function c_matrix_new(b) result(res)
+    integer(IK), intent(in) :: b(*)
     !! mol_block, must be initialized.
-    type(c_matrix)              :: res
+    type(c_matrix)          :: res
 !
     res%cb = 1 + DD * mol_block_nsym(b)
     res%nl = mol_block_nmol(b)
@@ -112,12 +112,10 @@ contains
 !
 !| Evaluation the C matrix; G matrix is also calculated at the same time.<br>
 !  If nx>=ny C(cb,nx,ny), else C(cb,ny,nx)
-  pure subroutine c_matrix_eval(this, b, ms, X, Y, C, W)
+  pure subroutine c_matrix_eval(this, b, X, Y, C, W)
     type(c_matrix), intent(in)  :: this
     !! c_matrix
-    type(mol_block), intent(in) :: b
-    !! mol_block, b must match the one used for initialization.
-    integer(IK), intent(in)     :: ms(*)
+    integer(IK), intent(in)     :: b(*)
     !! mol symmetry array, associated with b.
     real(RK), intent(in)        :: X(*)
     !! reference coordinate
@@ -140,7 +138,7 @@ contains
     wy = wx + dm
 !
     call eval_g_matrix(dm, this%cb, n, X, Y, C, W(gx), W(gy))
-    call eval_c_matrix(b, s, m, n, dm, this%cb, ms, X, Y, C, W(wx), W(wy))
+    call eval_c_matrix(b, s, m, n, dm, this%cb, X, Y, C, W(wx), W(wy))
 !
   contains
 !
@@ -171,9 +169,8 @@ contains
     end subroutine eval_g_matrix
 !
 !   get correlation matrix C = Y^t@X and optimal rotation R^t
-    pure subroutine eval_c_matrix(b, s, m, n, dm, cb, ms, X, Y, C, WX, WY)
-      type(mol_block), intent(in) :: b
-      integer(IK), intent(in)     :: s, m, dm, n, cb, ms(*)
+    pure subroutine eval_c_matrix(b, s, m, n, dm, cb, X, Y, C, WX, WY)
+      integer(IK), intent(in)     :: b(*), s, m, dm, n, cb
       real(RK), intent(in)        :: X(dm, *), Y(dm, *)
       real(RK), intent(inout)     :: C(cb, *)
       real(RK), intent(inout)     :: WX(dm), WY(dm, n)
@@ -188,7 +185,7 @@ contains
           block
             integer(IK) :: ic
             ic = j + k
-            call calc_cov(b, s, m, dm, ms, WX, WY(1, j), C(2, ic))
+            call calc_cov(b, s, m, dm, WX, WY(1, j), C(2, ic))
           end block
         end do
         k = k + n
@@ -196,9 +193,8 @@ contains
 !
     end subroutine eval_c_matrix
 !
-    pure subroutine calc_cov(b, s, m, dm, ms, WX, WY, C)
-      type(mol_block), intent(in) :: b
-      integer(IK), intent(in)     :: s, m, dm, ms(*)
+    pure subroutine calc_cov(b, s, m, dm, WX, WY, C)
+      integer(IK), intent(in)     :: b(*), s, m, dm
       real(RK), intent(in)        :: WX(D, *)
       real(RK), intent(inout)     :: WY(D, *)
       real(RK), intent(inout)     :: C(DD, *)
@@ -207,9 +203,9 @@ contains
         call gemm('N', 'T', D, D, m, ONE, WY, D, WX, D, ZERO, C(1, 1), D)
 !
         do concurrent(i=2:s)
-          call mol_block_swap(b, i - 1, ms, WY)
+          call mol_block_swap(b, i - 1, WY)
           call gemm('N', 'T', D, D, m, ONE, WY, D, WX, D, ZERO, C(1, i), D)
-          call mol_block_inverse_swap(b, i - 1, ms, WY)
+          call mol_block_inverse_swap(b, i - 1, WY)
         end do
 !
     end subroutine calc_cov

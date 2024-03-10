@@ -42,8 +42,6 @@ module mod_bb_manager
     !! memory size.
     integer(IK)         :: nw
     !! work size.
-    type(mol_block)     :: b
-    !! mol_block
     integer(IK)         :: bq
     !! pointer to mol_block interger array
     integer(IK)         :: cx
@@ -64,8 +62,6 @@ module mod_bb_manager
     !! pointer to tree memory
     integer(IK)         :: tw
     !! pointer to tree work memory
-    type(tree)          :: t
-    !! tree
   end type bb_manager
 !
 !| A set of bb_manager and work arrays. <br>
@@ -97,24 +93,23 @@ contains
     !! number of atoms per molecule.
     integer(IK), intent(in), optional :: sym(:,:)
     !! symmetric codomains, [[a1,a2,...,am], [b1,b2,...,bm], ...].
-    type(mol_block_tuple)             :: b
+    type(mol_block)                   :: b
     type(c_matrix_tuple)              :: c
     type(f_matrix_tuple)              :: f
-    type(tree_tuple)                  :: t
+    type(tree)                        :: t
     type(bb_manager_tuple)            :: res
 !
-    b = mol_block_tuple(m, n, sym)
+    b = mol_block(m, n, sym)
     c = c_matrix_tuple(b%b)
     f = f_matrix_tuple(b%b)
-    t = tree_tuple(b%b, node_memsize)
+    t = tree(b%b, node_memsize)
 !
-    res%bb%b = b%b
     res%bb%c = c%c
     res%bb%f = f%f
     res%bb%t = t%t
 !
     res%bb%nm = SIZE(c%x) + SIZE(t%x)
-    res%bb%nw = MAX(tree_worksize(b%b), SIZE(c%w) - SIZE(t%x) - tree_worksize(b%b))
+    res%bb%nw = MAX(tree_worksize(b%q), SIZE(c%w) - SIZE(t%x) - tree_worksize(b%q))
 !
     res%bb%bq = 1
     res%bb%tq = res%bb%bq + SIZE(b%w)
@@ -122,7 +117,7 @@ contains
     res%bb%cx = 1
     res%bb%cw = res%bb%cx + c_matrix_memsize(c%c)
     res%bb%tx = res%bb%cw
-    res%bb%tw = res%bb%tx + tree_memsize(t%t, t%q)
+    res%bb%tw = res%bb%tx + tree_memsize(t%q)
     res%bb%fx = res%bb%tx + 2 + DD                 ! F of root node
     res%bb%fw = res%bb%fx + f_matrix_memsize(f%f)
 !
@@ -133,17 +128,17 @@ contains
   end function bb_manager_tuple_new
 !
   pure function node_memsize(b, p) result(res)
-    type(mol_block), intent(in) :: b
-    integer(IK), intent(in)     :: p
-    integer(IK)                 :: res, n
+    integer(IK), intent(in) :: b(*)
+    integer(IK), intent(in) :: p
+    integer(IK)             :: res, n
     n = mol_block_nmol(b) - p
     res = 1 + 1 + DD + n * n
   end function node_memsize
 !
-  pure elemental function tree_worksize(b) result(res)
-    type(mol_block), intent(in) :: b
-    integer(IK)                 :: p, n, m, sw, hw
-    integer(IK)                 :: res
+  pure function tree_worksize(b) result(res)
+    integer(IK), intent(in) :: b(*)
+    integer(IK)             :: p, n, m, sw, hw
+    integer(IK)             :: res
     sw = sdmin_worksize()
     res = 1 + mol_block_nsym(b) * sw
     n = mol_block_nmol(b)
