@@ -213,11 +213,9 @@ contains
   end subroutine c_matrix_eval
 !
 !| Add CIJs to partial covariance matrix C.
-  pure subroutine c_matrix_add(this, b, i, j, s, C, G, Cp)
+  pure subroutine c_matrix_add(this, i, j, s, C, G, Cp)
     type(c_matrix), intent(in)  :: this
     !! this :: c_matrix
-    type(mol_block), intent(in) :: b
-    !! b    :: mol_block
     integer(IK), intent(in)     :: i
     !! i    :: row index
     integer(IK), intent(in)     :: j

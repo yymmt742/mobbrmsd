@@ -28,6 +28,11 @@ module mod_bb_manager
   public :: bb_manager_queue_is_bottom
   public :: bb_manager_current_value
 !
+  integer(IK), parameter :: nm = 1
+  integer(IK), parameter :: nw = 2
+  integer(IK), parameter :: bq = 3
+  integer(IK), parameter :: tq = 4
+!
 !| bb_manager<br>
 !    Node data [L, G, C, F, W]<br>
 !    0    L      : scalar, lowerbound.<br>
@@ -100,19 +105,18 @@ contains
     type(bb_manager_tuple)            :: res
 !
     b = mol_block(m, n, sym)
-    c = c_matrix_tuple(b%b)
-    f = f_matrix_tuple(b%b)
-    t = tree(b%b, node_memsize)
+    c = c_matrix_tuple(b%q)
+    f = f_matrix_tuple(b%q)
+    t = tree(b%q, node_memsize)
 !
     res%bb%c = c%c
     res%bb%f = f%f
-    res%bb%t = t%t
 !
-    res%bb%nm = SIZE(c%x) + SIZE(t%x)
-    res%bb%nw = MAX(tree_worksize(b%q), SIZE(c%w) - SIZE(t%x) - tree_worksize(b%q))
+    res%bb%nm = size(c%x) + SIZE(t%x)
+    res%bb%nw = max(tree_worksize(b%q), SIZE(c%w) - SIZE(t%x) - tree_worksize(b%q))
 !
     res%bb%bq = 1
-    res%bb%tq = res%bb%bq + SIZE(b%w)
+    res%bb%tq = res%bb%bq + SIZE(b%q)
 !
     res%bb%cx = 1
     res%bb%cw = res%bb%cx + c_matrix_memsize(c%c)
@@ -121,7 +125,7 @@ contains
     res%bb%fx = res%bb%tx + 2 + DD                 ! F of root node
     res%bb%fw = res%bb%fx + f_matrix_memsize(f%f)
 !
-    allocate (res%q, source=[b%w, t%q])
+    allocate (res%q, source=[b%q, t%q])
     allocate (res%x(res%bb%nm))
     allocate (res%w(res%bb%nw))
 !
@@ -179,8 +183,8 @@ contains
     real(RK), intent(inout)      :: W(*)
     !! work integer array
 !
-    call c_matrix_eval(this%c, this%b, Q(this%bq), X, Y, W(this%cx), W(this%cw))
-    call f_matrix_eval(this%f, this%b, this%c, W(this%cx), W(this%fx), W(this%fw))
+    call c_matrix_eval(this%c, Q(this%bq), X, Y, W(this%cx), W(this%cw))
+    call f_matrix_eval(this%f, this%c, W(this%cx), W(this%fx), W(this%fw))
     call zfill(DD + 2, W(this%tx), 1)
 !
   end subroutine bb_manager_setup
@@ -199,7 +203,7 @@ contains
     !! work array
     integer(IK)                  :: pp
 !
-    pp = tree_current_pointer(parent%t, QZ(parent%tq))
+    pp = tree_current_pointer(QZ(parent%tq))
     X(this%tx + 1) = Z(pp + 1)
     call copy(DD, Z(pp + 2), 1, X(this%tx + 2), 1)
 !
@@ -218,35 +222,34 @@ contains
     integer(IK)                  :: nper, nsym
     integer(IK)                  :: p, n, np, nn, nb, nw
 !
-     np = this%tx - 1 + tree_current_pointer(this%t, Q(this%tq))
-     call tree_expand(this%t, Q(this%tq))
+     np = this%tx - 1 + tree_current_pointer(Q(this%tq))
+     call tree_expand(Q(this%tq))
 !
-     p = tree_current_level(this%t, Q(this%tq))
-     n = mol_block_nmol(this%b)
-     nn = this%tx - 1 + tree_queue_pointer(this%t, Q(this%tq))
-     nb = node_memsize(this%b, p)
-     nper = tree_n_perm(this%t, Q(this%tq))
-     nsym = mol_block_nsym(this%b)
+     p = tree_current_level(Q(this%tq))
+     n = mol_block_nmol(Q(this%bq))
+     nn = this%tx - 1 + tree_queue_pointer(Q(this%tq))
+     nb = node_memsize(Q(this%bq), p)
+     nper = tree_n_perm(Q(this%tq))
+     nsym = mol_block_nsym(Q(this%bq))
      nw = MAX(Hungarian_worksize(n - p, n - p), sdmin_worksize())
 !
      block
        integer(IK) :: s(n)
-       s = tree_current_permutation(this%t, Q(this%tq))
+       s = tree_current_permutation(Q(this%tq))
        print*,s
        if (n == p) then
-         call expand_terminal(this%c, this%b, p, n, nb, nw, nsym, s, X(this%cx), X(np), X(nn), W)
+         call expand_terminal(this%c, p, n, nb, nw, nsym, Q(this%bq), s, X(this%cx), X(np), X(nn), W)
        else
-         call expand(this%c, this%b, p, n, nb, nw, nper, nsym, s, X(this%cx), X(np), X(nn), W(1), W(2))
+         call expand(this%c, p, n, nb, nw, nper, nsym, Q(this%bq), s, X(this%cx), X(np), X(nn), W(1), W(2))
        end if
      end block
 !
   end subroutine bb_manager_expand
 !
-  pure subroutine expand(cm, b, p, n, nb, nw, nper, nsym, s, C, NP, NN, W1, W2)
+  pure subroutine expand(cm, p, n, nb, nw, nper, nsym, b, s, C, NP, NN, W1, W2)
     type(c_matrix), intent(in)  :: cm
-    type(mol_block), intent(in) :: b
     integer(IK), intent(in)     :: p, n, nb, nw, nper, nsym
-    integer(IK), intent(in)     :: s(*)
+    integer(IK), intent(in)     :: b(*), s(*)
     real(RK), intent(in)        :: C(*)
     real(RK), intent(in)        :: NP(*)
     real(RK), intent(inout)     :: NN(nb, nsym, nper)
@@ -267,7 +270,7 @@ contains
 !
     do concurrent(iper=1:nper, isym=1:nsym)
       call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, isym, iper), 1)
-      call c_matrix_add(cm, b, p, s(iper + p - 1), isym, C, NN(mmap_G, isym, iper), NN(mmap_C, isym, iper))
+      call c_matrix_add(cm, p, s(iper + p - 1), isym, C, NN(mmap_G, isym, iper), NN(mmap_C, isym, iper))
     end do
 !
     do concurrent(iper=1:nper)
@@ -289,11 +292,10 @@ contains
 !
   end subroutine expand
 !
-  pure subroutine expand_terminal(cm, b, p, n, nb, nw, nsym, s, C, NP, NN, W)
+  pure subroutine expand_terminal(cm, p, n, nb, nw, nsym, b, s, C, NP, NN, W)
     type(c_matrix), intent(in)  :: cm
-    type(mol_block), intent(in) :: b
     integer(IK), intent(in)     :: p, n, nb, nw, nsym
-    integer(IK), intent(in)     :: s(*)
+    integer(IK), intent(in)     :: b(*), s(*)
     real(RK), intent(in)        :: C(*)
     real(RK), intent(in)        :: NP(*)
     real(RK), intent(inout)     :: NN(nb, nsym)
@@ -305,7 +307,7 @@ contains
 !
     do concurrent(isym=1:nsym)
       call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, isym), 1)
-      call c_matrix_add(cm, b, p, s(n), isym, C, NN(mmap_G, isym), NN(mmap_C, isym))
+      call c_matrix_add(cm, p, s(n), isym, C, NN(mmap_G, isym), NN(mmap_C, isym))
       call estimate_sdmin(NN(mmap_G, isym), NN(mmap_C, isym), W(1, isym))
       NN(mmap_L, isym) = W(1, isym)
     end do
@@ -337,7 +339,7 @@ contains
     !! main memory
     real(RK), intent(in)         :: UB
     !! upper bound
-    call tree_select_top_node(this%t, Q(this%tq), UB, X(this%tx))
+    call tree_select_top_node(Q(this%tq), UB, X(this%tx))
      print*,'select top node',Q(this%tq:this%tq+1)
      print'(4i4)',Q(this%tq+2:this%tq+17)
   end subroutine bb_manager_select_top_node
@@ -349,7 +351,7 @@ contains
     integer(IK), intent(in)      :: Q(*)
     !! work integer array
     logical                      :: res
-    res = tree_queue_is_empty(this%t, Q(this%tq))
+    res = tree_queue_is_empty(Q(this%tq))
   end function bb_manager_queue_is_empty
 !
 !| Leave current node.
@@ -362,7 +364,7 @@ contains
     !! main memory
     real(RK)                     :: res
     integer(IK)                  :: tx
-    tx = this%tx - 1 + tree_current_pointer(this%t, Q(this%tq))
+    tx = this%tx - 1 + tree_current_pointer(Q(this%tq))
     res = X(tx)
   end function bb_manager_current_value
 !
@@ -373,7 +375,7 @@ contains
     integer(IK), intent(in)      :: Q(*)
     !! work integer array
     logical                      :: res
-    res = tree_queue_is_bottom(this%t, Q(this%tq))
+    res = tree_queue_is_bottom(Q(this%tq))
   end function bb_manager_queue_is_bottom
 !
 !| Leave current node.
@@ -383,7 +385,7 @@ contains
     integer(IK), intent(inout)   :: Q(*)
     !! work integer array
 !
-    call tree_leave(this%t, Q(this%tq))
+    call tree_leave(Q(this%tq))
 !
   end subroutine bb_manager_leave
 !

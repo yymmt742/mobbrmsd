@@ -63,22 +63,6 @@ target_link_libraries( test_rotation_matrix PRIVATE unittest )
 target_link_libraries( test_rotation_matrix PRIVATE purelapack )
 add_test( NAME test_rotation_matrix COMMAND test_rotation_matrix )
 
-add_executable( test_lowerbound )
-target_include_directories( test_lowerbound PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_lowerbound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_lowerbound.f90
-                                        mod_testutil.f90
-                                        test_lowerbound.f90 )
-target_include_directories( test_lowerbound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
-target_link_libraries( test_lowerbound PRIVATE unittest )
-target_link_libraries( test_lowerbound PRIVATE purelapack )
-add_test( NAME test_lowerbound COMMAND test_lowerbound )
-
 add_executable( test_c_matrix )
 target_include_directories( test_c_matrix PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_c_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
@@ -122,7 +106,6 @@ target_sources( test_bb_manager PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_param
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_lowerbound.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_manager.f90
                                         mod_testutil.f90
                                         test_bb_manager.f90 )

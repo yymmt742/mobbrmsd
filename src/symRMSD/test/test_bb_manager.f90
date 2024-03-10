@@ -2,7 +2,6 @@ program main
   use mod_params, only: D, setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_rotation_matrix
-  use mod_lowerbound
   use mod_bb_manager
   use mod_testutil
   use mod_unittest
@@ -14,8 +13,6 @@ program main
   call setup_dimension(3)
   call test0()
 ! call test1()
-! call test2()
-! call test3()
 !
   call u%finish_and_terminate()
 !
