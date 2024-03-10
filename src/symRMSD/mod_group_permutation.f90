@@ -1,10 +1,11 @@
 !
 !| Module for permutation by decomposed cyclic groups.
 !  gp are stored in work array, in the following. <br>
-!  - [p2, ..., ps, swp_1, swp_2, ..., swp_s]
-!  - pi (s-1)  :: pointer to swp_2 to swp_s. <br>
-!  - p1 is calculated in p + s - 1 <br>
-!  - pi is calculated in p + w(i-2) <br>
+!  - [p1, p2, ..., ps, swp_1, swp_2, ..., swp_s]
+!  - pi (s)    :: pointer to swp_1 to swp_s. <br>
+!  - s is equiv to w(1) - 1 <br>
+!  - p1 is calculated in w(1) <br>
+!  - pi is calculated in w(i-2) <br>
 !  Swap indeces are stored in work array, in the following. <br>
 !  - [[p1, p2, ..., pm],  [ b1, b2, ..., bi, ..., bm ]] <br>
 !  - m         :: number of order - 1. <br>
@@ -21,36 +22,22 @@ module mod_group_permutation
   implicit none
   private
   public :: group_permutation
-  public :: group_permutation_tuple
   public :: group_permutation_swap
   public :: group_permutation_inverse
 !
 !| A structure that references an array representing a replacement operation. <br>
 !  It is possible to hold s permutation mapping of starting from [1,2,...,N].
+!  This is mainly used for passing during initialization.
   type :: group_permutation
-    sequence
-    integer(IK) :: s = 0
-    !! number of permutation. if s==0, gp only has identity mapping.
+    integer(IK), allocatable :: q(:)
+    !! q array.
+  contains
+    final :: group_permutation_destroy
   end type group_permutation
 !
   interface group_permutation
     module procedure group_permutation_new
   end interface group_permutation
-!
-!| A set of t and w arrays. <br>
-!  This is mainly used for passing during initialization.
-  type :: group_permutation_tuple
-    type(group_permutation)  :: t
-    !! group_permutation.
-    integer(IK), allocatable :: w(:)
-    !! w array.
-  contains
-    final :: group_permutation_tuple_destroy
-  end type group_permutation_tuple
-!
-  interface group_permutation_tuple
-    module procedure group_permutation_tuple_new
-  end interface group_permutation_tuple
 !
 contains
 !
@@ -58,33 +45,26 @@ contains
   pure function group_permutation_new(perm) result(res)
     integer(IK), intent(in), optional :: perm(:, :)
     !! codomains, [[a1,a2,...,am],[b1,b2,...,bm],...].
-    type(group_permutation) :: res
-    if (PRESENT(perm)) res%s = SIZE(perm, 2)
-  end function group_permutation_new
-!
-!| Constructor.
-  pure function group_permutation_tuple_new(perm) result(res)
-    integer(IK), intent(in), optional :: perm(:, :)
-    !! codomains, [[a1,a2,...,am],[b1,b2,...,bm],...].
-    type(group_permutation_tuple) :: res
+    type(group_permutation)  :: res
     !! return value.
-    integer(IK), allocatable      :: t(:)
-    integer(IK)                   :: i, p
+    integer(IK), allocatable :: t(:)
+    integer(IK)              :: i, p, s
 !
-    res%t = group_permutation(perm)
-    allocate (res%w(MAX(res%t%s - 1, 0)))
-    if (res%t%s < 1) return
+    if (PRESENT(perm)) then; s = SIZE(perm, 2)
+    else; s = 0
+    end if
 !
-    res%w = [(0, i=1, res%t%s)]
-    p = res%t%s + 1
-    do i = 1, res%t%s
-      res%w(i) = p
+    res%q = [(0, i=1, s)]
+!
+    p = s + 1
+    do i = 1, s
+      res%q(i) = p
       t = decompose_to_cyclic(perm(:, i))
       p = p + SIZE(t)
-      res%w = [res%w, t]
+      res%q = [res%q, t]
     end do
 !
-  end function group_permutation_tuple_new
+  end function group_permutation_new
 !
   pure function decompose_to_cyclic(perm) result(res)
     integer(IK), intent(in)  :: perm(:)
@@ -346,10 +326,8 @@ contains
 ! end subroutine group_permutation_swap_int_l2
 !
 !| Replaces an array of real numbers according to the map s. <br>
-  pure subroutine group_permutation_swap(this, w, s, d, X)
-    type(group_permutation), intent(in) :: this
-    !! group_permutation
-    integer(IK), intent(in) :: w(*)
+  pure subroutine group_permutation_swap(q, s, d, X)
+    integer(IK), intent(in) :: q(*)
     !! work array.
     integer(IK), intent(in) :: s
     !! permutation index.
@@ -358,13 +336,13 @@ contains
     real(RK), intent(inout) :: X(*)
     !! data array.
 !
-    if (s < 1 .or. this%s < s) return ! identity map
-    call swap_real(w(w(s)), d, X)
+    if (s < 1 .or. q(1) <= s) return ! identity map
+    call swap_real(q(q(s)), d, X)
 !
   end subroutine group_permutation_swap
 !
-  pure subroutine swap_real(w, d, X)
-    integer(IK), intent(in) :: w(*)
+  pure subroutine swap_real(q, d, X)
+    integer(IK), intent(in) :: q(*)
     !! swap indices.
     integer(IK), intent(in) :: d
     !! leading dimension of x
@@ -372,19 +350,19 @@ contains
     !! data array.
     integer(IK)             :: i, m
 !
-    m = w(1) - 1
+    m = q(1) - 1
 !
     do concurrent(i=1:m)
       block
         integer(IK) :: j, p, n, s, ns
-        p = w(i)
-        n = w(p)
+        p = q(i)
+        n = q(p)
         p = p + 1
-        s = w(p)
+        s = q(p)
         p = p + 1
         ns = p + (n - 1) * s
         do concurrent(j=p:ns:s)
-          call cyclic_swap_real(d, s, w(j), X)
+          call cyclic_swap_real(d, s, q(j), X)
         end do
       end block
     end do
@@ -392,10 +370,8 @@ contains
   end subroutine swap_real
 !
 !| Replaces an array of real numbers according to the inverse map s. <br>
-  pure subroutine group_permutation_inverse(this, w, s, d, X)
-    type(group_permutation), intent(in) :: this
-    !! group_permutation
-    integer(IK), intent(in) :: w(*)
+  pure subroutine group_permutation_inverse(q, s, d, X)
+    integer(IK), intent(in) :: q(*)
     !! work array.
     integer(IK), intent(in) :: s
     !! permutation index.
@@ -404,13 +380,13 @@ contains
     real(RK), intent(inout) :: X(*)
     !! data array.
 !
-    if (s < 1 .or. this%s < s) return ! identity map
-    call inverse_real(w(w(s)), d, X)
+    if (s < 1 .or. q(1) <= s) return ! identity map
+    call inverse_real(q(q(s)), d, X)
 !
   end subroutine group_permutation_inverse
 !
-  pure subroutine inverse_real(w, d, X)
-    integer(IK), intent(in) :: w(*)
+  pure subroutine inverse_real(q, d, X)
+    integer(IK), intent(in) :: q(*)
     !! swap indices.
     integer(IK), intent(in) :: d
     !! leading dimension of x
@@ -418,19 +394,19 @@ contains
     !! data array.
     integer(IK)             :: i, m
 !
-    m = w(1) - 1
+    m = q(1) - 1
 !
     do concurrent(i=1:m)
       block
         integer(IK) :: j, p, n, s, ns
-        p = w(i)
-        n = w(p)
+        p = q(i)
+        n = q(p)
         p = p + 1
-        s = w(p)
+        s = q(p)
         p = p + 1
         ns = p + (n - 1) * s
         do concurrent(j=p:ns:s)
-          call cyclic_inverse_real(d, s, w(j), X)
+          call cyclic_inverse_real(d, s, q(j), X)
         end do
       end block
     end do
@@ -491,10 +467,10 @@ contains
     end do
   end subroutine cyclic_inverse_real
 !
-  pure elemental subroutine group_permutation_tuple_destroy(this)
-    type(group_permutation_tuple), intent(inout) :: this
-    if(ALLOCATED(this%w)) deallocate(this%w)
-  end subroutine group_permutation_tuple_destroy
+  pure elemental subroutine group_permutation_destroy(this)
+    type(group_permutation), intent(inout) :: this
+    if(ALLOCATED(this%q)) deallocate(this%q)
+  end subroutine group_permutation_destroy
 !
 end module mod_group_permutation
 
