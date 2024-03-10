@@ -10,7 +10,6 @@ module mod_mol_block
   implicit none
   private
   public :: mol_block
-  public :: mol_block_tuple
   public :: mol_block_each_size
   public :: mol_block_total_size
   public :: mol_block_natm
@@ -20,139 +19,111 @@ module mod_mol_block
   public :: mol_block_swap
   public :: mol_block_inverse_swap
 !
+  integer(IK), parameter  :: m = 1
+  integer(IK), parameter  :: n = 2
+  integer(IK), parameter  :: g = 3
+!
 !| molecular block
+!  This is mainly used for passing during initialization.
   type mol_block
     sequence
-    private
-    integer(IK)     :: m = 1
-    !! number of atom in a molecule
-    integer(IK)     :: n = 1
-    !! number of molecule
-    type(group_permutation) :: s
-    !! molecular symmetry permutation
+    !| q :: work array.
+    integer(IK), allocatable :: q(:)
   end type mol_block
 !
   interface mol_block
     module procedure mol_block_new
   end interface mol_block
 !
-!| A set of molecular block and work arrays. <br>
-!  This is mainly used for passing during initialization.
-  type mol_block_tuple
-    !| m :: number of atom in a molecule
-    type (mol_block)         :: b
-    !| w :: work array.
-    integer(IK), allocatable :: w(:)
-  end type mol_block_tuple
-!
-  interface mol_block_tuple
-    module procedure mol_block_tuple_new
-  end interface mol_block_tuple
-!
 contains
 !
 !| Constructer
-  pure function mol_block_tuple_new(m, n, sym) result(res)
+  pure function mol_block_new(m, n, sym) result(res)
     integer(IK), intent(in) :: m
     !! number of molecules
     integer(IK), intent(in) :: n
     !! number of atoms per molecule
     integer(IK), intent(in), optional :: sym(:,:)
     !! symmetric codomains, [[a1,a2,...,am],[b1,b2,...,bm],...].
-    type(mol_block_tuple)   :: res
-    type(group_permutation_tuple) :: s
-!
-    res%b = mol_block_new(m, n, sym)
-    s = group_permutation_tuple(sym)
-    res%w = s%w
-!
-  end function mol_block_tuple_new
-!
-! Constructer
-  pure function mol_block_new(m, n, sym) result(res)
-    integer(IK), intent(in) :: m
-    !! number of molecules
-    integer(IK), intent(in) :: n
-    !! number of atoms per molecule
-    integer(IK), intent(in), optional :: sym(:, :)
-    !! symmetric codomains, [[a1,a2,...,am],[b1,b2,...,bm],...].
     type(mol_block)         :: res
-    res%m = MAX(m, 1)
-    res%n = MAX(n, 1)
-    res%s = group_permutation(sym)
+    type(group_permutation) :: s
+!
+    s = group_permutation(sym)
+    res%q = [MAX(m, 1), MAX(n, 1), s%q]
+!
   end function mol_block_new
 !
 !| number of atoms
-  pure elemental function mol_block_natm(b) result(res)
-    type(mol_block), intent(in) :: b
+  pure function mol_block_natm(q) result(res)
+    integer(IK), intent(in)     :: q(*)
     !! mol_block
     integer(IK)                 :: res
-    res = b%m * b%n
+    res = q(m) * q(n)
   end function mol_block_natm
 !
 !| number of molecules
-  pure elemental function mol_block_nmol(b) result(res)
-    type(mol_block), intent(in) :: b
+  pure function mol_block_nmol(q) result(res)
+    integer(IK), intent(in)     :: q(*)
     !! mol_block
     integer(IK)                 :: res
-    res = b%n
+    res = q(n)
   end function mol_block_nmol
 !
 !| number of atoms per molecule
-  pure elemental function mol_block_napm(b) result(res)
-    type(mol_block), intent(in) :: b
+  pure function mol_block_napm(q) result(res)
+    integer(IK), intent(in)     :: q(*)
     !! mol_block
     integer(IK)                 :: res
-    res = b%m
+    res = q(m)
   end function mol_block_napm
 !
 !| number of atoms per molecule
-  pure elemental function mol_block_nsym(b) result(res)
-    type(mol_block), intent(in) :: b
+  pure function mol_block_nsym(q) result(res)
+    integer(IK), intent(in)     :: q(*)
     !! mol_block
     integer(IK)                 :: res
-    res = b%s%s + 1
+    res = group_permutation_nsym(q(g))
   end function mol_block_nsym
 !
 !| memory blocksize per molecule, defined by d*m.
-  pure elemental function mol_block_each_size(b) result(res)
-    type(mol_block), intent(in) :: b
+  pure function mol_block_each_size(q) result(res)
+    integer(IK), intent(in) :: q(*)
     !! mol_block
-    integer(IK)                 :: res
-    res = D * b%m
+    integer(IK)             :: res
+    res = D * q(m)
   end function mol_block_each_size
 !
 !| memory blocksize, defined by d*m*n.
-  pure elemental function mol_block_total_size(b) result(res)
-    type(mol_block), intent(in) :: b
+  pure function mol_block_total_size(q) result(res)
+    integer(IK), intent(in) :: q(*)
     !! mol_block
-    integer(IK)                 :: res
-    res = D * b%m * b%n
+    integer(IK)             :: res
+    res = D * q(m) * q(n)
   end function mol_block_total_size
 !
 !| swap.
-  pure subroutine mol_block_swap(b, isym, ms, X)
-    type(mol_block), intent(in) :: b
-    !! mol_block.
-    integer(IK), intent(in)     :: isym
-    !! symmetry id.
-    integer(IK), intent(in)     :: ms(*)
-    real(RK), intent(inout)     :: X(*)
+  pure subroutine mol_block_swap(q, isym, X)
+    integer(IK), intent(in) :: q(*)
+    !! mol_block
+    integer(IK), intent(in) :: isym
+    !! symmetry id
+    real(RK), intent(inout) :: X(*)
+    !! work array
 !
-    call group_permutation_swap(b%s, ms, isym, D, X)
+    call group_permutation_swap(q(g), isym, D, X)
 !
   end subroutine mol_block_swap
 !
 !| inverse swap.
-  pure subroutine mol_block_inverse_swap(b, isym, ms, X)
-    type(mol_block), intent(in) :: b
-    !! mol_block.
+  pure subroutine mol_block_inverse_swap(q, isym, X)
+    integer(IK), intent(in) :: q(*)
+    !! mol_block
     integer(IK), intent(in)     :: isym
     !! symmetry id.
-    integer(IK), intent(in)     :: ms(*)
     real(RK), intent(inout)     :: X(*)
+    !! work array
 !
-    call group_permutation_inverse(b%s, ms, isym, D, X)
+    call group_permutation_inverse(q(g), isym, D, X)
 !
   end subroutine mol_block_inverse_swap
 !

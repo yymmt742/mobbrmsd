@@ -22,6 +22,7 @@ module mod_group_permutation
   implicit none
   private
   public :: group_permutation
+  public :: group_permutation_nsym
   public :: group_permutation_swap
   public :: group_permutation_inverse
 !
@@ -47,14 +48,24 @@ contains
     !! codomains, [[a1,a2,...,am],[b1,b2,...,bm],...].
     type(group_permutation)  :: res
     !! return value.
-    integer(IK), allocatable :: t(:)
-    integer(IK)              :: i, p, s
+    integer(IK), allocatable :: t(:), c(:,:)
+    integer(IK)              :: i, m, p, s
 !
-    if (PRESENT(perm)) then; s = SIZE(perm, 2)
-    else; s = 0
+    if (PRESENT(perm)) then
+      m = SIZE(perm, 1)
+      s = SIZE(perm, 2)
+      c = perm(:, count_perm(m, s, perm))
+      s = SIZE(c, 2)
+    else
+      s = 0
     end if
 !
-    res%q = [(0, i=1, s)]
+    if (s < 1) then
+      res%q = [1]
+      return
+    else
+      res%q = [(0, i=1, s)]
+    end if
 !
     p = s + 1
     do i = 1, s
@@ -63,6 +74,21 @@ contains
       p = p + SIZE(t)
       res%q = [res%q, t]
     end do
+!
+  contains
+!
+    pure function count_perm(m, s, perm) result(res)
+      integer(IK), intent(in)  :: m, s, perm(m, s)
+      integer(IK), allocatable :: res(:)
+      integer(IK)              :: i, j
+      allocate(res(0))
+      do i = 1, s
+        if(is_not_permutation(m, perm)) cycle
+        if (ALL(perm(:, i) == [(j, j=1, m)])) cycle
+        if (ANY([(ALL(perm(:, i) == perm(:, j)), j=1, i - 1)])) cycle
+        res = [res, i]
+      end do
+    end function count_perm
 !
   end function group_permutation_new
 !
@@ -286,44 +312,13 @@ contains
 !
   end subroutine qsi
 !
-! pure subroutine group_permutation_swap_int_l1(this, X)
-!   class(group_permutation), intent(inout) :: this
-!   integer(IK), intent(inout)              :: X(*)
-!   integer(IK)                             :: i, j
-!
-!   if (.not. ALLOCATED(this%p)) return
-!
-!   do concurrent(i=1:SIZE(this%p, 2))
-!     do concurrent(j=1:this%p(3, i))
-!       block
-!         integer(IK) :: b
-!         b = this%p(1, i) + this%p(2, i) * (j - 1)
-!         call cyclic_swap_int(1, this%p(2, i), this%q(b), X)
-!       end block
-!     end do
-!   end do
-!
-! end subroutine group_permutation_swap_int_l1
-!
-! pure subroutine group_permutation_swap_int_l2(this, d, X)
-!   class(group_permutation), intent(inout) :: this
-!   integer(IK), intent(in)                 :: d
-!   integer(IK), intent(inout)              :: X(d, *)
-!   integer(IK)                             :: i, j
-!
-!   if (.not. ALLOCATED(this%p)) return
-!
-!   do concurrent(i=1:SIZE(this%p, 2))
-!     do concurrent(j=1:this%p(3, i))
-!       block
-!         integer(IK) :: b
-!         b = this%p(1, i) + this%p(2, i) * (j - 1)
-!         call cyclic_swap_int(d, this%p(2, i), this%q(b), X)
-!       end block
-!     end do
-!   end do
-!
-! end subroutine group_permutation_swap_int_l2
+!| nsym of group_permutation
+  pure function group_permutation_nsym(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! work array.
+    integer(IK)             :: res
+    res = q(1)
+  end function group_permutation_nsym
 !
 !| Replaces an array of real numbers according to the map s. <br>
   pure subroutine group_permutation_swap(q, s, d, X)

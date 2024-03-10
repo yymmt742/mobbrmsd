@@ -15,9 +15,16 @@ contains
     type(mol_block) :: b
 !
     b = mol_block(10, 5)
-    print*,mol_block_nmol(b)
-    print*,mol_block_napm(b)
-    print*,mol_block_nsym(b)
+    print*,b%q
+    print*,mol_block_nmol(b%q)
+    print*,mol_block_napm(b%q)
+    print*,mol_block_nsym(b%q)
+!
+    b = mol_block(8, 4, sym=RESHAPE([2, 4, 6, 8, 1, 3, 5, 7], [8, 1]))
+    print'(*(I4))',b%q
+    print*,mol_block_nmol(b%q)
+    print*,mol_block_napm(b%q)
+    print*,mol_block_nsym(b%q)
 !
   end subroutine test1
 !
