@@ -313,8 +313,8 @@ contains
     real(RK), intent(in)       :: UB
     !! upper bound
     call tree_select_top_node(Q(Q(tq)), UB, X(Q(tx)))
-     print*,'select top node',Q(Q(tq):Q(tq)+1)
-     print'(4i4)',Q(Q(tq)+2:Q(tq)+17)
+     print*,'select top node',Q(Q(tq):Q(tq)+3)
+     print'(4i4)',Q(Q(tq)+4:Q(tq)+19)
   end subroutine bb_manager_select_top_node
 !
 !| Leave current node.
