@@ -76,11 +76,11 @@ module mod_tree
 !
 contains
 !
-  pure function queue_state(s, l) result(res)
-    integer(IK), intent(in) :: s(*), l
+  pure function queue_state(r, l) result(res)
+    integer(IK), intent(in) :: r(state_blocksize, *)
+    integer(IK), intent(in) :: l
     integer(IK)             :: res
-    res = state_blocksize * l + sr + ss - 1
-    res = s(res)
+    res = r(ss, l + 1)
   end function queue_state
 !
   pure subroutine set_state(s, t)
@@ -100,14 +100,13 @@ contains
     res = r(qp, l + 1)
   end function queue_pointer
 !
-  pure function queue_node_pointer(r, l, s, n) result(res)
+  pure function queue_node_pointer(r, l, n) result(res)
     integer(IK), intent(in) :: r(queue_blocksize, *)
     integer(IK), intent(in) :: l
-    integer(IK), intent(in) :: s(state_blocksize, *)
     integer(IK), intent(in) :: n
     integer(IK)             :: res
     res = l + 1
-    res = r(qp, res) + r(qx, res) * s(ss, n + 1)
+    res = r(qp, res) + r(qx, res) * n
   end function queue_node_pointer
 !
   pure function queue_nnodes(r, l) result(res)
@@ -251,7 +250,7 @@ contains
     integer(IK), intent(in) :: s(*)
 !!  state
     integer(IK)             :: res
-    res = queue_node_pointer(q(qr), s(sl), s(sr), s(sl))
+    res = queue_node_pointer(q(qr), s(sl), queue_state(s(sr), s(sl)))
   end function tree_current_pointer
 !
 !| Returns a pointer to the current best node.
@@ -265,7 +264,7 @@ contains
     integer(IK), intent(in) :: imap
 !!  mapping index, must be [0,1,...,s-1].
     integer(IK)             :: res
-    res = queue_node_pointer(q(qr), s(sl), s(sr), iper * q(qs) * imap)
+    res = queue_node_pointer(q(qr), s(sl), iper * q(qs) + imap)
   end function tree_node_pointer
 !
 !| Returns current sequence.
@@ -276,7 +275,7 @@ contains
 !!  state
     integer(IK)             :: i, res(q(qd) - 1)
     do concurrent(i=1:q(qd)-1)
-      res(i) = queue_state(s, i) + 1
+      res(i) = queue_state(s(sr), i) + 1
     end do
   end function tree_current_sequence
 !
@@ -292,7 +291,7 @@ contains
       res(i) = i
     end do
     do i = 1, s(sl)
-      p = queue_state(s, i)
+      p = queue_state(s(sr), i)
       if (p < 0) return
       if (p < q(qs)) cycle
       ! cyclic swap res(i:p)
@@ -313,7 +312,7 @@ contains
 !!  state
     integer(IK)             :: i, res(q(qd) - 1)
     do concurrent(i=1:q(qd) - 1)
-      res(i) = MODULO(queue_state(s, i), q(qs))
+      res(i) = MODULO(queue_state(s(sr), i), q(qs))
     end do
   end function tree_current_mapping
 !
@@ -359,7 +358,7 @@ contains
       lv = -RHUGE
     else
       lv = W(tree_current_pointer(q, s))
-      call cpaws(q(qs), s(sl), queue_state(s, s(sl)), s(sq))
+      call cpaws(q(qs), s(sl), queue_state(s(sr), s(sl)), s(sq))
     end if
 !
     call set_state(s, is_explored)
@@ -380,7 +379,7 @@ contains
     end do
 !
     if (tree_queue_is_explored(q, s)) return
-    call cswap(q(qs), s(sl), queue_state(s, s(sl)), s(sq))
+    call cswap(q(qs), s(sl), queue_state(s(sr), s(sl)), s(sq))
 !
   end subroutine tree_select_top_node
 !
@@ -480,7 +479,7 @@ contains
     integer(IK), intent(in) :: s(*)
 !!  state
     logical                 :: res
-    res = queue_state(s, s(sl)) == -1
+    res = queue_state(s(sr), s(sl)) == -1
   end function tree_queue_is_unexplored
 !
   pure function tree_queue_is_explored(q, s) result(res)
@@ -489,7 +488,7 @@ contains
     integer(IK), intent(in) :: s(*)
 !!  state
     logical                 :: res
-    res = queue_state(s, s(sl)) < -1
+    res = queue_state(s(sr), s(sl)) < -1
   end function tree_queue_is_explored
 !
   pure function tree_queue_is_empty(q, s) result(res)
@@ -498,7 +497,7 @@ contains
     integer(IK), intent(in) :: s(*)
 !!  state
     logical                 :: res
-    res = queue_state(s, s(sl)) < 0
+    res = queue_state(s(sr), s(sl)) < 0
   end function tree_queue_is_empty
 !
   pure function tree_queue_is_bottom(q, s) result(res)
