@@ -22,36 +22,39 @@ contains
     type(bb_block)         :: bm
     integer(IK), parameter :: m = 8
     integer(IK), parameter :: n = 3
+    integer(IK)            :: iw
     real(RK)               :: X(D, m * n), Y(D, m * n)
+    real(RK), allocatable  :: W(:)
     real(RK)               :: ub
 !
     bm = bb_block(8, 3, sym=RESHAPE([2, 3, 4, 5, 6, 7, 8, 1], [8, 1]))
     print'(4I4)',bm%q
-    print*,size(bm%x), size(bm%w)
-!
     print *, bb_block_memsize(bm%q), bb_block_worksize(bm%q)
+!
     X = sample(D, m * n)
     Y(:, m + 1:m * n) = X(:, :m * (n - 1))
     Y(:, :m) = X(:, m * (n - 1) + 1:m * n)
-    bm%x(:) = 99
-    call bb_block_setup(bm%q, X, Y, bm%x)
+    iw = 1 + bb_block_memsize(bm%q)
+    allocate (W(bb_block_memsize(bm%q) + bb_block_worksize(bm%q)))
+    w(:) = 99
+    call bb_block_setup(bm%q, X, Y, w)
 !
-    call bb_block_expand(bm%q, bm%x, bm%w)
-    call bb_block_select_top_node(bm%q, bm%x, 999.0_RK)
+    call bb_block_expand(bm%q, w, w(iw))
+    call bb_block_select_top_node(bm%q, w, 999.0_RK)
     print *, bb_block_queue_is_empty(bm%q), &
       &      bb_block_queue_is_bottom(bm%q), &
-      &      bb_block_current_value(bm%q, bm%x)
-    call bb_block_expand(bm%q, bm%x, bm%w)
-    call bb_block_select_top_node(bm%q, bm%x, 999.0_RK)
+      &      bb_block_current_value(bm%q, w)
+    call bb_block_expand(bm%q, w, w(iw))
+    call bb_block_select_top_node(bm%q, w, 999.0_RK)
     print *, bb_block_queue_is_empty(bm%q), &
       &      bb_block_queue_is_bottom(bm%q), &
-      &      bb_block_current_value(bm%q, bm%x)
-    call bb_block_expand(bm%q, bm%x, bm%w)
-    call bb_block_select_top_node(bm%q, bm%x, 999.0_RK)
-    ub = bb_block_current_value(bm%q, bm%x)
+      &      bb_block_current_value(bm%q, w)
+    call bb_block_expand(bm%q, w, w(iw))
+    call bb_block_select_top_node(bm%q, w, 999.0_RK)
+    ub = bb_block_current_value(bm%q, w)
     print *, bb_block_queue_is_empty(bm%q), &
       &      bb_block_queue_is_bottom(bm%q), &
-      &      bb_block_current_value(bm%q, bm%x)
+      &      bb_block_current_value(bm%q, w)
 !
   end subroutine test0
 !

@@ -4,7 +4,7 @@ module mod_branch_and_bound
   use mod_bb_block
   implicit none
   private
-  public :: branch_and_bound, branch_and_bound_memsize, DEF_maxeval, DEF_cutoff
+  public :: branch_and_bound, branch_and_bound_memsize, branch_and_bound_worksize, DEF_maxeval, DEF_cutoff
 !
   integer(IK), parameter :: DEF_maxeval = -1
   real(RK), parameter    :: DEF_cutoff  = RHUGE
@@ -18,6 +18,9 @@ module mod_branch_and_bound
 !
   integer(IK), parameter :: header_memsize = 1
   integer(IK), parameter :: bx = header_memsize + 1
+!   ratio = pi; pi = pi + 1
+!   nsrch = pi; pi = pi + 1
+!   lncmb = pi; pi = pi + 1
 !
 !| branch_and_bound<br>
 !  This is mainly used for passing during initialization.
@@ -86,9 +89,6 @@ contains
     end do
 !
     allocate (res%q, source=[q, p, r, [(blk(i)%q, i=1, SIZE(blk))]])
-!
-!   res%mn = blk%mn
-!   res%dmn = D * blk%mn
 !
 !   pi = 1
 !   res%ratio = pi; pi = pi + 1
@@ -166,8 +166,7 @@ contains
   pure function branch_and_bound_memsize(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! bb_block.
-    integer(IK)             :: res
-    integer(IK)             :: i, j
+    integer(IK)             :: res, i, j
 !
     res = 0
     j = header_size
@@ -182,18 +181,26 @@ contains
   pure function branch_and_bound_worksize(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! integer array.
-    integer(IK)             :: res
+    integer(IK)             :: i, j, res, mem
 !
     res = 0
+    mem = 0
+    j = header_size
+    do i = 1, q(nq)
+      j = j + 1
+      mem = mem + bb_block_memsize(q(q(j)))
+      res = MAX(res, mem + bb_block_worksize(q(q(j))))
+    end do
+    res = res - branch_and_bound_memsize(q)
 !
   end function branch_and_bound_worksize
 !
-! pure subroutine branch_and_bound_setup(this, X, Y, W)
-!   class(branch_and_bound), intent(in) :: this
-!   real(RK), intent(in)                :: X(*)
-!   real(RK), intent(in)                :: Y(*)
-!   real(RK), intent(inout)             :: W(*)
-!   integer(IK)                         :: p
+  pure subroutine branch_and_bound_setup(this, X, Y, W)
+    integer(IK), intent(inout) :: q(*)
+    real(RK), intent(in)       :: X(*)
+    real(RK), intent(in)       :: Y(*)
+    real(RK), intent(inout)    :: W(*)
+    integer(IK)                :: p
 !
 !   call DCOPY(this%dmn, X, 1, W(this%xp), 1)
 !   call DCOPY(this%dmn, Y, 1, W(this%yp), 1)
@@ -210,7 +217,7 @@ contains
 !   W(this%tr%lowerbound) = W(this%dx%o)
 !   W(this%lncmb) = this%tr%log_ncomb()
 !
-! end subroutine branch_and_bound_setup
+  end subroutine branch_and_bound_setup
 !
 ! pure subroutine branch_and_bound_run(this, W, swap_y)
 !   class(branch_and_bound), intent(in)  :: this

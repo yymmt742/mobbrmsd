@@ -59,10 +59,6 @@ module mod_bb_block
   type bb_block
     integer(IK), allocatable :: q(:)
     !! work integer array
-    real(RK), allocatable    :: x(:)
-    !! main memory
-    real(RK), allocatable    :: w(:)
-    !! work array
   contains
     final           :: bb_block_destroy
   end type bb_block
@@ -104,8 +100,6 @@ contains
     q(fw) = q(fx) + f_matrix_memsize(f%q)
 !
     allocate (res%q, source=[q, b%q, c%q, f%q, t%q])
-    allocate (res%x(bb_block_memsize(res%q)))
-    allocate (res%w(bb_block_worksize(res%q)))
 !
   end function bb_block_new
 !
@@ -158,16 +152,17 @@ contains
   end function bb_block_worksize
 !
 !| Setup C matrix and F matrix in root node.
-  pure subroutine bb_block_setup(Q, X, Y, W)
-    integer(IK), intent(in) :: Q(*)
+  pure subroutine bb_block_setup(q, X, Y, W)
+    integer(IK), intent(inout) :: q(*)
     !! integer array
-    real(RK), intent(in)    :: X(*)
+    real(RK), intent(in)       :: X(*)
     !! reference coordinate
-    real(RK), intent(in)    :: Y(*)
+    real(RK), intent(in)       :: Y(*)
     !! target coordinate
-    real(RK), intent(inout) :: W(*)
+    real(RK), intent(inout)    :: W(*)
     !! work integer array
 !
+    call tree_reset(q(q(tx)))
     call c_matrix_eval(Q(Q(cq)), Q(bq), X, Y, W(Q(cx)), W(Q(cw)))
     call f_matrix_eval(Q(Q(fq)), Q(Q(cq)), W(Q(cx)), W(Q(fx)), W(Q(fw)))
     call zfill(DD + 2, W(Q(tx)), 1)
@@ -749,8 +744,6 @@ contains
 !
   pure elemental subroutine bb_block_destroy(this)
     type(bb_block), intent(inout) :: this
-    if (ALLOCATED(this%x)) deallocate (this%x)
-    if (ALLOCATED(this%w)) deallocate (this%w)
     if (ALLOCATED(this%q)) deallocate (this%q)
   end subroutine bb_block_destroy
 !

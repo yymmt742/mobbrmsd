@@ -44,6 +44,7 @@ contains
     print*
     print'(4i4)',b%q(b%q(2):)
     print*, branch_and_bound_memsize(b%q)
+    print*, branch_and_bound_worksize(b%q)
 !   call bb_block_setup(bm%q, X, Y, bm%x)
 !
 !   call bb_block_expand(bm%q, bm%x, bm%w)
