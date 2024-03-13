@@ -2,7 +2,7 @@ program main
   use mod_params, only: D, setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_rotation_matrix
-  use mod_bb_manager
+  use mod_bb_block
   use mod_testutil
   use mod_unittest
   implicit none
@@ -19,39 +19,39 @@ program main
 contains
 !
   subroutine test0()
-    type(bb_manager)       :: bm
+    type(bb_block)       :: bm
     integer(IK), parameter :: m = 8
     integer(IK), parameter :: n = 3
     real(RK)               :: X(D, m * n), Y(D, m * n)
     real(RK)               :: ub
 !
-    bm = bb_manager(8, 3, sym=RESHAPE([2, 3, 4, 5, 6, 7, 8, 1], [8, 1]))
+    bm = bb_block(8, 3, sym=RESHAPE([2, 3, 4, 5, 6, 7, 8, 1], [8, 1]))
     print'(4I4)',bm%q
     print*,size(bm%x), size(bm%w)
 !
-    print *, bb_manager_memsize(bm%q), bb_manager_worksize(bm%q)
+    print *, bb_block_memsize(bm%q), bb_block_worksize(bm%q)
     X = sample(D, m * n)
     Y(:, m + 1:m * n) = X(:, :m * (n - 1))
     Y(:, :m) = X(:, m * (n - 1) + 1:m * n)
     bm%x(:) = 99
-    call bb_manager_setup(bm%q, X, Y, bm%x)
+    call bb_block_setup(bm%q, X, Y, bm%x)
 !
-    call bb_manager_expand(bm%q, bm%x, bm%w)
-    call bb_manager_select_top_node(bm%q, bm%x, 999.0_RK)
-    print *, bb_manager_queue_is_empty(bm%q), &
-      &      bb_manager_queue_is_bottom(bm%q), &
-      &      bb_manager_current_value(bm%q, bm%x)
-    call bb_manager_expand(bm%q, bm%x, bm%w)
-    call bb_manager_select_top_node(bm%q, bm%x, 999.0_RK)
-    print *, bb_manager_queue_is_empty(bm%q), &
-      &      bb_manager_queue_is_bottom(bm%q), &
-      &      bb_manager_current_value(bm%q, bm%x)
-    call bb_manager_expand(bm%q, bm%x, bm%w)
-    call bb_manager_select_top_node(bm%q, bm%x, 999.0_RK)
-    ub = bb_manager_current_value(bm%q, bm%x)
-    print *, bb_manager_queue_is_empty(bm%q), &
-      &      bb_manager_queue_is_bottom(bm%q), &
-      &      bb_manager_current_value(bm%q, bm%x)
+    call bb_block_expand(bm%q, bm%x, bm%w)
+    call bb_block_select_top_node(bm%q, bm%x, 999.0_RK)
+    print *, bb_block_queue_is_empty(bm%q), &
+      &      bb_block_queue_is_bottom(bm%q), &
+      &      bb_block_current_value(bm%q, bm%x)
+    call bb_block_expand(bm%q, bm%x, bm%w)
+    call bb_block_select_top_node(bm%q, bm%x, 999.0_RK)
+    print *, bb_block_queue_is_empty(bm%q), &
+      &      bb_block_queue_is_bottom(bm%q), &
+      &      bb_block_current_value(bm%q, bm%x)
+    call bb_block_expand(bm%q, bm%x, bm%w)
+    call bb_block_select_top_node(bm%q, bm%x, 999.0_RK)
+    ub = bb_block_current_value(bm%q, bm%x)
+    print *, bb_block_queue_is_empty(bm%q), &
+      &      bb_block_queue_is_bottom(bm%q), &
+      &      bb_block_current_value(bm%q, bm%x)
 !
   end subroutine test0
 !

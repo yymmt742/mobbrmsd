@@ -95,9 +95,9 @@ target_link_libraries( test_f_matrix PRIVATE unittest )
 target_link_libraries( test_f_matrix PRIVATE purelapack )
 add_test( NAME test_f_matrix COMMAND test_f_matrix )
 
-add_executable( test_bb_manager )
-target_include_directories( test_bb_manager PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_bb_manager PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+add_executable( test_bb_block )
+target_include_directories( test_bb_block PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_bb_block PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -106,13 +106,13 @@ target_sources( test_bb_manager PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_param
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
                                         ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_manager.f90
+                                        ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
                                         mod_testutil.f90
-                                        test_bb_manager.f90 )
-target_include_directories( test_bb_manager PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
-target_link_libraries( test_bb_manager PRIVATE unittest )
-target_link_libraries( test_bb_manager PRIVATE purelapack )
-add_test( NAME test_bb_manager COMMAND test_bb_manager )
+                                        test_bb_block.f90 )
+target_include_directories( test_bb_block PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_link_libraries( test_bb_block PRIVATE unittest )
+target_link_libraries( test_bb_block PRIVATE purelapack )
+add_test( NAME test_bb_block COMMAND test_bb_block )
 
 add_executable( test_branch_and_bound )
 target_include_directories( test_branch_and_bound PRIVATE ${unittest_DIR}/mod_files )

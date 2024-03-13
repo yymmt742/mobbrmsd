@@ -4,7 +4,7 @@
 !    |----|--C2--|--------W2-------|<br>
 !    |-----------|--C3--|-W3-|<br>
 !    Therefore, the maximum memory allocation size is MAX( SUM_i^I |Ci| + |W_I| ).
-module mod_bb_manager
+module mod_bb_block
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_params, only: gemm, dot, copy
   use mod_mol_block
@@ -15,17 +15,17 @@ module mod_bb_manager
   use mod_tree
   implicit none
   private
-  public :: bb_manager
-  public :: bb_manager_memsize
-  public :: bb_manager_worksize
-  public :: bb_manager_setup
-  public :: bb_manager_set_root
-  public :: bb_manager_expand
-  public :: bb_manager_select_top_node
-  public :: bb_manager_leave
-  public :: bb_manager_queue_is_empty
-  public :: bb_manager_queue_is_bottom
-  public :: bb_manager_current_value
+  public :: bb_block
+  public :: bb_block_memsize
+  public :: bb_block_worksize
+  public :: bb_block_setup
+  public :: bb_block_set_root
+  public :: bb_block_expand
+  public :: bb_block_select_top_node
+  public :: bb_block_leave
+  public :: bb_block_queue_is_empty
+  public :: bb_block_queue_is_bottom
+  public :: bb_block_current_value
 !
   integer(IK), parameter :: header_size = 9
 !
@@ -48,7 +48,7 @@ module mod_bb_manager
   integer(IK), parameter :: fw = 9
   !! pointer to f_matrix work memory
 !
-!| bb_manager<br>
+!| bb_block<br>
 !    Node data [L, G, C, F, W]<br>
 !    0    L      : scalar, lowerbound.<br>
 !    1    G      : scalar, partial sum of auto variance.<br>
@@ -56,7 +56,7 @@ module mod_bb_manager
 !    2+nn C(D,D) : partial sum of covariance.<br>
 !         W(*)   : work space.<br>
 !  This is mainly used for passing during initialization.
-  type bb_manager
+  type bb_block
     integer(IK), allocatable :: q(:)
     !! work integer array
     real(RK), allocatable    :: x(:)
@@ -64,17 +64,17 @@ module mod_bb_manager
     real(RK), allocatable    :: w(:)
     !! work array
   contains
-    final           :: bb_manager_destroy
-  end type bb_manager
+    final           :: bb_block_destroy
+  end type bb_block
 !
-  interface bb_manager
-    module procedure bb_manager_new
-  end interface bb_manager
+  interface bb_block
+    module procedure bb_block_new
+  end interface bb_block
 !
 contains
 !
 !| Constructer
-  pure function bb_manager_new(m, n, sym) result(res)
+  pure function bb_block_new(m, n, sym) result(res)
     integer(IK), intent(in) :: m
     !! number of molecules.
     integer(IK), intent(in) :: n
@@ -85,7 +85,7 @@ contains
     type(c_matrix)          :: c
     type(f_matrix)          :: f
     type(tree)              :: t
-    type(bb_manager)        :: res
+    type(bb_block)        :: res
     integer(IK)             :: q(header_size)
 !
     b = mol_block(m, n, sym)
@@ -105,23 +105,26 @@ contains
     q(fw) = q(fx) + f_matrix_memsize(f%q)
 !
     allocate (res%q, source=[q, b%q, c%q, f%q, t%q])
-    allocate (res%x(bb_manager_memsize(res%q)))
-    allocate (res%w(bb_manager_worksize(res%q)))
+    allocate (res%x(bb_block_memsize(res%q)))
+    allocate (res%w(bb_block_worksize(res%q)))
 !
-  end function bb_manager_new
+  end function bb_block_new
 !
   pure function node_memsize(b, p) result(res)
     integer(IK), intent(in) :: b(*)
     integer(IK), intent(in) :: p
     integer(IK)             :: res, n
+!
     n = mol_block_nmol(b) - p
     res = 1 + 1 + DD + n * n
+!
   end function node_memsize
 !
   pure function tree_worksize(b) result(res)
     integer(IK), intent(in) :: b(*)
     integer(IK)             :: p, n, m, sw, hw
     integer(IK)             :: res
+!
     sw = sdmin_worksize()
     res = 1 + mol_block_nsym(b) * sw
     n = mol_block_nmol(b)
@@ -131,27 +134,32 @@ contains
       res = MAX(hw, res)
       m = m - 1
     end do
+!
   end function tree_worksize
 !
 !| Inquire worksize of f_matrix.
-  pure function bb_manager_memsize(q) result(res)
+  pure function bb_block_memsize(q) result(res)
     integer(IK), intent(in) :: q(*)
-    !! bb_manager.
+    !! bb_block.
     integer(IK)             :: res
-    res = c_matrix_memsize(q(q(cq))) + tree_memsize(q(q(tq)))
-  end function bb_manager_memsize
 !
-!| Inquire worksize of bb_manager.
-  pure function bb_manager_worksize(q) result(res)
+    res = c_matrix_memsize(q(q(cq))) + tree_memsize(q(q(tq)))
+!
+  end function bb_block_memsize
+!
+!| Inquire worksize of bb_block.
+  pure function bb_block_worksize(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! integer array.
     integer(IK)             :: res
-    res = MAX(tree_worksize(q(q(bq))), &
-   &          c_matrix_worksize(q(q(cq))) - tree_memsize(q(q(tq))) - tree_worksize(q(q(bq))))
-  end function bb_manager_worksize
+!
+    res = tree_worksize(q(q(bq)))
+    res = MAX(res, c_matrix_worksize(q(q(cq))) - tree_memsize(q(q(tq))) - res)
+!
+  end function bb_block_worksize
 !
 !| Setup C matrix and F matrix in root node.
-  pure subroutine bb_manager_setup(Q, X, Y, W)
+  pure subroutine bb_block_setup(Q, X, Y, W)
     integer(IK), intent(in) :: Q(*)
     !! integer array
     real(RK), intent(in)    :: X(*)
@@ -165,10 +173,10 @@ contains
     call f_matrix_eval(Q(Q(fq)), Q(Q(cq)), W(Q(cx)), W(Q(fx)), W(Q(fw)))
     call zfill(DD + 2, W(Q(tx)), 1)
 !
-  end subroutine bb_manager_setup
+  end subroutine bb_block_setup
 !
 !| Setup C matrix and F matrix in root node.
-  pure subroutine bb_manager_set_root(QP, XP, Q, X)
+  pure subroutine bb_block_set_root(QP, XP, Q, X)
     integer(IK), intent(in)      :: QP(*)
     !! parent integer array
     real(RK), intent(in)         :: XP(*)
@@ -186,10 +194,10 @@ contains
     pp = pp + 1
     call copy(DD, XP(pp), 1, X(pc), 1)
 !
-  end subroutine bb_manager_set_root
+  end subroutine bb_block_set_root
 !
 !| Expand top node in queue.
-  subroutine bb_manager_expand(Q, X, W)
+  pure subroutine bb_block_expand(Q, X, W)
     integer(IK), intent(inout)   :: Q(*)
     !! work integer array
     real(RK), intent(inout)      :: X(*)
@@ -213,7 +221,6 @@ contains
      block
        integer(IK) :: s(n)
        s = tree_current_permutation(Q(Q(tq)))
-       print*,s
        if (n == p) then
          call expand_terminal(p, n, nb, nw, nsym, Q(Q(cq)), Q(Q(bq)), s, X(Q(cx)), X(np), X(nn), W)
        else
@@ -221,7 +228,7 @@ contains
        end if
      end block
 !
-  end subroutine bb_manager_expand
+  end subroutine bb_block_expand
 !
   pure subroutine expand(p, n, nb, nw, nper, nsym, cq, b, s, C, NP, NN, W1, W2)
     integer(IK), intent(in)     :: p, n, nb, nw, nper, nsym
@@ -305,7 +312,7 @@ contains
   end subroutine subm
 !
 !| Select_top_node.
-  subroutine bb_manager_select_top_node(Q, X, UB)
+  pure subroutine bb_block_select_top_node(Q, X, UB)
     integer(IK), intent(inout) :: Q(*)
     !! work integer array
     real(RK), intent(in)       :: X(*)
@@ -313,20 +320,18 @@ contains
     real(RK), intent(in)       :: UB
     !! upper bound
     call tree_select_top_node(Q(Q(tq)), UB, X(Q(tx)))
-     print*,'select top node',Q(Q(tq):Q(tq)+3)
-     print'(4i4)',Q(Q(tq)+4:Q(tq)+19)
-  end subroutine bb_manager_select_top_node
+  end subroutine bb_block_select_top_node
 !
 !| Leave current node.
-  pure function bb_manager_queue_is_empty(Q) result(res)
+  pure function bb_block_queue_is_empty(Q) result(res)
     integer(IK), intent(in) :: Q(*)
     !! work integer array
     logical                 :: res
     res = tree_queue_is_empty(Q(Q(tq)))
-  end function bb_manager_queue_is_empty
+  end function bb_block_queue_is_empty
 !
 !| Leave current node.
-  pure function bb_manager_current_value(Q, X) result(res)
+  pure function bb_block_current_value(Q, X) result(res)
     integer(IK), intent(in) :: Q(*)
     !! work integer array
     real(RK), intent(in)    :: X(*)
@@ -335,24 +340,24 @@ contains
     integer(IK)             :: t
     t = Q(tx) - 1 + tree_current_pointer(Q(Q(tq)))
     res = X(t)
-  end function bb_manager_current_value
+  end function bb_block_current_value
 !
 !| Leave current node.
-  pure function bb_manager_queue_is_bottom(Q) result(res)
+  pure function bb_block_queue_is_bottom(Q) result(res)
     integer(IK), intent(in) :: Q(*)
     !! work integer array
     logical                 :: res
     res = tree_queue_is_bottom(Q(Q(tq)))
-  end function bb_manager_queue_is_bottom
+  end function bb_block_queue_is_bottom
 !
 !| Leave current node.
-  pure subroutine bb_manager_leave(Q)
+  pure subroutine bb_block_leave(Q)
     integer(IK), intent(inout)   :: Q(*)
     !! work integer array
 !
     call tree_leave(Q(Q(tq)))
 !
-  end subroutine bb_manager_leave
+  end subroutine bb_block_leave
 !
 ! pure subroutine eval_child(b, p, inode, Wp, Wc)
 !   type(mol_block), intent(in) :: b
@@ -743,17 +748,17 @@ contains
     end do
   end subroutine zfill
 !
-  pure elemental subroutine bb_manager_destroy(this)
-    type(bb_manager), intent(inout) :: this
+  pure elemental subroutine bb_block_destroy(this)
+    type(bb_block), intent(inout) :: this
     if (ALLOCATED(this%x)) deallocate (this%x)
     if (ALLOCATED(this%w)) deallocate (this%w)
     if (ALLOCATED(this%q)) deallocate (this%q)
-  end subroutine bb_manager_destroy
+  end subroutine bb_block_destroy
 !
 !| Setup.
-! pure subroutine bb_manager_list_setup(bb, X, Y, W)
-!   type(bb_manager), intent(in) :: bb(:)
-!   !! bb_manager
+! pure subroutine bb_block_list_setup(bb, X, Y, W)
+!   type(bb_block), intent(in) :: bb(:)
+!   !! bb_block
 !   real(RK), intent(in)         :: X(*)
 !   !! reference coordinate
 !   real(RK), intent(in)         :: Y(*)
@@ -774,7 +779,7 @@ contains
 !     call zfill(DD + 1, W(bb(k)%t%p + mmap_g(bb(k)%b, 0)))
 !   end do
 !
-! end subroutine bb_manager_list_setup
+! end subroutine bb_block_list_setup
 !
-end module mod_bb_manager
+end module mod_bb_block
 
