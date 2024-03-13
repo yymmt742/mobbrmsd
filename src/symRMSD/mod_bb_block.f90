@@ -27,26 +27,26 @@ module mod_bb_block
   public :: bb_block_queue_is_bottom
   public :: bb_block_current_value
 !
-  integer(IK), parameter :: header_size = 9
+  integer(IK), parameter :: header_size = 8
 !
-  integer(IK), parameter :: bq = 1
-  !! pointer to mol_block interger array
-  integer(IK), parameter :: cq = 2
+  integer(IK), parameter :: cq = 1
   !! pointer to c_matrix interger array
-  integer(IK), parameter :: fq = 3
+  integer(IK), parameter :: fq = 2
   !! pointer to f_matrix interger array
-  integer(IK), parameter :: tq = 4
+  integer(IK), parameter :: tq = 3
   !! pointer to tree interger array
-  integer(IK), parameter :: cx = 5
+  integer(IK), parameter :: cx = 4
   !! pointer to c_matrix memory
-  integer(IK), parameter :: fx = 6
+  integer(IK), parameter :: fx = 5
   !! pointer to f_matrix memory
-  integer(IK), parameter :: tx = 7
+  integer(IK), parameter :: tx = 6
   !! pointer to tree memory
-  integer(IK), parameter :: cw = 8
+  integer(IK), parameter :: cw = 7
   !! pointer to c_matrix work memory
-  integer(IK), parameter :: fw = 9
+  integer(IK), parameter :: fw = 8
   !! pointer to f_matrix work memory
+  integer(IK), parameter :: bq = 9
+  !! pointer to mol_block interger array
 !
 !| bb_block<br>
 !    Node data [L, G, C, F, W]<br>
@@ -85,7 +85,7 @@ contains
     type(c_matrix)          :: c
     type(f_matrix)          :: f
     type(tree)              :: t
-    type(bb_block)        :: res
+    type(bb_block)          :: res
     integer(IK)             :: q(header_size)
 !
     b = mol_block(m, n, sym)
@@ -93,8 +93,7 @@ contains
     f = f_matrix(b%q)
     t = tree(b%q, node_memsize)
 !
-    q(bq) = header_size + 1
-    q(cq) = q(bq) + SIZE(b%q)
+    q(cq) = bq + SIZE(b%q)
     q(fq) = q(cq) + SIZE(c%q)
     q(tq) = q(fq) + SIZE(f%q)
 !
@@ -153,7 +152,7 @@ contains
     !! integer array.
     integer(IK)             :: res
 !
-    res = tree_worksize(q(q(bq)))
+    res = tree_worksize(q(bq))
     res = MAX(res, c_matrix_worksize(q(q(cq))) - tree_memsize(q(q(tq))) - res)
 !
   end function bb_block_worksize
@@ -169,7 +168,7 @@ contains
     real(RK), intent(inout) :: W(*)
     !! work integer array
 !
-    call c_matrix_eval(Q(Q(cq)), Q(Q(bq)), X, Y, W(Q(cx)), W(Q(cw)))
+    call c_matrix_eval(Q(Q(cq)), Q(bq), X, Y, W(Q(cx)), W(Q(cw)))
     call f_matrix_eval(Q(Q(fq)), Q(Q(cq)), W(Q(cx)), W(Q(fx)), W(Q(fw)))
     call zfill(DD + 2, W(Q(tx)), 1)
 !
@@ -211,20 +210,20 @@ contains
      call tree_expand(Q(Q(tq)))
 !
      p = tree_current_level(Q(Q(tq)))
-     n = mol_block_nmol(Q(Q(bq)))
+     n = mol_block_nmol(Q(bq))
      nn = Q(tx) - 1 + tree_queue_pointer(Q(Q(tq)))
-     nb = node_memsize(Q(Q(bq)), p)
+     nb = node_memsize(Q(bq), p)
      nper = tree_n_perm(Q(Q(tq)))
-     nsym = mol_block_nsym(Q(Q(bq)))
+     nsym = mol_block_nsym(Q(bq))
      nw = MAX(Hungarian_worksize(n - p, n - p), sdmin_worksize())
 !
      block
        integer(IK) :: s(n)
        s = tree_current_permutation(Q(Q(tq)))
        if (n == p) then
-         call expand_terminal(p, n, nb, nw, nsym, Q(Q(cq)), Q(Q(bq)), s, X(Q(cx)), X(np), X(nn), W)
+         call expand_terminal(p, n, nb, nw, nsym, Q(Q(cq)), Q(bq), s, X(Q(cx)), X(np), X(nn), W)
        else
-         call expand(p, n, nb, nw, nper, nsym, Q(Q(cq)), Q(Q(bq)), s, X(Q(cx)), X(np), X(nn), W(1), W(2))
+         call expand(p, n, nb, nw, nper, nsym, Q(Q(cq)), Q(bq), s, X(Q(cx)), X(np), X(nn), W(1), W(2))
        end if
      end block
 !

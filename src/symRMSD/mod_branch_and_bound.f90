@@ -1,49 +1,36 @@
 !| mod_branch_and_bound
 module mod_branch_and_bound
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
-  use mod_bb_manager
+  use mod_bb_block
   implicit none
   private
-  public :: branch_and_bound, DEF_maxeval, DEF_cutoff
+  public :: branch_and_bound, branch_and_bound_memsize, DEF_maxeval, DEF_cutoff
 !
   integer(IK), parameter :: DEF_maxeval = -1
   real(RK), parameter    :: DEF_cutoff  = RHUGE
 !
-  integer(IK), parameter :: header_size = 9
+  integer(IK), parameter :: header_size = 1
 !
-  integer(IK), parameter :: bq = 1
-  !! pointer to mol_block interger array
-  integer(IK), parameter :: cq = 2
-  !! pointer to c_matrix interger array
-  integer(IK), parameter :: fq = 3
+  integer(IK), parameter :: nq = 1
   !! pointer to f_matrix interger array
-  integer(IK), parameter :: tq = 4
-  !! pointer to tree interger array
-  integer(IK), parameter :: cx = 5
-  !! pointer to c_matrix memory
-  integer(IK), parameter :: fx = 6
-  !! pointer to f_matrix memory
-  integer(IK), parameter :: tx = 7
-  !! pointer to tree memory
-  integer(IK), parameter :: cw = 8
-  !! pointer to c_matrix work memory
-  integer(IK), parameter :: fw = 9
-  !! pointer to f_matrix work memory
+  integer(IK), parameter :: qq = 2
+  !! pointer to q1
+!
+  integer(IK), parameter :: header_memsize = 1
+  integer(IK), parameter :: bx = header_memsize + 1
 !
 !| branch_and_bound<br>
 !  This is mainly used for passing during initialization.
   type branch_and_bound
     integer(IK), allocatable :: q(:)
     !! work integer array
-    real(RK), allocatable    :: x(:)
-    !! main memory
   contains
     final           :: branch_and_bound_destroy
   end type branch_and_bound
 !
-  interface bb_manager
-    module procedure bb_manager_new
-  end interface bb_manager
+  interface branch_and_bound
+    module procedure branch_and_bound_new
+  end interface branch_and_bound
 !
 ! type branch_and_bound
 !   private
@@ -76,13 +63,29 @@ module mod_branch_and_bound
 contains
 !
 !| generate node instance
-! pure function branch_and_bound_new(blk, ms, maxeval, cutoff) result(res)
-!   type(mol_block_list), intent(in)         :: blk
-!   type(mol_symmetry), intent(in), optional :: ms(*)
-!   integer(IK), intent(in), optional        :: maxeval
-!   real(RK), intent(in), optional           :: cutoff
-!   type(branch_and_bound)                   :: res
-!   integer(IK)                              :: i, j, pi
+  pure function branch_and_bound_new(blk) result(res)
+    type(bb_block), intent(in) :: blk(:)
+    type(branch_and_bound)     :: res
+    integer(IK)                :: q(header_size)
+    integer(IK)                :: p(SIZE(blk))
+    integer(IK)                :: r(SIZE(blk))
+    integer(IK)                :: i, j
+!
+    q(nq) = SIZE(blk)
+!
+    j = SIZE(q) + SIZE(p) + SIZE(r) + 1
+    do i = 1, SIZE(p)
+      p(i) = j
+      j = j + SIZE(blk(i)%q)
+    end do
+!
+    j = bx
+    do i = 1, SIZE(r)
+      r(i) = j
+      j = j + bb_block_memsize(blk(i)%q)
+    end do
+!
+    allocate (res%q, source=[q, p, r, [(blk(i)%q, i=1, SIZE(blk))]])
 !
 !   res%mn = blk%mn
 !   res%dmn = D * blk%mn
@@ -157,7 +160,33 @@ contains
 !
 !   res%memsize = pi
 !
-! end function branch_and_bound_new
+  end function branch_and_bound_new
+!
+!| Inquire worksize of f_matrix.
+  pure function branch_and_bound_memsize(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! bb_block.
+    integer(IK)             :: res
+    integer(IK)             :: i, j
+!
+    res = 0
+    j = header_size
+    do i = 1, q(nq)
+      j = j + 1
+      res = res + bb_block_memsize(q(q(j)))
+    end do
+!
+  end function branch_and_bound_memsize
+!
+!| Inquire worksize of bb_block.
+  pure function branch_and_bound_worksize(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! integer array.
+    integer(IK)             :: res
+!
+    res = 0
+!
+  end function branch_and_bound_worksize
 !
 ! pure subroutine branch_and_bound_setup(this, X, Y, W)
 !   class(branch_and_bound), intent(in) :: this
@@ -369,7 +398,6 @@ contains
   pure elemental subroutine branch_and_bound_destroy(this)
     type(branch_and_bound), intent(inout) :: this
     if (ALLOCATED(this%q)) deallocate (this%q)
-    if (ALLOCATED(this%x)) deallocate (this%x)
   end subroutine branch_and_bound_destroy
 !
 !!!

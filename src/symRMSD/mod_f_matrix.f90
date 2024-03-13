@@ -27,12 +27,6 @@ module mod_f_matrix
   type f_matrix
     integer(IK)           :: q(header_size)
     !! header
-    real(RK), allocatable :: x(:)
-    !! main memory.
-    real(RK), allocatable :: w(:)
-    !! work memory.
-  contains
-    final :: f_matrix_destroy
   end type f_matrix
 !
   interface f_matrix
@@ -48,10 +42,7 @@ contains
     type(f_matrix)    :: res
 !
     res%q(nn) = mol_block_nmol(b)**2
-    res%q(nw) = sdmin_worksize()
-
-    allocate (res%x(f_matrix_memsize(res%q)))
-    allocate (res%w(f_matrix_worksize(res%q)))
+    res%q(nw) = sdmin_worksize() + 1
 !
   end function f_matrix_new
 !
@@ -99,20 +90,15 @@ contains
 !
 !   get squared displacement
     do j = 1, nn
-      F(j) = RHUGE
+      W(1) = RHUGE
       do i = 2, cb, DD
-        call estimate_sdmin(C(1, j), C(i, j), W)
-        F(j) = MIN(F(j), W(1))
+        call estimate_sdmin(C(1, j), C(i, j), W(2))
+        W(1) = MIN(W(1), W(2))
       end do
+      F(j) = W(1)
     end do
 !
   end subroutine eval_f_matrix
-!
-  pure elemental subroutine f_matrix_destroy(this)
-    type(f_matrix), intent(inout) :: this
-    if (ALLOCATED(this%x)) deallocate (this%x)
-    if (ALLOCATED(this%w)) deallocate (this%w)
-  end subroutine f_matrix_destroy
 !
 end module mod_f_matrix
 

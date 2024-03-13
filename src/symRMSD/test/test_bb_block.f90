@@ -19,7 +19,7 @@ program main
 contains
 !
   subroutine test0()
-    type(bb_block)       :: bm
+    type(bb_block)         :: bm
     integer(IK), parameter :: m = 8
     integer(IK), parameter :: n = 3
     real(RK)               :: X(D, m * n), Y(D, m * n)

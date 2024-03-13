@@ -35,26 +35,10 @@ module mod_c_matrix
 !  --- G_IJ = Tr[X_I @ X_I^T] + Tr[Y_J @ Y_J^T]. <br>
 !  - G does not change with respect to s. <br>
 !  - C(:,I,J) = [G_IJ, C_IJ1, C_IJ2, ..., C_IJS] with C_IJs(D,D) := Y_J @ Q_s @ X_I^T. <br>
-! type c_matrix
-!   private
-!   sequence
-!   integer(IK)         :: nl
-!   integer(IK)         :: cb
-!   integer(IK)         :: cl
-!   integer(IK)         :: nw
-! end type c_matrix
-!
-!| A set of c_matrix and work arrays. <br>
 !  This is mainly used for passing during initialization.
   type c_matrix
     integer(IK)              :: q(header_size)
     !! header
-    real(RK), allocatable    :: x(:)
-    !! main memory.
-    real(RK), allocatable    :: w(:)
-    !! work memory.
-  contains
-    final :: c_matrix_destroy
   end type c_matrix
 !
   interface c_matrix
@@ -72,10 +56,7 @@ contains
     res%q(cb) = 1 + DD * mol_block_nsym(b)
     res%q(nl) = mol_block_nmol(b)
     res%q(cl) = res%q(cb) * res%q(nl)
-    res%q(nw) = MAX(mol_block_each_size(b) + mol_block_total_size(b), res%q(nl) * 2)
-!
-    allocate (res%x(c_matrix_memsize(res%q)))
-    allocate (res%w(c_matrix_worksize(res%q)))
+    res%q(nw) = MAX((res%q(nl) + 1) * mol_block_each_size(b), res%q(nl) * 2)
 !
   end function c_matrix_new
 !
@@ -165,31 +146,25 @@ contains
     pure subroutine eval_c_matrix(b, s, m, n, dm, cb, X, Y, C, WX, WY)
       integer(IK), intent(in)     :: b(*), s, m, dm, n, cb
       real(RK), intent(in)        :: X(dm, *), Y(dm, *)
-      real(RK), intent(inout)     :: C(cb, *)
+      real(RK), intent(inout)     :: C(cb, n, *)
       real(RK), intent(inout)     :: WX(dm), WY(dm, n)
-      integer(IK)                 :: i, j, k
+      integer(IK)                 :: i, j
 !
       call copy(dm * n, Y, 1, WY, 1)
 !
-      k = 0
-      do i = 1, n
-        call copy(dm, X(1, i), 1, WX, 1)
-        do concurrent(j=1:n)
-          block
-            integer(IK) :: ic
-            ic = j + k
-            call calc_cov(b, s, m, dm, WX, WY(1, j), C(2, ic))
-          end block
+      do j = 1, n
+        call copy(dm, X(1, j), 1, WX, 1)
+        do concurrent(i=1:n)
+          call calc_cov(b, s, m, dm, WX, WY(1, i), C(2, i, j))
         end do
-        k = k + n
       end do
 !
     end subroutine eval_c_matrix
 !
     pure subroutine calc_cov(b, s, m, dm, WX, WY, C)
       integer(IK), intent(in)     :: b(*), s, m, dm
-      real(RK), intent(in)        :: WX(D, *)
-      real(RK), intent(inout)     :: WY(D, *)
+      real(RK), intent(in)        :: WX(D, m)
+      real(RK), intent(inout)     :: WY(D, m)
       real(RK), intent(inout)     :: C(DD, *)
       integer(IK)                 :: i
 !
@@ -229,12 +204,6 @@ contains
     call axpy(DD, ONE, C(k), 1, Cp, 1)
 !
   end subroutine c_matrix_add
-!
-  pure elemental subroutine c_matrix_destroy(this)
-    type(c_matrix), intent(inout) :: this
-    if (ALLOCATED(this%x)) deallocate (this%x)
-    if (ALLOCATED(this%w)) deallocate (this%w)
-  end subroutine c_matrix_destroy
 !
 end module mod_c_matrix
 

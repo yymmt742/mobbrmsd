@@ -24,7 +24,7 @@ contains
     real(RK)              :: X(3, 5 * 3 + 3 * 4 + 8 * 3)
     real(RK)              :: Y(3, 5 * 3 + 3 * 2 + 8 * 5)
     real(RK), allocatable :: W(:)
-    integer(IK)           :: x1, x2, x3
+    integer(IK)           :: nw, x1, x2, x3
     integer(IK)           :: p1, p2, p3, w1, w2, w3
 !
     X = sample(3, SIZE(X, 2))
@@ -52,7 +52,11 @@ contains
     p3 = w2
     w3 = p3 + c_matrix_memsize(c(3)%q)
 !
-    W = [c(1)%x, c(2)%x, c(3)%x, c(3)%w]
+    nw = c_matrix_memsize(c(1)%q) &
+   &   + c_matrix_memsize(c(2)%q) &
+   &   + c_matrix_memsize(c(3)%q) &
+   &   + c_matrix_worksize(c(3)%q)
+    allocate (W(nw))
     W(:) = 999
 !
     call c_matrix_eval(c(1)%q, b(1)%q, X(1, x1), Y(1, x1), W(p1), W(w1))

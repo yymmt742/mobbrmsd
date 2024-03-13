@@ -26,6 +26,7 @@ contains
     real(RK)              :: X(3, 5 * 3 + 3 * 2 + 8 * 3)
     real(RK)              :: Y(3, 5 * 3 + 3 * 2 + 8 * 3)
     real(RK), allocatable :: W(:)
+    integer(IK)           :: nx
     integer(IK)           :: x1, x2, x3
     integer(IK)           :: c1, c2, c3
     integer(IK)           :: f1, f2, f3
@@ -68,7 +69,14 @@ contains
     f3 = v3
     w3 = f3 + f_matrix_memsize(f(3)%q)
 !
-    W = [c(1)%x, c(2)%x, c(3)%x, f(1)%x, f(2)%x, f(3)%x, c(3)%w, f(3)%w]
+    nx = c_matrix_memsize(c(1)%q) &
+   &   + f_matrix_memsize(f(1)%q) &
+   &   + c_matrix_memsize(c(2)%q) &
+   &   + f_matrix_memsize(f(2)%q) &
+   &   + c_matrix_memsize(c(3)%q) &
+   &   + f_matrix_memsize(f(3)%q) &
+   &   + MAX(c_matrix_worksize(c(3)%q), f_matrix_worksize(f(3)%q))
+    allocate (w(nx))
     W(:) = 999
 !
     call c_matrix_eval(c(1)%q, b(1)%q, X(1, x1), Y(1, x1), W(c1), W(v1))
