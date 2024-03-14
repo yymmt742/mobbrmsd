@@ -21,16 +21,17 @@ module mod_bb_block
   public :: bb_block_setup
   public :: bb_block_set_root
   public :: bb_block_expand
-  public :: bb_block_select_top_node
   public :: bb_block_leave
   public :: bb_block_queue_is_empty
   public :: bb_block_queue_is_bottom
   public :: bb_block_current_value
 !
-  integer(IK), parameter :: header_size = 7
+  integer(IK), parameter :: header_size = 8
 !
   integer(IK), parameter :: cx = 1
   !! pointer to c_matrix array (fixed)
+  integer(IK), parameter :: ts = 1
+  !! pointer to tree interger work array (fixed)
   integer(IK), parameter :: bq = header_size + 1
   !! pointer to mol_block interger array (fixed)
 !
@@ -40,13 +41,15 @@ module mod_bb_block
   !! pointer to f_matrix interger array
   integer(IK), parameter :: tq = 3
   !! pointer to tree interger array
-  integer(IK), parameter :: fx = 4
+  integer(IK), parameter :: ps = 4
+  !! pointer to tree interger array
+  integer(IK), parameter :: fx = 5
   !! pointer to f_matrix memory
-  integer(IK), parameter :: tx = 5
+  integer(IK), parameter :: tx = 6
   !! pointer to tree memory
-  integer(IK), parameter :: cw = 6
+  integer(IK), parameter :: cw = 7
   !! pointer to c_matrix work memory
-  integer(IK), parameter :: fw = 7
+  integer(IK), parameter :: fw = 8
   !! pointer to f_matrix work memory
 !
 !| bb_block<br>
@@ -96,13 +99,19 @@ contains
     q(fq) = q(cq) + SIZE(c%q)
     q(tq) = q(fq) + SIZE(f%q)
 !
+    q(ps) = ts + SIZE(t%s)
+!
     q(cw) = cx + c_matrix_memsize(c%q)
     q(tx) = q(cw)
     q(fx) = q(cw) + 2 + DD ! F as root node
     q(fw) = q(fx) + f_matrix_memsize(f%q)
 !
     allocate (res%q, source=[q, b%q, c%q, f%q, t%q])
-    allocate (res%s, source=t%s)
+    block
+      integer(IK) :: prm(mol_block_nmol(b%q))
+      call perm_reset(b%q, prm)
+      allocate (res%s, source=[t%s, prm])
+    end block
 !
   end function bb_block_new
 !
@@ -155,7 +164,7 @@ contains
   end function bb_block_worksize
 !
 !| Setup C matrix and F matrix in root node.
-  subroutine bb_block_setup(q, X, Y, s, W)
+  pure subroutine bb_block_setup(q, X, Y, s, W)
     integer(IK), intent(in)    :: q(*)
     !! integer array
     real(RK), intent(in)       :: X(*)
@@ -167,23 +176,40 @@ contains
     real(RK), intent(inout)    :: W(*)
     !! work integer array
 !
-    call tree_reset(q(q(tq)), s)
+    call tree_reset(q(q(tq)), s(ts))
+    call perm_reset(q(bq), s(q(ps)))
     call c_matrix_eval(q(q(cq)), q(bq), X, Y, W(cx), W(q(cw)))
     call f_matrix_eval(q(q(fq)), q(q(cq)), W(cx), W(q(fx)), W(q(fw)))
     call zfill(DD + 2, W(q(tx)), 1)
 !
   end subroutine bb_block_setup
 !
+  pure subroutine perm_reset(b, prm)
+    integer(IK), intent(in)    :: b(*)
+    !! mol_block
+    integer(IK), intent(inout) :: prm(*)
+    !! permutation
+    integer(IK)                :: i, n
+!
+    n = mol_block_nmol(b)
+    do concurrent(i=1:n)
+      prm(i) = i
+    end do
+!
+  end subroutine perm_reset
+!
 !| Setup C matrix and F matrix in root node.
-  pure subroutine bb_block_set_root(qp, sp, XP, q, X)
+  pure subroutine bb_block_set_root(qp, sp, XP, q, s, X)
     integer(IK), intent(in)      :: qp(*)
     !! parent integer array
     integer(ik), intent(in)      :: sp(*)
-    !! integer work array
+    !! parent integer work array
     real(RK), intent(in)         :: XP(*)
     !! parent work array
     integer(ik), intent(in)      :: q(*)
     !! integer array
+    integer(ik), intent(inout)   :: s(*)
+    !! integer work array
     real(RK), intent(inout)      :: X(*)
     !! work array
     integer(IK)                  :: pc, pp
@@ -195,12 +221,17 @@ contains
     pp = pp + 1
     call copy(DD, XP(pp), 1, X(pc), 1)
 !
+    call tree_reset(q(q(tq)), s(ts))
+    call perm_reset(q(bq), s(q(ps)))
+!
   end subroutine bb_block_set_root
 !
 !| Expand top node in queue.
-  pure subroutine bb_block_expand(q, s, X, W)
+  pure subroutine bb_block_expand(q, UB, s, X, W)
     integer(IK), intent(in)    :: q(*)
     !! work integer array
+    real(RK), intent(in)       :: UB
+    !! upper bound
     integer(IK), intent(inout) :: s(*)
     !! work integer array
     real(RK), intent(inout)    :: X(*)
@@ -210,32 +241,34 @@ contains
     integer(IK)                :: nper, nsym
     integer(IK)                :: p, n, np, nn, nb, nw
 !
-     np = q(tx) - 1 + tree_current_pointer(q(q(tq)), s)
-     call tree_expand(q(q(tq)), s)
+     np = q(tx) - 1 + tree_current_pointer(q(q(tq)), s(ts))
+     call tree_expand(q(q(tq)), s(ts))
 !
      p = tree_current_level(s)
      n = mol_block_nmol(q(bq))
-     nn = q(tx) - 1 + tree_queue_pointer(q(q(tq)), s)
+     nn = q(tx) - 1 + tree_queue_pointer(q(q(tq)), s(ts))
      nb = node_memsize(Q(bq), p)
-     nper = tree_n_perm(q(q(tq)), s)
+     nper = tree_n_perm(q(q(tq)), s(ts))
      nsym = mol_block_nsym(q(bq))
      nw = MAX(Hungarian_worksize(n - p, n - p), sdmin_worksize())
 !
-     block
-       integer(IK) :: prm(n)
-       prm = tree_current_permutation(q(q(tq)), s)
-       if (n == p) then
-         call expand_terminal(p, n, nb, nw, nsym, q(q(cq)), q(bq), prm(n), X, X(np), X(nn), W)
-       else
-         call expand(p, n, nb, nw, nper, nsym, q(q(cq)), q(bq), prm, X, X(np), X(nn), W(1), W(2))
-       end if
-     end block
+     if (n == p) then
+       call expand_terminal(p, n, nb, nw, nsym, q(q(cq)), q(bq), s(q(ps)), X, X(np), X(nn), W)
+     else
+       call expand(p, n, nb, nw, nper, nsym, q(q(cq)), q(bq), s(q(ps)), X, X(np), X(nn), W(1), W(2))
+     end if
+!
+     call tree_select_top_node(q(q(tq)), s(ts), UB, X(q(tx)))
+!
+     if(bb_block_queue_is_empty(q(q(tq)), s(ts))) return
+!
+     call cswap(p, tree_current_iper(q(q(tq)), s(ts)), s(q(ps)))
 !
   end subroutine bb_block_expand
 !
-  pure subroutine expand(p, n, nb, nw, nper, nsym, cq, b, s, C, NP, NN, W1, W2)
+  pure subroutine expand(p, n, nb, nw, nper, nsym, cq, b, prm, C, NP, NN, W1, W2)
     integer(IK), intent(in)     :: p, n, nb, nw, nper, nsym
-    integer(IK), intent(in)     :: cq(*), b(*), s(*)
+    integer(IK), intent(in)     :: cq(*), b(*), prm(*)
     real(RK), intent(in)        :: C(*)
     real(RK), intent(in)        :: NP(*)
     real(RK), intent(inout)     :: NN(nb, nsym, nper)
@@ -256,7 +289,7 @@ contains
 !
     do concurrent(iper=1:nper, isym=1:nsym)
       call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, isym, iper), 1)
-      call c_matrix_add(cq, p, s(iper + p - 1), isym, C, NN(mmap_G, isym, iper), NN(mmap_C, isym, iper))
+      call c_matrix_add(cq, p, prm(iper + p - 1), isym, C, NN(mmap_G, isym, iper), NN(mmap_C, isym, iper))
     end do
 !
     do iper = 1, nper
@@ -276,9 +309,9 @@ contains
 !
   end subroutine expand
 !
-  pure subroutine expand_terminal(p, n, nb, nw, nsym, cq, b, s, C, NP, NN, W)
+  pure subroutine expand_terminal(p, n, nb, nw, nsym, cq, b, prm, C, NP, NN, W)
     integer(IK), intent(in)     :: p, n, nb, nw, nsym
-    integer(IK), intent(in)     :: cq(*), b(*), s
+    integer(IK), intent(in)     :: cq(*), b(*), prm(*)
     real(RK), intent(in)        :: C(*)
     real(RK), intent(in)        :: NP(*)
     real(RK), intent(inout)     :: NN(nb, nsym)
@@ -290,7 +323,7 @@ contains
 !
     do concurrent(isym=1:nsym)
       call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, isym), 1)
-      call c_matrix_add(cq, p, s, isym, C, NN(mmap_G, isym), NN(mmap_C, isym))
+      call c_matrix_add(cq, p, prm(n), isym, C, NN(mmap_G, isym), NN(mmap_C, isym))
       call estimate_sdmin(NN(mmap_G, isym), NN(mmap_C, isym), W(1, isym))
       NN(mmap_L, isym) = W(1, isym)
     end do
@@ -298,10 +331,11 @@ contains
   end subroutine expand_terminal
 !
   pure subroutine subm(m, n, r, X, Y)
-  integer(IK), intent(in) :: m, n, r
-  real(RK), intent(in)    :: X(m, n)
-  real(RK), intent(inout) :: Y(m - 1, n - 1)
-  integer(IK)             :: i, j
+    integer(IK), intent(in) :: m, n, r
+    real(RK), intent(in)    :: X(m, n)
+    real(RK), intent(inout) :: Y(m - 1, n - 1)
+    integer(IK)             :: i, j
+!
     do concurrent(j=2:n)
       do concurrent(i=1:r - 1)
         Y(i, j - 1) = X(i, j)
@@ -310,20 +344,51 @@ contains
         Y(i - 1, j - 1) = X(i, j)
       end do
     end do
+!
   end subroutine subm
 !
+  pure subroutine cswap(p, iper, prm)
+    integer(IK), intent(in)    :: p, iper
+    integer(IK), intent(inout) :: prm(*)
+    integer(IK)                :: q, i, t
+    ! cyclic swap prm(p:q)
+    if (iper < 1) return
+    q = p + iper
+    t = prm(q)
+    do i = q, p + 1, -1
+      prm(i) = prm(i - 1)
+    end do
+    prm(p) = t
+!
+  end subroutine cswap
+!
+  pure subroutine creverse(p, iper, prm)
+    integer(IK), intent(in)    :: p, iper
+    integer(IK), intent(inout) :: prm(*)
+    integer(IK)                :: q, i, t
+    ! cyclic reverse prm(p:q)
+    if (iper < 1) return
+    q = p + iper
+    t = prm(p)
+    do i = p + 1, q
+      prm(i - 1) = prm(i)
+    end do
+    prm(q) = t
+!
+  end subroutine creverse
+!
 !| Select_top_node.
-  pure subroutine bb_block_select_top_node(q, X, UB, s)
-    integer(IK), intent(in)    :: q(*)
-    !! integer array
-    real(RK), intent(in)       :: X(*)
-    !! main memory
-    real(RK), intent(in)       :: UB
-    !! upper bound
-    integer(IK), intent(inout) :: s(*)
-    !! work integer array
-    call tree_select_top_node(q(q(tq)), s, UB, X(Q(tx)))
-  end subroutine bb_block_select_top_node
+! pure subroutine bb_block_select_top_node(q, X, UB, s)
+!   integer(IK), intent(in)    :: q(*)
+!   !! integer array
+!   real(RK), intent(in)       :: X(*)
+!   !! main memory
+!   real(RK), intent(in)       :: UB
+!   !! upper bound
+!   integer(IK), intent(inout) :: s(*)
+!   !! work integer array
+!   call tree_select_top_node(q(q(tq)), s, UB, X(Q(tx)))
+! end subroutine bb_block_select_top_node
 !
 !| Leave current node.
   pure function bb_block_queue_is_empty(q, s) result(res)
@@ -345,7 +410,7 @@ contains
     !! main memory
     real(RK)                :: res
     integer(IK)             :: t
-    t = Q(tx) - 1 + tree_current_pointer(q(q(tq)), s)
+    t = Q(tx) - 1 + tree_current_pointer(q(q(tq)), s(ts))
     res = X(t)
   end function bb_block_current_value
 !
@@ -356,17 +421,23 @@ contains
     integer(IK), intent(in) :: s(*)
     !! work integer array
     logical                 :: res
-    res = tree_queue_is_bottom(q(q(tq)), s)
+    res = tree_queue_is_bottom(q(q(tq)), s(ts))
   end function bb_block_queue_is_bottom
 !
 !| Leave current node.
-  pure subroutine bb_block_leave(q, s)
+  pure subroutine bb_block_leave(q, UB, X, s)
     integer(IK), intent(in)    :: q(*)
     !! integer array
+    real(RK), intent(in)       :: UB
+    !! upperbound
+    real(RK), intent(in)       :: X(*)
+    !! workarray
     integer(IK), intent(inout) :: s(*)
     !! work integer array
 !
-    call tree_leave(q(q(tq)), s)
+    call creverse(tree_current_level(s), tree_current_iper(q(q(tq)), s(ts)), s(q(ps)))
+    call tree_leave(q(q(tq)), s(ts))
+    call tree_select_top_node(q(q(tq)), s(ts), UB, X(q(tx)))
 !
   end subroutine bb_block_leave
 !
@@ -757,36 +828,6 @@ contains
 !   end do
 !
 ! end subroutine bb_block_list_setup
-!
-! pure subroutine cswap(s, l, p, prm)
-!   integer(IK), intent(in)    :: s, l, p
-!   integer(IK), intent(inout) :: prm(state_blocksize, *)
-!   integer(IK)                :: q, i, t
-!     if (p < 0) return
-!     if (p < s) return
-!     ! cyclic swap prm(l:q)
-!     q = l + p / s
-!     t = prm(sp, q)
-!     do i = q, l + 1, -1
-!       prm(sp, i) = prm(sp, i - 1)
-!     end do
-!     prm(sp, l) = t
-! end subroutine cswap
-!
-! pure subroutine cpaws(s, l, p, prm)
-!   integer(IK), intent(in)    :: s, l, p
-!   integer(IK), intent(inout) :: prm(state_blocksize, *)
-!   integer(IK)                :: q, i, t
-!     if (p < 0) return
-!     if (p < s) return
-!     ! reverse cyclic swap prm(l:q)
-!     q = l + p / s
-!     t = prm(sp, l)
-!     do i = l + 1, q
-!       prm(sp, i - 1) = prm(sp, i)
-!     end do
-!     prm(sp, q) = t
-! end subroutine cpaws
 !
 end module mod_bb_block
 

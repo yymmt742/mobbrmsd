@@ -13,6 +13,9 @@ module mod_tree
   public :: tree
   public :: tree_memsize
   public :: tree_current_level
+  public :: tree_current_state
+  public :: tree_current_iper
+  public :: tree_current_isym
   public :: tree_root_pointer
   public :: tree_queue_pointer
   public :: tree_current_pointer
@@ -223,6 +226,34 @@ contains
     res = s(sl)
   end function tree_current_level
 !
+!| Returns current level.
+  pure function tree_current_state(s) result(res)
+    integer(IK), intent(in) :: s(*)
+!!  state
+    integer(IK)             :: res
+    res = queue_state(s(sr), s(sl))
+  end function tree_current_state
+!
+!| Returns current permutation.
+  pure function tree_current_iper(q, s) result(res)
+    integer(IK), intent(in) :: q(*)
+!!  queue
+    integer(IK), intent(in) :: s(*)
+!!  state
+    integer(IK)             :: res
+    res = queue_state(s(sr), s(sl)) / q(qs)
+  end function tree_current_iper
+!
+!| Returns current mapping.
+  pure function tree_current_isym(q, s) result(res)
+    integer(IK), intent(in) :: q(*)
+!!  queue
+    integer(IK), intent(in) :: s(*)
+!!  state
+    integer(IK)             :: res
+    res = MODULO(queue_state(s(sr), s(sl)), q(qs))
+  end function tree_current_isym
+!
 !| Returns a pointer to the root node.
   pure function tree_root_pointer(q) result(res)
     integer(IK), intent(in) :: q(*)
@@ -252,17 +283,17 @@ contains
   end function tree_current_pointer
 !
 !| Returns a pointer to the current best node.
-  pure function tree_node_pointer(q, s, iper, imap) result(res)
+  pure function tree_node_pointer(q, s, iper, isym) result(res)
     integer(IK), intent(in) :: q(*)
 !!  queue
     integer(IK), intent(in) :: s(*)
 !!  state
     integer(IK), intent(in) :: iper
 !!  permutation index, must be [0,1,...,q%n/s-1].
-    integer(IK), intent(in) :: imap
+    integer(IK), intent(in) :: isym
 !!  mapping index, must be [0,1,...,s-1].
     integer(IK)             :: res
-    res = queue_node_pointer(q(qr), s(sl), iper * q(qs) + imap)
+    res = queue_node_pointer(q(qr), s(sl), iper * q(qs) + isym)
   end function tree_node_pointer
 !
 !| Returns current sequence.
