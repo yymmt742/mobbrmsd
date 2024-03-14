@@ -100,8 +100,8 @@ contains
     real(RK), intent(inout) :: W(*)
     !! work memory
     integer(IK), parameter  :: gx = 1
-    integer(IK), parameter  :: wx = 1
-    integer(IK)             :: s, m, n, dm, gy, wy
+    integer(IK), parameter  :: wy = 1
+    integer(IK)             :: s, m, n, dm, gy, wx
 !
     s = mol_block_nsym(b)
     m = mol_block_napm(b)
@@ -109,7 +109,7 @@ contains
 !
     dm = mol_block_each_size(b)
     gy = gx + n
-    wy = wx + dm
+    wx = wy + dm
 !
     call eval_g_matrix(dm, q(cb), n, X, Y, C, W(gx), W(gy))
     call eval_c_matrix(b, s, m, n, dm, q(cb), X, Y, C, W(wx), W(wy))
@@ -134,7 +134,6 @@ contains
       do concurrent(i=1:n, j=1:n)
         block
           integer(IK) :: ic
-!         if nx>=ny, C(s,nx,ny). else C(s,ny,nx)
           ic = i + (j - 1) * n
           C(1, ic) = GX(i) + GY(j)
         end block
@@ -146,35 +145,37 @@ contains
     pure subroutine eval_c_matrix(b, s, m, n, dm, cb, X, Y, C, WX, WY)
       integer(IK), intent(in)     :: b(*), s, m, dm, n, cb
       real(RK), intent(in)        :: X(dm, *), Y(dm, *)
-      real(RK), intent(inout)     :: C(cb, n, *)
-      real(RK), intent(inout)     :: WX(dm), WY(dm, n)
-      integer(IK)                 :: i, j
+      real(RK), intent(inout)     :: C(cb, n, *), WX(dm, n), WY(dm)
+      integer(IK)                 :: i
 !
-      call copy(dm * n, Y, 1, WY, 1)
+      call copy(dm * n, X, 1, WX, 1)
 !
-      do j = 1, n
-        call copy(dm, X(1, j), 1, WX, 1)
-        do concurrent(i=1:n)
-          call calc_cov(b, s, m, dm, WX, WY(1, i), C(2, i, j))
-        end do
+      do i = 1, n
+        call copy(dm, Y(1, i), 1, WY, 1)
+        call calc_cov(b, s, m, n, cb, WX, WY, C(1, 1, i))
       end do
 !
     end subroutine eval_c_matrix
 !
-    pure subroutine calc_cov(b, s, m, dm, WX, WY, C)
-      integer(IK), intent(in)     :: b(*), s, m, dm
-      real(RK), intent(in)        :: WX(D, m)
-      real(RK), intent(inout)     :: WY(D, m)
-      real(RK), intent(inout)     :: C(DD, *)
-      integer(IK)                 :: i
+    pure subroutine calc_cov(b, s, m, n, cb, WX, WY, C)
+      integer(IK), intent(in)     :: b(*), s, m, n, cb
+      real(RK), intent(in)        :: WX(D, m, n)
+      real(RK), intent(inout)     :: WY(D, m), C(cb, n)
+      integer(IK)                 :: i, j, ic
 !
-        call gemm('N', 'T', D, D, m, ONE, WY, D, WX, D, ZERO, C(1, 1), D)
+      ic = 2
+      do concurrent(i=1:n)
+        call gemm('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
+      enddo
 !
-        do concurrent(i=2:s)
-          call mol_block_swap(b, i - 1, WY)
-          call gemm('N', 'T', D, D, m, ONE, WY, D, WX, D, ZERO, C(1, i), D)
-          call mol_block_inverse_swap(b, i - 1, WY)
+      do j = 1, s - 1
+        ic = ic + DD
+        call mol_block_swap(b, j, WY)
+        do concurrent(i=1:n)
+          call gemm('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
         end do
+        call mol_block_inverse_swap(b, j, WY)
+      end do
 !
     end subroutine calc_cov
 !

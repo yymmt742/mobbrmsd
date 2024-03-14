@@ -64,11 +64,10 @@ module mod_tree
   integer(IK), parameter :: state_headersize = 1
   integer(IK), parameter :: sl = 1 ! current level.
   integer(IK), parameter :: sr = 2 ! root state.
-  integer(IK), parameter :: sq = 4 ! queue state.
 !
-  integer(IK), parameter :: state_blocksize = 2
+  integer(IK), parameter :: state_blocksize = 1
   integer(IK), parameter :: ss = 1 ! queue state
-  integer(IK), parameter :: sp = 2 ! permutation
+  integer(IK), parameter :: sq = sr + state_blocksize
 !
 ! state parameter.
   integer(IK), parameter :: is_unexplored = -1
@@ -131,22 +130,6 @@ contains
     res = r(qx, l + 1)
   end function queue_memstride
 !
-!| initializer of queue
-  pure subroutine queue_init(n_nodes, memsize, p, q)
-    integer(IK), intent(in) :: n_nodes
-!!  n_nodes :: number of nodes in queue, n_nodes>0.
-    integer(IK), intent(in) :: memsize
-!!  memsize :: memory size of each node.
-    integer(IK), intent(in) :: p
-!!  p :: offset of pointer
-    integer(IK), intent(inout) :: q(*)
-!!  q :: queue array
-!   q(qi) = is_unexplored    ! current state -> unexplored
-    q(qp) = p                ! pointer to work array.
-    q(qn) = MAX(1, n_nodes)  ! max number of nodes in this queue.
-    q(qx) = MAX(1, memsize)  ! memsize of a node.
-  end subroutine queue_init
-!
 !| Constructer of factorial tree.<br>
 !  [s*m, s*(m-1),..., s*2, s]
   pure function tree_new(b, memsize) result(res)
@@ -179,7 +162,7 @@ contains
 !
     do i = 1, res%q(qd) - 1
       j = j - res%q(qs)
-      k = k + queue_memsize(res%q(qr), i)
+      k = k + queue_memsize(res%q(qr), i - 1)
       l = l + queue_blocksize
       call queue_init(j, memsize(b, i), k, res%q(l))
     end do
@@ -187,6 +170,22 @@ contains
     call tree_reset(res%q, res%s)
 !
   end function tree_new
+!
+!| initializer of queue
+  pure subroutine queue_init(n_nodes, memsize, p, q)
+    integer(IK), intent(in) :: n_nodes
+!!  n_nodes :: number of nodes in queue, n_nodes>0.
+    integer(IK), intent(in) :: memsize
+!!  memsize :: memory size of each node.
+    integer(IK), intent(in) :: p
+!!  p :: offset of pointer
+    integer(IK), intent(inout) :: q(*)
+!!  q :: queue array
+!   q(qi) = is_unexplored    ! current state -> unexplored
+    q(qp) = p                ! pointer to work array.
+    q(qn) = MAX(1, n_nodes)  ! max number of nodes in this queue.
+    q(qx) = MAX(1, memsize)  ! memsize of a node.
+  end subroutine queue_init
 !
 !| reset tree
   pure subroutine tree_reset(q, s)
@@ -201,7 +200,6 @@ contains
 !
     do concurrent(i=1:q(qd) - 1)
       s(sq + state_blocksize * (i - 1) + ss - 1) = is_unexplored ! queue state
-      s(sq + state_blocksize * (i - 1) + sp - 1) = i             ! permutation
     end do
 !
   end subroutine tree_reset
@@ -358,7 +356,6 @@ contains
       lv = -RHUGE
     else
       lv = W(tree_current_pointer(q, s))
-      call cpaws(q(qs), s(sl), queue_state(s(sr), s(sl)), s(sq))
     end if
 !
     call set_state(s, is_explored)
@@ -378,40 +375,7 @@ contains
       p = p + b
     end do
 !
-    if (tree_queue_is_explored(q, s)) return
-    call cswap(q(qs), s(sl), queue_state(s(sr), s(sl)), s(sq))
-!
   end subroutine tree_select_top_node
-!
-  pure subroutine cswap(s, l, p, prm)
-    integer(IK), intent(in)    :: s, l, p
-    integer(IK), intent(inout) :: prm(state_blocksize, *)
-    integer(IK)                :: q, i, t
-      if (p < 0) return
-      if (p < s) return
-      ! cyclic swap prm(l:q)
-      q = l + p / s
-      t = prm(sp, q)
-      do i = q, l + 1, -1
-        prm(sp, i) = prm(sp, i - 1)
-      end do
-      prm(sp, l) = t
-  end subroutine cswap
-!
-  pure subroutine cpaws(s, l, p, prm)
-    integer(IK), intent(in)    :: s, l, p
-    integer(IK), intent(inout) :: prm(state_blocksize, *)
-    integer(IK)                :: q, i, t
-      if (p < 0) return
-      if (p < s) return
-      ! reverse cyclic swap prm(l:q)
-      q = l + p / s
-      t = prm(sp, l)
-      do i = l + 1, q
-        prm(sp, i - 1) = prm(sp, i)
-      end do
-      prm(sp, q) = t
-  end subroutine cpaws
 !
 !|  returns number of permutation in q.
   pure function tree_n_perm(q, s) result(res)

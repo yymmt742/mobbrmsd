@@ -29,6 +29,11 @@ module mod_bb_block
 !
   integer(IK), parameter :: header_size = 7
 !
+  integer(IK), parameter :: cx = 1
+  !! pointer to c_matrix array (fixed)
+  integer(IK), parameter :: bq = header_size + 1
+  !! pointer to mol_block interger array (fixed)
+!
   integer(IK), parameter :: cq = 1
   !! pointer to c_matrix interger array
   integer(IK), parameter :: fq = 2
@@ -43,8 +48,6 @@ module mod_bb_block
   !! pointer to c_matrix work memory
   integer(IK), parameter :: fw = 7
   !! pointer to f_matrix work memory
-  integer(IK), parameter :: bq = header_size + 1
-  !! pointer to mol_block interger array
 !
 !| bb_block<br>
 !    Node data [L, G, C, F, W]<br>
@@ -93,9 +96,9 @@ contains
     q(fq) = q(cq) + SIZE(c%q)
     q(tq) = q(fq) + SIZE(f%q)
 !
-    q(cw) = 1 + c_matrix_memsize(c%q)
+    q(cw) = cx + c_matrix_memsize(c%q)
     q(tx) = q(cw)
-    q(fx) = q(cw) + 2 + DD                 ! F as root node
+    q(fx) = q(cw) + 2 + DD ! F as root node
     q(fw) = q(fx) + f_matrix_memsize(f%q)
 !
     allocate (res%q, source=[q, b%q, c%q, f%q, t%q])
@@ -109,7 +112,7 @@ contains
     integer(IK)             :: res, n
 !
     n = mol_block_nmol(b) - p
-    res = 1 + 1 + DD + n * n
+    res = 1 + 1 + DD + n * n  ! [L, G, C(D,D), F(n,n)]
 !
   end function node_memsize
 !
@@ -152,7 +155,7 @@ contains
   end function bb_block_worksize
 !
 !| Setup C matrix and F matrix in root node.
-  pure subroutine bb_block_setup(q, X, Y, s, W)
+  subroutine bb_block_setup(q, X, Y, s, W)
     integer(IK), intent(in)    :: q(*)
     !! integer array
     real(RK), intent(in)       :: X(*)
@@ -164,10 +167,10 @@ contains
     real(RK), intent(inout)    :: W(*)
     !! work integer array
 !
-    call tree_reset(q(q(tx)), s)
-    call c_matrix_eval(q(q(cq)), q(bq), X, Y, W, W(Q(cw)))
-    call f_matrix_eval(q(q(fq)), q(q(cq)), W, W(Q(fx)), W(Q(fw)))
-    call zfill(DD + 2, W(Q(tx)), 1)
+    call tree_reset(q(q(tq)), s)
+    call c_matrix_eval(q(q(cq)), q(bq), X, Y, W(cx), W(q(cw)))
+    call f_matrix_eval(q(q(fq)), q(q(cq)), W(cx), W(q(fx)), W(q(fw)))
+    call zfill(DD + 2, W(q(tx)), 1)
 !
   end subroutine bb_block_setup
 !
@@ -208,16 +211,27 @@ contains
     integer(IK)                :: p, n, np, nn, nb, nw
 !
      np = q(tx) - 1 + tree_current_pointer(q(q(tq)), s)
+print*,'expand'
+print*, q(fx), q(tx)
+print'(*(I3))',s(:5)
+print'(*(I3))',q(q(tq):q(tq)+9)
+print*,'np', np, tree_current_pointer(q(q(tq)), s)
+print'(3f9.3)',X(q(tx):q(tx)+1)
+print'(3f9.3)',X(q(tx)+2:q(tx)+10)
+print'(3f9.3)',X(q(tx)+11:q(tx)+19)
+print'(3f9.3)',X(np+11:np+19)
      call tree_expand(q(q(tq)), s)
 !
      p = tree_current_level(s)
      n = mol_block_nmol(q(bq))
-     nn = Q(tx) - 1 + tree_queue_pointer(q(q(tq)), s)
+     nn = q(tx) - 1 + tree_queue_pointer(q(q(tq)), s)
      nb = node_memsize(Q(bq), p)
      nper = tree_n_perm(q(q(tq)), s)
      nsym = mol_block_nsym(q(bq))
      nw = MAX(Hungarian_worksize(n - p, n - p), sdmin_worksize())
 !
+print*,'nn', nn, tree_queue_pointer(q(q(tq)), s)
+print'(*(I3))',p, n, nn, nb, nper, nsym, nw
      block
        integer(IK) :: prm(n)
        prm = tree_current_permutation(q(q(tq)), s)
@@ -268,20 +282,25 @@ print'(3f9.3)',NN(mmap_C:mmap_C+8, isym, iper)
         NN(mmap_L, 1, iper) = w1(1)
         call estimate_sdmin(NN(mmap_G, 1, iper), NN(mmap_C, 1, iper), w1)
 !
-        do concurrent(isym=2:nsym)
+        do isym=2,nsym
+        !do concurrent(isym=2:nsym)
             call copy(mm, NN(mmap_F, 1, iper), 1, NN(mmap_F, isym, iper), 1)
             call estimate_sdmin(NN(mmap_G, isym, iper), NN(mmap_C, isym, iper), W2(1, isym - 1))
             NN(mmap_L, isym, iper) = W2(1, isym - 1) + NN(mmap_L, 1, iper)
         end do
 !
-        NN(mmap_L, 1, iper) = W1(1) + NN(mmap_L, 1, iper)
+print'(3f9.3)',NP(mmap_F:mmap_F+mp**2-1)
+print*
+print'(2f9.3)',NN(mmap_F:mmap_F+(mp-1)**2-1, 1, iper)
+print*
         print*,NN(mmap_L, :, iper), W1(1)
+        NN(mmap_L, 1, iper) = W1(1) + NN(mmap_L, 1, iper)
 !
     end do
 !
   end subroutine expand
 !
-  pure subroutine expand_terminal(p, n, nb, nw, nsym, cq, b, s, C, NP, NN, W)
+  subroutine expand_terminal(p, n, nb, nw, nsym, cq, b, s, C, NP, NN, W)
     integer(IK), intent(in)     :: p, n, nb, nw, nsym
     integer(IK), intent(in)     :: cq(*), b(*), s
     real(RK), intent(in)        :: C(*)
@@ -293,10 +312,14 @@ print'(3f9.3)',NN(mmap_C:mmap_C+8, isym, iper)
     integer(IK), parameter      :: mmap_C = 3
     integer(IK)                 :: isym
 !
-    do concurrent(isym=1:nsym)
+    do isym=1,nsym
+    !do concurrent(isym=1:nsym)
       call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, isym), 1)
       call c_matrix_add(cq, p, s, isym, C, NN(mmap_G, isym), NN(mmap_C, isym))
+print'(3f9.3)',NN(mmap_C:mmap_C+8, isym)
       call estimate_sdmin(NN(mmap_G, isym), NN(mmap_C, isym), W(1, isym))
+print*,NN(mmap_G, isym), W(1, isym)
+
       NN(mmap_L, isym) = W(1, isym)
     end do
 !
@@ -762,6 +785,36 @@ print'(3f9.3)',NN(mmap_C:mmap_C+8, isym, iper)
 !   end do
 !
 ! end subroutine bb_block_list_setup
+!
+! pure subroutine cswap(s, l, p, prm)
+!   integer(IK), intent(in)    :: s, l, p
+!   integer(IK), intent(inout) :: prm(state_blocksize, *)
+!   integer(IK)                :: q, i, t
+!     if (p < 0) return
+!     if (p < s) return
+!     ! cyclic swap prm(l:q)
+!     q = l + p / s
+!     t = prm(sp, q)
+!     do i = q, l + 1, -1
+!       prm(sp, i) = prm(sp, i - 1)
+!     end do
+!     prm(sp, l) = t
+! end subroutine cswap
+!
+! pure subroutine cpaws(s, l, p, prm)
+!   integer(IK), intent(in)    :: s, l, p
+!   integer(IK), intent(inout) :: prm(state_blocksize, *)
+!   integer(IK)                :: q, i, t
+!     if (p < 0) return
+!     if (p < s) return
+!     ! reverse cyclic swap prm(l:q)
+!     q = l + p / s
+!     t = prm(sp, l)
+!     do i = l + 1, q
+!       prm(sp, i - 1) = prm(sp, i)
+!     end do
+!     prm(sp, q) = t
+! end subroutine cpaws
 !
 end module mod_bb_block
 
