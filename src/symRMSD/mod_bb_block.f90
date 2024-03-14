@@ -27,7 +27,7 @@ module mod_bb_block
   public :: bb_block_queue_is_bottom
   public :: bb_block_current_value
 !
-  integer(IK), parameter :: header_size = 8
+  integer(IK), parameter :: header_size = 7
 !
   integer(IK), parameter :: cq = 1
   !! pointer to c_matrix interger array
@@ -35,17 +35,15 @@ module mod_bb_block
   !! pointer to f_matrix interger array
   integer(IK), parameter :: tq = 3
   !! pointer to tree interger array
-  integer(IK), parameter :: cx = 4
-  !! pointer to c_matrix memory
-  integer(IK), parameter :: fx = 5
+  integer(IK), parameter :: fx = 4
   !! pointer to f_matrix memory
-  integer(IK), parameter :: tx = 6
+  integer(IK), parameter :: tx = 5
   !! pointer to tree memory
-  integer(IK), parameter :: cw = 7
+  integer(IK), parameter :: cw = 6
   !! pointer to c_matrix work memory
-  integer(IK), parameter :: fw = 8
+  integer(IK), parameter :: fw = 7
   !! pointer to f_matrix work memory
-  integer(IK), parameter :: bq = 9
+  integer(IK), parameter :: bq = header_size + 1
   !! pointer to mol_block interger array
 !
 !| bb_block<br>
@@ -95,8 +93,7 @@ contains
     q(fq) = q(cq) + SIZE(c%q)
     q(tq) = q(fq) + SIZE(f%q)
 !
-    q(cx) = 1
-    q(cw) = q(cx) + c_matrix_memsize(c%q)
+    q(cw) = 1 + c_matrix_memsize(c%q)
     q(tx) = q(cw)
     q(fx) = q(cw) + 2 + DD                 ! F as root node
     q(fw) = q(fx) + f_matrix_memsize(f%q)
@@ -168,8 +165,8 @@ contains
     !! work integer array
 !
     call tree_reset(q(q(tx)), s)
-    call c_matrix_eval(q(q(cq)), q(bq), X, Y, W(Q(cx)), W(Q(cw)))
-    call f_matrix_eval(q(q(fq)), q(q(cq)), W(Q(cx)), W(Q(fx)), W(Q(fw)))
+    call c_matrix_eval(q(q(cq)), q(bq), X, Y, W, W(Q(cw)))
+    call f_matrix_eval(q(q(fq)), q(q(cq)), W, W(Q(fx)), W(Q(fw)))
     call zfill(DD + 2, W(Q(tx)), 1)
 !
   end subroutine bb_block_setup
@@ -198,7 +195,7 @@ contains
   end subroutine bb_block_set_root
 !
 !| Expand top node in queue.
-  pure subroutine bb_block_expand(q, s, X, W)
+  subroutine bb_block_expand(q, s, X, W)
     integer(IK), intent(in)    :: q(*)
     !! work integer array
     integer(IK), intent(inout) :: s(*)
@@ -225,15 +222,15 @@ contains
        integer(IK) :: prm(n)
        prm = tree_current_permutation(q(q(tq)), s)
        if (n == p) then
-         call expand_terminal(p, n, nb, nw, nsym, q(q(cq)), q(bq), prm, X(q(cx)), X(np), X(nn), W)
+         call expand_terminal(p, n, nb, nw, nsym, q(q(cq)), q(bq), prm(n), X, X(np), X(nn), W)
        else
-         call expand(p, n, nb, nw, nper, nsym, q(q(cq)), q(bq), prm, X(q(cx)), X(np), X(nn), W(1), W(2))
+         call expand(p, n, nb, nw, nper, nsym, q(q(cq)), q(bq), prm, X, X(np), X(nn), W(1), W(2))
        end if
      end block
 !
   end subroutine bb_block_expand
 !
-  pure subroutine expand(p, n, nb, nw, nper, nsym, cq, b, s, C, NP, NN, W1, W2)
+  subroutine expand(p, n, nb, nw, nper, nsym, cq, b, s, C, NP, NN, W1, W2)
     integer(IK), intent(in)     :: p, n, nb, nw, nper, nsym
     integer(IK), intent(in)     :: cq(*), b(*), s(*)
     real(RK), intent(in)        :: C(*)
@@ -254,9 +251,14 @@ contains
 !
     mmap_F = mmap_C + DD
 !
-    do concurrent(iper=1:nper, isym=1:nsym)
+    do iper=1,nper
+      do isym=1,nsym
+    !do concurrent(iper=1:nper, isym=1:nsym)
       call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, isym, iper), 1)
       call c_matrix_add(cq, p, s(iper + p - 1), isym, C, NN(mmap_G, isym, iper), NN(mmap_C, isym, iper))
+print*, iper, isym, s(iper + p - 1), s(:n)
+print'(3f9.3)',NN(mmap_C:mmap_C+8, isym, iper)
+    end do
     end do
 !
     do iper = 1, nper
@@ -273,6 +275,7 @@ contains
         end do
 !
         NN(mmap_L, 1, iper) = W1(1) + NN(mmap_L, 1, iper)
+        print*,NN(mmap_L, :, iper), W1(1)
 !
     end do
 !
@@ -280,7 +283,7 @@ contains
 !
   pure subroutine expand_terminal(p, n, nb, nw, nsym, cq, b, s, C, NP, NN, W)
     integer(IK), intent(in)     :: p, n, nb, nw, nsym
-    integer(IK), intent(in)     :: cq(*), b(*), s(*)
+    integer(IK), intent(in)     :: cq(*), b(*), s
     real(RK), intent(in)        :: C(*)
     real(RK), intent(in)        :: NP(*)
     real(RK), intent(inout)     :: NN(nb, nsym)
@@ -292,7 +295,7 @@ contains
 !
     do concurrent(isym=1:nsym)
       call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, isym), 1)
-      call c_matrix_add(cq, p, s(n), isym, C, NN(mmap_G, isym), NN(mmap_C, isym))
+      call c_matrix_add(cq, p, s, isym, C, NN(mmap_G, isym), NN(mmap_C, isym))
       call estimate_sdmin(NN(mmap_G, isym), NN(mmap_C, isym), W(1, isym))
       NN(mmap_L, isym) = W(1, isym)
     end do
