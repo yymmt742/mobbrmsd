@@ -40,27 +40,25 @@ contains
     allocate (W(bb_block_memsize(bm%q) + bb_block_worksize(bm%q)))
     w(:) = 99
     call bb_block_setup(bm%q, X, Y, bm%s, w)
-    print'(19f6.2)',W
-    print'(2I4)',bm%s(2:)
     call bb_block_expand(bm%q, bm%s, w, w(iw))
     call bb_block_select_top_node(bm%q, w, 999.0_RK, bm%s)
     print *, bb_block_queue_is_empty(bm%q, bm%s), &
       &      bb_block_queue_is_bottom(bm%q, bm%s), &
-      &      bb_block_current_value(bm%q, bm%s, w)
-    print'(2I4)',bm%s(2:)
+      &      bb_block_current_value(bm%q, bm%s, w), &
+      &      bm%s(2:)
     call bb_block_expand(bm%q, bm%s, w, w(iw))
     call bb_block_select_top_node(bm%q, w, 999.0_RK, bm%s)
     print *, bb_block_queue_is_empty(bm%q, bm%s), &
       &      bb_block_queue_is_bottom(bm%q, bm%s), &
-      &      bb_block_current_value(bm%q, bm%s, w)
-    print'(2I4)',bm%s(2:)
+      &      bb_block_current_value(bm%q, bm%s, w), &
+      &      bm%s(2:)
     call bb_block_expand(bm%q, bm%s, w, w(iw))
     call bb_block_select_top_node(bm%q, w, 999.0_RK, bm%s)
     ub = bb_block_current_value(bm%q, bm%s, w)
     print *, bb_block_queue_is_empty(bm%q, bm%s), &
       &      bb_block_queue_is_bottom(bm%q, bm%s), &
-      &      bb_block_current_value(bm%q, bm%s, w)
-    print'(2I4)',bm%s(2:)
+      &      bb_block_current_value(bm%q, bm%s, w), &
+      &      bm%s(2:)
 !
   end subroutine test0
 !
