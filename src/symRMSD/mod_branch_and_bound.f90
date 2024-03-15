@@ -26,6 +26,8 @@ module mod_branch_and_bound
 !  This is mainly used for passing during initialization.
   type branch_and_bound
     integer(IK), allocatable :: q(:)
+    !! integer array
+    integer(IK), allocatable :: s(:)
     !! work integer array
   contains
     final           :: branch_and_bound_destroy
@@ -72,6 +74,7 @@ contains
     integer(IK)                :: q(header_size)
     integer(IK)                :: p(SIZE(blk))
     integer(IK)                :: r(SIZE(blk))
+    integer(IK)                :: s(SIZE(blk))
     integer(IK)                :: i, j
 !
     q(nq) = SIZE(blk)
@@ -82,6 +85,12 @@ contains
       j = j + SIZE(blk(i)%q)
     end do
 !
+    j = 1
+    do i = 1, SIZE(r)
+      s(i) = j
+      j = j + SIZE(blk(i)%s)
+    end do
+!
     j = bx
     do i = 1, SIZE(r)
       r(i) = j
@@ -89,6 +98,7 @@ contains
     end do
 !
     allocate (res%q, source=[q, p, r, [(blk(i)%q, i=1, SIZE(blk))]])
+    allocate (res%s, source=[[(blk(i)%s, i=1, SIZE(blk))]])
 !
 !   pi = 1
 !   res%ratio = pi; pi = pi + 1

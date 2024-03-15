@@ -359,7 +359,6 @@ contains
       prm(i) = prm(i - 1)
     end do
     prm(p) = t
-!
   end subroutine cswap
 !
   pure subroutine creverse(p, iper, prm)
@@ -376,19 +375,6 @@ contains
     prm(q) = t
 !
   end subroutine creverse
-!
-!| Select_top_node.
-! pure subroutine bb_block_select_top_node(q, X, UB, s)
-!   integer(IK), intent(in)    :: q(*)
-!   !! integer array
-!   real(RK), intent(in)       :: X(*)
-!   !! main memory
-!   real(RK), intent(in)       :: UB
-!   !! upper bound
-!   integer(IK), intent(inout) :: s(*)
-!   !! work integer array
-!   call tree_select_top_node(q(q(tq)), s, UB, X(Q(tx)))
-! end subroutine bb_block_select_top_node
 !
 !| Leave current node.
   pure function bb_block_queue_is_empty(q, s) result(res)
@@ -519,13 +505,13 @@ contains
 !
 !     iw = ic + DD
 !
-!!! update H and C
+! update H and C
 !     w(it) = HP + H
 !     HP = w(it)
 !     call add(DD, CP, C, W(ic))
 !     call DCOPY(DD, W(ic), 1, CP, 1)
 !
-!!! get squared displacement
+! get squared displacement
 !     call estimate_sdmin(w(it), w(ic), W(iw))
 !     LF = LF + w(iw)
 !
@@ -774,18 +760,7 @@ contains
 !   call d_matrix_list_clear(this)
 ! end subroutine d_matrix_list_destroy
 !
-!!! util
-!
-! pure subroutine add(d, A, B, C)
-!   integer(IK), intent(in) :: d
-!   real(RK), intent(in)    :: A(*), B(*)
-!   real(RK), intent(inout) :: C(*)
-!   integer(IK)             :: i
-!   do concurrent(i=1:d)
-!     C(i) = A(i) + B(i)
-!   end do
-! end subroutine add
-!
+! util
   pure subroutine zfill(d, x, ld)
     integer(IK), intent(in) :: d
     real(RK), intent(inout) :: x(*)
@@ -797,37 +772,12 @@ contains
     end do
   end subroutine zfill
 !
+!| destructer
   pure elemental subroutine bb_block_destroy(this)
     type(bb_block), intent(inout) :: this
     if (ALLOCATED(this%q)) deallocate (this%q)
     if (ALLOCATED(this%s)) deallocate (this%s)
   end subroutine bb_block_destroy
-!
-!| Setup.
-! pure subroutine bb_block_list_setup(bb, X, Y, W)
-!   type(bb_block), intent(in) :: bb(:)
-!   !! bb_block
-!   real(RK), intent(in)         :: X(*)
-!   !! reference coordinate
-!   real(RK), intent(in)         :: Y(*)
-!   !! target coordinate
-!   real(RK), intent(inout)      :: W(*)
-!   !! work memory
-!   integer(IK)                  :: k, l
-!
-!   do k = 1, SIZE(bb)
-!     call c_matrix_eval(bb(k)%c, bb(k)%b, bb(k)%ms, X, Y, W, W)
-!     call f_matrix_eval(bb(k)%f, bb(k)%b, W(bb(k)%c%p), W, W)
-!     call Hungarian(bb(k)%b%n1, bb(k)%b%n2, W(bb(k)%f%p), W(bb(k)%t%p))
-!     do concurrent(l=1:k - 1)
-!       W(bb(l)%o) = W(bb(l)%o) + W(bb(k)%t%p)
-!     end do
-!     W(bb(k)%o) = ZERO
-!     call copy(bb(k)%b%n1 * bb(k)%b%n2, W(bb(k)%f%p), 1, W(bb(k)%t%p + mmap_f), 1)
-!     call zfill(DD + 1, W(bb(k)%t%p + mmap_g(bb(k)%b, 0)))
-!   end do
-!
-! end subroutine bb_block_list_setup
 !
 end module mod_bb_block
 
