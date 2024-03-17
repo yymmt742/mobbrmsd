@@ -16,6 +16,7 @@ module mod_bb_block
   implicit none
   private
   public :: bb_block
+  public :: bb_block_molsize
   public :: bb_block_memsize
   public :: bb_block_worksize
   public :: bb_block_setup
@@ -142,26 +143,34 @@ contains
 !
   end function tree_worksize
 !
-!| Inquire worksize of f_matrix.
+!| Returns the memory size array size.
   pure function bb_block_memsize(q) result(res)
     integer(IK), intent(in) :: q(*)
-    !! bb_block.
+    !! bb_block header array.
     integer(IK)             :: res
 !
     res = c_matrix_memsize(q(q(cq))) + tree_memsize(q(q(tq)))
 !
   end function bb_block_memsize
 !
-!| Inquire worksize of bb_block.
+!| Returns the memory size of work array size.
   pure function bb_block_worksize(q) result(res)
     integer(IK), intent(in) :: q(*)
-    !! integer array.
+    !! bb_block header array.
     integer(IK)             :: res
 !
     res = tree_worksize(q(bq))
     res = MAX(res, c_matrix_worksize(q(q(cq))) - tree_memsize(q(q(tq))) - res)
 !
   end function bb_block_worksize
+!
+!| Inquire Returns the memory size of molecular block size.
+  pure function node_molsize(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! bb_block header array.
+    integer(IK)             :: res, n
+    res = mol_block_total_size(q(bq))
+  end function node_molsize
 !
 !| Setup C matrix and F matrix in root node.
   pure subroutine bb_block_setup(q, X, Y, s, W)

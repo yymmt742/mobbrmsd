@@ -4,17 +4,20 @@ module mod_branch_and_bound
   use mod_bb_block
   implicit none
   private
-  public :: branch_and_bound, branch_and_bound_memsize, branch_and_bound_worksize, DEF_maxeval, DEF_cutoff
+  public :: branch_and_bound
+  public :: branch_and_bound_memsize
+  public :: branch_and_bound_worksize
+  public :: branch_and_bound_setup
+  public :: DEF_maxeval
+  public :: DEF_cutoff
 !
   integer(IK), parameter :: DEF_maxeval = -1
   real(RK), parameter    :: DEF_cutoff  = RHUGE
 !
   integer(IK), parameter :: header_size = 1
 !
-  integer(IK), parameter :: nq = 1
-  !! pointer to f_matrix interger array
-  integer(IK), parameter :: qq = 2
-  !! pointer to q1
+  integer(IK), parameter :: nb = 1
+  !! number of block
 !
   integer(IK), parameter :: header_memsize = 1
   integer(IK), parameter :: bx = header_memsize + 1
@@ -37,35 +40,22 @@ module mod_branch_and_bound
     module procedure branch_and_bound_new
   end interface branch_and_bound
 !
-! type branch_and_bound
-!   private
-!   integer(IK)                :: bs, nd
-!   integer(IK), public        :: mn, dmn, memsize, maxeval
-!   integer(IK), public        :: ratio, nsrch, lncmb, xp, yp
-!   integer(IK), public        :: upperbound, lowerbound
-!   real(RK), public           :: cutoff
-!   integer(IK), allocatable   :: p(:), q(:)
-!   type(d_matrix_list)        :: dx
-!   type(tree)                 :: tr
-!   type(breadth_indicator), allocatable :: bi(:)
-!   type(mol_symmetry), allocatable      :: ms(:)
-! contains
-!   procedure :: setup      => branch_and_bound_setup
-!   procedure :: run        => branch_and_bound_run
-!   procedure :: clear      => branch_and_bound_clear
-!   final     :: branch_and_bound_destroy
-! end type branch_and_bound
-!
-! interface branch_and_bound
-!   module procedure branch_and_bound_new
-! end interface branch_and_bound
-!
-! interface
-!   include 'dgemm.h'
-!   include 'dcopy.h'
-! end interface
-!
 contains
+!
+!| generate node instance
+  pure function n_block(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    integer(IK)             :: res
+    res = q(nb)
+  end function n_block
+!
+!| generate node instance
+  pure function block_pointer(q, i) result(res)
+    integer(IK), intent(in) :: q(*)
+    integer(IK), intent(in) :: i
+    integer(IK)             :: res
+    res = q(header_size + i)
+  end function block_pointer
 !
 !| generate node instance
   pure function branch_and_bound_new(blk) result(res)
@@ -77,7 +67,7 @@ contains
     integer(IK)                :: s(SIZE(blk))
     integer(IK)                :: i, j
 !
-    q(nq) = SIZE(blk)
+    q(nb) = SIZE(blk)
 !
     j = SIZE(q) + SIZE(p) + SIZE(r) + 1
     do i = 1, SIZE(p)
@@ -97,78 +87,8 @@ contains
       j = j + bb_block_memsize(blk(i)%q)
     end do
 !
-    allocate (res%q, source=[q, p, r, [(blk(i)%q, i=1, SIZE(blk))]])
+    allocate (res%q, source=[q, p, [([s(i), r(i), blk(i)%q], i=1, SIZE(blk))]])
     allocate (res%s, source=[[(blk(i)%s, i=1, SIZE(blk))]])
-!
-!   pi = 1
-!   res%ratio = pi; pi = pi + 1
-!   res%nsrch = pi; pi = pi + 1
-!   res%lncmb = pi; pi = pi + 1
-!   res%xp = pi;    pi = pi + res%dmn
-!   res%yp = pi;    pi = pi + res%dmn
-!
-!   res%dx = d_matrix_list(blk, pi); pi = pi + res%dx%memsize()
-!
-!   res%nd = res%dx%n_depth()
-!   res%bs = DD + 2
-!
-!   allocate (res%bi(res%nd))
-!
-!   do concurrent(j=1:res%dx%l)
-!     block
-!       integer(IK) :: k
-!       k = SUM(res%dx%m(:j - 1)%g)
-!       do concurrent(i=1:res%dx%m(j)%g)
-!         block
-!           integer(IK) :: ib, nper, nnod
-!           nper = res%dx%m(j)%g - i + 1
-!           nnod = nper * res%dx%m(j)%s
-!           ib = k + i
-!           res%bi(ib) = breadth_indicator(j, i, i, 0, 0, nper, res%dx%m(j)%s, nnod)
-!         end block
-!       end do
-!     end block
-!   end do
-!
-!   res%tr = tree(pi, res%bs, res%nd + 1, [1, res%bi%nnod]); pi = pi + res%tr%memsize
-!
-!   res%upperbound = res%tr%upperbound
-!   res%lowerbound = res%tr%lowerbound
-!
-!   if (PRESENT(maxeval)) then
-!     res%maxeval = maxeval
-!   else
-!     res%maxeval = DEF_maxeval
-!   end if
-!
-!   if (PRESENT(cutoff)) then
-!     res%cutoff = cutoff
-!   else
-!     res%cutoff = DEF_cutoff
-!   end if
-!
-!   allocate (res%p(res%dx%l))
-!   res%p(1) = 1
-!   do i = 2, res%dx%l
-!     res%p(i) = res%p(i - 1) + res%dx%m(i - 1)%g
-!   end do
-!
-!   allocate (res%q(res%dx%l))
-!   res%q(1) = res%yp
-!   do i = 2, res%dx%l
-!     res%q(i) = res%q(i - 1) + D * res%dx%m(i - 1)%m * res%dx%m(i - 1)%n
-!   end do
-!
-!   allocate (res%ms(res%dx%l))
-!   if (PRESENT(ms)) then
-!     do concurrent(i=1:res%dx%l)
-!       res%ms(i) = ms(i)
-!     end do
-!   end if
-!
-!   call res%tr%reset()
-!
-!   res%memsize = pi
 !
   end function branch_and_bound_new
 !
@@ -176,13 +96,13 @@ contains
   pure function branch_and_bound_memsize(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! bb_block.
-    integer(IK)             :: res, i, j
+    integer(IK)             :: res, i, p, n
 !
     res = 0
-    j = header_size
-    do i = 1, q(nq)
-      j = j + 1
-      res = res + bb_block_memsize(q(q(j)))
+    n = n_block(q)
+    do i = 1, n
+      p = block_pointer(q, i)
+      res = res + bb_block_memsize(q(p))
     end do
 !
   end function branch_and_bound_memsize
@@ -191,29 +111,30 @@ contains
   pure function branch_and_bound_worksize(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! integer array.
-    integer(IK)             :: i, j, res, mem
+    integer(IK)             :: i, p, n, res, mem
 !
     res = 0
     mem = 0
-    j = header_size
-    do i = 1, q(nq)
-      j = j + 1
-      mem = mem + bb_block_memsize(q(q(j)))
-      res = MAX(res, mem + bb_block_worksize(q(q(j))))
+!
+    n = n_block(q)
+    do i = 1, n
+      p = block_pointer(q, i)
+      mem = mem + bb_block_memsize(q(p))
+      res = MAX(res, mem + bb_block_worksize(q(p)))
     end do
     res = res - branch_and_bound_memsize(q)
 !
   end function branch_and_bound_worksize
 !
-  pure subroutine branch_and_bound_setup(this, X, Y, W)
-    integer(IK), intent(inout) :: q(*)
+  pure subroutine branch_and_bound_setup(q, s, X, Y, W)
+    integer(IK), intent(in)    :: q(*)
+    integer(IK), intent(inout) :: s(*)
     real(RK), intent(in)       :: X(*)
     real(RK), intent(in)       :: Y(*)
     real(RK), intent(inout)    :: W(*)
-    integer(IK)                :: p
 !
-!   call DCOPY(this%dmn, X, 1, W(this%xp), 1)
-!   call DCOPY(this%dmn, Y, 1, W(this%yp), 1)
+node_molsize
+    call bb_block_setup(q, X, Y, s, W)
 !   call this%dx%eval(this%ms, X, Y, W)
 !
 !   p = this%tr%nodes_pointer()
