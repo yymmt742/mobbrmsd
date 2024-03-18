@@ -42,20 +42,39 @@ module mod_branch_and_bound
 !
 contains
 !
-!| generate node instance
   pure function n_block(q) result(res)
     integer(IK), intent(in) :: q(*)
     integer(IK)             :: res
     res = q(nb)
   end function n_block
 !
-!| generate node instance
-  pure function block_pointer(q, i) result(res)
+  pure function s_pointer(q, i) result(res)
     integer(IK), intent(in) :: q(*)
     integer(IK), intent(in) :: i
     integer(IK)             :: res
-    res = q(header_size + i)
-  end function block_pointer
+    res = q(q(header_size + i))
+  end function s_pointer
+!
+  pure function w_pointer(q, i) result(res)
+    integer(IK), intent(in) :: q(*)
+    integer(IK), intent(in) :: i
+    integer(IK)             :: res
+    res = q(q(header_size + i) + 1)
+  end function w_pointer
+!
+  pure function x_pointer(q, i) result(res)
+    integer(IK), intent(in) :: q(*)
+    integer(IK), intent(in) :: i
+    integer(IK)             :: res
+    res = q(q(header_size + i) + 2)
+  end function x_pointer
+!
+  pure function q_pointer(q, i) result(res)
+    integer(IK), intent(in) :: q(*)
+    integer(IK), intent(in) :: i
+    integer(IK)             :: res
+    res = q(header_size + i) + 3
+  end function q_pointer
 !
 !| generate node instance
   pure function branch_and_bound_new(blk) result(res)
@@ -63,31 +82,36 @@ contains
     type(branch_and_bound)     :: res
     integer(IK)                :: q(header_size)
     integer(IK)                :: p(SIZE(blk))
-    integer(IK)                :: r(SIZE(blk))
-    integer(IK)                :: s(SIZE(blk))
+    integer(IK)                :: r(3, SIZE(blk))
     integer(IK)                :: i, j
 !
     q(nb) = SIZE(blk)
 !
-    j = SIZE(q) + SIZE(p) + SIZE(r) + 1
+    j = header_size + SIZE(p) + 1
     do i = 1, SIZE(p)
       p(i) = j
-      j = j + SIZE(blk(i)%q)
+      j = j + 3 + SIZE(blk(i)%q)
     end do
 !
     j = 1
-    do i = 1, SIZE(r)
-      s(i) = j
+    do i = 1, SIZE(r, 2)
+      r(1, i) = j
       j = j + SIZE(blk(i)%s)
     end do
 !
-    j = bx
-    do i = 1, SIZE(r)
-      r(i) = j
+    j = 1
+    do i = 1, SIZE(r, 2)
+      r(2, i) = j
       j = j + bb_block_memsize(blk(i)%q)
     end do
 !
-    allocate (res%q, source=[q, p, [([s(i), r(i), blk(i)%q], i=1, SIZE(blk))]])
+    j = 1
+    do i = 1, SIZE(r, 2)
+      r(3, i) = j
+      j = j + bb_block_molsize(blk(i)%q)
+    end do
+!
+    allocate (res%q, source=[q, p, [([r(:,i), blk(i)%q], i=1, SIZE(blk))]])
     allocate (res%s, source=[[(blk(i)%s, i=1, SIZE(blk))]])
 !
   end function branch_and_bound_new
@@ -101,7 +125,7 @@ contains
     res = 0
     n = n_block(q)
     do i = 1, n
-      p = block_pointer(q, i)
+      p = q_pointer(q, i)
       res = res + bb_block_memsize(q(p))
     end do
 !
@@ -118,7 +142,7 @@ contains
 !
     n = n_block(q)
     do i = 1, n
-      p = block_pointer(q, i)
+      p = q_pointer(q, i)
       mem = mem + bb_block_memsize(q(p))
       res = MAX(res, mem + bb_block_worksize(q(p)))
     end do
@@ -126,31 +150,34 @@ contains
 !
   end function branch_and_bound_worksize
 !
-  pure subroutine branch_and_bound_setup(q, s, X, Y, W)
+  subroutine branch_and_bound_setup(q, s, X, Y, W)
     integer(IK), intent(in)    :: q(*)
     integer(IK), intent(inout) :: s(*)
     real(RK), intent(in)       :: X(*)
     real(RK), intent(in)       :: Y(*)
     real(RK), intent(inout)    :: W(*)
+    integer(IK)                :: i, b, n
 !
-node_molsize
-    call bb_block_setup(q, X, Y, s, W)
-!   call this%dx%eval(this%ms, X, Y, W)
+    b = 1
 !
-!   p = this%tr%nodes_pointer()
-!   W(p) = W(this%dx%o)
-!   p = p + 1
-!   W(p) = W(this%dx%h)
-!   p = p + 1
-!   call DCOPY(DD, W(this%dx%c), 1, W(p), 1)
-!
-!   W(this%tr%upperbound) = RHUGE
-!   W(this%tr%lowerbound) = W(this%dx%o)
-!   W(this%lncmb) = this%tr%log_ncomb()
+    n = n_block(q)
+    do i = 1, n
+      block
+        integer(IK) :: ps, pq, px, pw
+        ps = s_pointer(q, i)
+        px = x_pointer(q, i)
+        pw = w_pointer(q, i)
+        pq = q_pointer(q, i)
+        call bb_block_setup(q(pq), X(px), Y(px), s(ps), W(pw))
+      end block
+    end do
 !
   end subroutine branch_and_bound_setup
 !
-! pure subroutine branch_and_bound_run(this, W, swap_y)
+  pure subroutine branch_and_bound_run(q, s, W)
+    integer(IK), intent(in)    :: q(*)
+    integer(IK), intent(inout) :: s(*)
+    real(RK), intent(inout)    :: W(*)
 !   class(branch_and_bound), intent(in)  :: this
 !   real(RK), intent(inout)              :: W(*)
 !   logical, intent(in)                  :: swap_y
@@ -322,7 +349,7 @@ node_molsize
 !
 !   end subroutine rotation
 !
-! end subroutine branch_and_bound_run
+  end subroutine branch_and_bound_run
 !
 ! pure elemental subroutine branch_and_bound_clear(this)
 !   class(branch_and_bound), intent(inout) :: this

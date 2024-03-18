@@ -165,12 +165,12 @@ contains
   end function bb_block_worksize
 !
 !| Inquire Returns the memory size of molecular block size.
-  pure function node_molsize(q) result(res)
+  pure function bb_block_molsize(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! bb_block header array.
-    integer(IK)             :: res, n
+    integer(IK)             :: res
     res = mol_block_total_size(q(bq))
-  end function node_molsize
+  end function bb_block_molsize
 !
 !| Setup C matrix and F matrix in root node.
   pure subroutine bb_block_setup(q, X, Y, s, W)
