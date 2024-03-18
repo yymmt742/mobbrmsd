@@ -17,7 +17,7 @@ contains
     type(mol_block)       :: b
     type(tree)            :: t
     real(RK), allocatable :: w(:)
-    integer(IK)           :: i
+    integer(IK)           :: i, l
 !
 !   0    1  o____________________________
 !           |                | | | | | | |
@@ -32,115 +32,114 @@ contains
 !      633
 !
 !   mmap      1         2         3         4         5         6
-!   -1234567890123456789012345678901234567890123456789012345678901
-!   [01-1-1-1-1-1-1-1-2--2--2--2--2--2--3---3---3---3---4----4----]
+!    123456789012345678901234567890123456789012345678901234567890
+!   [1_1_1_1_1_1_1_1_2__2__2__2__2__2__3___3___3___3___4____4____]
 !
     b = mol_block(10, 4, sym=RESHAPE([1, 2, 4, 3], [4, 1]))
     t = tree(b%q, memsize1)
 !
     call u%assert_equal(tree_n_depth(t%q),                 4, 'n_depth    [4,3,2,1]')
-    call u%assert_equal(tree_memsize(t%q),                61, 'memsize    [4,3,2,1]')
-    call u%assert_equal(NINT(EXP(tree_log_ncomb(t%q))),  633, 'log_ncomb  [4,3,2,1]')
-    call u%assert_almost_equal(tree_ncomb_frac(t%q), 6.33_RK, 'ncomb_frac [4,3,2,1]')
+    call u%assert_equal(tree_memsize(t%q),                60, 'memsize    [4,3,2,1]')
+    call u%assert_equal(NINT(EXP(tree_log_ncomb(t%q))),  632, 'log_ncomb  [4,3,2,1]')
+    call u%assert_almost_equal(tree_ncomb_frac(t%q), 6.32_RK, 'ncomb_frac [4,3,2,1]')
     call u%assert_equal(tree_ncomb_exp(t%q),               2, 'ncomb_exp  [4,3,2,1]')
 !
-    call u%assert_equal(tree_current_level(t%s),           0, 'tree_current_level  ')
-    call u%assert_equal(tree_root_pointer(t%q),            1, 'tree_root_pointer   ')
-    call u%assert_equal(tree_queue_pointer(t%q, t%s),      1, 'tree_queue_pointer  ')
-    call u%assert_equal(tree_current_pointer(t%q, t%s),    1, 'tree_current_pointer')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 0, 0), 1, 'tree_node_pointer   ')
+    call u%assert_equal(tree_queue_pointer(t%q, t%s, 1),      1, 'tree_queue_pointer  ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, 1, 0, 0), 1, 'tree_node_pointer   ')
 !
     allocate(W(tree_memsize(t%q)))
     do i = 1, SIZE(w)
       w(i) = -i
     end do
 !
-    call tree_expand(t%q, t%s)
-    call tree_select_top_node(t%q, t%s, 999._RK, w)
+    call tree_reset(t%q, t%s)
 !
-    call u%assert_equal(tree_current_level(t%s),           1, 'tree_current_level  ')
-    call u%assert_equal(tree_queue_pointer(t%q, t%s),      2, 'tree_queue_pointer  ')
-    call u%assert_equal(tree_current_pointer(t%q, t%s),   16, 'tree_current_pointer')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 0, 0), 2, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 0, 1), 4, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 1, 0), 6, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 1, 1), 8, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 2, 0),10, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 2, 1),12, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 3, 0),14, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 3, 1),16, 'tree_node_pointer   ')
+    l = 1
+    call tree_select_top_node(t%q, t%s, l, 999._RK, w)
 !
-    call tree_expand(t%q, t%s)
-    call tree_select_top_node(t%q, t%s, 999._RK, w)
+    call u%assert_equal(l,                                    1, 'tree_current_level  ')
+    call u%assert_equal(tree_queue_pointer(t%q, t%s, l),      1, 'tree_queue_pointer  ')
+    call u%assert_equal(tree_current_pointer(t%q, t%s, l),   15, 'tree_current_pointer')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 0, 0), 1, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 0, 1), 3, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 1, 0), 5, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 1, 1), 7, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 2, 0), 9, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 2, 1),11, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 3, 0),13, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 3, 1),15, 'tree_node_pointer   ')
 !
-    call u%assert_equal(tree_current_level(t%s),           2, 'tree_current_level  ')
-    call u%assert_equal(tree_queue_pointer(t%q, t%s),     18, 'tree_queue_pointer  ')
-    call u%assert_equal(tree_current_pointer(t%q, t%s),   33, 'tree_current_pointer')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 0, 0),18, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 0, 1),21, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 1, 0),24, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 1, 1),27, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 2, 0),30, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 2, 1),33, 'tree_node_pointer   ')
+    call tree_expand(t%q, t%s, l)
+    call tree_select_top_node(t%q, t%s, l, 999._RK, w)
 !
-    call tree_expand(t%q, t%s)
-    call tree_select_top_node(t%q, t%s, 999._RK, w)
+    call u%assert_equal(l,                                    2, 'tree_current_level  ')
+    call u%assert_equal(tree_queue_pointer(t%q, t%s, l),     17, 'tree_queue_pointer  ')
+    call u%assert_equal(tree_current_pointer(t%q, t%s, l),   32, 'tree_current_pointer')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 0, 0),17, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 0, 1),20, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 1, 0),23, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 1, 1),26, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 2, 0),29, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 2, 1),32, 'tree_node_pointer   ')
 !
-    call u%assert_equal(tree_current_level(t%s),           3, 'tree_current_level  ')
-    call u%assert_equal(tree_queue_pointer(t%q, t%s),     36, 'tree_queue_pointer  ')
-    call u%assert_equal(tree_current_pointer(t%q, t%s),   48, 'tree_current_pointer')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 0, 0),36, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 0, 1),40, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 1, 0),44, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 1, 1),48, 'tree_node_pointer   ')
+    call tree_expand(t%q, t%s, l)
+    call tree_select_top_node(t%q, t%s, l, 999._RK, w)
 !
-    call tree_expand(t%q, t%s)
-    call tree_select_top_node(t%q, t%s, 999._RK, w)
+    call u%assert_equal(l,                                    3, 'tree_current_level  ')
+    call u%assert_equal(tree_queue_pointer(t%q, t%s, l),     35, 'tree_queue_pointer  ')
+    call u%assert_equal(tree_current_pointer(t%q, t%s, l),   47, 'tree_current_pointer')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 0, 0),35, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 0, 1),39, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 1, 0),43, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 1, 1),47, 'tree_node_pointer   ')
 !
-    call u%assert_equal(tree_current_level(t%s),           4, 'tree_current_level  ')
-    call u%assert_equal(tree_queue_pointer(t%q, t%s),     52, 'tree_queue_pointer  ')
-    call u%assert_equal(tree_current_pointer(t%q, t%s),   57, 'tree_current_pointer')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 0, 0),52, 'tree_node_pointer   ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 0, 1),57, 'tree_node_pointer   ')
+    call tree_expand(t%q, t%s, l)
+    call tree_select_top_node(t%q, t%s, l, 999._RK, w)
+!
+    call u%assert_equal(l,                                    4, 'tree_current_level  ')
+    call u%assert_equal(tree_queue_pointer(t%q, t%s, l),     51, 'tree_queue_pointer  ')
+    call u%assert_equal(tree_current_pointer(t%q, t%s, l),   56, 'tree_current_pointer')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 0, 0),51, 'tree_node_pointer   ')
+    call u%assert_equal(tree_node_pointer(t%q, t%s, l, 0, 1),56, 'tree_node_pointer   ')
 !
     call u%assert_equal(tree_current_sequence(t%q, t%s),    [8,6,4,2], 'current_sequence    ')
     call u%assert_equal(tree_current_permutation(t%q, t%s), [4,3,2,1], 'current_permutation ')
     call u%assert_equal(tree_current_mapping(t%q, t%s),     [1,1,1,1], 'current_mapping     ')
 !
-    call tree_select_top_node(t%q, t%s, 999._RK, w)
+    call tree_select_top_node(t%q, t%s, l, 999._RK, w)
     call u%assert_equal(tree_current_sequence(t%q, t%s),    [8,6,4,1], 'current_sequence    ')
     call u%assert_equal(tree_current_permutation(t%q, t%s), [4,3,2,1], 'current_permutation ')
     call u%assert_equal(tree_current_mapping(t%q, t%s),     [1,1,1,0], 'current_mapping     ')
 !
-    call tree_leave(t%q, t%s)
-    call tree_select_top_node(t%q, t%s, 999._RK, w)
-    call tree_expand(t%q, t%s)
-    call tree_select_top_node(t%q, t%s, 999._RK, w)
+    call tree_leave(t%q, t%s, l)
+    call tree_select_top_node(t%q, t%s, l, 999._RK, w)
+    call tree_expand(t%q, t%s, l)
+    call tree_select_top_node(t%q, t%s, l, 999._RK, w)
     call u%assert_equal(tree_current_sequence(t%q, t%s),    [8,6,3,2], 'current_sequence    ')
     call u%assert_equal(tree_current_permutation(t%q, t%s), [4,3,2,1], 'current_permutation ')
     call u%assert_equal(tree_current_mapping(t%q, t%s),     [1,1,0,1], 'current_mapping     ')
 !
-    call tree_leave(t%q, t%s)
-    call tree_select_top_node(t%q, t%s, 999._RK, w)
-    call tree_expand(t%q, t%s)
-    call tree_select_top_node(t%q, t%s, 999._RK, w)
+    call tree_leave(t%q, t%s, l)
+    call tree_select_top_node(t%q, t%s, l, 999._RK, w)
+    call tree_expand(t%q, t%s, l)
+    call tree_select_top_node(t%q, t%s, l, 999._RK, w)
     call u%assert_equal(tree_current_sequence(t%q, t%s),    [8,6,2,2], 'current_sequence    ')
     call u%assert_equal(tree_current_permutation(t%q, t%s), [4,3,1,2], 'current_permutation ')
     call u%assert_equal(tree_current_mapping(t%q, t%s),     [1,1,1,1], 'current_mapping     ')
 !
-    call tree_leave(t%q, t%s)
-    call tree_select_top_node(t%q, t%s, 999._RK, w)
-    call tree_expand(t%q, t%s)
-    call tree_select_top_node(t%q, t%s, 999._RK, w)
+    call tree_leave(t%q, t%s, l)
+    call tree_select_top_node(t%q, t%s, l, 999._RK, w)
+    call tree_expand(t%q, t%s, l)
+    call tree_select_top_node(t%q, t%s, l, 999._RK, w)
     call u%assert_equal(tree_current_sequence(t%q, t%s),    [8,6,1,2], 'current_sequence    ')
     call u%assert_equal(tree_current_permutation(t%q, t%s), [4,3,1,2], 'current_permutation ')
     call u%assert_equal(tree_current_mapping(t%q, t%s),     [1,1,0,1], 'current_mapping     ')
 !
-    call tree_leave(t%q, t%s)
-    call tree_leave(t%q, t%s)
-    call tree_select_top_node(t%q, t%s, 999._RK, w)
-    call tree_expand(t%q, t%s)
-    call tree_select_top_node(t%q, t%s, 999._RK, w)
+    call tree_leave(t%q, t%s, l)
+    call tree_leave(t%q, t%s, l)
+    call tree_select_top_node(t%q, t%s, l, 999._RK, w)
+    call tree_expand(t%q, t%s, l)
+    call tree_select_top_node(t%q, t%s, l, 999._RK, w)
     call u%assert_equal(tree_current_sequence(t%q, t%s),    [8,5,4,2], 'current_sequence    ')
     call u%assert_equal(tree_current_permutation(t%q, t%s), [4,3,2,1], 'current_permutation ')
     call u%assert_equal(tree_current_mapping(t%q, t%s),     [1,0,1,1], 'current_mapping     ')

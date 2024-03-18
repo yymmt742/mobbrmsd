@@ -5,7 +5,7 @@
 !    |-----------|--C3--|-W3-|<br>
 !    Therefore, the maximum memory allocation size is MAX( SUM_i^I |Ci| + |W_I| ).
 module mod_bb_block
-  use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use mod_params, only: DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_params, only: gemm, dot, copy
   use mod_mol_block
   use mod_c_matrix
@@ -236,11 +236,17 @@ contains
   end subroutine bb_block_set_root
 !
 !| Expand top node in queue.
-  pure subroutine bb_block_expand(q, UB, s, X, W)
-    integer(IK), intent(in)    :: q(*)
-    !! work integer array
+  pure subroutine bb_block_expand(UB, p, r, Z, q, s, X, W)
     real(RK), intent(in)       :: UB
     !! upper bound
+    integer(IK), intent(in)    :: p(*)
+    !! parent integer array
+    integer(ik), intent(in)    :: r(*)
+    !! parent integer work array
+    real(RK), intent(in)       :: Z(*)
+    !! parent work array
+    integer(IK), intent(in)    :: q(*)
+    !! work integer array
     integer(IK), intent(inout) :: s(*)
     !! work integer array
     real(RK), intent(inout)    :: X(*)
@@ -248,21 +254,22 @@ contains
     real(RK), intent(inout)    :: W(*)
     !! work real array
     integer(IK)                :: nper, nsym
-    integer(IK)                :: p, n, np, nn, nb, nw
+    integer(IK)                :: l, n, np, nn, nb, nw
 !
-     np = q(tx) - 1 + tree_current_pointer(q(q(tq)), s(ts))
+     np = p(tx) - 1 + tree_current_pointer(p(p(tq)), r(ts))
+!
      call tree_expand(q(q(tq)), s(ts))
 !
-     p = tree_current_level(s)
+     l = tree_current_level(s)
      n = mol_block_nmol(q(bq))
      nn = q(tx) - 1 + tree_queue_pointer(q(q(tq)), s(ts))
-     nb = node_memsize(Q(bq), p)
+     nb = node_memsize(Q(bq), l)
      nper = tree_n_perm(q(q(tq)), s(ts))
      nsym = mol_block_nsym(q(bq))
-     nw = MAX(Hungarian_worksize(n - p, n - p), sdmin_worksize())
+     nw = MAX(Hungarian_worksize(n - l, n - l), sdmin_worksize())
 !
-     if (n == p) then
-       call expand_terminal(p, n, nb, nw, nsym, q(q(cq)), q(bq), s(q(ps)), X, X(np), X(nn), W)
+     if (n == l) then
+       call expand_terminal(l, n, nb, nw, nsym, q(q(cq)), q(bq), s(q(ps)), X, X(np), X(nn), W)
      else
        call expand(p, n, nb, nw, nper, nsym, q(q(cq)), q(bq), s(q(ps)), X, X(np), X(nn), W(1), W(2))
      end if
@@ -275,20 +282,36 @@ contains
 !
   end subroutine bb_block_expand
 !
+  pure subroutine copy_matrix(p, n, nb, nw, nper, nsym, cq, b, prm, C, NP, NN, W1, W2)
+    integer(IK), intent(in) :: p, n, nb, nw, nper, nsym
+    integer(IK), intent(in) :: cq(*), b(*), prm(*)
+    real(RK), intent(in)    :: C(*)
+    real(RK), intent(in)    :: NP(*)
+    real(RK), intent(inout) :: NN(nb, nsym, nper)
+    real(RK), intent(out)   :: W1(*)
+    real(RK), intent(out)   :: W2(nw, *)
+    integer(IK), parameter  :: mmap_L = 1
+    integer(IK), parameter  :: mmap_G = 2
+    integer(IK), parameter  :: mmap_C = 3
+    integer(IK)             :: mmap_F
+    integer(IK)             :: mp, mn, mm
+    integer(IK)             :: iper, isym
+  end subroutine copy_matrix
+!
   pure subroutine expand(p, n, nb, nw, nper, nsym, cq, b, prm, C, NP, NN, W1, W2)
-    integer(IK), intent(in)     :: p, n, nb, nw, nper, nsym
-    integer(IK), intent(in)     :: cq(*), b(*), prm(*)
-    real(RK), intent(in)        :: C(*)
-    real(RK), intent(in)        :: NP(*)
-    real(RK), intent(inout)     :: NN(nb, nsym, nper)
-    real(RK), intent(out)       :: W1(*)
-    real(RK), intent(out)       :: W2(nw, *)
-    integer(IK), parameter      :: mmap_L = 1
-    integer(IK), parameter      :: mmap_G = 2
-    integer(IK), parameter      :: mmap_C = 3
-    integer(IK)                 :: mmap_F
-    integer(IK)                 :: mp, mn, mm
-    integer(IK)                 :: iper, isym
+    integer(IK), intent(in) :: p, n, nb, nw, nper, nsym
+    integer(IK), intent(in) :: cq(*), b(*), prm(*)
+    real(RK), intent(in)    :: C(*)
+    real(RK), intent(in)    :: NP(*)
+    real(RK), intent(inout) :: NN(nb, nsym, nper)
+    real(RK), intent(out)   :: W1(*)
+    real(RK), intent(out)   :: W2(nw, *)
+    integer(IK), parameter  :: mmap_L = 1
+    integer(IK), parameter  :: mmap_G = 2
+    integer(IK), parameter  :: mmap_C = 3
+    integer(IK)             :: mmap_F
+    integer(IK)             :: mp, mn, mm
+    integer(IK)             :: iper, isym
 !
     mn = n - p
     mm = mn**2
@@ -546,7 +569,7 @@ contains
 !
 ! end subroutine d_matrix_partial_eval
 !
-!!! d_matrix_list
+! d_matrix_list
 !
 !| Constructor of d_matrix_list
 ! pure function d_matrix_list_new(b, p) result(res)
