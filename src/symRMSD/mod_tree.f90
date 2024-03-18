@@ -62,8 +62,9 @@ module mod_tree
   integer(IK), parameter :: qn = 2
   integer(IK), parameter :: qx = 3
 !
-  integer(IK), parameter :: state_headersize = 0
-  integer(IK), parameter :: sr = 1 ! top node state.
+  integer(IK), parameter :: state_headersize = 1
+  integer(IK), parameter :: sl = 1 ! current level
+  integer(IK), parameter :: sr = 2 ! top node state.
 !
   integer(IK), parameter :: state_blocksize = 1
   integer(IK), parameter :: ss = 1 ! queue state
@@ -137,95 +138,84 @@ contains
 !!  state
     integer(IK)                :: i
 !
+    s(sl) = 1 ! current state
     do concurrent(i=1:q(qd))
       s(sr + state_blocksize * (i - 1) + ss - 1) = is_unexplored ! queue state
     end do
 !
   end subroutine tree_reset
 !
-!| Inquire total memsize of tree.
+!| Inquire total memsize of tree
   pure function tree_memsize(q) result(res)
     integer(IK), intent(in) :: q(*)
 !!  queue
-    integer(IK)             :: res, l
+    integer(IK)             :: res, i
     res = 0
-    do l = 1, q(qd)
-      res = res + queue_memsize(q(qr), l)
+    do i = 1, q(qd)
+      res = res + queue_memsize(q(qr), i)
     end do
   end function tree_memsize
 !
-!| Returns current level.
-  pure function tree_current_state(s, l) result(res)
+!| Returns current level
+  pure function tree_current_state(s) result(res)
     integer(IK), intent(in) :: s(*)
 !!  state
-    integer(IK), intent(in) :: l
-!!  current level
     integer(IK)             :: res
-    res = queue_state(s(sr), l)
+    res = queue_state(s(sr), s(sl))
   end function tree_current_state
 !
-!| Returns current permutation.
-  pure function tree_current_iper(q, s, l) result(res)
+!| Returns current permutation
+  pure function tree_current_iper(q, s) result(res)
     integer(IK), intent(in) :: q(*)
 !!  queue
     integer(IK), intent(in) :: s(*)
 !!  state
-    integer(IK), intent(in) :: l
-!!  current level
     integer(IK)             :: res
-    res = queue_state(s(sr), l) / q(qs)
+    res = queue_state(s(sr), s(sl)) / q(qs)
   end function tree_current_iper
 !
-!| Returns current mapping.
-  pure function tree_current_isym(q, s, l) result(res)
+!| Returns current mapping
+  pure function tree_current_isym(q, s) result(res)
     integer(IK), intent(in) :: q(*)
 !!  queue
     integer(IK), intent(in) :: s(*)
 !!  state
-    integer(IK), intent(in) :: l
-!!  current level
     integer(IK)             :: res
-    res = MODULO(queue_state(s(sr), l), q(qs))
+    res = MODULO(queue_state(s(sr), s(sl)), q(qs))
   end function tree_current_isym
 !
 !| Returns a pointer to the current queue.
-  pure function tree_queue_pointer(q, s, l) result(res)
+  pure function tree_queue_pointer(q, s) result(res)
     integer(IK), intent(in) :: q(*)
 !!  queue
     integer(IK), intent(in) :: s(*)
 !!  state
-    integer(IK), intent(in) :: l
-!!  current level
     integer(IK)             :: res
-    res = queue_pointer(q(qr), l)
+    res = queue_pointer(q(qr), s(sl))
   end function tree_queue_pointer
 !
 !| Returns a pointer to the current queue.
-  pure function tree_current_pointer(q, s, l) result(res)
+  pure function tree_current_pointer(q, s) result(res)
     integer(IK), intent(in) :: q(*)
 !!  queue
     integer(IK), intent(in) :: s(*)
 !!  state
-    integer(IK), intent(in) :: l
-!!  current level
     integer(IK)             :: res
-    res = queue_node_pointer(q(qr), l, queue_state(s(sr), l))
+    res = queue_node_pointer(q(qr), s(sl), queue_state(s(sr), s(sl)))
   end function tree_current_pointer
 !
 !| Returns a pointer to the current best node.
-  pure function tree_node_pointer(q, s, l, iper, isym) result(res)
+  pure function tree_node_pointer(q, s, iper, isym) result(res)
     integer(IK), intent(in) :: q(*)
 !!  queue
     integer(IK), intent(in) :: s(*)
 !!  state
-    integer(IK), intent(in) :: l
-!!  current level
     integer(IK), intent(in) :: iper
 !!  permutation index, must be [0,1,...,q%n/s-1].
     integer(IK), intent(in) :: isym
 !!  mapping index, must be [0,1,...,s-1].
     integer(IK)             :: res
-    res = queue_node_pointer(q(qr), l, iper * q(qs) + isym)
+    res = queue_node_pointer(q(qr), s(sl), iper * q(qs) + isym)
   end function tree_node_pointer
 !
 !| Returns current sequence.
@@ -278,38 +268,32 @@ contains
   end function tree_current_mapping
 !
 !| Expand current node
-  pure subroutine tree_expand(q, s, l)
+  pure subroutine tree_expand(q, s)
     integer(IK), intent(in)    :: q(*)
 !!  queue
     integer(IK), intent(inout) :: s(*)
 !!  state
-    integer(IK), intent(inout) :: l
-!!  current level
-     if(tree_queue_is_empty(q, s, l).or.tree_queue_is_bottom(q, l)) return
-     l = l + 1
-    call set_state(s, l, is_unexplored)
+     if(tree_queue_is_empty(q, s).or.tree_queue_is_bottom(q, s)) return
+     s(sl) = s(sl) + 1
+    call set_state(s, is_unexplored)
   end subroutine tree_expand
 !
 !| Leave current node
-  pure subroutine tree_leave(q, s, l)
+  pure subroutine tree_leave(q, s)
     integer(IK), intent(in)    :: q(*)
 !!  queue
     integer(IK), intent(inout) :: s(*)
 !!  state
-    integer(IK), intent(inout) :: l
-!!  current level
-    if (l < 1) return
-    l = l - 1 ! l = l + 1
+    if (s(sl) < 1) return
+    s(sl) = s(sl) - 1 ! l = l + 1
   end subroutine tree_leave
 !
 !| Select top node
-  pure subroutine tree_select_top_node(q, s, l, UB, W)
+  pure subroutine tree_select_top_node(q, s, UB, W)
     integer(IK), intent(in)    :: q(*)
 !!  queue
     integer(IK), intent(inout) :: s(*)
 !!  state
-    integer(IK), intent(in)    :: l
-!!  current level
     real(RK), intent(in)       :: UB
 !!  upperbound
     real(RK), intent(in)       :: W(*)
@@ -319,25 +303,25 @@ contains
 !
     uv = UB
 !
-    if (tree_queue_is_explored(q, s, l)) then
+    if (tree_queue_is_explored(q, s)) then
       return
-    elseif (tree_queue_is_unexplored(q, s, l)) then
+    elseif (tree_queue_is_unexplored(q, s)) then
       lv = -RHUGE
     else
-      lv = W(tree_current_pointer(q, s, l))
+      lv = W(tree_current_pointer(q, s))
     end if
 !
-    call set_state(s, l, is_explored)
+    call set_state(s, is_explored)
 !
     if (uv < lv) return
 !
-    p = tree_queue_pointer(q, s, l)
-    n = queue_nnodes(q(qr), l) - 1
-    b = queue_memstride(q(qr), l)
+    p = tree_queue_pointer(q, s)
+    n = queue_nnodes(q(qr), s) - 1
+    b = queue_memstride(q(qr), s)
 !
     do i = 0, n
       if (lv < W(p) .and. W(p) < uv) then
-        call set_state(s, l, i)
+        call set_state(s, i)
         uv = W(p)
       end if
       p = p + b
@@ -346,15 +330,13 @@ contains
   end subroutine tree_select_top_node
 !
 !|  returns number of permutation in q.
-  pure function tree_n_perm(q, s, l) result(res)
+  pure function tree_n_perm(q, s) result(res)
     integer(IK), intent(in) :: q(*)
 !!  queue
     integer(IK), intent(in) :: s(*)
 !!  state
-    integer(IK), intent(in) :: l
-!!  current level
     integer(IK)             :: res
-    res = queue_nnodes(q(qr), l) / q(qs)
+    res = queue_nnodes(q(qr), s(sl)) / q(qs)
   end function tree_n_perm
 !
 !|  returns number tree depth (without root node).
@@ -407,46 +389,40 @@ contains
 !
   end function tree_ncomb_exp
 !
-  pure function tree_queue_is_unexplored(q, s, l) result(res)
+  pure function tree_queue_is_unexplored(q, s) result(res)
     integer(IK), intent(in) :: q(*)
 !!  queue
     integer(IK), intent(in) :: s(*)
 !!  state
-    integer(IK), intent(in) :: l
-!!  current level
     logical                 :: res
-    res = queue_state(s(sr), l) == -1
+    res = queue_state(s(sr), s(sl)) == -1
   end function tree_queue_is_unexplored
 !
-  pure function tree_queue_is_explored(q, s, l) result(res)
+  pure function tree_queue_is_explored(q, s) result(res)
     integer(IK), intent(in) :: q(*)
 !!  queue
     integer(IK), intent(in) :: s(*)
 !!  state
-    integer(IK), intent(in) :: l
-!!  current level
     logical                 :: res
-    res = queue_state(s(sr), l) < -1
+    res = queue_state(s(sr), s(sl)) < -1
   end function tree_queue_is_explored
 !
-  pure function tree_queue_is_empty(q, s, l) result(res)
+  pure function tree_queue_is_empty(q, s) result(res)
     integer(IK), intent(in) :: q(*)
 !!  queue
     integer(IK), intent(in) :: s(*)
 !!  state
-    integer(IK), intent(in) :: l
-!!  current level
     logical                 :: res
-    res = queue_state(s(sr), l) < 0
+    res = queue_state(s(sr), s(sl)) < 0
   end function tree_queue_is_empty
 !
-  pure function tree_queue_is_bottom(q, l) result(res)
+  pure function tree_queue_is_bottom(q, s) result(res)
     integer(IK), intent(in) :: q(*)
 !!  queue
-    integer(IK), intent(in) :: l
+    integer(IK), intent(in) :: s(*)
 !!  current level
     logical                 :: res
-    res = l == q(qd)
+    res = s(sl) == q(qd)
   end function tree_queue_is_bottom
 !
   pure elemental subroutine tree_destroy(this)
@@ -464,35 +440,34 @@ contains
     res = r(ss, l)
   end function queue_state
 !
-  pure subroutine set_state(s, l, t)
+  pure subroutine set_state(s, t)
     integer(IK), intent(inout) :: s(*)! state vector
-    integer(IK), intent(in)    :: l   ! current level
     integer(IK), intent(in)    :: t   ! state
     integer(IK)                :: i
-    i = state_blocksize * (l - 1) + sr + ss - 1
+    i = state_blocksize * (s(sl) - 1) + sr + ss - 1
     s(i) = t
   end subroutine set_state
 !
-  pure function queue_pointer(r, l) result(res)
+  pure function queue_pointer(r, s) result(res)
     integer(IK), intent(in) :: r(queue_blocksize, *)
-    integer(IK), intent(in) :: l
+    integer(IK), intent(in) :: s(*)
     integer(IK)             :: res
-    res = r(qp, l)
+    res = r(qp, s(sl))
   end function queue_pointer
 !
-  pure function queue_node_pointer(r, l, n) result(res)
+  pure function queue_node_pointer(r, s, n) result(res)
     integer(IK), intent(in) :: r(queue_blocksize, *)
-    integer(IK), intent(in) :: l
+    integer(IK), intent(in) :: s(*)
     integer(IK), intent(in) :: n
     integer(IK)             :: res
-    res = r(qp, l) + r(qx, l) * n
+    res = r(qp, s(sl)) + r(qx, s(sl)) * n
   end function queue_node_pointer
 !
-  pure function queue_nnodes(r, l) result(res)
+  pure function queue_nnodes(r, s) result(res)
     integer(IK), intent(in) :: r(queue_blocksize, *)
-    integer(IK), intent(in) :: l
+    integer(IK), intent(in) :: s(*)
     integer(IK)             :: res
-    res = r(qn, l)
+    res = r(qn, s(sl))
   end function queue_nnodes
 !
   pure function queue_memsize(r, l) result(res)
@@ -502,11 +477,11 @@ contains
     res = r(qn, l) * r(qx, l)
   end function queue_memsize
 !
-  pure function queue_memstride(r, l) result(res)
+  pure function queue_memstride(r, s) result(res)
     integer(IK), intent(in) :: r(queue_blocksize, *)
-    integer(IK), intent(in) :: l
+    integer(IK), intent(in) :: s(*)
     integer(IK)             :: res
-    res = r(qx, l)
+    res = r(qx, s(sl))
   end function queue_memstride
 !
 end module mod_tree
