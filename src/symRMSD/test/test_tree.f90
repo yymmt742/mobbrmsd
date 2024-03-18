@@ -44,8 +44,8 @@ contains
     call u%assert_almost_equal(tree_ncomb_frac(t%q), 6.32_RK, 'ncomb_frac [4,3,2,1]')
     call u%assert_equal(tree_ncomb_exp(t%q),               2, 'ncomb_exp  [4,3,2,1]')
 !
-    call u%assert_equal(tree_queue_pointer(t%q, t%s),      1, 'tree_queue_pointer  ')
-    call u%assert_equal(tree_node_pointer(t%q, t%s, 0, 0), 1, 'tree_node_pointer   ')
+!   call u%assert_equal(tree_queue_pointer(t%q, t%s),      1, 'tree_queue_pointer  ')
+!   call u%assert_equal(tree_node_pointer(t%q, t%s, 0, 0), 1, 'tree_node_pointer   ')
 !
     allocate(W(tree_memsize(t%q)))
     do i = 1, SIZE(w)

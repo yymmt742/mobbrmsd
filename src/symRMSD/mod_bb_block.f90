@@ -29,6 +29,10 @@ module mod_bb_block
 !
   integer(IK), parameter :: header_size = 8
 !
+  integer(IK), parameter :: mmap_L = 1
+  integer(IK), parameter :: mmap_G = 2
+  integer(IK), parameter :: mmap_C = 3
+!
   integer(IK), parameter :: cx = 1
   !! pointer to c_matrix array (fixed)
   integer(IK), parameter :: ts = 1
@@ -43,7 +47,7 @@ module mod_bb_block
   integer(IK), parameter :: tq = 3
   !! pointer to tree interger array
   integer(IK), parameter :: ps = 4
-  !! pointer to tree interger array
+  !! pointer to perm interger array
   integer(IK), parameter :: fx = 5
   !! pointer to f_matrix memory
   integer(IK), parameter :: tx = 6
@@ -103,9 +107,9 @@ contains
     q(ps) = ts + SIZE(t%s)
 !
     q(cw) = cx + c_matrix_memsize(c%q)
-    q(tx) = q(cw)
-    q(fx) = q(cw) + 2 + DD ! F as root node
+    q(fx) = q(cw)
     q(fw) = q(fx) + f_matrix_memsize(f%q)
+    q(tx) = q(fw)
 !
     allocate (res%q, source=[q, b%q, c%q, f%q, t%q])
     block
@@ -119,10 +123,9 @@ contains
   pure function node_memsize(b, p) result(res)
     integer(IK), intent(in) :: b(*)
     integer(IK), intent(in) :: p
-    integer(IK)             :: res, n
+    integer(IK)             :: res
 !
-    n = mol_block_nmol(b) - p
-    res = 1 + 1 + DD + n * n  ! [L, G, C(D,D), F(n,n)]
+    res = 1 + 1 + DD  ! [L, G, C(D,D)]
 !
   end function node_memsize
 !
@@ -149,7 +152,9 @@ contains
     !! bb_block header array.
     integer(IK)             :: res
 !
-    res = c_matrix_memsize(q(q(cq))) + tree_memsize(q(q(tq)))
+    res = c_matrix_memsize(q(q(cq))) &
+   &    + f_matrix_memsize(q(q(fq))) &
+   &    + tree_memsize(q(q(tq)))
 !
   end function bb_block_memsize
 !
@@ -165,12 +170,12 @@ contains
   end function bb_block_worksize
 !
 !| Inquire Returns the memory size of molecular block size.
-  pure function node_molsize(q) result(res)
+  pure function bb_block_molsize(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! bb_block header array.
-    integer(IK)             :: res, n
+    integer(IK)             :: res
     res = mol_block_total_size(q(bq))
-  end function node_molsize
+  end function bb_block_molsize
 !
 !| Setup C matrix and F matrix in root node.
   pure subroutine bb_block_setup(q, X, Y, s, W)
@@ -189,7 +194,6 @@ contains
     call perm_reset(q(bq), s(q(ps)))
     call c_matrix_eval(q(q(cq)), q(bq), X, Y, W(cx), W(q(cw)))
     call f_matrix_eval(q(q(fq)), q(q(cq)), W(cx), W(q(fx)), W(q(fw)))
-    call zfill(DD + 2, W(q(tx)), 1)
 !
   end subroutine bb_block_setup
 !
@@ -256,124 +260,158 @@ contains
     integer(IK)                :: nper, nsym
     integer(IK)                :: l, n, np, nn, nb, nw
 !
+     n = mol_block_nmol(q(bq))
+     l = tree_current_level(s(ts))
+!
+     if (p(1) < 0) then
+!      call assign_c_matrix(l, n, nb, nper, nsym, cq, prm, X(cx), X(nn))
+     else
+!
+       call tree_expand(q(q(tq)), s(ts))
+       l = l + 1
+     end if
+!
+     nn = q(tx) - 1 + tree_queue_pointer(q(q(tq)), s(ts))
      np = p(tx) - 1 + tree_current_pointer(p(p(tq)), r(ts))
 !
-     call tree_expand(q(q(tq)), s(ts))
-!
-     l = tree_current_level(s)
-     n = mol_block_nmol(q(bq))
-     nn = q(tx) - 1 + tree_queue_pointer(q(q(tq)), s(ts))
      nb = node_memsize(Q(bq), l)
      nper = tree_n_perm(q(q(tq)), s(ts))
      nsym = mol_block_nsym(q(bq))
+     call copy_c_matrix(l, n, nb, nper, nsym, q(q(cq)), s(q(ps)), X(cx), X(np), X(nn))
+!
      nw = MAX(Hungarian_worksize(n - l, n - l), sdmin_worksize())
 !
-     if (n == l) then
-       call expand_terminal(l, n, nb, nw, nsym, q(q(cq)), q(bq), s(q(ps)), X, X(np), X(nn), W)
-     else
-       call expand(p, n, nb, nw, nper, nsym, q(q(cq)), q(bq), s(q(ps)), X, X(np), X(nn), W(1), W(2))
-     end if
+!    if (n == l) then
+!      call expand_terminal(l, n, nb, nw, nsym, q(q(cq)), q(bq), s(q(ps)), X, X(np), X(nn), W)
+!    else
+!      call expand(p, n, nb, nw, nper, nsym, q(q(cq)), q(bq), s(q(ps)), X, X(np), X(nn), W(1), W(2))
+!    end if
 !
      call tree_select_top_node(q(q(tq)), s(ts), UB, X(q(tx)))
 !
      if(bb_block_queue_is_empty(q(q(tq)), s(ts))) return
 !
-     call cswap(p, tree_current_iper(q(q(tq)), s(ts)), s(q(ps)))
+     call cswap(l, tree_current_iper(q(q(tq)), s(ts)), s(q(ps)))
 !
   end subroutine bb_block_expand
 !
-  pure subroutine copy_matrix(p, n, nb, nw, nper, nsym, cq, b, prm, C, NP, NN, W1, W2)
-    integer(IK), intent(in) :: p, n, nb, nw, nper, nsym
-    integer(IK), intent(in) :: cq(*), b(*), prm(*)
+  pure subroutine copy_c_matrix(l, n, nb, nper, nsym, cq, prm, C, NP, NN)
+    integer(IK), intent(in) :: l, n, nb, nper, nsym
+    integer(IK), intent(in) :: cq(*), prm(*)
     real(RK), intent(in)    :: C(*)
     real(RK), intent(in)    :: NP(*)
     real(RK), intent(inout) :: NN(nb, nsym, nper)
-    real(RK), intent(out)   :: W1(*)
-    real(RK), intent(out)   :: W2(nw, *)
-    integer(IK), parameter  :: mmap_L = 1
-    integer(IK), parameter  :: mmap_G = 2
-    integer(IK), parameter  :: mmap_C = 3
-    integer(IK)             :: mmap_F
-    integer(IK)             :: mp, mn, mm
     integer(IK)             :: iper, isym
-  end subroutine copy_matrix
-!
-  pure subroutine expand(p, n, nb, nw, nper, nsym, cq, b, prm, C, NP, NN, W1, W2)
-    integer(IK), intent(in) :: p, n, nb, nw, nper, nsym
-    integer(IK), intent(in) :: cq(*), b(*), prm(*)
-    real(RK), intent(in)    :: C(*)
-    real(RK), intent(in)    :: NP(*)
-    real(RK), intent(inout) :: NN(nb, nsym, nper)
-    real(RK), intent(out)   :: W1(*)
-    real(RK), intent(out)   :: W2(nw, *)
-    integer(IK), parameter  :: mmap_L = 1
-    integer(IK), parameter  :: mmap_G = 2
-    integer(IK), parameter  :: mmap_C = 3
-    integer(IK)             :: mmap_F
-    integer(IK)             :: mp, mn, mm
-    integer(IK)             :: iper, isym
-!
-    mn = n - p
-    mm = mn**2
-    mp = mn + 1
-!
-    mmap_F = mmap_C + DD
 !
     do concurrent(iper=1:nper, isym=1:nsym)
       call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, isym, iper), 1)
-      call c_matrix_add(cq, p, prm(iper + p - 1), isym, C, NN(mmap_G, isym, iper), NN(mmap_C, isym, iper))
+      call c_matrix_add(cq, l, prm(l + iper - 1), isym, C, NN(mmap_G, isym, iper), NN(mmap_C, isym, iper))
     end do
+!
+  end subroutine copy_c_matrix
+!
+  pure subroutine evaluate(l, n, nb, nw, nper, nsym, prm, F, NN, W1, W2)
+    integer(IK), intent(in) :: l, n, nb, nw, nper, nsym, prm(*)
+    real(RK), intent(in)    :: F(*)
+    real(RK), intent(inout) :: NN(nb, nsym, nper)
+    real(RK), intent(inout) :: W1(*)
+    real(RK), intent(inout) :: W2(nw, *)
+    integer(IK)             :: m, mm, ww
+    integer(IK)             :: iper, isym
+!
+    m  = n - l
+    mm = m**2
+    ww = mm + 1
 !
     do iper = 1, nper
-        call subm(mp, mp, iper, NP(mmap_F), NN(mmap_F, 1, iper))
-        call Hungarian(mn, mn, NN(mmap_F, 1, iper), w1)
-        NN(mmap_L, 1, iper) = w1(1)
-        call estimate_sdmin(NN(mmap_G, 1, iper), NN(mmap_C, 1, iper), w1)
+      call subm(l, n, iper, prm, F, w1)
+      call Hungarian(mm, mm, w1, w1(ww))
+      NN(mmap_L, 1, iper) = w1(ww)
+      call estimate_sdmin(NN(mmap_G, 1, iper), NN(mmap_C, 1, iper), w1)
 !
-        do concurrent(isym=2:nsym)
-          call copy(mm, NN(mmap_F, 1, iper), 1, NN(mmap_F, isym, iper), 1)
-          call estimate_sdmin(NN(mmap_G, isym, iper), NN(mmap_C, isym, iper), W2(1, isym - 1))
-          NN(mmap_L, isym, iper) = W2(1, isym - 1) + NN(mmap_L, 1, iper)
-        end do
+      do concurrent(isym=2:nsym)
+        call estimate_sdmin(NN(mmap_G, isym, iper), NN(mmap_C, isym, iper), W2(1, isym - 1))
+        NN(mmap_L, isym, iper) = W2(1, isym - 1) + NN(mmap_L, 1, iper)
+      end do
 !
-        NN(mmap_L, 1, iper) = W1(1) + NN(mmap_L, 1, iper)
+      NN(mmap_L, 1, iper) = w1(1) + NN(mmap_L, 1, iper)
     end do
 !
-  end subroutine expand
+  end subroutine evaluate
 !
-  pure subroutine expand_terminal(p, n, nb, nw, nsym, cq, b, prm, C, NP, NN, W)
-    integer(IK), intent(in)     :: p, n, nb, nw, nsym
-    integer(IK), intent(in)     :: cq(*), b(*), prm(*)
-    real(RK), intent(in)        :: C(*)
-    real(RK), intent(in)        :: NP(*)
-    real(RK), intent(inout)     :: NN(nb, nsym)
-    real(RK), intent(out)       :: W(nw, *)
-    integer(IK), parameter      :: mmap_L = 1
-    integer(IK), parameter      :: mmap_G = 2
-    integer(IK), parameter      :: mmap_C = 3
-    integer(IK)                 :: isym
+! pure subroutine expand(p, n, nb, nw, nper, nsym, cq, b, prm, C, NP, NN, W1, W2)
+!   integer(IK), intent(in) :: p, n, nb, nw, nper, nsym
+!   integer(IK), intent(in) :: cq(*), b(*), prm(*)
+!   real(RK), intent(in)    :: C(*)
+!   real(RK), intent(in)    :: NP(*)
+!   real(RK), intent(inout) :: NN(nb, nsym, nper)
+!   real(RK), intent(out)   :: W1(*)
+!   real(RK), intent(out)   :: W2(nw, *)
+!   integer(IK)             :: mmap_F
+!   integer(IK)             :: mp, mn, mm
+!   integer(IK)             :: iper, isym
 !
-    do concurrent(isym=1:nsym)
-      call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, isym), 1)
-      call c_matrix_add(cq, p, prm(n), isym, C, NN(mmap_G, isym), NN(mmap_C, isym))
-      call estimate_sdmin(NN(mmap_G, isym), NN(mmap_C, isym), W(1, isym))
-      NN(mmap_L, isym) = W(1, isym)
-    end do
+!   mn = n - p
+!   mm = mn**2
+!   mp = mn + 1
 !
-  end subroutine expand_terminal
+!   mmap_F = mmap_C + DD
 !
-  pure subroutine subm(m, n, r, X, Y)
-    integer(IK), intent(in) :: m, n, r
-    real(RK), intent(in)    :: X(m, n)
-    real(RK), intent(inout) :: Y(m - 1, n - 1)
+!   do concurrent(iper=1:nper, isym=1:nsym)
+!     call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, isym, iper), 1)
+!     call c_matrix_add(cq, p, prm(iper + p - 1), isym, C, NN(mmap_G, isym, iper), NN(mmap_C, isym, iper))
+!   end do
+!
+!   do iper = 1, nper
+!       call subm(mp, mp, iper, NP(mmap_F), NN(mmap_F, 1, iper))
+!       call Hungarian(mn, mn, NN(mmap_F, 1, iper), w1)
+!       NN(mmap_L, 1, iper) = w1(1)
+!       call estimate_sdmin(NN(mmap_G, 1, iper), NN(mmap_C, 1, iper), w1)
+!
+!       do concurrent(isym=2:nsym)
+!         call copy(mm, NN(mmap_F, 1, iper), 1, NN(mmap_F, isym, iper), 1)
+!         call estimate_sdmin(NN(mmap_G, isym, iper), NN(mmap_C, isym, iper), W2(1, isym - 1))
+!         NN(mmap_L, isym, iper) = W2(1, isym - 1) + NN(mmap_L, 1, iper)
+!       end do
+!
+!       NN(mmap_L, 1, iper) = W1(1) + NN(mmap_L, 1, iper)
+!   end do
+!
+! end subroutine expand
+!
+! pure subroutine expand_terminal(p, n, nb, nw, nsym, cq, b, prm, C, NP, NN, W)
+!   integer(IK), intent(in)     :: p, n, nb, nw, nsym
+!   integer(IK), intent(in)     :: cq(*), b(*), prm(*)
+!   real(RK), intent(in)        :: C(*)
+!   real(RK), intent(in)        :: NP(*)
+!   real(RK), intent(inout)     :: NN(nb, nsym)
+!   real(RK), intent(out)       :: W(nw, *)
+!   integer(IK), parameter      :: mmap_L = 1
+!   integer(IK), parameter      :: mmap_G = 2
+!   integer(IK), parameter      :: mmap_C = 3
+!   integer(IK)                 :: isym
+!
+!   do concurrent(isym=1:nsym)
+!     call copy(DD + 1, NP(mmap_G), 1, NN(mmap_G, isym), 1)
+!     call c_matrix_add(cq, p, prm(n), isym, C, NN(mmap_G, isym), NN(mmap_C, isym))
+!     call estimate_sdmin(NN(mmap_G, isym), NN(mmap_C, isym), W(1, isym))
+!     NN(mmap_L, isym) = W(1, isym)
+!   end do
+!
+! end subroutine expand_terminal
+!
+  pure subroutine subm(l, n, r, prm, X, Y)
+    integer(IK), intent(in) :: l, n, r, prm(*)
+    real(RK), intent(in)    :: X(n, n)
+    real(RK), intent(inout) :: Y(n - l, n - l)
     integer(IK)             :: i, j
 !
-    do concurrent(j=2:n)
-      do concurrent(i=1:r - 1)
-        Y(i, j - 1) = X(i, j)
+    do concurrent(j=l + 1:n)
+      do concurrent(i=l + 1:l + r - 1)
+        Y(i - l, j - l) = X(prm(i), j)
       end do
-      do concurrent(i=r + 1:m)
-        Y(i - 1, j - 1) = X(i, j)
+      do concurrent(i=l + r + 1:n)
+        Y(i - l - 1, j - l) = X(prm(i), j)
       end do
     end do
 !
@@ -415,15 +453,17 @@ contains
     integer(IK), intent(in) :: s(*)
     !! work integer array
     logical                 :: res
-    res = tree_queue_is_empty(q(q(tq)), s)
+    res = tree_queue_is_empty(q(q(tq)), s(ts))
   end function bb_block_queue_is_empty
 !
 !| Leave current node.
-  pure function bb_block_current_value(q, s, X) result(res)
+  pure function bb_block_current_value(q, s, l, X) result(res)
     integer(IK), intent(in) :: q(*)
     !! integer array
     integer(IK), intent(in) :: s(*)
     !! work integer array
+    integer(IK), intent(in) :: l
+    !! current level
     real(RK), intent(in)    :: X(*)
     !! main memory
     real(RK)                :: res
@@ -452,8 +492,11 @@ contains
     !! workarray
     integer(IK), intent(inout) :: s(*)
     !! work integer array
+    integer(IK)                :: curl, iper
 !
-    call creverse(tree_current_level(s), tree_current_iper(q(q(tq)), s(ts)), s(q(ps)))
+    curl = tree_current_level(s(ts))
+    iper = tree_current_iper(q(q(tq)), s(ts))
+    call creverse(curl, iper, s(q(ps)))
     call tree_leave(q(q(tq)), s(ts))
     call tree_select_top_node(q(q(tq)), s(ts), UB, X(q(tx)))
 !

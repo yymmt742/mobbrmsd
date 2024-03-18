@@ -12,6 +12,7 @@ module mod_tree
   private
   public :: tree
   public :: tree_memsize
+  public :: tree_current_level
   public :: tree_current_state
   public :: tree_current_iper
   public :: tree_current_isym
@@ -157,6 +158,14 @@ contains
   end function tree_memsize
 !
 !| Returns current level
+  pure function tree_current_level(s) result(res)
+    integer(IK), intent(in) :: s(*)
+!!  state
+    integer(IK)             :: res
+    res = s(sl)
+  end function tree_current_level
+!
+!| Returns current level
   pure function tree_current_state(s) result(res)
     integer(IK), intent(in) :: s(*)
 !!  state
@@ -284,8 +293,8 @@ contains
 !!  queue
     integer(IK), intent(inout) :: s(*)
 !!  state
-    if (s(sl) < 1) return
-    s(sl) = s(sl) - 1 ! l = l + 1
+    if (s(sl) < 2) return
+    s(sl) = s(sl) - 1
   end subroutine tree_leave
 !
 !| Select top node
