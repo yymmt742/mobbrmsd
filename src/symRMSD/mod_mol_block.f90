@@ -49,7 +49,7 @@ contains
     type(group_permutation) :: s
 !
     s = group_permutation(sym)
-    res%q = [MAX(m, 1), MAX(n, 1), s%q]
+    res%q = [MAX(m, 0), MAX(n, 1), s%q]
 !
   end function mol_block_new
 !

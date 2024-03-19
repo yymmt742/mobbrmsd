@@ -51,12 +51,17 @@ contains
   pure function c_matrix_new(b) result(res)
     integer(IK), intent(in) :: b(*)
     !! mol_block, must be initialized.
-    type(c_matrix)    :: res
+    type(c_matrix)          :: res
+    integer(IK)             :: n, m, s
 !
-    res%q(cb) = 1 + DD * mol_block_nsym(b)
-    res%q(nl) = mol_block_nmol(b)
+    n = mol_block_nmol(b)
+    m = mol_block_napm(b)
+    s = mol_block_nsym(b)
+!
+    res%q(cb) = 1 + DD * s
+    res%q(nl) = n
     res%q(cl) = res%q(cb) * res%q(nl)
-    res%q(nw) = MAX((res%q(nl) + 1) * mol_block_each_size(b), res%q(nl) * 2)
+    res%q(nw) = MERGE(MAX((res%q(nl) + 1) * mol_block_each_size(b), res%q(nl) * 2), 0, m > 0)
 !
   end function c_matrix_new
 !
@@ -106,6 +111,11 @@ contains
     s = mol_block_nsym(b)
     m = mol_block_napm(b)
     n = mol_block_nmol(b)
+!
+    if (m < 1) then
+      call zfill(q(cl) * q(nl), C, 1)
+      return
+    end if
 !
     dm = mol_block_each_size(b)
     gy = gx + n
@@ -205,6 +215,17 @@ contains
     call axpy(DD, ONE, C(k), 1, Cp, 1)
 !
   end subroutine c_matrix_add
+!
+  pure subroutine zfill(d, x, ld)
+    integer(IK), intent(in) :: d
+    real(RK), intent(inout) :: x(*)
+    integer(IK), intent(in) :: ld
+    integer(IK)             :: i, dld
+    dld = d * ld
+    do concurrent(i=1:dld:ld)
+      x(i) = ZERO
+    end do
+  end subroutine zfill
 !
 end module mod_c_matrix
 
