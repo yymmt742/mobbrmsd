@@ -14,6 +14,7 @@ module mod_tree
   public :: tree_memsize
   public :: tree_current_level
   public :: tree_current_state
+  public :: tree_current_memsize
   public :: tree_current_iper
   public :: tree_current_isym
   public :: tree_queue_pointer
@@ -165,13 +166,23 @@ contains
     res = s(sl)
   end function tree_current_level
 !
-!| Returns current level
+!| Inquire memsize of current node
   pure function tree_current_state(s) result(res)
     integer(IK), intent(in) :: s(*)
 !!  state
     integer(IK)             :: res
     res = queue_state(s(sr), s(sl))
   end function tree_current_state
+!
+!| Inquire total memsize of tree
+  pure function tree_current_memsize(q, s) result(res)
+    integer(IK), intent(in) :: q(*)
+!!  queue
+    integer(IK), intent(in) :: s(*)
+!!  state
+    integer(IK)             :: res
+    res = queue_memsize(s(sr), s(sl))
+  end function tree_current_memsize
 !
 !| Returns current permutation
   pure function tree_current_iper(q, s) result(res)

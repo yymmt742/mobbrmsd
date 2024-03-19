@@ -194,9 +194,9 @@ contains
 !| Add CIJs to partial covariance matrix C.
   pure subroutine c_matrix_add(q, i, j, s, C, G, Cp)
     integer(IK), intent(in) :: q(*)
-    !! this :: c_matrix
+    !! c_matrix
     integer(IK), intent(in) :: i
-    !! i    :: row index
+    !! row index
     integer(IK), intent(in) :: j
     !! collumn index
     integer(IK), intent(in) :: s

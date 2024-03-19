@@ -19,44 +19,51 @@ program main
 contains
 !
   subroutine test0()
+    type(bb_block)         :: root
     type(bb_block)         :: bm
     integer(IK), parameter :: m = 8
     integer(IK), parameter :: n = 3
-    integer(IK)            :: iw
     real(RK)               :: X(D, m * n), Y(D, m * n)
+    real(RK), allocatable  :: Z(:)
     real(RK), allocatable  :: W(:)
     real(RK)               :: ub
 !
+    root = bb_block(0, 0)
+    print'(4I4)',root%q
+    print*
+    print'(4I4)',root%s
+    allocate (Z(bb_block_memsize(root%q)))
+    Z(:) = 99
+    call bb_block_setup(root%q, X, Y, root%s, Z)
+    call bb_block_expand(999.9_RK, root%q, root%s, Z, [-1], [-1], Z)
+    print'(10f6.1)', Z
+!
+    print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(root%q, root%s), &
+      &                       bb_block_queue_is_bottom(root%q, root%s), &
+      &                       bb_block_current_value(root%q, root%s, Z), &
+      &                       root%s
+!
     bm = bb_block(8, 3, sym=RESHAPE([2, 3, 4, 5, 6, 7, 8, 1], [8, 1]))
     print'(4I4)',bm%q
-    print'(2I4)',bm%s(2:)
+    print*
+    print'(4I4)',bm%s
     print *, bb_block_memsize(bm%q), bb_block_worksize(bm%q)
 !
     X = sample(D, m * n)
-    Y(:, m + 1:m * n) = X(:, :m * (n - 1))
-    Y(:, :m) = X(:, m * (n - 1) + 1:m * n)
+    Y = X
+!   Y(:, m + 1:m * n) = X(:, :m * (n - 1))
+!   Y(:, :m) = X(:, m * (n - 1) + 1:m * n)
 !   Y = 0.8*Y +sample(D, m * n) * 0.2
+!   Y = sample(D, m * n)
 !
-    iw = 1 + bb_block_memsize(bm%q)
-    allocate (W(bb_block_memsize(bm%q) + bb_block_worksize(bm%q)))
-    w(:) = 99
+    allocate (W(bb_block_memsize(bm%q)))
     call bb_block_setup(bm%q, X, Y, bm%s, w)
-    call bb_block_expand(bm%q, 999.0_RK, bm%s, w, w(iw))
+    call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
+    print'(10f6.1)',w
     print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-      &      bb_block_queue_is_bottom(bm%q, bm%s), &
-      &      bb_block_current_value(bm%q, bm%s, w), &
-      &      bm%s(2:)
-    call bb_block_expand(bm%q, 999.0_RK, bm%s, w, w(iw))
-    print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-      &      bb_block_queue_is_bottom(bm%q, bm%s), &
-      &      bb_block_current_value(bm%q, bm%s, w), &
-      &      bm%s(2:)
-    call bb_block_expand(bm%q, 999.0_RK, bm%s, w, w(iw))
-    ub = bb_block_current_value(bm%q, bm%s, w)
-    print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-      &      bb_block_queue_is_bottom(bm%q, bm%s), &
-      &      bb_block_current_value(bm%q, bm%s, w), &
-      &      bm%s(2:)
+      &                       bb_block_queue_is_bottom(bm%q, bm%s), &
+      &                       bb_block_current_value(bm%q, bm%s, w), &
+      &                       bm%s
 !
   end subroutine test0
 !
