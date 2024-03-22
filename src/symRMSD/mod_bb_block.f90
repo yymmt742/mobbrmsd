@@ -324,6 +324,7 @@ print'(*(I3))',stree(:4)
      if(bb_block_queue_is_empty(qtree, stree)) return
 !
      call cswap(l, tree_current_iper(qtree, stree), perm)
+print'(A,*(I3))','perm',perm(:nmol)
 !
   end subroutine expand
 !
@@ -364,13 +365,16 @@ print'(*(I3))',stree(:4)
     mm = m**2
     ww = mm + 1
 !
+print'(3f9.3)',F(:9)
     do iper = 1, nper
       call subm(l, nmol, iper, perm, F, w1)
-print'(2f9.3)',w1(:4)
-print*
+print*, l, iper, perm(:nmol)
+print'(2f9.3)',w1(:m*m)
       call Hungarian(m, m, w1(1), w1(ww))
       NN(mmap_L, 1, iper) = w1(1)
+print'(f16.3)',w1(1)
       call estimate_sdmin(NN(mmap_G, 1, iper), NN(mmap_C, 1, iper), w1(1))
+print'(f16.3)',w1(1)
 !
       do concurrent(isym=2:nsym)
         call estimate_sdmin(NN(mmap_G, isym, iper), NN(mmap_C, isym, iper), W2(1, isym - 1))
@@ -450,11 +454,11 @@ print*
     integer(IK)             :: i, j
 !
     do concurrent(j=l + 1:n)
-      do concurrent(i=l + 1:l + r - 1)
-        Y(i - l, j - l) = X(perm(i), j)
+      do concurrent(i=l:l + r - 2)
+        Y(i - l + 1, j - l) = X(perm(i), j)
       end do
-      do concurrent(i=l + r + 1:n)
-        Y(i - l - 1, j - l) = X(perm(i), j)
+      do concurrent(i=l + r:n)
+        Y(i - l, j - l) = X(perm(i), j)
       end do
     end do
 !

@@ -8,7 +8,7 @@ program main
   implicit none
   type(unittest) :: u
 !
-  call u%init('test lowerbound')
+  call u%init('test bb_block')
 !
   call setup_dimension(3)
   call test0()
