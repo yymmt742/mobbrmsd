@@ -154,7 +154,7 @@ contains
     res = c_matrix_memsize(q(q(cq))) &
    &    + f_matrix_memsize(q(q(fq))) &
    &    + tree_memsize(q(q(tq))) &
-   &    + tree_worksize(q)
+   &    + tree_worksize(q) + 10
 !
   end function bb_block_memsize
 !
@@ -212,7 +212,7 @@ contains
   end subroutine perm_reset
 !
 !| Expand top node in queue.
-  subroutine bb_block_expand(UB, q, s, X, p, r, Z)
+  pure subroutine bb_block_expand(UB, q, s, X, p, r, Z)
     real(RK), intent(in)       :: UB
     !! upper bound
     integer(IK), intent(in)    :: q(*)
@@ -234,8 +234,8 @@ contains
      nsym = mol_block_nsym(q(bq))
 !
      if (tree_current_level(s(ts)) == 1) then
-       cn = parent_pointer(q, s)
-       wp = cn + tree_current_memsize(q, s)
+       cn = child_pointer(q, s)
+       wp = cn + tree_current_memsize(q(q(tq)), s(ts))
        nb = node_memsize(q(bq), 1)
        nper = tree_n_perm(q(q(tq)), s(ts))
 !
@@ -254,17 +254,20 @@ contains
      do
        if(bb_block_queue_is_empty(q, s).or.bb_block_queue_is_bottom(q, s)) return
 !
+       pn = parent_pointer(q, s)
+!
        call tree_expand(q(q(tq)), s(ts))
        l = tree_current_level(s(ts))
+!
        nb = node_memsize(q(bq), l)
-       pn = parent_pointer(q, s)
        cn = child_pointer(q, s)
-       wp = cn + tree_current_memsize(q, s)
+       wp = cn + tree_current_memsize(q(q(tq)), s(ts))
        nper = tree_n_perm(q(q(tq)), s(ts))
 !
-       call copy_c_matrix(nper, nsym, nb, Z(pn), X(cn))
+       call copy_c_matrix(nper, nsym, nb, X(pn), X(cn))
        call add_c_matrix(l, nper, nsym, nb, q(q(cq)), s(q(ps)), X(cx), X(cn))
        call expand(nmol, nper, nsym, nb, q(q(tq)), UB, X(q(fx)), X(cn), s(ts), s(q(ps)), X(wp))
+!
      enddo
 !
   end subroutine bb_block_expand
@@ -275,7 +278,7 @@ contains
     !! covariance matrix header array
     integer(IK), intent(in) :: s(*)
     integer(IK)             :: res
-    res = q(tx) - 1 + tree_queue_pointer(q(q(tq)), s(ts))
+    res = q(tx) - 1 + tree_current_pointer(q(q(tq)), s(ts))
   end function parent_pointer
 !
   pure function child_pointer(q, s) result(res)
@@ -284,11 +287,11 @@ contains
     !! covariance matrix header array
     integer(IK), intent(in) :: s(*)
     integer(IK)             :: res
-    res = q(tx) - 1 + tree_current_pointer(q(q(tq)), s(ts))
+    res = q(tx) - 1 + tree_queue_pointer(q(q(tq)), s(ts))
   end function child_pointer
 !
 !| Expand top node in queue.
-  subroutine expand(nmol, nper, nsym, nb, qtree, UB, F, CN, stree, perm, W)
+  pure subroutine expand(nmol, nper, nsym, nb, qtree, UB, F, CN, stree, perm, W)
     integer(IK), intent(in)    :: nmol
     !! number of molecule
     integer(IK), intent(in)    :: nper
@@ -320,11 +323,8 @@ contains
      call evaluate_nodes(l, m, nmol, nper, nsym, nb, nw, perm, F, CN, W(1), W(2))
      call tree_select_top_node(qtree, stree, UB, CN)
 !
-print'(*(I3))',stree(:4)
      if(bb_block_queue_is_empty(qtree, stree)) return
-!
      call cswap(l, tree_current_iper(qtree, stree), perm)
-print'(A,*(I3))','perm',perm(:nmol)
 !
   end subroutine expand
 !
@@ -353,10 +353,10 @@ print'(A,*(I3))','perm',perm(:nmol)
 !
   end subroutine add_c_matrix
 !
-  subroutine evaluate_nodes(l, m, nmol, nper, nsym, nb, nw, perm, F, NN, W1, W2)
+  pure subroutine evaluate_nodes(l, m, nmol, nper, nsym, nb, nw, perm, F, CN, W1, W2)
     integer(IK), intent(in) :: l, m, nmol, nper, nsym, nb, nw, perm(*)
     real(RK), intent(in)    :: F(*)
-    real(RK), intent(inout) :: NN(nb, nsym, nper)
+    real(RK), intent(inout) :: CN(nb, nsym, nper)
     real(RK), intent(inout) :: W1(*)
     real(RK), intent(inout) :: W2(nw, *)
     integer(IK)             :: mm, ww
@@ -365,23 +365,18 @@ print'(A,*(I3))','perm',perm(:nmol)
     mm = m**2
     ww = mm + 1
 !
-print'(3f9.3)',F(:9)
     do iper = 1, nper
       call subm(l, nmol, iper, perm, F, w1)
-print*, l, iper, perm(:nmol)
-print'(2f9.3)',w1(:m*m)
       call Hungarian(m, m, w1(1), w1(ww))
-      NN(mmap_L, 1, iper) = w1(1)
-print'(f16.3)',w1(1)
-      call estimate_sdmin(NN(mmap_G, 1, iper), NN(mmap_C, 1, iper), w1(1))
-print'(f16.3)',w1(1)
+      CN(mmap_L, 1, iper) = w1(1)
+      call estimate_sdmin(CN(mmap_G, 1, iper), CN(mmap_C, 1, iper), w1(1))
 !
       do concurrent(isym=2:nsym)
-        call estimate_sdmin(NN(mmap_G, isym, iper), NN(mmap_C, isym, iper), W2(1, isym - 1))
-        NN(mmap_L, isym, iper) = W2(1, isym - 1) + NN(mmap_L, 1, iper)
+        call estimate_sdmin(CN(mmap_G, isym, iper), CN(mmap_C, isym, iper), W2(1, isym - 1))
+        CN(mmap_L, isym, iper) = W2(1, isym - 1) + CN(mmap_L, 1, iper)
       end do
 !
-      NN(mmap_L, 1, iper) = w1(1) + NN(mmap_L, 1, iper)
+      CN(mmap_L, 1, iper) = w1(1) + CN(mmap_L, 1, iper)
     end do
 !
   end subroutine evaluate_nodes

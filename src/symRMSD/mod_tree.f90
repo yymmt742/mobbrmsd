@@ -181,7 +181,7 @@ contains
     integer(IK), intent(in) :: s(*)
 !!  state
     integer(IK)             :: res
-    res = queue_memsize(s(sr), s(sl))
+    res = queue_memsize(q(qr), s(sl))
   end function tree_current_memsize
 !
 !| Returns current permutation
@@ -453,11 +453,11 @@ contains
 !
 ! module functions
 !
-  pure function queue_state(r, l) result(res)
-    integer(IK), intent(in) :: r(state_blocksize, *)
+  pure function queue_state(s, l) result(res)
+    integer(IK), intent(in) :: s(state_blocksize, *)
     integer(IK), intent(in) :: l
     integer(IK)             :: res
-    res = r(ss, l)
+    res = s(ss, l)
   end function queue_state
 !
   pure subroutine set_state(s, t)

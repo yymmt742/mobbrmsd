@@ -39,6 +39,7 @@ contains
     real(RK), intent(inout)    :: W(*)
 !
     if (n == 0 .or. m == 0) then
+      W(1) = ZERO
       return
     elseif (n < 0 .or. m < 0) then
       ! query work array size

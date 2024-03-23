@@ -51,8 +51,8 @@ contains
 !
     X = sample(D, m * n)
     Y = X
-!   Y(:, m + 1:m * n) = X(:, :m * (n - 1))
-!   Y(:, :m) = X(:, m * (n - 1) + 1:m * n)
+    Y(:, m + 1:m * n) = X(:, :m * (n - 1))
+    Y(:, :m) = X(:, m * (n - 1) + 1:m * n)
 !   Y = 0.8*Y +sample(D, m * n) * 0.2
 !   Y = sample(D, m * n)
 !
