@@ -178,12 +178,8 @@ contains
     integer(IK), intent(in)    :: q(*)
     integer(IK), intent(inout) :: s(*)
     real(RK), intent(inout)    :: W(*)
-!   class(branch_and_bound), intent(in)  :: this
-!   real(RK), intent(inout)              :: W(*)
-!   logical, intent(in)                  :: swap_y
-!   type(tree)                           :: tr
-!   type(breadth_indicator), allocatable :: bi(:)
-!   integer(IK)                          :: cur, pp, cix, ncount
+!   logical, intent(in)        :: swap_y
+!   integer(IK)                :: cur, pp, cix, ncount
 !
 !   tr = this%tr
 !   bi = this%bi
@@ -264,73 +260,6 @@ contains
 !   end block
 !
 ! contains
-!
-!   pure subroutine swap_iper(nd, cur, inod, b)
-!     integer(IK), intent(in)                :: nd, cur, inod
-!     type(breadth_indicator), intent(inout) :: b(nd)
-!     integer(IK)                            :: ip, sw, i
-!     ip = MODULO(inod - 1, b(cur)%nper)
-!     sw = b(cur + ip)%iper
-!     do i = cur + ip - 1, cur, -1
-!       b(i + 1)%iper = b(i)%iper
-!     end do
-!     b(cur)%iper = sw
-!   end subroutine swap_iper
-!
-!   pure subroutine paws_iper(nd, cur, bi)
-!     integer(IK), intent(in)                :: nd, cur
-!     type(breadth_indicator), intent(inout) :: bi(nd)
-!     integer(IK)                            :: sw, i
-!     if (cur < 2) return
-!     do i = cur, nd
-!       if (bi(i - 1)%ispc /= bi(i)%ispc .or. bi(i - 1)%iper < bi(i)%iper) return
-!       sw = bi(i - 1)%iper
-!       bi(i - 1)%iper = bi(i)%iper
-!       bi(i)%iper = sw
-!     end do
-!   end subroutine paws_iper
-!
-!   pure subroutine set_hc(dm, tr, bi, cur, nd, bs, W)
-!     integer(IK), intent(in)             :: cur, nd, bs
-!     type(d_matrix_list), intent(in)     :: dm
-!     type(tree), intent(in)              :: tr
-!     type(breadth_indicator), intent(in) :: bi(nd)
-!     real(RK), intent(inout)             :: W(*)
-!     integer(IK)                         :: iper(nd)
-!     integer(IK)                         :: i, j, p, q, ph, nx
-!
-!     p = tr%parent_pointer()
-!     ph = p + 1
-!     q = tr%nodes_pointer() - bs
-!     iper = bi%iper
-!     nx = DD + 1
-!
-!     do concurrent(i=1:bi(cur)%nper, j=0:bi(cur)%nsym - 1)
-!       block
-!         integer(IK) :: t, h, c
-!         t = q + bs * (i + bi(cur)%nper * j)
-!         h = t + 1
-!         c = t + 2
-!         call DCOPY(nx, W(ph), 1, W(h), 1)
-!         call dm%partial_eval(cur, iper, i, j, W, W(t), W(h), W(c))
-!       end block
-!     end do
-!
-!   end subroutine set_hc
-!
-!   pure subroutine swap(m, g, iper, isym, ms, X)
-!     integer(IK), intent(in)             :: m, g
-!     integer(IK), intent(in)             :: iper(g), isym(g)
-!     type(mol_symmetry), intent(in)      :: ms
-!     real(RK), intent(inout)             :: X(d, m, g)
-!     type(group_permutation)             :: gp
-!     integer(IK)                         :: i
-!     gp = group_permutation(iper)
-!     do concurrent(i=1:g)
-!       call ms%swap(D, X(1, 1, i), isym(i))
-!     end do
-!     call gp%reverse(D * m, X)
-!   end subroutine swap
 !
 !   pure subroutine rotation(mn, dmn, H, C, Y)
 !     integer(IK), intent(in) :: mn, dmn
