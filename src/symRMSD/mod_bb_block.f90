@@ -128,23 +128,6 @@ contains
 !
   end function node_memsize
 !
-  pure function tree_worksize(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    integer(IK)             :: p, n, m, sw, hw
-    integer(IK)             :: res
-!
-    sw = sdmin_worksize()
-    res = 1 + mol_block_nsym(q(bq)) * sw
-    n = mol_block_nmol(q(bq))
-    m = n
-    do p = 1, n
-      hw = Hungarian_worksize(m, m)
-      res = MAX(hw, res)
-      m = m - 1
-    end do
-!
-  end function tree_worksize
-!
 !| Returns the memory size array size.
   pure function bb_block_memsize(q) result(res)
     integer(IK), intent(in) :: q(*)
@@ -153,19 +136,30 @@ contains
 !
     res = c_matrix_memsize(q(q(cq))) &
    &    + f_matrix_memsize(q(q(fq))) &
-   &    + tree_memsize(q(q(tq))) &
-   &    + tree_worksize(q) + 10
+   &    + tree_memsize(q(q(tq)))
 !
   end function bb_block_memsize
 !
-!| Returns the memory size of work array size.
+!| Returns the work memory size array size.
   pure function bb_block_worksize(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! bb_block header array.
+    integer(IK)             :: p, nmol, nsym, m, buf, tmp, swrk, hwrk
     integer(IK)             :: res
 !
-    res = tree_worksize(q(bq))
-    res = MAX(res, c_matrix_worksize(q(q(cq))) - tree_memsize(q(q(tq))) - res)
+    swrk = sdmin_worksize()
+    nmol = mol_block_nmol(q(bq))
+    nsym = mol_block_nsym(q(bq))
+    buf = tree_memsize(q(q(tq)))
+    res = 0
+    m = nmol
+    do p = 1, nmol
+      buf = buf - m * nsym * node_memsize(q(bq), p)
+      hwrk = Hungarian_worksize(m, m)
+      tmp = MAX(MAX(swrk, m**2 + hwrk), swrk * (nsym - 1) + 1)
+      res = MAX(res, tmp - buf)
+      m = m - 1
+    end do
 !
   end function bb_block_worksize
 !
@@ -211,6 +205,29 @@ contains
 !
   end subroutine perm_reset
 !
+!| leave current node.
+  subroutine bb_block_leave(UB, q, s, X)
+  !pure subroutine bb_block_leave(UB, q, s, X)
+    real(RK), intent(in)       :: UB
+    !! upper bound
+    integer(IK), intent(in)    :: q(*)
+    !! work integer array
+    integer(IK), intent(inout) :: s(*)
+    !! work integer array
+    real(RK), intent(in)       :: X(*)
+    !! main memory
+    integer(IK)                :: l
+!
+     do
+       l = tree_current_level(s(ts))
+       call creverse(l, tree_current_iper(q(q(tq)), s(ts)), s(q(ts)))
+       call tree_select_top_node(q(q(tq)), s(ts), UB, X(q(tx)))
+       if (l == 1 .or. .not. bb_block_queue_is_empty(q, s)) return
+       call tree_leave(q(q(tq)), s(ts))
+     enddo
+!
+  end subroutine bb_block_leave
+!
 !| Expand top node in queue.
   pure subroutine bb_block_expand(UB, q, s, X, p, r, Z)
     real(RK), intent(in)       :: UB
@@ -247,8 +264,7 @@ contains
        endif
 !
        call add_c_matrix(1, nper, nsym, nb, q(q(cq)), s(q(ps)), X(cx), X(cn))
-       call expand(nmol, nper, nsym, nb, q(q(tq)), UB, X(q(fx)), X(cn), s(ts), s(q(ps)), X(wp))
-!
+       call expand(nmol, nper, nsym, nb, q(q(tq)), UB, X(q(fx)), X(cn), X(q(tx)), s(ts), s(q(ps)), X(wp))
      end if
 !
      do
@@ -266,8 +282,7 @@ contains
 !
        call copy_c_matrix(nper, nsym, nb, X(pn), X(cn))
        call add_c_matrix(l, nper, nsym, nb, q(q(cq)), s(q(ps)), X(cx), X(cn))
-       call expand(nmol, nper, nsym, nb, q(q(tq)), UB, X(q(fx)), X(cn), s(ts), s(q(ps)), X(wp))
-!
+       call expand(nmol, nper, nsym, nb, q(q(tq)), UB, X(q(fx)), X(cn), X(q(tx)), s(ts), s(q(ps)), X(wp))
      enddo
 !
   end subroutine bb_block_expand
@@ -291,7 +306,7 @@ contains
   end function child_pointer
 !
 !| Expand top node in queue.
-  pure subroutine expand(nmol, nper, nsym, nb, qtree, UB, F, CN, stree, perm, W)
+  pure subroutine expand(nmol, nper, nsym, nb, qtree, UB, F, CN, TX, stree, perm, W)
     integer(IK), intent(in)    :: nmol
     !! number of molecule
     integer(IK), intent(in)    :: nper
@@ -312,18 +327,20 @@ contains
     !! permutation array
     real(RK), intent(inout)    :: CN(*)
     !! child node
+    real(RK), intent(inout)    :: TX(*)
+    !! tree_memory
     real(RK), intent(inout)    :: W(*)
     !! work real array
     integer(IK)                :: l, m, nw
 !
      l = tree_current_level(stree)
      m = nmol - l
-     nw = MAX(Hungarian_worksize(m, m), sdmin_worksize())
+     nw = sdmin_worksize()
 !
      call evaluate_nodes(l, m, nmol, nper, nsym, nb, nw, perm, F, CN, W(1), W(2))
-     call tree_select_top_node(qtree, stree, UB, CN)
+     call tree_select_top_node(qtree, stree, UB, TX)
 !
-     if(bb_block_queue_is_empty(qtree, stree)) return
+     if(tree_queue_is_empty(qtree, stree)) return
      call cswap(l, tree_current_iper(qtree, stree), perm)
 !
   end subroutine expand
@@ -357,8 +374,8 @@ contains
     integer(IK), intent(in) :: l, m, nmol, nper, nsym, nb, nw, perm(*)
     real(RK), intent(in)    :: F(*)
     real(RK), intent(inout) :: CN(nb, nsym, nper)
-    real(RK), intent(inout) :: W1(*)
-    real(RK), intent(inout) :: W2(nw, *)
+    real(RK), intent(inout) :: W1(*)     ! MAX(sdmin_worksize(), m**2 + Hungarian_worksize())
+    real(RK), intent(inout) :: W2(nw, *) ! nw * nsym-1
     integer(IK)             :: mm, ww
     integer(IK)             :: iper, isym
 !
@@ -518,29 +535,9 @@ contains
     !! main memory
     real(RK)                :: res
     integer(IK)             :: t
-    t = child_pointer(q, s)
+    t = q(tx) - 1 + tree_current_pointer(q(q(tq)), s(ts))
     res = X(t)
   end function bb_block_current_value
-!
-!| leave current node.
-  pure subroutine bb_block_leave(q, UB, X, s)
-    integer(IK), intent(in)    :: q(*)
-    !! integer array
-    real(RK), intent(in)       :: UB
-    !! upperbound
-    real(RK), intent(in)       :: X(*)
-    !! workarray
-    integer(IK), intent(inout) :: s(*)
-    !! work integer array
-    integer(IK)                :: curl, iper
-!
-    curl = tree_current_level(s(ts))
-    iper = tree_current_iper(q(q(tq)), s(ts))
-    call creverse(curl, iper, s(q(ps)))
-    call tree_leave(q(q(tq)), s(ts))
-    call tree_select_top_node(q(q(tq)), s(ts), UB, X(q(tx)))
-!
-  end subroutine bb_block_leave
 !
 ! pure subroutine d_matrix_partial_eval(a, p, iperm, isym, ires, W, LT, H, C, LF, LB)
 !   type(d_matrix), intent(in)        :: a

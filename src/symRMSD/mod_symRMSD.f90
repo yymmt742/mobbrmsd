@@ -2,7 +2,6 @@ module mod_symRMSD
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_branch_and_bound, only: branch_and_bound, DEF_maxeval, DEF_cutoff
   use mod_mol_block
-  use mod_mol_symmetry
   implicit none
   public :: symRMSD
   public :: symRMSD_input
@@ -11,7 +10,6 @@ module mod_symRMSD
     integer(IK)                     :: maxeval = DEF_maxeval
     real(RK)                        :: cutoff  = DEF_cutoff
     type(mol_block_list)            :: blk
-    type(mol_symmetry), allocatable :: ms(:)
   contains
     procedure :: add_molecule => symRMSD_input_add_molecule
     procedure :: clear        => symRMSD_input_clear
