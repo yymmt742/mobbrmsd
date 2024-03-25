@@ -53,7 +53,7 @@ contains
     Y = X
     Y(:, m + 1:m * n) = X(:, :m * (n - 1))
     Y(:, :m) = X(:, m * (n - 1) + 1:m * n)
-    Y = 0.5 * Y + sample(D, m * n) * 0.5
+    !Y = 0.5 * Y + sample(D, m * n) * 0.5
 !   Y = sample(D, m * n)
 !
     allocate (W(bb_block_memsize(bm%q)+bb_block_worksize(bm%q)))
