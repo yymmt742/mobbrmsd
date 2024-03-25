@@ -6,18 +6,10 @@ program main
   use mod_testutil
   implicit none
   type(unittest) :: u
-! integer, parameter :: NTEST=25
-! integer            :: itest
 !
   call u%init('test branch_and_bound')
 !
   call test0()
-!
-! do itest = 1, NTEST
-!   call test1()
-! end do
-!
-! call test2()
 !
   call u%finish_and_terminate()
 !
@@ -32,47 +24,22 @@ contains
     blk(1) = bb_block(8, 3, sym=RESHAPE([2, 3, 4, 5, 6, 7, 8, 1], [8, 1]))
     blk(2) = bb_block(4, 5, sym=RESHAPE([1, 3, 2, 4], [4, 1]))
     b = branch_and_bound(blk)
-
+!
     X = sample(D, SIZE(X, 2))
     Y = X
-    !Y = X
-
-    print'(4i4)',blk(2)%q
-    print*
-    print'(4i4)',b%q
-    print*
-    print'(4i4)',b%s
+!
     nmem = branch_and_bound_memsize(b%q)
-    print*,nmem
 !
     block
       real(RK) :: w(nmem)
       w = 99
-      do i = 1, 10
+      do i = 1, 50
         call branch_and_bound_setup(b%q, b%s, X, Y, w)
         call branch_and_bound_run(b%q, b%s, w, 999.9_RK)
-        print*, W(:4)
+        print'(5F12.3,8I3)', W(:4), EXP(W(4)), b%s(2:9)
         Y = 0.8 * Y + 0.2 * sample(D, SIZE(X, 2))
       end do
-!     print'(10f5.1)',w
     end block
-!
-!   call bb_block_expand(bm%q, bm%x, bm%w)
-!   call bb_block_select_top_node(bm%q, bm%x, 999.0_RK)
-!   print *, bb_block_queue_is_empty(bm%q), &
-!     &      bb_block_queue_is_bottom(bm%q), &
-!     &      bb_block_current_value(bm%q, bm%x)
-!   call bb_block_expand(bm%q, bm%x, bm%w)
-!   call bb_block_select_top_node(bm%q, bm%x, 999.0_RK)
-!   print *, bb_block_queue_is_empty(bm%q), &
-!     &      bb_block_queue_is_bottom(bm%q), &
-!     &      bb_block_current_value(bm%q, bm%x)
-!   call bb_block_expand(bm%q, bm%x, bm%w)
-!   call bb_block_select_top_node(bm%q, bm%x, 999.0_RK)
-!   ub = bb_block_current_value(bm%q, bm%x)
-!   print *, bb_block_queue_is_empty(bm%q), &
-!     &      bb_block_queue_is_bottom(bm%q), &
-!     &      bb_block_current_value(bm%q, bm%x)
 !
   end subroutine test0
 !

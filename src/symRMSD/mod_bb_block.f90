@@ -16,6 +16,7 @@ module mod_bb_block
   implicit none
   private
   public :: bb_block
+  public :: bb_block_nmol
   public :: bb_block_molsize
   public :: bb_block_memsize
   public :: bb_block_worksize
@@ -28,6 +29,8 @@ module mod_bb_block
   public :: bb_block_current_value
   public :: bb_block_lowest_value
   public :: bb_block_log_ncomb
+  public :: bb_block_evaluation_count
+  public :: bb_block_save_state
 !
   integer(IK), parameter :: mmap_L = 1
   integer(IK), parameter :: mmap_G = 2
@@ -50,7 +53,11 @@ module mod_bb_block
   integer(IK), parameter :: fw = 7
   !! pointer to f_matrix work memory
 !
-  integer(IK), parameter :: cx = 1
+  integer(IK), parameter :: header_memsize = 1
+!
+  integer(IK), parameter :: nc = 1
+  !! pointer to evaluation count (fixed)
+  integer(IK), parameter :: cx = 2
   !! pointer to c_matrix array (fixed)
   integer(IK), parameter :: ts = 1
   !! pointer to tree interger work array (fixed)
@@ -118,7 +125,8 @@ contains
     !! bb_block header array.
     integer(IK)             :: res
 !
-    res = c_matrix_memsize(q(q(cq))) &
+    res = header_memsize &
+   &    + c_matrix_memsize(q(q(cq))) &
    &    + f_matrix_memsize(q(q(fq))) &
    &    + tree_nnodes(q(q(tq))) * ND
 !
@@ -147,7 +155,15 @@ contains
 !
   end function bb_block_worksize
 !
-!| Inquire Returns the memory size of molecular block size.
+!| Returns the number of molecules.
+  pure function bb_block_nmol(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! bb_block header array.
+    integer(IK)             :: res
+    res = mol_block_nmol(q(bq))
+  end function bb_block_nmol
+!
+!| Returns the memory size of molecular block size.
   pure function bb_block_molsize(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! bb_block header array.
@@ -170,6 +186,7 @@ contains
     logical, intent(in), optional :: zfill
     !! if true, the root node is filled by zero.
 !
+    W(nc) = ZERO
     call tree_reset(q(q(tq)), s(ts))
     call c_matrix_eval(q(q(cq)), q(bq), X, Y, W(cx), W(q(cw)))
     call f_matrix_eval(q(q(fq)), q(q(cq)), W(cx), W(q(fx)), W(q(fw)))
@@ -182,7 +199,7 @@ contains
       integer(IK) :: nmol
       nmol = mol_block_nmol(q(bq))
       call zfill(ND, ZEROS, 1)
-      call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(ts), W(cx), W(q(fx)), ZEROS, W(q(tx)))
+      call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(ts), W(cx), W(q(fx)), ZEROS, W(q(tx)), W(nc))
     end block
 !
   end subroutine bb_block_setup
@@ -208,7 +225,7 @@ contains
     nmol = mol_block_nmol(q(bq))
     pp = p(tx) + (tree_current_pointer(p(p(tq)), r(ts)) - 1) * ND
 !
-    call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(ts), X(cx), X(q(fx)), Z(pp), X(q(tx)))
+    call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(ts), X(cx), X(q(fx)), Z(pp), X(q(tx)), X(nc))
     call tree_reset(q(q(tq)), s(ts))
     call tree_select_top_node(q(q(tq)), s(ts), ND, UB, X(q(tx)))
 !
@@ -232,7 +249,7 @@ contains
          if (bb_block_queue_is_empty(q, s) .or. bb_block_queue_is_bottom(q, s)) return
          pp = q(tx) + (tree_current_pointer(q(q(tq)), s(ts)) - 1) * ND
          call tree_expand(q(q(tq)), s(ts))
-         call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(ts), X(cx), X(q(fx)), X(pp), X(q(tx)))
+         call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(ts), X(cx), X(q(fx)), X(pp), X(q(tx)), X(nc))
          call tree_select_top_node(q(q(tq)), s(ts), ND, UB, X(q(tx)))
        end do
      end block
@@ -261,10 +278,10 @@ contains
 !
   end subroutine bb_block_leave
 !
-  pure subroutine evaluate_nodes(nmol, qcov, q, s, CX, FX, Z, X)
+  pure subroutine evaluate_nodes(nmol, qcov, q, s, CX, FX, Z, X, neval)
     integer(IK), intent(in) :: nmol, qcov(*), q(*), s(*)
     real(RK), intent(in)    :: CX(*), FX(*), Z(ND)
-    real(RK), intent(inout) :: X(ND, *)
+    real(RK), intent(inout) :: X(ND, *), neval
     integer(IK)             :: l, px, pw, m, nw, nper, nsym, iper, perm(nmol)
 !
     l = tree_current_level(s)
@@ -283,7 +300,8 @@ contains
      &                    CX, FX, Z, X(1, px), X(1, pw), X(2, pw))
       pw = pw + nsym
     end do
-    !print'(*(f9.3))', X(1, px:px+nper*nsym-1)
+!
+    neval = neval + real(nsym * nper, RK)
 !
   end subroutine evaluate_nodes
 !
@@ -369,12 +387,20 @@ contains
     integer(IK), intent(in) :: q(*)
     !! integer array
     integer(IK), intent(in) :: s(*)
-    !! work integer array
+    !! state vector
     real(RK), intent(in)    :: X(*)
     !! main memory
     real(RK)                :: res
     res = tree_lowest_value(q(q(tq)), s(ts), ND, X(q(tx)))
   end function bb_block_lowest_value
+!
+!| Returns the minimum value of the surviving nodes, excluding the current value.
+  pure function bb_block_evaluation_count(X) result(res)
+    real(RK), intent(in)    :: X(*)
+    !! main memory
+    real(RK)                :: res
+    res = X(nc)
+  end function bb_block_evaluation_count
 !
 !| Returns the minimum value of the surviving nodes, excluding the current value.
   pure function bb_block_log_ncomb(q) result(res)
@@ -383,6 +409,19 @@ contains
     real(RK)                :: res
     res = tree_log_ncomb(q(q(tq)))
   end function bb_block_log_ncomb
+!
+!| Save current state.
+  pure subroutine bb_block_save_state(q, s, z)
+    integer(IK), intent(in)    :: q(*)
+    !! integer array
+    integer(IK), intent(in)    :: s(*)
+    !! state vector
+    integer(IK), intent(inout) :: z(*)
+    !! memory
+    integer(IK)                :: nmol
+    nmol = mol_block_nmol(q(bq))
+    z(:nmol) = tree_current_sequence(q(q(tq)), s(ts))
+  end subroutine bb_block_save_state
 !
 ! util
 !

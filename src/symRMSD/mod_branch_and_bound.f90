@@ -15,10 +15,11 @@ module mod_branch_and_bound
   real(RK), parameter    :: DEF_cutoff  = RHUGE
 !
   integer(IK), parameter :: header_size = 1
-  integer(IK), parameter :: nb = 1
+  integer(IK), parameter :: nb = 1 ! number of block
 !
   integer(IK), parameter :: header_sttsize = 1
   integer(IK), parameter :: sb = 1
+  integer(IK), parameter :: ss = 2 ! pointer to best state vector
 !
   integer(IK), parameter :: header_memsize = 4
   integer(IK), parameter :: ub = 1
@@ -79,9 +80,10 @@ contains
     type(branch_and_bound)     :: res
     integer(IK)                :: q(header_size), s(header_sttsize)
     integer(IK)                :: pq(SIZE(blk)), px(SIZE(blk)), ps(SIZE(blk)), pw(SIZE(blk))
-    integer(IK)                :: i, j
+    integer(IK)                :: i, j, nstat
 !
     q(nb) = SIZE(blk)
+    nstat = SUM([(bb_block_nmol(blk(i)%q), i=1, q(nb))])
     s(sb) = 1
 !
     j = header_size + 4 * q(nb) + 1
@@ -90,7 +92,7 @@ contains
       j = j + SIZE(blk(i)%q)
     end do
 !
-    j = header_sttsize + 1
+    j = header_sttsize + nstat + 1
     do i = 1, q(nb)
       ps(i) = j
       j = j + SIZE(blk(i)%s)
@@ -109,7 +111,7 @@ contains
     end do
 !
     allocate (res%q, source=[q, pq, ps, pw, px, [(blk(i)%q, i=1, SIZE(blk))]])
-    allocate (res%s, source=[s, [(blk(i)%s, i=1, SIZE(blk))]])
+    allocate (res%s, source=[s, [(-1, i=1, nstat)], [(blk(i)%s, i=1, SIZE(blk))]])
 !
   end function branch_and_bound_new
 !
@@ -156,17 +158,16 @@ contains
     pq = q_pointer(q)
 !
     n = n_block(q)
-    do i = 1, n
-      call bb_block_setup(q(q(pq)), X(q(px)), Y(q(px)), s(q(ps)), W(q(pw)), zfill=(i == 1))
-      ps = ps + 1
-      px = px + 1
-      pw = pw + 1
-      pq = pq + 1
+!
+    do concurrent(i=0:n - 1)
+      call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
     end do
+!
+    call save_state(n, q(pq), q(ps), q, s)
 !
   end subroutine branch_and_bound_setup
 !
-  subroutine branch_and_bound_run(q, s, W, cutoff, difflim, maxiter)
+  pure subroutine branch_and_bound_run(q, s, W, cutoff, difflim, maxiter)
     integer(IK), intent(in)           :: q(*)
     !! header
     integer(IK), intent(inout)        :: s(*)
@@ -198,6 +199,11 @@ contains
 !
     call run_bb(n, q(pq), q(ps), q(pw), q, coff, diff, nlim, s(sb), s, W)
 !
+    W(nc) = ZERO
+    do j = 0, n - 1
+      W(nc) = W(nc) + bb_block_evaluation_count(W(q(pw + j)))
+    end do
+!
     W(rt) = LOG(W(nc))
     do j = 0, n - 1
       W(rt) = W(rt) - bb_block_log_ncomb(q(q(pq + j)))
@@ -220,10 +226,18 @@ contains
        &                          q(pq(b - 1)), s(ps(b - 1)), W(pw(b - 1)))
       enddo
 !
-      if (b == n .and. bb_block_queue_is_bottom(q(pq(b)), s(ps(b)))) then
-        W(nc) = W(nc) + ONE
-        W(ub) = MIN(W(ub), bb_block_current_value(q(pq(b)), s(ps(b)), W(pw(b))))
+      if (b == n &
+        & .and. .not. bb_block_queue_is_empty(q(pq(b)), s(ps(b))) &
+        & .and. bb_block_queue_is_bottom(q(pq(b)), s(ps(b)))) then
         call lowerbound(n, pq, ps, pw, q, s, W)
+        block
+          real(RK) :: cv
+          cv = bb_block_current_value(q(pq(b)), s(ps(b)), W(pw(b)))
+          if (W(ub) > cv) then
+            W(ub) = cv
+            call save_state(n, pq, ps, q, s)
+          end if
+        end block
       end if
 !
       do
@@ -252,6 +266,18 @@ contains
     end do
     W(lb) = MAX(W(lb), lv)
   end subroutine lowerbound
+!
+  pure subroutine save_state(n, pq, ps, q, s)
+  integer(IK), intent(in)    :: n, pq(n), ps(n)
+  integer(IK), intent(in)    :: q(*)
+  integer(IK), intent(inout) :: s(*)
+  integer(IK)                :: b, p
+    p = ss
+    do b = 1, n
+      call bb_block_save_state(q(pq(b)), s(ps(b)), s(p))
+      p = p + bb_block_nmol(q(pq(b)))
+    end do
+  end subroutine save_state
 !
   pure elemental subroutine branch_and_bound_destroy(this)
     type(branch_and_bound), intent(inout) :: this
