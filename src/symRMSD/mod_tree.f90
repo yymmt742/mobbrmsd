@@ -27,6 +27,7 @@ module mod_tree
   public :: tree_leave
   public :: tree_select_top_node
   public :: tree_reset
+  public :: tree_n_sym
   public :: tree_n_perm
   public :: tree_n_depth
   public :: tree_log_ncomb
@@ -307,7 +308,7 @@ contains
     real(RK), intent(in)       :: W(ld, *)
 !!  work array
     real(RK)                   :: uv, lv
-    integer(IK)                :: i, p, n, b
+    integer(IK)                :: i, p, n
 !
     uv = UB
 !
@@ -336,7 +337,15 @@ contains
 !
   end subroutine tree_select_top_node
 !
-!|  returns number of permutation in q.
+!| returns number of symmetry in queue.
+  pure function tree_n_sym(q) result(res)
+    integer(IK), intent(in) :: q(*)
+!!  queue
+    integer(IK)             :: res
+    res = q(qs)
+  end function tree_n_sym
+!
+!| returns number of permutation in queue.
   pure function tree_n_perm(q, s) result(res)
     integer(IK), intent(in) :: q(*)
 !!  queue
@@ -346,7 +355,7 @@ contains
     res = queue_nnodes(q(qr), s(sl)) / q(qs)
   end function tree_n_perm
 !
-!|  returns number tree depth (without root node).
+!| returns number tree depth (without root node).
   pure function tree_n_depth(q) result(res)
     integer(IK), intent(in) :: q(*)
 !!  queue
@@ -354,7 +363,7 @@ contains
     res = q(qd)
   end function tree_n_depth
 !
-!|  returns number of nodes in tree.
+!| returns number of nodes in tree.
   pure function tree_log_ncomb(q) result(res)
     integer(IK), intent(in) :: q(*)
 !!  queue
