@@ -26,18 +26,11 @@ module mod_bb_block
   public :: bb_block_queue_is_bottom
   public :: bb_block_current_value
 !
-  integer(IK), parameter :: header_size = 8
-!
   integer(IK), parameter :: mmap_L = 1
   integer(IK), parameter :: mmap_G = 2
   integer(IK), parameter :: mmap_C = 3
 !
-  integer(IK), parameter :: cx = 1
-  !! pointer to c_matrix array (fixed)
-  integer(IK), parameter :: ts = 1
-  !! pointer to tree interger work array (fixed)
-  integer(IK), parameter :: bq = header_size + 1
-  !! pointer to mol_block interger array (fixed)
+  integer(IK), parameter :: header_size = 7
 !
   integer(IK), parameter :: cq = 1
   !! pointer to c_matrix interger array
@@ -45,16 +38,21 @@ module mod_bb_block
   !! pointer to f_matrix interger array
   integer(IK), parameter :: tq = 3
   !! pointer to tree interger array
-  integer(IK), parameter :: ps = 4
-  !! pointer to perm interger array
-  integer(IK), parameter :: fx = 5
+  integer(IK), parameter :: fx = 4
   !! pointer to f_matrix memory
-  integer(IK), parameter :: tx = 6
+  integer(IK), parameter :: tx = 5
   !! pointer to tree memory
-  integer(IK), parameter :: cw = 7
+  integer(IK), parameter :: cw = 6
   !! pointer to c_matrix work memory
-  integer(IK), parameter :: fw = 8
+  integer(IK), parameter :: fw = 7
   !! pointer to f_matrix work memory
+!
+  integer(IK), parameter :: cx = 1
+  !! pointer to c_matrix array (fixed)
+  integer(IK), parameter :: ts = 1
+  !! pointer to tree interger work array (fixed)
+  integer(IK), parameter :: bq = header_size + 1
+  !! pointer to mol_block interger array (fixed)
 !
 !| bb_block<br>
 !    Node data [L, G, C, F, W]<br>
@@ -103,19 +101,13 @@ contains
     q(fq) = q(cq) + SIZE(c%q)
     q(tq) = q(fq) + SIZE(f%q)
 !
-    q(ps) = ts + SIZE(t%s)
-!
     q(cw) = cx + c_matrix_memsize(c%q)
     q(fx) = q(cw)
     q(fw) = q(fx) + f_matrix_memsize(f%q)
     q(tx) = q(fw)
 !
     allocate (res%q, source=[q, b%q, c%q, f%q, t%q])
-    block
-      integer(IK) :: perm(mol_block_nmol(b%q))
-      call perm_reset(b%q, perm)
-      allocate (res%s, source=[t%s, perm])
-    end block
+    allocate (res%s, source=t%s)
 !
   end function bb_block_new
 !
@@ -185,7 +177,6 @@ contains
     !! work integer array
 !
     call tree_reset(q(q(tq)), s(ts))
-    call perm_reset(q(bq), s(q(ps)))
     call c_matrix_eval(q(q(cq)), q(bq), X, Y, W(cx), W(q(cw)))
     call f_matrix_eval(q(q(fq)), q(q(cq)), W(cx), W(q(fx)), W(q(fw)))
 !
@@ -220,7 +211,6 @@ contains
 !
      do
        l = tree_current_level(s(ts))
-       call creverse(l, tree_current_iper(q(q(tq)), s(ts)), s(q(ts)))
        call tree_select_top_node(q(q(tq)), s(ts), UB, X(q(tx)))
        if (l == 1 .or. .not. bb_block_queue_is_empty(q, s)) return
        call tree_leave(q(q(tq)), s(ts))
@@ -249,41 +239,46 @@ contains
 !
      nmol = mol_block_nmol(q(bq))
      nsym = mol_block_nsym(q(bq))
+     block
+       integer(IK) :: perm(nmol)
 !
-     if (tree_current_level(s(ts)) == 1) then
-       cn = child_pointer(q, s)
-       wp = cn + tree_current_memsize(q(q(tq)), s(ts))
-       nb = node_memsize(q(bq), 1)
-       nper = tree_n_perm(q(q(tq)), s(ts))
+       if (tree_current_level(s(ts)) == 1) then
+         cn = child_pointer(q, s)
+         wp = cn + tree_current_memsize(q(q(tq)), s(ts))
+         nb = node_memsize(q(bq), 1)
+         nper = tree_n_perm(q(q(tq)), s(ts))
+         perm = tree_current_permutation(q(q(tq)), s(ts))
 !
-       if (p(1) > 0) then
-         pn = parent_pointer(p, r)
-         call copy_c_matrix(nper, nsym, nb, Z(pn), X(cn))
-       else
-         call zfill(nb * nper * nsym, X(cn), 1)
-       endif
+         if (p(1) > 0) then
+           pn = parent_pointer(p, r)
+           call copy_c_matrix(nper, nsym, nb, Z(pn), X(cn))
+         else
+           call zfill(nb * nper * nsym, X(cn), 1)
+         end if
 !
-       call add_c_matrix(1, nper, nsym, nb, q(q(cq)), s(q(ps)), X(cx), X(cn))
-       call expand(nmol, nper, nsym, nb, q(q(tq)), UB, X(q(fx)), X(cn), X(q(tx)), s(ts), s(q(ps)), X(wp))
-     end if
+         call add_c_matrix(1, nper, nsym, nb, q(q(cq)), perm, X(cx), X(cn))
+         call expand(nmol, nper, nsym, nb, q(q(tq)), perm, UB, X(q(fx)), X(cn), X(q(tx)), s(ts), X(wp))
+       end if
 !
-     do
-       if(bb_block_queue_is_empty(q, s).or.bb_block_queue_is_bottom(q, s)) return
+       do
+         if (bb_block_queue_is_empty(q, s) .or. bb_block_queue_is_bottom(q, s)) return
 !
-       pn = parent_pointer(q, s)
+         pn = parent_pointer(q, s)
 !
-       call tree_expand(q(q(tq)), s(ts))
-       l = tree_current_level(s(ts))
+         call tree_expand(q(q(tq)), s(ts))
+         l = tree_current_level(s(ts))
 !
-       nb = node_memsize(q(bq), l)
-       cn = child_pointer(q, s)
-       wp = cn + tree_current_memsize(q(q(tq)), s(ts))
-       nper = tree_n_perm(q(q(tq)), s(ts))
+         nb = node_memsize(q(bq), l)
+         cn = child_pointer(q, s)
+         wp = cn + tree_current_memsize(q(q(tq)), s(ts))
+         nper = tree_n_perm(q(q(tq)), s(ts))
+         perm = tree_current_permutation(q(q(tq)), s(ts))
 !
-       call copy_c_matrix(nper, nsym, nb, X(pn), X(cn))
-       call add_c_matrix(l, nper, nsym, nb, q(q(cq)), s(q(ps)), X(cx), X(cn))
-       call expand(nmol, nper, nsym, nb, q(q(tq)), UB, X(q(fx)), X(cn), X(q(tx)), s(ts), s(q(ps)), X(wp))
-     enddo
+         call copy_c_matrix(nper, nsym, nb, X(pn), X(cn))
+         call add_c_matrix(l, nper, nsym, nb, q(q(cq)), perm, X(cx), X(cn))
+         call expand(nmol, nper, nsym, nb, q(q(tq)), perm, UB, X(q(fx)), X(cn), X(q(tx)), s(ts), X(wp))
+       end do
+     end block
 !
   end subroutine bb_block_expand
 !
@@ -306,7 +301,7 @@ contains
   end function child_pointer
 !
 !| Expand top node in queue.
-  pure subroutine expand(nmol, nper, nsym, nb, qtree, UB, F, CN, TX, stree, perm, W)
+  pure subroutine expand(nmol, nper, nsym, nb, qtree, perm, UB, F, CN, TX, stree, W)
     integer(IK), intent(in)    :: nmol
     !! number of molecule
     integer(IK), intent(in)    :: nper
@@ -317,14 +312,14 @@ contains
     !! nblock
     integer(IK), intent(in)    :: qtree(*)
     !! tree header array
+    integer(IK), intent(in)    :: perm(*)
+    !! permutation array
     real(RK), intent(in)       :: UB
     !! upper bound
     real(RK), intent(in)       :: F(*)
     !! free matrix
     integer(IK), intent(inout) :: stree(*)
     !! tree work integer array
-    integer(IK), intent(inout) :: perm(*)
-    !! permutation array
     real(RK), intent(inout)    :: CN(*)
     !! child node
     real(RK), intent(inout)    :: TX(*)
@@ -339,9 +334,6 @@ contains
 !
      call evaluate_nodes(l, m, nmol, nper, nsym, nb, nw, perm, F, CN, W(1), W(2))
      call tree_select_top_node(qtree, stree, UB, TX)
-!
-     if(tree_queue_is_empty(qtree, stree)) return
-     call cswap(l, tree_current_iper(qtree, stree), perm)
 !
   end subroutine expand
 !
@@ -475,35 +467,6 @@ contains
     end do
 !
   end subroutine subm
-!
-  pure subroutine cswap(p, iper, perm)
-    integer(IK), intent(in)    :: p, iper
-    integer(IK), intent(inout) :: perm(*)
-    integer(IK)                :: q, i, t
-    ! cyclic swap perm(p:q)
-    if (iper < 1) return
-    q = p + iper
-    t = perm(q)
-    do i = q, p + 1, -1
-      perm(i) = perm(i - 1)
-    end do
-    perm(p) = t
-  end subroutine cswap
-!
-  pure subroutine creverse(p, iper, perm)
-    integer(IK), intent(in)    :: p, iper
-    integer(IK), intent(inout) :: perm(*)
-    integer(IK)                :: q, i, t
-    ! cyclic reverse perm(p:q)
-    if (iper < 1) return
-    q = p + iper
-    t = perm(p)
-    do i = p + 1, q
-      perm(i - 1) = perm(i)
-    end do
-    perm(q) = t
-!
-  end subroutine creverse
 !
 !| queue_is_empty
   pure function bb_block_queue_is_empty(q, s) result(res)
