@@ -19,29 +19,12 @@ program main
 contains
 !
   subroutine test0()
-    type(bb_block)         :: root
     type(bb_block)         :: bm
     integer(IK), parameter :: m = 8
     integer(IK), parameter :: n = 3
     real(RK)               :: X(D, m * n), Y(D, m * n)
-    real(RK), allocatable  :: Z(:)
     real(RK), allocatable  :: W(:)
-    real(RK)               :: ub
-!
-    root = bb_block(0, 0)
-    print'(4I4)',root%q
-    print*
-    print'(4I4)',root%s
-    allocate (Z(bb_block_memsize(root%q)+bb_block_worksize(root%q)))
-    Z(:) = 99
-    call bb_block_setup(root%q, X, Y, root%s, Z)
-!   call bb_block_expand(999.9_RK, root%q, root%s, Z, [-1], [-1], Z)
-    print'(10f6.1)', Z
-!
-    print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(root%q, root%s), &
-      &                       bb_block_queue_is_bottom(root%q, root%s), &
-      &                       bb_block_current_value(root%q, root%s, Z), &
-      &                       root%s
+    integer(IK)            :: i
 !
     bm = bb_block(8, 3, sym=RESHAPE([2, 3, 4, 5, 6, 7, 8, 1], [8, 1]))
     print'(4I4)',bm%q
@@ -49,211 +32,45 @@ contains
     print'(4I4)',bm%s
     print *, bb_block_memsize(bm%q), bb_block_worksize(bm%q)
 !
+    allocate (W(bb_block_memsize(bm%q)+bb_block_worksize(bm%q)))
+!
     X = sample(D, m * n)
-    Y = X
     Y(:, m + 1:m * n) = X(:, :m * (n - 1))
     Y(:, :m) = X(:, m * (n - 1) + 1:m * n)
-    !Y = 0.5 * Y + sample(D, m * n) * 0.5
-!   Y = sample(D, m * n)
-!
-    allocate (W(bb_block_memsize(bm%q)+bb_block_worksize(bm%q)))
-    call bb_block_setup(bm%q, X, Y, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print'(10f6.1)',w
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
-!   call bb_block_leave(999.9_RK, bm%q, bm%s, W)
-!   call bb_block_expand(999.9_RK, bm%q, bm%s, W, root%q, root%s, Z)
-!   print '(2L4,f9.3,*(I3))', bb_block_queue_is_empty(bm%q, bm%s), &
-!     &                       bb_block_queue_is_bottom(bm%q, bm%s), &
-!     &                       bb_block_current_value(bm%q, bm%s, w), &
-!     &                       bm%s
+    do i = 1, 100
+      call run(bm%q, bm%s, X, Y, W)
+      Y = 0.8 * Y + sample(D, m * n) * 0.2
+    end do
 !
   end subroutine test0
 !
-! subroutine test1()
+  subroutine run(q, s, X, Y, W)
+    integer(IK), intent(in)    :: q(*)
+    integer(IK), intent(inout) :: s(*)
+    real(RK), intent(in)       :: X(*), Y(*)
+    real(RK), intent(inout)    :: W(*)
+    real(RK)                   :: ub
+!
+    ub = 999.9_RK
+!
+    call bb_block_setup(q, X, Y, s, W)
+    call bb_block_inheritance(ub, q, s, W, [-1], [-1], W)
+!
+    do
+      call bb_block_expand(ub, q, s, W)
+      if(bb_block_queue_is_empty(q, s)) exit
+      print '(2L4,2f9.3,*(I3))', bb_block_queue_is_empty(q, s), &
+        &                       bb_block_queue_is_bottom(q, s), &
+        &                       bb_block_current_value(q, s, w), &
+        &                       bb_block_lowest_value(q, s, w), &
+        &                       s(:4)
+      ub = bb_block_current_value(q, s, w)
+      call bb_block_leave(ub, q, s, W)
+    end do
+    print*
+!
+  end subroutine run
+!
 !   type(mol_block)       :: b
 !   type(mol_symmetry)    :: ms
 !   type(c_matrix)        :: cm

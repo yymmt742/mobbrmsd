@@ -26,6 +26,7 @@ module mod_tree
   public :: tree_expand
   public :: tree_leave
   public :: tree_select_top_node
+  public :: tree_lowest_value
   public :: tree_reset
   public :: tree_n_sym
   public :: tree_n_perm
@@ -248,7 +249,7 @@ contains
     do concurrent(i=1:q(qd))
       res(i) = i
     end do
-    do i = 1, q(qd)
+    do i = 1, s(sl)
       p = queue_state(s(sr), i)
       if (p < 0) return
       if (p < q(qs)) cycle
@@ -336,6 +337,47 @@ contains
     end do
 !
   end subroutine tree_select_top_node
+!
+!| Returns the minimum value of the surviving nodes, excluding the current value.
+!  If tree is empty, returns -infty.
+  pure function tree_lowest_value(q, s, ld, W) result(res)
+    integer(IK), intent(in) :: q(*)
+!!  queue
+    integer(IK), intent(in) :: s(*)
+!!  state
+    integer(IK), intent(in) :: ld
+!!  leading dimension
+    real(RK), intent(in)    :: W(ld, *)
+!!  work array
+    real(RK)                :: res
+    integer(IK)             :: i
+!
+    res = RHUGE
+    do i = 1, s(sl)
+      if (queue_state(s(sr), i) < 0) return
+      call queue_second_value(q(qr), s(sr), i, ld, W, res)
+    end do
+!
+  end function tree_lowest_value
+!
+  pure subroutine queue_second_value(r, s, i, ld, W, res)
+    integer(IK), intent(in) :: r(queue_blocksize, *), s(*), i, ld
+    real(RK), intent(in)    :: W(ld, *)
+    real(RK), intent(inout) :: res
+    real(RK)                :: cv
+    integer(IK)             :: p, l, u
+!
+    l = r(qp, i)
+    u = l + r(qn, i) - 1
+    p = l + s(i)
+!
+    cv = W(1, p)
+!
+    do p = l, u
+      res = MERGE(W(1, p), res, cv < W(1, p) .and. W(1, p) < res)
+    end do
+!
+  end subroutine queue_second_value
 !
 !| returns number of symmetry in queue.
   pure function tree_n_sym(q) result(res)

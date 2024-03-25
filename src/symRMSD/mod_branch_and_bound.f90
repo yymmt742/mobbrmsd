@@ -6,8 +6,8 @@ module mod_branch_and_bound
   private
   public :: branch_and_bound
   public :: branch_and_bound_memsize
-  public :: branch_and_bound_worksize
   public :: branch_and_bound_setup
+  public :: branch_and_bound_run
   public :: DEF_maxeval
   public :: DEF_cutoff
 !
@@ -15,15 +15,16 @@ module mod_branch_and_bound
   real(RK), parameter    :: DEF_cutoff  = RHUGE
 !
   integer(IK), parameter :: header_size = 1
-!
   integer(IK), parameter :: nb = 1
-  !! number of block
 !
-  integer(IK), parameter :: header_memsize = 1
-  integer(IK), parameter :: bx = header_memsize + 1
-!   ratio = pi; pi = pi + 1
-!   nsrch = pi; pi = pi + 1
-!   lncmb = pi; pi = pi + 1
+  integer(IK), parameter :: header_sttsize = 1
+  integer(IK), parameter :: sb = 1
+!
+  integer(IK), parameter :: header_memsize = 4
+  integer(IK), parameter :: ub = 1
+  integer(IK), parameter :: lb = 2
+  integer(IK), parameter :: nc = 3
+  integer(IK), parameter :: rt = 4
 !
 !| branch_and_bound<br>
 !  This is mainly used for passing during initialization.
@@ -48,71 +49,67 @@ contains
     res = q(nb)
   end function n_block
 !
-  pure function s_pointer(q, i) result(res)
+  pure function s_pointer(q) result(res)
     integer(IK), intent(in) :: q(*)
-    integer(IK), intent(in) :: i
     integer(IK)             :: res
-    res = q(q(header_size + i))
+    res = header_size + q(nb) + 1
   end function s_pointer
 !
-  pure function w_pointer(q, i) result(res)
+  pure function w_pointer(q) result(res)
     integer(IK), intent(in) :: q(*)
-    integer(IK), intent(in) :: i
     integer(IK)             :: res
-    res = q(q(header_size + i) + 1)
+    res = header_size + 2 * q(nb) + 1
   end function w_pointer
 !
-  pure function x_pointer(q, i) result(res)
+  pure function x_pointer(q) result(res)
     integer(IK), intent(in) :: q(*)
-    integer(IK), intent(in) :: i
     integer(IK)             :: res
-    res = q(q(header_size + i) + 2)
+    res = header_size + 3 * q(nb) + 1
   end function x_pointer
 !
-  pure function q_pointer(q, i) result(res)
+  pure function q_pointer(q) result(res)
     integer(IK), intent(in) :: q(*)
-    integer(IK), intent(in) :: i
     integer(IK)             :: res
-    res = q(header_size + i) + 3
+    res = header_size + 1
   end function q_pointer
 !
 !| generate node instance
   pure function branch_and_bound_new(blk) result(res)
     type(bb_block), intent(in) :: blk(:)
     type(branch_and_bound)     :: res
-    integer(IK)                :: q(header_size)
-    integer(IK)                :: p(SIZE(blk))
-    integer(IK)                :: r(3, SIZE(blk))
+    integer(IK)                :: q(header_size), s(header_sttsize)
+    integer(IK)                :: pq(SIZE(blk)), px(SIZE(blk)), ps(SIZE(blk)), pw(SIZE(blk))
     integer(IK)                :: i, j
 !
     q(nb) = SIZE(blk)
+    s(sb) = 1
 !
-    j = header_size + SIZE(p) + 1
-    do i = 1, SIZE(p)
-      p(i) = j
-      j = j + 3 + SIZE(blk(i)%q)
+    j = header_size + 4 * q(nb) + 1
+    do i = 1, q(nb)
+      pq(i) = j
+      j = j + SIZE(blk(i)%q)
     end do
 !
-    j = 1
-    do i = 1, SIZE(r, 2)
-      r(1, i) = j
+    j = header_sttsize + 1
+    do i = 1, q(nb)
+      ps(i) = j
       j = j + SIZE(blk(i)%s)
     end do
 !
-    j = 1
-    do i = 1, SIZE(r, 2)
-      r(2, i) = j
-      j = j + bb_block_memsize(blk(i)%q)
+    j = header_memsize + 1
+    do i = 1, q(nb)
+      pw(i) = j
+      j = j + bb_block_memsize(blk(i)%q) + bb_block_worksize(blk(i)%q)
     end do
 !
     j = 1
-    do i = 1, SIZE(r, 2)
-      r(3, i) = j
+    do i = 1, q(nb)
+      px(i) = j
       j = j + bb_block_molsize(blk(i)%q)
     end do
 !
-    allocate (res%q, source=[q, p, [([r(:,i), blk(i)%q], i=1, SIZE(blk))]])
-    allocate (res%s, source=[[(blk(i)%s, i=1, SIZE(blk))]])
+    allocate (res%q, source=[q, pq, ps, pw, px, [(blk(i)%q, i=1, SIZE(blk))]])
+    allocate (res%s, source=[s, [(blk(i)%s, i=1, SIZE(blk))]])
 !
   end function branch_and_bound_new
 !
@@ -120,187 +117,146 @@ contains
   pure function branch_and_bound_memsize(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! bb_block.
-    integer(IK)             :: res, i, p, n
+    integer(IK)             :: res, i, j, n
 !
-    res = 0
+    res = header_memsize
     n = n_block(q)
+    j = q_pointer(q)
     do i = 1, n
-      p = q_pointer(q, i)
-      res = res + bb_block_memsize(q(p))
+      res = res + bb_block_memsize(q(q(j))) + bb_block_worksize(q(q(j)))
+      j = j + 1
     end do
 !
   end function branch_and_bound_memsize
 !
-!| Inquire worksize of bb_block.
-  pure function branch_and_bound_worksize(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    !! integer array.
-    integer(IK)             :: i, p, n, res, mem
-!
-    res = 0
-    mem = 0
-!
-    n = n_block(q)
-    do i = 1, n
-      p = q_pointer(q, i)
-      mem = mem + bb_block_memsize(q(p))
-      res = MAX(res, mem + bb_block_worksize(q(p)))
-    end do
-    res = res - branch_and_bound_memsize(q)
-!
-  end function branch_and_bound_worksize
-!
-  subroutine branch_and_bound_setup(q, s, X, Y, W)
+!| Setup
+  pure subroutine branch_and_bound_setup(q, s, X, Y, W)
     integer(IK), intent(in)    :: q(*)
+    !! header
     integer(IK), intent(inout) :: s(*)
+    !! state
     real(RK), intent(in)       :: X(*)
+    !! reference coordinate
     real(RK), intent(in)       :: Y(*)
+    !! target coordinate
     real(RK), intent(inout)    :: W(*)
-    integer(IK)                :: i, b, n
+    !! work array
+    integer(IK)                :: i, n
+    integer(IK)                :: ps, pq, px, pw
 !
-    b = 1
+    s(sb) = 1
+    W(ub) = RHUGE
+    W(lb) = -RHUGE
+    W(nc) = ZERO
+    W(rt) = ZERO
+!
+    ps = s_pointer(q)
+    px = x_pointer(q)
+    pw = w_pointer(q)
+    pq = q_pointer(q)
 !
     n = n_block(q)
     do i = 1, n
-      block
-        integer(IK) :: ps, pq, px, pw
-        ps = s_pointer(q, i)
-        px = x_pointer(q, i)
-        pw = w_pointer(q, i)
-        pq = q_pointer(q, i)
-        call bb_block_setup(q(pq), X(px), Y(px), s(ps), W(pw))
-      end block
+      call bb_block_setup(q(q(pq)), X(q(px)), Y(q(px)), s(q(ps)), W(q(pw)), zfill=(i == 1))
+      ps = ps + 1
+      px = px + 1
+      pw = pw + 1
+      pq = pq + 1
     end do
 !
   end subroutine branch_and_bound_setup
 !
-  pure subroutine branch_and_bound_run(q, s, W)
-    integer(IK), intent(in)    :: q(*)
-    integer(IK), intent(inout) :: s(*)
-    real(RK), intent(inout)    :: W(*)
-!   logical, intent(in)        :: swap_y
-!   integer(IK)                :: cur, pp, cix, ncount
+  subroutine branch_and_bound_run(q, s, W, cutoff, difflim, maxiter)
+    integer(IK), intent(in)           :: q(*)
+    !! header
+    integer(IK), intent(inout)        :: s(*)
+    !! state
+    real(RK), intent(inout)           :: W(*)
+    !! work array
+    real(RK), intent(in), optional    :: cutoff
+    !! The search ends when lowerbound is determined to be greater than to cutoff.
+    real(RK), intent(in), optional    :: difflim
+    !! The search ends when the difference between the lower and upper bounds is less than difflim.
+    integer(IK), intent(in), optional :: maxiter
+    !! The search ends when ncount exceeds maxiter.
+    real(RK)                          :: coff, diff, nlim
+    integer(IK)                       :: pq, ps, pw
+    integer(IK)                       :: j, n
 !
-!   tr = this%tr
-!   bi = this%bi
-!   ncount = 0
+    n = n_block(q)
+    pq = q_pointer(q)
+    ps = s_pointer(q)
+    pw = w_pointer(q)
 !
-!   call tr%set_parent_node(W)
+    coff = RHUGE
+    diff = ZERO
+    nlim = RHUGE
 !
-!   do
-!     do
-!       call tr%open_node()
-!       cur = tr%current_depth() - 1
-!       call set_hc(this%dx, tr, bi, cur, this%nd, this%bs, W)
-!       call tr%prune(W)
-!       ncount = ncount + tr%n_breadth()
+    if (PRESENT(cutoff)) coff = MAX(coff, cutoff)
+    if (PRESENT(difflim)) diff = MAX(diff, difflim)
+    if (PRESENT(maxiter)) nlim = maxiter
 !
-!       if (tr%finished()) exit
+    call run_bb(n, q(pq), q(ps), q(pw), q, coff, diff, nlim, s(sb), s, W)
 !
-!       call tr%set_parent_node(W)
-!       cix = tr%current_index()
-!       bi(cur)%isym = (cix - 1) / bi(cur)%nper
-!       call swap_iper(this%nd, cur, cix, bi)
-!       if (cur == this%nd) then
-!         pp = tr%current_pointer()
-!         if (W(tr%upperbound) > W(pp)) then
-!           call breadth_indicator_save(bi)
-!           call DCOPY(tr%memnode, W(pp), 1, W(tr%ubnode), 1)
-!         end if
-!         exit
-!       end if
-!     end do
-!
-!     call tr%set_lowerbound(W)
-!
-!     do while (tr%finished() .and. cur > 0)
-!       call tr%close_node()
-!       call paws_iper(this%nd, cur, bi)
-!       call tr%prune(W)
-!       cur = cur - 1
-!     end do
-!
-!     if (cur == 0) exit
-!     if (this%maxeval > 0 .and. this%maxeval < ncount) exit
-!     if (this%cutoff < W(this%lowerbound)) exit
-!
-!     call tr%set_parent_node(W)
-!     block
-!       integer(IK) :: cix
-!       cix = tr%current_index()
-!       bi(cur)%isym = (cix - 1) / bi(cur)%nper
-!       call swap_iper(this%nd, cur, cix, bi)
-!     end block
-!   end do
-!
-!   W(this%nsrch) = REAL(ncount, RK)
-!   if (ncount < 1) then
-!     W(this%ratio) = -RHUGE
-!   else
-!     W(this%ratio) = LOG(W(this%nsrch)) - W(this%lncmb)
-!   end if
-!
-!   if(.not.swap_y) return
-!
-!   block
-!     integer(IK) :: ig, ic
-!     ig = tr%ubnode + 1
-!     ic = tr%ubnode + 2
-!     call rotation(this%mn, this%dmn, W(ig), W(ic), W(this%yp))
-!   end block
-!
-!   block
-!     integer(IK) :: i
-!     do concurrent(i = 1:this%dx%l)
-!       call swap(this%dx%m(i)%m, this%dx%m(i)%g, &
-!      &          bi(this%p(i):this%p(i)+this%dx%m(i)%g-1)%jper, &
-!      &          bi(this%p(i):this%p(i)+this%dx%m(i)%g-1)%jsym, &
-!      &          this%ms(i), W(this%q(i)))
-!     end do
-!   end block
-!
-! contains
-!
-!   pure subroutine rotation(mn, dmn, H, C, Y)
-!     integer(IK), intent(in) :: mn, dmn
-!     real(RK), intent(in)    :: H, C(d, d)
-!     real(RK), intent(inout) :: Y(d, mn)
-!     integer(IK)             :: nw
-!
-!     nw = dd + MAX(dmn, worksize_rotation_matrix())
-!
-!     block
-!       real(RK) :: WL(nw)
-!       call estimate_rotation_matrix(H, C, WL(1), WL(dd + 1))
-!       call DGEMM('T', 'N', D, mn, D, ONE, WL, D, Y, D, ZERO, WL(dd + 1), D)
-!       call DCOPY(dmn, WL(DD + 1), 1, Y, 1)
-!     end block
-!
-!   end subroutine rotation
+    W(rt) = LOG(W(nc))
+    do j = 0, n - 1
+      W(rt) = W(rt) - bb_block_log_ncomb(q(q(pq + j)))
+    end do
 !
   end subroutine branch_and_bound_run
 !
-! pure elemental subroutine branch_and_bound_clear(this)
-!   class(branch_and_bound), intent(inout) :: this
-!   call this%dx%clear()
-!   call this%tr%clear()
-!   if (ALLOCATED(this%p)) deallocate (this%p)
-!   if (ALLOCATED(this%q)) deallocate (this%q)
-!   if (ALLOCATED(this%ms)) deallocate (this%ms)
-! end subroutine branch_and_bound_clear
+  pure subroutine run_bb(n, pq, ps, pw, q, coff, diff, nlim, b, s, W)
+  integer(IK), intent(in)    :: n, pq(n), ps(n), pw(n), q(*)
+  real(RK), intent(in)       :: coff, diff, nlim
+  integer(IK), intent(inout) :: b, s(*)
+  real(RK), intent(inout)    :: W(*)
+!
+    do
+      do
+        call bb_block_expand(W(ub), q(pq(b)), s(ps(b)), W(pw(b)))
+        if (b == n .or. bb_block_queue_is_empty(q(pq(b)), s(ps(b)))) exit
+        b = b + 1
+        call bb_block_inheritance(W(ub), q(pq(b)), s(ps(b)), W(pw(b)), &
+       &                          q(pq(b - 1)), s(ps(b - 1)), W(pw(b - 1)))
+      enddo
+!
+      if (b == n .and. bb_block_queue_is_bottom(q(pq(b)), s(ps(b)))) then
+        W(nc) = W(nc) + ONE
+        W(ub) = MIN(W(ub), bb_block_current_value(q(pq(b)), s(ps(b)), W(pw(b))))
+        call lowerbound(n, pq, ps, pw, q, s, W)
+      end if
+!
+      do
+        call bb_block_leave(W(ub), q(pq(b)), s(ps(b)), W(pw(b)))
+        if (b == 1 .or. .not. bb_block_queue_is_empty(q(pq(b)), s(ps(b)))) exit
+        b = b - 1
+      enddo
+!
+      if (b == 1 .and. bb_block_queue_is_empty(q(pq(b)), s(ps(b)))) return
+      if (nlim <= W(nc)) return
+      if (W(lb) > coff) return
+      if (W(ub) - W(lb) < diff) return
+    end do
+!
+  end subroutine run_bb
+!
+  pure subroutine lowerbound(n, pq, ps, pw, q, s, W)
+  integer(IK), intent(in)    :: n, pq(n), ps(n), pw(n)
+  integer(IK), intent(in)    :: q(*), s(*)
+  real(RK), intent(inout)    :: W(*)
+  real(RK)                   :: lv
+  integer(IK)                :: b
+    lv = RHUGE
+    do b = 1, n
+      lv = MIN(lv, bb_block_lowest_value(q(pq(b)), s(ps(b)), W(pw(b))))
+    end do
+    W(lb) = MAX(W(lb), lv)
+  end subroutine lowerbound
 !
   pure elemental subroutine branch_and_bound_destroy(this)
     type(branch_and_bound), intent(inout) :: this
     if (ALLOCATED(this%q)) deallocate (this%q)
   end subroutine branch_and_bound_destroy
-!
-!!!
-!
-! pure elemental subroutine breadth_indicator_save(this)
-!   type(breadth_indicator), intent(inout) :: this
-!   this%jper = this%iper
-!   this%jsym = this%isym
-! end subroutine breadth_indicator_save
 !
 end module mod_branch_and_bound
 

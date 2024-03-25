@@ -27,14 +27,15 @@ contains
     type(bb_block)         :: blk(2)
     type(branch_and_bound) :: b
     real(RK)               :: X(D, 8 * 3 + 4 * 5), Y(D, 8 * 3 + 4 * 5)
-    integer(IK)            :: nmem, nwrk
+    integer(IK)            :: i, nmem
 !
     blk(1) = bb_block(8, 3, sym=RESHAPE([2, 3, 4, 5, 6, 7, 8, 1], [8, 1]))
     blk(2) = bb_block(4, 5, sym=RESHAPE([1, 3, 2, 4], [4, 1]))
     b = branch_and_bound(blk)
 
     X = sample(D, SIZE(X, 2))
-    Y = sample(D, SIZE(Y, 2))
+    Y = X
+    !Y = X
 
     print'(4i4)',blk(2)%q
     print*
@@ -42,14 +43,18 @@ contains
     print*
     print'(4i4)',b%s
     nmem = branch_and_bound_memsize(b%q)
-    nwrk = branch_and_bound_worksize(b%q)
-    print*,nmem, nwrk
+    print*,nmem
 !
     block
       real(RK) :: w(nmem)
       w = 99
-      call branch_and_bound_setup(b%q, b%s, X, Y, w)
-      print'(10f5.1)',w
+      do i = 1, 10
+        call branch_and_bound_setup(b%q, b%s, X, Y, w)
+        call branch_and_bound_run(b%q, b%s, w, 999.9_RK)
+        print*, W(:4)
+        Y = 0.8 * Y + 0.2 * sample(D, SIZE(X, 2))
+      end do
+!     print'(10f5.1)',w
     end block
 !
 !   call bb_block_expand(bm%q, bm%x, bm%w)
