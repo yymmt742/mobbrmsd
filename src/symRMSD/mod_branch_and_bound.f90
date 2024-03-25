@@ -143,8 +143,7 @@ contains
     !! target coordinate
     real(RK), intent(inout)    :: W(*)
     !! work array
-    integer(IK)                :: i, n
-    integer(IK)                :: ps, pq, px, pw
+    integer(IK)                :: i, n, ps, pq, px, pw
 !
     s(sb) = 1
     W(ub) = RHUGE

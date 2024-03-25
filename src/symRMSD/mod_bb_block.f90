@@ -142,15 +142,15 @@ contains
     swrk = sdmin_worksize()
     nmol = mol_block_nmol(q(bq))
     nsym = mol_block_nsym(q(bq))
-    buf = tree_nnodes(q(q(tq))) * ND
+    buf = (tree_nnodes(q(q(tq))) - nsym * 2) * ND - 500
     res = 0
     m = nmol
     do p = 1, nmol
       buf = buf - m * nsym * ND
-      hwrk = Hungarian_worksize(m, m)
-      tmp = MAX(MAX(swrk, m**2 + hwrk), swrk * (nsym - 1) + 1)
-      res = MAX(res, tmp - buf)
       m = m - 1
+      hwrk = Hungarian_worksize(m, m)
+      tmp = MAX(MAX(swrk, m**2 + hwrk), swrk * MAX(1, nsym - 1) + 1)
+      res = MAX(res, tmp - buf)
     end do
 !
   end function bb_block_worksize
@@ -183,7 +183,7 @@ contains
     !! integer work array
     real(RK), intent(inout)    :: W(*)
     !! work integer array
-    logical, intent(in), optional :: zfill
+    logical, intent(in)        :: zfill
     !! if true, the root node is filled by zero.
 !
     W(nc) = ZERO
@@ -191,7 +191,6 @@ contains
     call c_matrix_eval(q(q(cq)), q(bq), X, Y, W(cx), W(q(cw)))
     call f_matrix_eval(q(q(fq)), q(q(cq)), W(cx), W(q(fx)), W(q(fw)))
 !
-    if(.not.present(zfill)) return
     if(.not.zfill) return
 !
     block
@@ -200,6 +199,7 @@ contains
       nmol = mol_block_nmol(q(bq))
       call zfill(ND, ZEROS, 1)
       call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(ts), W(cx), W(q(fx)), ZEROS, W(q(tx)), W(nc))
+      call tree_select_top_node(q(q(tq)), s(ts), ND, RHUGE, W(q(tx)))
     end block
 !
   end subroutine bb_block_setup

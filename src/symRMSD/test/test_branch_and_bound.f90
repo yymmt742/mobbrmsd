@@ -1,6 +1,7 @@
 program main
   use mod_params, only: D, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_bb_block
+  use mod_rotation_matrix
   use mod_branch_and_bound
   use mod_unittest
   use mod_testutil
@@ -9,7 +10,8 @@ program main
 !
   call u%init('test branch_and_bound')
 !
-  call test0()
+! call test0()
+  call test1()
 !
   call u%finish_and_terminate()
 !
@@ -22,7 +24,7 @@ contains
     integer(IK)            :: i, nmem
 !
     blk(1) = bb_block(8, 3, sym=RESHAPE([2, 3, 4, 5, 6, 7, 8, 1], [8, 1]))
-    blk(2) = bb_block(4, 5, sym=RESHAPE([1, 3, 2, 4], [4, 1]))
+    blk(2) = bb_block(4, 5, sym=RESHAPE([1, 3, 2, 4, 4, 2, 3, 1], [4, 2]))
     b = branch_and_bound(blk)
 !
     X = sample(D, SIZE(X, 2))
@@ -35,61 +37,62 @@ contains
       w = 99
       do i = 1, 50
         call branch_and_bound_setup(b%q, b%s, X, Y, w)
-        call branch_and_bound_run(b%q, b%s, w, 999.9_RK)
-        print'(5F12.3,8I3)', W(:4), EXP(W(4)), b%s(2:9)
+        call branch_and_bound_run(b%q, b%s, w)
+        print'(2F9.4,F9.1,2F9.4,8I3)', W(:4), EXP(W(4)), b%s(2:9)
         Y = 0.8 * Y + 0.2 * sample(D, SIZE(X, 2))
       end do
     end block
 !
   end subroutine test0
 !
-! subroutine test1()
-!   integer, parameter     :: l = 1
-!   integer, parameter     :: s = 2
-!   integer, parameter     :: m = 5, n = 8, g = 3
-!   integer, parameter     :: mn = m * n
-!   type(mol_block)        :: b = mol_block(0, s, m, n, g)
-!   type(branch_and_bound) :: bra
-!   type(mol_block_list)   :: blk
-!   type(mol_symmetry)     :: ms(l)
-!   real(RK)               :: X(d, mn), Y(d, mn), isd, msd
-!   real(RK), allocatable  :: W(:)
-!   integer                :: i, j, k
+  subroutine test1()
+    integer, parameter     :: l = 1
+    integer, parameter     :: s = 2
+    integer, parameter     :: m = 5, n = 8
+    type(bb_block)         :: blk(1)
+    type(branch_and_bound) :: b
+    real(RK)               :: X(d, m*n), Y(d, m*n), isd, msd
+    real(RK), allocatable  :: W(:)
+    integer(IK)            :: sym(m, 2)
+    integer                :: i, j, k
 !
-!   ms(1) = mol_symmetry(RESHAPE([2, 3, 1, 4, 5], [m, 1]))
-!   blk = mol_block_list(l, [b])
+    sym(:, 1) = [1, 2, 3, 4, 5]
+    sym(:, 2) = [1, 2, 3, 4, 5]
+    !sym(:, 2) = [2, 3, 1, 4, 5]
+    !blk(1) = bb_block(m, n, sym=sym(:,2:2))
+    blk(1) = bb_block(m, n)
+    b = branch_and_bound(blk)
 !
-!   X = sample(d, mn)
-!   Y = sample(d, mn)
+    X = sample(D, SIZE(X, 2))
+    Y = sample(D, SIZE(Y, 2))
 !
-!   bra = branch_and_bound(blk, ms)
+    allocate (W(branch_and_bound_memsize(b%q)))
+    call branch_and_bound_setup(b%q, b%s, X, Y, W)
+    call branch_and_bound_run(b%q, b%s, W)
+    print'(2F9.4,F9.1,2F9.4,8I3)', W(:4), EXP(W(4)), b%s(2:9)
 !
-!   allocate (W(bra%memsize))
-!   call bra%setup(X, Y, W)
-!   call bra%run(W, .true.)
-!   print'(*(f16.3))', w(bra%lncmb), w(bra%nsrch), EXP(w(bra%ratio))
+    msd = 999.0_RK
+    do k = 1, s
+    do j = 1, s
+    do i = 1, s
+      isd = sd(X, swp(m, n, [1, 2, 3], [i, j, k], sym, Y)); msd = MIN(msd, isd)
+      isd = sd(X, swp(m, n, [1, 3, 2], [i, j, k], sym, Y)); msd = MIN(msd, isd)
+      isd = sd(X, swp(m, n, [2, 1, 3], [i, j, k], sym, Y)); msd = MIN(msd, isd)
+      isd = sd(X, swp(m, n, [2, 3, 1], [i, j, k], sym, Y)); msd = MIN(msd, isd)
+      isd = sd(X, swp(m, n, [3, 1, 2], [i, j, k], sym, Y)); msd = MIN(msd, isd)
+      isd = sd(X, swp(m, n, [3, 2, 1], [i, j, k], sym, Y)); msd = MIN(msd, isd)
+    end do
+    end do
+    end do
 !
-!   msd = 999D0
-!   do k=0,s-1
-!   do j=0,s-1
-!   do i=0,s-1
-!     isd = sd(X, swp(m, n, [1, 2, 3], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
-!     isd = sd(X, swp(m, n, [1, 3, 2], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
-!     isd = sd(X, swp(m, n, [2, 1, 3], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
-!     isd = sd(X, swp(m, n, [2, 3, 1], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
-!     isd = sd(X, swp(m, n, [3, 1, 2], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
-!     isd = sd(X, swp(m, n, [3, 2, 1], [i, j, k], ms(1), Y)) ; msd = MIN(msd, isd)
-!   enddo
-!   enddo
-!   enddo
-!
+print*,msd
 !   Y = RESHAPE(W(bra%yp:bra%yp + d * mn), [d, mn])
 !
 !   call u%assert_almost_equal(msd, W(bra%upperbound),             'branchcut vs brute')
 !   call u%assert_almost_equal(SUM((X - Y)**2), W(bra%upperbound), 'swap a            ')
 !   call u%assert_almost_equal(sd(X, Y), W(bra%upperbound),     'swap b            ')
 !
-! end subroutine test1
+  end subroutine test1
 !
 ! subroutine test2()
 !   integer, parameter     :: s = 3
@@ -125,27 +128,25 @@ contains
 !
 ! end subroutine test2
 !
-! pure function swp(m, n, per, sym, ms, X) result(res)
-!   integer(IK), intent(in)        :: m, n, per(:), sym(:)
-!   type(mol_symmetry), intent(in) :: ms
-!   real(RK), intent(in)           :: X(d, m, n)
-!   real(RK)                       :: tmp(d, m, n), res(d, m * n)
-!   integer(IK)                    :: i
-!   tmp = X
-!   do i = 1, SIZE(per)
-!     tmp(:, :, per(i)) = X(:, :, i)
-!     call ms%swap(D, tmp(:, :, per(i)), sym(i))
-!   end do
-!   res = RESHAPE(tmp, [D, m * n])
-! end function swp
+  pure function swp(m, n, per, map, sym, X) result(res)
+    integer(IK), intent(in)        :: m, n, per(:), map(:), sym(:, :)
+    real(RK), intent(in)           :: X(d, m, n)
+    real(RK)                       :: tmp(d, m, n), res(d, m * n)
+    integer(IK)                    :: i
+    tmp = X
+    do i = 1, SIZE(per)
+      tmp(:, sym(:, map(i)), per(i)) = X(:, :, i)
+    end do
+    res = RESHAPE(tmp, [D, m * n])
+  end function swp
 !
-! pure function sd(X, Y) result(res)
-!   real(RK), intent(in)    :: X(:, :), Y(:, :)
-!   real(RK)                :: C(D, D), R(D, D), W(100), res
-!   C = MATMUL(Y, TRANSPOSE(X))
-!   call estimate_rotation_matrix(SUM(X * X) + SUM(Y * Y), C, R, W)
-!   res = SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
-! end function sd
+  pure function sd(X, Y) result(res)
+    real(RK), intent(in)    :: X(:, :), Y(:, :)
+    real(RK)                :: C(D, D), R(D, D), W(100), res
+    C = MATMUL(Y, TRANSPOSE(X))
+    call estimate_rotation_matrix(SUM(X * X) + SUM(Y * Y), C, R, W)
+    res = SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
+  end function sd
 !
 ! function sample(d, n) result(res)
 !   integer, intent(in)  :: d, n

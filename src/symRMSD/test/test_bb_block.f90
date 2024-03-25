@@ -12,7 +12,7 @@ program main
 !
   call setup_dimension(3)
   call test0()
-! call test1()
+  call test1()
 !
   call u%finish_and_terminate()
 !
@@ -27,12 +27,36 @@ contains
     integer(IK)            :: i
 !
     bm = bb_block(8, 3, sym=RESHAPE([2, 3, 4, 5, 6, 7, 8, 1], [8, 1]))
+    print'(10I4)', bm%q
+    print'(10I4)', bm%s
+!
+    allocate (W(bb_block_memsize(bm%q) + bb_block_worksize(bm%q)))
+!
+    X = sample(D, m * n)
+    Y(:, m + 1:m * n) = X(:, :m * (n - 1))
+    Y(:, :m) = X(:, m * (n - 1) + 1:m * n)
+!
+    do i = 1, 20
+      call run(bm%q, bm%s, X, Y, W)
+      Y = 0.8 * Y + sample(D, m * n) * 0.2
+    end do
+!
+  end subroutine test0
+!
+  subroutine test1()
+    type(bb_block)         :: bm
+    integer(IK), parameter :: m = 8
+    integer(IK), parameter :: n = 3
+    real(RK)               :: X(D, m * n), Y(D, m * n)
+    real(RK), allocatable  :: W(:)
+    integer(IK)            :: i
+!
+    bm = bb_block(8, 3)
     print'(4I4)',bm%q
     print*
     print'(4I4)',bm%s
-    print *, bb_block_memsize(bm%q), bb_block_worksize(bm%q)
 !
-    allocate (W(bb_block_memsize(bm%q)+bb_block_worksize(bm%q)))
+    allocate (W(bb_block_memsize(bm%q) + bb_block_worksize(bm%q)))
 !
     X = sample(D, m * n)
     Y(:, m + 1:m * n) = X(:, :m * (n - 1))
@@ -42,19 +66,17 @@ contains
       Y = 0.8 * Y + sample(D, m * n) * 0.2
     end do
 !
-  end subroutine test0
+  end subroutine test1
 !
   subroutine run(q, s, X, Y, W)
     integer(IK), intent(in)    :: q(*)
     integer(IK), intent(inout) :: s(*)
     real(RK), intent(in)       :: X(*), Y(*)
-    real(RK), intent(inout)    :: W(*)
+    real(RK), intent(inout)    :: W(:)
     real(RK)                   :: ub
 !
     ub = 999.9_RK
-!
-    call bb_block_setup(q, X, Y, s, W)
-    call bb_block_inheritance(ub, q, s, W, [-1], [-1], W)
+    call bb_block_setup(q, X, Y, s, W, zfill=.TRUE.)
 !
     do
       call bb_block_expand(ub, q, s, W)
@@ -70,151 +92,6 @@ contains
     print*
 !
   end subroutine run
-!
-!   type(mol_block)       :: b
-!   type(mol_symmetry)    :: ms
-!   type(c_matrix)        :: cm
-!   real(RK)              :: G, C(DD), R(5, 3)
-!   real(RK)              :: X(D, 8 * 3), Y(D, 8 * 5)
-!   real(RK), allocatable :: w(:)
-!
-!   b = mol_block(2, 8, 3, 5)
-!   ms = mol_symmetry(RESHAPE([2, 3, 1, 4, 5, 6, 7, 8], [8, 1]))
-!   cm = c_matrix(b)
-!   allocate (W(memsize_c_matrix(cm) + worksize_c_matrix(cm)))
-!   W(:) = 999
-!   call c_matrix_eval(cm, b, ms, X, Y, W)
-!   G = 0D0
-!   C = 0D0
-!
-!   a = s_matrix(1, 28, b)
-!   X = sample(d, mn)
-!   Y = 0.9D0 * MATMUL(SO3(), X) + 0.1D0 * sample(d, mn)
-!   print *, s_matrix_memsize(a)
-!   allocate (w(s_matrix_memsize(a)))
-!   call s_matrix_eval(a, ms, X, Y, W)
-!   call s_matrix_partial_eval(a, 1, 1, 1, [2, 3, 4, 5], W, LT, H, C, LF, LB)
-!   print'(4f9.3)', LF, LB, LF + LB, LT
-!   call s_matrix_partial_eval(a, 2, 2, 1, [3, 4, 5], W, LT, H, C, LF, LB)
-!   print'(4f9.3)', LF, LB, LF + LB, LT
-!   call s_matrix_partial_eval(a, 3, 3, 1, [4, 5], W, LT, H, C, LF, LB)
-!   print'(4f9.3)', LF, LB, LF + LB, LT
-!   call s_matrix_partial_eval(a, 4, 4, 1, [5], W, LT, H, C, LF, LB)
-!   print'(4f9.3)', LF, LB, LF + LB, LT
-!   call s_matrix_partial_eval(a, 5, 5, 1, [5], W, LT, H, C, LF, LB)
-!   print'(4f9.3)', LF, LB, LF + LB, LT
-!   print *
-!   call s_matrix_partial_eval(a, 1, 1, 2, [2, 3, 4, 5], W, LT, H, C, LF, LB)
-!   print'(4f9.3)', LF, LB, LF + LB, LT
-!   call s_matrix_partial_eval(a, 1, 2, 1, [1, 3, 4, 5], W, LT, H, C, LF, LB)
-!   print'(4f9.3)', LF, LB, LF + LB, LT
-!   call s_matrix_partial_eval(a, 1, 2, 2, [1, 3, 4, 5], W, LT, H, C, LF, LB)
-!   print'(4f9.3)', LF, LB, LF + LB, LT
-!
-! end subroutine test1
-!
-! subroutine test2()
-!   integer, parameter    :: l = 3
-!   integer, parameter    :: s = 3
-!   integer, parameter    :: m = 5
-!   integer, parameter    :: n = 7
-!   integer, parameter    :: f = 3
-!   integer, parameter    :: g = 5
-!   integer, parameter    :: mnl = (3 * m + 6) * n
-!   integer, parameter    :: swp(m, s - 1) = RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m, s - 1])
-!   integer               :: perm(3 * g - 6)
-!   type(mol_block_list)  :: blk
-!   type(mol_block)       :: b(l)
-!   type(mol_symmetry)    :: ms(l)
-!   type(s_matrix_list)   :: a
-!   real(RK)              :: X(d, mnl), Y(d, mnl)
-!   real(RK), allocatable :: w(:)
-!   real(RK)              :: C(d * d), H, LT, LF, LB
-!   integer               :: i, j, k
-!
-!   do concurrent(i=1:l)
-!     ms(i) = mol_symmetry(swp(:, :i - 1))
-!   end do
-!
-!   do i = 1, l
-!     b(i) = mol_block(0, ms(i)%n_sym() + 1, m + i, n, g - i)
-!   end do
-!
-!   k = 0
-!   do j = 1, l
-!     do i = 1, b(j)%g
-!       k = k + 1
-!       perm(k) = i
-!     end do
-!   end do
-!   print'(10I4)',perm
-!
-!   blk = mol_block_list(l, b)
-!   a = s_matrix_list(blk, 1)
-!
-!   X = sample(d, mnl)
-!   Y = 0.99D0 * MATMUL(SO3(), X) + 0.01D0 * sample(d, mnl)
-!   print *, a%memsize()
-!   print *, s_matrix_memsize(a%m)
-!
-!   allocate (w(a%memsize()))
-!
-!   call a%eval(ms, X, Y, W)
-!   print *, W(1)
-!   print'(3f9.3)', W(2:10)
-!   print'(*(f9.3))', W(a%o:a%o+l-1)
-!   print*
-!
-!   H = W(a%h)
-!   C = W(a%c:a%c + DD - 1)
-!   call a%partial_eval(1, perm, 1, 1, W, LT, H, C, LF, LB)
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(2, perm, 1, 1, W, LT, H, C, LF, LB)
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(3, perm, 1, 1, W, LT, H, C, LF, LB)
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(4, perm, 1, 1, W, LT, H, C, LF, LB)
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(5, perm, 1, 1, W, LT, H, C, LF, LB)
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(6, perm, 1, 1, W, LT, H, C, LF, LB)
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(7, perm, 1, 1, W, LT, H, C, LF, LB)
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(8, perm, 1, 1, W, LT, H, C, LF, LB)
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(9, perm, 1, 1, W, LT, H, C, LF, LB)
-!   print'(3f9.3)',H, LT
-!   print*
-!
-!   H = W(a%h)
-!   C = W(a%c:a%c + DD - 1)
-!   call a%partial_eval(1, perm, 4, 1, W, LT, H, C, LF, LB)
-!   perm(:4) = [4,1,2,3]
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(2, perm, 3, 1, W, LT, H, C, LF, LB)
-!   perm(:4) = [4,3,1,2]
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(3, perm, 2, 1, W, LT, H, C, LF, LB)
-!   perm(:4) = [4,3,2,1]
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(4, perm, 1, 1, W, LT, H, C, LF, LB)
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(5, perm, 3, 1, W, LT, H, C, LF, LB)
-!   perm(5:7) = [3,1,2]
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(6, perm, 2, 1, W, LT, H, C, LF, LB)
-!   perm(5:7) = [3,2,1]
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(7, perm, 1, 1, W, LT, H, C, LF, LB)
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(8, perm, 2, 1, W, LT, H, C, LF, LB)
-!   perm(8:9) = [2,1]
-!   print'(3f9.3)',H, LT
-!   call a%partial_eval(9, perm, 1, 1, W, LT, H, C, LF, LB)
-!   print'(3f9.3)',H, LT
-!
-! end subroutine test2
 !
 ! subroutine test3()
 !   integer, parameter    :: s = 1
