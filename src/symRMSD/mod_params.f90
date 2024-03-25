@@ -83,7 +83,7 @@ module mod_params
   public  :: RZERO, RONE, RHALF, RFOUR, RTEN
   public  :: RNAPIER, RHUGE, LN_TO_L10
 !
-  public  :: D, DD
+  public  :: D, DD, ND
   public  :: setup_dimension
   public  :: copy, axpy, dot, gemm, gesvd, getrf, symm
 !
@@ -118,6 +118,8 @@ module mod_params
   !! Spatial dimension
   integer(IK), save, protected :: DD = 9
   !! Square spatial dimension
+  integer(IK), save, protected :: ND = 9 + 2
+  !! Node size, defined by [L, G, C(D,D)]
 !
 !&>
 !
@@ -129,6 +131,7 @@ contains
     integer(IK), intent(in) :: d_
     D = MAX(1, d_)
     DD = D * D
+    ND = DD + 2
   end subroutine setup_dimension
 !
 end module mod_params

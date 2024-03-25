@@ -5,7 +5,7 @@
 !    |-----------|--C3--|-W3-|<br>
 !    Therefore, the maximum memory allocation size is MAX( SUM_i^I |Ci| + |W_I| ).
 module mod_bb_block
-  use mod_params, only: DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use mod_params, only: DD, ND, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_params, only: gemm, dot, copy
   use mod_mol_block
   use mod_c_matrix
@@ -20,7 +20,8 @@ module mod_bb_block
   public :: bb_block_memsize
   public :: bb_block_worksize
   public :: bb_block_setup
-  public :: bb_block_expand
+  public :: bb_block_inheritance
+  !public :: bb_block_expand
   public :: bb_block_leave
   public :: bb_block_queue_is_empty
   public :: bb_block_queue_is_bottom
@@ -95,7 +96,7 @@ contains
     b = mol_block(m, n, sym)
     c = c_matrix(b%q)
     f = f_matrix(b%q)
-    t = tree(b%q, node_memsize)
+    t = tree(b%q)
 !
     q(cq) = bq + SIZE(b%q)
     q(fq) = q(cq) + SIZE(c%q)
@@ -111,15 +112,6 @@ contains
 !
   end function bb_block_new
 !
-  pure function node_memsize(b, p) result(res)
-    integer(IK), intent(in) :: b(*)
-    integer(IK), intent(in) :: p
-    integer(IK)             :: res
-!
-    res = 1 + 1 + DD  ! [L, G, C(D,D)]
-!
-  end function node_memsize
-!
 !| Returns the memory size array size.
   pure function bb_block_memsize(q) result(res)
     integer(IK), intent(in) :: q(*)
@@ -128,7 +120,7 @@ contains
 !
     res = c_matrix_memsize(q(q(cq))) &
    &    + f_matrix_memsize(q(q(fq))) &
-   &    + tree_memsize(q(q(tq)))
+   &    + tree_nnodes(q(q(tq))) * ND
 !
   end function bb_block_memsize
 !
@@ -142,11 +134,11 @@ contains
     swrk = sdmin_worksize()
     nmol = mol_block_nmol(q(bq))
     nsym = mol_block_nsym(q(bq))
-    buf = tree_memsize(q(q(tq)))
+    buf = tree_nnodes(q(q(tq))) * ND
     res = 0
     m = nmol
     do p = 1, nmol
-      buf = buf - m * nsym * node_memsize(q(bq), p)
+      buf = buf - m * nsym * ND
       hwrk = Hungarian_worksize(m, m)
       tmp = MAX(MAX(swrk, m**2 + hwrk), swrk * (nsym - 1) + 1)
       res = MAX(res, tmp - buf)
@@ -211,17 +203,15 @@ contains
 !
      do
        l = tree_current_level(s(ts))
-       call tree_select_top_node(q(q(tq)), s(ts), UB, X(q(tx)))
+       call tree_select_top_node(q(q(tq)), s(ts), ND, UB, X(q(tx)))
        if (l == 1 .or. .not. bb_block_queue_is_empty(q, s)) return
        call tree_leave(q(q(tq)), s(ts))
      enddo
 !
   end subroutine bb_block_leave
 !
-!| Expand top node in queue.
-  pure subroutine bb_block_expand(UB, q, s, X, p, r, Z)
-    real(RK), intent(in)       :: UB
-    !! upper bound
+!| Expands the latest node of the parent block to the top-level queue of the child block.
+  pure subroutine bb_block_inheritance(q, s, X, p, r, Z)
     integer(IK), intent(in)    :: q(*)
     !! work integer array
     integer(IK), intent(inout) :: s(*)
@@ -234,161 +224,166 @@ contains
     !! parent integer work array
     real(RK), intent(in)       :: Z(*)
     !! parent work array
-    integer(IK)                :: nmol, nsym, nper
-    integer(IK)                :: l, cn, pn, wp, nb
+    integer(IK)                :: nmol
 !
-     nmol = mol_block_nmol(q(bq))
-     nsym = mol_block_nsym(q(bq))
-     block
-       integer(IK) :: perm(nmol)
+    nmol = mol_block_nmol(q(bq))
 !
-       if (tree_current_level(s(ts)) == 1) then
-         cn = child_pointer(q, s)
-         wp = cn + tree_current_memsize(q(q(tq)), s(ts))
-         nb = node_memsize(q(bq), 1)
-         nper = tree_n_perm(q(q(tq)), s(ts))
-         perm = tree_current_permutation(q(q(tq)), s(ts))
+    block
+      integer(IK) :: perm(nmol), pp, i
+      perm = [(i, i=1, nmol)]
+      pp = p(tx) + (tree_current_pointer(p(p(tq)), r(ts)) - 1) * ND
+      call evaluate_nodes(1, nmol, q(q(cq)), perm, q(q(tq)), s(ts), X(cx), X(q(fx)), Z(pp), X(q(tx)))
+    end block
 !
-         if (p(1) > 0) then
-           pn = parent_pointer(p, r)
-           call copy_c_matrix(nper, nsym, nb, Z(pn), X(cn))
-         else
-           call zfill(nb * nper * nsym, X(cn), 1)
-         end if
-!
-         call add_c_matrix(1, nper, nsym, nb, q(q(cq)), perm, X(cx), X(cn))
-         call expand(nmol, nper, nsym, nb, q(q(tq)), perm, UB, X(q(fx)), X(cn), X(q(tx)), s(ts), X(wp))
-       end if
-!
-       do
-         if (bb_block_queue_is_empty(q, s) .or. bb_block_queue_is_bottom(q, s)) return
-!
-         pn = parent_pointer(q, s)
-!
-         call tree_expand(q(q(tq)), s(ts))
-         l = tree_current_level(s(ts))
-!
-         nb = node_memsize(q(bq), l)
-         cn = child_pointer(q, s)
-         wp = cn + tree_current_memsize(q(q(tq)), s(ts))
-         nper = tree_n_perm(q(q(tq)), s(ts))
-         perm = tree_current_permutation(q(q(tq)), s(ts))
-!
-         call copy_c_matrix(nper, nsym, nb, X(pn), X(cn))
-         call add_c_matrix(l, nper, nsym, nb, q(q(cq)), perm, X(cx), X(cn))
-         call expand(nmol, nper, nsym, nb, q(q(tq)), perm, UB, X(q(fx)), X(cn), X(q(tx)), s(ts), X(wp))
-       end do
-     end block
-!
-  end subroutine bb_block_expand
-!
-  pure function parent_pointer(q, s) result(res)
-    !! covariance matrix header array
-    integer(IK), intent(in) :: q(*)
-    !! covariance matrix header array
-    integer(IK), intent(in) :: s(*)
-    integer(IK)             :: res
-    res = q(tx) - 1 + tree_current_pointer(q(q(tq)), s(ts))
-  end function parent_pointer
-!
-  pure function child_pointer(q, s) result(res)
-    !! covariance matrix header array
-    integer(IK), intent(in) :: q(*)
-    !! covariance matrix header array
-    integer(IK), intent(in) :: s(*)
-    integer(IK)             :: res
-    res = q(tx) - 1 + tree_queue_pointer(q(q(tq)), s(ts))
-  end function child_pointer
+  end subroutine bb_block_inheritance
 !
 !| Expand top node in queue.
-  pure subroutine expand(nmol, nper, nsym, nb, qtree, perm, UB, F, CN, TX, stree, W)
-    integer(IK), intent(in)    :: nmol
-    !! number of molecule
-    integer(IK), intent(in)    :: nper
-    !! number of molecular symmetry
-    integer(IK), intent(in)    :: nsym
-    !! number of molecular symmetry
-    integer(IK), intent(in)    :: nb
-    !! nblock
-    integer(IK), intent(in)    :: qtree(*)
-    !! tree header array
-    integer(IK), intent(in)    :: perm(*)
-    !! permutation array
-    real(RK), intent(in)       :: UB
-    !! upper bound
-    real(RK), intent(in)       :: F(*)
-    !! free matrix
-    integer(IK), intent(inout) :: stree(*)
-    !! tree work integer array
-    real(RK), intent(inout)    :: CN(*)
-    !! child node
-    real(RK), intent(inout)    :: TX(*)
-    !! tree_memory
-    real(RK), intent(inout)    :: W(*)
-    !! work real array
-    integer(IK)                :: l, m, nw
+! pure subroutine bb_block_expand(UB, q, s, X)
+!   real(RK), intent(in)       :: UB
+!   !! upper bound
+!   integer(IK), intent(in)    :: q(*)
+!   !! work integer array
+!   integer(IK), intent(inout) :: s(*)
+!   !! work integer array
+!   real(RK), intent(inout)    :: X(*)
+!   !! main memory
+!   integer(IK)                :: nmol, nsym, nper
+!   integer(IK)                :: l, cn, pn, wp, nb
 !
-     l = tree_current_level(stree)
-     m = nmol - l
-     nw = sdmin_worksize()
+!    nmol = mol_block_nmol(q(bq))
+!    nsym = mol_block_nsym(q(bq))
+!    block
+!      integer(IK) :: perm(nmol)
 !
-     call evaluate_nodes(l, m, nmol, nper, nsym, nb, nw, perm, F, CN, W(1), W(2))
-     call tree_select_top_node(qtree, stree, UB, TX)
+!      if (tree_current_level(s(ts)) == 1) then
+!        cn = child_pointer(q, s)
+!        wp = cn + tree_current_memsize(q(q(tq)), s(ts))
+!        nb = node_memsize(q(bq), 1)
+!        nper = tree_n_perm(q(q(tq)), s(ts))
+!        perm = tree_current_permutation(q(q(tq)), s(ts))
 !
-  end subroutine expand
+!        if (p(1) > 0) then
+!          pn = parent_pointer(p, r)
+!          call copy_c_matrix(nper, nsym, nb, Z(pn), X(cn))
+!        else
+!          call zfill(nb * nper * nsym, X(cn), 1)
+!        end if
 !
-  pure subroutine copy_c_matrix(nper, nsym, nb, PN, CN)
-    integer(IK), intent(in) :: nper, nsym, nb
-    real(RK), intent(in)    :: PN(*)
-    real(RK), intent(inout) :: CN(nb, nsym, nper)
+!        call add_c_matrix(1, nper, nsym, nb, q(q(cq)), perm, X(cx), X(cn))
+!        call expand(nmol, nper, nsym, nb, q(q(tq)), perm, UB, X(q(fx)), X(cn), X(q(tx)), s(ts), X(wp))
+!      end if
+!
+!      do
+!        if (bb_block_queue_is_empty(q, s) .or. bb_block_queue_is_bottom(q, s)) return
+!
+!        pn = parent_pointer(q, s)
+!
+!        call tree_expand(q(q(tq)), s(ts))
+!        l = tree_current_level(s(ts))
+!
+!        nb = node_memsize(q(bq), l)
+!        cn = child_pointer(q, s)
+!        wp = cn + tree_current_memsize(q(q(tq)), s(ts))
+!        nper = tree_n_perm(q(q(tq)), s(ts))
+!        perm = tree_current_permutation(q(q(tq)), s(ts))
+!
+!        call copy_c_matrix(nper, nsym, nb, X(pn), X(cn))
+!        call add_c_matrix(l, nper, nsym, nb, q(q(cq)), perm, X(cx), X(cn))
+!        call expand(nmol, nper, nsym, nb, q(q(tq)), perm, UB, X(q(fx)), X(cn), X(q(tx)), s(ts), X(wp))
+!    call tree_select_top_node(qtree, stree, ND, UB, TX)
+!      end do
+!    end block
+!
+! end subroutine bb_block_expand
+!
+!| Expand top node in queue.
+! pure subroutine expand(nmol, nper, nsym, nb, qtree, perm, UB, F, CN, TX, stree, W)
+!   integer(IK), intent(in)    :: nmol
+!   !! number of molecule
+!   integer(IK), intent(in)    :: nper
+!   !! number of molecular symmetry
+!   integer(IK), intent(in)    :: nsym
+!   !! number of molecular symmetry
+!   integer(IK), intent(in)    :: nb
+!   !! nblock
+!   integer(IK), intent(in)    :: qtree(*)
+!   !! tree header array
+!   integer(IK), intent(in)    :: perm(*)
+!   !! permutation array
+!   real(RK), intent(in)       :: UB
+!   !! upper bound
+!   real(RK), intent(in)       :: F(*)
+!   !! free matrix
+!   integer(IK), intent(inout) :: stree(*)
+!   !! tree work integer array
+!   real(RK), intent(inout)    :: CN(*)
+!   !! child node
+!   real(RK), intent(inout)    :: TX(*)
+!   !! tree_memory
+!   real(RK), intent(inout)    :: W(*)
+!   !! work real array
+!   integer(IK)                :: l, m, nw
+!
+!    l = tree_current_level(stree)
+!    m = nmol - l
+!    nw = sdmin_worksize()
+!
+!    call evaluate_nodes(l, m, nmol, nper, nsym, nb, nw, perm, F, CN, W(1), W(2))
+!
+! end subroutine expand
+!
+  pure subroutine evaluate_nodes(l, nmol, qcov, perm, q, s, CX, FX, Z, X)
+    integer(IK), intent(in) :: l, nmol
+    integer(IK), intent(in) :: qcov(*), perm(*), q(*), s(*)
+    real(RK), intent(in)    :: CX(*), FX(*), Z(ND)
+    real(RK), intent(inout) :: X(ND, *)
+    integer(IK)             :: px, pw
+    integer(IK)             :: nper, nsym
     integer(IK)             :: iper, isym
+    integer(IK)             :: m, nw
 !
-    do concurrent(iper=1:nper, isym=1:nsym)
-      call copy(DD + 1, PN(mmap_G), 1, CN(mmap_G, isym, iper), 1)
-    end do
+    nsym = tree_n_sym(q)
+    nper = tree_n_perm(q, s)
 !
-  end subroutine copy_c_matrix
+    m = nmol - l
+    nw = sdmin_worksize()
 !
-  pure subroutine add_c_matrix(l, nper, nsym, nb, qcov, perm, C, CN)
-    integer(IK), intent(in) :: l, nper, nsym, nb
-    integer(IK), intent(in) :: qcov(*), perm(*)
-    real(RK), intent(in)    :: C(*)
-    real(RK), intent(inout) :: CN(nb, nsym, nper)
-    integer(IK)             :: iper, isym
-!
-    do concurrent(iper=1:nper, isym=1:nsym)
-      call c_matrix_add(qcov, l, perm(l + iper - 1), isym, C, CN(mmap_G, isym, iper), CN(mmap_C, isym, iper))
-    end do
-!
-  end subroutine add_c_matrix
-!
-  pure subroutine evaluate_nodes(l, m, nmol, nper, nsym, nb, nw, perm, F, CN, W1, W2)
-    integer(IK), intent(in) :: l, m, nmol, nper, nsym, nb, nw, perm(*)
-    real(RK), intent(in)    :: F(*)
-    real(RK), intent(inout) :: CN(nb, nsym, nper)
-    real(RK), intent(inout) :: W1(*)     ! MAX(sdmin_worksize(), m**2 + Hungarian_worksize())
-    real(RK), intent(inout) :: W2(nw, *) ! nw * nsym-1
-    integer(IK)             :: mm, ww
-    integer(IK)             :: iper, isym
-!
-    mm = m**2
-    ww = mm + 1
+    px = tree_queue_pointer(q, s)
+    pw = px + nsym
 !
     do iper = 1, nper
-      call subm(l, nmol, iper, perm, F, w1)
-      call Hungarian(m, m, w1(1), w1(ww))
-      CN(mmap_L, 1, iper) = w1(1)
-      call estimate_sdmin(CN(mmap_G, 1, iper), CN(mmap_C, 1, iper), w1(1))
-!
-      do concurrent(isym=2:nsym)
-        call estimate_sdmin(CN(mmap_G, isym, iper), CN(mmap_C, isym, iper), W2(1, isym - 1))
-        CN(mmap_L, isym, iper) = W2(1, isym - 1) + CN(mmap_L, 1, iper)
-      end do
-!
-      CN(mmap_L, 1, iper) = w1(1) + CN(mmap_L, 1, iper)
+      call evaluate_queue(iper, l, m, nw, nsym, nper, nmol, qcov, perm, &
+     &                    CX, FX, Z, X(1, px), X(1, pw), X(2, pw))
+      px = px + nsym
+      pw = pw + nsym
     end do
 !
   end subroutine evaluate_nodes
+!
+  pure subroutine evaluate_queue(iper, l, m, nw, nsym, nper, nmol, qcov, perm, CX, FX, Z, X, W1, W2)
+    integer(IK), intent(in) :: iper, l, m, nw, nsym, nper, nmol
+    integer(IK), intent(in) :: qcov(*), perm(*)
+    real(RK), intent(in)    :: CX(*), FX(*), Z(ND)
+    real(RK), intent(inout) :: X(ND, nsym, nper), W1(*), W2(nw, *)
+    integer(IK)             :: isym
+!
+    call copy(ND, Z, 1, X(1, 1, iper), 1)
+    call c_matrix_add(qcov, l, perm(l + iper), isym, CX, X(mmap_G, 1, iper), X(mmap_C, 1, iper))
+!
+    call subm(l, nmol, iper, perm, FX, W1)
+    call Hungarian(m, m, W1(1), W1(m * m + 1))
+!
+    do concurrent(isym=2:nsym)
+      call copy(ND, Z, 1, X(1, isym, iper), 1)
+      call c_matrix_add(qcov, l, perm(l + iper), isym, CX, X(mmap_G, 1, iper), X(mmap_C, 1, iper))
+      call estimate_sdmin(X(mmap_G, isym, iper), X(mmap_C, isym, iper), W2(1, isym - 1))
+      X(mmap_L, isym, iper) = W1(1) + W2(1, isym - 1)
+    end do
+!
+    call estimate_sdmin(X(mmap_G, 1, iper), X(mmap_C, 1, iper), W2)
+    X(mmap_L, 1, iper) = W1(1) + W2(1, 1)
+!
+  end subroutine evaluate_queue
 !
 ! pure subroutine expand(p, n, nb, nw, nper, nsym, cq, b, perm, C, NP, NN, W1, W2)
 !   integer(IK), intent(in) :: p, n, nb, nw, nper, nsym
