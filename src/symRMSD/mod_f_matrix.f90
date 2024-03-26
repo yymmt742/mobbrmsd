@@ -1,6 +1,6 @@
-!| Module for manage S matrix.<br>
-!  S(nx, ny) :: Surplus matrices.<br>
-!    - S_IJ = min_{R,s} Tr[C_IJs @ R]<br>
+!| Module for manage F matrix.<br>
+!  F(n, n) :: Free rotation matrices.<br>
+!    - F_ij = min_{R,s} Tr[C_IJs @ R]<br>
 module mod_f_matrix
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_c_matrix
@@ -14,11 +14,9 @@ module mod_f_matrix
   public :: f_matrix_worksize
   public :: f_matrix_eval
 !
-  integer(IK), parameter :: header_size = 2
+  integer(IK), parameter :: header_size = 1
   integer(IK), parameter :: nn = 1
   !! n * n
-  integer(IK), parameter :: nw = 2
-  !! work memory size.
 !
 !| f_matrix <br>
 !  - F is the n x n matrix. <br>
@@ -39,10 +37,9 @@ contains
   pure function f_matrix_new(b) result(res)
     integer(IK), intent(in) :: b(*)
     !! mol_block, must be initialized
-    type(f_matrix)    :: res
+    type(f_matrix)          :: res
 !
     res%q(nn) = mol_block_nmol(b)**2
-    res%q(nw) = sdmin_worksize() + 1
 !
   end function f_matrix_new
 !
@@ -59,7 +56,7 @@ contains
     integer(IK), intent(in) :: q(*)
     !! f_matrix
     integer(IK)             :: res
-    res = q(nn) * q(nw)
+    res = q(nn) * (sdmin_worksize() + 1)
   end function f_matrix_worksize
 !
 !| Evaluation the D matrix
@@ -74,15 +71,16 @@ contains
     !! main memory of F.
     real(RK), intent(inout) :: W(*)
     !! work array.
-    integer(IK)             :: i, cb
+    integer(IK)             :: i, cb, nw
 !
     cb = c_matrix_blocksize(qc)
+    nw = sdmin_worksize() + 1
 !
     do concurrent(i=1:q(nn))
       block
         integer(IK) :: ic, iw
         ic = cb * (i - 1) + 1
-        iw = q(nw) * (i - 1) + 1
+        iw = nw * (i - 1) + 1
         call eval_f_matrix(cb, C(ic), W(iw))
         F(i) = W(iw)
       end block
@@ -104,24 +102,6 @@ contains
     end do
 !
   end subroutine eval_f_matrix
-!
-! pure subroutine eval_f_matrix(cb, nn, C, F, W)
-!   integer(IK), intent(in) :: cb, nn
-!   real(RK), intent(in)    :: C(cb, *)
-!   real(RK), intent(inout) :: F(*), W(*)
-!   integer(IK)             :: i, j
-!
-!   get squared displacement
-!   do j = 1, nn
-!     W(1) = RHUGE
-!     do i = 2, cb, DD
-!       call estimate_sdmin(C(1, j), C(i, j), W(2))
-!       W(1) = MIN(W(1), W(2))
-!     end do
-!     F(j) = W(1)
-!   end do
-!
-! end subroutine eval_f_matrix
 !
 end module mod_f_matrix
 

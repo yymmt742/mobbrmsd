@@ -205,7 +205,7 @@ contains
     map = 1
     do while (.not. per%endl())
       do
-        res = MIN(res, sd(m, n, X, swp(m, n, s, per%id, map, sym, Y)))
+        res = MIN(res, sd(m, n, X, pws(m, n, s, per%id, map, sym, Y)))
         call map_next(n, s, map)
         if (ALL(map == 1)) exit
       enddo
@@ -236,6 +236,17 @@ contains
       res(:, sym1(:, map(i)), per(i)) = X(:, :, i)
     end do
   end function swp
+!
+  pure function pws(m, n, s, per, map, sym, X) result(res)
+    integer(IK), intent(in) :: m, n, s, per(n), map(n), sym(m * (s - 1))
+    real(RK), intent(in)    :: X(D, m, n)
+    real(RK)                :: res(D, m, n)
+    integer(IK)             :: i, sym1(m, s)
+    sym1 = RESHAPE([[(i, i=1, m)], sym], SHAPE(sym1))
+    do i = 1, n
+      res(:, :, i) = X(:, sym1(:, map(i)), per(i))
+    end do
+  end function pws
 !
 end module mod_testutil
 

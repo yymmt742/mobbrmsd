@@ -136,13 +136,15 @@ contains
   pure function bb_block_worksize(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! bb_block header array.
-    integer(IK)             :: p, nmol, nsym, m, buf, tmp, swrk, hwrk
+    integer(IK)             :: p, nmol, nsym, m, buf, tmp, swrk, hwrk, mfmt, mtre
     integer(IK)             :: res
 !
     swrk = sdmin_worksize()
     nmol = mol_block_nmol(q(bq))
     nsym = mol_block_nsym(q(bq))
-    buf = (tree_nnodes(q(q(tq))) - nsym * 2) * ND - 500
+    mfmt = f_matrix_worksize(q(q(fq)))
+    mtre = tree_nnodes(q(q(tq))) * ND
+    buf = (tree_nnodes(q(q(tq))) - nsym * 2) * ND
     res = 0
     m = nmol
     do p = 1, nmol
@@ -152,6 +154,8 @@ contains
       tmp = MAX(MAX(swrk, m**2 + hwrk), swrk * MAX(1, nsym - 1) + 1)
       res = MAX(res, tmp - buf)
     end do
+    res = MAX(res, c_matrix_worksize(q(q(cq))) - mfmt - mtre)
+    res = MAX(res, mfmt - mtre)
 !
   end function bb_block_worksize
 !
