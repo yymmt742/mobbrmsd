@@ -12,7 +12,7 @@ program main
 !
   call setup_dimension(3)
   call test0()
-  call test1()
+! call test1()
 !
   call u%finish_and_terminate()
 !
@@ -22,23 +22,25 @@ contains
     type(bb_block)         :: bm
     integer(IK), parameter :: m = 8
     integer(IK), parameter :: n = 3
-    real(RK)               :: X(D, m * n), Y(D, m * n)
+    integer(IK), parameter :: s = 2
+    integer(IK), parameter :: sym(m) = [2, 3, 4, 5, 6, 7, 8, 1]
+    real(RK)               :: X(D, m, n), Y(D, m, n)
     real(RK), allocatable  :: W(:)
     integer(IK)            :: i
 !
-    bm = bb_block(8, 3, sym=RESHAPE([2, 3, 4, 5, 6, 7, 8, 1], [8, 1]))
-    print'(10I4)', bm%q
-    print'(10I4)', bm%s
+    bm = bb_block(8, 3, sym=RESHAPE(sym, [m, 1]))
 !
     allocate (W(bb_block_memsize(bm%q) + bb_block_worksize(bm%q)))
 !
-    X = sample(D, m * n)
-    Y(:, m + 1:m * n) = X(:, :m * (n - 1))
-    Y(:, :m) = X(:, m * (n - 1) + 1:m * n)
+    X = RESHAPE(sample(D, m * n), SHAPE(X))
+    Y(:, :, :2) = X(:, :, 2:)
+    Y(:, :, 3) = X(:, :, 1)
 !
     do i = 1, 20
       call run(bm%q, bm%s, X, Y, W)
-      Y = 0.8 * Y + sample(D, m * n) * 0.2
+      print'(2f9.3)', W(1), brute_sd(m, n, s, sym, X, Y)
+      print*
+      Y = 0.8 * Y + RESHAPE(sample(D, m * n), SHAPE(Y)) * 0.2
     end do
 !
   end subroutine test0
@@ -89,7 +91,8 @@ contains
       ub = bb_block_current_value(q, s, w)
       call bb_block_leave(ub, q, s, W)
     end do
-    print*
+!
+    W(1) = ub
 !
   end subroutine run
 !

@@ -195,7 +195,7 @@ contains
   end function sd
 !
   pure function brute_sd(m, n, s, sym, X, Y) result(res)
-    integer(IK), intent(in) :: m, n, s, sym(m, s)
+    integer(IK), intent(in) :: m, n, s, sym(m * (s - 1))
     real(RK), intent(in)    :: X(D, m, n), Y(D, m, n)
     real(RK)                :: res
     type(permutation)       :: per
@@ -227,12 +227,13 @@ contains
   end subroutine map_next
 !
   pure function swp(m, n, s, per, map, sym, X) result(res)
-    integer(IK), intent(in) :: m, n, s, per(n), map(n), sym(m, s)
+    integer(IK), intent(in) :: m, n, s, per(n), map(n), sym(m * (s - 1))
     real(RK), intent(in)    :: X(D, m, n)
     real(RK)                :: res(D, m, n)
-    integer(IK)             :: i
+    integer(IK)             :: i, sym1(m, s)
+    sym1 = RESHAPE([[(i, i=1, m)], sym], SHAPE(sym1))
     do i = 1, n
-      res(:, sym(:, map(i)), per(i)) = X(:, :, i)
+      res(:, sym1(:, map(i)), per(i)) = X(:, :, i)
     end do
   end function swp
 !
