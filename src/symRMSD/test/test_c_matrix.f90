@@ -1,5 +1,5 @@
 program main
-  use mod_params, only: setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: setup_dimension, D, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_rotation_matrix
   use mod_c_matrix
@@ -11,14 +11,46 @@ program main
   call u%init('test d_matrix')
 !
   call setup_dimension(3)
-!
-  call test0()
+  call test0(0, 0, 1, [0])
+  call test0(5, 1, 1, [0])
+  call test0(5, 1, 2, [4,5,1,2,3])
+  call test0(2, 5, 2, [2,1])
+  call test0(3, 5, 3, [1, 3, 2, 3, 2, 1])
+  call test1()
 !
   call u%finish_and_terminate()
 !
 contains
 !
-  subroutine test0()
+  subroutine test0(m, n, s, sym)
+    integer(IK), intent(in) :: m, n, s, sym(m * (s - 1))
+    type(mol_block)         :: b
+    type(c_matrix)          :: c
+    real(RK)                :: X(D, m * n)
+    real(RK)                :: Y(D, m * n)
+    real(RK), allocatable   :: Z(:), W(:)
+!
+    X = sample(SIZE(X, 1), SIZE(X, 2))
+    Y = sample(SIZE(Y, 1), SIZE(Y, 2))
+!
+    b = mol_block(m, n, sym=RESHAPE(sym, [m, (s - 1)]))
+    c = c_matrix(b%q)
+    allocate (Z(c_matrix_memsize(c%q)))
+    allocate (W(c_matrix_worksize(c%q)))
+    Z(:) = 999
+    W(:) = 999
+!
+    call c_matrix_eval(c%q, b%q, X, Y, Z, W)
+!
+    print'(10f5.1)', Z
+    print*
+!   print'(10f5.1)', W
+!   print*
+!   print*
+!
+  end subroutine test0
+!
+  subroutine test1()
     type(mol_block)       :: b(3)
     type(c_matrix)        :: c(3)
     real(RK)              :: X(3, 5 * 3 + 3 * 4 + 8 * 3)
@@ -70,6 +102,6 @@ contains
     print'(19f5.1)',W(p3:p3+170)
     print*
 !
-  end subroutine test0
+  end subroutine test1
 !
 end program main
