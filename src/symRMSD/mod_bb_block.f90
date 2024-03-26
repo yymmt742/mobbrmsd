@@ -1,11 +1,6 @@
-!| Module for manage lowerbound matrices and tree.
-!    By default, memory is allocated as follows.<br>
-!    |-C1-|----W1----|<br>
-!    |----|--C2--|--------W2-------|<br>
-!    |-----------|--C3--|-W3-|<br>
-!    Therefore, the maximum memory allocation size is MAX( SUM_i^I |Ci| + |W_I| ).
+!| Module for handling C, F and tree.
 module mod_bb_block
-  use mod_params, only: DD, ND, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use mod_params, only: ND, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_params, only: gemm, dot, copy
   use mod_mol_block
   use mod_c_matrix
