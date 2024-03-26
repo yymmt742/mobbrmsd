@@ -18,9 +18,21 @@ program main
   call test0(3, 5, 3, [1, 3, 2, 3, 2, 1])
   call test1()
 !
+  call test3(4, 3, 1, [1, 2, 3], [1, 1, 1], [1, 2, 3, 4])
+  call test3(4, 3, 3, [2, 1, 3], [2, 1, 2], [1, 2, 3, 4, 4, 1, 2, 3, 2, 3, 4, 1])
+!
   call u%finish_and_terminate()
 !
 contains
+!
+  subroutine test3(m, n, s, per, map, sym)
+    integer(IK), intent(in) :: m, n, s, per(n), map(n), sym(m * s)
+    real(RK)                :: X(D, m, n)
+!
+    X = RESHAPE(sample(D, m * n), SHAPE(X))
+    print*, brute_sd(m, n, s, sym, X, swp(m, n, s, per, map, sym, X))
+!
+  end subroutine test3
 !
   subroutine test0(m, n, s, sym)
     integer(IK), intent(in) :: m, n, s, sym(m * (s - 1))
@@ -44,9 +56,6 @@ contains
 !
     print'(10f5.1)', Z
     print*
-!   print'(10f5.1)', W
-!   print*
-!   print*
 !
   end subroutine test0
 !
