@@ -1,7 +1,8 @@
 !
 !| Utility functions for testing.
 module mod_testutil
-  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use mod_params, only: D, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use mod_rotation_matrix
   implicit none
   private
   public :: sample
@@ -62,28 +63,25 @@ contains
     enddo
   end function eye
 !
-! pure function swp(d, m, n, per, sym, ms, X) result(res)
-!   integer(IK), intent(in) :: d, m, n, per(:), sym(:)
-!   type(mol_symmetry), intent(in) :: ms
-!   real(RK), intent(in)    :: X(d, m, n)
-!   real(RK)                :: tmp(d, m, n), res(d, m * n)
-!   integer(IK)             :: i
-!   tmp = X
-!   do i = 1, SIZE(per)
-!     tmp(:, :, per(i)) = X(:, :, i)
-!     call ms%swap(d, tmp(:, :, per(i)), sym(i))
-!   end do
-!   res = RESHAPE(tmp, [d, m * n])
-! end function swp
+  pure function swp(m, n, per, map, sym, X) result(res)
+    integer(IK), intent(in)        :: m, n, per(:), map(:), sym(:, :)
+    real(RK), intent(in)           :: X(d, m, n)
+    real(RK)                       :: tmp(d, m, n), res(d, m * n)
+    integer(IK)                    :: i
+    tmp = X
+    do i = 1, SIZE(per)
+      tmp(:, sym(:, map(i)), per(i)) = X(:, :, i)
+    end do
+    res = RESHAPE(tmp, [D, m * n])
+  end function swp
 !
-! pure function sd(d, X, Y) result(res)
-!   integer(IK), intent(in) :: d
-!   real(RK), intent(in)    :: X(:, :), Y(:, :)
-!   real(RK)                :: C(d, d), R(d, d), W(100), res
-!   C = MATMUL(Y, TRANSPOSE(X))
-!   call estimate_rotation_matrix(SUM(X * X) + SUM(Y * Y), C, R, W)
-!   res = SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
-! end function sd
+  pure function sd(X, Y) result(res)
+    real(RK), intent(in)    :: X(:, :), Y(:, :)
+    real(RK)                :: C(D, D), R(D, D), W(100), res
+    C = MATMUL(Y, TRANSPOSE(X))
+    call estimate_rotation_matrix(SUM(X * X) + SUM(Y * Y), C, R, W)
+    res = SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
+  end function sd
 !
 end module mod_testutil
 

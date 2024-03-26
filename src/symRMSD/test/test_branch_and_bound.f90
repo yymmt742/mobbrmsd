@@ -148,16 +148,4 @@ print*,msd
     res = SUM(X**2) + SUM(Y**2) - 2 * SUM(C * R)
   end function sd
 !
-! function sample(d, n) result(res)
-!   integer, intent(in)  :: d, n
-!   real(RK)             :: cnt(d)
-!   real(RK)             :: res(d, n)
-!   integer              :: i
-!   call RANDOM_NUMBER(res)
-!   cnt = SUM(res, 2) / n
-!   do concurrent(i=1:n)
-!     res(:, i) = res(:, i) - cnt
-!   enddo
-! end function sample
-!
 end program main

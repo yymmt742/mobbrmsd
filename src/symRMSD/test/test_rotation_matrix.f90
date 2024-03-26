@@ -43,7 +43,7 @@ contains
     real(RK), allocatable :: w(:)
     integer               :: i
 !
-    allocate (w(MAX(worksize_rotation_matrix(), worksize_sdmin())))
+    allocate (w(MAX(rotation_matrix_worksize(), sdmin_worksize())))
 !
     call RANDOM_NUMBER(X)
 !

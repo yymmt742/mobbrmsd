@@ -1,5 +1,5 @@
 program main
-  use mod_params, only: setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: setup_dimension, D, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_c_matrix
   use mod_f_matrix
@@ -11,14 +11,54 @@ program main
   call u%init('test f_matrix')
 !
   call setup_dimension(3)
-  call test0(0.0_RK)
-  call test0(1.0_RK)
+!
+  call test0(9, 1, 1, [1])
+  call test0(4, 1, 2, [1,3,4,2])
+  call test0(4, 3, 2, [1,3,4,2])
+  call test0(3, 3, 3, [1,3,2,2,3,1])
+  call test0(1, 4, 1, [1])
+  call test0(3, 4, 1, [1])
+!
+  call test1(0.0_RK)
+  call test1(1.0_RK)
 !
   call u%finish_and_terminate()
 !
 contains
 !
-  subroutine test0(s)
+  subroutine test0(m, n, s, sym)
+    integer(IK), intent(in) :: m, n, s, sym(m * (s - 1))
+    type(mol_block)         :: b
+    type(c_matrix)          :: c
+    type(f_matrix)          :: f
+    real(RK)                :: X(D, m * n), Y(D, m * n)
+    real(RK), allocatable   :: CX(:), CW(:), FX(:), FW(:)
+!
+    X = sample(SIZE(X, 1), SIZE(X, 2))
+    Y = X
+    b = mol_block(m, n)
+    c = c_matrix(b%q)
+    f = f_matrix(b%q)
+!
+    allocate (CX(c_matrix_memsize(c%q)))
+    allocate (CW(c_matrix_worksize(c%q)))
+    allocate (FX(f_matrix_memsize(f%q)))
+    allocate (FW(f_matrix_worksize(f%q)))
+    CX(:) = 999
+    CW(:) = 999
+    FX(:) = 999
+    FW(:) = 999
+!
+    call c_matrix_eval(c%q, b%q, X, Y, CX, CW)
+    call f_matrix_eval(f%q, c%q, CX, FX, FW)
+!
+    print'(4f9.3)', FX
+    print*
+!   print'(4f9.3)', FW
+!
+  end subroutine test0
+!
+  subroutine test1(s)
     real(RK), intent(in)  :: s
     type(mol_block)       :: b(3)
     type(c_matrix)        :: c(3)
@@ -91,7 +131,7 @@ contains
     print'(3f9.3)', W(f3:f3 + f_matrix_memsize(f(3)%q) - 1)
     print*
 !
-  end subroutine test0
+  end subroutine test1
 !
 end program main
 
