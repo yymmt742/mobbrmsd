@@ -148,6 +148,7 @@ target_sources( test_mobbrmsd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
+                                     mod_testutil.f90
                                      test_mobbrmsd.f90 )
 target_include_directories( test_mobbrmsd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
 target_link_libraries( test_mobbrmsd PRIVATE unittest )

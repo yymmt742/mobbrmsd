@@ -1,6 +1,7 @@
 program main
-  use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: D, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mobbrmsd
+  use mod_testutil
   use mod_unittest
   implicit none
   type(unittest) :: u
@@ -34,9 +35,14 @@ contains
     block
       type(mobbrmsd_header) :: h
       type(mobbrmsd_state)  :: s(3)
+      real(RK)              :: X(D, 24 + 4 * 4 + 20 * 3)
+      real(RK)              :: Y(D, 24 + 4 * 4 + 20 * 3)
       h = mobb%h
       s(:) = mobb%s
       print*, h%n_block(), h%memsize()
+      X = sample(SIZE(X, 1), SIZE(X, 2))
+      Y = 0.8 * X + 0.2 * sample(SIZE(Y, 1), SIZE(Y, 2))
+      call mobbrmsd_run(h, s(1), X, Y)
     end block
 !
 !
