@@ -11,6 +11,7 @@ module mod_mobbrmsd
   public :: mobbrmsd_header
   public :: mobbrmsd_state
   public :: mobbrmsd_run
+  public :: mobbrmsd_swap_y
 !
   type mol_block_input
     private
@@ -278,14 +279,15 @@ contains
 !
   end function mobbrmsd_new_from_block
 !
-  pure subroutine mobbrmsd_run(header, state, X, Y, W, cutoff, difflim, maxeval)
+!| run mobbrmsd
+  pure subroutine mobbrmsd_run(header, state, X, Y, W, cutoff, difflim, maxeval, rot)
     class(mobbrmsd_header), intent(in)   :: header
     !! mobbrmsd_header
     class(mobbrmsd_state), intent(inout) :: state
-    !! mobbrmsd_state
+    !! mobbrmsd_state, the result is contained in this structure.
     real(RK), intent(in)                 :: X(*)
     !! reference coordinate
-    real(RK), intent(inout)              :: Y(*)
+    real(RK), intent(in)                 :: Y(*)
     !! target coordinate
     real(RK), intent(inout), optional    :: W(*)
     !! work array, must be > header%memsize()
@@ -295,6 +297,8 @@ contains
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
     integer(IK), intent(in), optional    :: maxeval
     !! The search ends when ncount exceeds maxiter.
+    real(RK), intent(inout), optional    :: rot(*)
+    !! rotation matrix, if needed.
 !
     if (.not. ALLOCATED(header%q)) return
     if (.not. ALLOCATED(state%s)) return
@@ -324,6 +328,19 @@ contains
     end if
 !
   end subroutine mobbrmsd_run
+!
+!| swap target coordinate.
+  pure subroutine mobbrmsd_swap_y(header, state, Y)
+    class(mobbrmsd_header), intent(in) :: header
+    !! mobbrmsd_header
+    class(mobbrmsd_state), intent(in)  :: state
+    !! mobbrmsd_state
+    real(RK), intent(inout)            :: Y(*)
+    !! target coordinate
+!
+    call bb_list_swap_y(header%q, state%s, Y)
+!
+  end subroutine mobbrmsd_swap_y
 !
   pure elemental subroutine mobbrmsd_destroy(this)
     type(mobbrmsd), intent(inout) :: this

@@ -28,6 +28,7 @@ module mod_bb_block
   public :: bb_block_evaluation_count
   public :: bb_block_save_state
   public :: bb_block_swap_y
+  public :: bb_block_covmat_add
 !
   integer(IK), parameter :: mmap_L = 1
   integer(IK), parameter :: mmap_G = 2
@@ -267,7 +268,6 @@ contains
 !
 !| leave current node.
   pure subroutine bb_block_leave(UB, q, s, X)
-  !pure subroutine bb_block_leave(UB, q, s, X)
     real(RK), intent(in)       :: UB
     !! upper bound
     integer(IK), intent(in)    :: q(*)
@@ -357,6 +357,7 @@ contains
 !
   end subroutine subm
 !
+!
 !| Returns true when queue is empty
   pure function bb_block_queue_is_empty(q, s) result(res)
     integer(IK), intent(in) :: q(*)
@@ -432,12 +433,12 @@ contains
     z(:nmol) = tree_current_sequence(q(q(tq)), s(ts))
   end subroutine bb_block_save_state
 !
-!| swap Y.
+!| swap Y by saved state z.
   pure subroutine bb_block_swap_y(q, z, Y)
     integer(IK), intent(in) :: q(*)
     !! integer array
     integer(IK), intent(in) :: z(*)
-    !! tree_current_sequence (not state vector)
+    !! saved state (not state vector)
     real(RK), intent(inout) :: Y(*)
     !! target coordinate
     integer(IK)             :: nmol, napm
@@ -464,6 +465,30 @@ contains
     end do
     call copy(dmn, T, 1, Y, 1)
   end subroutine swap_y
+!
+!| Sum covariance matrix by saved state z.
+  pure subroutine bb_block_covmat_add(q, z, W, G, C)
+    integer(IK), intent(in) :: q(*)
+    !! integer array
+    integer(IK), intent(in) :: z(*)
+    !! saved state (not state vector)
+    real(RK), intent(in)    :: W(*)
+    !! main memory
+    real(RK), intent(inout) :: G
+    !! autovariance
+    real(RK), intent(inout) :: C(*)
+    !! covariance matrix
+    integer(IK)             :: nmol
+    nmol = mol_block_nmol(q(bq))
+    block
+      integer(IK) :: i, iper(nmol), imap(nmol)
+      iper = tree_sequence_to_permutation(q(q(tq)), z)
+      imap = tree_sequence_to_mapping(q(q(tq)), z) + 1
+      do i = 1, nmol
+        call c_matrix_add(q(q(cq)), i, iper(i), imap(i), W(cx), G, C)
+      end do
+    end block
+  end subroutine bb_block_covmat_add
 !
 ! util
 !

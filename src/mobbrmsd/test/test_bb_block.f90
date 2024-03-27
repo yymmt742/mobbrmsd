@@ -37,6 +37,7 @@ contains
     integer(IK), parameter :: s = 2
     integer(IK), parameter :: sym(m) = [2, 3, 4, 5, 6, 7, 8, 1]
     real(RK)               :: X(D, m, n), Y(D, m, n), Z(D, m, n)
+    real(RK)               :: G, C(D, D), R(D, D), V(rotation_worksize()), sxz, rxz
     real(RK), allocatable  :: W(:)
     integer(IK)            :: sb(n)
     integer(IK)            :: i
@@ -54,7 +55,17 @@ contains
       call u%assert_almost_equal(W(1), brute_sd(m, n, s, sym, X, Y), 'minrmsd value')
       Z = Y
       call bb_block_swap_y(bm%q, sb, Z)
-      call u%assert_almost_equal(W(1), sd(m * n, X, Z), 'swap sd value')
+      sxz = sd(m * n, X, Z)
+      call u%assert_almost_equal(W(1), sxz, 'swap sd value')
+!
+      G = ZERO
+      C = ZERO
+      call bb_block_covmat_add(bm%q, sb, W, G, C)
+      call estimate_rotation(G, C, R, V)
+      rxz = SUM((X - RESHAPE(MATMUL(TRANSPOSE(R), RESHAPE(Z, [D, m * n])), [D, m, n]))**2)
+!
+      call u%assert_almost_equal(sxz, rxz, 'rotmat value ')
+!
       Y = 0.8 * Y + RESHAPE(sample(D, m * n), SHAPE(Y)) * 0.2
     end do
 !
