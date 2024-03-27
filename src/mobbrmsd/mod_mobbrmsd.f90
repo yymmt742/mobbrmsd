@@ -7,6 +7,8 @@ module mod_mobbrmsd
   implicit none
   public :: mobbrmsd
   public :: mobbrmsd_input
+  public :: mobbrmsd_header
+  public :: mobbrmsd_state
 !
   integer(IK), parameter :: DEF_maxeval = -1
   real(RK), parameter    :: DEF_cutoff  = RHUGE
@@ -22,18 +24,31 @@ module mod_mobbrmsd
 !
   type mobbrmsd_input
     private
-    integer(IK) :: maxeval = DEF_maxeval
-    real(RK)    :: cutoff  = DEF_cutoff
-    type(mol_block_input), allocatable :: m(:)
+    type(mol_block_input), allocatable :: blocks(:)
   contains
     procedure :: add_molecule => mobbrmsd_input_add_molecule
-    procedure :: clear        => mobbrmsd_input_clear
     final     :: mobbrmsd_input_destroy
   end type mobbrmsd_input
 !
-  type mobbrmsd
+  type mobbrmsd_header
     private
-!   type(branch_and_bound) :: bra
+    integer(IK), allocatable :: q(:)
+  contains
+    procedure :: n_block => mobbrmsd_header_n_block
+    procedure :: memsize => mobbrmsd_header_memsize
+    final :: mobbrmsd_header_destroy
+  end type mobbrmsd_header
+!
+  type mobbrmsd_state
+    private
+    integer(IK), allocatable :: s(:)
+  contains
+    final :: mobbrmsd_state_destroy
+  end type mobbrmsd_state
+!
+  type mobbrmsd
+    type(mobbrmsd_header) :: h
+    type(mobbrmsd_state)  :: s
   contains
     procedure :: run             => mobbrmsd_run
 !   procedure :: sd              => mobbrmsd_sd
@@ -44,6 +59,10 @@ module mod_mobbrmsd
     procedure :: clear           => mobbrmsd_clear
     final     :: mobbrmsd_destroy
   end type mobbrmsd
+!
+  interface mobbrmsd_input
+    module procedure mobbrmsd_input_new
+  end interface mobbrmsd_input
 !
   interface mobbrmsd
     module procedure mobbrmsd_new
@@ -56,6 +75,13 @@ contains
     if (ALLOCATED(this%sym)) deallocate (this%sym)
   end subroutine mol_block_input_destroy
 !
+! ------
+!
+  pure elemental function mobbrmsd_input_new() result(res)
+    type(mobbrmsd_input) :: res
+    allocate (res%blocks(0))
+  end function mobbrmsd_input_new
+!
   pure subroutine mobbrmsd_input_add_molecule(this, m, n, sym)
     class(mobbrmsd_input), intent(inout) :: this
     !! this
@@ -65,47 +91,83 @@ contains
     !! number of molecule
     integer(IK), intent(in), optional    :: sym(:, :)
     !! molecular symmetry
+    type(mol_block_input), allocatable   :: blocks(:)
+    integer(IK)                          :: nblock, i
 !
-!   call this%blk%add_molecule(b)
+    nblock = SIZE(this%blocks) + 1
 !
-!   l = this%blk%nspecies()
-!   h(1) = this%blk%b(l)%m
-!   h(2) = this%blk%b(l)%s - 1
-!   n = h(1) * h(2)
+    allocate (blocks(nblock))
+    do concurrent(i=1:nblock - 1)
+      blocks(i) = this%blocks(i)
+    end do
 !
-!   allocate (ms(l))
-!   do concurrent(i=1:l - 1)
-!     ms(i) = this%ms(i)
-!   end do
-!   ms(l) = mol_symmetry(RESHAPE(s(:n), h))
-!   call move_alloc(from=ms, to=this%ms)
+    blocks(nblock)%m = m
+    blocks(nblock)%n = n
+    if (PRESENT(sym)) blocks(nblock)%sym = sym
+!
+    call MOVE_ALLOC(from=blocks, to=this%blocks)
 !
   end subroutine mobbrmsd_input_add_molecule
-
-  pure elemental subroutine mobbrmsd_input_clear(this)
-    class(mobbrmsd_input), intent(inout) :: this
-    if (ALLOCATED(this%m)) deallocate (this%m)
-  end subroutine mobbrmsd_input_clear
 !
   pure elemental subroutine mobbrmsd_input_destroy(this)
     type(mobbrmsd_input), intent(inout) :: this
-    call mobbrmsd_input_clear(this)
+    if (ALLOCATED(this%blocks)) deallocate (this%blocks)
   end subroutine mobbrmsd_input_destroy
 !
-!!!
+! ------
+!
+!| Returns number of molecular blocks
+  pure elemental function mobbrmsd_header_n_block(this) result(res)
+    class(mobbrmsd_header), intent(in) :: this
+    integer(IK)               :: res
+    res = bb_list_n_block(this%q)
+  end function mobbrmsd_header_n_block
+!
+  pure elemental function mobbrmsd_header_memsize(this) result(res)
+    class(mobbrmsd_header), intent(in) :: this
+    integer(IK)               :: res
+    res = bb_list_memsize(this%q)
+  end function mobbrmsd_header_memsize
+!
+  pure elemental subroutine mobbrmsd_header_destroy(this)
+    type(mobbrmsd_header), intent(inout) :: this
+    if (ALLOCATED(this%q)) deallocate (this%q)
+  end subroutine mobbrmsd_header_destroy
+!
+! ------
+!
+  pure elemental subroutine mobbrmsd_state_destroy(this)
+    type(mobbrmsd_state), intent(inout) :: this
+    if (ALLOCATED(this%s)) deallocate (this%s)
+  end subroutine mobbrmsd_state_destroy
+!
+! ------
 !
   pure function mobbrmsd_new(inp) result(res)
     type(mobbrmsd_input), intent(in) :: inp
     type(mobbrmsd)                   :: res
+    integer(IK)                      :: nblock
 !
-!   if (ALLOCATED(inp%ms)) then
-!     res%bra = branch_and_bound(inp%blk, ms=inp%ms, maxeval=inp%maxeval, cutoff=inp%cutoff)
-!   else
-!     res%bra = branch_and_bound(inp%blk, maxeval=inp%maxeval, cutoff=inp%cutoff)
-!   end if
+    nblock = SIZE(inp%blocks)
 !
-!   res%nmem = res%bra%memsize
-!   res%natm = inp%blk%mn
+    block
+      type(bb_block) :: bbblk(nblock)
+      type(bb_list)  :: bblst
+      integer(IK)    :: i
+!
+      do concurrent(i=1:nblock)
+        if (ALLOCATED(inp%blocks(i)%sym)) then
+          bbblk(i) = bb_block(inp%blocks(i)%m, inp%blocks(i)%n, sym=inp%blocks(i)%sym)
+        else
+          bbblk(i) = bb_block(inp%blocks(i)%m, inp%blocks(i)%n)
+        end if
+      end do
+!
+      bblst = bb_list(bbblk)
+      res%h%q = bblst%q
+      res%s%s = bblst%s
+!
+    end block
 !
   end function mobbrmsd_new
 !

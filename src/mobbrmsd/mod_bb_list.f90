@@ -6,6 +6,7 @@ module mod_bb_list
   private
   public :: bb_list
   public :: bb_list_memsize
+  public :: bb_list_n_block
   public :: bb_list_setup
   public :: bb_list_run
 !
@@ -125,6 +126,16 @@ contains
     end do
 !
   end function bb_list_memsize
+!
+!| Inquire worksize of f_matrix.
+  pure function bb_list_n_block(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! bb_block.
+    integer(IK)             :: res
+!
+    res = q(nb)
+!
+  end function bb_list_n_block
 !
 !| Setup
   pure subroutine bb_list_setup(q, s, X, Y, W)

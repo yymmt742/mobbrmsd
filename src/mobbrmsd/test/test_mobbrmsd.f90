@@ -1,5 +1,5 @@
 program main
-  use mod_params, only: D, DD, RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mobbrmsd
   use mod_unittest
   implicit none
@@ -21,11 +21,25 @@ program main
 contains
 !
   subroutine test0()
-    type(mobbrmsd_input)   :: inp
-    integer(IK), parameter :: s(10) = [1, 3, 4, 5, 2, 2, 3, 5, 4, 1]
-!   call inp%add_molecule(mol_block(0, 1, 5, 4, 4), s)
-!   call inp%add_molecule(mol_block(0, 2, 5, 4, 4), s)
-!   call inp%add_molecule(mol_block(0, 3, 5, 4, 4), s)
+    type(mobbrmsd_input) :: inp
+    type(mobbrmsd)       :: mobb
+!
+    inp = mobbrmsd_input()
+    call inp%add_molecule(24, 1)
+    call inp%add_molecule(4, 4, sym=RESHAPE([2, 1, 3, 4, 4, 3, 2, 1], [4, 2]))
+    call inp%add_molecule(20, 3)
+!
+    mobb = mobbrmsd(inp)
+!
+    block
+      type(mobbrmsd_header) :: h
+      type(mobbrmsd_state)  :: s(3)
+      h = mobb%h
+      s(:) = mobb%s
+      print*, h%n_block(), h%memsize()
+    end block
+!
+!
   end subroutine test0
 !
 ! subroutine test1()
