@@ -11,7 +11,8 @@ program main
   call u%init('test branch_and_bound')
 !
   call test0()
-! call test1()
+  call test1(4, 3, 1, [0])
+  call test1(4, 2, 2, [3, 2, 1, 4])
 !
   call u%finish_and_terminate()
 !
@@ -34,8 +35,7 @@ contains
 !
     block
       real(RK) :: w(nmem)
-      w = 99
-      do i = 1, 50
+      do i = 1, 20
         call branch_and_bound_setup(b%q, b%s, X, Y, w)
         call branch_and_bound_run(b%q, b%s, w)
         print'(2F9.4,F9.1,2F9.4,8I3)', W(:4), EXP(W(4)), b%s(2:9)
@@ -45,88 +45,33 @@ contains
 !
   end subroutine test0
 !
-! subroutine test1()
-!   integer, parameter     :: l = 1
-!   integer, parameter     :: s = 2
-!   integer, parameter     :: m = 5, n = 8
-!   type(bb_block)         :: blk(1)
-!   type(branch_and_bound) :: b
-!   real(RK)               :: X(d, m*n), Y(d, m*n), isd, msd
-!   real(RK), allocatable  :: W(:)
-!   integer(IK)            :: sym(m, 2)
-!   integer                :: i, j, k
+  subroutine test1(m, n, s, sym)
+    integer, intent(in)    :: m, n, s, sym(m * (s - 1))
+    type(bb_block)         :: blk(2)
+    type(branch_and_bound) :: b
+    real(RK), parameter    :: off = 5.0_RK
+    real(RK)               :: X(D, m, n, 2), Y(D, m, n, 2)
+    real(RK), allocatable  :: W(:)
+    integer(IK)            :: i
 !
-!   sym(:, 1) = [1, 2, 3, 4, 5]
-!   sym(:, 2) = [1, 2, 3, 4, 5]
-!   !sym(:, 2) = [2, 3, 1, 4, 5]
-!   !blk(1) = bb_block(m, n, sym=sym(:,2:2))
-!   blk(1) = bb_block(m, n)
-!   b = branch_and_bound(blk)
+    blk(1) = bb_block(m, n, sym=RESHAPE(sym, [m, s - 1]))
+    blk(2) = bb_block(m, n, sym=RESHAPE(sym, [m, s - 1]))
+    b = branch_and_bound(blk)
 !
-!   X = sample(D, SIZE(X, 2))
-!   Y = sample(D, SIZE(Y, 2))
+    X = RESHAPE([sample(D, m * n) + off, sample(D, m * n) - off], SHAPE(X))
+    Y = X
 !
-!   allocate (W(branch_and_bound_memsize(b%q)))
-!   call branch_and_bound_setup(b%q, b%s, X, Y, W)
-!   call branch_and_bound_run(b%q, b%s, W)
-!   print'(2F9.4,F9.1,2F9.4,8I3)', W(:4), EXP(W(4)), b%s(2:9)
+    allocate(W(branch_and_bound_memsize(b%q)))
 !
-!   msd = 999.0_RK
-!   do k = 1, s
-!   do j = 1, s
-!   do i = 1, s
-!     isd = sd(X, swp(m, n, [1, 2, 3], [i, j, k], sym, Y)); msd = MIN(msd, isd)
-!     isd = sd(X, swp(m, n, [1, 3, 2], [i, j, k], sym, Y)); msd = MIN(msd, isd)
-!     isd = sd(X, swp(m, n, [2, 1, 3], [i, j, k], sym, Y)); msd = MIN(msd, isd)
-!     isd = sd(X, swp(m, n, [2, 3, 1], [i, j, k], sym, Y)); msd = MIN(msd, isd)
-!     isd = sd(X, swp(m, n, [3, 1, 2], [i, j, k], sym, Y)); msd = MIN(msd, isd)
-!     isd = sd(X, swp(m, n, [3, 2, 1], [i, j, k], sym, Y)); msd = MIN(msd, isd)
-!   end do
-!   end do
-!   end do
+    do i = 1, 10
+      call branch_and_bound_setup(b%q, b%s, X, Y, W)
+      call branch_and_bound_run(b%q, b%s, w)
+      call u%assert_almost_equal(W(1), brute_sd(m, n + n, s, sym, X, Y), 'minrmsd value')
+      Y(:, :, :, 1) = 0.8 * Y(:, :, :, 1) + 0.2 * RESHAPE(sample(D, m * n) + off, [D, m, n])
+      Y(:, :, :, 2) = 0.8 * Y(:, :, :, 2) + 0.2 * RESHAPE(sample(D, m * n) - off, [D, m, n])
+    end do
 !
-!rint*,msd
-!   Y = RESHAPE(W(bra%yp:bra%yp + d * mn), [d, mn])
-!
-!   call u%assert_almost_equal(msd, W(bra%upperbound),             'branchcut vs brute')
-!   call u%assert_almost_equal(SUM((X - Y)**2), W(bra%upperbound), 'swap a            ')
-!   call u%assert_almost_equal(sd(X, Y), W(bra%upperbound),     'swap b            ')
-!
-! end subroutine test1
-!
-! subroutine test2()
-!   integer, parameter     :: s = 3
-!   integer, parameter     :: m1 = 5, n1 = 3, g1 = 2
-!   integer, parameter     :: m2 = 3, n2 = 4, g2 = 4
-!   integer, parameter     :: m3 = 7, n3 = 6, g3 = 5
-!   integer, parameter     :: mn = m1 * n1 + m2 * n2 + m3 * n3
-!   type(mol_block)        :: b(3) = [mol_block(0, 3, m1, n1, g1), &
-!                                  &  mol_block(0, 1, m2, n2, g2), &
-!                                  &  mol_block(0, 2, m3, n3, g3)]
-!   type(branch_and_bound) :: bra
-!   type(mol_block_list)   :: blk
-!   type(mol_symmetry)     :: ms(s)
-!   real(RK)               :: X(d, mn), Y(d, mn)
-!   real(RK), allocatable  :: W(:)
-!   integer                :: i
-!
-!   ms(1) = mol_symmetry(RESHAPE([2, 3, 1, 4, 5, 3, 1, 2, 4, 5], [m1, 2]))
-!   ms(2) = mol_symmetry(RESHAPE([(i, i=1,0)], [0, 1]))
-!   ms(3) = mol_symmetry(RESHAPE([7, 6, 5, 4, 3, 2, 1], [m3, 1]))
-!   blk = mol_block_list(s, b)
-!
-!   X = sample(D, mn)
-!   Y = sample(D, mn)
-!
-!   bra = branch_and_bound(blk, ms)
-!   allocate (W(bra%memsize))
-!   call bra%setup(X, Y, W)
-!   call bra%run(W, .true.)
-!   print'(*(f16.3))', w(bra%lncmb), w(bra%nsrch), EXP(w(bra%ratio))
-!   Y = RESHAPE(W(bra%yp:bra%yp + d * mn), [d, mn])
-!   call u%assert_almost_equal(sd(X, Y), W(bra%upperbound), 'multiple swap')
-!
-! end subroutine test2
+  end subroutine test1
 !
 end program main
 
