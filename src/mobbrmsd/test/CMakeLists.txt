@@ -134,9 +134,9 @@ target_link_libraries( test_bb_list PRIVATE unittest )
 target_link_libraries( test_bb_list PRIVATE purelapack )
 add_test( NAME test_bb_list COMMAND test_bb_list )
 
-add_executable( test_symRMSD )
-target_include_directories( test_symRMSD PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_symRMSD PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+add_executable( test_mobbrmsd )
+target_include_directories( test_mobbrmsd PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_mobbrmsd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -146,10 +146,10 @@ target_sources( test_symRMSD PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_symRMSD.f90
-                                     test_symRMSD.f90 )
-target_include_directories( test_symRMSD PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
-target_link_libraries( test_symRMSD PRIVATE unittest )
-target_link_libraries( test_symRMSD PRIVATE purelapack )
-add_test( NAME test_symRMSD COMMAND test_symRMSD )
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
+                                     test_mobbrmsd.f90 )
+target_include_directories( test_mobbrmsd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_link_libraries( test_mobbrmsd PRIVATE unittest )
+target_link_libraries( test_mobbrmsd PRIVATE purelapack )
+add_test( NAME test_mobbrmsd COMMAND test_mobbrmsd )
 

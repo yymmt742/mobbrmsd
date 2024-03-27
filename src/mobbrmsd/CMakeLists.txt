@@ -9,7 +9,7 @@ list( APPEND f90_src mod_f_matrix.f90 )
 list( APPEND f90_src mod_tree.f90 )
 list( APPEND f90_src mod_bb_block.f90 )
 list( APPEND f90_src mod_bb_list.f90 )
-list( APPEND f90_src mod_symRMSD.f90 )
+list( APPEND f90_src mod_mobbrmsd.f90 )
 
 set(LIB_MOD_DIR ${CMAKE_CURRENT_BINARY_DIR}/mod_files)
 
@@ -27,10 +27,10 @@ target_sources(${PROJECT_NAME} PRIVATE ${f90_src})
 target_include_directories(${PROJECT_NAME} PRIVATE include)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${BLAS_LIBRARIES})
 
-add_library(${PROJECT_NAME}_shared SHARED $<TARGET_OBJECTS:symRMSD>)
+add_library(${PROJECT_NAME}_shared SHARED $<TARGET_OBJECTS:mobbrmsd>)
 set_target_properties(${PROJECT_NAME}_shared PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME}_shared PRIVATE ${BLAS_LIBRARIES})
-add_library(${PROJECT_NAME}_static STATIC $<TARGET_OBJECTS:symRMSD>)
+add_library(${PROJECT_NAME}_static STATIC $<TARGET_OBJECTS:mobbrmsd>)
 set_target_properties(${PROJECT_NAME}_static PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 
 install(TARGETS ${PROJECT_NAME}_static

@@ -33,7 +33,7 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   )
 endif()
 
-add_subdirectory( symRMSD )
+add_subdirectory( mobbrmsd )
 
 if(SKBUILD)
   add_subdirectory( python_interface )
