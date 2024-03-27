@@ -36,8 +36,9 @@ contains
     integer(IK), parameter :: n = 3
     integer(IK), parameter :: s = 2
     integer(IK), parameter :: sym(m) = [2, 3, 4, 5, 6, 7, 8, 1]
-    real(RK)               :: X(D, m, n), Y(D, m, n)
+    real(RK)               :: X(D, m, n), Y(D, m, n), Z(D, m, n)
     real(RK), allocatable  :: W(:)
+    integer(IK)            :: sb(n + 1)
     integer(IK)            :: i
 !
     bm = bb_block(8, 3, sym=RESHAPE(sym, [m, 1]))
@@ -49,8 +50,11 @@ contains
     Y(:, :, 3) = X(:, :, 1)
 !
     do i = 1, 20
-      call run(bm%q, bm%s, X, Y, W)
+      call run(bm%q, bm%s, X, Y, W, sb)
       call u%assert_almost_equal(W(1), brute_sd(m, n, s, sym, X, Y), 'minrmsd value')
+      Z = Y
+      call bb_block_swap_y(bm%q, sb, Z)
+      call u%assert_almost_equal(W(1), sd(m, n, X, Z),               'swap sd value')
       Y = 0.8 * Y + RESHAPE(sample(D, m * n), SHAPE(Y)) * 0.2
     end do
 !
@@ -59,8 +63,9 @@ contains
   subroutine test1(m, n, s, per, map, sym)
     integer(IK), intent(in) :: m, n, s, per(n), map(n), sym(m * (s - 1))
     type(bb_block)          :: bm
-    real(RK)                :: X(D, m, n), Y(D, m, n)
+    real(RK)                :: X(D, m, n), Y(D, m, n), Z(D, m, n)
     real(RK), allocatable   :: W(:)
+    integer(IK)             :: sb(n + 1)
     integer(IK)             :: i
 !
     bm = bb_block(m, n, RESHAPE(sym, [m, s - 1]))
@@ -69,21 +74,27 @@ contains
     X = RESHAPE(sample(D, m * n), SHAPE(X))
     Y = swp(m, n, s, per, map, sym, X)
     do i = 1, 20
-      call run(bm%q, bm%s, X, Y, W)
+      call run(bm%q, bm%s, X, Y, W, sb)
       call u%assert_almost_equal(W(1), brute_sd(m, n, s, sym, X, Y), 'minrmsd value')
+      Z = Y
+      call bb_block_swap_y(bm%q, sb, Z)
+      call u%assert_almost_equal(W(1), sd(m, n, X, Z),               'swap sd value')
       Y = 0.8 * Y + RESHAPE(sample(D, m * n), SHAPE(Y)) * 0.2
     end do
 !
   end subroutine test1
 !
-  subroutine run(q, s, X, Y, W)
+  subroutine run(q, s, X, Y, W, sb)
     integer(IK), intent(in)    :: q(*)
     integer(IK), intent(inout) :: s(*)
     real(RK), intent(in)       :: X(*), Y(*)
     real(RK), intent(inout)    :: W(:)
+    integer(IK), intent(inout) :: sb(*)
+    integer(IK)                :: nmol
     real(RK)                   :: ub
 !
     ub = 999.9_RK
+    nmol = bb_block_nmol(q)
     call bb_block_setup(q, X, Y, s, W, zfill=.TRUE.)
 !
     do
@@ -91,6 +102,7 @@ contains
 !
       if (.not. bb_block_queue_is_empty(q, s) &
         & .and. bb_block_queue_is_bottom(q, s)) then
+        if (bb_block_current_value(q, s, w) < ub) sb(:1 + nmol) = s(:1 + nmol)
         ub = MIN(bb_block_current_value(q, s, w), ub)
       end if
 !

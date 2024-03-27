@@ -129,6 +129,7 @@ module mod_testutil
   public :: gcov
   public :: SO3
   public :: eye
+  public :: sd
   public :: swp
   public :: brute_sd
 !

@@ -1,6 +1,6 @@
 !| Module for handling C, F and tree.
 module mod_bb_block
-  use mod_params, only: ND, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use mod_params, only: D, ND, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_params, only: gemm, dot, copy
   use mod_mol_block
   use mod_c_matrix
@@ -27,6 +27,7 @@ module mod_bb_block
   public :: bb_block_log_ncomb
   public :: bb_block_evaluation_count
   public :: bb_block_save_state
+  public :: bb_block_swap_y
 !
   integer(IK), parameter :: mmap_L = 1
   integer(IK), parameter :: mmap_G = 2
@@ -430,6 +431,39 @@ contains
     nmol = mol_block_nmol(q(bq))
     z(:nmol) = tree_current_sequence(q(q(tq)), s(ts))
   end subroutine bb_block_save_state
+!
+!| swap Y.
+  subroutine bb_block_swap_y(q, s, Y)
+    integer(IK), intent(in) :: q(*)
+    !! integer array
+    integer(IK), intent(in) :: s(*)
+    !! state vector
+    real(RK), intent(inout) :: Y(*)
+    !! target coordinate
+    integer(IK)             :: nmol, napm
+    nmol = mol_block_nmol(q(bq))
+    napm = mol_block_napm(q(bq))
+    block
+      integer(IK) :: iper(nmol), imap(nmol)
+      iper = tree_current_permutation(q(q(tq)), s(ts))
+      imap = tree_current_mapping(q(q(tq)), s(ts))
+      call swap_y(nmol, napm, iper, imap, q(bq), Y)
+    end block
+  end subroutine bb_block_swap_y
+!
+  pure subroutine swap_y(nmol, napm, iper, imap, b, Y)
+    integer(IK), intent(in) :: nmol, napm, iper(nmol), imap(nmol), b(*)
+    real(RK), intent(inout) :: Y(D, napm, nmol)
+    real(RK)                :: T(D, napm, nmol)
+    integer(IK)             :: i, dm, dmn
+    dm = D * napm
+    dmn = dm * nmol
+    do concurrent(i = 1:nmol)
+      call copy(dm, Y(:, :, i), 1, T(:, :, iper(i)), 1)
+      call mol_block_swap(b, imap(i), T(1, 1, iper(i)))
+    end do
+    call copy(dmn, T, 1, Y, 1)
+  end subroutine swap_y
 !
 ! util
 !
