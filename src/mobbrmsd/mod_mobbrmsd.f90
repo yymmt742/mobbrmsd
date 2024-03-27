@@ -9,9 +9,7 @@ module mod_mobbrmsd
   public :: mobbrmsd_input
   public :: mobbrmsd_header
   public :: mobbrmsd_state
-!
-  integer(IK), parameter :: DEF_maxeval = -1
-  real(RK), parameter    :: DEF_cutoff  = RHUGE
+  public :: mobbrmsd_run
 !
   type mol_block_input
     private
@@ -42,6 +40,10 @@ module mod_mobbrmsd
   type mobbrmsd_state
     private
     integer(IK), allocatable :: s(:)
+    real(RK)                 :: uppbou
+    real(RK)                 :: lowbou
+    real(RK)                 :: lograt
+    real(RK)                 :: numevl
   contains
     final :: mobbrmsd_state_destroy
   end type mobbrmsd_state
@@ -50,12 +52,6 @@ module mod_mobbrmsd
     type(mobbrmsd_header) :: h
     type(mobbrmsd_state)  :: s
   contains
-    procedure :: run             => mobbrmsd_run
-!   procedure :: sd              => mobbrmsd_sd
-!   procedure :: sd_with_error   => mobbrmsd_sd_with_error
-!   procedure :: rmsd            => mobbrmsd_rmsd
-!   procedure :: rmsd_with_error => mobbrmsd_rmsd_with_error
-!   procedure :: search_ratio    => mobbrmsd_search_ratio
     procedure :: clear           => mobbrmsd_clear
     final     :: mobbrmsd_destroy
   end type mobbrmsd
@@ -166,21 +162,51 @@ contains
       bblst = bb_list(bbblk)
       res%h%q = bblst%q
       res%s%s = bblst%s
-!
     end block
 !
   end function mobbrmsd_new
 !
-  pure subroutine mobbrmsd_run(this, swap_y, x, y, w)
-    class(mobbrmsd), intent(in) :: this
-    logical, intent(in)        :: swap_y
-    real(RK), intent(in)       :: x(*)
-    real(RK), intent(inout)    :: y(*)
-    real(RK), intent(inout)    :: w(*)
+  pure subroutine mobbrmsd_run(header, state, X, Y, W, cutoff, difflim, maxeval)
+    class(mobbrmsd_header), intent(in)   :: header
+    !! mobbrmsd_header
+    class(mobbrmsd_state), intent(inout) :: state
+    !! mobbrmsd_state
+    real(RK), intent(in)                 :: X(*)
+    !! reference coordinate
+    real(RK), intent(inout)              :: Y(*)
+    !! target coordinate
+    real(RK), intent(inout), optional    :: W(*)
+    !! work array, must be > header%memsize()
+    real(RK), intent(in), optional       :: cutoff
+    !! The search ends when lowerbound is determined to be greater than to cutoff.
+    real(RK), intent(in), optional       :: difflim
+    !! The search ends when the difference between the lower and upper bounds is less than difflim.
+    integer(IK), intent(in), optional    :: maxeval
+    !! The search ends when ncount exceeds maxiter.
 !
-!   call this%bra%setup(x, y, w)
-!   call this%bra%run(w, swap_y)
-!   if (swap_y) call dcopy(this%bra%dmn, w(this%bra%yp), 1, y, 1)
+    if (PRESENT(W)) then
+!
+      call bb_list_setup(header%q, state%s, X, Y, W)
+      call bb_list_run(header%q, state%s, W, cutoff=cutoff, difflim=difflim, maxeval=maxeval)
+      state%uppbou = W(1)
+      state%lowbou = W(2)
+      state%lograt = W(3)
+      state%numevl = W(4)
+!
+    else
+!
+      block
+        real(RK), allocatable :: T(:)
+        allocate (T(header%memsize()+100))
+        call bb_list_setup(header%q, state%s, X, Y, T)
+        call bb_list_run(header%q, state%s, T, cutoff=cutoff, difflim=difflim, maxeval=maxeval)
+        state%uppbou = T(1)
+        state%lowbou = T(2)
+        state%lograt = T(3)
+        state%numevl = T(4)
+      end block
+!
+    end if
 !
   end subroutine mobbrmsd_run
 !

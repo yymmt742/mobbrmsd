@@ -234,7 +234,7 @@ contains
 !!  state
     integer(IK)             :: i, res(q(qd))
     do concurrent(i=1:q(qd))
-      res(i) = queue_state(s(sr), i) + 1
+      res(i) = queue_state(s(sr), i)
     end do
   end function tree_current_sequence
 !

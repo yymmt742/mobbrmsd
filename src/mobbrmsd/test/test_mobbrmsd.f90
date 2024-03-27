@@ -6,16 +6,11 @@ program main
   implicit none
   type(unittest) :: u
   integer, parameter :: NTEST=1
-  integer            :: itest
 !
   call u%init('test symRMSD')
 !
   call test0()
 ! call test2()
-!
-! do itest = 1, NTEST
-!   call test1()
-! end do
 !
   call u%finish_and_terminate()
 !
@@ -27,7 +22,7 @@ contains
 !
     inp = mobbrmsd_input()
     call inp%add_molecule(24, 1)
-    call inp%add_molecule(4, 4, sym=RESHAPE([2, 1, 3, 4, 4, 3, 2, 1], [4, 2]))
+    call inp%add_molecule(4, 4, sym=RESHAPE([2, 1, 3, 4], [4, 1]))
     call inp%add_molecule(20, 3)
 !
     mobb = mobbrmsd(inp)
@@ -39,12 +34,10 @@ contains
       real(RK)              :: Y(D, 24 + 4 * 4 + 20 * 3)
       h = mobb%h
       s(:) = mobb%s
-      print*, h%n_block(), h%memsize()
       X = sample(SIZE(X, 1), SIZE(X, 2))
       Y = 0.8 * X + 0.2 * sample(SIZE(Y, 1), SIZE(Y, 2))
       call mobbrmsd_run(h, s(1), X, Y)
     end block
-!
 !
   end subroutine test0
 !

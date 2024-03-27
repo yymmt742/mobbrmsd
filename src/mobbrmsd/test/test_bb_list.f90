@@ -15,6 +15,7 @@ program main
   call test1(4, 2, 2, [3, 2, 1, 4])
   call test2(4, 2, 2, [3, 2, 1, 4])
   call test2(4, 4, 2, [3, 2, 1, 4])
+  call test2(24, 4, 1, [0])
 !
   call u%finish_and_terminate()
 !
@@ -80,27 +81,27 @@ contains
     type(bb_block)        :: blk(3)
     type(bb_list)         :: b
     real(RK), parameter   :: off = 5.0_RK
-    real(RK)              :: X(D, m, n, 3), Y(D, m, n, 3)
+    real(RK)              :: X(D, m, 3 + n), Y(D, m, 3 + n)
     real(RK), allocatable :: W(:)
     integer(IK)           :: i
 !
-    blk(1) = bb_block(m, n)
-    blk(2) = bb_block(m, n, sym=RESHAPE(sym, [m, s - 1]))
+    blk(1) = bb_block(m, 1)
+    blk(2) = bb_block(m, 2, sym=RESHAPE(sym, [m, s - 1]))
     blk(3) = bb_block(m, n, sym=RESHAPE(sym, [m, s - 1]))
     b = bb_list(blk)
 !
-    X = RESHAPE([sample(D, m * n) + off, sample(D, m * n), sample(D, m * n) - off], SHAPE(X))
+    X = RESHAPE([sample(D, m) + off, sample(D, m * 2), sample(D, m * n) - off], SHAPE(X))
     Y = X
 !
     allocate(W(bb_list_memsize(b%q)))
 !
-    do i = 1, 10
+    do i = 1, 20
       call bb_list_setup(b%q, b%s, X, Y, W)
       call bb_list_run(b%q, b%s, w)
-      print'(2f9.3,f16.1,f9.3)', w(:4)
-      Y(:, :, :, 1) = 0.8 * Y(:, :, :, 1) + 0.2 * RESHAPE(sample(D, m * n) + off, [D, m, n])
-      Y(:, :, :, 2) = 0.8 * Y(:, :, :, 2) + 0.2 * RESHAPE(sample(D, m * n), [D, m, n])
-      Y(:, :, :, 3) = 0.8 * Y(:, :, :, 3) + 0.2 * RESHAPE(sample(D, m * n) - off, [D, m, n])
+      print'(2F9.4,F9.1,2F9.4,*(I3))', W(:4), EXP(W(4)), b%s(2:1 + 3 + n)
+      Y(:, :, 1:1) = 0.8 * Y(:, :, 1:1) + 0.2 * RESHAPE(sample(D, m * 1) + off, [D, m, 1])
+      Y(:, :, 2:3) = 0.8 * Y(:, :, 2:3) + 0.2 * RESHAPE(sample(D, m * 2), [D, m, 2])
+      Y(:, :, 4:)  = 0.8 * Y(:, :, 4:)  + 0.2 * RESHAPE(sample(D, m * n) - off, [D, m, n])
     end do
 !
   end subroutine test2

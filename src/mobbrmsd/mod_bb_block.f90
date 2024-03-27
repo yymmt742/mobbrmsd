@@ -131,26 +131,26 @@ contains
   pure function bb_block_worksize(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! bb_block header array.
-    integer(IK)             :: p, nmol, nsym, m, buf, tmp, swrk, hwrk, mfmt, mtre
+    integer(IK)             :: p, nmol, nsym, buf, tmp, swrk, hwrk
     integer(IK)             :: res
 !
-    swrk = sdmin_worksize()
     nmol = mol_block_nmol(q(bq))
     nsym = mol_block_nsym(q(bq))
-    mfmt = f_matrix_worksize(q(q(fq)))
-    mtre = tree_nnodes(q(q(tq))) * ND
-    buf = (tree_nnodes(q(q(tq))) - nsym * 2) * ND
+    swrk = sdmin_worksize()
+!
+    buf = bb_block_memsize(q)
+!
     res = 0
-    m = nmol
     do p = 1, nmol
-      buf = buf - m * nsym * ND
-      m = m - 1
-      hwrk = Hungarian_worksize(m, m)
-      tmp = MAX(MAX(swrk, m**2 + hwrk), swrk * MAX(1, nsym - 1) + 1)
-      res = MAX(res, tmp - buf)
+      hwrk = Hungarian_worksize(p, p)
+      tmp = MAX(MAX(swrk, p**2 + hwrk), swrk * MAX(1, nsym - 1) + 1)
+      res = MAX(res, buf + tmp)
+      buf = buf - p * nsym * ND
     end do
-    res = MAX(res, c_matrix_worksize(q(q(cq))) - mfmt - mtre)
-    res = MAX(res, mfmt - mtre)
+    res = MAX(res, buf + f_matrix_worksize(q(q(fq))))
+    buf = buf - f_matrix_memsize(q(q(fq)))
+    res = MAX(res, buf + c_matrix_worksize(q(q(cq))))
+    res = res - bb_block_memsize(q)
 !
   end function bb_block_worksize
 !
