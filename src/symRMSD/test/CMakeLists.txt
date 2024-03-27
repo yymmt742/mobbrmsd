@@ -51,23 +51,23 @@ target_include_directories( test_tree PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../inc
 target_link_libraries( test_tree PRIVATE unittest )
 add_test( NAME test_tree COMMAND test_tree )
 
-add_executable( test_rotation_matrix )
-target_include_directories( test_rotation_matrix PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_rotation_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+add_executable( test_rotation )
+target_include_directories( test_rotation PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_rotation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation.f90
                                     mod_testutil.f90
-                                    test_rotation_matrix.f90 )
-target_include_directories( test_rotation_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
-target_link_libraries( test_rotation_matrix PRIVATE unittest )
-target_link_libraries( test_rotation_matrix PRIVATE purelapack )
-add_test( NAME test_rotation_matrix COMMAND test_rotation_matrix )
+                                    test_rotation.f90 )
+target_include_directories( test_rotation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_link_libraries( test_rotation PRIVATE unittest )
+target_link_libraries( test_rotation PRIVATE purelapack )
+add_test( NAME test_rotation COMMAND test_rotation )
 
 add_executable( test_c_matrix )
 target_include_directories( test_c_matrix PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_c_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
@@ -82,7 +82,7 @@ add_executable( test_f_matrix )
 target_include_directories( test_f_matrix PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_f_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
@@ -99,7 +99,7 @@ add_executable( test_bb_block )
 target_include_directories( test_bb_block PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_bb_block PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
@@ -118,7 +118,7 @@ add_executable( test_bb_list )
 target_include_directories( test_bb_list PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_bb_list PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
+                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
@@ -138,7 +138,7 @@ add_executable( test_symRMSD )
 target_include_directories( test_symRMSD PRIVATE ${unittest_DIR}/mod_files )
 target_sources( test_symRMSD PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90

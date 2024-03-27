@@ -5,7 +5,7 @@ module mod_f_matrix
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_c_matrix
   use mod_mol_block
-  use mod_rotation_matrix
+  use mod_rotation
   use mod_Hungarian
   implicit none
   private

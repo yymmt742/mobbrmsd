@@ -1,6 +1,6 @@
 !| Calculate the rotation matrix that minimizes |X-RY|^2 using the Kabsch-Umeyama algorithm.
 !  Here, RR^T=I and det(R)=1 are satisfied.
-module mod_rotation_matrix
+module mod_rotation
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, HALF => RHALF
   use mod_params, only: dot, copy, gemm, gesvd
   use mod_det
@@ -8,8 +8,8 @@ module mod_rotation_matrix
   private
   public :: sdmin_worksize
   public :: estimate_sdmin
-  public :: rotation_matrix_worksize
-  public :: estimate_rotation_matrix
+  public :: rotation_worksize
+  public :: estimate_rotation
 !
   real(RK), parameter    :: THRESHOLD = 1E-8_RK
   integer(IK), parameter :: MAXITER = 100000
@@ -143,8 +143,8 @@ contains
 !
   end subroutine quartenion_sdmin_d3
 !
-!| Inquire function for memory size of rotation_matrix.
-  pure elemental function rotation_matrix_worksize() result(res)
+!| Inquire function for memory size of rotation.
+  pure elemental function rotation_worksize() result(res)
     integer(IK) :: res
     if (d <= 0) then
       res = 0
@@ -157,10 +157,10 @@ contains
     else
       res = worksize_Kabsch()
     endif
-  end function rotation_matrix_worksize
+  end function rotation_worksize
 !
 !| Compute the transpose rotation matrix for minimize tr[CR] from cov = YX^T and g = tr[XX^T] + tr[YY^T].
-  pure subroutine estimate_rotation_matrix(g, cov, rot, w)
+  pure subroutine estimate_rotation(g, cov, rot, w)
     real(RK), intent(in)    :: g
     !! g = tr[XX^T] + tr[YY^T]
     real(RK), intent(in)    :: cov(*)
@@ -168,7 +168,7 @@ contains
     real(RK), intent(inout) :: rot(*)
     !! rotation dxd matrix
     real(RK), intent(inout) :: w(*)
-    !! work array, must be larger than worksize_rotation_matrix().
+    !! work array, must be larger than worksize_rotation().
 !
     if (d == 1) then
       rot(1) = ONE
@@ -195,7 +195,7 @@ contains
       call Kabsch(cov, rot, w)
     end if
 !
-  end subroutine estimate_rotation_matrix
+  end subroutine estimate_rotation
 !
   pure subroutine quartenion_rotmatrix_d2(c, rot)
     real(RK), intent(in)    :: c(*)
@@ -377,4 +377,4 @@ contains
 !
   end subroutine Kabsch
 !
-end module mod_rotation_matrix
+end module mod_rotation

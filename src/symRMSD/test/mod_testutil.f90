@@ -121,7 +121,7 @@ end module mod_permutation
 module mod_testutil
   use mod_params, only: D, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_permutation
-  use mod_rotation_matrix
+  use mod_rotation
   implicit none
   private
   public :: sample

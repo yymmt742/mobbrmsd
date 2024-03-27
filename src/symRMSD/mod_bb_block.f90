@@ -5,7 +5,7 @@ module mod_bb_block
   use mod_mol_block
   use mod_c_matrix
   use mod_f_matrix
-  use mod_rotation_matrix
+  use mod_rotation
   use mod_Hungarian
   use mod_tree
   implicit none

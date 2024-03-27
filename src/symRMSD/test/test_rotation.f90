@@ -1,6 +1,6 @@
 program main
   use mod_params, only: D, setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
-  use mod_rotation_matrix
+  use mod_rotation
   use mod_testutil
   use mod_unittest
   implicit none
@@ -43,7 +43,7 @@ contains
     real(RK), allocatable :: w(:)
     integer               :: i
 !
-    allocate (w(MAX(rotation_matrix_worksize(), sdmin_worksize())))
+    allocate (w(MAX(rotation_worksize(), sdmin_worksize())))
 !
     call RANDOM_NUMBER(X)
     X = X * 10
@@ -53,7 +53,7 @@ contains
       Y = MATMUL(rot, X)
       g = SUM(X * X) + SUM(Y * Y)
       cov = MATMUL(X, TRANSPOSE(Y))
-      call estimate_rotation_matrix(g, cov, krot, w)
+      call estimate_rotation(g, cov, krot, w)
       call z%assert_almost_equal([X - MATMUL(krot, Y)], ZERO, 'X = YR   ')
       if (d <= n) call z%assert_almost_equal([MATMUL(rot, krot) - eye(d)], ZERO, 'S@RT = I ')
       call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye(d)], ZERO, 'R@RT = I ')
@@ -66,7 +66,7 @@ contains
       call RANDOM_NUMBER(Y)
       cov = MATMUL(X, TRANSPOSE(Y))
       g = SUM(X**2) + SUM(Y**2)
-      call estimate_rotation_matrix(g, cov, krot, w)
+      call estimate_rotation(g, cov, krot, w)
       call z%assert_greater_equal(SUM(cov * krot), SUM(cov * SO(d)), 'CR >= CQ ')
       call estimate_sdmin(g, cov, w)
 !
