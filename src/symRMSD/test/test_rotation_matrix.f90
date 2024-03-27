@@ -46,6 +46,7 @@ contains
     allocate (w(MAX(rotation_matrix_worksize(), sdmin_worksize())))
 !
     call RANDOM_NUMBER(X)
+    X = X * 10
 !
     do i = 1, N_TEST
       rot = SO(d)

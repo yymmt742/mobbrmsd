@@ -11,7 +11,8 @@ module mod_rotation_matrix
   public :: rotation_matrix_worksize
   public :: estimate_rotation_matrix
 !
-  real(RK), parameter :: THRESHOLD = 1E-8_RK
+  real(RK), parameter    :: THRESHOLD = 1E-8_RK
+  integer(IK), parameter :: MAXITER = 100000
 !
 contains
 !
@@ -85,6 +86,7 @@ contains
     integer(IK), parameter  :: k32 = 8, k42 = 9, k43 = 10
     integer(IK), parameter  :: a1 = 5, a2 = 6, b2 = 7, b8 = 8, c1 = 9
     integer(IK), parameter  :: l1 = 1, l0 = 2, l2 = 3, l3 = 4
+    integer(IK)             :: i
 !
     w(k11) =  c(1) + c(5) + c(9)
     w(k21) =  c(8) - c(6)
@@ -122,7 +124,7 @@ contains
       w(l1) = SQRT(ABS(HALF * (SQRT(ABS(w(a2) * w(a2) - w(l2))) + w(a2))))
     else
       w(l1) = g
-      do
+      do i = 1, MAXITER
         w(l2) = w(l1) * w(l1)
         w(l3) = w(l2) * w(l1)
         w(l0) = w(l2) * w(l2)
