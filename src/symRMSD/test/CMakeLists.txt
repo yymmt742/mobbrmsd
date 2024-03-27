@@ -114,9 +114,9 @@ target_link_libraries( test_bb_block PRIVATE unittest )
 target_link_libraries( test_bb_block PRIVATE purelapack )
 add_test( NAME test_bb_block COMMAND test_bb_block )
 
-add_executable( test_branch_and_bound )
-target_include_directories( test_branch_and_bound PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_branch_and_bound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+add_executable( test_bb_list )
+target_include_directories( test_bb_list PRIVATE ${unittest_DIR}/mod_files )
+target_sources( test_bb_list PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation_matrix.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -126,13 +126,13 @@ target_sources( test_branch_and_bound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
                                   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_branch_and_bound.f90
+                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
                                   mod_testutil.f90
-                                  test_branch_and_bound.f90 )
-target_include_directories( test_branch_and_bound PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
-target_link_libraries( test_branch_and_bound PRIVATE unittest )
-target_link_libraries( test_branch_and_bound PRIVATE purelapack )
-add_test( NAME test_branch_and_bound COMMAND test_branch_and_bound )
+                                  test_bb_list.f90 )
+target_include_directories( test_bb_list PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_link_libraries( test_bb_list PRIVATE unittest )
+target_link_libraries( test_bb_list PRIVATE purelapack )
+add_test( NAME test_bb_list COMMAND test_bb_list )
 
 add_executable( test_symRMSD )
 target_include_directories( test_symRMSD PRIVATE ${unittest_DIR}/mod_files )
@@ -145,7 +145,7 @@ target_sources( test_symRMSD PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_branch_and_bound.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_symRMSD.f90
                                      test_symRMSD.f90 )
 target_include_directories( test_symRMSD PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )

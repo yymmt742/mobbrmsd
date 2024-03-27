@@ -1,13 +1,13 @@
-!| mod_branch_and_bound
-module mod_branch_and_bound
+!| mod_bb_list
+module mod_bb_list
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_bb_block
   implicit none
   private
-  public :: branch_and_bound
-  public :: branch_and_bound_memsize
-  public :: branch_and_bound_setup
-  public :: branch_and_bound_run
+  public :: bb_list
+  public :: bb_list_memsize
+  public :: bb_list_setup
+  public :: bb_list_run
   public :: DEF_maxeval
   public :: DEF_cutoff
 !
@@ -27,20 +27,20 @@ module mod_branch_and_bound
   integer(IK), parameter :: nc = 3
   integer(IK), parameter :: rt = 4
 !
-!| branch_and_bound<br>
+!| bb_list<br>
 !  This is mainly used for passing during initialization.
-  type branch_and_bound
+  type bb_list
     integer(IK), allocatable :: q(:)
     !! integer array
     integer(IK), allocatable :: s(:)
     !! work integer array
   contains
-    final           :: branch_and_bound_destroy
-  end type branch_and_bound
+    final           :: bb_list_destroy
+  end type bb_list
 !
-  interface branch_and_bound
-    module procedure branch_and_bound_new
-  end interface branch_and_bound
+  interface bb_list
+    module procedure bb_list_new
+  end interface bb_list
 !
 contains
 !
@@ -75,9 +75,9 @@ contains
   end function q_pointer
 !
 !| generate node instance
-  pure function branch_and_bound_new(blk) result(res)
+  pure function bb_list_new(blk) result(res)
     type(bb_block), intent(in) :: blk(:)
-    type(branch_and_bound)     :: res
+    type(bb_list)     :: res
     integer(IK)                :: q(header_size), s(header_sttsize)
     integer(IK)                :: pq(SIZE(blk)), px(SIZE(blk)), ps(SIZE(blk)), pw(SIZE(blk))
     integer(IK)                :: i, j, nstat
@@ -113,10 +113,10 @@ contains
     allocate (res%q, source=[q, pq, ps, pw, px, [(blk(i)%q, i=1, SIZE(blk))]])
     allocate (res%s, source=[s, [(-1, i=1, nstat)], [(blk(i)%s, i=1, SIZE(blk))]])
 !
-  end function branch_and_bound_new
+  end function bb_list_new
 !
 !| Inquire worksize of f_matrix.
-  pure function branch_and_bound_memsize(q) result(res)
+  pure function bb_list_memsize(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! bb_block.
     integer(IK)             :: res, i, j, n
@@ -129,10 +129,10 @@ contains
       j = j + 1
     end do
 !
-  end function branch_and_bound_memsize
+  end function bb_list_memsize
 !
 !| Setup
-  pure subroutine branch_and_bound_setup(q, s, X, Y, W)
+  pure subroutine bb_list_setup(q, s, X, Y, W)
     integer(IK), intent(in)    :: q(*)
     !! header
     integer(IK), intent(inout) :: s(*)
@@ -164,9 +164,9 @@ contains
 !
     call save_state(n, q(pq), q(ps), q, s)
 !
-  end subroutine branch_and_bound_setup
+  end subroutine bb_list_setup
 !
-  pure subroutine branch_and_bound_run(q, s, W, cutoff, difflim, maxiter)
+  pure subroutine bb_list_run(q, s, W, cutoff, difflim, maxiter)
     integer(IK), intent(in)           :: q(*)
     !! header
     integer(IK), intent(inout)        :: s(*)
@@ -208,7 +208,7 @@ contains
       W(rt) = W(rt) - bb_block_log_ncomb(q(q(pq + j)))
     end do
 !
-  end subroutine branch_and_bound_run
+  end subroutine bb_list_run
 !
   pure subroutine run_bb(n, pq, ps, pw, q, coff, diff, nlim, b, s, W)
   integer(IK), intent(in)    :: n, pq(n), ps(n), pw(n), q(*)
@@ -278,10 +278,10 @@ contains
     end do
   end subroutine save_state
 !
-  pure elemental subroutine branch_and_bound_destroy(this)
-    type(branch_and_bound), intent(inout) :: this
+  pure elemental subroutine bb_list_destroy(this)
+    type(bb_list), intent(inout) :: this
     if (ALLOCATED(this%q)) deallocate (this%q)
-  end subroutine branch_and_bound_destroy
+  end subroutine bb_list_destroy
 !
-end module mod_branch_and_bound
+end module mod_bb_list
 
