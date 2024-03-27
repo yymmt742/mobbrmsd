@@ -22,9 +22,9 @@ execute_process(
 
 set (initpy "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py")
 set (f2cmap "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap")
-set (sofile "${CMAKE_CURRENT_BINARY_DIR}/symrmsd.${Python_SOABI}.so")
+set (sofile "${CMAKE_CURRENT_BINARY_DIR}/mobbrmsd.${Python_SOABI}.so")
 
-add_custom_target( symrmsd ALL DEPENDS ${sofile} )
+add_custom_target( mobbrmsd_ ALL DEPENDS ${sofile} )
 
 include_directories(${PYTHON_INCLUDE_DIR})
 include_directories(${NumPy_INCLUDE_DIRS})
@@ -37,13 +37,13 @@ add_custom_command(
     OUTPUT ${sofile}
     COMMAND ${F2PY_EXECUTABLE}
       -c
-      -m symrmsd
+      -m mobbrmsd
       --no-wrap-functions
       $<$<CONFIG:Debug>:--debug-capi>
       --f2cmap ${f2cmap}
       "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
-      "${CMAKE_CURRENT_BINARY_DIR}/../symRMSD/libsymRMSD.a"
-      -I${CMAKE_CURRENT_BINARY_DIR}/../symRMSD/mod_files
+      "${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/libmobbrmsd.a"
+      -I${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mod_files
       ${BLAS_LIBRARIES}
       ${lomp}
       --opt=-O2
@@ -68,13 +68,13 @@ add_custom_command(
       $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-traceback">>
       '
       $<$<CONFIG:Debug>:--debug>
-    DEPENDS symrmsd
+    DEPENDS mobbrmsd
             "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap"
             "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
   )
 
-install( FILES ${sofile} DESTINATION symrmsd )
-install( FILES ${initpy} DESTINATION symrmsd )
+install( FILES ${sofile} DESTINATION mobbrmsd )
+install( FILES ${initpy} DESTINATION mobbrmsd )
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   find_package(unittest REQUIRED)
@@ -84,11 +84,11 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   target_sources(test_driver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/test_driver.f90)
   target_include_directories(test_driver PRIVATE ${unittest_DIR}/mod_files)
-  target_include_directories(test_driver PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../symRMSD/mod_files)
-  #target_include_directories(test_driver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../symRMSD/include )
+  target_include_directories(test_driver PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mod_files)
+  #target_include_directories(test_driver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mobbrmsd/include )
   target_include_directories(test_driver PRIVATE ${OpenMP_Fortran_INCLUDE_DIRS} )
   target_link_libraries(test_driver PRIVATE ${OpenMP_Fortran_LIB_NAMES} )
-  target_link_libraries(test_driver PRIVATE symRMSD_shared)
+  target_link_libraries(test_driver PRIVATE mobbrmsd_shared)
   target_link_libraries(test_driver PRIVATE unittest)
   add_test( NAME test_driver COMMAND test_driver )
 endif()
