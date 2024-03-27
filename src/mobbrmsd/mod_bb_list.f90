@@ -233,7 +233,7 @@ contains
     diff = ZERO
     nlim = RHUGE
 !
-    if (PRESENT(cutoff)) coff = MAX(coff, cutoff)
+    if (PRESENT(cutoff)) coff = MIN(coff, cutoff)
     if (PRESENT(difflim)) diff = MAX(diff, difflim)
     if (PRESENT(maxeval)) nlim = MERGE(real(maxeval, RK), nlim, maxeval >= 0)
 !

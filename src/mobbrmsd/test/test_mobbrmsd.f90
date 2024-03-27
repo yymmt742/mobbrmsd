@@ -41,7 +41,6 @@ contains
       cutoff = 999.9_RK
 !
       do i = 1, 10
-!
         Y = 0.5 * X + 0.5 * sample(SIZE(Y, 1), SIZE(Y, 2))
         call mobbrmsd_run(h, s(1), X, Y, cutoff=cutoff)
         cutoff = MIN(cutoff, s(1)%upperbound())

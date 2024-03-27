@@ -19,6 +19,7 @@ module mod_mobbrmsd
     final :: mol_block_input_destroy
   end type mol_block_input
 !
+!| mobbrmsd_input
   type mobbrmsd_input
     private
     type(mol_block_input), allocatable :: blocks(:)
@@ -27,6 +28,7 @@ module mod_mobbrmsd
     final     :: mobbrmsd_input_destroy
   end type mobbrmsd_input
 !
+!| mobbrmsd_header
   type mobbrmsd_header
     private
     integer(IK), allocatable :: q(:)
@@ -40,6 +42,7 @@ module mod_mobbrmsd
     final     :: mobbrmsd_header_destroy
   end type mobbrmsd_header
 !
+!| mobbrmsd_state
   type mobbrmsd_state
     private
     integer(IK), allocatable :: s(:)
@@ -58,6 +61,7 @@ module mod_mobbrmsd
     final     :: mobbrmsd_state_destroy
   end type mobbrmsd_state
 !
+!| mobbrmsd
   type mobbrmsd
     type(mobbrmsd_header) :: h
     type(mobbrmsd_state)  :: s
