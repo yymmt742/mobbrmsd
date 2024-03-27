@@ -13,6 +13,7 @@ module mod_mobbrmsd
   public :: mobbrmsd_run
   public :: mobbrmsd_swap_y
 !
+!| mol_block_input
   type mol_block_input
     private
     integer(IK) :: m
@@ -55,19 +56,28 @@ module mod_mobbrmsd
     real(RK)                 :: lograt
     real(RK)                 :: numevl
   contains
-    procedure :: upperbound       => mobbrmsd_state_upperbound
-    procedure :: lowerbound       => mobbrmsd_state_lowerbound
-    procedure :: rmsd             => mobbrmsd_state_rmsd
-    procedure :: n_eval           => mobbrmsd_state_n_eval
-    procedure :: eval_ratio       => mobbrmsd_state_eval_ratio
-    procedure :: log_eval_ratio   => mobbrmsd_state_log_eval_ratio
+    procedure :: upperbound     => mobbrmsd_state_upperbound
+    !! upperbound
+    procedure :: lowerbound     => mobbrmsd_state_lowerbound
+    !! lowerbound
+    procedure :: rmsd           => mobbrmsd_state_rmsd
+    !! rmsd
+    procedure :: n_eval         => mobbrmsd_state_n_eval
+    !! number of lowerbound evaluation
+    procedure :: eval_ratio     => mobbrmsd_state_eval_ratio
+    !! ratio of evaluated node
+    procedure :: log_eval_ratio => mobbrmsd_state_log_eval_ratio
+    !! log ratio of evaluated node
     final     :: mobbrmsd_state_destroy
+    !! destracter
   end type mobbrmsd_state
 !
 !| mobbrmsd
   type mobbrmsd
     type(mobbrmsd_header) :: h
+    !! mobbrmsd_header
     type(mobbrmsd_state)  :: s
+    !! mobbrmsd_state
   contains
     final     :: mobbrmsd_destroy
   end type mobbrmsd
@@ -188,6 +198,7 @@ contains
     res = INT(LN_TO_L10 * mobbrmsd_header_log_n_nodes(this), IK)
   end function mobbrmsd_header_exp_n_nodes
 !
+!| destructer
   pure elemental subroutine mobbrmsd_header_destroy(this)
     type(mobbrmsd_header), intent(inout) :: this
     if (ALLOCATED(this%q)) deallocate (this%q)
@@ -312,6 +323,8 @@ contains
       state%numevl = W(3)
       state%lograt = W(4)
 !
+      if(PRESENT(rot)) call bb_list_rotation_matrix(header%q, state%s, W, rot)
+!
     else
 !
       block
@@ -323,6 +336,9 @@ contains
         state%lowbou = T(2)
         state%numevl = T(3)
         state%lograt = T(4)
+!
+        if(PRESENT(rot)) call bb_list_rotation_matrix(header%q, state%s, T, rot)
+!
       end block
 !
     end if
