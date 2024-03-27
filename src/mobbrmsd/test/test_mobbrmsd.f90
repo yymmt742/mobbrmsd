@@ -21,22 +21,29 @@ contains
     type(mobbrmsd)       :: mobb
 !
     inp = mobbrmsd_input()
-    call inp%add_molecule(24, 1)
-    call inp%add_molecule(4, 4, sym=RESHAPE([2, 1, 3, 4], [4, 1]))
+    call inp%add_molecule(128, 1)
     call inp%add_molecule(20, 3)
+    call inp%add_molecule(4, 8, sym=RESHAPE([3, 4, 1, 2], [4, 1]))
 !
     mobb = mobbrmsd(inp)
+    print*,mobb%h%n_atoms(), NINT(EXP(mobb%h%log_n_nodes())), mobb%h%frac_n_nodes(), mobb%h%exp_n_nodes()
 !
     block
       type(mobbrmsd_header) :: h
       type(mobbrmsd_state)  :: s(3)
-      real(RK)              :: X(D, 24 + 4 * 4 + 20 * 3)
-      real(RK)              :: Y(D, 24 + 4 * 4 + 20 * 3)
+      real(RK)              :: X(D, mobb%h%n_atoms())
+      real(RK)              :: Y(D, mobb%h%n_atoms())
       h = mobb%h
       s(:) = mobb%s
       X = sample(SIZE(X, 1), SIZE(X, 2))
-      Y = 0.8 * X + 0.2 * sample(SIZE(Y, 1), SIZE(Y, 2))
+      Y = 0.5 * X + 0.5 * sample(SIZE(Y, 1), SIZE(Y, 2))
       call mobbrmsd_run(h, s(1), X, Y)
+      Y = 0.5 * Y + 0.5 * sample(SIZE(Y, 1), SIZE(Y, 2))
+      call mobbrmsd_run(h, s(2), X, Y)
+      Y = 0.5 * Y + 0.5 * sample(SIZE(Y, 1), SIZE(Y, 2))
+      call mobbrmsd_run(h, s(3), X, Y)
+      print'(6f10.4)',s%square_deviation(), s%rmsd()
+      print'(6f10.4)',s%eval_ratio(), s%log_eval_ratio()
     end block
 !
   end subroutine test0

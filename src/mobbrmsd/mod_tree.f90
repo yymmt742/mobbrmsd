@@ -528,12 +528,5 @@ contains
     res = r(qn, i)
   end function queue_nnodes
 !
-! pure function queue_memstride(r, s) result(res)
-!   integer(IK), intent(in) :: r(queue_blocksize, *)
-!   integer(IK), intent(in) :: s(*)
-!   integer(IK)             :: res
-!   res = r(qx, s(sl))
-! end function queue_memstride
-!
 end module mod_tree
 

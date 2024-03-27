@@ -12,6 +12,7 @@ module mod_bb_block
   private
   public :: bb_block
   public :: bb_block_nmol
+  public :: bb_block_natm
   public :: bb_block_molsize
   public :: bb_block_memsize
   public :: bb_block_worksize
@@ -161,6 +162,14 @@ contains
     integer(IK)             :: res
     res = mol_block_nmol(q(bq))
   end function bb_block_nmol
+!
+!| Returns the number of molecules.
+  pure function bb_block_natm(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! bb_block header array.
+    integer(IK)             :: res
+    res = mol_block_natm(q(bq))
+  end function bb_block_natm
 !
 !| Returns the memory size of molecular block size.
   pure function bb_block_molsize(q) result(res)

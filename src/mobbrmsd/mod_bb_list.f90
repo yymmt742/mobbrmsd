@@ -7,6 +7,8 @@ module mod_bb_list
   public :: bb_list
   public :: bb_list_memsize
   public :: bb_list_n_block
+  public :: bb_list_n_atoms
+  public :: bb_list_log_n_nodes
   public :: bb_list_setup
   public :: bb_list_run
 !
@@ -127,7 +129,7 @@ contains
 !
   end function bb_list_memsize
 !
-!| Inquire worksize of f_matrix.
+!| Returns number of molecular blocks.
   pure function bb_list_n_block(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! bb_block.
@@ -136,6 +138,39 @@ contains
     res = q(nb)
 !
   end function bb_list_n_block
+!
+!| Returns number of total atoms.
+  pure function bb_list_n_atoms(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! bb_block.
+    integer(IK)             :: res, i, j, n
+!
+    res = 0
+    n = n_block(q)
+    j = q_pointer(q)
+    do i = 1, n
+      res = res + bb_block_natm(q(q(j)))
+      j = j + 1
+    end do
+!
+  end function bb_list_n_atoms
+!
+!| Returns the logarithm of the total number of nodes.
+  pure function bb_list_log_n_nodes(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! bb_block.
+    integer(IK)             :: i, j, n
+    real(RK)                :: res
+!
+    res = ZERO
+    n = n_block(q)
+    j = q_pointer(q)
+    do i = 1, n
+      res = res + bb_block_log_ncomb(q(q(j)))
+      j = j + 1
+    end do
+!
+  end function bb_list_log_n_nodes
 !
 !| Setup
   pure subroutine bb_list_setup(q, s, X, Y, W)
