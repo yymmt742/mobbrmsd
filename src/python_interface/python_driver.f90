@@ -7,17 +7,19 @@ module driver
   public add_molecule
   public run
 !
-  type(mobbrmsd_input), save :: inp
+  type(mol_block_input), allocatable :: blocks(:)
 !
 contains
 !
+  !| add_molecule
   subroutine add_molecule(m, n, s, sym)
     integer(kind=ik), intent(in) :: m
     integer(kind=ik), intent(in) :: n
     integer(kind=ik), intent(in) :: s
-    integer(kind=ik), intent(in) :: sym(*)
+    integer(kind=ik), intent(in), optional :: sym(m * (s - 1))
 !
-    call inp%add_molecule(m, n, sym=RESHAPE(sym(:m * (s - 1)), [m, s - 1]))
+    if (.not. ALLOCATED(blocks)) allocate (blocks(0))
+    call mol_block_input_add(blocks, m, n, reshape(sym, [m, s - 1]))
 !
   end subroutine add_molecule
 !
@@ -42,7 +44,7 @@ contains
     type(mobbrmsd)                :: mob
     integer(kind=ik)              :: i, dmn
 !
-    mob = mobbrmsd(inp)
+    mob = mobbrmsd(blocks)
     nmem = mob%h%memsize()
     dmn = mob%h%n_atoms()
 !
@@ -62,12 +64,13 @@ contains
         pnt = (i - 1) * dmn + 1
         ijob = omp_get_thread_num() + 1
         s = mob%s
-        call mobrmsd_run(mob%h, s, X, Y(pnt), w(1, ijob), cutoff, difflim, maxeval)
+        call mobbrmsd_run(mob%h, s, X, Y(pnt), w(1, ijob), cutoff, difflim, maxeval)
 !
         rmsd(i) = s%rmsd()
         upper(i) = s%upperbound()
         lower(i) = s%lowerbound()
         log_ratio(i) = s%log_eval_ratio()
+        neval(i) = s%n_eval()
 !
       end block
     end do

@@ -5,6 +5,8 @@ module mod_mobbrmsd
   use mod_bb_block
   implicit none
   public :: mobbrmsd
+  public :: mol_block_input
+  public :: mol_block_input_add
   public :: mobbrmsd_input
   public :: mobbrmsd_header
   public :: mobbrmsd_state
@@ -74,10 +76,40 @@ module mod_mobbrmsd
   end interface mobbrmsd_input
 !
   interface mobbrmsd
-    module procedure mobbrmsd_new
+    module procedure mobbrmsd_new, mobbrmsd_new_from_block
   end interface mobbrmsd
 !
 contains
+!
+  pure subroutine mol_block_input_add(this, m, n, sym)
+    type(mol_block_input), allocatable, intent(inout) :: this(:)
+    !! this
+    integer(IK), intent(in)            :: m
+    !! number of atoms per molecule
+    integer(IK), intent(in)            :: n
+    !! number of molecule
+    integer(IK), intent(in), optional  :: sym(:, :)
+    !! molecular symmetry
+    type(mol_block_input), allocatable :: blocks(:)
+    integer(IK)                        :: nblock, i
+!
+    nblock = 1
+    if (ALLOCATED(this)) nblock = nblock + SIZE(this)
+!
+    allocate (blocks(nblock))
+    do concurrent(i=1:nblock - 1)
+      blocks(i)%m = this(i)%m
+      blocks(i)%n = this(i)%n
+      call move_alloc(from=this(i)%sym, to=blocks(i)%sym)
+    end do
+!
+    blocks(nblock)%m = m
+    blocks(nblock)%n = n
+    if (PRESENT(sym)) blocks(nblock)%sym = sym
+!
+    call MOVE_ALLOC(from=blocks, to=this)
+!
+  end subroutine mol_block_input_add
 !
   pure elemental subroutine mol_block_input_destroy(this)
     type(mol_block_input), intent(inout) :: this
@@ -100,21 +132,8 @@ contains
     !! number of molecule
     integer(IK), intent(in), optional    :: sym(:, :)
     !! molecular symmetry
-    type(mol_block_input), allocatable   :: blocks(:)
-    integer(IK)                          :: nblock, i
 !
-    nblock = SIZE(this%blocks) + 1
-!
-    allocate (blocks(nblock))
-    do concurrent(i=1:nblock - 1)
-      blocks(i) = this%blocks(i)
-    end do
-!
-    blocks(nblock)%m = m
-    blocks(nblock)%n = n
-    if (PRESENT(sym)) blocks(nblock)%sym = sym
-!
-    call MOVE_ALLOC(from=blocks, to=this%blocks)
+    call mol_block_input_add(this%blocks, m, n, sym)
 !
   end subroutine mobbrmsd_input_add_molecule
 !
@@ -218,12 +237,20 @@ contains
 !
 ! ------
 !
-  pure function mobbrmsd_new(inp) result(res)
+  pure elemental function mobbrmsd_new(inp) result(res)
     type(mobbrmsd_input), intent(in) :: inp
     type(mobbrmsd)                   :: res
-    integer(IK)                      :: nblock
 !
-    nblock = SIZE(inp%blocks)
+    if (ALLOCATED(inp%blocks)) res = mobbrmsd_new_from_block(inp%blocks)
+!
+  end function mobbrmsd_new
+!
+  pure function mobbrmsd_new_from_block(blocks) result(res)
+    type(mol_block_input), intent(in) :: blocks(:)
+    type(mobbrmsd)                    :: res
+    integer(IK)                       :: nblock
+!
+    nblock = SIZE(blocks)
 !
     block
       type(bb_block) :: bbblk(nblock)
@@ -231,10 +258,10 @@ contains
       integer(IK)    :: i
 !
       do concurrent(i=1:nblock)
-        if (ALLOCATED(inp%blocks(i)%sym)) then
-          bbblk(i) = bb_block(inp%blocks(i)%m, inp%blocks(i)%n, sym=inp%blocks(i)%sym)
+        if (ALLOCATED(blocks(i)%sym)) then
+          bbblk(i) = bb_block(blocks(i)%m, blocks(i)%n, sym=blocks(i)%sym)
         else
-          bbblk(i) = bb_block(inp%blocks(i)%m, inp%blocks(i)%n)
+          bbblk(i) = bb_block(blocks(i)%m, blocks(i)%n)
         end if
       end do
 !
@@ -249,7 +276,7 @@ contains
 !
     end block
 !
-  end function mobbrmsd_new
+  end function mobbrmsd_new_from_block
 !
   pure subroutine mobbrmsd_run(header, state, X, Y, W, cutoff, difflim, maxeval)
     class(mobbrmsd_header), intent(in)   :: header
@@ -268,6 +295,9 @@ contains
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
     integer(IK), intent(in), optional    :: maxeval
     !! The search ends when ncount exceeds maxiter.
+!
+    if (.not. ALLOCATED(header%q)) return
+    if (.not. ALLOCATED(state%s)) return
 !
     if (PRESENT(W)) then
 !

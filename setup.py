@@ -1,9 +1,9 @@
 from skbuild import setup
 
 setup(
-  name="symrmsd",
+  name="mobbrmsd",
   version="0.0.1",
-  description="molecular symmetry corrected rmsd",
-  packages=['symrmsd'],
+  description="molecular orientation corrected rmsd with branch-and-bound",
+  packages=['mobbrmsd'],
   python_requires=">=3.8",
  )
