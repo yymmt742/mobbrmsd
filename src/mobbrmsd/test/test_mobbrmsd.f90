@@ -33,17 +33,35 @@ contains
       type(mobbrmsd_state)  :: s(3)
       real(RK)              :: X(D, mobb%h%n_atoms())
       real(RK)              :: Y(D, mobb%h%n_atoms())
+      real(RK)              :: cutoff
+      integer(IK)           :: i
       h = mobb%h
       s(:) = mobb%s
       X = sample(SIZE(X, 1), SIZE(X, 2))
-      Y = 0.5 * X + 0.5 * sample(SIZE(Y, 1), SIZE(Y, 2))
-      call mobbrmsd_run(h, s(1), X, Y)
-      Y = 0.5 * Y + 0.5 * sample(SIZE(Y, 1), SIZE(Y, 2))
-      call mobbrmsd_run(h, s(2), X, Y)
-      Y = 0.5 * Y + 0.5 * sample(SIZE(Y, 1), SIZE(Y, 2))
-      call mobbrmsd_run(h, s(3), X, Y)
-      print'(6f10.4)',s%square_deviation(), s%rmsd()
-      print'(6f10.4)',s%eval_ratio(), s%log_eval_ratio()
+      cutoff = 999.9_RK
+!
+      do i = 1, 10
+!
+        Y = 0.5 * X + 0.5 * sample(SIZE(Y, 1), SIZE(Y, 2))
+        call mobbrmsd_run(h, s(1), X, Y, cutoff=cutoff)
+        cutoff = MIN(cutoff, s(1)%upperbound())
+!
+        Y = 0.5 * Y + 0.5 * sample(SIZE(Y, 1), SIZE(Y, 2))
+        call mobbrmsd_run(h, s(2), X, Y, cutoff=cutoff)
+        cutoff = MIN(cutoff, s(2)%upperbound())
+!
+        Y = 0.5 * Y + 0.5 * sample(SIZE(Y, 1), SIZE(Y, 2))
+        call mobbrmsd_run(h, s(3), X, Y, cutoff=cutoff)
+        cutoff = MIN(cutoff, s(3)%upperbound())
+!
+        print*,cutoff
+        print'(6f10.4)', s%upperbound(), s%lowerbound()
+        print'(6f10.4)', s%rmsd()
+        print'(6f10.4)', s%eval_ratio(), s%log_eval_ratio()
+        print'(3I20)', s%n_eval()
+        print*
+      end do
+!
     end block
 !
   end subroutine test0

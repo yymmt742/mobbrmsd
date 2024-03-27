@@ -49,8 +49,10 @@ module mod_mobbrmsd
     real(RK)                 :: lograt
     real(RK)                 :: numevl
   contains
-    procedure :: square_deviation => mobbrmsd_state_square_deviation
+    procedure :: upperbound       => mobbrmsd_state_upperbound
+    procedure :: lowerbound       => mobbrmsd_state_lowerbound
     procedure :: rmsd             => mobbrmsd_state_rmsd
+    procedure :: n_eval           => mobbrmsd_state_n_eval
     procedure :: eval_ratio       => mobbrmsd_state_eval_ratio
     procedure :: log_eval_ratio   => mobbrmsd_state_log_eval_ratio
     final     :: mobbrmsd_state_destroy
@@ -159,9 +161,7 @@ contains
     class(mobbrmsd_header), intent(in) :: this
     !! mobbrmsd_header
     integer(IK)                        :: res
-!
     res = INT(LN_TO_L10 * mobbrmsd_header_log_n_nodes(this), IK)
-!
   end function mobbrmsd_header_exp_n_nodes
 !
   pure elemental subroutine mobbrmsd_header_destroy(this)
@@ -171,17 +171,29 @@ contains
 !
 ! ------
 !
-  pure elemental function mobbrmsd_state_square_deviation(this) result(res)
+  pure elemental function mobbrmsd_state_upperbound(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
     real(RK)                          :: res
     res = MAX(ZERO, this%uppbou)
-  end function mobbrmsd_state_square_deviation
+  end function mobbrmsd_state_upperbound
+!
+  pure elemental function mobbrmsd_state_lowerbound(this) result(res)
+    class(mobbrmsd_state), intent(in) :: this
+    real(RK)                          :: res
+    res = MAX(ZERO, this%lowbou)
+  end function mobbrmsd_state_lowerbound
 !
   pure elemental function mobbrmsd_state_rmsd(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
     real(RK)                          :: res
     res = SQRT(this%rcnatm * MAX(ZERO, this%uppbou))
   end function mobbrmsd_state_rmsd
+!
+  pure elemental function mobbrmsd_state_n_eval(this) result(res)
+    class(mobbrmsd_state), intent(in) :: this
+    integer(IK)                       :: res
+    res = NINT(this%numevl, IK)
+  end function mobbrmsd_state_n_eval
 !
   pure elemental function mobbrmsd_state_eval_ratio(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
@@ -266,7 +278,7 @@ contains
 !
       block
         real(RK), allocatable :: T(:)
-        allocate (T(header%memsize()+100))
+        allocate (T(header%memsize()))
         call bb_list_setup(header%q, state%s, X, Y, T)
         call bb_list_run(header%q, state%s, T, cutoff=cutoff, difflim=difflim, maxeval=maxeval)
         state%uppbou = T(1)
