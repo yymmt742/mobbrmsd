@@ -1,5 +1,4 @@
-!
-!| Module for calculating determinants.
+!| Module for determinants.
 module mod_det
   use mod_params, only : D, DD, IK, RK, ONE => RONE, ZERO => RZERO, getrf
   implicit none
@@ -216,3 +215,4 @@ contains
    end subroutine det_sign_part
 !
  end module mod_det
+
