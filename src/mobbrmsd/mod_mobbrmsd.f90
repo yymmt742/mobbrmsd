@@ -2,16 +2,29 @@
 module mod_mobbrmsd
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_params, only: copy
-  use mod_branch_and_bound, only: branch_and_bound, DEF_maxeval, DEF_cutoff
-  use mod_mol_block
+  use mod_bb_list
+  use mod_bb_block
   implicit none
   public :: mobbrmsd
   public :: mobbrmsd_input
 !
+  integer(IK), parameter :: DEF_maxeval = -1
+  real(RK), parameter    :: DEF_cutoff  = RHUGE
+!
+  type mol_block_input
+    private
+    integer(IK) :: m
+    integer(IK) :: n
+    integer(IK), allocatable :: sym(:, :)
+  contains
+    final :: mol_block_input_destroy
+  end type mol_block_input
+!
   type mobbrmsd_input
-    integer(IK)                     :: maxeval = DEF_maxeval
-    real(RK)                        :: cutoff  = DEF_cutoff
-!   type(mol_block_list)            :: blk
+    private
+    integer(IK) :: maxeval = DEF_maxeval
+    real(RK)    :: cutoff  = DEF_cutoff
+    type(mol_block_input), allocatable :: m(:)
   contains
     procedure :: add_molecule => mobbrmsd_input_add_molecule
     procedure :: clear        => mobbrmsd_input_clear
@@ -20,8 +33,6 @@ module mod_mobbrmsd
 !
   type mobbrmsd
     private
-    integer(IK), public    :: nmem = 0
-    integer(IK), public    :: natm = 0
 !   type(branch_and_bound) :: bra
   contains
     procedure :: run             => mobbrmsd_run
@@ -40,11 +51,20 @@ module mod_mobbrmsd
 !
 contains
 !
-  pure subroutine mobbrmsd_input_add_molecule(this, b, s)
+  pure elemental subroutine mol_block_input_destroy(this)
+    type(mol_block_input), intent(inout) :: this
+    if (ALLOCATED(this%sym)) deallocate (this%sym)
+  end subroutine mol_block_input_destroy
+!
+  pure subroutine mobbrmsd_input_add_molecule(this, m, n, sym)
     class(mobbrmsd_input), intent(inout) :: this
-    type(mol_block), intent(in)         :: b
-    integer(IK), intent(in)             :: s(*)
-    integer(IK)                         :: l, i, n, h(2)
+    !! this
+    integer(IK), intent(in)              :: m
+    !! number of atoms per molecule
+    integer(IK), intent(in)              :: n
+    !! number of molecule
+    integer(IK), intent(in), optional    :: sym(:, :)
+    !! molecular symmetry
 !
 !   call this%blk%add_molecule(b)
 !
@@ -64,6 +84,7 @@ contains
 
   pure elemental subroutine mobbrmsd_input_clear(this)
     class(mobbrmsd_input), intent(inout) :: this
+    if (ALLOCATED(this%m)) deallocate (this%m)
   end subroutine mobbrmsd_input_clear
 !
   pure elemental subroutine mobbrmsd_input_destroy(this)
@@ -154,7 +175,6 @@ contains
 !
   pure elemental subroutine mobbrmsd_clear(this)
     class(mobbrmsd), intent(inout) :: this
-    this%nmem = 0
     !call this%bra%clear()
   end subroutine mobbrmsd_clear
 !

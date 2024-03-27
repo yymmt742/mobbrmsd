@@ -8,11 +8,6 @@ module mod_bb_list
   public :: bb_list_memsize
   public :: bb_list_setup
   public :: bb_list_run
-  public :: DEF_maxeval
-  public :: DEF_cutoff
-!
-  integer(IK), parameter :: DEF_maxeval = -1
-  real(RK), parameter    :: DEF_cutoff  = RHUGE
 !
   integer(IK), parameter :: header_size = 1
   integer(IK), parameter :: nb = 1 ! number of block
@@ -166,7 +161,7 @@ contains
 !
   end subroutine bb_list_setup
 !
-  pure subroutine bb_list_run(q, s, W, cutoff, difflim, maxiter)
+  pure subroutine bb_list_run(q, s, W, cutoff, difflim, maxeval)
     integer(IK), intent(in)           :: q(*)
     !! header
     integer(IK), intent(inout)        :: s(*)
@@ -177,7 +172,7 @@ contains
     !! The search ends when lowerbound is determined to be greater than to cutoff.
     real(RK), intent(in), optional    :: difflim
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
-    integer(IK), intent(in), optional :: maxiter
+    integer(IK), intent(in), optional :: maxeval
     !! The search ends when ncount exceeds maxiter.
     real(RK)                          :: coff, diff, nlim
     integer(IK)                       :: pq, ps, pw
@@ -194,7 +189,7 @@ contains
 !
     if (PRESENT(cutoff)) coff = MAX(coff, cutoff)
     if (PRESENT(difflim)) diff = MAX(diff, difflim)
-    if (PRESENT(maxiter)) nlim = maxiter
+    if (PRESENT(maxeval)) nlim = MERGE(real(maxeval, RK), nlim, maxeval >= 0)
 !
     call run_bb(n, q(pq), q(ps), q(pw), q, coff, diff, nlim, s(sb), s, W)
 !

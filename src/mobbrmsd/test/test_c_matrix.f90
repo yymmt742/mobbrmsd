@@ -1,7 +1,7 @@
 program main
   use mod_params, only: setup_dimension, D, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
-  use mod_rotation_matrix
+  use mod_rotation
   use mod_c_matrix
   use mod_testutil
   use mod_unittest

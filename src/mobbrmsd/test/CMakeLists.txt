@@ -142,9 +142,10 @@ target_sources( test_mobbrmsd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
+                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
                                      test_mobbrmsd.f90 )

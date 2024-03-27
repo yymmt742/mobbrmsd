@@ -1,7 +1,7 @@
 program main
   use mod_params, only: D, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_bb_block
-  use mod_rotation_matrix
+  use mod_rotation
   use mod_bb_list
   use mod_unittest
   use mod_testutil
