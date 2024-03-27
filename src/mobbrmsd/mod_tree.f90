@@ -22,7 +22,9 @@ module mod_tree
   public :: tree_node_pointer
   public :: tree_current_sequence
   public :: tree_current_permutation
+  public :: tree_sequence_to_permutation
   public :: tree_current_mapping
+  public :: tree_sequence_to_mapping
   public :: tree_expand
   public :: tree_leave
   public :: tree_select_top_node
@@ -263,6 +265,30 @@ contains
     enddo
   end function tree_current_permutation
 !
+!| Convert sequence to permutation.
+  pure function tree_sequence_to_permutation(q, z) result(res)
+    integer(IK), intent(in) :: q(*)
+!!  queue
+    integer(IK), intent(in) :: z(*)
+!!  state
+    integer(IK)             :: res(q(qd))
+    integer(IK)             :: i, j, p, t
+    do concurrent(i=1:q(qd))
+      res(i) = i
+    end do
+    do i = 1, q(qd)
+      if (z(i) < 0) return
+      if (z(i) < q(qs)) cycle
+      ! cyclic swap res(i:p)
+      p = i + z(i) / q(qs)
+      t = res(p)
+      do j = p, i + 1, -1
+        res(j) = res(j - 1)
+      end do
+      res(i) = t
+    enddo
+  end function tree_sequence_to_permutation
+!
 !| Returns current mapping.
   pure function tree_current_mapping(q, s) result(res)
     integer(IK), intent(in) :: q(*)
@@ -274,6 +300,18 @@ contains
       res(i) = MODULO(queue_state(s(sr), i), q(qs))
     end do
   end function tree_current_mapping
+!
+!| Returns current mapping.
+  pure function tree_sequence_to_mapping(q, z) result(res)
+    integer(IK), intent(in) :: q(*)
+!!  queue
+    integer(IK), intent(in) :: z(*)
+!!  state
+    integer(IK)             :: i, res(q(qd))
+    do concurrent(i=1:q(qd))
+      res(i) = MODULO(z(i), q(qs))
+    end do
+  end function tree_sequence_to_mapping
 !
 !| Expand current node
   pure subroutine tree_expand(q, s)

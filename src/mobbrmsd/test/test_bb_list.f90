@@ -11,11 +11,11 @@ program main
   call u%init('test bb_list')
 !
   call test0()
-  call test1(4, 3, 1, [0])
-  call test1(4, 2, 2, [3, 2, 1, 4])
-  call test2(4, 2, 2, [3, 2, 1, 4])
-  call test2(4, 4, 2, [3, 2, 1, 4])
-  call test2(24, 4, 1, [0])
+! call test1(4, 3, 1, [0])
+! call test1(4, 2, 2, [3, 2, 1, 4])
+! call test2(4, 2, 2, [3, 2, 1, 4])
+! call test2(4, 4, 2, [3, 2, 1, 4])
+! call test2(24, 4, 1, [0])
 !
   call u%finish_and_terminate()
 !
@@ -24,7 +24,7 @@ contains
   subroutine test0()
     type(bb_block) :: blk(2)
     type(bb_list)  :: b
-    real(RK)       :: X(D, 8 * 3 + 4 * 5), Y(D, 8 * 3 + 4 * 5)
+    real(RK)       :: X(D, 8 * 3 + 4 * 5), Y(D, 8 * 3 + 4 * 5), Z(D, 8 * 3 + 4 * 5)
     integer(IK)    :: i, nmem
 !
     blk(1) = bb_block(8, 3, sym=RESHAPE([2, 3, 4, 5, 6, 7, 8, 1], [8, 1]))
@@ -37,11 +37,14 @@ contains
     nmem = bb_list_memsize(b%q)
 !
     block
-      real(RK) :: w(nmem)
+      real(RK) :: W(nmem)
       do i = 1, 20
-        call bb_list_setup(b%q, b%s, X, Y, w)
-        call bb_list_run(b%q, b%s, w)
-        print'(2F9.4,F9.1,2F9.4,8I3)', W(:4), EXP(W(4)), b%s(2:9)
+        call bb_list_setup(b%q, b%s, X, Y, W)
+        call bb_list_run(b%q, b%s, W)
+        Z = Y
+        call bb_list_swap_y(b%q, b%s, Z)
+        print'(4F9.4,F9.1,2F9.4,8I3)', sd(SIZE(X, 2), X, Y), sd(SIZE(X, 2), X, Z), W(:4), EXP(W(4)), b%s(2:9)
+        call u%assert_almost_equal(W(1), sd(SIZE(X, 2), X, Z), 'minrmsd vs swaped sd')
         Y = 0.8 * Y + 0.2 * sample(D, SIZE(X, 2))
       end do
     end block

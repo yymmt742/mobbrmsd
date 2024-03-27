@@ -185,12 +185,12 @@ contains
     enddo
   end function eye
 !
-  pure function sd(m, n, X, Y) result(res)
-    integer(IK), intent(in) :: m, n
-    real(RK), intent(in)    :: X(D, m, n), Y(D, m, n)
+  pure function sd(n, X, Y) result(res)
+    integer(IK), intent(in) :: n
+    real(RK), intent(in)    :: X(D, n), Y(D, n)
     real(RK)                :: G, C(D, D), W(100), res
     G = SUM(X * X) + SUM(Y * Y)
-    C = MATMUL(RESHAPE(Y, [D, m * n]), TRANSPOSE(RESHAPE(X, [D, m * n])))
+    C = MATMUL(RESHAPE(Y, [D, n]), TRANSPOSE(RESHAPE(X, [D, n])))
     call estimate_sdmin(G, C, w)
     res = w(1)
   end function sd
@@ -206,7 +206,7 @@ contains
     map = 1
     do while (.not. per%endl())
       do
-        res = MIN(res, sd(m, n, X, pws(m, n, s, per%id, map, sym, Y)))
+        res = MIN(res, sd(m * n, X, pws(m, n, s, per%id, map, sym, Y)))
         call map_next(n, s, map)
         if (ALL(map == 1)) exit
       enddo

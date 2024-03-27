@@ -11,6 +11,7 @@ module mod_bb_list
   public :: bb_list_log_n_nodes
   public :: bb_list_setup
   public :: bb_list_run
+  public :: bb_list_swap_y
 !
   integer(IK), parameter :: header_size = 1
   integer(IK), parameter :: nb = 1 ! number of block
@@ -207,6 +208,7 @@ contains
 !
   end subroutine bb_list_setup
 !
+!| run branch and bound
   pure subroutine bb_list_run(q, s, W, cutoff, difflim, maxeval)
     integer(IK), intent(in)           :: q(*)
     !! header
@@ -319,6 +321,31 @@ contains
     end do
   end subroutine save_state
 !
+!| Swap target coordinate.
+  pure subroutine bb_list_swap_y(q, s, Y)
+    integer(IK), intent(in) :: q(*)
+    !! header
+    integer(IK), intent(in) :: s(*)
+    !! state
+    real(RK), intent(inout) :: Y(*)
+    !! target coordinate
+    integer(IK)             :: i, n, pb, ps, pq, px
+!
+    ps = s_pointer(q)
+    px = x_pointer(q)
+    pq = q_pointer(q)
+    pb = ss
+!
+    n = n_block(q)
+!
+    do i = 0, n - 1
+      call bb_block_swap_y(q(q(pq + i)), s(pb), Y(q(px + i)))
+      pb = pb + bb_block_nmol(q(q(pq + i)))
+    end do
+!
+  end subroutine bb_list_swap_y
+!
+!| destractor
   pure elemental subroutine bb_list_destroy(this)
     type(bb_list), intent(inout) :: this
     if (ALLOCATED(this%q)) deallocate (this%q)

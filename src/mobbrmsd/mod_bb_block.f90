@@ -433,11 +433,11 @@ contains
   end subroutine bb_block_save_state
 !
 !| swap Y.
-  subroutine bb_block_swap_y(q, s, Y)
+  pure subroutine bb_block_swap_y(q, z, Y)
     integer(IK), intent(in) :: q(*)
     !! integer array
-    integer(IK), intent(in) :: s(*)
-    !! state vector
+    integer(IK), intent(in) :: z(*)
+    !! tree_current_sequence (not state vector)
     real(RK), intent(inout) :: Y(*)
     !! target coordinate
     integer(IK)             :: nmol, napm
@@ -445,8 +445,8 @@ contains
     napm = mol_block_napm(q(bq))
     block
       integer(IK) :: iper(nmol), imap(nmol)
-      iper = tree_current_permutation(q(q(tq)), s(ts))
-      imap = tree_current_mapping(q(q(tq)), s(ts))
+      iper = tree_sequence_to_permutation(q(q(tq)), z)
+      imap = tree_sequence_to_mapping(q(q(tq)), z)
       call swap_y(nmol, napm, iper, imap, q(bq), Y)
     end block
   end subroutine bb_block_swap_y

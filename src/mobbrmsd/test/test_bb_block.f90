@@ -38,7 +38,7 @@ contains
     integer(IK), parameter :: sym(m) = [2, 3, 4, 5, 6, 7, 8, 1]
     real(RK)               :: X(D, m, n), Y(D, m, n), Z(D, m, n)
     real(RK), allocatable  :: W(:)
-    integer(IK)            :: sb(n + 1)
+    integer(IK)            :: sb(n)
     integer(IK)            :: i
 !
     bm = bb_block(8, 3, sym=RESHAPE(sym, [m, 1]))
@@ -54,7 +54,7 @@ contains
       call u%assert_almost_equal(W(1), brute_sd(m, n, s, sym, X, Y), 'minrmsd value')
       Z = Y
       call bb_block_swap_y(bm%q, sb, Z)
-      call u%assert_almost_equal(W(1), sd(m, n, X, Z),               'swap sd value')
+      call u%assert_almost_equal(W(1), sd(m * n, X, Z), 'swap sd value')
       Y = 0.8 * Y + RESHAPE(sample(D, m * n), SHAPE(Y)) * 0.2
     end do
 !
@@ -65,7 +65,7 @@ contains
     type(bb_block)          :: bm
     real(RK)                :: X(D, m, n), Y(D, m, n), Z(D, m, n)
     real(RK), allocatable   :: W(:)
-    integer(IK)             :: sb(n + 1)
+    integer(IK)             :: sb(n)
     integer(IK)             :: i
 !
     bm = bb_block(m, n, RESHAPE(sym, [m, s - 1]))
@@ -78,7 +78,7 @@ contains
       call u%assert_almost_equal(W(1), brute_sd(m, n, s, sym, X, Y), 'minrmsd value')
       Z = Y
       call bb_block_swap_y(bm%q, sb, Z)
-      call u%assert_almost_equal(W(1), sd(m, n, X, Z),               'swap sd value')
+      call u%assert_almost_equal(W(1), sd(m * n, X, Z), 'swap sd value')
       Y = 0.8 * Y + RESHAPE(sample(D, m * n), SHAPE(Y)) * 0.2
     end do
 !
@@ -90,11 +90,9 @@ contains
     real(RK), intent(in)       :: X(*), Y(*)
     real(RK), intent(inout)    :: W(:)
     integer(IK), intent(inout) :: sb(*)
-    integer(IK)                :: nmol
     real(RK)                   :: ub
 !
     ub = 999.9_RK
-    nmol = bb_block_nmol(q)
     call bb_block_setup(q, X, Y, s, W, zfill=.TRUE.)
 !
     do
@@ -102,7 +100,7 @@ contains
 !
       if (.not. bb_block_queue_is_empty(q, s) &
         & .and. bb_block_queue_is_bottom(q, s)) then
-        if (bb_block_current_value(q, s, w) < ub) sb(:1 + nmol) = s(:1 + nmol)
+        if (bb_block_current_value(q, s, w) < ub) call bb_block_save_state(q, s, sb)
         ub = MIN(bb_block_current_value(q, s, w), ub)
       end if
 !
