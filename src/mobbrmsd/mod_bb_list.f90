@@ -1,7 +1,8 @@
 !| mod_bb_list
 module mod_bb_list
-  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use mod_params, only: DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_bb_block
+  use mod_rotation
   implicit none
   private
   public :: bb_list
@@ -12,6 +13,7 @@ module mod_bb_list
   public :: bb_list_setup
   public :: bb_list_run
   public :: bb_list_swap_y
+  public :: bb_list_rotation_matrix
 !
   integer(IK), parameter :: header_size = 1
   integer(IK), parameter :: nb = 1 ! number of block
@@ -329,9 +331,8 @@ contains
     !! state
     real(RK), intent(inout) :: Y(*)
     !! target coordinate
-    integer(IK)             :: i, n, pb, ps, pq, px
+    integer(IK)             :: i, n, pb, pq, px
 !
-    ps = s_pointer(q)
     px = x_pointer(q)
     pq = q_pointer(q)
     pb = ss
@@ -344,6 +345,36 @@ contains
     end do
 !
   end subroutine bb_list_swap_y
+!
+!| Sum covariance matrix by saved state z.
+  pure subroutine bb_list_rotation_matrix(q, s, W, R)
+    integer(IK), intent(in) :: q(*)
+    !! integer array
+    integer(IK), intent(in) :: s(*)
+    !! state
+    real(RK), intent(in)    :: W(*)
+    !! main memory
+    real(RK), intent(inout) :: R(*)
+    !! rotation matrix
+    real(RK)                :: G, C(DD), V(rotation_worksize())
+    integer(IK)             :: i, n, pb, pq, pw
+!
+    n = n_block(q)
+    pb = ss
+    pw = w_pointer(q)
+    pq = q_pointer(q)
+!
+    G = ZERO
+    C = ZERO
+!
+    do i = 0, n - 1
+      call bb_block_covmat_add(q(q(pq + i)), s(pb), W(q(pw + i)), G, C)
+      pb = pb + bb_block_nmol(q(q(pq + i)))
+    end do
+!
+    call estimate_rotation(G, C, R, V)
+!
+  end subroutine bb_list_rotation_matrix
 !
 !| destractor
   pure elemental subroutine bb_list_destroy(this)

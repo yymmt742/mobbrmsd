@@ -11,11 +11,11 @@ program main
   call u%init('test bb_list')
 !
   call test0()
-! call test1(4, 3, 1, [0])
-! call test1(4, 2, 2, [3, 2, 1, 4])
-! call test2(4, 2, 2, [3, 2, 1, 4])
-! call test2(4, 4, 2, [3, 2, 1, 4])
-! call test2(24, 4, 1, [0])
+  call test1(4, 3, 1, [0])
+  call test1(4, 2, 2, [3, 2, 1, 4])
+  call test2(4, 2, 2, [3, 2, 1, 4])
+  call test2(4, 4, 2, [3, 2, 1, 4])
+  call test2(24, 4, 1, [0])
 !
   call u%finish_and_terminate()
 !
@@ -37,14 +37,20 @@ contains
     nmem = bb_list_memsize(b%q)
 !
     block
-      real(RK) :: W(nmem)
+      real(RK) :: W(nmem), R(D, D), sxz, rxz
       do i = 1, 20
         call bb_list_setup(b%q, b%s, X, Y, W)
         call bb_list_run(b%q, b%s, W)
         Z = Y
         call bb_list_swap_y(b%q, b%s, Z)
-        print'(4F9.4,F9.1,2F9.4,8I3)', sd(SIZE(X, 2), X, Y), sd(SIZE(X, 2), X, Z), W(:4), EXP(W(4)), b%s(2:9)
-        call u%assert_almost_equal(W(1), sd(SIZE(X, 2), X, Z), 'minrmsd vs swaped sd')
+        sxz = sd(SIZE(X, 2), X, Z)
+!
+        call bb_list_rotation_matrix(b%q, b%s, W, R)
+        rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
+        call u%assert_almost_equal(W(1), sxz, 'minrmsd vs swaped sd')
+        call u%assert_almost_equal(sxz, rxz,  'swaped sd vs rotmat ')
+        print'(5F9.4,F9.1,2F9.4,8I3)', sd(SIZE(X, 2), X, Y), sxz, rxz, W(:4), EXP(W(4)), b%s(2:9)
+!
         Y = 0.8 * Y + 0.2 * sample(D, SIZE(X, 2))
       end do
     end block
