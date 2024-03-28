@@ -1,6 +1,17 @@
 find_package( unittest REQUIRED )
 find_package( purelapack REQUIRED )
 
+set(LIB_MOD_2D_DIR ${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd_2d/mod_files)
+set(TARGET_2D ${PROJECT_NAME}_2d)
+
+add_executable( test_gemm )
+target_sources( test_gemm PRIVATE test_gemm.f90 )
+target_include_directories( test_gemm PRIVATE ${unittest_DIR}/mod_files )
+target_include_directories( test_gemm PRIVATE ${LIB_MOD_2D_DIR} )
+target_link_libraries( test_gemm PRIVATE unittest )
+target_link_libraries( test_gemm PRIVATE ${TARGET_2D} )
+add_test( NAME test_gemm COMMAND test_gemm )
+
 add_executable( test_group_permutation )
 target_sources( test_group_permutation PRIVATE test_group_permutation.f90 )
 target_include_directories( test_group_permutation PRIVATE ${unittest_DIR}/mod_files )

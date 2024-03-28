@@ -2,3 +2,40 @@ list( APPEND f90_gd_src blas_lapack_interface.f90 )
 list( APPEND f90_gd_src mod_rotation.f90 )
 list( APPEND f90_gd_src mod_bb_interface_g.f90 )
 target_sources(${TARGET_GD} PRIVATE ${f90_gd_src})
+
+set(LIB_MOD_GD_DIR ${CMAKE_CURRENT_BINARY_DIR}/mod_files)
+if(NOT EXISTS "${LIB_MOD_GD_DIR}")
+  make_directory("${LIB_MOD_GD_DIR}")
+endif()
+
+set_target_properties(${TARGET_GD} PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_GD_DIR})
+target_include_directories(${TARGET_GD} PRIVATE include)
+
+set_target_properties(${TARGET_GD_INTERFACE} PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_GD_DIR})
+target_include_directories(${TARGET_GD_INTERFACE} PUBLIC $<BUILD_INTERFACE:${LIB_MOD_GD_DIR}> $<INSTALL_INTERFACE:${CMAKE_INSTALL_MODULEDIR}>)
+target_link_libraries(${TARGET_GD_INTERFACE} PRIVATE ${TARGET_GD} ${BLAS_LIBRARIES})
+
+add_library(${TARGET_GD_INTERFACE}_shared SHARED $<TARGET_OBJECTS:mobbrmsd>)
+set_target_properties(${TARGET_GD_INTERFACE}_shared PROPERTIES OUTPUT_NAME ${TARGET_GD_INTERFACE})
+target_link_libraries(${TARGET_GD_INTERFACE}_shared PRIVATE ${BLAS_LIBRARIES})
+
+add_library(${TARGET_GD_INTERFACE}_static STATIC $<TARGET_OBJECTS:mobbrmsd>)
+set_target_properties(${TARGET_GD_INTERFACE}_static PROPERTIES OUTPUT_NAME ${TARGET_GD_INTERFACE})
+
+install(TARGETS ${TARGET_GD_INTERFACE}_static
+        EXPORT ${TARGET_GD_INTERFACE}-export
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_GD}/lib"
+        LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_GD}/lib")
+install(TARGETS ${TARGET_GD_INTERFACE}_shared
+        EXPORT ${TARGET_GD_INTERFACE}-export
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
+        LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
+install(EXPORT ${TARGET_GD_INTERFACE}-export
+        NAMESPACE ${TARGET_GD_INTERFACE}::
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_GD}")
+install(EXPORT ${TARGET_GD_INTERFACE}-export
+        FILE ${TARGET_GD_INTERFACE}-config.cmake
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_GD}")
+
+install(DIRECTORY ${LIB_MOD_GD_DIR} DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_GD}")
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_GD}")
