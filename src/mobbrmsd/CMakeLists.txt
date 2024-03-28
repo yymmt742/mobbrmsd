@@ -1,3 +1,4 @@
+list( APPEND f90_src mod_kinds.f90 )
 list( APPEND f90_src mod_params.f90 )
 list( APPEND f90_src mod_group_permutation.f90 )
 list( APPEND f90_src mod_det.f90 )
