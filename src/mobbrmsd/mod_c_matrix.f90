@@ -7,7 +7,7 @@
 !  - - Q_s :: Permutation matrix on m.
 module mod_c_matrix
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE, &
-    &                   gemm, dot, copy, axpy
+    &                   gemm, copy
   use mod_mol_block
   implicit none
   private
@@ -135,10 +135,10 @@ contains
       integer(IK)                    :: i, j
 !
       do concurrent(i=1:n)
-        GX(i) = dot(dm, X(1, i), 1, X(1, i), 1)
+        GX(i) = dot(dm, X(1, i), X(1, i))
       end do
       do concurrent(i=1:n)
-        GY(i) = dot(dm, Y(1, i), 1, Y(1, i), 1)
+        GY(i) = dot(dm, Y(1, i), Y(1, i))
       end do
 !
       do concurrent(i=1:n, j=1:n)
@@ -212,7 +212,7 @@ contains
     k = q(cl) * (i - 1) + q(cb) * (j - 1) + 1
     G = G + C(k)
     k = k + 1 + DD * (s - 1)
-    call axpy(DD, ONE, C(k), 1, Cp, 1)
+    call xpy(DD, C(k), Cp)
 !
   end subroutine c_matrix_add
 !
@@ -226,6 +226,27 @@ contains
       x(i) = ZERO
     end do
   end subroutine zfill
+!
+  pure subroutine xpy(N, X, Y)
+    integer(IK), intent(in) :: N
+    real(RK), intent(in)    :: X(*)
+    real(RK), intent(inout) :: Y(*)
+    integer(IK)             :: i
+    do concurrent(i=1:N)
+      Y(i) = X(i) + Y(i)
+    end do
+  end subroutine xpy
+!
+  pure function dot(N, X, Y) result(res)
+    integer(IK), intent(in) :: N
+    real(RK), intent(in)    :: X(*), Y(*)
+    real(RK)                :: res
+    integer(IK)             :: i
+    res = ZERO
+    do i = 1, N
+      res = res + X(i) * Y(i)
+    end do
+  end function dot
 !
 end module mod_c_matrix
 

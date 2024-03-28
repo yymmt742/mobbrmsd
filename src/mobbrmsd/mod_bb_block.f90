@@ -1,7 +1,7 @@
 !| Module for handling C, F and tree.
 module mod_bb_block
   use mod_params, only: D, ND, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
-  use mod_params, only: gemm, dot, copy
+  use mod_params, only: gemm, copy
   use mod_mol_block
   use mod_c_matrix
   use mod_f_matrix

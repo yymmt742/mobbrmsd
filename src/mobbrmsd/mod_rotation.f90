@@ -2,7 +2,7 @@
 !  Here, RR^T=I and det(R)=1 are satisfied.
 module mod_rotation
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, HALF => RHALF
-  use mod_params, only: dot, copy, gemm, gesvd
+  use mod_params, only: copy, gemm, gesvd
   use mod_det
   implicit none
   private
@@ -57,7 +57,7 @@ contains
       call quartenion_sdmin_d3(g, cov, w)
     elseif (d > 3) then
       call Kabsch(cov, w(2), w(d * d + 2))
-      w(1) = dot(DD, cov, 1, w(2), 1)
+      w(1) = dot(DD, cov, w(2))
       w(1) = w(1) + w(1)
       w(1) = g - w(1)
     end if
@@ -377,4 +377,16 @@ contains
 !
   end subroutine Kabsch
 !
+  pure function dot(N, X, Y) result(res)
+    integer(IK), intent(in) :: N
+    real(RK), intent(in)    :: X(*), Y(*)
+    real(RK)                :: res
+    integer(IK)             :: i
+    res = ZERO
+    do i = 1, N
+      res = res + X(i) * Y(i)
+    end do
+  end function dot
+!
 end module mod_rotation
+

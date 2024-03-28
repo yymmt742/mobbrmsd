@@ -3,8 +3,6 @@ module blas_lapack_interface
   implicit none
   private
   public  :: SCOPY,  DCOPY
-  public  :: SDOT,   DDOT
-  public  :: SAXPY,  DAXPY
   public  :: SGEMM,  DGEMM
   public  :: SGESVD, DGESVD
   public  :: SGETRF, DGETRF
@@ -13,14 +11,8 @@ module blas_lapack_interface
 !
   interface
 !
-    include 'daxpy.h'
-    include 'saxpy.h'
-!
     include 'dcopy.h'
     include 'scopy.h'
-!
-    include 'ddot.h'
-    include 'sdot.h'
 !
     include 'dgemm.h'
     include 'sgemm.h'
@@ -63,15 +55,12 @@ module mod_params
 !
   use :: blas_lapack_interface, only : &
     &                copy   => DCOPY,  &
-    &                dot    => DDOT,   &
-    &                axpy   => DAXPY,  &
     &                gemm   => DGEMM,  &
     &                gesvd  => DGESVD, &
     &                getrf  => DGETRF
 !
 ! use :: blas_lapack_interface, only : &
 !   &                copy   => SCOPY,  &
-!   &                axpy   => SAXPY,  &
 !   &                gemm   => SGEMM,  &
 !   &                gesvd  => SGESVD, &
 !   &                getrf  => SGETRF
@@ -88,7 +77,7 @@ module mod_params
   public  :: RNAPIER, RHUGE, LN_TO_L10
 !
   public  :: setup_dimension
-  public  :: copy, dot, axpy, gemm, gesvd, getrf
+  public  :: copy, gemm, gesvd, getrf
 !
 !&<
 !
