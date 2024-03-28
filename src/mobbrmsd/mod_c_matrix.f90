@@ -1,4 +1,3 @@
-!
 !| Module for manage C matrix.<br>
 !  {C_IJs} :: Covariance matrices.<br>
 !  - C_IJs(d,d) = Y_J @ Q_s @ X_I^T<br>
@@ -7,7 +6,7 @@
 !  - - Q_s :: Permutation matrix on m.
 module mod_c_matrix
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE, &
-    &                   gemm, copy
+    &                   gemm
   use mod_mol_block
   implicit none
   private
@@ -158,10 +157,10 @@ contains
       real(RK), intent(inout)     :: C(cb, n, *), WX(dm, n), WY(dm)
       integer(IK)                 :: i
 !
-      call copy(dm * n, X, 1, WX, 1)
+      call copy(dm * n, X, WX)
 !
       do i = 1, n
-        call copy(dm, Y(1, i), 1, WY, 1)
+        call copy(dm, Y(1, i), WY)
         call calc_cov(b, s, m, n, cb, WX, WY, C(1, 1, i))
       end do
 !
@@ -247,6 +246,16 @@ contains
       res = res + X(i) * Y(i)
     end do
   end function dot
+!
+  pure subroutine copy(N, X, Y)
+    integer(IK), intent(in) :: N
+    real(RK), intent(in)    :: X(*)
+    real(RK), intent(inout) :: Y(*)
+    integer(IK)             :: i
+    do concurrent(i=1:N)
+      Y(i) = Y(i)
+    end do
+  end subroutine copy
 !
 end module mod_c_matrix
 

@@ -1,7 +1,7 @@
 !| Module for handling C, F and tree.
 module mod_bb_block
   use mod_params, only: D, ND, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
-  use mod_params, only: gemm, copy
+  use mod_params, only: gemm
   use mod_mol_block
   use mod_c_matrix
   use mod_f_matrix
@@ -323,13 +323,13 @@ contains
 !
     iprm = perm(l + iper - 1)
 !
-    call copy(ND, Z, 1, X(1, 1, iper), 1)
+    call copy(ND, Z, X(1, 1, iper))
     call c_matrix_add(qcov, l, iprm, 1, CX, X(mmap_G, 1, iper), X(mmap_C, 1, iper))
     call subm(l, nmol, iper, perm, FX, W1)
     call Hungarian(m, m, W1(1), W1(m * m + 1))
 !
     do concurrent(isym=2:nsym)
-      call copy(ND, Z, 1, X(1, isym, iper), 1)
+      call copy(ND, Z, X(1, isym, iper))
       call c_matrix_add(qcov, l, iprm, isym, CX, X(mmap_G, isym, iper), X(mmap_C, isym, iper))
       call estimate_sdmin(X(mmap_G, isym, iper), X(mmap_C, isym, iper), W2(1, isym - 1))
       X(mmap_L, isym, iper) = W1(1) + W2(1, isym - 1)
@@ -460,10 +460,10 @@ contains
     dm = D * napm
     dmn = dm * nmol
     do concurrent(i = 1:nmol)
-      call copy(dm, Y(:, :, i), 1, T(:, :, iper(i)), 1)
+      call copy(dm, Y(:, :, i), T(:, :, iper(i)))
       call mol_block_swap(b, imap(i), T(1, 1, iper(i)))
     end do
-    call copy(dmn, T, 1, Y, 1)
+    call copy(dmn, T, Y)
   end subroutine swap_y
 !
 !| Sum covariance matrix by saved state z.
@@ -509,6 +509,16 @@ contains
       x(i) = ZERO
     end do
   end subroutine zfill
+!
+  pure subroutine copy(N, X, Y)
+    integer(IK), intent(in) :: N
+    real(RK), intent(in)    :: X(*)
+    real(RK), intent(inout) :: Y(*)
+    integer(IK)             :: i
+    do concurrent(i=1:N)
+      Y(i) = Y(i)
+    end do
+  end subroutine copy
 !
 end module mod_bb_block
 

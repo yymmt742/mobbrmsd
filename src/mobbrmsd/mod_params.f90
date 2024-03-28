@@ -2,7 +2,6 @@
 module blas_lapack_interface
   implicit none
   private
-  public  :: SCOPY,  DCOPY
   public  :: SGEMM,  DGEMM
   public  :: SGESVD, DGESVD
   public  :: SGETRF, DGETRF
@@ -10,9 +9,6 @@ module blas_lapack_interface
   public  :: setup_dimension
 !
   interface
-!
-    include 'dcopy.h'
-    include 'scopy.h'
 !
     include 'dgemm.h'
     include 'sgemm.h'
@@ -54,13 +50,11 @@ module mod_params
   use :: blas_lapack_interface, only : D, DD, ND, setup_dimension
 !
   use :: blas_lapack_interface, only : &
-    &                copy   => DCOPY,  &
     &                gemm   => DGEMM,  &
     &                gesvd  => DGESVD, &
     &                getrf  => DGETRF
 !
 ! use :: blas_lapack_interface, only : &
-!   &                copy   => SCOPY,  &
 !   &                gemm   => SGEMM,  &
 !   &                gesvd  => SGESVD, &
 !   &                getrf  => SGETRF
@@ -77,7 +71,7 @@ module mod_params
   public  :: RNAPIER, RHUGE, LN_TO_L10
 !
   public  :: setup_dimension
-  public  :: copy, gemm, gesvd, getrf
+  public  :: gemm, gesvd, getrf
 !
 !&<
 !

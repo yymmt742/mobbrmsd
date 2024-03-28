@@ -2,7 +2,7 @@
 !  Here, RR^T=I and det(R)=1 are satisfied.
 module mod_rotation
   use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, HALF => RHALF
-  use mod_params, only: copy, gemm, gesvd
+  use mod_params, only: gemm, gesvd
   use mod_det
   implicit none
   private
@@ -366,14 +366,14 @@ contains
     call gesvd('A', 'A', d, d, w(m), d, w(s), w(u), d, w(vt), d, w(iw), -1, info)
     lw = NINT(w(iw))
 !
-    call copy(dd, cov, 1, w(m), 1)
+    call copy(dd, cov, w(m))
     call gesvd('A', 'A', d, d, w(m), d, w(s), w(u), d, w(vt), d, w(iw), lw, info)
 !
     call gemm('N', 'N', d, d, d, ONE, w(u), d, w(vt), d, ZERO, w(s), d)
     call det_sign(w(s:s + dd - 1))
     if (w(s) < ZERO) w(u + dd - d:u + dd - 1) = -w(u + dd - d:u + dd - 1)
     call gemm('N', 'N', d, d, d, ONE, w(u), d, w(vt), d, ZERO, w(s), d)
-    call copy(dd, w(s), 1, rot(1), 1)
+    call copy(dd, w(s), rot(1))
 !
   end subroutine Kabsch
 !
@@ -387,6 +387,16 @@ contains
       res = res + X(i) * Y(i)
     end do
   end function dot
+!
+  pure subroutine copy(N, X, Y)
+    integer(IK), intent(in) :: N
+    real(RK), intent(in)    :: X(*)
+    real(RK), intent(inout) :: Y(*)
+    integer(IK)             :: i
+    do concurrent(i=1:N)
+      Y(i) = Y(i)
+    end do
+  end subroutine copy
 !
 end module mod_rotation
 
