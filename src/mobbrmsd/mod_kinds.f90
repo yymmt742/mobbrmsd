@@ -12,9 +12,9 @@ module mod_kinds
 !
   implicit none
   private
-  public  :: I1, I2, I4, I8
-  public  :: R4, R8, RQ
-  public  :: RK, IK
+  public :: I1, I2, I4, I8
+  public :: R4, R8, RQ
+  public :: RK, IK
 !
   integer, parameter  :: IK = KIND(0)
   !! Selected integer kind.

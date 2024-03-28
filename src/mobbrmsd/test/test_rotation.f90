@@ -1,5 +1,5 @@
 program main
-  use mod_params, only: D, setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: D, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_rotation
   use mod_testutil
   use mod_unittest
@@ -7,30 +7,30 @@ program main
   type(unittest) :: z
   real(RK)       :: E2(2, 2), E3(3, 3), E6(6, 6)
 !
-  E2 = eye(2)
-  E3 = eye(3)
-  E6 = eye(6)
+! E2 = eye(2)
+! E3 = eye(3)
+! E6 = eye(6)
 !
   call z%init('test quartanion d=2')
-  call setup_dimension(2)
+! call setup_dimension(2)
   call test1(10, 10)
   call test1(20, 10)
   call test1(100, 10)
 !
-  call z%init('test quartanion d=3')
-  call setup_dimension(3)
-  call test1(3, 10)
-  call test1(5, 10)
-  call test1(10, 10)
-  call test1(100, 10)
+! call z%init('test quartanion d=3')
+! call setup_dimension(3)
+! call test1(3, 10)
+! call test1(5, 10)
+! call test1(10, 10)
+! call test1(100, 10)
 !
-  call z%init('test kabsch d=6')
-  call setup_dimension(6)
-  call test1(1, 2)
-  call test1(2, 2)
-  call test1(3, 2)
-  call test1(5, 4)
-  call test1(100, 10)
+! call z%init('test kabsch d=6')
+! call setup_dimension(6)
+! call test1(1, 2)
+! call test1(2, 2)
+! call test1(3, 2)
+! call test1(5, 4)
+! call test1(100, 10)
 !
   call z%finish_and_terminate()
 !

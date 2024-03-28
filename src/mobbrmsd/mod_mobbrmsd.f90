@@ -1,41 +1,104 @@
 !| molecular orientation corrected RMSD with branch-and-bound.
 module mod_mobbrmsd
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, TEN => RTEN, LN_TO_L10, RHUGE
-  use mod_bb_list
-  use mod_bb_block
+! use mod_bb_list
+! use mod_bb_block
   implicit none
   public :: mobbrmsd
   public :: mol_block_input
   public :: mol_block_input_add
-  public :: mobbrmsd_input
   public :: mobbrmsd_header
   public :: mobbrmsd_state
   public :: mobbrmsd_run
   public :: mobbrmsd_swap_y
 !
+  integer(IK), parameter :: DEF_D = 3
+!
+  interface
+    pure function bb_list_memsize_(q) result(res)
+      use mod_params, only: IK
+      integer(IK), intent(in) :: q(*)
+      integer(IK)             :: res
+    end function bb_list_memsize_
+!
+    pure function bb_list_n_atoms_(q) result(res)
+      use mod_params, only: IK
+      integer(IK), intent(in) :: q(*)
+      integer(IK)             :: res
+    end function bb_list_n_atoms_
+!
+    pure function bb_list_n_block_(q) result(res)
+      use mod_params, only: IK
+      integer(IK), intent(in) :: q(*)
+      integer(IK)             :: res
+    end function bb_list_n_block_
+!
+    pure function bb_list_log_n_nodes_(q) result(res)
+      use mod_params, only: IK, RK
+      integer(IK), intent(in) :: q(*)
+      real(RK)                :: res
+    end function bb_list_log_n_nodes_
+!
+    pure subroutine bb_list_setup_(q, s, X, Y, W)
+      use mod_params, only: IK, RK
+      integer(IK), intent(in)    :: q(*)
+      integer(IK), intent(inout) :: s(*)
+      real(RK), intent(in)       :: X(*)
+      real(RK), intent(in)       :: Y(*)
+      real(RK), intent(inout)    :: W(*)
+    end subroutine bb_list_setup_
+!
+    pure subroutine bb_list_run_(q, s, W, cutoff, difflim, maxeval)
+      use mod_params, only: IK, RK
+      integer(IK), intent(in)           :: q(*)
+      integer(IK), intent(inout)        :: s(*)
+      real(RK), intent(inout)           :: W(*)
+      real(RK), intent(in), optional    :: cutoff
+      real(RK), intent(in), optional    :: difflim
+      integer(IK), intent(in), optional :: maxeval
+    end subroutine bb_list_run_
+!
+    pure subroutine bb_list_swap_y_(q, s, Y)
+      use mod_params, only: IK, RK
+      integer(IK), intent(in) :: q(*)
+      integer(IK), intent(in) :: s(*)
+      real(RK), intent(inout) :: Y(*)
+    end subroutine bb_list_swap_y_
+!
+    pure subroutine bb_list_rotmat_(q, s, W, R)
+      use mod_params, only: IK, RK
+      integer(IK), intent(in) :: q(*)
+      integer(IK), intent(in) :: s(*)
+      real(RK), intent(in)    :: W(*)
+      real(RK), intent(inout) :: R(*)
+    end subroutine bb_list_rotmat_
+  end interface
+!
 !| mol_block_input
   type mol_block_input
     private
     integer(IK) :: m
+    !! number of atoms per molecule
     integer(IK) :: n
+    !! number of molecule
     integer(IK), allocatable :: sym(:, :)
+    !! molecular symmetry
   contains
     final :: mol_block_input_destroy
   end type mol_block_input
 !
-!| mobbrmsd_input
-  type mobbrmsd_input
-    private
-    type(mol_block_input), allocatable :: blocks(:)
-  contains
-    procedure :: add_molecule => mobbrmsd_input_add_molecule
-    final     :: mobbrmsd_input_destroy
-  end type mobbrmsd_input
-!
 !| mobbrmsd_header
   type mobbrmsd_header
     private
-    integer(IK), allocatable :: q(:)
+    integer(IK), allocatable    :: q(:)
+    procedure(bb_list_memsize_), pointer, nopass     :: memsize_ => NULL()
+    procedure(bb_list_n_atoms_), pointer, nopass     :: n_atoms_ => NULL()
+    procedure(bb_list_n_block_), pointer, nopass     :: n_block_ => NULL()
+    procedure(bb_list_log_n_nodes_), pointer, nopass :: log_n_nodes_ => NULL()
+    procedure(bb_list_setup_), pointer, nopass       :: setup_ => NULL()
+    procedure(bb_list_run_), pointer, nopass         :: run_ => NULL()
+    procedure(bb_list_swap_y_), pointer, nopass      :: swap_y_ => NULL()
+    procedure(bb_list_rotmat_), pointer, nopass      :: rotmat_ => NULL()
   contains
     procedure :: n_block      => mobbrmsd_header_n_block
     procedure :: n_atoms      => mobbrmsd_header_n_atoms
@@ -82,12 +145,8 @@ module mod_mobbrmsd
     final     :: mobbrmsd_destroy
   end type mobbrmsd
 !
-  interface mobbrmsd_input
-    module procedure mobbrmsd_input_new
-  end interface mobbrmsd_input
-!
   interface mobbrmsd
-    module procedure mobbrmsd_new, mobbrmsd_new_from_block
+    module procedure mobbrmsd_new_from_block
   end interface mobbrmsd
 !
 contains
@@ -129,56 +188,33 @@ contains
 !
 ! ------
 !
-  pure elemental function mobbrmsd_input_new() result(res)
-    type(mobbrmsd_input) :: res
-    allocate (res%blocks(0))
-  end function mobbrmsd_input_new
-!
-  pure subroutine mobbrmsd_input_add_molecule(this, m, n, sym)
-    class(mobbrmsd_input), intent(inout) :: this
-    !! this
-    integer(IK), intent(in)              :: m
-    !! number of atoms per molecule
-    integer(IK), intent(in)              :: n
-    !! number of molecule
-    integer(IK), intent(in), optional    :: sym(:, :)
-    !! molecular symmetry
-!
-    call mol_block_input_add(this%blocks, m, n, sym)
-!
-  end subroutine mobbrmsd_input_add_molecule
-!
-  pure elemental subroutine mobbrmsd_input_destroy(this)
-    type(mobbrmsd_input), intent(inout) :: this
-    if (ALLOCATED(this%blocks)) deallocate (this%blocks)
-  end subroutine mobbrmsd_input_destroy
-!
-! ------
-!
 !| Returns number of molecular blocks
   pure elemental function mobbrmsd_header_n_block(this) result(res)
     class(mobbrmsd_header), intent(in) :: this
-    integer(IK)               :: res
-    res = bb_list_n_block(this%q)
+    !! mobbrmsd_header
+    integer(IK)                        :: res
+    res = this%n_block_(this%q)
   end function mobbrmsd_header_n_block
 !
   pure elemental function mobbrmsd_header_memsize(this) result(res)
     class(mobbrmsd_header), intent(in) :: this
-    integer(IK)               :: res
-    res = bb_list_memsize(this%q)
+    !! mobbrmsd_header
+    integer(IK)                        :: res
+    res = this%memsize_(this%q)
   end function mobbrmsd_header_memsize
 !
   pure elemental function mobbrmsd_header_n_atoms(this) result(res)
     class(mobbrmsd_header), intent(in) :: this
-    integer(IK)               :: res
-    res = bb_list_n_atoms(this%q)
+    !! mobbrmsd_header
+    integer(IK)                        :: res
+    res = this%n_atoms_(this%q)
   end function mobbrmsd_header_n_atoms
 !
   pure elemental function mobbrmsd_header_log_n_nodes(this) result(res)
     class(mobbrmsd_header), intent(in) :: this
     !! mobbrmsd_header
     real(RK)                           :: res
-    res = bb_list_log_n_nodes(this%q)
+    res = this%log_n_nodes_(this%q)
   end function mobbrmsd_header_log_n_nodes
 !
 !| returns number of nodes in fraction.
@@ -186,7 +222,7 @@ contains
     class(mobbrmsd_header), intent(in) :: this
     !! mobbrmsd_header
     real(RK)                           :: tmp, res
-    tmp = LN_TO_L10 * mobbrmsd_header_log_n_nodes(this)
+    tmp = LN_TO_L10 * this%log_n_nodes_(this%q)
     res = TEN**(tmp - REAL(INT(tmp), RK))
   end function mobbrmsd_header_frac_n_nodes
 !
@@ -195,12 +231,19 @@ contains
     class(mobbrmsd_header), intent(in) :: this
     !! mobbrmsd_header
     integer(IK)                        :: res
-    res = INT(LN_TO_L10 * mobbrmsd_header_log_n_nodes(this), IK)
+    res = INT(LN_TO_L10 * this%log_n_nodes_(this%q), IK)
   end function mobbrmsd_header_exp_n_nodes
 !
 !| destructer
   pure elemental subroutine mobbrmsd_header_destroy(this)
     type(mobbrmsd_header), intent(inout) :: this
+    nullify (this%memsize_)
+    nullify (this%n_atoms_)
+    nullify (this%n_block_)
+    nullify (this%setup_)
+    nullify (this%run_)
+    nullify (this%swap_y_)
+    nullify (this%rotmat_)
     if (ALLOCATED(this%q)) deallocate (this%q)
   end subroutine mobbrmsd_header_destroy
 !
@@ -249,44 +292,127 @@ contains
 !
 ! ------
 !
-  pure elemental function mobbrmsd_new(inp) result(res)
-    type(mobbrmsd_input), intent(in) :: inp
-    type(mobbrmsd)                   :: res
-!
-    if (ALLOCATED(inp%blocks)) res = mobbrmsd_new_from_block(inp%blocks)
-!
-  end function mobbrmsd_new
-!
-  pure function mobbrmsd_new_from_block(blocks) result(res)
+  pure function mobbrmsd_new_from_block(blocks, d) result(res)
     type(mol_block_input), intent(in) :: blocks(:)
+    integer(IK), intent(in), optional :: d
     type(mobbrmsd)                    :: res
-    integer(IK)                       :: nblock
+    integer(IK)                       :: d_, nblock
+!
+    if (PRESENT(d)) then
+      d_ = MAX(d, 1)
+    else
+      d_ = DEF_D
+    end if
 !
     nblock = SIZE(blocks)
 !
-    block
-      type(bb_block) :: bbblk(nblock)
-      type(bb_list)  :: bblst
-      integer(IK)    :: i
+    select case(d_)
+    case (2)
+      block
+        use mod_bb_interface_d2
+        type(bb_block) :: bbblk(nblock)
+        type(bb_list)  :: bblst
+        integer(IK)    :: i
 !
-      do concurrent(i=1:nblock)
-        if (ALLOCATED(blocks(i)%sym)) then
-          bbblk(i) = bb_block(blocks(i)%m, blocks(i)%n, sym=blocks(i)%sym)
-        else
-          bbblk(i) = bb_block(blocks(i)%m, blocks(i)%n)
-        end if
-      end do
+        do concurrent(i=1:nblock)
+          if (ALLOCATED(blocks(i)%sym)) then
+            bbblk(i) = bb_block(blocks(i)%m, blocks(i)%n, sym=blocks(i)%sym)
+          else
+            bbblk(i) = bb_block(blocks(i)%m, blocks(i)%n)
+          end if
+        end do
 !
-      bblst = bb_list(bbblk)
-      res%h%q = bblst%q
-      res%s%s = bblst%s
-      res%s%rcnatm = ONE / real(bb_list_n_atoms(bblst%q), RK)
-      res%s%uppbou = RHUGE
-      res%s%lowbou = ZERO
-      res%s%lograt = ZERO
-      res%s%numevl = ZERO
+        bblst = bb_list(bbblk)
 !
-    end block
+        res%h%q = bblst%q
+        res%h%memsize_     => bb_list_memsize
+        res%h%n_atoms_     => bb_list_n_atoms
+        res%h%n_block_     => bb_list_n_block
+        res%h%log_n_nodes_ => bb_list_log_n_nodes
+        res%h%setup_       => bb_list_setup
+        res%h%run_         => bb_list_run
+        res%h%swap_y_      => bb_list_swap_y
+        res%h%rotmat_      => bb_list_rotation_matrix
+!
+        res%s%s = bblst%s
+!
+        res%s%rcnatm = ONE / real(bb_list_n_atoms(bblst%q), RK)
+        res%s%uppbou = RHUGE
+        res%s%lowbou = ZERO
+        res%s%lograt = ZERO
+        res%s%numevl = ZERO
+      end block
+    case (3)
+      block
+        use mod_bb_interface_d3
+        type(bb_block) :: bbblk(nblock)
+        type(bb_list)  :: bblst
+        integer(IK)    :: i
+!
+        do concurrent(i=1:nblock)
+          if (ALLOCATED(blocks(i)%sym)) then
+            bbblk(i) = bb_block(blocks(i)%m, blocks(i)%n, sym=blocks(i)%sym)
+          else
+            bbblk(i) = bb_block(blocks(i)%m, blocks(i)%n)
+          end if
+        end do
+!
+        bblst = bb_list(bbblk)
+!
+        res%h%q = bblst%q
+        res%h%memsize_     => bb_list_memsize
+        res%h%n_atoms_     => bb_list_n_atoms
+        res%h%n_block_     => bb_list_n_block
+        res%h%log_n_nodes_ => bb_list_log_n_nodes
+        res%h%setup_       => bb_list_setup
+        res%h%run_         => bb_list_run
+        res%h%swap_y_      => bb_list_swap_y
+        res%h%rotmat_      => bb_list_rotation_matrix
+!
+        res%s%s = bblst%s
+!
+        res%s%rcnatm = ONE / real(bb_list_n_atoms(bblst%q), RK)
+        res%s%uppbou = RHUGE
+        res%s%lowbou = ZERO
+        res%s%lograt = ZERO
+        res%s%numevl = ZERO
+      end block
+    case default
+      block
+        use mod_bb_interface_g
+        type(bb_block) :: bbblk(nblock)
+        type(bb_list)  :: bblst
+        integer(IK)    :: i
+!
+        do concurrent(i=1:nblock)
+          if (ALLOCATED(blocks(i)%sym)) then
+            bbblk(i) = bb_block(blocks(i)%m, blocks(i)%n, sym=blocks(i)%sym)
+          else
+            bbblk(i) = bb_block(blocks(i)%m, blocks(i)%n)
+          end if
+        end do
+!
+        bblst = bb_list(bbblk)
+!
+        res%h%q = bblst%q
+        res%h%memsize_     => bb_list_memsize
+        res%h%n_atoms_     => bb_list_n_atoms
+        res%h%n_block_     => bb_list_n_block
+        res%h%log_n_nodes_ => bb_list_log_n_nodes
+        res%h%setup_       => bb_list_setup
+        res%h%run_         => bb_list_run
+        res%h%swap_y_      => bb_list_swap_y
+        res%h%rotmat_      => bb_list_rotation_matrix
+!
+        res%s%s = bblst%s
+!
+        res%s%rcnatm = ONE / real(bb_list_n_atoms(bblst%q), RK)
+        res%s%uppbou = RHUGE
+        res%s%lowbou = ZERO
+        res%s%lograt = ZERO
+        res%s%numevl = ZERO
+      end block
+    end select
 !
   end function mobbrmsd_new_from_block
 !
@@ -316,28 +442,28 @@ contains
 !
     if (PRESENT(W)) then
 !
-      call bb_list_setup(header%q, state%s, X, Y, W)
-      call bb_list_run(header%q, state%s, W, cutoff=cutoff, difflim=difflim, maxeval=maxeval)
+      call header%setup_(header%q, state%s, X(1), Y(1), W(1))
+      call header%run_(header%q, state%s, W(1), cutoff=cutoff, difflim=difflim, maxeval=maxeval)
       state%uppbou = W(1)
       state%lowbou = W(2)
       state%numevl = W(3)
       state%lograt = W(4)
 !
-      if(PRESENT(rot)) call bb_list_rotation_matrix(header%q, state%s, W, rot)
+      if(PRESENT(rot)) call header%rotmat_(header%q, state%s, W(1), rot(1))
 !
     else
 !
       block
         real(RK), allocatable :: T(:)
         allocate (T(header%memsize()))
-        call bb_list_setup(header%q, state%s, X, Y, T)
-        call bb_list_run(header%q, state%s, T, cutoff=cutoff, difflim=difflim, maxeval=maxeval)
+        call header%setup_(header%q, state%s, X(1), Y(1), T(1))
+        call header%run_(header%q, state%s, T, cutoff=cutoff, difflim=difflim, maxeval=maxeval)
         state%uppbou = T(1)
         state%lowbou = T(2)
         state%numevl = T(3)
         state%lograt = T(4)
 !
-        if(PRESENT(rot)) call bb_list_rotation_matrix(header%q, state%s, T, rot)
+        if(PRESENT(rot)) call header%rotmat_(header%q, state%s, T(1), rot(1))
 !
       end block
 !
@@ -354,7 +480,7 @@ contains
     real(RK), intent(inout)            :: Y(*)
     !! target coordinate
 !
-    call bb_list_swap_y(header%q, state%s, Y)
+    call header%swap_y_(header%q, state%s, Y(1))
 !
   end subroutine mobbrmsd_swap_y
 !

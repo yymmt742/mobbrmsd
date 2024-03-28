@@ -1,0 +1,5 @@
+list( APPEND f90_3d_src gemm.f90 )
+list( APPEND f90_3d_src blas_lapack_interface.f90 )
+list( APPEND f90_3d_src mod_rotation.f90 )
+list( APPEND f90_3d_src mod_bb_interface_3d.f90 )
+target_sources(${TARGET_3D} PRIVATE ${f90_3d_src})

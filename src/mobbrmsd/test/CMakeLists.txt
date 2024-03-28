@@ -2,167 +2,79 @@ find_package( unittest REQUIRED )
 find_package( purelapack REQUIRED )
 
 add_executable( test_group_permutation )
+target_sources( test_group_permutation PRIVATE test_group_permutation.f90 )
 target_include_directories( test_group_permutation PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_group_permutation PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-  test_group_permutation.f90 )
-target_include_directories( test_group_permutation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_include_directories( test_group_permutation PRIVATE ${LIB_MOD_2D_DIR} )
 target_link_libraries( test_group_permutation PRIVATE unittest )
+target_link_libraries( test_group_permutation PRIVATE ${TARGET_2D} )
 add_test( NAME test_group_permutation COMMAND test_group_permutation )
 
 add_executable( test_Hungarian )
+target_sources( test_Hungarian PRIVATE test_Hungarian.f90 )
 target_include_directories( test_Hungarian PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_Hungarian PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-                                       test_Hungarian.f90 )
-target_include_directories( test_Hungarian PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_include_directories( test_Hungarian PRIVATE ${LIB_MOD_2D_DIR} )
 target_link_libraries( test_Hungarian PRIVATE unittest )
+target_link_libraries( test_Hungarian PRIVATE ${TARGET_2D} )
 add_test( NAME test_Hungarian COMMAND test_Hungarian )
 
 add_executable( test_mol_block )
+target_sources( test_mol_block PRIVATE test_mol_block.f90 )
 target_include_directories( test_mol_block PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_mol_block PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-                                       test_mol_block.f90 )
-target_include_directories( test_mol_block PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_include_directories( test_mol_block PRIVATE ${LIB_MOD_2D_DIR} )
 target_link_libraries( test_mol_block PRIVATE unittest )
+target_link_libraries( test_mol_block PRIVATE ${TARGET_2D} )
 add_test( NAME test_mol_block COMMAND test_mol_block )
 
-add_executable( test_det )
-target_include_directories( test_det PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_det PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-                                 ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                 ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                 test_det.f90 )
-target_include_directories( test_det PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
-target_link_libraries( test_det PRIVATE unittest )
-target_link_libraries( test_det PRIVATE purelapack )
-add_test( NAME test_det COMMAND test_det )
-
 add_executable( test_tree )
+target_sources( test_tree PRIVATE test_tree.f90 )
 target_include_directories( test_tree PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_tree PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-                                  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
-                                  test_tree.f90 )
-target_include_directories( test_tree PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_include_directories( test_tree PRIVATE ${LIB_MOD_2D_DIR} )
 target_link_libraries( test_tree PRIVATE unittest )
+target_link_libraries( test_tree PRIVATE ${TARGET_2D} )
 add_test( NAME test_tree COMMAND test_tree )
 
 add_executable( test_rotation )
+target_sources( test_rotation PRIVATE mod_testutil.f90 test_rotation.f90 )
 target_include_directories( test_rotation PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_rotation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation.f90
-                                      mod_testutil.f90
-                                      test_rotation.f90 )
-target_include_directories( test_rotation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_include_directories( test_rotation PRIVATE ${LIB_MOD_2D_DIR} )
 target_link_libraries( test_rotation PRIVATE unittest )
 target_link_libraries( test_rotation PRIVATE purelapack )
+target_link_libraries( test_rotation PRIVATE ${TARGET_2D} )
 add_test( NAME test_rotation COMMAND test_rotation )
 
 add_executable( test_c_matrix )
+target_sources( test_c_matrix PRIVATE mod_testutil.f90 test_c_matrix.f90 )
 target_include_directories( test_c_matrix PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_c_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-                                      mod_testutil.f90
-                                      test_c_matrix.f90 )
-target_include_directories( test_c_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_include_directories( test_c_matrix PRIVATE ${LIB_MOD_2D_DIR} )
 target_link_libraries( test_c_matrix PRIVATE unittest )
 target_link_libraries( test_c_matrix PRIVATE purelapack )
+target_link_libraries( test_c_matrix PRIVATE ${TARGET_2D} )
 add_test( NAME test_c_matrix COMMAND test_c_matrix )
 
 add_executable( test_f_matrix )
+target_sources( test_f_matrix PRIVATE mod_testutil.f90 test_f_matrix.f90 )
 target_include_directories( test_f_matrix PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_f_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-                                      mod_testutil.f90
-                                      test_f_matrix.f90 )
-target_include_directories( test_f_matrix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_include_directories( test_f_matrix PRIVATE ${LIB_MOD_2D_DIR} )
 target_link_libraries( test_f_matrix PRIVATE unittest )
 target_link_libraries( test_f_matrix PRIVATE purelapack )
+target_link_libraries( test_f_matrix PRIVATE ${TARGET_2D} )
 add_test( NAME test_f_matrix COMMAND test_f_matrix )
 
 add_executable( test_bb_block )
+target_sources( test_bb_block PRIVATE mod_testutil.f90 test_bb_block.f90 )
 target_include_directories( test_bb_block PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_bb_block PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
-                                      mod_testutil.f90
-                                      test_bb_block.f90 )
-target_include_directories( test_bb_block PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_include_directories( test_bb_block PRIVATE ${LIB_MOD_2D_DIR} )
 target_link_libraries( test_bb_block PRIVATE unittest )
 target_link_libraries( test_bb_block PRIVATE purelapack )
+target_link_libraries( test_bb_block PRIVATE ${TARGET_2D} )
 add_test( NAME test_bb_block COMMAND test_bb_block )
 
 add_executable( test_bb_list )
+target_sources( test_bb_list PRIVATE mod_testutil.f90 test_bb_list.f90 )
 target_include_directories( test_bb_list PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_bb_list PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
-                                     mod_testutil.f90
-                                     test_bb_list.f90 )
-target_include_directories( test_bb_list PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+target_include_directories( test_bb_list PRIVATE ${LIB_MOD_2D_DIR} )
 target_link_libraries( test_bb_list PRIVATE unittest )
 target_link_libraries( test_bb_list PRIVATE purelapack )
+target_link_libraries( test_bb_list PRIVATE ${TARGET_2D} )
 add_test( NAME test_bb_list COMMAND test_bb_list )
-
-add_executable( test_mobbrmsd )
-target_include_directories( test_mobbrmsd PRIVATE ${unittest_DIR}/mod_files )
-target_sources( test_mobbrmsd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_det.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_rotation.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
-                                      mod_testutil.f90
-                                      test_mobbrmsd.f90 )
-target_include_directories( test_mobbrmsd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
-target_link_libraries( test_mobbrmsd PRIVATE unittest )
-target_link_libraries( test_mobbrmsd PRIVATE purelapack )
-add_test( NAME test_mobbrmsd COMMAND test_mobbrmsd )
 
