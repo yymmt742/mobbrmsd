@@ -1,10 +1,12 @@
 find_package(BLAS REQUIRED)
+find_package(OpenMP REQUIRED)
 
 if(BLAS_FOUND)
   add_compile_options(${BLAS_LINKER_FLAGS})
 endif()
 
 add_compile_options(
+  ${OpenMP_Fortran_FLAGS}
   $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-O2>
   $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-std=f2008>
   $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fimplicit-none>

@@ -1,5 +1,5 @@
 program main
-  use mod_params, only: setup_dimension, D, RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: D, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_c_matrix
   use mod_f_matrix
@@ -9,8 +9,6 @@ program main
   type(unittest) :: u
 !
   call u%init('test f_matrix')
-!
-  call setup_dimension(3)
 !
   call test0(9, 1, 1, [1])
   call test0(4, 1, 2, [1,3,4,2])
@@ -31,10 +29,10 @@ contains
     type(mol_block)         :: b
     type(c_matrix)          :: c
     type(f_matrix)          :: f
-    real(RK)                :: X(D, m * n), Y(D, m * n)
+    real(RK)                :: X(D, m, n), Y(D, m, n)
     real(RK), allocatable   :: CX(:), CW(:), FX(:), FW(:)
 !
-    X = sample(SIZE(X, 1), SIZE(X, 2))
+    X = sample(m, n)
     Y = X
     b = mol_block(m, n)
     c = c_matrix(b%q)
@@ -63,8 +61,8 @@ contains
     type(mol_block)       :: b(3)
     type(c_matrix)        :: c(3)
     type(f_matrix)        :: f(3)
-    real(RK)              :: X(3, 5 * 3 + 3 * 2 + 8 * 3)
-    real(RK)              :: Y(3, 5 * 3 + 3 * 2 + 8 * 3)
+    real(RK)              :: X(D, 5 * 3 + 3 * 2 + 8 * 3)
+    real(RK)              :: Y(D, 5 * 3 + 3 * 2 + 8 * 3)
     real(RK), allocatable :: W(:)
     integer(IK)           :: nx
     integer(IK)           :: x1, x2, x3
@@ -73,8 +71,8 @@ contains
     integer(IK)           :: v1, v2, v3
     integer(IK)           :: w1, w2, w3
 !
-    X = sample(3, SIZE(X, 2))
-    Y = (ONE - s) * X + s * sample(3, SIZE(Y, 2))
+    X = sample(SIZE(X, 2))
+    Y = (ONE - s) * X + s * sample(SIZE(Y, 2))
 !
     b(1) = mol_block(5, 3)
     b(2) = mol_block(3, 2, sym=RESHAPE([2, 3, 1, 3, 1, 2], [3, 2]))

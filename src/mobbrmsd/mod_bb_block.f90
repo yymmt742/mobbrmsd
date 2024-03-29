@@ -1,7 +1,6 @@
 !| Module for handling C, F and tree.
 module mod_bb_block
   use mod_params, only: D, ND, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
-  use mod_params, only: gemm
   use mod_mol_block
   use mod_c_matrix
   use mod_f_matrix
@@ -101,7 +100,7 @@ contains
     b = mol_block(m, n, sym)
     c = c_matrix(b%q)
     f = f_matrix(b%q)
-    t = tree(b%q)
+    t = tree(mol_block_nmol(b%q), mol_block_nsym(b%q))
 !
     q(cq) = bq + SIZE(b%q)
     q(fq) = q(cq) + SIZE(c%q)
@@ -516,7 +515,7 @@ contains
     real(RK), intent(inout) :: Y(*)
     integer(IK)             :: i
     do concurrent(i=1:N)
-      Y(i) = Y(i)
+      Y(i) = X(i)
     end do
   end subroutine copy
 !
