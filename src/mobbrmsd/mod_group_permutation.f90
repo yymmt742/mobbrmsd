@@ -1,4 +1,3 @@
-!
 !| Module for permutation by decomposed cyclic groups.
 !  gp are stored in work array, in the following. <br>
 !  - [p1, p2, ..., ps, swp_1, swp_2, ..., swp_s]
