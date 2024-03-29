@@ -9,9 +9,11 @@ program main
 !
   call test1()
   call test2()
-  call test3(6, 1, [1,2,3,4,5,6])
-  call test3(6, 1, [4,5,6,1,2,3])
-  call test3(6, 1, [4,5,6,1,2,9])
+  call test3(2, 1, [2, 1])
+  call test3(3, 5, [2, 1, 3, 1, 3, 2, 2, 3, 1, 3, 1, 2, 3, 2, 1])
+  call test3(6, 1, [1, 2, 3, 4, 5, 6])
+  call test3(6, 1, [4, 5, 6, 1, 2, 3])
+  call test3(6, 1, [4, 5, 6, 1, 2, 9])
 !
   call u%finish_and_terminate()
 !
@@ -90,7 +92,7 @@ contains
     integer                 :: t(n), v(n, m)
     integer                 :: i
 !
-    t = [(i, i=1,n)]
+    t = [(i, i=1, n)]
     v = RESHAPE(s, [n, m])
     g = group_permutation(v)
 !

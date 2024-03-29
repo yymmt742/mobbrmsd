@@ -105,19 +105,19 @@ contains
     if (n < 2) then
       return
     elseif (n == 2) then
-      if (ALL(perm(1:2) == [2, 1])) res = [1, 1, 2, 2, 1]
+      if (ALL(perm(1:2) == [2, 1])) res = [2, 1, 2, 1, 2]
       return
     elseif (n == 3) then
       if (ALL(perm(1:3) == [1, 3, 2])) then
-        res = [1, 1, 2, 3, 2]
+        res = [2, 1, 2, 2, 3]
       elseif (ALL(perm(1:3) == [2, 1, 3])) then
-        res = [1, 1, 2, 2, 1]
+        res = [2, 1, 2, 1, 2]
       elseif (ALL(perm(1:3) == [2, 3, 1])) then
-        res = [1, 1, 3, 2, 3, 1]
+        res = [2, 1, 3, 1, 2, 3]
       elseif (ALL(perm(1:3) == [3, 1, 2])) then
-        res = [1, 1, 3, 3, 1, 2]
+        res = [2, 1, 3, 1, 3, 2]
       elseif (ALL(perm(1:3) == [3, 2, 1])) then
-        res = [1, 1, 2, 3, 1]
+        res = [2, 1, 2, 1, 3]
       end if
       return
     elseif (is_not_permutation(n, perm)) then
