@@ -21,13 +21,13 @@ pure subroutine DGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, L
   !! matrix A.
   integer, intent(in)      :: LDB
   !! leading dimension of B, must be >1.
-  real(RK), intent(in)     :: B(LDB, *)
+  real(RK), intent(in)     :: B(LDA, *)
   !! matrix B.
   real(RK), intent(in)     :: BETA
   !! A coefficient, not used.
   integer, intent(in)      :: LDC
   !! leading dimension of C, must be >1.
-  real(RK), intent(inout)  :: C(LDC, *)
+  real(RK), intent(inout)  :: C(LDA, *)
   !! matrix C.
   if (TRANSA=='T') then
     if (TRANSB=='T') then

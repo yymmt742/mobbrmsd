@@ -9,7 +9,7 @@
 #target_include_directories(${TARGET_GD} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_subdirectory(mobbrmsd_2d)
-#add_subdirectory(d3routines)
+add_subdirectory(mobbrmsd_3d)
 #add_subdirectory(dgroutines)
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
