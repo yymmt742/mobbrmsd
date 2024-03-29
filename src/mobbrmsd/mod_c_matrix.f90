@@ -5,8 +5,7 @@
 !  - - Y_J :: J-th molecule in Y.<br>
 !  - - Q_s :: Permutation matrix on m.
 module mod_c_matrix
-  use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE, &
-    &                   gemm
+  use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE, gemm
   use mod_mol_block
   implicit none
   private
@@ -161,12 +160,12 @@ contains
 !
       do i = 1, n
         call copy(dm, Y(1, i), WY)
-        call calc_cov(b, s, m, n, cb, WX, WY, C(1, 1, i))
+        call calc_covariance(b, s, m, n, cb, WX, WY, C(1, 1, i))
       end do
 !
     end subroutine eval_c_matrix
 !
-    pure subroutine calc_cov(b, s, m, n, cb, WX, WY, C)
+    pure subroutine calc_covariance(b, s, m, n, cb, WX, WY, C)
       integer(IK), intent(in)     :: b(*), s, m, n, cb
       real(RK), intent(in)        :: WX(D, m, n)
       real(RK), intent(inout)     :: WY(D, m), C(cb, n)
@@ -174,6 +173,7 @@ contains
 !
       ic = 2
       do concurrent(i=1:n)
+        !call copy(DD, MATMUL(WY, TRANSPOSE(WX(:, :, i))), C(ic, i))
         call gemm('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
       enddo
 !
@@ -181,12 +181,13 @@ contains
         ic = ic + DD
         call mol_block_swap(b, j, WY)
         do concurrent(i=1:n)
+          !call copy(DD, MATMUL(WY, TRANSPOSE(WX(:, :, i))), C(ic, i))
           call gemm('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
         end do
         call mol_block_inverse_swap(b, j, WY)
       end do
 !
-    end subroutine calc_cov
+    end subroutine calc_covariance
 !
   end subroutine c_matrix_eval
 !
@@ -253,7 +254,7 @@ contains
     real(RK), intent(inout) :: Y(*)
     integer(IK)             :: i
     do concurrent(i=1:N)
-      Y(i) = Y(i)
+      Y(i) = X(i)
     end do
   end subroutine copy
 !

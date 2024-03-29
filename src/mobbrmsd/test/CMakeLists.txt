@@ -7,71 +7,48 @@ set(TARGET_3D ${PROJECT_NAME}_3d)
 set(LIB_MOD_2D_DIR ${CMAKE_CURRENT_BINARY_DIR}/../${TARGET_2D}/mod_files)
 set(LIB_MOD_3D_DIR ${CMAKE_CURRENT_BINARY_DIR}/../${TARGET_3D}/mod_files)
 
-add_executable( test_gemm_2d )
-target_sources( test_gemm_2d PRIVATE test_gemm.f90 )
-target_include_directories( test_gemm_2d PRIVATE ${unittest_DIR}/mod_files )
-target_include_directories( test_gemm_2d PRIVATE ${LIB_MOD_2D_DIR} )
-target_link_libraries( test_gemm_2d PRIVATE unittest )
-target_link_libraries( test_gemm_2d PRIVATE ${TARGET_2D} )
-add_test( NAME test_gemm_2d COMMAND test_gemm_2d )
-
-add_executable( test_gemm_3d )
-target_sources( test_gemm_3d PRIVATE test_gemm.f90 )
-target_include_directories( test_gemm_3d PRIVATE ${unittest_DIR}/mod_files )
-target_include_directories( test_gemm_3d PRIVATE ${LIB_MOD_3D_DIR} )
-target_link_libraries( test_gemm_3d PRIVATE unittest )
-target_link_libraries( test_gemm_3d PRIVATE ${TARGET_3D} )
-add_test( NAME test_gemm_3d COMMAND test_gemm_3d )
+#target_link_libraries( test_rotation_3d PRIVATE purelapack )
 
 add_executable( test_group_permutation )
-target_sources( test_group_permutation PRIVATE test_group_permutation.f90 )
+target_sources( test_group_permutation PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
+  test_group_permutation.f90 )
 target_include_directories( test_group_permutation PRIVATE ${unittest_DIR}/mod_files )
-target_include_directories( test_group_permutation PRIVATE ${LIB_MOD_2D_DIR} )
 target_link_libraries( test_group_permutation PRIVATE unittest )
-target_link_libraries( test_group_permutation PRIVATE ${TARGET_2D} )
 add_test( NAME test_group_permutation COMMAND test_group_permutation )
 
 add_executable( test_Hungarian )
-target_sources( test_Hungarian PRIVATE test_Hungarian.f90 )
+target_sources( test_Hungarian PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
+  test_Hungarian.f90 )
 target_include_directories( test_Hungarian PRIVATE ${unittest_DIR}/mod_files )
-target_include_directories( test_Hungarian PRIVATE ${LIB_MOD_2D_DIR} )
 target_link_libraries( test_Hungarian PRIVATE unittest )
-target_link_libraries( test_Hungarian PRIVATE ${TARGET_2D} )
 add_test( NAME test_Hungarian COMMAND test_Hungarian )
 
 add_executable( test_mol_block )
-target_sources( test_mol_block PRIVATE test_mol_block.f90 )
+target_sources( test_mol_block PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
+  test_mol_block.f90 )
 target_include_directories( test_mol_block PRIVATE ${unittest_DIR}/mod_files )
-target_include_directories( test_mol_block PRIVATE ${LIB_MOD_2D_DIR} )
 target_link_libraries( test_mol_block PRIVATE unittest )
-target_link_libraries( test_mol_block PRIVATE ${TARGET_2D} )
 add_test( NAME test_mol_block COMMAND test_mol_block )
 
 add_executable( test_tree )
-target_sources( test_tree PRIVATE test_tree.f90 )
+target_sources( test_tree PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
+  test_tree.f90 )
 target_include_directories( test_tree PRIVATE ${unittest_DIR}/mod_files )
-target_include_directories( test_tree PRIVATE ${LIB_MOD_2D_DIR} )
 target_link_libraries( test_tree PRIVATE unittest )
-target_link_libraries( test_tree PRIVATE ${TARGET_2D} )
 add_test( NAME test_tree COMMAND test_tree )
-
-add_executable( test_rotation )
-target_sources( test_rotation PRIVATE mod_testutil.f90 test_rotation.f90 )
-target_include_directories( test_rotation PRIVATE ${unittest_DIR}/mod_files )
-target_include_directories( test_rotation PRIVATE ${LIB_MOD_2D_DIR} )
-target_link_libraries( test_rotation PRIVATE unittest )
-target_link_libraries( test_rotation PRIVATE purelapack )
-target_link_libraries( test_rotation PRIVATE ${TARGET_2D} )
-add_test( NAME test_rotation COMMAND test_rotation )
-
-add_executable( test_c_matrix )
-target_sources( test_c_matrix PRIVATE mod_testutil.f90 test_c_matrix.f90 )
-target_include_directories( test_c_matrix PRIVATE ${unittest_DIR}/mod_files )
-target_include_directories( test_c_matrix PRIVATE ${LIB_MOD_2D_DIR} )
-target_link_libraries( test_c_matrix PRIVATE unittest )
-target_link_libraries( test_c_matrix PRIVATE purelapack )
-target_link_libraries( test_c_matrix PRIVATE ${TARGET_2D} )
-add_test( NAME test_c_matrix COMMAND test_c_matrix )
 
 add_executable( test_f_matrix )
 target_sources( test_f_matrix PRIVATE mod_testutil.f90 test_f_matrix.f90 )

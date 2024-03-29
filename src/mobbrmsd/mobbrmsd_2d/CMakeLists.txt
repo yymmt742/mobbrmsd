@@ -19,9 +19,9 @@ target_sources(${TARGET_2D} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
-  gemm.f90
-  blas_lapack_interface.f90
-  mod_rotation.f90 )
+  ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90 )
 
 set_target_properties(${TARGET_2D} PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_2D_DIR})
 add_library(${TARGET_2D}_shared SHARED $<TARGET_OBJECTS:mobbrmsd_2d>)
@@ -46,3 +46,50 @@ install(EXPORT ${TARGET_2D}-export
 
 install(DIRECTORY ${LIB_MOD_DIR} DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_2D}")
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_2D}")
+
+if( CMAKE_BUILD_TYPE MATCHES "Debug" )
+  find_package( unittest REQUIRED )
+  add_executable( test_gemm_2d )
+  target_sources( test_gemm_2d PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_gemm.f90 )
+  target_include_directories( test_gemm_2d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+  target_include_directories( test_gemm_2d PRIVATE ${unittest_DIR}/mod_files )
+  target_link_libraries( test_gemm_2d PRIVATE unittest )
+  add_test( NAME test_gemm_2d COMMAND test_gemm_2d )
+
+  add_executable( test_rotation_2d )
+  target_sources( test_rotation_2d PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_rotation.f90 )
+  target_include_directories( test_rotation_2d PRIVATE ${unittest_DIR}/mod_files )
+  target_include_directories( test_rotation_2d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+  target_link_libraries( test_rotation_2d PRIVATE unittest )
+  add_test( NAME test_rotation_2d COMMAND test_rotation_2d )
+
+  add_executable( test_c_matrix_2d )
+  target_sources( test_c_matrix_2d PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_c_matrix.f90 )
+  target_include_directories( test_c_matrix_2d PRIVATE ${unittest_DIR}/mod_files )
+  target_include_directories( test_c_matrix_2d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+  target_link_libraries( test_c_matrix_2d PRIVATE unittest )
+  add_test( NAME test_c_matrix_2d COMMAND test_c_matrix_2d )
+endif()
+

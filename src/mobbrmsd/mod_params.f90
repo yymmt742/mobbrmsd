@@ -11,7 +11,7 @@ module mod_params
   public  :: RK, IK
   public  :: D, DD, ND
   public  :: RZERO, RONE, RHALF, RFOUR, RTEN
-  public  :: RNAPIER, RHUGE, LN_TO_L10
+  public  :: RPI, RNAPIER, RHUGE, LN_TO_L10
   public  :: setup_dimension, gemm
 !
 !&<
@@ -26,10 +26,12 @@ module mod_params
   !! Real four.
   real(RK), parameter :: RTEN  = 10.0_RK
   !! Real ten.
-!
-  real(RK), parameter :: RNAPIER = 2.71828182846_RK
+
+  real(RK), parameter :: RPI       = ACOS(RZERO)
+  !! Real circular constant.
+  real(RK), parameter :: RNAPIER   = 2.71828182846_RK
   !! Napier constant.
-  real(RK), parameter :: RHUGE = HUGE(RZERO)
+  real(RK), parameter :: RHUGE     = HUGE(RZERO)
   !! Real large numbe
   real(RK), parameter :: LN_TO_L10 = LOG10(RNAPIER)
   !! Scaling factor, LOG10(x) =LN_TO_L10 * LN(x)

@@ -7,7 +7,6 @@
 !        i <  -1 :: explored
 module mod_tree
   use mod_params, only: IK, RK, ONE => RONE, TEN => RTEN, ZERO => RZERO, RHUGE, LN_TO_L10
-  use mod_mol_block
   implicit none
   private
   public :: tree
@@ -81,18 +80,19 @@ contains
 !
 !| Constructer of factorial tree.<br>
 !  [s*m, s*(m-1),..., s*2, s]
-  pure function tree_new(b) result(res)
-!|  b :: mol_block.
-    integer(IK), intent(in) :: b(*)
+  pure function tree_new(nmol, nsym) result(res)
+    integer(IK), intent(in) :: nmol
+    !! number of molecule
+    integer(IK), intent(in) :: nsym
+    !! number of molecular symmetry
     type(tree)              :: res
     integer(IK)             :: i, j, k, l
 !
-    k = mol_block_nmol(b)
-    allocate (res%q(queue_headersize + queue_blocksize * k))
-    allocate (res%s(state_headersize + state_blocksize * k))
+    allocate (res%q(queue_headersize + queue_blocksize * nmol))
+    allocate (res%s(state_headersize + state_blocksize * nmol))
 !
-    res%q(qs) = mol_block_nsym(b)
-    res%q(qd) = k
+    res%q(qs) = nsym
+    res%q(qd) = nmol
 !
     j = res%q(qs) * res%q(qd)
     k = 1

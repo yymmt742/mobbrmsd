@@ -2,15 +2,11 @@
 module blas_lapack_interface
   implicit none
   private
-  public  :: SCOPY, DCOPY
   public  :: SGEMM, DGEMM
   public  :: D, DD, ND
   public  :: setup_dimension
 !
   interface
-!
-    include 'dcopy.h'
-    include 'scopy.h'
 !
     include 'dgemm.h'
     include 'sgemm.h'

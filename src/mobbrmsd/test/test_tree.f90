@@ -1,6 +1,5 @@
 program main
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
-  use mod_mol_block
   use mod_unittest
   use mod_tree
   implicit none
@@ -14,7 +13,6 @@ program main
 contains
 !
   subroutine test1()
-    type(mol_block)       :: b
     type(tree)            :: t
     real(RK), allocatable :: w(:)
     integer(IK)           :: i
@@ -35,8 +33,7 @@ contains
 !    1234567890123456789012345678901234567890
 !   [1_1_1_1_1_1_1_1_2_2_2_2_2_2_3_3_3_3_4_4_]
 !
-    b = mol_block(10, 4, sym=RESHAPE([1, 2, 4, 3], [4, 1]))
-    t = tree(b%q)
+    t = tree(4, 2)
 !
     call u%assert_equal(tree_n_depth(t%q),                 4, 'n_depth    [4,3,2,1]')
     call u%assert_equal(tree_nnodes(t%q),                 20, 'nnodes     [4,3,2,1]')

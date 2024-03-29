@@ -1,5 +1,5 @@
 program main
-  use mod_params, only: setup_dimension, D, RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: D, DD, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_rotation
   use mod_c_matrix
@@ -8,42 +8,32 @@ program main
   implicit none
   type(unittest) :: u
 !
-  call u%init('test d_matrix')
+  call u%init('test c_matrix')
 !
-  call setup_dimension(3)
   call test0(0, 0, 1, [0])
   call test0(5, 1, 1, [0])
-  call test0(5, 1, 2, [4,5,1,2,3])
-  call test0(2, 5, 2, [2,1])
+  call test0(5, 1, 2, [4, 5, 1, 2, 3])
+  call test0(5, 3, 1, [0])
+  call test0(2, 1, 2, [2, 1])
   call test0(3, 5, 3, [1, 3, 2, 3, 2, 1])
-  call test1()
 !
-  call test3(4, 3, 1, [1, 2, 3], [1, 1, 1], [0])
-  call test3(4, 3, 3, [2, 1, 3], [2, 1, 2], [4, 1, 2, 3, 2, 3, 4, 1])
+  call test1()
 !
   call u%finish_and_terminate()
 !
 contains
 !
-  subroutine test3(m, n, s, per, map, sym)
-    integer(IK), intent(in) :: m, n, s, per(n), map(n), sym(m * s)
-    real(RK)                :: X(D, m, n)
-!
-    X = RESHAPE(sample(D, m * n), SHAPE(X))
-    print*, brute_sd(m, n, s, sym, X, swp(m, n, s, per, map, sym, X))
-!
-  end subroutine test3
-!
   subroutine test0(m, n, s, sym)
     integer(IK), intent(in) :: m, n, s, sym(m * (s - 1))
     type(mol_block)         :: b
     type(c_matrix)          :: c
-    real(RK)                :: X(D, m * n)
-    real(RK)                :: Y(D, m * n)
+    real(RK)                :: X(D, m, n)
+    real(RK)                :: Y(D, m, n)
     real(RK), allocatable   :: Z(:), W(:)
+    integer(IK)             :: i, j, p
 !
-    X = sample(SIZE(X, 1), SIZE(X, 2))
-    Y = sample(SIZE(Y, 1), SIZE(Y, 2))
+    X = sample(m, n)
+    Y = sample(m, n)
 !
     b = mol_block(m, n, sym=RESHAPE(sym, [m, (s - 1)]))
     c = c_matrix(b%q)
@@ -54,22 +44,27 @@ contains
 !
     call c_matrix_eval(c%q, b%q, X, Y, Z, W)
 !
-    print'(10f5.1)', Z
-    print*
+    p = 1
+    do j = 1, n
+      do i = 1, n
+        call check_gcov(m, s, sym, Z(p), X(1, 1, i), Y(1, 1, j))
+        p = p + 1 + DD * s
+      end do
+    end do
 !
   end subroutine test0
 !
   subroutine test1()
     type(mol_block)       :: b(3)
     type(c_matrix)        :: c(3)
-    real(RK)              :: X(3, 5 * 3 + 3 * 4 + 8 * 3)
-    real(RK)              :: Y(3, 5 * 3 + 3 * 2 + 8 * 5)
+    real(RK)              :: X(D, 5 * 3 + 3 * 4 + 8 * 3)
+    real(RK)              :: Y(D, 5 * 3 + 3 * 2 + 8 * 5)
     real(RK), allocatable :: W(:)
     integer(IK)           :: nw, x1, x2, x3
     integer(IK)           :: p1, p2, p3, w1, w2, w3
 !
-    X = sample(3, SIZE(X, 2))
-    Y = sample(3, SIZE(Y, 2))
+    X = sample(SIZE(X, 2))
+    Y = sample(SIZE(Y, 2))
 !
     b(1) = mol_block(5, 3)
     b(2) = mol_block(3, 2, sym=RESHAPE([2, 3, 1, 3, 1, 2], [3, 2]))
@@ -104,13 +99,27 @@ contains
     call c_matrix_eval(c(2)%q, b(2)%q, X(1, x2), Y(1, x2), W(p2), W(w2))
     call c_matrix_eval(c(3)%q, b(3)%q, X(1, x3), Y(1, x3), W(p3), W(w3))
 !
-    print'(10f5.1)',W(p1:p1+89)
+    print'(10f5.1)', W(p1:p1 + c_matrix_memsize(c(1)%q) - 1)
     print*
-    print'(14f5.1)',W(p2:p2+111)
+    print'(10f5.1)', W(p2:p2 + c_matrix_memsize(c(2)%q) - 1)
     print*
-    print'(19f5.1)',W(p3:p3+170)
+    print'(10f5.1)', W(p3:p3 + c_matrix_memsize(c(3)%q) - 1)
     print*
 !
   end subroutine test1
+!
+  subroutine check_gcov(m, s, sym, C, X, Y)
+    integer(IK), intent(in) :: m, s, sym(m, s - 1)
+    real(RK), intent(in)    :: C(*), X(D, m), Y(D, m)
+    integer(IK)             :: i
+!
+    call u%assert_almost_equal(C(1), SUM(X * X) + SUM(Y * Y),          'auto variance')
+    call u%assert_almost_equal(C(2:1 + DD), [MATMUL(Y, TRANSPOSE(X))], 'covariance 1 ')
+!
+    do i = 1, s - 1
+      call u%assert_almost_equal(C(2 + DD * i:1 + DD * (i + 1)), [MATMUL(Y(:, sym(:, i)), TRANSPOSE(X))], 'covariance i ')
+    end do
+!
+  end subroutine check_gcov
 !
 end program main

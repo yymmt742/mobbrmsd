@@ -119,7 +119,7 @@ end module mod_permutation
 !
 !| Utility functions for testing.
 module mod_testutil
-  use mod_params, only: D, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, PI => RPI, RHUGE
   use mod_permutation
   use mod_rotation
   implicit none
@@ -127,60 +127,97 @@ module mod_testutil
   public :: sample
   public :: covmat
   public :: gcov
-  public :: SO3
+  public :: SO
   public :: eye
   public :: sd
   public :: swp
   public :: brute_sd
 !
+  interface sample
+    module procedure :: sample_2, sample_3
+  end interface sample
+!
 contains
 !
-  function sample(d, n) result(res)
-    integer(IK), intent(in) :: d, n
-    real(RK)                :: cnt(d)
-    real(RK)                :: res(d, n)
+  function sample_2(n) result(res)
+    integer(IK), intent(in) :: n
+    real(RK)                :: cnt(D), res(D, n)
     integer(IK)             :: i
     call RANDOM_NUMBER(res)
-    cnt = SUM(res, 2) / n
+    cnt = SUM(res, 2) / real(n, RK)
     do concurrent(i=1:n)
       res(:, i) = res(:, i) - cnt
     end do
-  end function sample
+  end function sample_2
 !
-  function covmat(d, n) result(res)
-    integer(IK), intent(in) :: d, n
-    real(RK)                :: res(d, d)
-    res(:, :) = MATMUL(sample(d, n), TRANSPOSE(sample(d, n)))
+  function sample_3(m, n) result(res)
+    integer(IK), intent(in) :: m, n
+    real(RK)                :: cnt(D), res(D, m, n)
+    integer(IK)             :: i, j
+    call RANDOM_NUMBER(res)
+    cnt = SUM(RESHAPE(res, [D, m * n]), 2) / real(m * n, RK)
+    do concurrent(i=1:m, j=1:n)
+      res(:, i, j) = res(:, i, j) - cnt
+    end do
+  end function sample_3
+!
+  function covmat(n) result(res)
+    integer(IK), intent(in) :: n
+    real(RK)                :: res(D, D)
+    res(:, :) = MATMUL(sample(n), TRANSPOSE(sample(n)))
   end function covmat
 !
-  function gcov(d, n) result(res)
-    integer(IK), intent(in) :: d, n
-    real(RK)                :: res(d * d + 1)
-    real(RK)                :: x(d, n), y(d, n)
-    x = sample(d, n)
-    y = sample(d, n)
+  function gcov(n) result(res)
+    integer(IK), intent(in) :: n
+    real(RK)                :: res(DD + 1)
+    real(RK)                :: x(D, n), y(D, n)
+    x = sample(n)
+    y = sample(n)
     res(1) = SUM(x * x) + SUM(y * y)
     res(2:) = [MATMUL(y, TRANSPOSE(x))]
   end function gcov
 !
-  function SO3() result(res)
-    real(RK) :: a(4), c, t, s, res(3, 3)
+  function SO() result(res)
+    real(RK) :: res(D, D)
+    select case (D)
+    case (1)
+      res(1, 1) = ONE
+    case (2)
+      call SO2(res)
+    case (3)
+      call SO3(res)
+    case default
+      res = eye()
+    end select
+  end function SO
+!
+  subroutine SO2(res)
+    real(RK), intent(inout) :: res(2, *)
+    real(RK)                :: a
+    call RANDOM_NUMBER(a)
+    a = a * PI
+    res(:, 1) = [COS(a), SIN(a)]
+    res(:, 2) = [-res(2, 1), res(1, 1)]
+  end subroutine SO2
+!
+  subroutine SO3(res)
+    real(RK), intent(inout) :: res(3, *)
+    real(RK)                :: a(4), c, t, s
     call RANDOM_NUMBER(a)
     a(:3) = a(:3) / SQRT(DOT_PRODUCT(a(:3), a(:3)))
-    a(4) = (a(4) + a(4)) * ACOS(0.0_RK)
+    a(4) = (a(4) + a(4)) * PI
     c = COS(a(4))
     t = ONE - c
     s = SIN(a(4))
     res(:, 1) = [c + t * a(1) * a(1), t * a(1) * a(2) - s * a(3), t * a(1) * a(3) + s * a(2)]
     res(:, 2) = [t * a(1) * a(2) + s * a(3), c + t * a(2) * a(2), t * a(2) * a(3) - s * a(1)]
     res(:, 3) = [t * a(1) * a(3) - s * a(2), t * a(2) * a(3) + s * a(1), c + t * a(3) * a(3)]
-  end function SO3
+  end subroutine SO3
 !
-  pure function eye(d) result(res)
-    integer,intent(in) :: d
-    real(RK)           :: res(d, d)
+  pure function eye() result(res)
+    real(RK)           :: res(D, D)
     integer            :: i, j
-    do concurrent(j=1:d, i=1:d)
+    do concurrent(j=1:D, i=1:D)
       res(i, j) = MERGE(ONE, ZERO, i == j)
     enddo
   end function eye
