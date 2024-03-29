@@ -31,7 +31,7 @@ contains
     blk(2) = bb_block(4, 5, sym=RESHAPE([1, 3, 2, 4, 4, 2, 3, 1], [4, 2]))
     b = bb_list(blk)
 !
-    X = sample(D, SIZE(X, 2))
+    X = sample(SIZE(X, 2))
     Y = X
 !
     nmem = bb_list_memsize(b%q)
@@ -51,7 +51,7 @@ contains
         call u%assert_almost_equal(sxz, rxz,  'swaped sd vs rotmat ')
         print'(5F9.4,F9.1,2F9.4,8I3)', sd(SIZE(X, 2), X, Y), sxz, rxz, W(:4), EXP(W(4)), b%s(2:9)
 !
-        Y = 0.8 * Y + 0.2 * sample(D, SIZE(X, 2))
+        Y = 0.8 * Y + 0.2 * sample(SIZE(X, 2))
       end do
     end block
 !
