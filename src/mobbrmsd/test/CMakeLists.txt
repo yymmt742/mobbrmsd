@@ -1,5 +1,4 @@
 find_package( unittest REQUIRED )
-find_package( purelapack REQUIRED )
 
 set(TARGET_2D ${PROJECT_NAME}_2d)
 set(TARGET_3D ${PROJECT_NAME}_3d)

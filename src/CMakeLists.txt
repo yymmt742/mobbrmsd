@@ -1,5 +1,5 @@
-find_package(BLAS REQUIRED)
 find_package(OpenMP REQUIRED)
+find_package(BLAS REQUIRED)
 
 if(BLAS_FOUND)
   add_compile_options(${BLAS_LINKER_FLAGS})

@@ -169,7 +169,7 @@ contains
     real(RK), intent(inout) :: Y(*)
     integer(IK)             :: i
     do concurrent(i=1:N)
-      Y(i) = Y(i)
+      Y(i) = X(i)
     end do
   end subroutine copy
 !
