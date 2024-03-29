@@ -227,7 +227,7 @@ contains
     real(RK), intent(in)    :: X(D, n), Y(D, n)
     real(RK)                :: G, C(D, D), W(100), res
     G = SUM(X * X) + SUM(Y * Y)
-    C = MATMUL(RESHAPE(Y, [D, n]), TRANSPOSE(RESHAPE(X, [D, n])))
+    C = MATMUL(Y, TRANSPOSE(X))
     call estimate_sdmin(G, C, w)
     res = w(1)
   end function sd

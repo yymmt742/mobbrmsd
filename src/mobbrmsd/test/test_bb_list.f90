@@ -49,9 +49,8 @@ contains
         rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
         call u%assert_almost_equal(W(1), sxz, 'minrmsd vs swaped sd')
         call u%assert_almost_equal(sxz, rxz,  'swaped sd vs rotmat ')
-        print'(5F9.4,F9.1,2F9.4,8I3)', sd(SIZE(X, 2), X, Y), sxz, rxz, W(:4), EXP(W(4)), b%s(2:9)
-!
         Y = 0.8 * Y + 0.2 * sample(SIZE(X, 2))
+        !print'(5F9.4,F9.1,2F9.4,8I3)', sd(SIZE(X, 2), X, Y), sxz, rxz, W(:4), EXP(W(4)), b%s(2:9)
       end do
     end block
 !
@@ -70,7 +69,7 @@ contains
     blk(2) = bb_block(m, n, sym=RESHAPE(sym, [m, s - 1]))
     b = bb_list(blk)
 !
-    X = RESHAPE([sample(D, m * n) + off, sample(D, m * n) - off], SHAPE(X))
+    X = RESHAPE([sample(m, n) + off, sample(m, n) - off], SHAPE(X))
     Y = X
 !
     allocate(W(bb_list_memsize(b%q)))
@@ -79,8 +78,8 @@ contains
       call bb_list_setup(b%q, b%s, X, Y, W)
       call bb_list_run(b%q, b%s, w)
       call u%assert_almost_equal(W(1), brute_sd(m, n + n, s, sym, X, Y), 'minrmsd value')
-      Y(:, :, :, 1) = 0.8 * Y(:, :, :, 1) + 0.2 * RESHAPE(sample(D, m * n) + off, [D, m, n])
-      Y(:, :, :, 2) = 0.8 * Y(:, :, :, 2) + 0.2 * RESHAPE(sample(D, m * n) - off, [D, m, n])
+      Y(:, :, :, 1) = 0.8 * Y(:, :, :, 1) + 0.2 * RESHAPE(sample(m, n) + off, [D, m, n])
+      Y(:, :, :, 2) = 0.8 * Y(:, :, :, 2) + 0.2 * RESHAPE(sample(m, n) - off, [D, m, n])
     end do
 !
   end subroutine test1
@@ -99,7 +98,7 @@ contains
     blk(3) = bb_block(m, n, sym=RESHAPE(sym, [m, s - 1]))
     b = bb_list(blk)
 !
-    X = RESHAPE([sample(D, m) + off, sample(D, m * 2), sample(D, m * n) - off], SHAPE(X))
+    X = RESHAPE([sample(m) + off, sample(m, 2), sample(m, n) - off], SHAPE(X))
     Y = X
 !
     allocate(W(bb_list_memsize(b%q)))
@@ -108,9 +107,9 @@ contains
       call bb_list_setup(b%q, b%s, X, Y, W)
       call bb_list_run(b%q, b%s, w)
       print'(2F9.4,F9.1,2F9.4,*(I3))', W(:4), EXP(W(4)), b%s(2:1 + 3 + n)
-      Y(:, :, 1:1) = 0.8 * Y(:, :, 1:1) + 0.2 * RESHAPE(sample(D, m * 1) + off, [D, m, 1])
-      Y(:, :, 2:3) = 0.8 * Y(:, :, 2:3) + 0.2 * RESHAPE(sample(D, m * 2), [D, m, 2])
-      Y(:, :, 4:)  = 0.8 * Y(:, :, 4:)  + 0.2 * RESHAPE(sample(D, m * n) - off, [D, m, n])
+      Y(:, :, 1:1) = 0.8 * Y(:, :, 1:1) + 0.2 * RESHAPE(sample(m, 1) + off, [D, m, 1])
+      Y(:, :, 2:3) = 0.8 * Y(:, :, 2:3) + 0.2 * RESHAPE(sample(m, 2),       [D, m, 2])
+      Y(:, :, 4:)  = 0.8 * Y(:, :, 4:)  + 0.2 * RESHAPE(sample(m, n) - off, [D, m, n])
     end do
 !
   end subroutine test2

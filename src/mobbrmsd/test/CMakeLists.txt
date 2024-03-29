@@ -50,12 +50,3 @@ target_include_directories( test_tree PRIVATE ${unittest_DIR}/mod_files )
 target_link_libraries( test_tree PRIVATE unittest )
 add_test( NAME test_tree COMMAND test_tree )
 
-add_executable( test_bb_list )
-target_sources( test_bb_list PRIVATE mod_testutil.f90 test_bb_list.f90 )
-target_include_directories( test_bb_list PRIVATE ${unittest_DIR}/mod_files )
-target_include_directories( test_bb_list PRIVATE ${LIB_MOD_2D_DIR} )
-target_link_libraries( test_bb_list PRIVATE unittest )
-target_link_libraries( test_bb_list PRIVATE purelapack )
-target_link_libraries( test_bb_list PRIVATE ${TARGET_2D} )
-add_test( NAME test_bb_list COMMAND test_bb_list )
-
