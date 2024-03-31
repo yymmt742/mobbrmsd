@@ -5,7 +5,8 @@
 !    - m :: number of atom in a molecule.<br>
 !    - n :: number of molecule.
 module mod_mol_block
-  use mod_params, only: D, IK, RK
+  use blas_lapack_interface, only : D
+  use mod_params, only: IK, RK
   use mod_group_permutation
   implicit none
   private

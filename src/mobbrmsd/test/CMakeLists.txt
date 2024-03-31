@@ -6,8 +6,6 @@ set(TARGET_3D ${PROJECT_NAME}_3d)
 set(LIB_MOD_2D_DIR ${CMAKE_CURRENT_BINARY_DIR}/../${TARGET_2D}/mod_files)
 set(LIB_MOD_3D_DIR ${CMAKE_CURRENT_BINARY_DIR}/../${TARGET_3D}/mod_files)
 
-#target_link_libraries( test_rotation_3d PRIVATE purelapack )
-
 add_executable( test_group_permutation )
 target_sources( test_group_permutation PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
@@ -27,17 +25,6 @@ target_sources( test_Hungarian PRIVATE
 target_include_directories( test_Hungarian PRIVATE ${unittest_DIR}/mod_files )
 target_link_libraries( test_Hungarian PRIVATE unittest )
 add_test( NAME test_Hungarian COMMAND test_Hungarian )
-
-add_executable( test_mol_block )
-target_sources( test_mol_block PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-  test_mol_block.f90 )
-target_include_directories( test_mol_block PRIVATE ${unittest_DIR}/mod_files )
-target_link_libraries( test_mol_block PRIVATE unittest )
-add_test( NAME test_mol_block COMMAND test_mol_block )
 
 add_executable( test_tree )
 target_sources( test_tree PRIVATE

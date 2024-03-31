@@ -1,5 +1,6 @@
 program main
-  use mod_params, only: D, DD, RK, IK, gemm, ONE => RONE, ZERO => RZERO
+  use blas_lapack_interface, only : gemm => DGEMM, D, DD
+  use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_unittest
   implicit none
   type(unittest) :: u

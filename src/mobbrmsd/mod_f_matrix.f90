@@ -2,7 +2,8 @@
 !  F(n, n) :: Free rotation matrices.<br>
 !    - F_ij = min_{R,s} Tr[C_IJs @ R]<br>
 module mod_f_matrix
-  use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use blas_lapack_interface, only : D, DD
+  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_c_matrix
   use mod_mol_block
   use mod_rotation

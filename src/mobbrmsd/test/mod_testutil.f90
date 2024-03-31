@@ -119,7 +119,8 @@ end module mod_permutation
 !
 !| Utility functions for testing.
 module mod_testutil
-  use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, PI => RPI, RHUGE
+  use blas_lapack_interface, only : D, DD
+  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, PI => RPI, RHUGE
   use mod_permutation
   use mod_rotation
   implicit none
@@ -222,7 +223,8 @@ contains
     enddo
   end function eye
 !
-  pure function sd(n, X, Y) result(res)
+  function sd(n, X, Y) result(res)
+  !pure function sd(n, X, Y) result(res)
     integer(IK), intent(in) :: n
     real(RK), intent(in)    :: X(D, n), Y(D, n)
     real(RK)                :: G, C(D, D), W(100), res
@@ -232,7 +234,8 @@ contains
     res = w(1)
   end function sd
 !
-  pure function brute_sd(m, n, s, sym, X, Y) result(res)
+  function brute_sd(m, n, s, sym, X, Y) result(res)
+  !pure function brute_sd(m, n, s, sym, X, Y) result(res)
     integer(IK), intent(in) :: m, n, s, sym(m * (s - 1))
     real(RK), intent(in)    :: X(D, m, n), Y(D, m, n)
     real(RK)                :: res

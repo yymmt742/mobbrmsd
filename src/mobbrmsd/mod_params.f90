@@ -2,17 +2,14 @@
 module mod_params
 !
   use :: mod_kinds, only : I1, I2, I4, I8, R4, R8, RQ, RK, IK
-  use :: blas_lapack_interface, only : D, DD, ND, setup_dimension, gemm => DGEMM
 !
   implicit none
   private
   public  :: I1, I2, I4, I8
   public  :: R4, R8, RQ
   public  :: RK, IK
-  public  :: D, DD, ND
   public  :: RZERO, RONE, RHALF, RFOUR, RTEN
   public  :: RPI, RNAPIER, RHUGE, LN_TO_L10
-  public  :: setup_dimension, gemm
 !
 !&<
 !

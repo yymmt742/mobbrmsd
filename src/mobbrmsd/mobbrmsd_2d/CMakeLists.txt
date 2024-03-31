@@ -49,6 +49,7 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include DESTINATION "${CMAKE_IN
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   find_package( unittest REQUIRED )
+  find_package( purelapack REQUIRED )
   add_executable( test_gemm_2d )
   target_sources( test_gemm_2d PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
@@ -73,6 +74,7 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   target_include_directories( test_rotation_2d PRIVATE ${unittest_DIR}/mod_files )
   target_include_directories( test_rotation_2d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
   target_link_libraries( test_rotation_2d PRIVATE unittest )
+  target_link_libraries( test_rotation_2d PRIVATE purelapack )
   add_test( NAME test_rotation_2d COMMAND test_rotation_2d )
 
   add_executable( test_c_matrix_2d )

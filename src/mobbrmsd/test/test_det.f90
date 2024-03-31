@@ -1,5 +1,5 @@
 program main
-  use mod_params, only: setup_dimension, RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_det
   use mod_unittest
   implicit none

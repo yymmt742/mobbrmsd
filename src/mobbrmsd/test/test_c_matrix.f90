@@ -1,5 +1,6 @@
 program main
-  use mod_params, only: D, DD, RK, IK, ONE => RONE, ZERO => RZERO
+  use blas_lapack_interface, only : D, DD
+  use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_rotation
   use mod_c_matrix

@@ -5,7 +5,8 @@
 !  - - Y_J :: J-th molecule in Y.<br>
 !  - - Q_s :: Permutation matrix on m.
 module mod_c_matrix
-  use mod_params, only: D, DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE, gemm
+  use blas_lapack_interface, only : D, DD, gemm => DGEMM
+  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mol_block
   implicit none
   private

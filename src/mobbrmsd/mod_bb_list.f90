@@ -1,6 +1,7 @@
 !| mod_bb_list
 module mod_bb_list
-  use mod_params, only: DD, IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use blas_lapack_interface, only : DD
   use mod_bb_block
   use mod_rotation
   implicit none
