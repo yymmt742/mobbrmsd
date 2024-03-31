@@ -223,19 +223,22 @@ contains
     enddo
   end function eye
 !
-  function sd(n, X, Y) result(res)
-  !pure function sd(n, X, Y) result(res)
+  pure function sd(n, X, Y) result(res)
     integer(IK), intent(in) :: n
     real(RK), intent(in)    :: X(D, n), Y(D, n)
-    real(RK)                :: G, C(D, D), W(100), res
+    real(RK)                :: G, C(D, D), res
+    integer(IK)             :: nw
     G = SUM(X * X) + SUM(Y * Y)
     C = MATMUL(Y, TRANSPOSE(X))
-    call estimate_sdmin(G, C, w)
-    res = w(1)
+    nw = sdmin_worksize()
+    block
+      real(rk) :: w(nw)
+      call estimate_sdmin(G, C, w)
+      res = w(1)
+    end block
   end function sd
 !
-  function brute_sd(m, n, s, sym, X, Y) result(res)
-  !pure function brute_sd(m, n, s, sym, X, Y) result(res)
+  pure function brute_sd(m, n, s, sym, X, Y) result(res)
     integer(IK), intent(in) :: m, n, s, sym(m * (s - 1))
     real(RK), intent(in)    :: X(D, m, n), Y(D, m, n)
     real(RK)                :: res
