@@ -14,9 +14,6 @@ ss = np.empty(0)
 sy.add_molecule(m, n, s, ss)
 sy.setup()
 
-def sample(r, s, ns):
-    return
-
 def test_block(r, s):
     x = cg.gen(m, n, r, s).flatten()
     y = np.array([cg.gen(m, n, r, s) for i in range(nblock)]).flatten()
