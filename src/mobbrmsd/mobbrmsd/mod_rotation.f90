@@ -1,5 +1,6 @@
-!| Calculate the rotation matrix that minimizes |X-RY|^2 for D=3. <br>
-!  Here, RR^T=I and det(R)=1 are satisfied.
+!| Calculate the rotation matrix that minimizes |X-RY|^2 for general dimension. <br>
+!  Here, RR^T=I and det(R)=1 are satisfied. <br>
+!  This code is based on the Kabsch algorithm. doi : 10.1107/S0567739476001873
 module mod_rotation
   use mod_kinds, only: IK, RK
   use blas_lapack_interface, only: D, DD, DGEMM

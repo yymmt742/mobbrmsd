@@ -1,5 +1,6 @@
 !| Calculate the rotation matrix that minimizes |X-RY|^2 for D=2. <br>
-!  Here, RR^T=I and det(R)=1 are satisfied.
+!  Here, RR^T=I and det(R)=1 are satisfied. <br>
+!  This code is based on the method of Theobald. doi : 10.1107/S0108767305015266
 module mod_rotation
   use mod_kinds, only: IK, RK
   implicit none
