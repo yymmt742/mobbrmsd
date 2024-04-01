@@ -1,4 +1,4 @@
 import numpy as np
-import symrmsd
+import mobbrmsd
 
-print(dir(symrmsd))
+print(dir(mobbrmsd))

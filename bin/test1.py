@@ -3,8 +3,8 @@ import mobbrmsd as mob
 
 print(dir(mob))
 mob3 = mob.mobbrmsd()
-mob3.add_molecule(5, 3, 2, [3,2,5,4,1])
-mob3.add_molecule(7, 2, 1)
+mob3.add_molecule(5, 3, [3,2,5,4,1])
+mob3.add_molecule(7, 2)
 
 n = 1000
 x = np.random.rand((5*3+7*2)*3)
@@ -17,7 +17,7 @@ print(neval)
 print()
 
 mob2 = mob.mobbrmsd(d=2)
-mob2.add_molecule(7, 6, 2, [2,3,5,6,7,1,4])
+mob2.add_molecule(7, 6, [2,3,5,6,7,1,4])
 
 n = 1000
 x = np.random.rand((7*6)*2)
