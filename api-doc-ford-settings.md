@@ -1,7 +1,7 @@
-src_dir: ./src/symRMSD
+src_dir: ./src/mobbrmsd
 output_dir: ./api-doc
-project: symRMSD
-summary: molecular symmetry corrected RMSD
+project: mobbrmsd
+summary: molecular orientation corrected RMSD
 author: yymmt742
 license: MIT
 

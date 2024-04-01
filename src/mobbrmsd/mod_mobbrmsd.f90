@@ -1,12 +1,15 @@
 !| molecular orientation corrected RMSD with branch-and-bound.
 module mod_mobbrmsd
+  use blas_lapack_interface, only: D, setup_dimension
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, TEN => RTEN, LN_TO_L10, RHUGE
   use mod_bb_list
   use mod_bb_block
   implicit none
+  public :: setup_dimension
   public :: mobbrmsd
   public :: mol_block_input
   public :: mol_block_input_add
+  public :: mobbrmsd_n_dims
   public :: mobbrmsd_header
   public :: mobbrmsd_state
   public :: mobbrmsd_run
@@ -36,6 +39,8 @@ module mod_mobbrmsd
     procedure :: frac_n_nodes => mobbrmsd_header_frac_n_nodes
     procedure :: exp_n_nodes  => mobbrmsd_header_exp_n_nodes
     procedure :: memsize      => mobbrmsd_header_memsize
+    procedure :: dump         => mobbrmsd_header_dump
+    procedure :: load         => mobbrmsd_header_load
     final     :: mobbrmsd_header_destroy
   end type mobbrmsd_header
 !
@@ -61,6 +66,12 @@ module mod_mobbrmsd
     !! ratio of evaluated node
     procedure :: log_eval_ratio => mobbrmsd_state_log_eval_ratio
     !! log ratio of evaluated node
+    procedure :: dump           => mobbrmsd_state_dump
+    !! dump current state
+    procedure :: dump_real      => mobbrmsd_state_dump_real
+    !! dump real part of current state
+    procedure :: load           => mobbrmsd_state_load
+    !! load state
     final     :: mobbrmsd_state_destroy
     !! destracter
   end type mobbrmsd_state
@@ -164,6 +175,23 @@ contains
     res = INT(LN_TO_L10 * bb_list_log_n_nodes(this%q), IK)
   end function mobbrmsd_header_exp_n_nodes
 !
+!| dump header as integer array
+  pure function mobbrmsd_header_dump(this) result(res)
+    class(mobbrmsd_header), intent(in) :: this
+    !! mobbrmsd_header
+    integer(IK), allocatable           :: res(:)
+    res = this%q
+  end function mobbrmsd_header_dump
+!
+!| load integer array as header
+  pure subroutine mobbrmsd_header_load(this, q)
+    class(mobbrmsd_header), intent(inout) :: this
+    !! mobbrmsd_header
+    integer(IK), intent(in)               :: q(:)
+    !! header array
+    this%q = q
+  end subroutine mobbrmsd_header_load
+!
 !| destructer
   pure elemental subroutine mobbrmsd_header_destroy(this)
     type(mobbrmsd_header), intent(inout) :: this
@@ -208,6 +236,38 @@ contains
     res = this%lograt
   end function mobbrmsd_state_log_eval_ratio
 !
+!| dump header as integer array
+  pure function mobbrmsd_state_dump(this) result(res)
+    class(mobbrmsd_state), intent(in) :: this
+    !! mobbrmsd_header
+    integer(IK), allocatable          :: res(:)
+    res = this%s
+  end function mobbrmsd_state_dump
+!
+!| dump header as integer array
+  pure function mobbrmsd_state_dump_real(this) result(res)
+    class(mobbrmsd_state), intent(in) :: this
+    !! mobbrmsd_header
+    real(RK)                          :: res(5)
+    res = [this%rcnatm, this%uppbou, this%lowbou, this%lograt, this%numevl]
+  end function mobbrmsd_state_dump_real
+!
+!| load integer array as header
+  pure subroutine mobbrmsd_state_load(this, s, z)
+    class(mobbrmsd_state), intent(inout) :: this
+    !! mobbrmsd_header
+    integer(IK), intent(in)              :: s(:)
+    !! state integer array
+    real(RK), intent(in)                 :: z(:)
+    !! state real array
+    this%s = s(:SIZE(s)-1)
+    this%rcnatm = z(1)
+    this%uppbou = z(2)
+    this%lowbou = z(3)
+    this%lograt = z(4)
+    this%numevl = z(5)
+  end subroutine mobbrmsd_state_load
+!
   pure elemental subroutine mobbrmsd_state_destroy(this)
     type(mobbrmsd_state), intent(inout) :: this
     if (ALLOCATED(this%s)) deallocate (this%s)
@@ -249,6 +309,11 @@ contains
 !
   end function mobbrmsd_new_from_block
 !
+  pure elemental function mobbrmsd_n_dims() result(res)
+    integer(IK) :: res
+    res = D
+  end function mobbrmsd_n_dims
+
 !| run mobbrmsd
   pure subroutine mobbrmsd_run(header, state, X, Y, W, cutoff, difflim, maxeval, rot)
     class(mobbrmsd_header), intent(in)   :: header
