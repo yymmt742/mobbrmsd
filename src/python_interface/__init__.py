@@ -51,3 +51,51 @@ class mobbrmsd:
     state = numpy.array([(i, r) for i, r in zip(iret.T, rret.T)], dtype=object)
 
     return {'header':hret, 'state':state}
+
+  def rmsd(self, state:numpy.ndarray) -> numpy.ndarray:
+    if state.ndim == 1:
+      istate = state[0].reshape((state[0].shape[0], 1))
+      rstate = state[1].reshape((state[1].shape[0], 1))
+    elif state.ndim == 2:
+      istate = numpy.array([s[0] for s in state]).transpose()
+      rstate = numpy.array([s[1] for s in state]).transpose()
+    else:
+      raise IndexError
+    return self.driver.rmsd(istate, rstate)
+
+  def bounds(self, state:numpy.ndarray) -> numpy.ndarray:
+    if state.ndim == 1:
+      istate = state[0].reshape((state[0].shape[0], 1))
+      rstate = state[1].reshape((state[1].shape[0], 1))
+    elif state.ndim == 2:
+      istate = numpy.array([s[0] for s in state]).transpose()
+      rstate = numpy.array([s[1] for s in state]).transpose()
+    else:
+      raise IndexError
+    return self.driver.bounds(istate, rstate).transpose()
+
+  def n_eval(self, state:numpy.ndarray) -> numpy.ndarray:
+    if state.ndim == 1:
+      istate = state[0].reshape((state[0].shape[0], 1))
+      rstate = state[1].reshape((state[1].shape[0], 1))
+    elif state.ndim == 2:
+      istate = numpy.array([s[0] for s in state]).transpose()
+      rstate = numpy.array([s[1] for s in state]).transpose()
+    else:
+      raise IndexError
+    return self.driver.n_eval(istate, rstate)
+
+  def log_eval_ratio(self, state:numpy.ndarray) -> numpy.ndarray:
+    if state.ndim == 1:
+      istate = state[0].reshape((state[0].shape[0], 1))
+      rstate = state[1].reshape((state[1].shape[0], 1))
+    elif state.ndim == 2:
+      istate = numpy.array([s[0] for s in state]).transpose()
+      rstate = numpy.array([s[1] for s in state]).transpose()
+    else:
+      raise IndexError
+    return self.driver.log_eval_ratio(istate, rstate)
+
+  def eval_ratio(self, state:numpy.ndarray) -> numpy.ndarray:
+    return numpy.exp(self.log_eval_ratio(state))
+

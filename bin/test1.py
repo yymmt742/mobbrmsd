@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import mobbrmsd as mob
 
 print(dir(mob))
@@ -13,8 +14,11 @@ print(x.shape)
 print(y.shape)
 
 ret = mob3.run(x, y)
-print(ret['header'])
-print(ret['state'])
+#plt.hist(mob3.rmsd(ret['state']))
+#plt.show()
+print(mob3.bounds(ret['state'][0:2]))
+print(mob3.n_eval(ret['state'][-1:0:-1]))
+print(mob3.eval_ratio(ret['state'][9]))
 print()
 exit()
 
