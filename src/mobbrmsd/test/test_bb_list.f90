@@ -17,7 +17,7 @@ program main
   call test1(40, 6, 1, [0])
 ! call test2(4, 2, 2, [3, 2, 1, 4])
 ! call test2(4, 4, 2, [3, 2, 1, 4])
-! call test2(24, 4, 1, [0])
+  call test2(24, 4, 1, [0])
 !
   call u%finish_and_terminate()
 !
@@ -52,7 +52,7 @@ contains
         call u%assert_almost_equal(W(1), sxz, 'minrmsd vs swaped sd')
         call u%assert_almost_equal(sxz, rxz,  'swaped sd vs rotmat ')
         Y = 0.8 * Y + 0.2 * sample(SIZE(X, 2))
-        !print'(5F9.4,F9.1,2F9.4,8I3)', sd(SIZE(X, 2), X, Y), sxz, rxz, W(:4), EXP(W(4)), b%s(2:9)
+        !print'(5F9.4,F9.1,2F9.4,*(I3))', sd(SIZE(X, 2), X, Y), sxz, rxz, W(:4), EXP(W(4)), b%s(2:9)
       end do
     end block
 !
@@ -83,35 +83,34 @@ contains
 !
   end subroutine test1
 !
-! subroutine test2(m, n, s, sym)
-!   integer, intent(in)   :: m, n, s, sym(m * (s - 1))
-!   type(bb_block)        :: blk(3)
-!   type(bb_list)         :: b
-!   real(RK), parameter   :: off = 5.0_RK
-!   real(RK)              :: X(D, m, 3 + n), Y(D, m, 3 + n)
-!   real(RK), allocatable :: W(:)
-!   integer(IK)           :: i
+  subroutine test2(m, n, s, sym)
+    integer, intent(in)   :: m, n, s, sym(m * (s - 1))
+    type(bb_block)        :: blk(2)
+    type(bb_list)         :: b
+    real(RK), parameter   :: off = 5.0_RK
+    real(RK)              :: X(D, m, n + n - 1), Y(D, m, n + n - 1)
+    real(RK), allocatable :: W(:)
+    integer(IK)           :: i
 !
-!   blk(1) = bb_block(m, 1)
-!   blk(2) = bb_block(m, 2, sym=RESHAPE(sym, [m, s - 1]))
-!   blk(3) = bb_block(m, n, sym=RESHAPE(sym, [m, s - 1]))
-!   b = bb_list(blk)
+    blk(1) = bb_block(m, n - 1, sym=RESHAPE(sym, [m, s - 1]))
+    blk(2) = bb_block(m, n,     sym=RESHAPE(sym, [m, s - 1]))
+    b = bb_list(blk)
 !
-!   X = RESHAPE([sample(m) + off, sample(m, 2), sample(m, n) - off], SHAPE(X))
-!   Y = X
+    X = RESHAPE([sample(m, n - 1) + off, sample(m, n)], SHAPE(X))
+    Y = X
 !
-!   allocate(W(bb_list_memsize(b%q)))
+    allocate(W(bb_list_memsize(b%q)))
 !
-!   do i = 1, 20
-!     call bb_list_setup(b%q, b%s, X, Y, W)
-!     call bb_list_run(b%q, b%s, w)
-!     print'(2F9.4,F9.1,2F9.4,*(I3))', W(:4), EXP(W(4)), b%s(2:1 + 3 + n)
-!     Y(:, :, 1:1) = 0.8 * Y(:, :, 1:1) + 0.2 * RESHAPE(sample(m, 1) + off, [D, m, 1])
-!     Y(:, :, 2:3) = 0.8 * Y(:, :, 2:3) + 0.2 * RESHAPE(sample(m, 2),       [D, m, 2])
-!     Y(:, :, 4:)  = 0.8 * Y(:, :, 4:)  + 0.2 * RESHAPE(sample(m, n) - off, [D, m, n])
-!   end do
+    do i = 1, 10
+      call bb_list_setup(b%q, b%s, X, Y, W)
+      call bb_list_run(b%q, b%s, w)
+      call u%assert_almost_equal(w(1), brute_sd(m, n + n - 1, s, sym, X, Y), 'minrmsd value')
+      !print'(2F9.4,F9.1,2F9.4,*(I3))', W(:4), EXP(W(4)), b%s(2:1 + 3 + n)
+      Y(:, :, 1:n - 1)     = 0.8 * Y(:, :, 1:n - 1) +     0.2 * (sample(m, n - 1) + off)
+      Y(:, :, n:n + n - 1) = 0.8 * Y(:, :, n:n + n - 1) + 0.2 * sample(m, n)
+    end do
 !
-! end subroutine test2
+  end subroutine test2
 !
 end program main
 
