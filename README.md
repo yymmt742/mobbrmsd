@@ -95,6 +95,7 @@ Calculate mobbrmsd.
 
 * [![cmake][cmake]][cmake-url]
 * [![fortran][fortran-shield]][fortran-url]
+* [![python][python-shield]][python-url]
 * [![scikit-build][skbuild-shield]][skbuild-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -103,6 +104,22 @@ Calculate mobbrmsd.
 
 <!-- GETTING STARTED -->
 ## Getting Started
+
+### Prerequisites
+
+* gfortran >= 9.4.0
+* cmake >= 3.9
+* openmp
+* blas/lapack
+
+To use the Python interface, you additionally need the following:
+* python >= 3.8
+* pip
+* setuptools >= 42
+* numpy >= 1.21
+* skbuild
+* wheel
+* f2py
 
 ### Installation
 
@@ -122,8 +139,9 @@ Calculate mobbrmsd.
    ```
    instead.
 3. Build python interface.
+   ```sh
    pip install .
-
+   ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -132,11 +150,7 @@ Calculate mobbrmsd.
 
 Usage
 
-_For more examples, please refer to the [Documentation](https://example.com)_
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- ROADMAP -->
 ## Roadmap
@@ -217,6 +231,10 @@ Project Link: [https://github.com/yymmt742/mobbrmsd](https://github.com/yymmt742
 [cmake-url]: https://cmake.org/
 [fortran-shield]: https://img.shields.io/badge/Fortran-734F96?style=for-the-badge&logo=fortran&logoColor=FFFFFF
 [fortran-url]: https://fortran-lang.org/
+[python-shield]: https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=FFFFFF
+[python-url]: https://www.python.org/
+[setuptools-shield]: https://img.shields.io/badge/setuptools-3775A9?style=for-the-badge&logo=pypi&logoColor=FFFFFF
+[setuptools-url]: https://pypi.org/project/setuptools/
 [skbuild-shield]: https://img.shields.io/badge/skbuild-35495E?style=for-the-badge
 [skbuild-url]: https://scikit-build.readthedocs.io/en/latest/
 
