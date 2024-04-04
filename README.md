@@ -83,7 +83,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]]
+[![Product Name Screen Shot][product-screenshot]](https://github.com/yymmt742/mobbrmsd/technical_notes.md)
 
 Calculate mobbrmsd.
 
