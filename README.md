@@ -93,7 +93,7 @@ Calculate mobbrmsd.
 ### Built With
 
 * [![cmake][cmake]][cmake-url]
-* [![scikit-build][scikit-build]][https://scikit-build.readthedocs.io/en/latest/]
+* [![scikit-build][scikit-build]][scikit-build-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -211,6 +211,8 @@ Project Link: [https://github.com/yymmt742/mobbrmsd](https://github.com/yymmt742
 [issues-url]: https://github.com/yymmt742/mobbrmsd/issues
 [license-shield]: https://img.shields.io/github/license/yymmt742/mobbrmsd.svg?style=for-the-badge
 [license-url]: https://github.com/yymmt742/mobbrmsd/blob/master/LICENSE.txt
-[cmake]: https://img.shields.io/github/license/yymmt742/Cmake.svg
+[cmake]: https://img.shields.io/badge/Cmake-35495E?style=for-the-badge&logo=vuedotjs&logoColor=4FC08D
 [cmake-url]: https://cmake.org/
+[scikit-build]: https://img.shields.io/badge/scikit-build-35495E?style=for-the-badge&logo=vuedotjs&logoColor=4FC08D
+[scikit-build-url]: https://scikit-build.readthedocs.io/en/latest/
 
