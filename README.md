@@ -94,7 +94,7 @@ Calculate mobbrmsd.
 ### Built With
 
 * [![cmake][cmake]][cmake-url]
-* [![fortran][fortran]][fortran-url]
+* [![fortran][fortran-shield]][fortran-url]
 * [![scikit-build][skbuild-shield]][skbuild-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
