@@ -19,7 +19,6 @@ target_sources(${TARGET_2D} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90 )
 
@@ -50,10 +49,10 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include DESTINATION "${CMAKE_IN
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   find_package( unittest REQUIRED )
   find_package( purelapack REQUIRED )
+
   add_executable( test_gemm_2d )
   target_sources( test_gemm_2d PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
-    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_gemm.f90 )
@@ -65,7 +64,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_executable( test_rotation_2d )
   target_sources( test_rotation_2d PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
-    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
@@ -80,7 +78,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_executable( test_c_matrix_2d )
   target_sources( test_c_matrix_2d PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
-    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
@@ -97,7 +94,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_executable( test_f_matrix_2d )
   target_sources( test_f_matrix_2d PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
-    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
@@ -116,7 +112,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_executable( test_bb_block_2d )
   target_sources( test_bb_block_2d PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
-    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
@@ -137,7 +132,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_executable( test_bb_list_2d )
   target_sources( test_bb_list_2d PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
-    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90

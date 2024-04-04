@@ -94,8 +94,8 @@ contains
 !
 !| Evaluation the c-matrix.<br>
 !  g-matrix is also calculated at the same time.<br>
-!  At the end of the calculation, save the c-matrix C(cb,M,M) to C(*). <br>
-!  workarray W(*) must be larger than c_matrix_worksize(q). <br>
+!  At the end of the calculation, save the c-matrix C(cb,M,M) to C(\*). <br>
+!  workarray W(\*) must be larger than c_matrix_worksize(q). <br>
   pure subroutine c_matrix_eval(q, b, X, Y, C, W)
     integer(IK), intent(in) :: q(*)
     !! c_matrix header
