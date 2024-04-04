@@ -156,10 +156,8 @@ Usage
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] Enable pip build
 - [ ] Add Usage
 - [ ] Compatible with compilers other than gnu
-- [ ] Enable CI documentation
 - [ ] Add detail documentation
 - [ ] Add benchmarks
 

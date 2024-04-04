@@ -1,9 +1,9 @@
 !| Module for molecular coodinate block indicator.<br>
-!  Coordinates must be stored in the following format.<br>
-!    X(d,m,n)<br>
-!    - d :: spatial dimension.<br>
-!    - m :: number of atom in a molecule.<br>
-!    - n :: number of molecule.
+!  Coordinates must be stored in the 3-D array, X(d, n, M).<br>
+!   <br>
+!    - \(d\) :: spatial dimension.<br>
+!    - \(n\) :: number of atom in a molecule.<br>
+!    - \(M\) :: number of molecule.<br>
 module mod_mol_block
   use blas_lapack_interface, only : D
   use mod_params, only: IK, RK
@@ -20,15 +20,15 @@ module mod_mol_block
   public :: mol_block_swap
   public :: mol_block_inverse_swap
 !
-  integer(IK), parameter  :: m = 1
-  integer(IK), parameter  :: n = 2
-  integer(IK), parameter  :: g = 3
+  integer(IK), parameter  :: pn = 1
+  integer(IK), parameter  :: pm = 2
+  integer(IK), parameter  :: pg = 3
 !
 !| molecular block
 !  This is mainly used for passing during initialization.
   type mol_block
     sequence
-    !| q :: work array.
+    !| header
     integer(IK), allocatable :: q(:)
   end type mol_block
 !
@@ -39,70 +39,74 @@ module mod_mol_block
 contains
 !
 !| Constructer
-  pure function mol_block_new(m, n, sym) result(res)
-    integer(IK), intent(in) :: m
-    !! number of molecules
+  pure function mol_block_new(n, M, sym) result(res)
     integer(IK), intent(in) :: n
     !! number of atoms per molecule
+    integer(IK), intent(in) :: M
+    !! number of molecules
     integer(IK), intent(in), optional :: sym(:,:)
-    !! symmetric codomains, [[a1,a2,...,am],[b1,b2,...,bm],...].
+    !! symmetric codomains, sym(n, S)
+    !! \( [[\nu_1^{(1)},\dots,\nu_n^{(1)}],[\nu_1^{(2)},\dots,\nu_n^{(2)}]],\dots, [\nu_1^{(S)},\dots,\nu_n^{(S)}]]\)
     type(mol_block)         :: res
     type(group_permutation) :: s
+    integer(IK)             :: napm
 !
     s = group_permutation(sym)
-    res%q = [MAX(m, 0), MAX(n, 1), s%q]
+    napm = MAX(n, 0)
+    if (PRESENT(sym)) napm = MAX(napm, SIZE(sym, 1))
+    res%q = [napm, MAX(M, 1), s%q]
 !
   end function mol_block_new
 !
-!| number of atoms
+!| number of atoms, defined by \(nM\).
   pure function mol_block_natm(q) result(res)
     integer(IK), intent(in)     :: q(*)
     !! mol_block
     integer(IK)                 :: res
-    res = q(m) * q(n)
+    res = q(pm) * q(pn)
   end function mol_block_natm
 !
-!| number of molecules
+!| number of molecules, \(M\).
   pure function mol_block_nmol(q) result(res)
     integer(IK), intent(in)     :: q(*)
     !! mol_block
     integer(IK)                 :: res
-    res = q(n)
+    res = q(pm)
   end function mol_block_nmol
 !
-!| number of atoms per molecule
+!| number of atoms per molecule, \(n\)
   pure function mol_block_napm(q) result(res)
     integer(IK), intent(in)     :: q(*)
     !! mol_block
     integer(IK)                 :: res
-    res = q(m)
+    res = q(pn)
   end function mol_block_napm
 !
-!| number of atoms per molecule
+!| number of molecular symmetry, \(S\).
   pure function mol_block_nsym(q) result(res)
     integer(IK), intent(in)     :: q(*)
     !! mol_block
     integer(IK)                 :: res
-    res = group_permutation_nsym(q(g))
+    res = group_permutation_nsym(q(pg))
   end function mol_block_nsym
 !
-!| memory blocksize per molecule, defined by d*m.
+!| memory blocksize per molecule, defined by \(dn\).
   pure function mol_block_each_size(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! mol_block
     integer(IK)             :: res
-    res = D * q(m)
+    res = D * q(pn)
   end function mol_block_each_size
 !
-!| memory blocksize, defined by d*m*n.
+!| memory blocksize, defined by \(dnM\).
   pure function mol_block_total_size(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! mol_block
     integer(IK)             :: res
-    res = D * q(m) * q(n)
+    res = D * q(pn) * q(pm)
   end function mol_block_total_size
 !
-!| swap.
+!| Compute molecular symmetry permutation according to isym.
   pure subroutine mol_block_swap(q, isym, X)
     integer(IK), intent(in) :: q(*)
     !! mol_block
@@ -111,20 +115,20 @@ contains
     real(RK), intent(inout) :: X(*)
     !! work array
 !
-    call group_permutation_swap(q(g), isym, D, X)
+    call group_permutation_swap(q(pg), isym, D, X)
 !
   end subroutine mol_block_swap
 !
-!| inverse swap.
+!| Compute molecular symmetry inverse permutation according to isym.
   pure subroutine mol_block_inverse_swap(q, isym, X)
     integer(IK), intent(in) :: q(*)
     !! mol_block
-    integer(IK), intent(in)     :: isym
+    integer(IK), intent(in) :: isym
     !! symmetry id.
-    real(RK), intent(inout)     :: X(*)
+    real(RK), intent(inout) :: X(*)
     !! work array
 !
-    call group_permutation_inverse(q(g), isym, D, X)
+    call group_permutation_inverse(q(pg), isym, D, X)
 !
   end subroutine mol_block_inverse_swap
 !

@@ -1,4 +1,17 @@
-!| Module for handling C, F and tree.
+!| Module for handling \( \{\mathbf{C}\}_{IJs}, \mathbf{F} \) and the factrial tree. <br>
+!  This module provides procedures for performing branch-and-bound algorithms (BB)
+!  on assemblies consisting of homologous molecules. <br>
+!  Since the BB procedure is implemented for multi-component systems,
+!  this module does not provide the BB itself. <br>
+!  @note
+!    Node data block is defined by \( [l_p, G_p, \mathbf{C}_p]\), here <br>
+!    \( l_p \)          : scalar, lowerbound.<br>
+!    \[ l_p = - \max_{\mathbf{R}} \text{Tr} \left[ \mathbf{C}_p\mathbf{R}\right] - \max_{\nu'}\sum_{I=p+1}^M F_{I\nu'(I)} \]
+!    \( G_p \)          : scalar, partial sum of auto variance.<br>
+!    \[ G_p = \sum_{I=1}^p \mathbf{G}_{I\nu(I)} \]
+!    \( \mathbf{C}_p \) : partial sum of covariance. <br>
+!    \[ \mathbf{C}_p = \sum_{I=1}^p \mathbf{C}_{I\nu(I)\sigma(I)} \]
+!  @endnote
 module mod_bb_block
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use blas_lapack_interface, only : D, ND
@@ -63,10 +76,6 @@ module mod_bb_block
   !! pointer to mol_block interger array (fixed)
 !
 !| bb_block<br>
-!  - Node data [L, G, C]<br>
-!  - 1    L      : scalar, lowerbound.<br>
-!  - 2    G      : scalar, partial sum of auto variance.<br>
-!  - 3    C(D,D) : partial sum of covariance.<br>
 !  This is mainly used for passing during initialization.
   type bb_block
     integer(IK), allocatable :: q(:)
@@ -84,10 +93,10 @@ module mod_bb_block
 contains
 !
 !| Constructer
-  pure function bb_block_new(m, n, sym) result(res)
-    integer(IK), intent(in) :: m
-    !! number of molecules.
+  pure function bb_block_new(n, M, sym) result(res)
     integer(IK), intent(in) :: n
+    !! number of molecules.
+    integer(IK), intent(in) :: M
     !! number of atoms per molecule.
     integer(IK), intent(in), optional :: sym(:,:)
     !! symmetric codomains, [[a1,a2,...,am], [b1,b2,...,bm], ...].
@@ -98,7 +107,7 @@ contains
     type(bb_block)          :: res
     integer(IK)             :: q(header_size)
 !
-    b = mol_block(m, n, sym)
+    b = mol_block(n, M, sym)
     c = c_matrix(b%q)
     f = f_matrix(b%q)
     t = tree(mol_block_nmol(b%q), mol_block_nsym(b%q))
