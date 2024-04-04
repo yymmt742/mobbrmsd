@@ -212,10 +212,10 @@ Project Link: [https://github.com/yymmt742/mobbrmsd](https://github.com/yymmt742
 [issues-url]: https://github.com/yymmt742/mobbrmsd/issues
 [license-shield]: https://img.shields.io/github/license/yymmt742/mobbrmsd.svg?style=for-the-badge
 [license-url]: https://github.com/yymmt742/mobbrmsd/blob/master/LICENSE.txt
-[cmake]: https://img.shields.io/badge/Cmake-35495E?style=for-the-badge&logo=cmake&logoColor=4FC08D
+[cmake]: https://img.shields.io/badge/Cmake-064F8C?style=for-the-badge&logo=cmake&logoColor=EEEEEE
 [cmake-url]: https://cmake.org/
-[fortran]: https://img.shields.io/badge/Fortran-734F96?style=for-the-badge&logo=fortran&logoColor=000000
+[fortran]: https://img.shields.io/badge/Fortran-734F96?style=for-the-badge&logo=fortran&logoColor=FFFFFF
 [fortran-url]: https://fortran-lang.org/
-[scikit-build]: https://img.shields.io/badge/scikit-build-35495E?style=for-the-badge
+[scikit-build]: https://img.shields.io/badge/skbuild-35495E?style=for-the-badge
 [scikit-build-url]: https://scikit-build.readthedocs.io/en/latest/
 
