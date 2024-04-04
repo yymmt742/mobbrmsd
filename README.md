@@ -18,12 +18,13 @@
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
+<!--
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
+-->
 
 
 
@@ -94,7 +95,7 @@ Calculate mobbrmsd.
 
 * [![cmake][cmake]][cmake-url]
 * [![fortran][fortran]][fortran-url]
-* [![scikit-build][scikit-build]][scikit-build-url]
+* [![scikit-build][skbuild-shield]][skbuild-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -214,8 +215,8 @@ Project Link: [https://github.com/yymmt742/mobbrmsd](https://github.com/yymmt742
 [license-url]: https://github.com/yymmt742/mobbrmsd/blob/master/LICENSE.txt
 [cmake]: https://img.shields.io/badge/Cmake-064F8C?style=for-the-badge&logo=cmake&logoColor=EEEEEE
 [cmake-url]: https://cmake.org/
-[fortran]: https://img.shields.io/badge/Fortran-734F96?style=for-the-badge&logo=fortran&logoColor=FFFFFF
+[fortran-shield]: https://img.shields.io/badge/Fortran-734F96?style=for-the-badge&logo=fortran&logoColor=FFFFFF
 [fortran-url]: https://fortran-lang.org/
-[scikit-build]: https://img.shields.io/badge/skbuild-35495E?style=for-the-badge
-[scikit-build-url]: https://scikit-build.readthedocs.io/en/latest/
+[skbuild-shield]: https://img.shields.io/badge/skbuild-35495E?style=for-the-badge
+[skbuild-url]: https://scikit-build.readthedocs.io/en/latest/
 
