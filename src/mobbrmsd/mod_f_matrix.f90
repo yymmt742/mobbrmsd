@@ -1,6 +1,7 @@
-!| Module for manage F matrix.<br>
-!  F(n, n) :: Free rotation matrices.<br>
-!    - F_ij = min_{R,s} Tr[C_IJs @ R]<br>
+!| Module for managing f-matrix, free rotation cost matrix, F(M, M). <br>
+!  \[ \mathbf{F}_{IJ} = \min_{\mathbf{R},s}\text{Tr}\left[\mathbf{C}_{IJs} \mathbf{R} \right] \] <br>
+!  \( \mathbf{C}_{IJs} \) :: Covariance matrix of \( \mathbf{X}_I \) and \( \mathbf{Y}_I \) with \( s \)-th molecular permutation.<br>
+!  \( \mathbf{R} \) :: Rotation matrix on \( \mathbb{R}^{d\times d} \).<br>
 module mod_f_matrix
   use blas_lapack_interface, only : D, DD
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
@@ -17,11 +18,8 @@ module mod_f_matrix
 !
   integer(IK), parameter :: header_size = 1
   integer(IK), parameter :: nn = 1
-  !! n * n
 !
 !| f_matrix <br>
-!  - F is the n x n matrix. <br>
-!  - F(I,J) = min_{R, s} tr[R@C_IJS] <br>
 !  This is mainly used for passing during initialization.
   type f_matrix
     integer(IK)           :: q(header_size)
