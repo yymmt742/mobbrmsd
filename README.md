@@ -83,7 +83,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](images/logo.png)
+[![Product Name Screen Shot][product-screenshot]]
 
 Calculate mobbrmsd.
 
@@ -229,6 +229,7 @@ Project Link: [https://github.com/yymmt742/mobbrmsd](https://github.com/yymmt742
 [issues-url]: https://github.com/yymmt742/mobbrmsd/issues
 [license-shield]: https://img.shields.io/github/license/yymmt742/mobbrmsd.svg?style=for-the-badge
 [license-url]: https://github.com/yymmt742/mobbrmsd/blob/master/LICENSE.txt
+[product-screenshot]: images/screenshot.png
 [cmake]: https://img.shields.io/badge/Cmake-064F8C?style=for-the-badge&logo=cmake&logoColor=EEEEEE
 [cmake-url]: https://cmake.org/
 [fortran-shield]: https://img.shields.io/badge/Fortran-734F96?style=for-the-badge&logo=fortran&logoColor=FFFFFF
