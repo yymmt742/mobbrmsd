@@ -74,7 +74,7 @@
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
+    <li><a href="#Reference">Reference</a></li>
   </ol>
 </details>
 
@@ -83,7 +83,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://github.com/yymmt742/mobbrmsd/technical_notes.md)
+[![Product Name Screen Shot][product-screenshot]](https://github.com/yymmt742/mobbrmsd/blob/main/technical_notes.md)
 
 Calculate mobbrmsd.
 
@@ -156,6 +156,7 @@ Usage
 <!-- ROADMAP -->
 ## Roadmap
 
+- [ ] Enable pip build
 - [ ] Add Usage
 - [ ] Compatible with compilers other than gnu
 - [ ] Enable CI documentation
@@ -206,12 +207,20 @@ Project Link: [https://github.com/yymmt742/mobbrmsd](https://github.com/yymmt742
 
 
 
-<!-- ACKNOWLEDGMENTS -->
-## Acknowledgments
+<!-- Reference -->
+## Reference
 
-* []()
-* []()
-* []()
+Molecular superposition is based on the following algorithm
+
+* [A solution for the best rotation to relate two sets of vectors](https://scripts.iucr.org/cgi-bin/paper?S0567739476001873)
+* [Rapid calculation of RMSDs using a quaternion-based characteristic polynomial](https://scripts.iucr.org/cgi-bin/paper?S0108767305015266)
+* [RMSD and Symmetry](https://onlinelibrary.wiley.com/doi/10.1002/jcc.25802)
+
+The solution to the linear assignment problem for estimating the variational lower bound is based on the Hungarian method.
+
+* [The Hungarian method for the assignment problem](https://onlinelibrary.wiley.com/doi/10.1002/nav.3800020109)
+* [Algorithms for the Assignment and Transportation Problems](http://www.jstor.org/stable/2098689)
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
