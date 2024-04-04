@@ -83,7 +83,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+[![Product Name Screen Shot][product-screenshot]](images/logo.png)
 
 Calculate mobbrmsd.
 
@@ -96,6 +96,7 @@ Calculate mobbrmsd.
 * [![cmake][cmake]][cmake-url]
 * [![fortran][fortran-shield]][fortran-url]
 * [![python][python-shield]][python-url]
+* [![setuptools][setuptools-shield]][setuptools-url]
 * [![scikit-build][skbuild-shield]][skbuild-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -155,10 +156,11 @@ Usage
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] Feature 1
-- [ ] Feature 2
-- [ ] Feature 3
-    - [ ] Nested Feature
+- [ ] Add Usage
+- [ ] Compatible with compilers other than gnu
+- [ ] Enable CI documentation
+- [ ] Add detail documentation
+- [ ] Add benchmarks
 
 See the [open issues](https://github.com/yymmt742/mobbrmsd/issues) for a full list of proposed features (and known issues).
 
