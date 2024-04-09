@@ -1,9 +1,18 @@
-!| Module for manage C matrix.<br>
-!  {C_IJs} :: Covariance matrices.<br>
-!  - C_IJs(d,d) = Y_J @ Q_s @ X_I^T<br>
-!  - - X_I :: I-th molecule in X.<br>
-!  - - Y_J :: J-th molecule in Y.<br>
-!  - - Q_s :: Permutation matrix on m.
+!| A module for managing c-matrices, tensor of covariance matrices. <br>
+!  \( \{\mathbf{C}_{IJs}\}_{IJs} \) is third-order ( \(M\times M\times s \) ) tensor of matrix \( \mathbf{C}_{IJs}\in\mathbb{R}^{d\times d} \),
+!  defined by<br>
+!  \[ \mathbf{C}_{IJs} = \mathbf{Y}_J \mathbf{Q}_s \mathbf{X}_I^\top \] <br>
+!  \( \mathbf{X}_I \) :: \( I \)-th molecule in reference coordinate, \( \mathbf{X} \in\mathbb{R}^{d\times n}\).<br>
+!  \( \mathbf{Y}_J \) :: \( J \)-th molecule in target coordinate,    \( \mathbf{Y} \in\mathbb{R}^{d\times n} \).<br>
+!  \( \mathbf{Q}_s \) :: Molecular permutation matrix on \( n \). <br>
+!  To quickly find the rotation matrix, \( \mathbf{C}_{IJs} \) is stored with autocorrelation \( G_{IJ} \), defined by <br>
+!  \[ G_{IJ} = \text{Tr}\left[\mathbf{X}_I\mathbf{X}_I^\top\right] + \text{Tr}\left[\mathbf{Y}_J\mathbf{Y}_J^\top\right] \] <br>
+!  @note
+!    \( G_{IJ} \) does not change with respect to molecular symmetry permutation index, \( s \). <br>
+!    Therefore, data blocks are stored in three-dimensional array C(bs,M,M)
+!    with the leading dimension with \( \text{bs}=1 + Sd^2 \). <br>
+!    Data blocks are defined by \( \left[ G_{IJ}, \mathbf{C}_{IJ1}, \mathbf{C}_{IJ2}, \dots, \mathbf{C}_{IJS} \right] \) <br>
+!  @endnote
 module mod_c_matrix
   use blas_lapack_interface, only : D, DD, gemm => DGEMM
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
@@ -29,12 +38,7 @@ module mod_c_matrix
   !! number of work array. nw = MAX(dmn + dm, n + n)
 !
 !| c_matrix <br>
-!  - C_IJs is the d x d matrix and {C_IJs} is the third-order tensor of nx x ny x s. <br>
-!  - To quickly find the rotation matrix, C is stored with G_IJ given by <br>
-!  --- G_IJ = Tr[X_I @ X_I^T] + Tr[Y_J @ Y_J^T]. <br>
-!  - G does not change with respect to s. <br>
-!  - C(:,I,J) = [G_IJ, C_IJ1, C_IJ2, ..., C_IJS] with C_IJs(D,D) := Y_J @ Q_s @ X_I^T. <br>
-!  This is mainly used for passing during initialization.
+!  This is mainly used for passing during initialization. <br>
   type c_matrix
     integer(IK)              :: q(header_size)
     !! header
@@ -88,17 +92,19 @@ contains
     res = q(nw)
   end function c_matrix_worksize
 !
-!| Evaluation the C matrix; G matrix is also calculated at the same time.<br>
-!  If nx>=ny C(cb,nx,ny), else C(cb,ny,nx)
+!| Evaluation the c-matrix.<br>
+!  g-matrix is also calculated at the same time.<br>
+!  At the end of the calculation, save the c-matrix C(cb,M,M) to C(\*). <br>
+!  workarray W(\*) must be larger than c_matrix_worksize(q). <br>
   pure subroutine c_matrix_eval(q, b, X, Y, C, W)
     integer(IK), intent(in) :: q(*)
-    !! c_matrix
+    !! c_matrix header
     integer(IK), intent(in) :: b(*)
-    !! mol symmetry array, associated with b.
+    !! mol block header.
     real(RK), intent(in)    :: X(*)
-    !! reference coordinate
+    !! reference coordinate, X(d, n, M)
     real(RK), intent(in)    :: Y(*)
-    !! target coordinate
+    !! target coordinate, Y(d, n, M)
     real(RK), intent(inout) :: C(*)
     !! main memory
     real(RK), intent(inout) :: W(*)
@@ -192,7 +198,9 @@ contains
 !
   end subroutine c_matrix_eval
 !
-!| Add CIJs to partial covariance matrix C.
+!| Adds \( G_{IJ} \) and \( \mathbf{C}_{IJs} \) specified by index \( i, j, s \) to the arguments. <br>
+!  This routine adds directly to G and C(:DD), so they must be initialized. <br>
+!  If indices outside the area defined by q(*) is specified, operation results are not guaranteed. <br>
   pure subroutine c_matrix_add(q, i, j, s, C, G, Cp)
     integer(IK), intent(in) :: q(*)
     !! c_matrix
@@ -203,11 +211,11 @@ contains
     integer(IK), intent(in) :: s
     !! symmetry index
     real(RK), intent(in)    :: C(*)
-    !! main memory
+    !! main memory, calculated by c_matrix_eval.
     real(RK), intent(inout) :: G
-    !! partial auto variance matrix
+    !! partial auto variance matrix.
     real(RK), intent(inout) :: Cp(*)
-    !! partial covariance matrix
+    !! partial covariance matrix, must be larger than \(d^2\).
     integer(IK)             :: k
 !
     k = q(cl) * (i - 1) + q(cb) * (j - 1) + 1

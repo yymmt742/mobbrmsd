@@ -1,21 +1,24 @@
-!| Module for permutation by decomposed cyclic groups.
-!  gp are stored in work array, in the following. <br>
-!  - [p1, p2, ..., ps, swp_1, swp_2, ..., swp_s]
-!  - pi (s)    :: pointer to swp_1 to swp_s. <br>
-!  - s is equiv to w(1) - 1 <br>
-!  - p1 is calculated in w(1) <br>
-!  - pi is calculated in w(i-2) <br>
-!  Swap indeces are stored in work array, in the following. <br>
-!  - [[p1, p2, ..., pm],  [ b1, b2, ..., bi, ..., bm ]] <br>
-!  - m         :: number of order - 1. <br>
-!  - pi (m)    :: pointer to bi+1. Note that m = p1 - 1. <br>
-!  - bi (m+1)  :: body. <br>
-!  body is constructed as follows. <br>
-!  - [n, s, s1, s2, ..., sj, ..., sn] <br>
-!  - n  :: number of permutation. <br>
-!  - s  :: order of cycle. <br>
-!  - sj :: mapping sequence. <br>
-!  - Total memsize is 2 + m * s
+!| Module for order permutation by decomposed cyclic groups. <br>
+!  This module provides swap operations on sequences equivalent to X(:, :) = X(:, perm(:)). <br>
+!  A given swap index perm(:) is decomposed into periodic substitutions. <br>
+!  @note
+!    group permutations are encoded in header integer array, in the following. <br>
+!    \( \mathbf{q} = [S, p_2, ..., p_S, \mathbf{w}_1, \mathbf{w}_2, ..., \mathbf{w}_S] \) <br>
+!    \( S \)   :: number of permutation. <br>
+!    \( p_s \) :: pointer to \( \mathbf{w}_2 \) to \( \mathbf{w}_S \). <br>
+!    \( p_1 \) is equiv to \( S + 1 \) <br>
+!    Swap indeces are stored in work array, in the following. <br>
+!    \( \mathbf{w}_i = [T, r_2, ..., r_T, \mathbf{b}_1, \mathbf{b}_2, ..., \mathbf{b}_T] \) <br>
+!    \( T \)   :: number of order - 1. <br>
+!    \( r_j \) :: pointer to \(b_i+1\). <br>
+!    \( \mathbf{b}_j \) :: body. <br>
+!    body is constructed as follows. <br>
+!    \( \mathbf{b}_j = [n, s, \mathbf{v}_1, ..., \mathbf{v}_n] \) <br>
+!    \( n \) :: number of permutation. <br>
+!    \( s \) :: order of cycle. <br>
+!    \( \mathbf{v}_j \) :: mapping sequence, \( v_1, v_2,\dots,v_s \). <br>
+!    - memsize is \(2 + ns\)
+!  @endnote
 module mod_group_permutation
   use mod_params, only: IK, RK
   implicit none

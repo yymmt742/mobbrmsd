@@ -403,16 +403,22 @@ contains
     real(RK), intent(in)    :: W(ld, *)
     real(RK), intent(inout) :: res
     real(RK)                :: cv
-    integer(IK)             :: p, l, u
+    integer(IK)             :: p, c, l, u
 !
     l = r(qp, i)
     u = l + r(qn, i) - 1
-    p = l + s(i)
+    c = l + s(i)
 !
-    cv = W(1, p)
+    cv = W(1, c)
 !
-    do p = l, u
-      res = MERGE(W(1, p), res, cv < W(1, p) .and. W(1, p) < res)
+    do p = l, c - 1
+      if (W(1, p) < cv) cycle
+      res = MIN(W(1, p), res)
+    end do
+!
+    do p = c + 1, u
+      if (W(1, p) < cv) cycle
+      res = MIN(W(1, p), res)
     end do
 !
   end subroutine queue_second_value

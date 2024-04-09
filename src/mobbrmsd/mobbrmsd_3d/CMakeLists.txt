@@ -20,7 +20,6 @@ target_sources(${TARGET_3D} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90 )
 
 set_target_properties(${TARGET_3D} PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_3D_DIR})
@@ -53,7 +52,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_executable( test_gemm_3d )
   target_sources( test_gemm_3d PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
-    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_gemm.f90 )
@@ -65,7 +63,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_executable( test_rotation_3d )
   target_sources( test_rotation_3d PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
-    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
@@ -80,7 +77,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_executable( test_c_matrix_3d )
   target_sources( test_c_matrix_3d PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
-    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
@@ -97,7 +93,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_executable( test_bb_block_3d )
   target_sources( test_bb_block_3d PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
-    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
@@ -118,7 +113,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_executable( test_bb_list_3d )
   target_sources( test_bb_list_3d PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
-    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90

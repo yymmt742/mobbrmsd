@@ -274,7 +274,6 @@ contains
       if (b == n &
         & .and. .not. bb_block_queue_is_empty(q(pq(b)), s(ps(b))) &
         & .and. bb_block_queue_is_bottom(q(pq(b)), s(ps(b)))) then
-        call lowerbound(n, pq, ps, pw, q, s, W)
         block
           real(RK) :: cv
           cv = bb_block_current_value(q(pq(b)), s(ps(b)), W(pw(b)))
@@ -284,6 +283,8 @@ contains
           end if
         end block
       end if
+!
+      call lowerbound(b, pq, ps, pw, q, s, W)
 !
       do
         call bb_block_leave(W(ub), q(pq(b)), s(ps(b)), W(pw(b)))
@@ -309,7 +310,7 @@ contains
     do b = 1, n
       lv = MIN(lv, bb_block_lowest_value(q(pq(b)), s(ps(b)), W(pw(b))))
     end do
-    W(lb) = MAX(W(lb), lv)
+    W(lb) = MIN(MAX(W(lb), lv), W(ub))
   end subroutine lowerbound
 !
   pure subroutine save_state(n, pq, ps, q, s)
