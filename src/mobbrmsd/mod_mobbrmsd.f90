@@ -253,14 +253,14 @@ contains
   end function mobbrmsd_state_dump_real
 !
 !| load integer array as header
-  pure subroutine mobbrmsd_state_load(this, s, z)
+  pure subroutine mobbrmsd_state_load(this, ns, s, z)
     class(mobbrmsd_state), intent(inout) :: this
     !! mobbrmsd_header
-    integer(IK), intent(in)              :: s(:)
+    integer(IK), intent(in)              :: ns, s(*)
     !! state integer array
-    real(RK), intent(in)                 :: z(:)
+    real(RK), intent(in)                 :: z(*)
     !! state real array
-    this%s = s(:SIZE(s)-1)
+    this%s = s(:ns)
     this%rcnatm = z(1)
     this%uppbou = z(2)
     this%lowbou = z(3)

@@ -103,6 +103,63 @@ contains
 !
   end subroutine state_vector_lengthes
 !
+!| return rmsd
+  subroutine rmsd(int_states, float_states, res, n_int, n_float)
+    integer(kind=ik), intent(in) :: n_int
+    integer(kind=ik), intent(in) :: n_float
+    integer(kind=ik), intent(in) :: int_states(n_int)
+    real(kind=rk), intent(in)    :: float_states(n_float)
+    real(kind=rk), intent(out)   :: res
+    type(mobbrmsd_state)         :: s
+!
+    call s%load(n_int, int_states, float_states)
+    res = s%rmsd()
+!
+  end subroutine rmsd
+!
+!| return bounds
+  subroutine bounds(int_states, float_states, res, n_int, n_float)
+    integer(kind=ik), intent(in) :: n_int
+    integer(kind=ik), intent(in) :: n_float
+    integer(kind=ik), intent(in) :: int_states(n_int)
+    real(kind=rk), intent(in)    :: float_states(n_float)
+    real(kind=rk), intent(out)   :: res(2)
+    type(mobbrmsd_state)         :: s
+!
+    call s%load(n_int, int_states, float_states)
+    res(1) = s%lowerbound()
+    res(2) = s%upperbound()
+!
+  end subroutine bounds
+!
+!| return n_eval
+  subroutine n_eval(int_states, float_states, res, n_int, n_float)
+    integer(kind=ik), intent(in)  :: n_int
+    integer(kind=ik), intent(in)  :: n_float
+    integer(kind=ik), intent(in)  :: int_states(n_int)
+    real(kind=rk), intent(in)     :: float_states(n_float)
+    integer(kind=ik), intent(out) :: res
+    type(mobbrmsd_state)          :: s
+!
+    call s%load(n_int, int_states, float_states)
+    res = s%n_eval()
+!
+  end subroutine n_eval
+!
+!| return log_eval_ratio
+  subroutine log_eval_ratio(int_states, float_states, res, n_int, n_float)
+    integer(kind=ik), intent(in) :: n_int
+    integer(kind=ik), intent(in) :: n_float
+    integer(kind=ik), intent(in) :: int_states(n_int)
+    real(kind=rk), intent(in)    :: float_states(n_float)
+    real(kind=rk), intent(out)   :: res
+    type(mobbrmsd_state)         :: s
+!
+    call s%load(n_int, int_states, float_states)
+    res = s%log_eval_ratio()
+!
+  end subroutine log_eval_ratio
+!
   !| run mobbrmsd
   subroutine run(ndim, natom, ntarget, n_header, n_int, n_float, x, y, &
  &               cutoff, difflim, maxeval, rotate_y, header, int_states, float_states)
@@ -158,108 +215,5 @@ contains
     !$omp end parallel do
 
   end subroutine run
-!
-  subroutine rmsd(int_states, float_states, res, n_int, n_float, ntarget)
-    integer(kind=ik), intent(in) :: n_int
-    integer(kind=ik), intent(in) :: n_float
-    integer(kind=ik), intent(in) :: ntarget
-    integer(kind=ik), intent(in) :: int_states(n_int, ntarget)
-    real(kind=rk), intent(in)    :: float_states(n_float, ntarget)
-    real(kind=rk), intent(out)   :: res(ntarget)
-    integer(kind=ik)             :: njob
-    integer(kind=ik)             :: i
-!
-    !$omp parallel
-    njob = MIN(ntarget, MAX(omp_get_num_threads(), 1))
-    !$omp end parallel
-!
-    !$omp parallel do
-    do i = 1, ntarget
-      block
-        type(mobbrmsd_state) :: s
-        call s%load(int_states(:, i), float_states(:, i))
-        res(i) = s%rmsd()
-      end block
-    end do
-    !$omp end parallel do
-!
-  end subroutine rmsd
-!
-  subroutine bounds(int_states, float_states, res, n_int, n_float, ntarget)
-    integer(kind=ik), intent(in) :: n_int
-    integer(kind=ik), intent(in) :: n_float
-    integer(kind=ik), intent(in) :: ntarget
-    integer(kind=ik), intent(in) :: int_states(n_int, ntarget)
-    real(kind=rk), intent(in)    :: float_states(n_float, ntarget)
-    real(kind=rk), intent(out)   :: res(2, ntarget)
-    integer(kind=ik)             :: njob
-    integer(kind=ik)             :: i
-!
-    !$omp parallel
-    njob = MIN(ntarget, MAX(omp_get_num_threads(), 1))
-    !$omp end parallel
-!
-    !$omp parallel do
-    do i = 1, ntarget
-      block
-        type(mobbrmsd_state) :: s
-        call s%load(int_states(:, i), float_states(:, i))
-        res(1, i) = s%lowerbound()
-        res(2, i) = s%upperbound()
-      end block
-    end do
-    !$omp end parallel do
-!
-  end subroutine bounds
-!
-  subroutine n_eval(int_states, float_states, res, n_int, n_float, ntarget)
-    integer(kind=ik), intent(in)  :: n_int
-    integer(kind=ik), intent(in)  :: n_float
-    integer(kind=ik), intent(in)  :: ntarget
-    integer(kind=ik), intent(in)  :: int_states(n_int, ntarget)
-    real(kind=rk), intent(in)     :: float_states(n_float, ntarget)
-    integer(kind=ik), intent(out) :: res(ntarget)
-    integer(kind=ik)              :: i, njob
-!
-    !$omp parallel
-    njob = MIN(ntarget, MAX(omp_get_num_threads(), 1))
-    !$omp end parallel
-!
-    !$omp parallel do
-    do i = 1, ntarget
-      block
-        type(mobbrmsd_state) :: s
-        call s%load(int_states(:, i), float_states(:, i))
-        res(i) = s%n_eval()
-      end block
-    end do
-    !$omp end parallel do
-!
-  end subroutine n_eval
-!
-  subroutine log_eval_ratio(int_states, float_states, res, n_int, n_float, ntarget)
-    integer(kind=ik), intent(in) :: n_int
-    integer(kind=ik), intent(in) :: n_float
-    integer(kind=ik), intent(in) :: ntarget
-    integer(kind=ik), intent(in) :: int_states(n_int, ntarget)
-    real(kind=rk), intent(in)    :: float_states(n_float, ntarget)
-    real(kind=rk), intent(out)   :: res(ntarget)
-    integer(kind=ik)             :: i, njob
-!
-    !$omp parallel
-    njob = MIN(ntarget, MAX(omp_get_num_threads(), 1))
-    !$omp end parallel
-!
-    !$omp parallel do
-    do i = 1, ntarget
-      block
-        type(mobbrmsd_state) :: s
-        call s%load(int_states(:, i), float_states(:, i))
-        res(i) = s%log_eval_ratio()
-      end block
-    end do
-    !$omp end parallel do
-!
-  end subroutine log_eval_ratio
 !
 end module driver

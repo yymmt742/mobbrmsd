@@ -54,47 +54,35 @@ class mobbrmsd:
 
   def rmsd(self, state:numpy.ndarray) -> numpy.ndarray:
     if state.ndim == 1:
-      istate = state[0].reshape((state[0].shape[0], 1))
-      rstate = state[1].reshape((state[1].shape[0], 1))
+      return self.driver.rmsd(state[0], state[1])
     elif state.ndim == 2:
-      istate = numpy.array([s[0] for s in state]).transpose()
-      rstate = numpy.array([s[1] for s in state]).transpose()
+      return numpy.array([self.driver.rmsd(s[0], s[1]) for s in state])
     else:
       raise IndexError
-    return self.driver.rmsd(istate, rstate)
 
   def bounds(self, state:numpy.ndarray) -> numpy.ndarray:
     if state.ndim == 1:
-      istate = state[0].reshape((state[0].shape[0], 1))
-      rstate = state[1].reshape((state[1].shape[0], 1))
+      return self.driver.bounds(state[0], state[1])
     elif state.ndim == 2:
-      istate = numpy.array([s[0] for s in state]).transpose()
-      rstate = numpy.array([s[1] for s in state]).transpose()
+      return numpy.array([self.driver.bounds(s[0], s[1]) for s in state])
     else:
       raise IndexError
-    return self.driver.bounds(istate, rstate).transpose()
 
   def n_eval(self, state:numpy.ndarray) -> numpy.ndarray:
     if state.ndim == 1:
-      istate = state[0].reshape((state[0].shape[0], 1))
-      rstate = state[1].reshape((state[1].shape[0], 1))
+      return self.driver.n_eval(state[0], state[1])
     elif state.ndim == 2:
-      istate = numpy.array([s[0] for s in state]).transpose()
-      rstate = numpy.array([s[1] for s in state]).transpose()
+      return numpy.array([self.driver.n_eval(s[0], s[1]) for s in state])
     else:
       raise IndexError
-    return self.driver.n_eval(istate, rstate)
 
   def log_eval_ratio(self, state:numpy.ndarray) -> numpy.ndarray:
     if state.ndim == 1:
-      istate = state[0].reshape((state[0].shape[0], 1))
-      rstate = state[1].reshape((state[1].shape[0], 1))
+      return self.driver.log_eval_ratio(state[0], state[1])
     elif state.ndim == 2:
-      istate = numpy.array([s[0] for s in state]).transpose()
-      rstate = numpy.array([s[1] for s in state]).transpose()
+      return numpy.array([self.driver.log_eval_ratio(s[0], s[1]) for s in state])
     else:
       raise IndexError
-    return self.driver.log_eval_ratio(istate, rstate)
 
   def eval_ratio(self, state:numpy.ndarray) -> numpy.ndarray:
     return numpy.exp(self.log_eval_ratio(state))

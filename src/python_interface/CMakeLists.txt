@@ -4,6 +4,15 @@ find_package(OpenMP REQUIRED)
 find_package(Threads REQUIRED)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
+if (NOT CMAKE_INSTALL_PYTHON_LIBDIR)
+  execute_process(
+   COMMAND "${PYTHON_EXECUTABLE}" -c "if True:
+             from distutils import sysconfig as sc
+             print(sc.get_python_lib(prefix='', plat_specific=True))"
+   OUTPUT_VARIABLE CMAKE_INSTALL_PYTHON_LIBDIR
+   OUTPUT_STRIP_TRAILING_WHITESPACE)
+ endif ()
+
 # Grab the variables from a local Python installation
 # NumPy headers
 execute_process(
@@ -155,10 +164,8 @@ add_custom_command(
             "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
   )
 
-install( FILES ${sofile} DESTINATION mobbrmsd )
-install( FILES ${sofile_2d} DESTINATION mobbrmsd )
-install( FILES ${sofile_3d} DESTINATION mobbrmsd )
-install( FILES ${initpy}  DESTINATION mobbrmsd )
+install(FILES ${sofile} ${sofile_2d} ${sofile_3d} ${initpy}
+        DESTINATION "${CMAKE_INSTALL_PYTHON_LIBDIR}/mobbrmsd")
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   find_package(unittest REQUIRED)
