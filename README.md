@@ -118,9 +118,9 @@ To use the Python interface, you additionally need the following:
 * pip
 * setuptools >= 42
 * numpy >= 1.21
+* f2py
 * skbuild
 * wheel
-* f2py
 
 ### Installation
 
