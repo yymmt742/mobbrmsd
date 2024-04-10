@@ -139,9 +139,15 @@ To use the Python interface, you additionally need the following:
    -DBLA_VENDOR=[OpenBLAS, ATLAS, ...]
    ```
    instead.
-3. Build python interface.
+
+#### Build python interface.
    ```sh
-   pip install .
+   pip -m install .
+   ```
+
+   Or you can use package build via
+   ```sh
+   pip install git+ssh://git@github.com/yymmt742/mobbrmsd.git
    ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
