@@ -20,27 +20,27 @@ contains
 !
   subroutine test0()
     type(bb_block)         :: bm
-    integer(IK), parameter :: m = 8
-    integer(IK), parameter :: n = 3
+    integer(IK), parameter :: m = 3
+    integer(IK), parameter :: n = 8
     integer(IK), parameter :: s = 2
-    integer(IK), parameter :: sym(m) = [2, 3, 4, 5, 6, 7, 8, 1]
-    real(RK)               :: X(D, m, n), Y(D, m, n), Z(D, m, n)
+    integer(IK), parameter :: sym(n) = [2, 3, 4, 5, 6, 7, 8, 1]
+    real(RK)               :: X(D, n, m), Y(D, n, m), Z(D, n, m)
     real(RK)               :: G, C(D, D), R(D, D), V(rotation_worksize()), sxz, rxz
     real(RK), allocatable  :: W(:)
-    integer(IK)            :: sb(n)
+    integer(IK)            :: sb(m)
     integer(IK)            :: i
 !
-    bm = bb_block(8, 3, sym=RESHAPE(sym, [m, 1]))
+    bm = bb_block(n, m, sym=RESHAPE(sym, [n, 1]))
 !
     allocate (W(bb_block_memsize(bm%q) + bb_block_worksize(bm%q)))
 !
-    X = sample(m, n)
+    X = sample(n, m)
     Y(:, :, :2) = X(:, :, 2:)
     Y(:, :, 3) = X(:, :, 1)
 !
     do i = 1, 20
       call run(bm%q, bm%s, X, Y, W, sb)
-      call u%assert_almost_equal(W(1), brute_sd(m, n, s, sym, X, Y), 'minrmsd value')
+      call u%assert_almost_equal(W(1), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
       Z = Y
       call bb_block_swap_y(bm%q, sb, Z)
       sxz = sd(m * n, X, Z)
@@ -50,35 +50,35 @@ contains
       C = ZERO
       call bb_block_covmat_add(bm%q, sb, W, G, C)
       call estimate_rotation(G, C, R, V)
-      rxz = SUM((X - RESHAPE(MATMUL(TRANSPOSE(R), RESHAPE(Z, [D, m * n])), [D, m, n]))**2)
+      rxz = SUM((X - RESHAPE(MATMUL(TRANSPOSE(R), RESHAPE(Z, [D, m * n])), [D, n, m]))**2)
 !
       call u%assert_almost_equal(sxz, rxz, 'rotmat value ')
 !
-      Y = 0.8 * Y + RESHAPE(sample(D, m * n), SHAPE(Y)) * 0.2
+      Y = 0.8 * Y + sample(n, m) * 0.2
     end do
 !
   end subroutine test0
 !
-  subroutine test1(m, n, s, per, map, sym)
-    integer(IK), intent(in) :: m, n, s, per(n), map(n), sym(m * (s - 1))
+  subroutine test1(n, m, s, per, map, sym)
+    integer(IK), intent(in) :: n, m, s, per(m), map(m), sym(n * (s - 1))
     type(bb_block)          :: bm
-    real(RK)                :: X(D, m, n), Y(D, m, n), Z(D, m, n)
+    real(RK)                :: X(D, n, m), Y(D, n, m), Z(D, n, m)
     real(RK), allocatable   :: W(:)
-    integer(IK)             :: sb(n)
+    integer(IK)             :: sb(m)
     integer(IK)             :: i
 !
-    bm = bb_block(m, n, RESHAPE(sym, [m, s - 1]))
+    bm = bb_block(n, m, RESHAPE(sym, [n, s - 1]))
     allocate (W(bb_block_memsize(bm%q) + bb_block_worksize(bm%q)))
 !
-    X = RESHAPE(sample(D, m * n), SHAPE(X))
-    Y = swp(m, n, s, per, map, sym, X)
+    X = sample(n, m)
+    Y = swp(n, m, s, per, map, sym, X)
     do i = 1, 20
       call run(bm%q, bm%s, X, Y, W, sb)
-      call u%assert_almost_equal(W(1), brute_sd(m, n, s, sym, X, Y), 'minrmsd value')
+      call u%assert_almost_equal(W(1), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
       Z = Y
       call bb_block_swap_y(bm%q, sb, Z)
       call u%assert_almost_equal(W(1), sd(m * n, X, Z), 'swap sd value')
-      Y = 0.8 * Y + RESHAPE(sample(D, m * n), SHAPE(Y)) * 0.2
+      Y = 0.8 * Y + sample(n, m) * 0.2
     end do
 !
   end subroutine test1

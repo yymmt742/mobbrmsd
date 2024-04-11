@@ -156,5 +156,28 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   target_link_libraries( test_bb_list PRIVATE unittest )
   target_link_libraries( test_bb_list PRIVATE purelapack )
   add_test( NAME test_bb_list COMMAND test_bb_list 4 )
+
+  add_executable( test_mobbrmsd )
+  target_sources( test_mobbrmsd PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_mobbrmsd.f90 )
+  target_include_directories( test_mobbrmsd PRIVATE ${unittest_DIR}/mod_files )
+  target_include_directories( test_mobbrmsd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
+  target_link_libraries( test_mobbrmsd PRIVATE unittest )
+  target_link_libraries( test_mobbrmsd PRIVATE purelapack )
+  add_test( NAME test_mobbrmsd COMMAND test_mobbrmsd 4 )
 endif()
 

@@ -13,6 +13,7 @@ module mod_mobbrmsd
   public :: mobbrmsd_header
   public :: mobbrmsd_state
   public :: mobbrmsd_run
+  public :: mobbrmsd_restart
   public :: mobbrmsd_swap_y
 !
 !| mol_block_input
@@ -116,7 +117,9 @@ contains
 !
     blocks(nblock)%m = m
     blocks(nblock)%n = n
-    if (PRESENT(sym)) blocks(nblock)%sym = sym
+    if (PRESENT(sym)) then
+      if (SIZE(sym) > 0) blocks(nblock)%sym = sym
+    end if
 !
     call MOVE_ALLOC(from=blocks, to=this)
 !
@@ -341,13 +344,7 @@ contains
     if (PRESENT(W)) then
 !
       call bb_list_setup(header%q, state%s, X(1), Y(1), W(1))
-      call bb_list_run(header%q, state%s, W(1), cutoff=cutoff, difflim=difflim, maxeval=maxeval)
-      state%uppbou = W(1)
-      state%lowbou = W(2)
-      state%numevl = W(3)
-      state%lograt = W(4)
-!
-      if(PRESENT(rot)) call bb_list_rotation_matrix(header%q, state%s, W(1), rot(1))
+      call mobbrmsd_restart(header, state, W, cutoff, difflim, maxeval, rot)
 !
     else
 !
@@ -355,19 +352,43 @@ contains
         real(RK), allocatable :: T(:)
         allocate (T(header%memsize()))
         call bb_list_setup(header%q, state%s, X(1), Y(1), T(1))
-        call bb_list_run(header%q, state%s, T, cutoff=cutoff, difflim=difflim, maxeval=maxeval)
-        state%uppbou = T(1)
-        state%lowbou = T(2)
-        state%numevl = T(3)
-        state%lograt = T(4)
-!
-        if(PRESENT(rot)) call bb_list_rotation_matrix(header%q, state%s, T(1), rot(1))
-!
+        call mobbrmsd_restart(header, state, W, cutoff, difflim, maxeval, rot)
       end block
 !
     end if
 !
   end subroutine mobbrmsd_run
+!
+!| run mobbrmsd
+  pure subroutine mobbrmsd_restart(header, state, W, cutoff, difflim, maxeval, rot)
+    class(mobbrmsd_header), intent(in)   :: header
+    !! mobbrmsd_header
+    class(mobbrmsd_state), intent(inout) :: state
+    !! mobbrmsd_state, the result is contained in this structure.
+    real(RK), intent(inout)              :: W(*)
+    !! work array, must be > header%memsize()
+    real(RK), intent(in), optional       :: cutoff
+    !! The search ends when lowerbound is determined to be greater than to cutoff.
+    real(RK), intent(in), optional       :: difflim
+    !! The search ends when the difference between the lower and upper bounds is less than difflim.
+    integer(IK), intent(in), optional    :: maxeval
+    !! The search ends when ncount exceeds maxiter.
+    real(RK), intent(inout), optional    :: rot(*)
+    !! rotation matrix, if needed.
+!
+    if (.not. ALLOCATED(header%q)) return
+    if (.not. ALLOCATED(state%s)) return
+!
+    call bb_list_run(header%q, state%s, W(1), cutoff=cutoff, difflim=difflim, maxeval=maxeval)
+!
+    state%uppbou = W(1)
+    state%lowbou = W(2)
+    state%numevl = W(3)
+    state%lograt = W(4)
+!
+    if(PRESENT(rot)) call bb_list_rotation_matrix(header%q, state%s, W(1), rot(1))
+!
+  end subroutine mobbrmsd_restart
 !
 !| swap target coordinate.
   pure subroutine mobbrmsd_swap_y(header, state, Y)

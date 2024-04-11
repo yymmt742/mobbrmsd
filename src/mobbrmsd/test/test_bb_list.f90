@@ -84,18 +84,18 @@ contains
 !
   end subroutine test0
 !
-  subroutine test1(m, n, s, sym)
-    integer, intent(in)   :: m, n, s, sym(m * (s - 1))
+  subroutine test1(n, m, s, sym)
+    integer, intent(in)   :: n, m, s, sym(n * (s - 1))
     type(bb_block)        :: blk(1)
     type(bb_list)         :: b
-    real(RK)              :: X(D, m, n), Y(D, m, n)
+    real(RK)              :: X(D, n, m), Y(D, n, m)
     real(RK), allocatable :: W(:)
     integer(IK)           :: i
 !
-    blk(1) = bb_block(m, n, sym=RESHAPE(sym, [m, s - 1]))
+    blk(1) = bb_block(n, m, sym=RESHAPE(sym, [n, s - 1]))
     b = bb_list(blk)
 !
-    X = sample(m, n)
+    X = sample(n, m)
     Y = X
 !
     allocate(W(bb_list_memsize(b%q)))
@@ -103,29 +103,29 @@ contains
     do i = 1, 20
       call bb_list_setup(b%q, b%s, X, Y, W)
       call bb_list_run(b%q, b%s, w)
-      call u%assert_almost_equal(w(1), brute_sd(m, n, s, sym, X, Y), 'minrmsd value')
-      Y = 0.8 * Y + 0.2 * sample(m, n)
+      call u%assert_almost_equal(w(1), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
+      Y = 0.8 * Y + 0.2 * sample(n, m)
     end do
 !
   end subroutine test1
 !
-  subroutine test2(m1, n1, s1, sym1, m2, n2, s2, sym2)
-    integer, intent(in)   :: m1, n1, s1, sym1(m1 * (s1 - 1))
-    integer, intent(in)   :: m2, n2, s2, sym2(m2 * (s2 - 1))
+  subroutine test2(n1, m1, s1, sym1, n2, m2, s2, sym2)
+    integer, intent(in)   :: n1, m1, s1, sym1(n1 * (s1 - 1))
+    integer, intent(in)   :: n2, m2, s2, sym2(n2 * (s2 - 1))
     type(bb_block)        :: blk(2)
     type(bb_list)         :: b
     real(RK)              :: brute
-    real(RK)              :: X1(D, m1, n1), X2(D, m2, n2)
-    real(RK)              :: Y1(D, m1, n1), Y2(D, m2, n2)
+    real(RK)              :: X1(D, n1, m1), X2(D, n2, m2)
+    real(RK)              :: Y1(D, n1, m1), Y2(D, n2, m2)
     real(RK), allocatable :: W(:)
     integer(IK)           :: i
 !
-    blk(1) = bb_block(m1, n1, sym=RESHAPE(sym1, [m1, s1 - 1]))
-    blk(2) = bb_block(m2, n2, sym=RESHAPE(sym2, [m2, s2 - 1]))
+    blk(1) = bb_block(n1, m1, sym=RESHAPE(sym1, [n1, s1 - 1]))
+    blk(2) = bb_block(n2, m2, sym=RESHAPE(sym2, [n2, s2 - 1]))
     b = bb_list(blk)
 !
-    X1 = sample(m1, n1)
-    X2 = sample(m2, n2)
+    X1 = sample(n1, m1)
+    X2 = sample(n2, m2)
     Y1 = X1
     Y2 = X2
 !
@@ -134,11 +134,10 @@ contains
     do i = 1, 10
       call bb_list_setup(b%q, b%s, [X1, X2], [Y1, Y2], W)
       call bb_list_run(b%q, b%s, W)
-      brute = brute_sd_double(m1, n1, s1, sym1, m2, n2, s2, sym2, X1, Y1, X2, Y2)
+      brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
       call u%assert_almost_equal(w(1), brute, 'minrmsd value')
-      !print'(2F9.4,F9.1,2F9.4,*(I3))', W(:4), EXP(W(4)), b%s(2:1 + 3 + n)
-      Y1 = 0.8 * Y1 + 0.2 * sample(m1, n1)
-      Y2 = 0.8 * Y2 + 0.2 * sample(m2, n2)
+      Y1 = 0.8 * Y1 + 0.2 * sample(n1, m1)
+      Y2 = 0.8 * Y2 + 0.2 * sample(n2, m2)
     end do
 !
   end subroutine test2

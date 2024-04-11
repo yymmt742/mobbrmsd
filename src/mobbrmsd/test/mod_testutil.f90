@@ -239,54 +239,55 @@ contains
     end block
   end function sd
 !
-  pure function brute_sd(m, n, s, sym, X, Y) result(res)
-    integer(IK), intent(in) :: m, n, s, sym(m * (s - 1))
-    real(RK), intent(in)    :: X(D, m, n), Y(D, m, n)
+  pure function brute_sd(n, m, s, sym, X, Y) result(res)
+    integer(IK), intent(in) :: n, m, s, sym(n * (s - 1))
+    real(RK), intent(in)    :: X(D, n, m), Y(D, n, m)
     real(RK)                :: res
     type(permutation)       :: per
-    integer(IK)             :: map(n)
-    per = permutation(n, n)
+    integer(IK)             :: map(m)
+    per = permutation(m, m)
     res = RHUGE
     map = 1
     do while (.not. per%endl())
       do
-        res = MIN(res, sd(m * n, X, pws(m, n, s, per%id, map, sym, Y)))
-        call map_next(n, s, map)
+        res = MIN(res, sd(n * m, X, pws(n, m, s, per%id, map, sym, Y)))
+        call map_next(m, s, map)
         if (ALL(map == 1)) exit
       enddo
       call per%next()
     end do
   end function brute_sd
 !
-  pure function brute_sd_double(m1, n1, s1, sym1, m2, n2, s2, sym2, X1, Y1, X2, Y2) result(res)
-    integer(IK), intent(in) :: m1, n1, s1, sym1(m1 * (s1 - 1))
-    integer(IK), intent(in) :: m2, n2, s2, sym2(m2 * (s2 - 1))
-    real(RK), intent(in)    :: X1(D, m1, n1), Y1(D, m1, n1)
-    real(RK), intent(in)    :: X2(D, m2, n2), Y2(D, m2, n2)
+  pure function brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2) result(res)
+    integer(IK), intent(in) :: n1, m1, s1, sym1(n1 * (s1 - 1))
+    integer(IK), intent(in) :: n2, m2, s2, sym2(n2 * (s2 - 1))
+    real(RK), intent(in)    :: X1(D, n1, m1), Y1(D, n1, m1)
+    real(RK), intent(in)    :: X2(D, n2, m2), Y2(D, n2, m2)
+    real(RK)                :: Z1(D, n1, m1), Z2(D, n2, m2)
     real(RK)                :: res
-    real(RK)                :: Z1(D, m1, n1), Z2(D, m2, n2)
     type(permutation)       :: per1, per2
-    integer(IK)             :: map1(n1), map2(n2), nz
+    integer(IK)             :: map1(m1), map2(m2), nz
+!
     res = RHUGE
     nz = m1 * n1 + m2 * n2
-
-    per2 = permutation(n2, n2)
+!
+    per2 = permutation(m2, m2)
     map2 = 1
     do while (.not. per2%endl())
       do
-        Z2 = pws(m2, n2, s2, per2%id, map2, sym2, Y2)
-        per1 = permutation(n1, n1)
+        Z2 = pws(n2, m2, s2, per2%id, map2, sym2, Y2)
+        per1 = permutation(m1, m1)
         map1 = 1
         do while (.not. per1%endl())
           do
-            Z1 = pws(m1, n1, s1, per1%id, map1, sym1, Y1)
+            Z1 = pws(n1, m1, s1, per1%id, map1, sym1, Y1)
             res = MIN(res, sd(nz, RESHAPE([X1, X2], [D, nz]), RESHAPE([Z1, Z2], [D, nz])))
-            call map_next(n1, s1, map1)
+            call map_next(m1, s1, map1)
             if (ALL(map1 == 1)) exit
           end do
           call per1%next()
         end do
-        call map_next(n2, s2, map2)
+        call map_next(m2, s2, map2)
         if (ALL(map2 == 1)) exit
       end do
       call per2%next()
@@ -306,24 +307,24 @@ contains
     end do
   end subroutine map_next
 !
-  pure function swp(m, n, s, per, map, sym, X) result(res)
-    integer(IK), intent(in) :: m, n, s, per(n), map(n), sym(m * (s - 1))
-    real(RK), intent(in)    :: X(D, m, n)
-    real(RK)                :: res(D, m, n)
-    integer(IK)             :: i, sym1(m, s)
-    sym1 = RESHAPE([[(i, i=1, m)], sym], SHAPE(sym1))
-    do i = 1, n
+  pure function swp(n, m, s, per, map, sym, X) result(res)
+    integer(IK), intent(in) :: n, m, s, per(m), map(m), sym(n * (s - 1))
+    real(RK), intent(in)    :: X(D, n, m)
+    real(RK)                :: res(D, n, m)
+    integer(IK)             :: i, sym1(n, s)
+    sym1 = RESHAPE([[(i, i=1, n)], sym], SHAPE(sym1))
+    do i = 1, m
       res(:, sym1(:, map(i)), per(i)) = X(:, :, i)
     end do
   end function swp
 !
-  pure function pws(m, n, s, per, map, sym, X) result(res)
-    integer(IK), intent(in) :: m, n, s, per(n), map(n), sym(m * (s - 1))
-    real(RK), intent(in)    :: X(D, m, n)
-    real(RK)                :: res(D, m, n)
-    integer(IK)             :: i, sym1(m, s)
-    sym1 = RESHAPE([[(i, i=1, m)], sym], SHAPE(sym1))
-    do i = 1, n
+  pure function pws(n, m, s, per, map, sym, X) result(res)
+    integer(IK), intent(in) :: n, m, s, per(m), map(m), sym(n * (s - 1))
+    real(RK), intent(in)    :: X(D, n, m)
+    real(RK)                :: res(D, n, m)
+    integer(IK)             :: i, sym1(n, s)
+    sym1 = RESHAPE([[(i, i=1, n)], sym], SHAPE(sym1))
+    do i = 1, m
       res(:, :, i) = X(:, sym1(:, map(i)), per(i))
     end do
   end function pws
