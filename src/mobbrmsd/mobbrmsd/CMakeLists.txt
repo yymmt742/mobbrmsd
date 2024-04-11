@@ -144,6 +144,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   target_include_directories( test_bb_list PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
   target_link_libraries( test_bb_list PRIVATE unittest )
   target_link_libraries( test_bb_list PRIVATE purelapack )
-  add_test( NAME test_bb_list COMMAND test_bb_list )
+  add_test( NAME test_bb_list COMMAND test_bb_list 4 )
 endif()
 

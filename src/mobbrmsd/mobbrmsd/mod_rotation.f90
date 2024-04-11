@@ -3,7 +3,7 @@
 !  This code is based on the Kabsch algorithm. doi : 10.1107/S0567739476001873
 module mod_rotation
   use mod_kinds, only: IK, RK
-  use blas_lapack_interface, only: D, DD, DGEMM
+  use blas_lapack_interface, only: D, DD
   implicit none
   private
   public :: sdmin_worksize
@@ -12,8 +12,12 @@ module mod_rotation
   public :: estimate_rotation
 !
   interface
+    include 'dgemm.h'
+    include 'sgemm.h'
     include 'dgesvd.h'
+    include 'sgesvd.h'
     include 'dgetrf.h'
+    include 'sgetrf.h'
   end interface
 !
   real(RK), parameter    :: ZERO = 0.0_RK
@@ -93,6 +97,19 @@ contains
     s = vt + DD
     iw = s + D
 !
+#ifdef SP
+    call SGESVD('A', 'A', D, D, w(m), D, w(s), w(u), D, w(vt), D, w(iw), -1, info)
+    lw = NINT(w(iw))
+!
+    call copy(DD, cov, w(m))
+    call SGESVD('A', 'A', D, D, w(m), D, w(s), w(u), D, w(vt), D, w(iw), lw, info)
+!
+    call SGEMM('N', 'N', D, D, D, ONE, w(u), D, w(vt), D, ZERO, w(s), D)
+    call det_sign(w(s))
+    if (w(s) < ZERO) call neg(d, w(u + DD - D))
+    call SGEMM('N', 'N', D, D, D, ONE, w(u), D, w(vt), D, ZERO, w(s), D)
+    call copy(DD, w(s), rot(1))
+#else
     call DGESVD('A', 'A', D, D, w(m), D, w(s), w(u), D, w(vt), D, w(iw), -1, info)
     lw = NINT(w(iw))
 !
@@ -104,6 +121,7 @@ contains
     if (w(s) < ZERO) call neg(d, w(u + DD - D))
     call DGEMM('N', 'N', D, D, D, ONE, w(u), D, w(vt), D, ZERO, w(s), D)
     call copy(DD, w(s), rot(1))
+#endif
 !
   end subroutine Kabsch
 !

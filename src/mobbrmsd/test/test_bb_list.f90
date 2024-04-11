@@ -1,5 +1,5 @@
 program main
-  use blas_lapack_interface, only : D
+  use blas_lapack_interface, only : D, setup_dimension
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_bb_block
   use mod_rotation
@@ -8,9 +8,14 @@ program main
   use mod_testutil
   implicit none
   type(unittest) :: u
+  character(32)  :: carg
+  integer(IK)    :: d_
+!
+  call GET_COMMAND_ARGUMENT(1, value=carg)
+  read(carg, *) d_
+  call setup_dimension(d_)
 !
   call u%init('test bb_list')
-!
   call test0()
   call u%init('test bb_list for (n,M,S)=(1,1,1)')
   call test1(1, 1, 1, [0])

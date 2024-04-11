@@ -129,6 +129,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   target_include_directories( test_bb_list_3d PRIVATE ${unittest_DIR}/mod_files )
   target_link_libraries( test_bb_list_3d PRIVATE unittest )
   target_include_directories( test_bb_list_3d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
-  add_test( NAME test_bb_list_3d COMMAND test_bb_list_3d )
+  add_test( NAME test_bb_list_3d COMMAND test_bb_list_3d 0 )
 
 endif()

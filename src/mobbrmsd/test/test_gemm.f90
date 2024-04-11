@@ -1,10 +1,15 @@
 program main
-  use blas_lapack_interface, only : gemm => DGEMM, D, DD
+  use blas_lapack_interface, only : D, DD
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_unittest
   implicit none
   type(unittest) :: u
   integer        :: i
+!
+  interface
+    include 'dgemm.h'
+    include 'sgemm.h'
+  end interface
 !
   call u%init('test gemm')
   do i = 1, 10
@@ -35,7 +40,11 @@ contains
     call RANDOM_NUMBER(A)
     call RANDOM_NUMBER(B)
 !
-    call gemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
+#ifdef SP
+    call sgemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
+#else
+    call dgemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
+#endif
     C2 = MATMUL(A, TRANSPOSE(B))
     call u%assert_almost_equal([C1 - C2], ZERO, ' A @ TB = C')
 !
@@ -55,7 +64,11 @@ contains
 !
     call CPU_TIME(time_begin_s)
     do i = 1, N
-      call gemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
+#ifdef SP
+      call sgemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
+#else
+      call dgemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
+#endif
       A = SUM(C1) / N + B
     end do
     call CPU_TIME(time_end_s)

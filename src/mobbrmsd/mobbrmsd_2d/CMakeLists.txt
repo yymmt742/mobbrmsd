@@ -5,6 +5,7 @@ endif()
 
 set(TARGET_2D ${PROJECT_NAME}_2d)
 add_library(${TARGET_2D} OBJECT)
+#target_compile_definitions(${TARGET_2D} PUBLIC SP)
 target_include_directories(${TARGET_2D} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 target_sources(${TARGET_2D} PRIVATE
@@ -148,6 +149,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   target_include_directories( test_bb_list_2d PRIVATE ${unittest_DIR}/mod_files )
   target_link_libraries( test_bb_list_2d PRIVATE unittest )
   target_include_directories( test_bb_list_2d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
-  add_test( NAME test_bb_list_2d COMMAND test_bb_list_2d )
+  add_test( NAME test_bb_list_2d COMMAND test_bb_list_2d 0)
 
 endif()
