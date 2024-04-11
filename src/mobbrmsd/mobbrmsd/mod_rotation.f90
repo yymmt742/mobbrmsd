@@ -97,7 +97,7 @@ contains
     s = vt + DD
     iw = s + D
 !
-#ifdef SP
+#ifdef REAL32
     call SGESVD('A', 'A', D, D, w(m), D, w(s), w(u), D, w(vt), D, w(iw), -1, info)
     lw = NINT(w(iw))
 !

@@ -40,7 +40,7 @@ contains
     call RANDOM_NUMBER(A)
     call RANDOM_NUMBER(B)
 !
-#ifdef SP
+#ifdef REAL32
     call sgemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
 #else
     call dgemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
@@ -64,7 +64,7 @@ contains
 !
     call CPU_TIME(time_begin_s)
     do i = 1, N
-#ifdef SP
+#ifdef REAL32
       call sgemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
 #else
       call dgemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)

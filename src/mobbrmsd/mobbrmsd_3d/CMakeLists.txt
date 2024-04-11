@@ -5,6 +5,17 @@ endif()
 
 set(TARGET_3D ${PROJECT_NAME}_3d)
 add_library(${TARGET_3D} OBJECT)
+
+if ( REAL )
+  message ( STATUS "Configuring build for ${REAL}-bit reals" )
+  target_compile_definitions(${TARGET_3D} PUBLIC REAL${REAL})
+endif ()
+
+if ( INT )
+  message ( STATUS "Configuring build for ${INT}-bit integers" )
+  target_compile_definitions(${TARGET_3D} PUBLIC INT${INT})
+endif ()
+
 target_include_directories(${TARGET_3D} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 target_sources(${TARGET_3D} PRIVATE

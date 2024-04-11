@@ -5,6 +5,17 @@ endif()
 
 set(TARGET_GD ${PROJECT_NAME})
 add_library(${TARGET_GD} OBJECT)
+
+if ( REAL )
+  message ( STATUS "Configuring build for ${REAL}-bit reals" )
+  target_compile_definitions(${TARGET_GD} PUBLIC REAL${REAL})
+endif ()
+
+if ( INT )
+  message ( STATUS "Configuring build for ${INT}-bit integers" )
+  target_compile_definitions(${TARGET_GD} PUBLIC INT${INT})
+endif ()
+
 target_include_directories(${TARGET_GD} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 target_sources(${TARGET_GD} PRIVATE

@@ -5,7 +5,17 @@ endif()
 
 set(TARGET_2D ${PROJECT_NAME}_2d)
 add_library(${TARGET_2D} OBJECT)
-#target_compile_definitions(${TARGET_2D} PUBLIC SP)
+
+if ( REAL )
+  message ( STATUS "Configuring build for ${REAL}-bit reals" )
+  target_compile_definitions(${TARGET_2D} PUBLIC REAL${REAL})
+endif ()
+
+if ( INT )
+  message ( STATUS "Configuring build for ${INT}-bit integers" )
+  target_compile_definitions(${TARGET_2D} PUBLIC INT${INT})
+endif ()
+
 target_include_directories(${TARGET_2D} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 target_sources(${TARGET_2D} PRIVATE

@@ -185,7 +185,7 @@ contains
 !
         ic = 2
         do concurrent(i=1:n)
-#ifdef SP
+#ifdef REAL32
           call SGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
 #else
           call DGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
@@ -196,7 +196,7 @@ contains
           ic = ic + DD
           call mol_block_swap(b, j, WY)
           do concurrent(i=1:n)
-#ifdef SP
+#ifdef REAL32
             call SGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
 #else
             call DGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
