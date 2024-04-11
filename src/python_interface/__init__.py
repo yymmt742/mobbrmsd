@@ -47,7 +47,7 @@ class mobbrmsd:
 
     ntarget = y_.shape[2]
     n_header, n_int, n_float = self.driver.state_vector_lengthes()
-    hret, iret, rret = self.driver.run(n_header, n_int, n_float, x_, y_, cutoff, difflim, maxeval, rotate_y)
+    hret, iret, rret = self.driver.batch_run(n_header, n_int, n_float, x_, y_, cutoff, difflim, maxeval, rotate_y)
     state = numpy.array([(i, r) for i, r in zip(iret.T, rret.T)], dtype=object)
 
     return {'header':hret, 'state':state}
