@@ -5,14 +5,6 @@ module blas_lapack_interface
   private
   public  :: D, DD, ND
   public  :: setup_dimension
-  public  :: SGEMM, DGEMM
-!
-  interface
-!
-    include 'dgemm.h'
-    include 'sgemm.h'
-!
-  end interface
 !
   integer, parameter :: D = 2
   !! Spatial dimension

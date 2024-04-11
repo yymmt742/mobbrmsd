@@ -133,6 +133,7 @@ module mod_testutil
   public :: sd
   public :: swp
   public :: brute_sd
+  public :: brute_sd_double
 !
   interface sample
     module procedure :: sample_2, sample_3
@@ -256,6 +257,41 @@ contains
       call per%next()
     end do
   end function brute_sd
+!
+  pure function brute_sd_double(m1, n1, s1, sym1, m2, n2, s2, sym2, X1, Y1, X2, Y2) result(res)
+    integer(IK), intent(in) :: m1, n1, s1, sym1(m1 * (s1 - 1))
+    integer(IK), intent(in) :: m2, n2, s2, sym2(m2 * (s2 - 1))
+    real(RK), intent(in)    :: X1(D, m1, n1), Y1(D, m1, n1)
+    real(RK), intent(in)    :: X2(D, m2, n2), Y2(D, m2, n2)
+    real(RK)                :: res
+    real(RK)                :: Z1(D, m1, n1), Z2(D, m2, n2)
+    type(permutation)       :: per1, per2
+    integer(IK)             :: map1(n1), map2(n2), nz
+    res = RHUGE
+    nz = m1 * n1 + m2 * n2
+
+    per2 = permutation(n2, n2)
+    map2 = 1
+    do while (.not. per2%endl())
+      do
+        Z2 = pws(m2, n2, s2, per2%id, map2, sym2, Y2)
+        per1 = permutation(n1, n1)
+        map1 = 1
+        do while (.not. per1%endl())
+          do
+            Z1 = pws(m1, n1, s1, per1%id, map1, sym1, Y1)
+            res = MIN(res, sd(nz, RESHAPE([X1, X2], [D, nz]), RESHAPE([Z1, Z2], [D, nz])))
+            call map_next(n1, s1, map1)
+            if (ALL(map1 == 1)) exit
+          end do
+          call per1%next()
+        end do
+        call map_next(n2, s2, map2)
+        if (ALL(map2 == 1)) exit
+      end do
+      call per2%next()
+    end do
+  end function brute_sd_double
 !
   pure subroutine map_next(n, s, map)
     integer(IK), intent(in)    :: n, s

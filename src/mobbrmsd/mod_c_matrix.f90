@@ -14,7 +14,7 @@
 !    Data blocks are defined by \( \left[ G_{IJ}, \mathbf{C}_{IJ1}, \mathbf{C}_{IJ2}, \dots, \mathbf{C}_{IJS} \right] \) <br>
 !  @endnote
 module mod_c_matrix
-  use blas_lapack_interface, only : D, DD, gemm => DGEMM
+  use blas_lapack_interface, only : D, DD
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mol_block
   implicit none
@@ -47,6 +47,11 @@ module mod_c_matrix
   interface c_matrix
     module procedure c_matrix_new
   end interface c_matrix
+!
+  interface
+    include 'dgemm.h'
+    include 'sgemm.h'
+  end interface
 !
 contains
 !
@@ -178,21 +183,27 @@ contains
       real(RK), intent(inout)     :: WY(D, m), C(cb, n)
       integer(IK)                 :: i, j, ic
 !
-      ic = 2
-      do concurrent(i=1:n)
-        !call copy(DD, MATMUL(WY, TRANSPOSE(WX(:, :, i))), C(ic, i))
-        call gemm('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
-      enddo
-!
-      do j = 1, s - 1
-        ic = ic + DD
-        call mol_block_swap(b, j, WY)
+        ic = 2
         do concurrent(i=1:n)
-          !call copy(DD, MATMUL(WY, TRANSPOSE(WX(:, :, i))), C(ic, i))
-          call gemm('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
+#ifdef REAL32
+          call SGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
+#else
+          call DGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
+#endif
+        enddo
+!
+        do j = 1, s - 1
+          ic = ic + DD
+          call mol_block_swap(b, j, WY)
+          do concurrent(i=1:n)
+#ifdef REAL32
+            call SGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
+#else
+            call DGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
+#endif
+          end do
+          call mol_block_inverse_swap(b, j, WY)
         end do
-        call mol_block_inverse_swap(b, j, WY)
-      end do
 !
     end subroutine calc_covariance
 !

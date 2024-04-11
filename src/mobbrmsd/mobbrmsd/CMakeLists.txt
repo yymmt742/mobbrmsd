@@ -5,6 +5,17 @@ endif()
 
 set(TARGET_GD ${PROJECT_NAME})
 add_library(${TARGET_GD} OBJECT)
+
+if ( REAL )
+  message ( STATUS "Configuring build for ${REAL}-bit reals" )
+  target_compile_definitions(${TARGET_GD} PUBLIC REAL${REAL})
+endif ()
+
+if ( INT )
+  message ( STATUS "Configuring build for ${INT}-bit integers" )
+  target_compile_definitions(${TARGET_GD} PUBLIC INT${INT})
+endif ()
+
 target_include_directories(${TARGET_GD} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 target_sources(${TARGET_GD} PRIVATE
@@ -144,6 +155,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   target_include_directories( test_bb_list PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
   target_link_libraries( test_bb_list PRIVATE unittest )
   target_link_libraries( test_bb_list PRIVATE purelapack )
-  add_test( NAME test_bb_list COMMAND test_bb_list )
+  add_test( NAME test_bb_list COMMAND test_bb_list 4 )
 endif()
 

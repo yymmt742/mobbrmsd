@@ -8,7 +8,6 @@ program main
   type(unittest) :: z
 !
   interface
-    include 'dgemm.h'
     include 'dgesvd.h'
     include 'dgetrf.h'
   end interface

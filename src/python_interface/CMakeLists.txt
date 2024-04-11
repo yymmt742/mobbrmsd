@@ -1,5 +1,6 @@
 find_package(F2PY REQUIRED)
 find_package(Python 3.8 REQUIRED COMPONENTS NumPy)
+find_package(BLAS REQUIRED)
 find_package(OpenMP REQUIRED)
 find_package(Threads REQUIRED)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -168,17 +169,47 @@ install(FILES ${sofile} ${sofile_2d} ${sofile_3d} ${initpy}
         DESTINATION "${CMAKE_INSTALL_PYTHON_LIBDIR}/mobbrmsd")
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
+
+  add_compile_options(
+    ${OpenMP_Fortran_FLAGS}
+    $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-O3>
+    $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-cpp>
+    $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-std=f2008>
+    $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fimplicit-none>
+    $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fall-intrinsics>
+    $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fexternal-blas>
+    $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-Wuninitialized>
+    $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fbounds-check>
+    $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-Wunused>
+    $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fbacktrace>
+    $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fcheck=array-temps,bounds,do,mem,pointer>
+    $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-O3>
+    $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-fpp>
+    $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-stand>
+    $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:f08>
+    $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-free>
+    $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-implicitnone>
+    $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-qopt-matmul>
+    $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-warn>
+    $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:all>
+    $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-check>
+    $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:bounds>
+    $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-traceback>
+  )
+
   find_package(unittest REQUIRED)
   add_compile_options(${BLAS_Fortran_FLAGS} ${OpenMP_Fortran_FLAGS})
+  add_compile_options(${BLAS_LINKER_FLAGS})
 
   add_executable(test_driver)
   target_sources(test_driver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/test_driver.f90)
   target_include_directories(test_driver PRIVATE ${unittest_DIR}/mod_files)
-  target_include_directories(test_driver PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mod_files)
+  target_include_directories(test_driver PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_3d/mod_files)
   target_include_directories(test_driver PRIVATE ${OpenMP_Fortran_INCLUDE_DIRS} )
+  target_link_libraries(test_driver PRIVATE blas )
   target_link_libraries(test_driver PRIVATE ${OpenMP_Fortran_LIB_NAMES} )
-  target_link_libraries(test_driver PRIVATE mobbrmsd_shared)
+  target_link_libraries(test_driver PRIVATE mobbrmsd_3d_shared)
   target_link_libraries(test_driver PRIVATE unittest)
   add_test( NAME test_driver COMMAND test_driver )
 endif()

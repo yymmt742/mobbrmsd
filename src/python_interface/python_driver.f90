@@ -18,12 +18,14 @@ module driver
   public clear_molecule
   public n_atoms
   public n_dims
+  public workmemory_length
   public state_vector_lengthes
-  public run
   public rmsd
   public bounds
   public n_eval
   public log_eval_ratio
+  public run
+  public batch_run
 !
   type(mol_block_input), allocatable :: blocks(:)
 !
@@ -38,51 +40,53 @@ contains
   end subroutine setup_dimension
 !
   !| add molecule
-  subroutine add_molecule(m, n, s, sym)
-    integer(kind=ik), intent(in) :: m
+  subroutine add_molecule(n, M, s, sym)
     integer(kind=ik), intent(in) :: n
+    integer(kind=ik), intent(in) :: M
     integer(kind=ik), intent(in) :: s
-    integer(kind=ik), intent(in), optional :: sym(m * (s - 1))
-    type(mobbrmsd)               :: mob
+    integer(kind=ik), intent(in), optional :: sym(n * (s - 1))
 !
     if (.not. ALLOCATED(blocks)) allocate (blocks(0))
-    call mol_block_input_add(blocks, m, n, reshape(sym, [m, s - 1]))
+    call mol_block_input_add(blocks, n, M, reshape(sym, [n, s - 1]))
 !
   end subroutine add_molecule
 !
   !| clear molecule
-  subroutine clear_molecule(m, n, s, sym)
-    integer(kind=ik), intent(in) :: m
-    integer(kind=ik), intent(in) :: n
-    integer(kind=ik), intent(in) :: s
-    integer(kind=ik), intent(in), optional :: sym(m * (s - 1))
-    type(mobbrmsd)               :: mob
+  subroutine clear_molecule()
 !
     if (ALLOCATED(blocks)) deallocate (blocks)
 !
   end subroutine clear_molecule
 !
   !| Returns total number of atoms
-  pure subroutine n_dims(ndim)
-    integer(kind=ik), intent(out) :: ndim
+  pure subroutine n_dims(n_dim)
+    integer(kind=ik), intent(out) :: n_dim
 !
-    ndim = mobbrmsd_n_dims()
+    n_dim = mobbrmsd_n_dims()
 !
   end subroutine n_dims
 !
   !| Returns total number of atoms
-  pure subroutine n_atoms(natom)
-    integer(kind=ik), intent(out) :: natom
+  pure subroutine n_atoms(n_atom)
+    integer(kind=ik), intent(out) :: n_atom
     type(mobbrmsd)                :: mob
 !
     if (ALLOCATED(blocks)) then
       mob = mobbrmsd(blocks)
-      natom = mob%h%n_atoms()
+      n_atom = mob%h%n_atoms()
     else
-      natom = 0
+      n_atom = 0
     end if
 !
   end subroutine n_atoms
+!
+  !| Returns total number of atoms
+  pure subroutine workmemory_length(nmem)
+    integer(kind=ik), intent(out) :: nmem
+    type(mobbrmsd)                :: mob
+    mob = mobbrmsd(blocks)
+    nmem = mob%h%memsize()
+  end subroutine workmemory_length
 !
   pure subroutine state_vector_lengthes(n_header, n_int, n_float)
     integer(kind=ik), intent(out) :: n_header
@@ -160,18 +164,50 @@ contains
 !
   end subroutine log_eval_ratio
 !
-  !| run mobbrmsd
-  subroutine run(ndim, natom, ntarget, n_header, n_int, n_float, x, y, &
- &               cutoff, difflim, maxeval, rotate_y, header, int_states, float_states)
-    integer(kind=ik), intent(in)  :: ndim
-    integer(kind=ik), intent(in)  :: natom
+  !| single run with working memory
+  subroutine run(n_dim, n_atom, n_header, n_int, n_float, n_mem, x, y, w,&
+ &               cutoff, difflim, maxeval, header, int_states, float_states)
+    integer(kind=ik), intent(in)  :: n_dim
+    integer(kind=ik), intent(in)  :: n_atom
+    integer(kind=ik), intent(in)  :: n_header
+    integer(kind=ik), intent(in)  :: n_int
+    integer(kind=ik), intent(in)  :: n_float
+    integer(kind=ik), intent(in)  :: n_mem
+    real(kind=rk), intent(in)     :: x(n_dim, n_atom)
+    !! reference coordinate
+    real(kind=rk), intent(in)     :: y(n_dim, n_atom)
+    !! target coordinate
+    real(kind=rk), intent(inout)  :: W(n_mem)
+    !! work memory
+    integer(kind=ik), intent(in)  :: maxeval
+    real(kind=rk), intent(in)     :: cutoff
+    real(kind=rk), intent(in)     :: difflim
+    integer(kind=ik), intent(out) :: header(n_header)
+    integer(kind=ik), intent(out) :: int_states(n_int)
+    real(kind=rk), intent(out)    :: float_states(n_float)
+    type(mobbrmsd)                :: mob
+!
+    mob = mobbrmsd(blocks)
+    call mobbrmsd_run(mob%h, mob%s, X, Y, w, cutoff, difflim, maxeval)
+!
+    header = mob%h%dump()
+    int_states = mob%s%dump()
+    float_states = mob%s%dump_real()
+
+  end subroutine run
+!
+  !| batch parallel run
+  subroutine batch_run(n_dim, n_atom, ntarget, n_header, n_int, n_float, x, y, &
+ &                     cutoff, difflim, maxeval, rotate_y, header, int_states, float_states)
+    integer(kind=ik), intent(in)  :: n_dim
+    integer(kind=ik), intent(in)  :: n_atom
     integer(kind=ik), intent(in)  :: ntarget
     integer(kind=ik), intent(in)  :: n_header
     integer(kind=ik), intent(in)  :: n_int
     integer(kind=ik), intent(in)  :: n_float
-    real(kind=rk), intent(in)     :: x(ndim, natom)
+    real(kind=rk), intent(in)     :: x(n_dim, n_atom)
     !! reference coordinate
-    real(kind=rk), intent(inout)  :: y(ndim, natom, ntarget)
+    real(kind=rk), intent(inout)  :: y(n_dim, n_atom, ntarget)
     !! target coordinate
     integer(kind=ik), intent(in)  :: maxeval
     real(kind=rk), intent(in)     :: cutoff
@@ -198,9 +234,8 @@ contains
     !$omp parallel do
     do i = 1, ntarget
       block
-        integer(kind=ik)     :: ijob, pnt
+        integer(kind=ik)     :: ijob
         type(mobbrmsd_state) :: s
-        real(kind=rk)        :: rat(3)
 !
         ijob = omp_get_thread_num() + 1
         s = mob%s
@@ -214,6 +249,6 @@ contains
     end do
     !$omp end parallel do
 
-  end subroutine run
+  end subroutine batch_run
 !
 end module driver
