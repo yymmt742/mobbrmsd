@@ -124,6 +124,7 @@ To use the Python interface, you additionally need the following:
 
 ### Installation
 
+#### Fortran library
 1. Clone the repo
    ```sh
    git clone https://github.com/yymmt742/mobbrmsd
@@ -134,18 +135,23 @@ To use the Python interface, you additionally need the following:
    cmake .. -DCMAKE_BUILD_TYPE=[Release, Debug, ...] -DCMAKE_PREFIX_PATH=your_local_cmake_path
    make install
    ```
-   It doesn't work with MKL. Please use
+
+#### python interface
    ```sh
-   -DBLA_VENDOR=[OpenBLAS, ATLAS, ...]
+   python -m pip install .
+   ```
+   or package build
+   ```sh
+   python -m build
+   ```
+
+   Python interface doesn't work with MKL. Please use
+   ```sh
+     python -m build --config-setting DBLA_VENDOR=[OpenBLAS, ATLAS, ...]
    ```
    instead.
 
-#### Build python interface.
-   ```sh
-   pip -m install .
-   ```
-
-   Or you can use package build via
+   you can use package build via
    ```sh
    pip install git+ssh://git@github.com/yymmt742/mobbrmsd.git
    ```
