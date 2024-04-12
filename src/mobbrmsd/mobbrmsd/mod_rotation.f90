@@ -176,12 +176,16 @@ contains
   pure function dot(N, X, Y) result(res)
     integer(IK), intent(in) :: N
     real(RK), intent(in)    :: X(*), Y(*)
-    real(RK)                :: res
+    real(RK)                :: res, tmp
     integer(IK)             :: i
     res = ZERO
-    do i = 1, N
-      res = res + X(i) * Y(i)
+    tmp = ZERO
+    do i = 2, N, 2
+      res = res + X(i - 1) * Y(i - 1)
+      tmp = tmp + X(i - 0) * Y(i - 0)
     end do
+    res = res + tmp
+    if (MODULO(N, 2) == 1) res = res + X(N) * Y(N)
   end function dot
 !
   pure subroutine copy(N, X, Y)
