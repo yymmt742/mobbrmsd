@@ -18,8 +18,6 @@ module mod_rotation
     include 'sgesvd.h'
     include 'dgetrf.h'
     include 'sgetrf.h'
-    include 'ddot.h'
-    include 'sdot.h'
   end interface
 !
   real(RK), parameter    :: ZERO = 0.0_RK
@@ -43,11 +41,7 @@ contains
     !! work array, must be larger than worksize_sdmin().
 !
     call Kabsch(cov, w(2), w(DD + 2))
-#ifdef REAL32
-    w(1) = sdot(DD, cov, 1, w(2), 1)
-#else
-    w(1) = ddot(DD, cov, 1, w(2), 1)
-#endif
+    w(1) = dot(DD, cov, w(2))
     w(1) = w(1) + w(1)
     w(1) = g - w(1)
 !
@@ -79,7 +73,11 @@ contains
     real(RK)    :: w(1)
     integer(IK) :: res, info
 !
+#ifdef REAL32
+    call SGESVD('A', 'A', D, D, w, D, w, w, D, w, D, w, -1, info)
+#else
     call DGESVD('A', 'A', D, D, w, D, w, w, D, w, D, w, -1, info)
+#endif
     res = NINT(w(1)) + DD * 3 + D
 !
   end function worksize_Kabsch
@@ -166,17 +164,6 @@ contains
 !
    end subroutine det_sign
 !
-! pure function dot(N, X, LX, Y, LY) result(res)
-!   integer(IK), intent(in) :: N, LX, LY
-!   real(RK), intent(in)    :: X(*), Y(*)
-!   real(RK)                :: res
-!   integer(IK)             :: i
-!   res = ZERO
-!   do i = 1, N
-!     res = res + X(i) * Y(i)
-!   end do
-! end function dot
-!
   pure subroutine neg(N, X)
     integer(IK), intent(in) :: N
     real(RK), intent(inout) :: X(*)
@@ -185,6 +172,17 @@ contains
       X(i) = -X(i)
     end do
   end subroutine neg
+!
+  pure function dot(N, X, Y) result(res)
+    integer(IK), intent(in) :: N
+    real(RK), intent(in)    :: X(*), Y(*)
+    real(RK)                :: res
+    integer(IK)             :: i
+    res = ZERO
+    do i = 1, N
+      res = res + X(i) * Y(i)
+    end do
+  end function dot
 !
   pure subroutine copy(N, X, Y)
     integer(IK), intent(in) :: N
