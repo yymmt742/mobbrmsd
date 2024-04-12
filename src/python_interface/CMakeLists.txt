@@ -165,8 +165,15 @@ add_custom_command(
             "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
   )
 
-install(FILES ${sofile} ${sofile_2d} ${sofile_3d} ${initpy}
-        DESTINATION "${CMAKE_INSTALL_PYTHON_LIBDIR}/mobbrmsd")
+install(FILES
+    ${sofile}
+    ${sofile_2d}
+    ${sofile_3d}
+    ${initpy}
+    __mobbrmsd__.py
+    __coord_generator__.py
+  DESTINATION
+    "${CMAKE_INSTALL_PYTHON_LIBDIR}/mobbrmsd")
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
 
