@@ -18,12 +18,12 @@ module mod_rotation
     include 'sgesvd.h'
     include 'dgetrf.h'
     include 'sgetrf.h'
+    include 'ddot.h'
+    include 'sdot.h'
   end interface
 !
   real(RK), parameter    :: ZERO = 0.0_RK
   real(RK), parameter    :: ONE = 1.0_RK
-  real(RK), parameter    :: THRESHOLD = 1E-8_RK
-  integer(IK), parameter :: MAXITER = 100000
 !
 contains
 !
@@ -43,7 +43,11 @@ contains
     !! work array, must be larger than worksize_sdmin().
 !
     call Kabsch(cov, w(2), w(DD + 2))
-    w(1) = dot(DD, cov, w(2))
+#ifdef REAL32
+    w(1) = sdot(DD, cov, 1, w(2), 1)
+#else
+    w(1) = ddot(DD, cov, 1, w(2), 1)
+#endif
     w(1) = w(1) + w(1)
     w(1) = g - w(1)
 !
@@ -162,16 +166,16 @@ contains
 !
    end subroutine det_sign
 !
-  pure function dot(N, X, Y) result(res)
-    integer(IK), intent(in) :: N
-    real(RK), intent(in)    :: X(*), Y(*)
-    real(RK)                :: res
-    integer(IK)             :: i
-    res = ZERO
-    do i = 1, N
-      res = res + X(i) * Y(i)
-    end do
-  end function dot
+! pure function dot(N, X, LX, Y, LY) result(res)
+!   integer(IK), intent(in) :: N, LX, LY
+!   real(RK), intent(in)    :: X(*), Y(*)
+!   real(RK)                :: res
+!   integer(IK)             :: i
+!   res = ZERO
+!   do i = 1, N
+!     res = res + X(i) * Y(i)
+!   end do
+! end function dot
 !
   pure subroutine neg(N, X)
     integer(IK), intent(in) :: N
