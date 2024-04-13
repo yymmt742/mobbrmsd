@@ -15,6 +15,7 @@ module mod_bb_list
   public :: bb_list_run
   public :: bb_list_swap_y
   public :: bb_list_rotation_matrix
+  public :: bb_list_is_finished
 !
   integer(IK), parameter :: header_size = 1
   integer(IK), parameter :: nb = 1 ! number of block
@@ -79,14 +80,14 @@ contains
 !| generate node instance
   pure function bb_list_new(blk) result(res)
     type(bb_block), intent(in) :: blk(:)
-    type(bb_list)     :: res
+    type(bb_list)              :: res
     integer(IK)                :: q(header_size), s(header_sttsize)
     integer(IK)                :: pq(SIZE(blk)), px(SIZE(blk)), ps(SIZE(blk)), pw(SIZE(blk))
     integer(IK)                :: i, j, nstat
 !
     q(nb) = SIZE(blk)
     nstat = SUM([(bb_block_nmol(blk(i)%q), i=1, q(nb))])
-    s(sb) = 1
+    s(sb) = 0
 !
     j = header_size + 4 * q(nb) + 1
     do i = 1, q(nb)
@@ -190,7 +191,7 @@ contains
     !! work array
     integer(IK)                :: i, n, ps, pq, px, pw
 !
-    s(sb) = 1
+    s(sb) = 0
     W(ub) = RHUGE
     W(lb) = -RHUGE
     W(nc) = ZERO
@@ -234,6 +235,8 @@ contains
     ps = s_pointer(q)
     pw = w_pointer(q)
 !
+    s(sb) = MAX(s(sb), 1)
+!
     coff = RHUGE
     diff = ZERO
     nlim = RHUGE
@@ -268,6 +271,8 @@ contains
         call bb_block_inheritance(W(ub), q(pq(b)), s(ps(b)), W(pw(b)), &
        &                          q(pq(b - 1)), s(ps(b - 1)), W(pw(b - 1)))
       enddo
+!
+!     Update upperbound and state
 !
       if (b == n &
         & .and. .not. bb_block_queue_is_empty(q(pq(b)), s(ps(b))) &
@@ -316,11 +321,15 @@ contains
   real(RK), intent(inout)    :: W(*)
   real(RK)                   :: lv
   integer(IK)                :: b
+!
     lv = RHUGE
+!
     do b = 1, n
       lv = MIN(lv, bb_block_lowest_value(q(pq(b)), s(ps(b)), W(pw(b))))
     end do
+!
     W(lb) = MIN(MAX(W(lb), lv), W(ub))
+!
   end subroutine update_lowerbound
 !
   pure subroutine save_state(n, pq, ps, q, s)
@@ -387,6 +396,24 @@ contains
     call estimate_rotation(G, C, R, V)
 !
   end subroutine bb_list_rotation_matrix
+!
+!| Returns bb is finished.
+  pure function bb_list_is_finished(q, s) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! header
+    integer(IK), intent(in) :: s(*)
+    !! state
+    logical                 :: res
+    integer(IK)             :: bq, bs
+!
+!   early return
+    res = s(sb) == 1; if (.not. res) return
+!
+    bq = q(q_pointer(q) + s(sb) - 1)
+    bs = q(s_pointer(q) + s(sb) - 1)
+    res = bb_block_queue_is_empty(q(bq), s(bs))
+!
+  end function bb_list_is_finished
 !
 !| destractor
   pure elemental subroutine bb_list_destroy(this)

@@ -17,6 +17,7 @@ program main
 !
   call u%init('test bb_list')
   call test0()
+!
   call u%init('test bb_list for (n,M,S)=(1,1,1)')
   call test1(1, 1, 1, [0])
   call u%init('test bb_list for (n,M,S)=(1,2,1)')
@@ -68,7 +69,9 @@ contains
       real(RK) :: W(nmem), R(D, D), sxz, rxz
       do i = 1, 20
         call bb_list_setup(b%q, b%s, X, Y, W)
+        call u%assert(.not.bb_list_is_finished(b%q, b%s), 'is not finished     ')
         call bb_list_run(b%q, b%s, W)
+        call u%assert(bb_list_is_finished(b%q, b%s),      'is finished         ')
         Z = Y
         call bb_list_swap_y(b%q, b%s, Z)
         sxz = sd(SIZE(X, 2), X, Z)

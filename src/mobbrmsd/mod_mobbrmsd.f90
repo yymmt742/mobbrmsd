@@ -15,6 +15,7 @@ module mod_mobbrmsd
   public :: mobbrmsd_run
   public :: mobbrmsd_restart
   public :: mobbrmsd_swap_y
+  public :: mobbrmsd_is_finished
 !
 !| mol_block_input
   type mol_block_input
@@ -410,6 +411,18 @@ contains
     call bb_list_swap_y(header%q, state%s, Y(1))
 !
   end subroutine mobbrmsd_swap_y
+!
+!| Returns bb process is finished.
+  pure function mobbrmsd_is_finished(header, state) result(res)
+    class(mobbrmsd_header), intent(in) :: header
+    !! mobbrmsd_header
+    class(mobbrmsd_state), intent(in)  :: state
+    !! mobbrmsd_state
+    logical                            :: res
+!
+    res = bb_list_is_finished(header%q, state%s)
+!
+  end function mobbrmsd_is_finished
 !
   pure elemental subroutine mobbrmsd_destroy(this)
     type(mobbrmsd), intent(inout) :: this
