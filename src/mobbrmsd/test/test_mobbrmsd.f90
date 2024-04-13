@@ -36,7 +36,7 @@ program main
   call test2(24, 3, 1, [0], 24, 4, 1, [0])
 !
   call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,3,1)}')
-  call test3(4, 7, 1, [0])
+  call test3(4, 8, 1, [0])
 !
   call u%finish_and_terminate()
 !
@@ -119,16 +119,19 @@ contains
     allocate(W(mobb%h%memsize()))
 !
     call mobbrmsd_run(mobb%h, mobb%s, X, Y, W, maxeval=0)
-    print *, mobb%s%n_eval(), mobb%s%upperbound(), mobb%s%lowerbound()
+    print *, mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
 !
     do i = 1, 10
       call mobbrmsd_restart(mobb%h, mobb%s, W, maxeval=i * 500)
-      print *, mobb%s%n_eval(), mobb%s%upperbound(), mobb%s%lowerbound()
+      print *, mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
     end do
 !
     call mobbrmsd_restart(mobb%h, mobb%s, W)
-    print *, mobb%s%n_eval(), mobb%s%upperbound(), mobb%s%lowerbound()
+    print *, mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
     call u%assert_almost_equal(mobb%s%sqrdev(), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
+!
+    call mobbrmsd_run(mobb%h, mobb%s, X, Y, W)
+    print *, mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
 !
     deallocate(inp)
 !

@@ -227,8 +227,7 @@ contains
     integer(IK), intent(in), optional :: maxeval
     !! The search ends when ncount exceeds maxiter.
     real(RK)                          :: coff, diff, nlim
-    integer(IK)                       :: pq, ps, pw
-    integer(IK)                       :: j, n
+    integer(IK)                       :: pq, ps, pw, n
 !
     n = n_block(q)
     pq = q_pointer(q)
@@ -246,11 +245,6 @@ contains
     if (PRESENT(maxeval)) nlim = MERGE(real(maxeval, RK), nlim, maxeval >= 0)
 !
     call run_bb(n, q(pq), q(ps), q(pw), q, coff, diff, nlim, s(sb), s, W)
-!
-    W(rt) = LOG(W(nc))
-    do j = 0, n - 1
-      W(rt) = W(rt) - bb_block_log_ncomb(q(q(pq + j)))
-    end do
 !
   end subroutine bb_list_run
 !
@@ -307,11 +301,19 @@ contains
         end do
       end block
 !
-      if (b == 1 .and. bb_block_queue_is_empty(q(pq(b)), s(ps(b)))) return
-      if (nlim <= W(nc)) return
-      if (W(lb) > coff) return
-      if (W(ub) - W(lb) < diff) return
+      if (b == 1 .and. bb_block_queue_is_empty(q(pq(b)), s(ps(b)))) exit
+      if (nlim <= W(nc)) exit
+      if (W(lb) > coff) exit
+      if (W(ub) - W(lb) < diff) exit
     end do
+!
+    block
+      integer(IK) :: i
+      W(rt) = LOG(W(nc))
+      do i = 1, n
+        W(rt) = W(rt) - bb_block_log_ncomb(q(pq(i)))
+      end do
+    end block
 !
   end subroutine run_bb
 !
