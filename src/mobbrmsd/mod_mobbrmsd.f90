@@ -480,7 +480,7 @@ contains
       real(RK), intent(in)    :: R(n_dims, n_dims)
       real(RK), intent(inout) :: Y(n_dims, n_atoms)
       real(RK)                :: T(n_dims, n_atoms)
-      T = MATMUL(R, Y)
+      T = MATMUL(TRANSPOSE(R), Y)
       Y = T
     end subroutine rotate
 !

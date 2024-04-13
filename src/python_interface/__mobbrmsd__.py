@@ -16,7 +16,7 @@ class mobbrmsd_result:
         self.n_eval = driver.n_eval(rstate)
         self.log_eval_ratio = driver.log_eval_ratio(rstate)
         self.eval_ratio = numpy.exp(self.log_eval_ratio)
-        self.is_finished = driver.is_finished(header, istate)
+        self.is_finished = driver.is_finished(header, istate, rstate)
 
 
 class mobbrmsd:
@@ -105,12 +105,10 @@ class mobbrmsd:
         )
         if Y is not None:
 
-            if y.ndim == 2:
-                y_ = y.T
-            else:
+            if Y.ndim != 2:
                 raise ValueError
 
-            self.driver.rotate_y(ret.header, ret.state[0], ret.state[1], y.T)
+            self.driver.rotate_y(ret.header, ret.state[0], ret.state[1], Y.T)
 
         return mobbrmsd_result(self.driver, ret.header, ret.state[0], ret.state[1])
 

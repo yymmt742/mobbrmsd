@@ -27,7 +27,7 @@ print(ret.rmsd, ret.bounds, ret.n_eval, ret.eval_ratio)
 while not ret.is_finished:
     ret = mrmsd.restart(ret, maxeval=0)
     print(ret.rmsd, ret.bounds, ret.n_eval, ret.eval_ratio)
-ret, _ = mrmsd.restart(ret, maxeval=0, Y=y)
+ret = mrmsd.restart(ret, maxeval=0, Y=y)
 print(z - y)
 import numpy
 

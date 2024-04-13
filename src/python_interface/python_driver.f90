@@ -1,17 +1,16 @@
 module driver
   !$ use omp_lib
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
-  use mod_bb_list,  only : bb_list_is_finished
   use mod_mobbrmsd, only : mobbrmsd, &
  &                         mobbrmsd_n_dims, &
  &                         mobbrmsd_run, &
  &                         mobbrmsd_restart, &
- &                         mobbrmsd_swap_y, &
+ &                         mobbrmsd_rotate_y, &
+ &                         mobbrmsd_is_finished, &
  &                         mol_block_input, &
  &                         mol_block_input_add, &
  &                         mobbrmsd_state, &
  &                         mobbrmsd_header, &
- &                         LENGTH_OF_DUMPED_STATE, &
  &                         INDEX_OF_RCP_NATOM, &
  &                         INDEX_OF_UPPERBOUND, &
  &                         INDEX_OF_LOWERBOUND, &
@@ -101,21 +100,21 @@ contains
 !
   end subroutine workmemory_length
 !
-  pure subroutine state_vector_lengthes(n_header, n_int, n_float)
-    integer(kind=ik), intent(out) :: n_header
+  pure subroutine state_vector_lengthes(n_head, n_int, n_float)
+    integer(kind=ik), intent(out) :: n_head
     integer(kind=ik), intent(out) :: n_int
     integer(kind=ik), intent(out) :: n_float
     type(mobbrmsd)                :: mob
 !
     if (ALLOCATED(blocks)) then
       mob = mobbrmsd(blocks)
-      n_header = SIZE(mob%h%dump())
+      n_head = SIZE(mob%h%dump())
       n_int = SIZE(mob%s%dump())
-      n_float = LENGTH_OF_DUMPED_STATE
+      n_float = SIZE(mob%s%dump_real())
     else
-      n_header = 0
+      n_head = 0
       n_int = 0
-      n_float = LENGTH_OF_DUMPED_STATE
+      n_float = 0
     endif
 !
   end subroutine state_vector_lengthes
@@ -163,26 +162,30 @@ contains
   end subroutine log_eval_ratio
 !
 !| inquire bb is finished
-  subroutine is_finished(n_head, n_int, header, int_states, res)
-    integer(kind=ik), intent(in)  :: n_head
+  subroutine is_finished(n_head, n_int, n_float, header, int_states, float_states, res)
+    integer(kind=ik), intent(in)  :: n_head, n_int, n_float
     integer(kind=ik), intent(in)  :: header(n_head)
-    integer(kind=ik), intent(in)  :: n_int
     integer(kind=ik), intent(in)  :: int_states(n_int)
+    real(kind=rk), intent(in)     :: float_states(n_float)
     logical, intent(out)          :: res
+    type(mobbrmsd_header)         :: h
+    type(mobbrmsd_state)          :: s
 !
-    res = bb_list_is_finished(header, int_states)
+    call h%load(n_head, header)
+    call s%load(n_int, int_states, n_float, float_states)
+    res = mobbrmsd_is_finished(h, s)
 !
   end subroutine is_finished
 !
   !| restart with working memory
-  subroutine restart(n_header, n_int, n_float, n_mem, &
+  subroutine restart(n_head, n_int, n_float, n_mem, &
  &               header, int_states, float_states, w, &
  &               cutoff, difflim, maxeval)
-    integer(kind=ik), intent(in)    :: n_header
+    integer(kind=ik), intent(in)    :: n_head
     integer(kind=ik), intent(in)    :: n_int
     integer(kind=ik), intent(in)    :: n_float
     integer(kind=ik), intent(in)    :: n_mem
-    integer(kind=ik), intent(in)    :: header(n_header)
+    integer(kind=ik), intent(in)    :: header(n_head)
     integer(kind=ik), intent(inout) :: int_states(n_int)
     real(kind=rk), intent(inout)    :: float_states(n_float)
     real(kind=rk), intent(inout)    :: W(n_mem)
@@ -193,8 +196,8 @@ contains
     type(mobbrmsd_header)           :: h
     type(mobbrmsd_state)            :: s
 !
-    call h%load(n_header, header)
-    call s%load(n_int, int_states, float_states)
+    call h%load(n_head, header)
+    call s%load(n_int, int_states, n_float, float_states)
     call mobbrmsd_restart(h, s, W, cutoff, difflim, maxeval)
 !
     int_states = s%dump()
@@ -203,33 +206,33 @@ contains
   end subroutine restart
 !
   !| single run with working memory
-  subroutine rotate_y(n_dim, n_atom, n_header, n_int, n_float,&
+  subroutine rotate_y(n_dim, n_atom, n_head, n_int, n_float,&
  &                    header, int_states, float_states, Y)
     integer(kind=ik), intent(in) :: n_dim
     integer(kind=ik), intent(in) :: n_atom
-    integer(kind=ik), intent(in) :: n_header
+    integer(kind=ik), intent(in) :: n_head
     integer(kind=ik), intent(in) :: n_int
     integer(kind=ik), intent(in) :: n_float
-    integer(kind=ik), intent(in) :: header(n_header)
+    integer(kind=ik), intent(in) :: header(n_head)
     integer(kind=ik), intent(in) :: int_states(n_int)
     real(kind=rk), intent(in)    :: float_states(n_float)
     real(kind=rk), intent(inout) :: Y(n_dim, n_atom)
     type(mobbrmsd_header)        :: h
     type(mobbrmsd_state)         :: s
 !
-    call h%load(n_header, header)
-    call s%load(n_int, int_states, float_states)
-    call mobbrmsd_swap_y(h, s, Y)
+    call h%load(n_head, header)
+    call s%load(n_int, int_states, n_float, float_states)
+    call mobbrmsd_rotate_y(h, s, Y)
 !
   end subroutine rotate_y
 !
   !| single run with working memory
-  subroutine run(n_dim, n_atom, n_header, n_int, n_float, n_mem, X, Y, W,&
+  subroutine run(n_dim, n_atom, n_head, n_int, n_float, n_mem, X, Y, W,&
  &               cutoff, difflim, maxeval, rotate_y, &
  &               header, int_states, float_states)
     integer(kind=ik), intent(in)  :: n_dim
     integer(kind=ik), intent(in)  :: n_atom
-    integer(kind=ik), intent(in)  :: n_header
+    integer(kind=ik), intent(in)  :: n_head
     integer(kind=ik), intent(in)  :: n_int
     integer(kind=ik), intent(in)  :: n_float
     integer(kind=ik), intent(in)  :: n_mem
@@ -243,14 +246,14 @@ contains
     real(kind=rk), intent(in)     :: cutoff
     real(kind=rk), intent(in)     :: difflim
     logical, intent(in)           :: rotate_y
-    integer(kind=ik), intent(out) :: header(n_header)
+    integer(kind=ik), intent(out) :: header(n_head)
     integer(kind=ik), intent(out) :: int_states(n_int)
     real(kind=rk), intent(out)    :: float_states(n_float)
     type(mobbrmsd)                :: mob
 !
     mob = mobbrmsd(blocks)
     call mobbrmsd_run(mob%h, mob%s, X, Y, w, cutoff, difflim, maxeval)
-    if(rotate_y) call mobbrmsd_swap_y(mob%h, mob%s, Y)
+    if(rotate_y) call mobbrmsd_rotate_y(mob%h, mob%s, Y)
 !
     header = mob%h%dump()
     int_states = mob%s%dump()
@@ -259,14 +262,14 @@ contains
   end subroutine run
 !
   !| batch parallel run
-  subroutine batch_run(n_dim, n_atom, ntarget, n_header, n_int, n_float, &
+  subroutine batch_run(n_dim, n_atom, ntarget, n_head, n_int, n_float, &
  &                     x, y, &
  &                     cutoff, difflim, maxeval, rotate_y, &
  &                     header, int_states, float_states)
     integer(kind=ik), intent(in)  :: n_dim
     integer(kind=ik), intent(in)  :: n_atom
     integer(kind=ik), intent(in)  :: ntarget
-    integer(kind=ik), intent(in)  :: n_header
+    integer(kind=ik), intent(in)  :: n_head
     integer(kind=ik), intent(in)  :: n_int
     integer(kind=ik), intent(in)  :: n_float
     real(kind=rk), intent(in)     :: x(n_dim, n_atom)
@@ -277,7 +280,7 @@ contains
     real(kind=rk), intent(in)     :: cutoff
     real(kind=rk), intent(in)     :: difflim
     logical, intent(in)           :: rotate_y
-    integer(kind=ik), intent(out) :: header(n_header)
+    integer(kind=ik), intent(out) :: header(n_head)
     integer(kind=ik), intent(out) :: int_states(n_int, ntarget)
     real(kind=rk), intent(out)    :: float_states(n_float, ntarget)
     real(kind=rk), allocatable    :: W(:, :)
@@ -304,7 +307,7 @@ contains
         ijob = omp_get_thread_num() + 1
         s = mob%s
         call mobbrmsd_run(mob%h, s, X, Y(1, 1, i), w(1, ijob), cutoff, difflim, maxeval)
-        if(rotate_y) call mobbrmsd_swap_y(mob%h, s, Y(1, 1, i))
+        if(rotate_y) call mobbrmsd_rotate_y(mob%h, s, Y(1, 1, i))
 !
         int_states(:, i) = s%dump()
         float_states(:, i) = s%dump_real()
