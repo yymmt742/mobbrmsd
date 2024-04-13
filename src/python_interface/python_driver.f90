@@ -1,6 +1,7 @@
 module driver
   !$ use omp_lib
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
+  use mod_bb_list,  only : bb_list_is_finished
   use mod_mobbrmsd, only : mobbrmsd, &
  &                         mobbrmsd_n_dims, &
  &                         mobbrmsd_run, &
@@ -25,6 +26,7 @@ module driver
   public bounds
   public n_eval
   public log_eval_ratio
+  public is_finished
   public run
   public restart
   public batch_run
@@ -86,8 +88,10 @@ contains
   pure subroutine workmemory_length(nmem)
     integer(kind=ik), intent(out) :: nmem
     type(mobbrmsd)                :: mob
+!
     mob = mobbrmsd(blocks)
     nmem = mob%h%memsize()
+!
   end subroutine workmemory_length
 !
   pure subroutine state_vector_lengthes(n_header, n_int, n_float)
@@ -165,6 +169,18 @@ contains
     res = s%log_eval_ratio()
 !
   end subroutine log_eval_ratio
+!
+!| inquire bb is finished
+  subroutine is_finished(n_head, n_int, header, int_states, res)
+    integer(kind=ik), intent(in)  :: n_head
+    integer(kind=ik), intent(in)  :: header(n_head)
+    integer(kind=ik), intent(in)  :: n_int
+    integer(kind=ik), intent(in)  :: int_states(n_int)
+    logical, intent(out)          :: res
+!
+    res = bb_list_is_finished(header, int_states)
+!
+  end subroutine is_finished
 !
   !| restart with working memory
   subroutine restart(n_header, n_int, n_float, n_mem, &
