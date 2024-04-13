@@ -1,6 +1,23 @@
 import numpy
 
 
+class mobbrmsd_result:
+    def __init__(
+        self,
+        driver,
+        header: numpy.ndarray,
+        istate: numpy.ndarray,
+        rstate: numpy.ndarray,
+    ):
+        self.header = header
+        self.state = (istate, rstate)
+        self.rmsd = driver.rmsd(istate, rstate)
+        self.bounds = driver.bounds(istate, rstate)
+        self.n_eval = driver.n_eval(istate, rstate)
+        self.log_eval_ratio = driver.log_eval_ratio(istate, rstate)
+        self.eval_ratio = numpy.exp(self.log_eval_ratio)
+
+
 class mobbrmsd:
     def __init__(self, d: int = 3):
 
@@ -35,7 +52,7 @@ class mobbrmsd:
         difflim: float = 0.0,
         maxeval: int = -1,
         rotate_y: bool = False,
-    ) -> dict:
+    ) -> mobbrmsd_result | list:
 
         ndim = self.driver.n_dims()
         natom = self.driver.n_atoms()
@@ -43,14 +60,14 @@ class mobbrmsd:
         if x.ndim == 2:
             x_ = x.transpose()
         else:
-            raise IndexError
+            raise ValueError
 
         if y.ndim == 2:
             y_ = y.transpose().reshape((-1, y.shape[1], y.shape[0]))
         elif y.ndim == 3:
             y_ = y.transpose([2, 1, 0])
         else:
-            raise IndexError
+            raise ValueError
 
         if (
             x_.shape[0] != ndim
@@ -58,48 +75,18 @@ class mobbrmsd:
             or y_.shape[0] != ndim
             or y_.shape[1] != natom
         ):
-            raise IndexError
+            raise ValueError
 
         ntarget = y_.shape[2]
         n_header, n_int, n_float = self.driver.state_vector_lengthes()
         hret, iret, rret = self.driver.batch_run(
             n_header, n_int, n_float, x_, y_, cutoff, difflim, maxeval, rotate_y
         )
-        state = numpy.array([(i, r) for i, r in zip(iret.T, rret.T)], dtype=object)
 
-        return {"header": hret, "state": state}
-
-    def rmsd(self, state: numpy.ndarray) -> numpy.ndarray:
-        if state.ndim == 1:
-            return self.driver.rmsd(state[0], state[1])
-        elif state.ndim == 2:
-            return numpy.array([self.driver.rmsd(s[0], s[1]) for s in state])
+        if ntarget > 1:
+            return [
+                mobbrmsd_result(self.driver, hret, ir, rr)
+                for ir, rr in zip(iret.T, rret.T)
+            ]
         else:
-            raise IndexError
-
-    def bounds(self, state: numpy.ndarray) -> numpy.ndarray:
-        if state.ndim == 1:
-            return self.driver.bounds(state[0], state[1])
-        elif state.ndim == 2:
-            return numpy.array([self.driver.bounds(s[0], s[1]) for s in state])
-        else:
-            raise IndexError
-
-    def n_eval(self, state: numpy.ndarray) -> numpy.ndarray:
-        if state.ndim == 1:
-            return self.driver.n_eval(state[0], state[1])
-        elif state.ndim == 2:
-            return numpy.array([self.driver.n_eval(s[0], s[1]) for s in state])
-        else:
-            raise IndexError
-
-    def log_eval_ratio(self, state: numpy.ndarray) -> numpy.ndarray:
-        if state.ndim == 1:
-            return self.driver.log_eval_ratio(state[0], state[1])
-        elif state.ndim == 2:
-            return numpy.array([self.driver.log_eval_ratio(s[0], s[1]) for s in state])
-        else:
-            raise IndexError
-
-    def eval_ratio(self, state: numpy.ndarray) -> numpy.ndarray:
-        return numpy.exp(self.log_eval_ratio(state))
+            return mobbrmsd_result(self.driver, hret, iret, rret)
