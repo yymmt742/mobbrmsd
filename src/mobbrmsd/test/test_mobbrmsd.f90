@@ -26,14 +26,17 @@ program main
   call u%init('test mobbrmsd for (n,M,S)=(40,6,1)')
   call test1(40, 6, 1, [0])
 !
-  call u%init('test bb_list for {(n,M,S)}={(5,1,1), (5,4,1)}')
+  call u%init('test mobbrmsd for {(n,M,S)}={(5,1,1), (5,4,1)}')
   call test2(5, 1, 1, [0], 5, 4, 1, [0])
-  call u%init('test bb_list for {(n,M,S)}={(4,2,1), (5,2,1)}')
+  call u%init('test mobbrmsd for {(n,M,S)}={(4,2,1), (5,2,1)}')
   call test2(4, 2, 1, [0], 5, 2, 1, [0])
-  call u%init('test bb_list for {(n,M,S)}={(8,2,1), (4,2,2)}')
+  call u%init('test mobbrmsd for {(n,M,S)}={(8,2,1), (4,2,2)}')
   call test2(8, 2, 1, [0], 4, 2, 2, [3, 2, 1, 4])
-  call u%init('test bb_list for {(n,M,S)}={(24,3,1), (24,4,1)}')
+  call u%init('test mobbrmsd for {(n,M,S)}={(24,3,1), (24,4,1)}')
   call test2(24, 3, 1, [0], 24, 4, 1, [0])
+!
+  call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,3,1)}')
+  call test3(4, 7, 1, [0])
 !
   call u%finish_and_terminate()
 !
@@ -98,6 +101,38 @@ contains
     end do
 !
   end subroutine test2
+!
+  subroutine test3(n, m, s, sym)
+    integer, intent(in)    :: n, m, s, sym(n * (s - 1))
+    type(mobbrmsd)         :: mobb
+    type(mol_block_input), allocatable :: inp(:)
+    real(RK)               :: X(D, n, m), Y(D, n, m)
+    real(RK), allocatable  :: W(:)
+    integer(IK)            :: i
+!
+    call mol_block_input_add(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
+    mobb = mobbrmsd(inp)
+!
+    X = sample(n, m)
+    Y = sample(n, m)
+!
+    allocate(W(mobb%h%memsize()))
+!
+    call mobbrmsd_run(mobb%h, mobb%s, X, Y, W, maxeval=0)
+    print *, mobb%s%n_eval(), mobb%s%upperbound(), mobb%s%lowerbound()
+!
+    do i = 1, 10
+      call mobbrmsd_restart(mobb%h, mobb%s, W, maxeval=i * 500)
+      print *, mobb%s%n_eval(), mobb%s%upperbound(), mobb%s%lowerbound()
+    end do
+!
+    call mobbrmsd_restart(mobb%h, mobb%s, W)
+    print *, mobb%s%n_eval(), mobb%s%upperbound(), mobb%s%lowerbound()
+    call u%assert_almost_equal(mobb%s%sqrdev(), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
+!
+    deallocate(inp)
+!
+  end subroutine test3
 !
 end program main
 

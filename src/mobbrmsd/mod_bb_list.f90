@@ -244,11 +244,6 @@ contains
 !
     call run_bb(n, q(pq), q(ps), q(pw), q, coff, diff, nlim, s(sb), s, W)
 !
-    W(nc) = ZERO
-    do j = 0, n - 1
-      W(nc) = W(nc) + bb_block_evaluation_count(W(q(pw + j)))
-    end do
-!
     W(rt) = LOG(W(nc))
     do j = 0, n - 1
       W(rt) = W(rt) - bb_block_log_ncomb(q(q(pq + j)))
@@ -263,6 +258,9 @@ contains
   real(RK), intent(inout)    :: W(*)
 !
     do
+!
+!     Expansion process
+!
       do
         call bb_block_expand(W(ub), q(pq(b)), s(ps(b)), W(pw(b)))
         if (b == n .or. bb_block_queue_is_empty(q(pq(b)), s(ps(b)))) exit
@@ -284,13 +282,25 @@ contains
         end block
       end if
 !
-      call lowerbound(b, pq, ps, pw, q, s, W)
+!     Update lowerbound
+!
+      call update_lowerbound(b, pq, ps, pw, q, s, W)
+!
+!     Closure process
 !
       do
         call bb_block_leave(W(ub), q(pq(b)), s(ps(b)), W(pw(b)))
         if (b == 1 .or. .not. bb_block_queue_is_empty(q(pq(b)), s(ps(b)))) exit
         b = b - 1
       enddo
+!
+      block
+        integer(IK) :: i
+        W(nc) = ZERO
+        do i = 1, n
+          W(nc) = W(nc) + bb_block_evaluation_count(W(pw(i)))
+        end do
+      end block
 !
       if (b == 1 .and. bb_block_queue_is_empty(q(pq(b)), s(ps(b)))) return
       if (nlim <= W(nc)) return
@@ -300,7 +310,7 @@ contains
 !
   end subroutine run_bb
 !
-  pure subroutine lowerbound(n, pq, ps, pw, q, s, W)
+  pure subroutine update_lowerbound(n, pq, ps, pw, q, s, W)
   integer(IK), intent(in)    :: n, pq(n), ps(n), pw(n)
   integer(IK), intent(in)    :: q(*), s(*)
   real(RK), intent(inout)    :: W(*)
@@ -311,7 +321,7 @@ contains
       lv = MIN(lv, bb_block_lowest_value(q(pq(b)), s(ps(b)), W(pw(b))))
     end do
     W(lb) = MIN(MAX(W(lb), lv), W(ub))
-  end subroutine lowerbound
+  end subroutine update_lowerbound
 !
   pure subroutine save_state(n, pq, ps, q, s)
   integer(IK), intent(in)    :: n, pq(n), ps(n)

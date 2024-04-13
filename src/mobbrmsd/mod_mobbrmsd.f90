@@ -59,6 +59,8 @@ module mod_mobbrmsd
     !! upperbound
     procedure :: lowerbound     => mobbrmsd_state_lowerbound
     !! lowerbound
+    procedure :: sqrdev         => mobbrmsd_state_sqrdev
+    !! rmsd
     procedure :: rmsd           => mobbrmsd_state_rmsd
     !! rmsd
     procedure :: n_eval         => mobbrmsd_state_n_eval
@@ -215,6 +217,12 @@ contains
     res = MAX(ZERO, this%lowbou)
   end function mobbrmsd_state_lowerbound
 !
+  pure elemental function mobbrmsd_state_sqrdev(this) result(res)
+    class(mobbrmsd_state), intent(in) :: this
+    real(RK)                          :: res
+    res = MAX(ZERO, this%uppbou)
+  end function mobbrmsd_state_sqrdev
+!
   pure elemental function mobbrmsd_state_rmsd(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
     real(RK)                          :: res
@@ -316,7 +324,7 @@ contains
     integer(IK) :: res
     res = D
   end function mobbrmsd_n_dims
-
+!
 !| run mobbrmsd
   pure subroutine mobbrmsd_run(header, state, X, Y, W, cutoff, difflim, maxeval, rot)
     class(mobbrmsd_header), intent(in)   :: header
