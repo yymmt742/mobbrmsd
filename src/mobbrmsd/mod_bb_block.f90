@@ -438,8 +438,10 @@ contains
     integer(IK), intent(inout) :: z(*)
     !! memory
     integer(IK)                :: nmol
+!
     nmol = mol_block_nmol(q(bq))
     z(:nmol) = tree_current_sequence(q(q(tq)), s(ts))
+!
   end subroutine bb_block_save_state
 !
 !| swap Y by saved state z.
@@ -451,6 +453,7 @@ contains
     real(RK), intent(inout) :: Y(*)
     !! target coordinate
     integer(IK)             :: nmol, napm
+!
     nmol = mol_block_nmol(q(bq))
     napm = mol_block_napm(q(bq))
     block
@@ -459,21 +462,22 @@ contains
       imap = tree_sequence_to_mapping(q(q(tq)), z)
       call swap_y(nmol, napm, iper, imap, q(bq), Y)
     end block
-  end subroutine bb_block_swap_y
 !
-  pure subroutine swap_y(nmol, napm, iper, imap, b, Y)
-    integer(IK), intent(in) :: nmol, napm, iper(nmol), imap(nmol), b(*)
-    real(RK), intent(inout) :: Y(D, napm, nmol)
-    real(RK)                :: T(D, napm, nmol)
-    integer(IK)             :: i, dm, dmn
-    dm = D * napm
-    dmn = dm * nmol
-    do concurrent(i = 1:nmol)
-      call copy(dm, Y(:, :, i), T(:, :, iper(i)))
-      call mol_block_swap(b, imap(i), T(1, 1, iper(i)))
-    end do
-    call copy(dmn, T, Y)
-  end subroutine swap_y
+  contains
+    pure subroutine swap_y(nmol, napm, iper, imap, b, Y)
+      integer(IK), intent(in) :: nmol, napm, iper(nmol), imap(nmol), b(*)
+      real(RK), intent(inout) :: Y(D, napm, nmol)
+      real(RK)                :: T(D, napm, nmol)
+      integer(IK)             :: i, dm, dmn
+      dm = D * napm
+      dmn = dm * nmol
+      do concurrent(i=1:nmol)
+        call copy(dm, Y(:, :, i), T(:, :, iper(i)))
+        call mol_block_swap(b, imap(i), T(1, 1, iper(i)))
+      end do
+      call copy(dmn, T, Y)
+    end subroutine swap_y
+  end subroutine bb_block_swap_y
 !
 !| Sum covariance matrix by saved state z.
   pure subroutine bb_block_covmat_add(q, z, W, G, C)
