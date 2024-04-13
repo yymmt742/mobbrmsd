@@ -35,6 +35,7 @@ module driver
   public is_finished
   public run
   public restart
+  public rotate_y
   public batch_run
 !
   type(mol_block_input), allocatable :: blocks(:)
@@ -202,7 +203,28 @@ contains
   end subroutine restart
 !
   !| single run with working memory
-  subroutine run(n_dim, n_atom, n_header, n_int, n_float, n_mem, x, y, w,&
+  subroutine rotate_y(n_dim, n_atom, n_header, n_int, n_float,&
+ &                    header, int_states, float_states, Y)
+    integer(kind=ik), intent(in) :: n_dim
+    integer(kind=ik), intent(in) :: n_atom
+    integer(kind=ik), intent(in) :: n_header
+    integer(kind=ik), intent(in) :: n_int
+    integer(kind=ik), intent(in) :: n_float
+    integer(kind=ik), intent(in) :: header(n_header)
+    integer(kind=ik), intent(in) :: int_states(n_int)
+    real(kind=rk), intent(in)    :: float_states(n_float)
+    real(kind=rk), intent(inout) :: Y(n_dim, n_atom)
+    type(mobbrmsd_header)        :: h
+    type(mobbrmsd_state)         :: s
+!
+    call h%load(n_header, header)
+    call s%load(n_int, int_states, float_states)
+    call mobbrmsd_swap_y(h, s, Y)
+!
+  end subroutine rotate_y
+!
+  !| single run with working memory
+  subroutine run(n_dim, n_atom, n_header, n_int, n_float, n_mem, X, Y, W,&
  &               cutoff, difflim, maxeval, rotate_y, &
  &               header, int_states, float_states)
     integer(kind=ik), intent(in)  :: n_dim
@@ -211,9 +233,9 @@ contains
     integer(kind=ik), intent(in)  :: n_int
     integer(kind=ik), intent(in)  :: n_float
     integer(kind=ik), intent(in)  :: n_mem
-    real(kind=rk), intent(in)     :: x(n_dim, n_atom)
+    real(kind=rk), intent(in)     :: X(n_dim, n_atom)
     !! reference coordinate
-    real(kind=rk), intent(inout)  :: y(n_dim, n_atom)
+    real(kind=rk), intent(inout)  :: Y(n_dim, n_atom)
     !! target coordinate
     real(kind=rk), intent(inout)  :: W(n_mem)
     !! work memory
