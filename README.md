@@ -124,12 +124,13 @@ To use the Python interface, you additionally need the following:
 
 ### Installation
 
-#### Fortran library
 1. Clone the repo
    ```sh
    git clone https://github.com/yymmt742/mobbrmsd
    ```
-2. Build fortran library
+#### Fortran library
+
+1. Build fortran library
    ```sh
    mkdir build && cd build
    cmake .. -DCMAKE_BUILD_TYPE=[Release, Debug, ...] -DCMAKE_PREFIX_PATH=your_local_cmake_path
@@ -137,10 +138,12 @@ To use the Python interface, you additionally need the following:
    ```
 
 #### python interface
+
+1. Package build
    ```sh
    python -m pip install .
    ```
-   or package build
+   or
    ```sh
    python -m build
    ```
@@ -169,7 +172,9 @@ Usage
 ## Roadmap
 
 - [ ] Add Usage
-- [ ] Compatible with compilers other than gnu
+- [ ] Enable autovariance sorting
+- [ ] Compatible with compilers (intel)
+- [ ] Compatible with compilers (nv)
 - [ ] Add detail documentation
 - [ ] Add benchmarks
 
