@@ -4,6 +4,7 @@ module driver
   use mod_mobbrmsd, only : mobbrmsd, &
  &                         mobbrmsd_n_dims, &
  &                         mobbrmsd_run, &
+ &                         mobbrmsd_restart, &
  &                         mobbrmsd_swap_y, &
  &                         mol_block_input, &
  &                         mol_block_input_add, &
@@ -25,6 +26,7 @@ module driver
   public n_eval
   public log_eval_ratio
   public run
+  public restart
   public batch_run
 !
   type(mol_block_input), allocatable :: blocks(:)
@@ -164,9 +166,38 @@ contains
 !
   end subroutine log_eval_ratio
 !
+  !| restart with working memory
+  subroutine restart(n_header, n_int, n_float, n_mem, &
+ &               header, int_states, float_states, w, &
+ &               cutoff, difflim, maxeval)
+    integer(kind=ik), intent(in)    :: n_header
+    integer(kind=ik), intent(in)    :: n_int
+    integer(kind=ik), intent(in)    :: n_float
+    integer(kind=ik), intent(in)    :: n_mem
+    integer(kind=ik), intent(in)    :: header(n_header)
+    integer(kind=ik), intent(inout) :: int_states(n_int)
+    real(kind=rk), intent(inout)    :: float_states(n_float)
+    real(kind=rk), intent(inout)    :: W(n_mem)
+    !! work memory
+    integer(kind=ik), intent(in)    :: maxeval
+    real(kind=rk), intent(in)       :: cutoff
+    real(kind=rk), intent(in)       :: difflim
+    type(mobbrmsd_header)           :: h
+    type(mobbrmsd_state)            :: s
+!
+    call h%load(n_header, header)
+    call s%load(n_int, int_states, float_states)
+    call mobbrmsd_restart(h, s, W, cutoff, difflim, maxeval)
+!
+    int_states = s%dump()
+    float_states = s%dump_real()
+!
+  end subroutine restart
+!
   !| single run with working memory
   subroutine run(n_dim, n_atom, n_header, n_int, n_float, n_mem, x, y, w,&
- &               cutoff, difflim, maxeval, header, int_states, float_states)
+ &               cutoff, difflim, maxeval, rotate_y, &
+ &               header, int_states, float_states)
     integer(kind=ik), intent(in)  :: n_dim
     integer(kind=ik), intent(in)  :: n_atom
     integer(kind=ik), intent(in)  :: n_header
@@ -175,13 +206,14 @@ contains
     integer(kind=ik), intent(in)  :: n_mem
     real(kind=rk), intent(in)     :: x(n_dim, n_atom)
     !! reference coordinate
-    real(kind=rk), intent(in)     :: y(n_dim, n_atom)
+    real(kind=rk), intent(inout)  :: y(n_dim, n_atom)
     !! target coordinate
     real(kind=rk), intent(inout)  :: W(n_mem)
     !! work memory
     integer(kind=ik), intent(in)  :: maxeval
     real(kind=rk), intent(in)     :: cutoff
     real(kind=rk), intent(in)     :: difflim
+    logical, intent(in)           :: rotate_y
     integer(kind=ik), intent(out) :: header(n_header)
     integer(kind=ik), intent(out) :: int_states(n_int)
     real(kind=rk), intent(out)    :: float_states(n_float)
@@ -189,16 +221,19 @@ contains
 !
     mob = mobbrmsd(blocks)
     call mobbrmsd_run(mob%h, mob%s, X, Y, w, cutoff, difflim, maxeval)
+    if(rotate_y) call mobbrmsd_swap_y(mob%h, mob%s, Y)
 !
     header = mob%h%dump()
     int_states = mob%s%dump()
     float_states = mob%s%dump_real()
-
+!
   end subroutine run
 !
   !| batch parallel run
-  subroutine batch_run(n_dim, n_atom, ntarget, n_header, n_int, n_float, x, y, &
- &                     cutoff, difflim, maxeval, rotate_y, header, int_states, float_states)
+  subroutine batch_run(n_dim, n_atom, ntarget, n_header, n_int, n_float, &
+ &                     x, y, &
+ &                     cutoff, difflim, maxeval, rotate_y, &
+ &                     header, int_states, float_states)
     integer(kind=ik), intent(in)  :: n_dim
     integer(kind=ik), intent(in)  :: n_atom
     integer(kind=ik), intent(in)  :: ntarget

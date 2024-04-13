@@ -35,6 +35,11 @@ class mobbrmsd:
             self.driver = driver
             self.driver.setup_dimension(d)
 
+        self.ndim = self.driver.n_dims()
+        self.natom = 0
+        self.memsize = 0
+        self.n_header, self.n_int, self.n_float = self.driver.state_vector_lengthes()
+
     def add_molecule(self, m=1, n=1, swp=None):
 
         if swp is None:
@@ -44,6 +49,10 @@ class mobbrmsd:
             s = swp_.shape[0] + 1
             self.driver.add_molecule(m, n, s, swp_)
 
+        self.natom = self.driver.n_atoms()
+        self.memsize = self.driver.workmemory_length()
+        self.n_header, self.n_int, self.n_float = self.driver.state_vector_lengthes()
+
     def run(
         self,
         x: numpy.ndarray,
@@ -52,10 +61,76 @@ class mobbrmsd:
         difflim: float = 0.0,
         maxeval: int = -1,
         rotate_y: bool = False,
-    ) -> mobbrmsd_result | list:
+    ) -> mobbrmsd_result:
 
-        ndim = self.driver.n_dims()
-        natom = self.driver.n_atoms()
+        x_, y_ = self.varidation_coordinates(x, y)
+        self.w = numpy.empty(self.memsize)
+
+        hret, iret, rret = self.driver.run(
+            self.n_header,
+            self.n_int,
+            self.n_float,
+            x_,
+            y_,
+            self.w,
+            cutoff,
+            difflim,
+            maxeval,
+            rotate_y,
+        )
+        return mobbrmsd_result(self.driver, hret, iret, rret)
+
+    def restart(
+        self,
+        ret: mobbrmsd_result,
+        cutoff: float = float("inf"),
+        difflim: float = 0.0,
+        maxeval: int = -1,
+    ) -> mobbrmsd_result:
+
+        if self.w is None:
+            raise ValueError
+
+        self.driver.restart(
+            ret.header,
+            ret.state[0],
+            ret.state[1],
+            self.w,
+            cutoff,
+            difflim,
+            maxeval,
+        )
+        return mobbrmsd_result(self.driver, ret.header, ret.state[0], ret.state[1])
+
+    def batch_run(
+        self,
+        x: numpy.ndarray,
+        y: numpy.ndarray,
+        cutoff: float = float("inf"),
+        difflim: float = 0.0,
+        maxeval: int = -1,
+        rotate_y: bool = False,
+    ) -> list:
+
+        x_, y_ = self.varidation_coordinates(x, y)
+
+        hret, iret, rret = self.driver.batch_run(
+            self.n_header,
+            self.n_int,
+            self.n_float,
+            x_,
+            y_,
+            cutoff,
+            difflim,
+            maxeval,
+            rotate_y,
+        )
+
+        return [
+            mobbrmsd_result(self.driver, hret, ir, rr) for ir, rr in zip(iret.T, rret.T)
+        ]
+
+    def varidation_coordinates(self, x: numpy.ndarray, y: numpy.ndarray) -> tuple:
 
         if x.ndim == 2:
             x_ = x.transpose()
@@ -63,30 +138,16 @@ class mobbrmsd:
             raise ValueError
 
         if y.ndim == 2:
-            y_ = y.transpose().reshape((-1, y.shape[1], y.shape[0]))
+            y_ = y.transpose().reshape((y.shape[1], y.shape[0], 1))
         elif y.ndim == 3:
             y_ = y.transpose([2, 1, 0])
         else:
             raise ValueError
-
         if (
-            x_.shape[0] != ndim
-            or x_.shape[1] != natom
-            or y_.shape[0] != ndim
-            or y_.shape[1] != natom
+            x_.shape[0] != self.ndim
+            or x_.shape[1] != self.natom
+            or y_.shape[0] != self.ndim
+            or y_.shape[1] != self.natom
         ):
             raise ValueError
-
-        ntarget = y_.shape[2]
-        n_header, n_int, n_float = self.driver.state_vector_lengthes()
-        hret, iret, rret = self.driver.batch_run(
-            n_header, n_int, n_float, x_, y_, cutoff, difflim, maxeval, rotate_y
-        )
-
-        if ntarget > 1:
-            return [
-                mobbrmsd_result(self.driver, hret, ir, rr)
-                for ir, rr in zip(iret.T, rret.T)
-            ]
-        else:
-            return mobbrmsd_result(self.driver, hret, iret, rret)
+        return x_, y_

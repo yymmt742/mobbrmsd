@@ -169,9 +169,10 @@ install(FILES
     ${sofile}
     ${sofile_2d}
     ${sofile_3d}
-    ${initpy}
-    __mobbrmsd__.py
-    __coord_generator__.py
+    "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/__main__.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/__mobbrmsd__.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/__coord_generator__.py"
   DESTINATION
     "${CMAKE_INSTALL_PYTHON_LIBDIR}/mobbrmsd")
 

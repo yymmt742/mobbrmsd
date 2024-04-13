@@ -189,12 +189,12 @@ contains
   end function mobbrmsd_header_dump
 !
 !| load integer array as header
-  pure subroutine mobbrmsd_header_load(this, q)
+  pure subroutine mobbrmsd_header_load(this, nq, q)
     class(mobbrmsd_header), intent(inout) :: this
     !! mobbrmsd_header
-    integer(IK), intent(in)               :: q(:)
+    integer(IK), intent(in)               :: nq, q(*)
     !! header array
-    this%q = q
+    this%q = q(:nq)
   end subroutine mobbrmsd_header_load
 !
 !| destructer
