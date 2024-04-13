@@ -11,6 +11,12 @@ module driver
  &                         mol_block_input_add, &
  &                         mobbrmsd_state, &
  &                         mobbrmsd_header, &
+ &                         LENGTH_OF_DUMPED_STATE, &
+ &                         INDEX_OF_RCP_NATOM, &
+ &                         INDEX_OF_UPPERBOUND, &
+ &                         INDEX_OF_LOWERBOUND, &
+ &                         INDEX_OF_LOG_RATIO, &
+ &                         INDEX_OF_N_EVAL, &
  &                         setup_dimension_ => setup_dimension
 !
   implicit none
@@ -104,69 +110,54 @@ contains
       mob = mobbrmsd(blocks)
       n_header = SIZE(mob%h%dump())
       n_int = SIZE(mob%s%dump())
-      n_float = SIZE(mob%s%dump_real())
+      n_float = LENGTH_OF_DUMPED_STATE
     else
       n_header = 0
       n_int = 0
-      n_float = 0
+      n_float = LENGTH_OF_DUMPED_STATE
     endif
 !
   end subroutine state_vector_lengthes
 !
 !| return rmsd
-  subroutine rmsd(int_states, float_states, res, n_int, n_float)
-    integer(kind=ik), intent(in) :: n_int
+  subroutine rmsd(float_states, res, n_float)
     integer(kind=ik), intent(in) :: n_float
-    integer(kind=ik), intent(in) :: int_states(n_int)
     real(kind=rk), intent(in)    :: float_states(n_float)
     real(kind=rk), intent(out)   :: res
-    type(mobbrmsd_state)         :: s
 !
-    call s%load(n_int, int_states, float_states)
-    res = s%rmsd()
+    res = SQRT(float_states(INDEX_OF_RCP_NATOM) &
+   &     * MAX(float_states(INDEX_OF_UPPERBOUND), ZERO))
 !
   end subroutine rmsd
 !
 !| return bounds
-  subroutine bounds(int_states, float_states, res, n_int, n_float)
-    integer(kind=ik), intent(in) :: n_int
+  subroutine bounds(float_states, res, n_float)
     integer(kind=ik), intent(in) :: n_float
-    integer(kind=ik), intent(in) :: int_states(n_int)
     real(kind=rk), intent(in)    :: float_states(n_float)
     real(kind=rk), intent(out)   :: res(2)
-    type(mobbrmsd_state)         :: s
 !
-    call s%load(n_int, int_states, float_states)
-    res(1) = s%lowerbound()
-    res(2) = s%upperbound()
+    res(1) = float_states(INDEX_OF_UPPERBOUND)
+    res(2) = float_states(INDEX_OF_LOWERBOUND)
 !
   end subroutine bounds
 !
 !| return n_eval
-  subroutine n_eval(int_states, float_states, res, n_int, n_float)
-    integer(kind=ik), intent(in)  :: n_int
+  subroutine n_eval(float_states, res, n_float)
     integer(kind=ik), intent(in)  :: n_float
-    integer(kind=ik), intent(in)  :: int_states(n_int)
     real(kind=rk), intent(in)     :: float_states(n_float)
     integer(kind=ik), intent(out) :: res
-    type(mobbrmsd_state)          :: s
 !
-    call s%load(n_int, int_states, float_states)
-    res = s%n_eval()
+    res = NINT(float_states(INDEX_OF_N_EVAL), IK)
 !
   end subroutine n_eval
 !
 !| return log_eval_ratio
-  subroutine log_eval_ratio(int_states, float_states, res, n_int, n_float)
-    integer(kind=ik), intent(in) :: n_int
+  subroutine log_eval_ratio(float_states, res, n_float)
     integer(kind=ik), intent(in) :: n_float
-    integer(kind=ik), intent(in) :: int_states(n_int)
     real(kind=rk), intent(in)    :: float_states(n_float)
     real(kind=rk), intent(out)   :: res
-    type(mobbrmsd_state)         :: s
 !
-    call s%load(n_int, int_states, float_states)
-    res = s%log_eval_ratio()
+    res = float_states(INDEX_OF_LOG_RATIO)
 !
   end subroutine log_eval_ratio
 !

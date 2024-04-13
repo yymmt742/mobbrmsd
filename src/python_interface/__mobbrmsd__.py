@@ -11,11 +11,12 @@ class mobbrmsd_result:
     ):
         self.header = header
         self.state = (istate, rstate)
-        self.rmsd = driver.rmsd(istate, rstate)
-        self.bounds = driver.bounds(istate, rstate)
-        self.n_eval = driver.n_eval(istate, rstate)
-        self.log_eval_ratio = driver.log_eval_ratio(istate, rstate)
+        self.rmsd = driver.rmsd(rstate)
+        self.bounds = driver.bounds(rstate)
+        self.n_eval = driver.n_eval(rstate)
+        self.log_eval_ratio = driver.log_eval_ratio(rstate)
         self.eval_ratio = numpy.exp(self.log_eval_ratio)
+        self.is_finished = driver.is_finished(header, istate)
 
 
 class mobbrmsd:

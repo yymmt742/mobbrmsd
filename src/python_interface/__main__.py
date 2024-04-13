@@ -20,7 +20,6 @@ mrmsd.add_molecule(n, m)
 
 ret = mrmsd.run(x.reshape([m * n, 3]), y.reshape([m * n, 3]), maxeval=0)
 print(ret.bounds, ret.n_eval, ret.eval_ratio)
-ret = mrmsd.restart(ret, maxeval=0)
-print(ret.bounds, ret.n_eval, ret.eval_ratio)
-ret = mrmsd.restart(ret, maxeval=0)
-print(ret.bounds, ret.n_eval, ret.eval_ratio)
+while not ret.is_finished:
+    ret = mrmsd.restart(ret, maxeval=0)
+    print(ret.bounds, ret.n_eval, ret.eval_ratio)

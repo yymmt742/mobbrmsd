@@ -17,6 +17,26 @@ module mod_mobbrmsd
   public :: mobbrmsd_swap_y
   public :: mobbrmsd_is_finished
 !
+  public :: LENGTH_OF_DUMPED_STATE
+  public :: INDEX_OF_RCP_NATOM
+  public :: INDEX_OF_UPPERBOUND
+  public :: INDEX_OF_LOWERBOUND
+  public :: INDEX_OF_LOG_RATIO
+  public :: INDEX_OF_N_EVAL
+!
+  integer(IK), parameter :: LENGTH_OF_DUMPED_STATE  = 5
+  !! Length of dumped state array
+  integer(IK), parameter :: INDEX_OF_RCP_NATOM  = 1
+  !! Index of reciprocal natom of dumped state
+  integer(IK), parameter :: INDEX_OF_UPPERBOUND = 2
+  !! Index of upperbound of dumped state
+  integer(IK), parameter :: INDEX_OF_LOWERBOUND = 3
+  !! Index of lowerbound of dumped state
+  integer(IK), parameter :: INDEX_OF_LOG_RATIO  = 4
+  !! Index of log_ratio of dumped state
+  integer(IK), parameter :: INDEX_OF_N_EVAL     = 5
+  !! Index of n_eval of dumped state
+!
 !| mol_block_input
   type mol_block_input
     private
@@ -261,7 +281,11 @@ contains
     class(mobbrmsd_state), intent(in) :: this
     !! mobbrmsd_header
     real(RK)                          :: res(5)
-    res = [this%rcnatm, this%uppbou, this%lowbou, this%lograt, this%numevl]
+    res = [this%rcnatm, &
+      &    this%uppbou, &
+      &    this%lowbou, &
+      &    this%lograt, &
+      &    this%numevl]
   end function mobbrmsd_state_dump_real
 !
 !| load integer array as header
@@ -273,11 +297,11 @@ contains
     real(RK), intent(in)                 :: z(*)
     !! state real array
     this%s = s(:ns)
-    this%rcnatm = z(1)
-    this%uppbou = z(2)
-    this%lowbou = z(3)
-    this%lograt = z(4)
-    this%numevl = z(5)
+    this%rcnatm = z(INDEX_OF_RCP_NATOM)
+    this%uppbou = z(INDEX_OF_UPPERBOUND)
+    this%lowbou = z(INDEX_OF_LOWERBOUND)
+    this%lograt = z(INDEX_OF_LOG_RATIO)
+    this%numevl = z(INDEX_OF_N_EVAL)
   end subroutine mobbrmsd_state_load
 !
   pure elemental subroutine mobbrmsd_state_destroy(this)
