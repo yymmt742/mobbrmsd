@@ -1,5 +1,3 @@
 add_subdirectory( mobbrmsd )
+add_subdirectory( python_interface )
 
-if(SKBUILD)
-  add_subdirectory( python_interface )
-endif()

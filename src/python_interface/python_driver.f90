@@ -1,6 +1,6 @@
 module driver
   !$ use omp_lib
-  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mobbrmsd, only : mobbrmsd, &
  &                         mobbrmsd_n_dims, &
  &                         mobbrmsd_run, &
@@ -25,6 +25,7 @@ module driver
   public clear_molecule
   public n_atoms
   public n_dims
+  public n_jobs
   public workmemory_length
   public state_vector_lengthes
   public rmsd
@@ -36,6 +37,7 @@ module driver
   public restart
   public rotate_y
   public batch_run
+  public nearest_neighbor
 !
   type(mol_block_input), allocatable :: blocks(:)
 !
@@ -77,6 +79,16 @@ contains
   end subroutine n_dims
 !
   !| Returns total number of atoms
+  subroutine n_jobs(n_job)
+    integer(kind=ik), intent(out) :: n_job
+!
+    !$omp parallel
+    n_job = MAX(omp_get_num_threads(), 1)
+    !$omp end parallel
+!
+  end subroutine n_jobs
+!
+  !| Returns total number of atoms
   pure subroutine n_atoms(n_atom)
     integer(kind=ik), intent(out) :: n_atom
     type(mobbrmsd)                :: mob
@@ -91,12 +103,12 @@ contains
   end subroutine n_atoms
 !
   !| Returns total number of atoms
-  pure subroutine workmemory_length(nmem)
-    integer(kind=ik), intent(out) :: nmem
+  pure subroutine workmemory_length(n_mem)
+    integer(kind=ik), intent(out) :: n_mem
     type(mobbrmsd)                :: mob
 !
     mob = mobbrmsd(blocks)
-    nmem = mob%h%memsize()
+    n_mem = mob%h%memsize()
 !
   end subroutine workmemory_length
 !
@@ -262,44 +274,44 @@ contains
   end subroutine run
 !
   !| batch parallel run
-  subroutine batch_run(n_dim, n_atom, ntarget, n_head, n_int, n_float, &
+  subroutine batch_run(n_dim, n_atom, n_target, n_head, n_int, n_float, &
  &                     x, y, &
  &                     cutoff, difflim, maxeval, rotate_y, &
  &                     header, int_states, float_states)
     integer(kind=ik), intent(in)  :: n_dim
     integer(kind=ik), intent(in)  :: n_atom
-    integer(kind=ik), intent(in)  :: ntarget
+    integer(kind=ik), intent(in)  :: n_target
     integer(kind=ik), intent(in)  :: n_head
     integer(kind=ik), intent(in)  :: n_int
     integer(kind=ik), intent(in)  :: n_float
     real(kind=rk), intent(in)     :: x(n_dim, n_atom)
     !! reference coordinate
-    real(kind=rk), intent(inout)  :: y(n_dim, n_atom, ntarget)
+    real(kind=rk), intent(inout)  :: y(n_dim, n_atom, n_target)
     !! target coordinate
     integer(kind=ik), intent(in)  :: maxeval
     real(kind=rk), intent(in)     :: cutoff
     real(kind=rk), intent(in)     :: difflim
     logical, intent(in)           :: rotate_y
     integer(kind=ik), intent(out) :: header(n_head)
-    integer(kind=ik), intent(out) :: int_states(n_int, ntarget)
-    real(kind=rk), intent(out)    :: float_states(n_float, ntarget)
+    integer(kind=ik), intent(out) :: int_states(n_int, n_target)
+    real(kind=rk), intent(out)    :: float_states(n_float, n_target)
     real(kind=rk), allocatable    :: W(:, :)
-    integer(kind=ik)              :: nmem, njob
+    integer(kind=ik)              :: n_mem, n_job
     type(mobbrmsd)                :: mob
     integer(kind=ik)              :: i
 !
     mob = mobbrmsd(blocks)
-    nmem = mob%h%memsize()
+    n_mem = mob%h%memsize()
     header = mob%h%dump()
 !
     !$omp parallel
-    njob = MIN(ntarget, MAX(omp_get_num_threads(), 1))
+    n_job = MIN(n_target, MAX(omp_get_num_threads(), 1))
     !$omp end parallel
 !
-    allocate (W(nmem, njob))
+    allocate (W(n_mem, n_job))
 !
     !$omp parallel do
-    do i = 1, ntarget
+    do i = 1, n_target
       block
         integer(kind=ik)     :: ijob
         type(mobbrmsd_state) :: s
@@ -317,5 +329,66 @@ contains
     !$omp end parallel do
 
   end subroutine batch_run
+!
+  !| batch parallel run
+  subroutine nearest_neighbor(n_dim, n_atom, n_target, n_mem, n_job,&
+ &                            x, y, w, cutoff, difflim, maxeval, &
+ &                            nn_index, nn_value)
+    integer(kind=ik), intent(in)  :: n_dim
+    integer(kind=ik), intent(in)  :: n_atom
+    integer(kind=ik), intent(in)  :: n_target
+    integer(kind=ik), intent(in)  :: n_mem
+    integer(kind=ik), intent(in)  :: n_job
+    real(kind=rk), intent(in)     :: x(n_dim, n_atom)
+    !! reference coordinate
+    real(kind=rk), intent(in)     :: y(n_dim, n_atom, n_target)
+    !! target coordinate
+    real(kind=rk), intent(inout)  :: W(n_mem, n_job)
+    !! work memory
+    real(kind=rk), intent(in)     :: cutoff
+    real(kind=rk), intent(in)     :: difflim
+    integer(kind=ik), intent(in)  :: maxeval
+    integer(kind=ik), intent(out) :: nn_index
+    real(kind=rk), intent(out)    :: nn_value
+    type(mobbrmsd)                :: mob
+    real(kind=rk)                 :: nn_values(n_job), cutoff_global
+    integer(kind=ik)              :: i, nn_indices(n_job)
+!
+    mob = mobbrmsd(blocks)
+!
+    cutoff_global = MERGE(RHUGE, cutoff, cutoff >= ZERO)
+    nn_values(:) = RHUGE
+    nn_indices(:) = 0
+!
+    !$omp parallel do
+    do i = 1, n_target
+      block
+        integer(kind=ik)     :: ijob
+        real(kind=rk)        :: ub
+        type(mobbrmsd_state) :: s
+!
+        ijob = omp_get_thread_num() + 1
+        s = mob%s
+        ub = cutoff_global
+        call mobbrmsd_run(mob%h, s, X, Y(1, 1, i), w(1, ijob), &
+       &                  cutoff=ub, difflim=difflim, maxeval=maxeval)
+!
+        ub = s%upperbound()
+        if (ub < nn_values(ijob)) then
+          nn_indices(ijob) = i
+          nn_values(ijob) = ub
+        end if
+!
+        cutoff_global = MIN(ub, cutoff_global)
+!
+      end block
+    end do
+    !$omp end parallel do
+!
+    i = MINLOC(nn_values, 1)
+    nn_index = nn_indices(i)
+    nn_value = nn_values(i)
+!
+  end subroutine nearest_neighbor
 !
 end module driver
