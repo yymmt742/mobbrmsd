@@ -171,6 +171,7 @@ install(FILES
     ${sofile_3d}
     "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/__main__.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/__version__.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/__mobbrmsd__.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/__coord_generator__.py"
   DESTINATION
