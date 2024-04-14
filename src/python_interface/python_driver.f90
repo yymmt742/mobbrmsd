@@ -43,7 +43,7 @@ contains
 
   !| setup dimension
   subroutine setup_dimension(d)
-    integer(kind=ik), intent(in) :: d
+    integer(kind=IK), intent(in) :: d
 
     call setup_dimension_(d)
 
@@ -51,10 +51,10 @@ contains
 
   !| add molecule
   subroutine add_molecule(n, M, s, sym)
-    integer(kind=ik), intent(in) :: n
-    integer(kind=ik), intent(in) :: M
-    integer(kind=ik), intent(in) :: s
-    integer(kind=ik), intent(in), optional :: sym(n * (s - 1))
+    integer(kind=IK), intent(in) :: n
+    integer(kind=IK), intent(in) :: M
+    integer(kind=IK), intent(in) :: s
+    integer(kind=IK), intent(in), optional :: sym(n * (s - 1))
 
     if (.not. ALLOCATED(blocks)) allocate (blocks(0))
     call mol_block_input_add(blocks, n, M, RESHAPE(sym, [n, s - 1]))
@@ -70,8 +70,8 @@ contains
 
   !| Returns spatial dimension and total number of atoms
   pure subroutine n_atoms(n_dim, n_atom)
-    integer(kind=ik), intent(out) :: n_dim
-    integer(kind=ik), intent(out) :: n_atom
+    integer(kind=IK), intent(out) :: n_dim
+    integer(kind=IK), intent(out) :: n_atom
     type(mobbrmsd)                :: mob
 
     n_dim = mobbrmsd_n_dims()
@@ -87,8 +87,8 @@ contains
 
   !| Returns total number of atoms
   subroutine workmemory_lengthes(n_mem, n_job)
-    integer(kind=ik), intent(out) :: n_mem
-    integer(kind=ik), intent(out) :: n_job
+    integer(kind=IK), intent(out) :: n_mem
+    integer(kind=IK), intent(out) :: n_job
     type(mobbrmsd)                :: mob
 
     if (ALLOCATED(blocks)) then
@@ -105,9 +105,9 @@ contains
   end subroutine workmemory_lengthes
 
   pure subroutine state_vector_lengthes(n_head, n_int, n_float)
-    integer(kind=ik), intent(out) :: n_head
-    integer(kind=ik), intent(out) :: n_int
-    integer(kind=ik), intent(out) :: n_float
+    integer(kind=IK), intent(out) :: n_head
+    integer(kind=IK), intent(out) :: n_int
+    integer(kind=IK), intent(out) :: n_float
     type(mobbrmsd)                :: mob
 
     if (ALLOCATED(blocks)) then
@@ -125,9 +125,9 @@ contains
 
   !| return rmsd
   subroutine rmsd(n_float, float_states, res)
-    integer(kind=ik), intent(in) :: n_float
-    real(kind=rk), intent(in)    :: float_states(n_float)
-    real(kind=rk), intent(out)   :: res
+    integer(kind=IK), intent(in) :: n_float
+    real(kind=RK), intent(in)    :: float_states(n_float)
+    real(kind=RK), intent(out)   :: res
 
     res = SQRT(float_states(INDEX_OF_RCP_NATOM) &
               &     * MAX(float_states(INDEX_OF_UPPERBOUND), ZERO))
@@ -136,9 +136,9 @@ contains
 
   !| return bounds
   subroutine bounds(n_float, float_states, res)
-    integer(kind=ik), intent(in) :: n_float
-    real(kind=rk), intent(in)    :: float_states(n_float)
-    real(kind=rk), intent(out)   :: res(2)
+    integer(kind=IK), intent(in) :: n_float
+    real(kind=RK), intent(in)    :: float_states(n_float)
+    real(kind=RK), intent(out)   :: res(2)
 
     res(1) = float_states(INDEX_OF_UPPERBOUND)
     res(2) = float_states(INDEX_OF_LOWERBOUND)
@@ -147,9 +147,9 @@ contains
 
   !| return n_eval
   subroutine n_eval(n_float, float_states, res)
-    integer(kind=ik), intent(in)  :: n_float
-    real(kind=rk), intent(in)     :: float_states(n_float)
-    integer(kind=ik), intent(out) :: res
+    integer(kind=IK), intent(in)  :: n_float
+    real(kind=RK), intent(in)     :: float_states(n_float)
+    integer(kind=IK), intent(out) :: res
 
     res = NINT(float_states(INDEX_OF_N_EVAL), IK)
 
@@ -157,9 +157,9 @@ contains
 
   !| return log_eval_ratio
   subroutine log_eval_ratio(n_float, float_states, res)
-    integer(kind=ik), intent(in) :: n_float
-    real(kind=rk), intent(in)    :: float_states(n_float)
-    real(kind=rk), intent(out)   :: res
+    integer(kind=IK), intent(in) :: n_float
+    real(kind=RK), intent(in)    :: float_states(n_float)
+    real(kind=RK), intent(out)   :: res
 
     res = float_states(INDEX_OF_LOG_RATIO)
 
@@ -167,10 +167,10 @@ contains
 
   !| inquire bb is finished
   subroutine is_finished(n_head, n_int, n_float, header, int_states, float_states, res)
-    integer(kind=ik), intent(in)  :: n_head, n_int, n_float
-    integer(kind=ik), intent(in)  :: header(n_head)
-    integer(kind=ik), intent(in)  :: int_states(n_int)
-    real(kind=rk), intent(in)     :: float_states(n_float)
+    integer(kind=IK), intent(in)  :: n_head, n_int, n_float
+    integer(kind=IK), intent(in)  :: header(n_head)
+    integer(kind=IK), intent(in)  :: int_states(n_int)
+    real(kind=RK), intent(in)     :: float_states(n_float)
     logical, intent(out)          :: res
     type(mobbrmsd_header)         :: h
     type(mobbrmsd_state)          :: s
@@ -185,18 +185,18 @@ contains
   subroutine restart(n_head, n_int, n_float, n_mem, &
  &                   header, int_states, float_states, w, &
  &                   cutoff, difflim, maxeval)
-    integer(kind=ik), intent(in)    :: n_head
-    integer(kind=ik), intent(in)    :: n_int
-    integer(kind=ik), intent(in)    :: n_float
-    integer(kind=ik), intent(in)    :: n_mem
-    integer(kind=ik), intent(in)    :: header(n_head)
-    integer(kind=ik), intent(inout) :: int_states(n_int)
-    real(kind=rk), intent(inout)    :: float_states(n_float)
-    real(kind=rk), intent(inout)    :: W(n_mem)
+    integer(kind=IK), intent(in)    :: n_head
+    integer(kind=IK), intent(in)    :: n_int
+    integer(kind=IK), intent(in)    :: n_float
+    integer(kind=IK), intent(in)    :: n_mem
+    integer(kind=IK), intent(in)    :: header(n_head)
+    integer(kind=IK), intent(inout) :: int_states(n_int)
+    real(kind=RK), intent(inout)    :: float_states(n_float)
+    real(kind=RK), intent(inout)    :: W(n_mem)
    !! work memory
-    integer(kind=ik), intent(in)    :: maxeval
-    real(kind=rk), intent(in)       :: cutoff
-    real(kind=rk), intent(in)       :: difflim
+    integer(kind=IK), intent(in)    :: maxeval
+    real(kind=RK), intent(in)       :: cutoff
+    real(kind=RK), intent(in)       :: difflim
     type(mobbrmsd_header)           :: h
     type(mobbrmsd_state)            :: s
 
@@ -212,15 +212,15 @@ contains
   !| single run with working memory
   subroutine rotate_y(n_dim, n_atom, n_head, n_int, n_float,&
  &                    header, int_states, float_states, Y)
-    integer(kind=ik), intent(in) :: n_dim
-    integer(kind=ik), intent(in) :: n_atom
-    integer(kind=ik), intent(in) :: n_head
-    integer(kind=ik), intent(in) :: n_int
-    integer(kind=ik), intent(in) :: n_float
-    integer(kind=ik), intent(in) :: header(n_head)
-    integer(kind=ik), intent(in) :: int_states(n_int)
-    real(kind=rk), intent(in)    :: float_states(n_float)
-    real(kind=rk), intent(inout) :: Y(n_dim, n_atom)
+    integer(kind=IK), intent(in) :: n_dim
+    integer(kind=IK), intent(in) :: n_atom
+    integer(kind=IK), intent(in) :: n_head
+    integer(kind=IK), intent(in) :: n_int
+    integer(kind=IK), intent(in) :: n_float
+    integer(kind=IK), intent(in) :: header(n_head)
+    integer(kind=IK), intent(in) :: int_states(n_int)
+    real(kind=RK), intent(in)    :: float_states(n_float)
+    real(kind=RK), intent(inout) :: Y(n_dim, n_atom)
     type(mobbrmsd_header)        :: h
     type(mobbrmsd_state)         :: s
 
@@ -234,25 +234,25 @@ contains
   subroutine run(n_dim, n_atom, n_head, n_int, n_float, n_mem, X, Y, W, &
  &               cutoff, difflim, maxeval, rotate_y, &
  &               header, int_states, float_states)
-    integer(kind=ik), intent(in)  :: n_dim
-    integer(kind=ik), intent(in)  :: n_atom
-    integer(kind=ik), intent(in)  :: n_head
-    integer(kind=ik), intent(in)  :: n_int
-    integer(kind=ik), intent(in)  :: n_float
-    integer(kind=ik), intent(in)  :: n_mem
-    real(kind=rk), intent(in)     :: X(n_dim, n_atom)
+    integer(kind=IK), intent(in)  :: n_dim
+    integer(kind=IK), intent(in)  :: n_atom
+    integer(kind=IK), intent(in)  :: n_head
+    integer(kind=IK), intent(in)  :: n_int
+    integer(kind=IK), intent(in)  :: n_float
+    integer(kind=IK), intent(in)  :: n_mem
+    real(kind=RK), intent(in)     :: X(n_dim, n_atom)
    !! reference coordinate
-    real(kind=rk), intent(inout)  :: Y(n_dim, n_atom)
+    real(kind=RK), intent(inout)  :: Y(n_dim, n_atom)
    !! target coordinate
-    real(kind=rk), intent(inout)  :: W(n_mem)
+    real(kind=RK), intent(inout)  :: W(n_mem)
    !! work memory
-    integer(kind=ik), intent(in)  :: maxeval
-    real(kind=rk), intent(in)     :: cutoff
-    real(kind=rk), intent(in)     :: difflim
+    integer(kind=IK), intent(in)  :: maxeval
+    real(kind=RK), intent(in)     :: cutoff
+    real(kind=RK), intent(in)     :: difflim
     logical, intent(in)           :: rotate_y
-    integer(kind=ik), intent(out) :: header(n_head)
-    integer(kind=ik), intent(out) :: int_states(n_int)
-    real(kind=rk), intent(out)    :: float_states(n_float)
+    integer(kind=IK), intent(out) :: header(n_head)
+    integer(kind=IK), intent(out) :: int_states(n_int)
+    real(kind=RK), intent(out)    :: float_states(n_float)
     type(mobbrmsd)                :: mob
 
     mob = mobbrmsd(blocks)
@@ -271,30 +271,30 @@ contains
  &                     X, Y, W, &
  &                     cutoff, difflim, maxeval, rotate_y, &
  &                     header, int_states, float_states)
-    integer(kind=ik), intent(in)  :: n_dim
-    integer(kind=ik), intent(in)  :: n_atom
-    integer(kind=ik), intent(in)  :: n_target
-    integer(kind=ik), intent(in)  :: n_head
-    integer(kind=ik), intent(in)  :: n_int
-    integer(kind=ik), intent(in)  :: n_float
-    integer(kind=ik), intent(in)  :: n_mem
-    integer(kind=ik), intent(in)  :: n_job
-    real(kind=rk), intent(in)     :: X(n_dim, n_atom)
+    integer(kind=IK), intent(in)  :: n_dim
+    integer(kind=IK), intent(in)  :: n_atom
+    integer(kind=IK), intent(in)  :: n_target
+    integer(kind=IK), intent(in)  :: n_head
+    integer(kind=IK), intent(in)  :: n_int
+    integer(kind=IK), intent(in)  :: n_float
+    integer(kind=IK), intent(in)  :: n_mem
+    integer(kind=IK), intent(in)  :: n_job
+    real(kind=RK), intent(in)     :: X(n_dim, n_atom)
    !! reference coordinate
-    real(kind=rk), intent(inout)  :: Y(n_dim, n_atom, n_target)
+    real(kind=RK), intent(inout)  :: Y(n_dim, n_atom, n_target)
    !! target coordinate
-    real(kind=rk), intent(inout)  :: W(n_mem, n_job)
+    real(kind=RK), intent(inout)  :: W(n_mem, n_job)
    !! work array
-    integer(kind=ik), intent(in)  :: maxeval
-    real(kind=rk), intent(in)     :: cutoff
-    real(kind=rk), intent(in)     :: difflim
+    integer(kind=IK), intent(in)  :: maxeval
+    real(kind=RK), intent(in)     :: cutoff
+    real(kind=RK), intent(in)     :: difflim
     logical, intent(in)           :: rotate_y
-    integer(kind=ik), intent(out) :: header(n_head)
-    integer(kind=ik), intent(out) :: int_states(n_int, n_target)
-    real(kind=rk), intent(out)    :: float_states(n_float, n_target)
+    integer(kind=IK), intent(out) :: header(n_head)
+    integer(kind=IK), intent(out) :: int_states(n_int, n_target)
+    real(kind=RK), intent(out)    :: float_states(n_float, n_target)
     type(mobbrmsd)                :: mob
-    integer(kind=ik)              :: i
-    integer(kind=ik)              :: itgt, ijob
+    integer(kind=IK)              :: i
+    integer(kind=IK)              :: itgt, ijob
     type(mobbrmsd_state)          :: s
 
     mob = mobbrmsd(blocks)
@@ -327,28 +327,28 @@ contains
   subroutine nearest_neighbor(n_dim, n_atom, n_target, n_mem, n_job,&
  &                            x, y, w, cutoff, difflim, maxeval, &
  &                            nn_index, nn_value)
-    integer(kind=ik), intent(in)  :: n_dim
-    integer(kind=ik), intent(in)  :: n_atom
-    integer(kind=ik), intent(in)  :: n_target
-    integer(kind=ik), intent(in)  :: n_mem
-    integer(kind=ik), intent(in)  :: n_job
-    real(kind=rk), intent(in)     :: x(n_dim, n_atom)
+    integer(kind=IK), intent(in)  :: n_dim
+    integer(kind=IK), intent(in)  :: n_atom
+    integer(kind=IK), intent(in)  :: n_target
+    integer(kind=IK), intent(in)  :: n_mem
+    integer(kind=IK), intent(in)  :: n_job
+    real(kind=RK), intent(in)     :: x(n_dim, n_atom)
    !! reference coordinate
-    real(kind=rk), intent(in)     :: y(n_dim, n_atom, n_target)
+    real(kind=RK), intent(in)     :: y(n_dim, n_atom, n_target)
    !! target coordinate
-    real(kind=rk), intent(inout)  :: W(n_mem, n_job)
+    real(kind=RK), intent(inout)  :: W(n_mem, n_job)
    !! work memory
-    real(kind=rk), intent(in)     :: cutoff
-    real(kind=rk), intent(in)     :: difflim
-    integer(kind=ik), intent(in)  :: maxeval
-    integer(kind=ik), intent(out) :: nn_index
-    real(kind=rk), intent(out)    :: nn_value
+    real(kind=RK), intent(in)     :: cutoff
+    real(kind=RK), intent(in)     :: difflim
+    integer(kind=IK), intent(in)  :: maxeval
+    integer(kind=IK), intent(out) :: nn_index
+    real(kind=RK), intent(out)    :: nn_value
     type(mobbrmsd)                :: mob
-    real(kind=rk)                 :: cutoff_global
-    real(kind=rk)                 :: nn_values(n_job)
-    integer(kind=ik)              :: nn_indices(n_job)
-    integer(kind=ik)              :: i, itgt, ijob
-    real(kind=rk)                 :: ub
+    real(kind=RK)                 :: cutoff_global
+    real(kind=RK)                 :: nn_values(n_job)
+    integer(kind=IK)              :: nn_indices(n_job)
+    integer(kind=IK)              :: i, itgt, ijob
+    real(kind=RK)                 :: ub
     type(mobbrmsd_state)          :: s
 
     mob = mobbrmsd(blocks)

@@ -1,3 +1,3 @@
-dict( integer=dict( ik='int' ),
-      real=dict( sp='float', dp='double', rk='double' ),
-      complex=dict( sp='complex_float', dp='complex_double', rk='complex_double' ) )
+dict( integer=dict( IK='int' ),
+      real=dict( SP='float', DP='double', RK='double' ),
+      complex=dict( SP='complex_float', DP='complex_double', RK='complex_double' ) )
