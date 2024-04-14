@@ -16,19 +16,28 @@ module mod_bb_list
   public :: bb_list_swap_y
   public :: bb_list_rotation_matrix
   public :: bb_list_is_finished
+  public :: bb_list_INDEX_OF_UPPERBOUND
+  public :: bb_list_INDEX_OF_LOWERBOUND
+  public :: bb_list_INDEX_OF_N_EVAL
+  public :: bb_list_INDEX_TO_LOG_N_COMB
 !
   integer(IK), parameter :: header_size = 1
-  integer(IK), parameter :: nb = 1 ! number of block
+  integer(IK), parameter :: NB = 1 ! number of block
 !
   integer(IK), parameter :: header_sttsize = 1
-  integer(IK), parameter :: sb = 1
-  integer(IK), parameter :: ss = 2 ! pointer to best state vector
+  integer(IK), parameter :: SB = 1
+  integer(IK), parameter :: SS = 2 ! pointer to best state vector
 !
   integer(IK), parameter :: header_memsize = 4
-  integer(IK), parameter :: ub = 1
-  integer(IK), parameter :: lb = 2
-  integer(IK), parameter :: nc = 3
-  integer(IK), parameter :: rt = 4
+  integer(IK), parameter :: bb_list_INDEX_OF_UPPERBOUND = 1
+  integer(IK), parameter :: bb_list_INDEX_OF_LOWERBOUND = 2
+  integer(IK), parameter :: bb_list_INDEX_OF_N_EVAL     = 3
+  integer(IK), parameter :: bb_list_INDEX_TO_LOG_N_COMB = 4
+!
+  integer(IK), parameter :: UB =  bb_list_INDEX_OF_UPPERBOUND
+  integer(IK), parameter :: LB =  bb_list_INDEX_OF_LOWERBOUND
+  integer(IK), parameter :: NV =  bb_list_INDEX_OF_N_EVAL
+  integer(IK), parameter :: CM =  bb_list_INDEX_TO_LOG_N_COMB
 !
 !| bb_list<br>
 !  This is mainly used for passing during initialization.
@@ -192,10 +201,10 @@ contains
     integer(IK)                :: i, n, ps, pq, px, pw
 !
     s(sb) = 0
-    W(ub) = RHUGE
-    W(lb) = -RHUGE
-    W(nc) = ZERO
-    W(rt) = ZERO
+    W(UB) = RHUGE
+    W(LB) = ZERO
+    W(NV) = ZERO
+    W(CM) = ZERO
 !
     ps = s_pointer(q)
     px = x_pointer(q)
@@ -206,6 +215,10 @@ contains
 !
     do concurrent(i=0:n - 1)
       call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
+    end do
+!
+    do i = 0, N - 1
+      W(CM) = W(CM) + bb_block_log_ncomb(q(q(pq + i)))
     end do
 !
     call save_state(n, q(pq), q(ps), q, s)
@@ -252,7 +265,11 @@ contains
 !
     call update_lowerbound(b, pq, ps, pw, q, s, W)
 !
-    do while (W(nc) < nlim .and. coff > W(lb) .and. W(ub) - W(lb) > diff)
+    do while ( &
+   &       W(NV) < nlim &
+   & .and. W(LB) < coff &
+   & .and. W(LB) + diff <= W(UB) &
+   &)
 !
 !     Expansion process
 !
@@ -293,25 +310,15 @@ contains
 !
       block
         integer(IK) :: i
-        W(nc) = ZERO
+        W(NV) = ZERO
         do i = 1, n
-          W(nc) = W(nc) + bb_block_evaluation_count(W(pw(i)))
+          W(NV) = W(NV) + bb_block_evaluation_count(W(pw(i)))
         end do
       end block
 !
-      if (b == 1 .and. bb_block_queue_is_empty(q(pq(b)), s(ps(b)))) exit
+      if(bb_list_is_finished(q, s)) return
 !
     end do
-!
-!   Calculate evaluate ratio
-!
-    block
-      integer(IK) :: i
-      W(rt) = LOG(W(nc))
-      do i = 1, n
-        W(rt) = W(rt) - bb_block_log_ncomb(q(pq(i)))
-      end do
-    end block
 !
   end subroutine run_bb
 !

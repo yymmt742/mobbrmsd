@@ -440,10 +440,11 @@ contains
 !
     call bb_list_run(header%q, state%s, W, cutoff=cutoff, difflim=difflim, maxeval=maxeval)
 !
-    state%z(INDEX_OF_UPPERBOUND) = W(1)
-    state%z(INDEX_OF_LOWERBOUND) = W(2)
-    state%z(INDEX_OF_N_EVAL)     = W(3)
-    state%z(INDEX_OF_LOG_RATIO)  = W(4)
+    state%z(INDEX_OF_UPPERBOUND) = W(bb_list_INDEX_OF_UPPERBOUND)
+    state%z(INDEX_OF_LOWERBOUND) = W(bb_list_INDEX_OF_LOWERBOUND)
+    state%z(INDEX_OF_N_EVAL)     = W(bb_list_INDEX_OF_N_EVAL)
+    state%z(INDEX_OF_LOG_RATIO)  = LOG(W(bb_list_INDEX_OF_N_EVAL)) - W(bb_list_INDEX_TO_LOG_N_COMB)
+!
     call bb_list_rotation_matrix(header%q, state%s, W, state%z(INDEX_TO_ROTMAT))
 !
   end subroutine mobbrmsd_restart

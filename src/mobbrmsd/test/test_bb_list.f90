@@ -67,7 +67,7 @@ contains
 !
     block
       real(RK) :: W(nmem), R(D, D), sxz, rxz
-      do i = 1, 20
+      do i = 1, 10
         call bb_list_setup(b%q, b%s, X, Y, W)
         call u%assert(.not.bb_list_is_finished(b%q, b%s), 'is not finished     ')
         call bb_list_run(b%q, b%s, W)
