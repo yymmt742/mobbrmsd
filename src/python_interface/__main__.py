@@ -70,6 +70,10 @@ while not ret.is_finished:
     ub, lb = ret.bounds[0], ret.bounds[1]
     ret = mrmsd.restart(ret, maxeval=0)
     i += 1
+
+print(
+    f"\r  {ret.n_eval:12d} {ret.eval_ratio:12.8f}{ret.bounds[0]:16.6f}{ret.bounds[1]:16.6f}{ret.rmsd:12.6f}       "
+)
 ret = mrmsd.restart(ret, maxeval=0, Y=y)
 print("    --------------------------------------------------------------------------")
 print("      -- Final results --")
@@ -91,34 +95,34 @@ for xi, yi, zi in zip(
     z.reshape([n_mol, n_apm, 3]),
 ):
     print(
-        "  --------------------|-------------------|--------|-------------------|--------"
+        "  -------------------|-------------------|--------|-------------------|--------"
     )
     for xij, yij, zij in zip(xi, yi, zi):
         d1 = numpy.sum(numpy.power(xij - zij, 2))
         d2 = numpy.sum(numpy.power(xij - yij, 2))
         print(
-            f"  {xij[0]:6.2f}{xij[1]:6.2f}{xij[2]:6.2f} ",
+            f"  {xij[0]:6.2f}{xij[1]:6.2f}{xij[2]:6.2f}",
             f"|{yij[0]:6.2f}{yij[1]:6.2f}{yij[2]:6.2f} |{d1:7.2f}",
             f"|{zij[0]:6.2f}{zij[1]:6.2f}{zij[2]:6.2f} |{d2:7.2f}",
         )
 d1, d2 = numpy.sum(numpy.power(x - z, 2)), numpy.sum(numpy.power(x - y, 2))
 print(
-    "  ----------------------------------------|--------|-------------------|---------"
+    "  ---------------------------------------|--------|-------------------|---------"
 )
 print(
-    f"              squared deviation           |{d1:7.2f} |                   |{d2:7.2f}"
+    f"             squared deviation           |{d1:7.2f} |                   |{d2:7.2f}"
 )
 d1 /= n_apm * n_mol
 d2 /= n_apm * n_mol
 print(
-    f"           mean squared deviation         |{d1:7.2f} |                   |{d2:7.2f}"
+    f"          mean squared deviation         |{d1:7.2f} |                   |{d2:7.2f}"
 )
 d1, d2 = numpy.sqrt(d1), numpy.sqrt(d2)
 print(
-    f"         root mean squared deviation      |{d1:7.2f} |                   |{d2:7.2f}"
+    f"        root mean squared deviation      |{d1:7.2f} |                   |{d2:7.2f}"
 )
 print(
-    "  -------------------------------------------------------------------------------"
+    "  ------------------------------------------------------------------------------"
 )
 
 end_wallclock_time = time.time()

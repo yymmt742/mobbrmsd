@@ -39,6 +39,7 @@ class mobbrmsd:
         self.ndim = self.driver.n_dims()
         self.natom = 0
         self.memsize = 0
+        self.njob = self.driver.n_jobs()
         self.n_header, self.n_int, self.n_float = self.driver.state_vector_lengthes()
 
     def add_molecule(self, n_apm, n_mol=1, swp=None):
@@ -123,6 +124,7 @@ class mobbrmsd:
     ) -> list:
 
         x_, y_ = self.varidation_coordinates_2(x, y)
+        self.ww = numpy.empty(self.njob, self.memsize).T
 
         hret, iret, rret = self.driver.batch_run(
             self.n_header,
@@ -130,6 +132,7 @@ class mobbrmsd:
             self.n_float,
             x_,
             y_,
+            self.ww,
             cutoff,
             difflim,
             maxeval,
