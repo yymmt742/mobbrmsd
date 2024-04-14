@@ -359,31 +359,40 @@ contains
     cutoff_global = MERGE(RHUGE, cutoff, cutoff >= ZERO)
     nn_values(:) = RHUGE
     nn_indices(:) = 0
+    i = 0
 !
-    !$omp parallel do
-    do i = 1, n_target
+    !$omp parallel
+    do
       block
-        integer(kind=ik)     :: ijob
+        integer(kind=ik)     :: itgt, ijob
         real(kind=rk)        :: ub
         type(mobbrmsd_state) :: s
+!
+        !$omp critical
+            i = i + 1
+            itgt = i
+        !$omp end critical
+        if (itgt > n_target) exit
 !
         ijob = omp_get_thread_num() + 1
         s = mob%s
         ub = cutoff_global
-        call mobbrmsd_run(mob%h, s, X, Y(1, 1, i), w(1, ijob), &
+        call mobbrmsd_run(mob%h, s, X, Y(1, 1, itgt), w(1, ijob), &
        &                  cutoff=ub, difflim=difflim, maxeval=maxeval)
 !
         ub = s%upperbound()
         if (ub < nn_values(ijob)) then
-          nn_indices(ijob) = i
+          nn_indices(ijob) = itgt
           nn_values(ijob) = ub
         end if
 !
-        cutoff_global = MIN(ub, cutoff_global)
+        !$omp critical
+            cutoff_global = MIN(ub, cutoff_global)
+        !$omp end critical
 !
       end block
     end do
-    !$omp end parallel do
+    !$omp end parallel
 !
     i = MINLOC(nn_values, 1)
     nn_index = nn_indices(i)
