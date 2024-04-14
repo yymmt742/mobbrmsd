@@ -251,25 +251,46 @@ contains
 !&<
     coff = RHUGE ; if (PRESENT(cutoff))  coff = MIN(coff, cutoff)
     diff = ZERO  ; if (PRESENT(difflim)) diff = MAX(diff, difflim)
-    nlim = RHUGE ; if (PRESENT(maxeval)) nlim = MERGE(nlim, real(maxeval, RK), maxeval < 0)
 !&>
-    call run_bb(n, q(pq), q(ps), q(pw), q, coff, diff, nlim, s(sb), s, W)
 !
-  end subroutine bb_list_run
+    if (PRESENT(maxeval))then
+      if (maxeval == 0) then
+        ! run only once, early return.
+        call run_bb(n, q(pq), q(ps), q(pw), q, s(sb), s, W)
+        return
+      elseif (maxeval > 0) then
+        ! finite run
+        nlim = real(maxeval, RK)
+      else
+        ! infinite run if maxeval < 0
+        nlim = RHUGE
+      end if
+    else
+      ! finite run
+      nlim = RHUGE
+    endif
 !
-  pure subroutine run_bb(n, pq, ps, pw, q, coff, diff, nlim, b, s, W)
-  integer(IK), intent(in)    :: n, pq(n), ps(n), pw(n), q(*)
-  real(RK), intent(in)       :: coff, diff, nlim
-  integer(IK), intent(inout) :: b, s(*)
-  real(RK), intent(inout)    :: W(*)
-!
-    call update_lowerbound(b, pq, ps, pw, q, s, W)
+    call update_lowerbound(s(sb), q(pq), q(ps), q(pw), q, s, W)
 !
     do while ( &
    &       W(NV) < nlim &
    & .and. W(LB) < coff &
    & .and. W(LB) + diff <= W(UB) &
    &)
+!
+      call run_bb(n, q(pq), q(ps), q(pw), q, s(sb), s, W)
+!
+      if(bb_list_is_finished(q, s)) exit
+!
+    end do
+!
+!
+  end subroutine bb_list_run
+!
+  pure subroutine run_bb(n, pq, ps, pw, q, b, s, W)
+  integer(IK), intent(in)    :: n, pq(n), ps(n), pw(n), q(*)
+  integer(IK), intent(inout) :: b, s(*)
+  real(RK), intent(inout)    :: W(*)
 !
 !     Expansion process
 !
@@ -315,10 +336,6 @@ contains
           W(NV) = W(NV) + bb_block_evaluation_count(W(pw(i)))
         end do
       end block
-!
-      if(bb_list_is_finished(q, s)) return
-!
-    end do
 !
   end subroutine run_bb
 !
