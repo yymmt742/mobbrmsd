@@ -46,7 +46,7 @@ class mobbrmsd:
         if swp is None:
             self.driver.add_molecule(n_apm, n_mol, 1)
         else:
-            swp_ = numpy.array(swp).reshape((-1, n_apm))
+            swp_ = numpy.array(swp).reshape((-1, n_apm)) + 1
             s = swp_.shape[0] + 1
             self.driver.add_molecule(n_apm, n_mol, s, swp_.flatten())
 
