@@ -1,3 +1,4 @@
+from . import __version__
 from . import coord_generator
 from . import mobbrmsd
 import numpy
@@ -22,17 +23,26 @@ z = y.copy()
 print(
     "  ==============================================================================="
 )
-print("                      --- demonstration of mobbrmsd ---")
+print(
+    "                  --- demonstration of mobbrmsd ver.",
+    __version__.__version__,
+    " ---",
+)
 print(
     "  ===============================================================================\n"
 )
 
 print("      --System settings--")
-print(f"    Atoms per molecule :{n_apm:2d}")
-print(f"    Number of molecule :{n_mol:2d}")
-print("    molecular symmetry : 0 ", [i for i in range(3)])
-for i in range(len(sym)):
-    print(f"                       :{i+1:2d} ", [si for si in sym[i]])
+print(
+    f"    Atoms per molecule :{n_apm:2d}    molecular symmetry : 0 ",
+    [i for i in range(3)],
+)
+print(f"    Number of molecule :{n_mol:2d}                         1 ", sym[0])
+for i in range(len(sym) - 1):
+    print(
+        f"                                                  {i+2:2d} ",
+        [si for si in sym[i + 1]],
+    )
 print()
 
 mrmsd = mobbrmsd()
@@ -42,7 +52,7 @@ ub, lb = numpy.inf, 0.0
 ret = mrmsd.run(x, y, maxeval=0)
 
 print("    --------------------------------------------------------------------------")
-print("                 Molecular-oriented RMSD for Branch-and-bound")
+print("                  Molecular-oriented RMSD for Branch-and-bound")
 print("    --------------------------------------------------------------------------")
 print("        N_eval   Eval_ratio      Upperbound      Lowerbound      RMSD")
 i = 0
