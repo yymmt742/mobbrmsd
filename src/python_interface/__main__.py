@@ -8,7 +8,7 @@ start_cpu_time = time.process_time()
 
 cogen = coord_generator()
 n_apm = 3
-n_mol = 8
+n_mol = 10
 sym = [[1, 2, 0], [2, 0, 1]]
 a = 0.5
 b = 1.0
@@ -42,22 +42,30 @@ ub, lb = numpy.inf, 0.0
 ret = mrmsd.run(x, y, maxeval=0)
 
 print("    --------------------------------------------------------------------------")
-print("                Molecular-oriented RMSD for Branch-and-bound")
+print("                 Molecular-oriented RMSD for Branch-and-bound")
 print("    --------------------------------------------------------------------------")
-print("        N_eval   Eval_ratio      Upperbound      Lowerbound          RMSD")
+print("        N_eval   Eval_ratio      Upperbound      Lowerbound      RMSD")
+i = 0
+xtra = ["|    ", " /   ", "  -  ", "   \\ ", "    |", "   \\ ", "  -  ", " /   "]
 while not ret.is_finished:
+    print(
+        f"\r  {ret.n_eval:12d} {ret.eval_ratio:12.8f}{ret.bounds[0]:16.6f}{ret.bounds[1]:16.6f}{ret.rmsd:12.6f} ",
+        xtra[int(i / 10000) % 8],
+        end="",
+    )
     if ub > ret.bounds[0] or lb < ret.bounds[1]:
         print(
-            f"  {ret.n_eval:12d} {ret.eval_ratio:12.8f}{ret.bounds[0]:16.6f}{ret.bounds[1]:16.6f}{ret.rmsd:16.6f} "
+            f"\r  {ret.n_eval:12d} {ret.eval_ratio:12.8f}{ret.bounds[0]:16.6f}{ret.bounds[1]:16.6f}{ret.rmsd:12.6f}       "
         )
     ub, lb = ret.bounds[0], ret.bounds[1]
     ret = mrmsd.restart(ret, maxeval=0)
+    i += 1
 ret = mrmsd.restart(ret, maxeval=0, Y=y)
 print("    --------------------------------------------------------------------------")
 print("      -- Final results --")
-print("        N_eval   Eval_ratio      Upperbound      Lowerbound          RMSD")
+print("        N_eval   Eval_ratio      Upperbound      Lowerbound      RMSD")
 print(
-    f"  {ret.n_eval:12d} {ret.eval_ratio:12.8f}{ret.bounds[0]:16.6f}{ret.bounds[1]:16.6f}{ret.rmsd:16.6f} "
+    f"  {ret.n_eval:12d} {ret.eval_ratio:12.8f}{ret.bounds[0]:16.6f}{ret.bounds[1]:16.6f}{ret.rmsd:12.6f} "
 )
 print(
     "    --------------------------------------------------------------------------\n"
