@@ -15,7 +15,7 @@ def print_ret(ret, post="", end="\n", to_console: bool = False):
     )
     if sys.stdout.isatty():
         print(
-            f"\r  {ev:12d} {er:12.8f}{ub:16.6f}{lb:16.6f}{sd:12.6f}       ",
+            f"\r  {ev:12d} {er:12.8f}{ub:16.6f}{lb:16.6f}{sd:12.6f}  ",
             post,
             end=end,
         )
@@ -37,17 +37,17 @@ def main(n_apm=3, n_mol=10, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0):
     sep2 = "  ---------------------------------------|--------|-------------------|---------"
 
     print(sep1)
-    print("                 Molecular-oriented RMSD for Branch-and-bound")
+    print("                  Molecular-oriented RMSD for Branch-and-bound")
     print(sep1)
     print("      --System settings--")
     print(
-        f"    Atoms per molecule :{n_apm:2d}    molecular symmetry : 0 ",
-        [i for i in range(3)],
+        f"    Atoms per molecule :{n_apm:14d}  | Molecular symmetry :   0 ",
+        [i for i in range(len(sym[0]))],
     )
-    print(f"    Number of molecule :{n_mol:2d}                         1 ", sym[0])
+    print(f"    Number of molecule :{n_mol:14d}  |                        1 ", sym[0])
     for i in range(len(sym) - 1):
         print(
-            f"                                                  {i+2:2d} ",
+            f"                                        |                 {i+2:8d} ",
             [si for si in sym[i + 1]],
         )
     print()

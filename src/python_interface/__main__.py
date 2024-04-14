@@ -28,7 +28,7 @@ elapsed_wallclock_time = end_wallclock_time - start_wallclock_time
 
 print("    -- Elapsed times --")
 print(
-    f"    cpu time : {elapsed_cpu_time:.6f} sec   wallclock time : {elapsed_wallclock_time:.6f} sec"
+    f"      cpu time : {elapsed_cpu_time:16.3f} sec   wallclock time : {elapsed_wallclock_time:16.3f} sec"
 )
 print(
     "  ===============================================================================\n"
