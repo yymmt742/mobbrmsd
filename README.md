@@ -1,23 +1,8 @@
 <!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a name="readme-top"></a>
-<!--
-*** Thanks for checking out the Best-README-Template. If you have a suggestion
-*** that would make this better, please fork the repo and create a pull request
-*** or simply open an issue with the tag "enhancement".
-*** Don't forget to give the project a star!
-*** Thanks again! Now go create something AMAZING! :D
--->
 
 
 
-<!-- PROJECT SHIELDS -->
-<!--
-*** I'm using markdown "reference style" links for readability.
-*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
-*** See the bottom of this document for the declaration of the reference variables
-*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
-*** https://www.markdownguide.org/basic-syntax/#reference-style-links
--->
 <!--
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
@@ -106,6 +91,16 @@ Calculate mobbrmsd.
 <!-- GETTING STARTED -->
 ## Getting Started
 
+   you can use package build via
+   ```sh
+   pip install git+ssh://git@github.com/yymmt742/mobbrmsd.git
+   ```
+
+   test run
+   ```sh
+   python -m mobbrmsd
+   ```
+
 ### Prerequisites
 
 * gfortran >= 9.4.0
@@ -116,11 +111,6 @@ Calculate mobbrmsd.
 To use the Python interface, you additionally need the following:
 * python >= 3.8
 * pip
-* setuptools >= 42
-* numpy >= 1.21
-* f2py
-* skbuild
-* wheel
 
 ### Installation
 
@@ -133,9 +123,10 @@ To use the Python interface, you additionally need the following:
 1. Build fortran library
    ```sh
    mkdir build && cd build
-   cmake .. -DCMAKE_BUILD_TYPE=[Release, Debug, ...] -DCMAKE_PREFIX_PATH=your_local_cmake_path
+   cmake ..
    make install
    ```
+   use -DCMAKE_BUILD_TYPE=[Release, Debug] -DCMAKE_PREFIX_PATH=your_local_cmake_path
 
 #### python interface
 
@@ -157,6 +148,11 @@ To use the Python interface, you additionally need the following:
    you can use package build via
    ```sh
    pip install git+ssh://git@github.com/yymmt742/mobbrmsd.git
+   ```
+
+   test
+   ```sh
+   python -m mobbrmsd
    ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
