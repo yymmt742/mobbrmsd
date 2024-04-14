@@ -326,7 +326,7 @@ contains
 
   subroutine nearest_neighbor(n_dim, n_atom, n_target, n_mem, n_job,&
  &                            x, y, w, cutoff, difflim, maxeval, &
- &                            nn_index, nn_value)
+ &                            nn_index, bounds)
     integer(kind=IK), intent(in)  :: n_dim
     integer(kind=IK), intent(in)  :: n_atom
     integer(kind=IK), intent(in)  :: n_target
@@ -342,22 +342,17 @@ contains
     real(kind=RK), intent(in)     :: difflim
     integer(kind=IK), intent(in)  :: maxeval
     integer(kind=IK), intent(out) :: nn_index
-    real(kind=RK), intent(out)    :: nn_value
+    real(kind=RK), intent(out)    :: bounds(2, n_target)
     type(mobbrmsd)                :: mob
     real(kind=RK)                 :: cutoff_global
-    real(kind=RK)                 :: nn_values(n_job)
-    integer(kind=IK)              :: nn_indices(n_job)
     integer(kind=IK)              :: i, itgt, ijob
     real(kind=RK)                 :: ub
     type(mobbrmsd_state)          :: s
 
     mob = mobbrmsd(blocks)
-
-    cutoff_global = MERGE(RHUGE, cutoff, cutoff >= ZERO)
+    cutoff_global = MERGE(RHUGE, cutoff, cutoff < ZERO)
     i = 0
 
-    nn_values(:) = RHUGE
-    nn_indices(:) = 0
     !$omp parallel private(itgt, ijob, s)
     do
       !$omp critical
@@ -372,20 +367,16 @@ contains
       call mobbrmsd_run(mob%h, s, X, Y(1, 1, itgt), w(1, ijob), &
      &                  cutoff=ub, difflim=difflim, maxeval=maxeval)
 
-      ub = s%upperbound()
-      if (ub < nn_values(ijob)) then
-        nn_indices(ijob) = itgt
-        nn_values(ijob) = ub
-      end if
+      bounds(1, itgt) = s%upperbound()
+      bounds(2, itgt) = s%lowerbound()
+
       !$omp critical
-      cutoff_global = MIN(ub, cutoff_global)
+      cutoff_global = MIN(bounds(1, itgt), cutoff_global)
       !$omp end critical
     end do
     !$omp end parallel
 
-    i = MINLOC(nn_values, 1)
-    nn_index = nn_indices(i)
-    nn_value = nn_values(i)
+    nn_index = MINLOC(bounds(1, :), 1) - 1
 
   end subroutine nearest_neighbor
 

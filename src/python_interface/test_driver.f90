@@ -84,7 +84,7 @@ contains
     real(RK)                 :: X(n_dim, n_apm, n_mol), Y(n_dim, n_apm, n_mol, n_target)
     integer(IK)              :: n_job, n_mem
     integer(IK)              :: nn_index
-    real(RK)                 :: nn_value
+    real(RK)                 :: nn_values(2, n_target)
     real(RK), allocatable    :: W(:)
 !
     call RANDOM_NUMBER(X)
@@ -99,9 +99,13 @@ contains
 !
     call nearest_neighbor(n_dim, n_atom, n_target, n_mem, n_job,&
  &                        X, Y, W, RHUGE, ZERO, -1, &
- &                        nn_index, nn_value)
+ &                        nn_index, nn_values)
 !
-    print*,nn_index, nn_value
+    print*,nn_index
+    print'(10f6.2)', nn_values(1, :)
+    print *
+    print'(10f6.2)', nn_values(2, :)
+    print *
 !
     call clear_molecule()
 !

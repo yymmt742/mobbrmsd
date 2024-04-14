@@ -1,5 +1,6 @@
 from . import __version__
 from . import demo_bb
+from . import demo_nn
 import sys
 import numpy
 import time
@@ -19,7 +20,8 @@ print(
     " ================================================================================\n"
 )
 
-demo_bb.main(n_apm=3, n_mol=10, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0)
+# demo_bb.main(n_apm=3, n_mol=10, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0)
+demo_nn.main()
 
 end_wallclock_time = time.time()
 end_cpu_time = time.process_time()

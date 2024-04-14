@@ -130,9 +130,9 @@ class mobbrmsd:
 
         if hasattr(self, "ww"):
             if self.ww.shape[1] != self.memsize or self.ww.shape[0] != self.njob:
-                self.ww = numpy.empty(self.njob, self.memsize).T
+                self.ww = numpy.empty((self.njob, self.memsize)).T
         else:
-            self.ww = numpy.empty(self.njob, self.memsize).T
+            self.ww = numpy.empty((self.njob, self.memsize)).T
 
         hret, iret, rret = self.driver.batch_run(
             self.n_header,
@@ -150,6 +150,34 @@ class mobbrmsd:
         return [
             mobbrmsd_result(self.driver, hret, ir, rr) for ir, rr in zip(iret.T, rret.T)
         ]
+
+    def nearest_neighbor(
+        self,
+        x: numpy.ndarray,
+        y: numpy.ndarray,
+        cutoff: float = float("inf"),
+        difflim: float = 0.0,
+        maxeval: int = -1,
+    ) -> tuple:
+
+        x_, y_ = self.varidation_coordinates_2(x, y)
+
+        if hasattr(self, "ww"):
+            if self.ww.shape[1] != self.memsize or self.ww.shape[0] != self.njob:
+                self.ww = numpy.empty((self.njob, self.memsize)).T
+        else:
+            self.ww = numpy.empty((self.njob, self.memsize)).T
+
+        ind, bounds = self.driver.nearest_neighbor(
+            x_,
+            y_,
+            self.ww,
+            cutoff,
+            difflim,
+            maxeval,
+        )
+
+        return ind, bounds
 
     def varidation_coordinates_1(self, x: numpy.ndarray, y: numpy.ndarray) -> tuple:
 
