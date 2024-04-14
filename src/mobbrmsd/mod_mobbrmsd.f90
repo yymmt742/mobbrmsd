@@ -1,5 +1,6 @@
 !| molecular orientation corrected RMSD with branch-and-bound.
 module mod_mobbrmsd
+!$ use omp_lib
   use blas_lapack_interface, only: D, setup_dimension
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, TEN => RTEN, LN_TO_L10, RHUGE
   use mod_bb_list
@@ -14,6 +15,8 @@ module mod_mobbrmsd
   public :: mobbrmsd_state
   public :: mobbrmsd_run
   public :: mobbrmsd_restart
+  public :: mobbrmsd_batch_run
+  public :: mobbrmsd_nearest_neighbor
   public :: mobbrmsd_swap_y
   public :: mobbrmsd_rotate_y
   public :: mobbrmsd_is_finished
@@ -380,9 +383,9 @@ contains
 !
 !| run mobbrmsd
   pure subroutine mobbrmsd_run(header, state, X, Y, W, cutoff, difflim, maxeval)
-    class(mobbrmsd_header), intent(in)   :: header
+    type(mobbrmsd_header), intent(in)    :: header
     !! mobbrmsd_header
-    class(mobbrmsd_state), intent(inout) :: state
+    type(mobbrmsd_state), intent(inout)  :: state
     !! mobbrmsd_state, the result is contained in this structure.
     real(RK), intent(in)                 :: X(*)
     !! reference coordinate
@@ -421,9 +424,9 @@ contains
 !
 !| run mobbrmsd
   pure subroutine mobbrmsd_restart(header, state, W, cutoff, difflim, maxeval)
-    class(mobbrmsd_header), intent(in)   :: header
+    type(mobbrmsd_header), intent(in)    :: header
     !! mobbrmsd_header
-    class(mobbrmsd_state), intent(inout) :: state
+    type(mobbrmsd_state), intent(inout)  :: state
     !! mobbrmsd_state, the result is contained in this structure.
     real(RK), intent(inout)              :: W(*)
     !! work array, must be > header%memsize()
@@ -448,6 +451,102 @@ contains
     call bb_list_rotation_matrix(header%q, state%s, W, state%z(INDEX_TO_ROTMAT))
 !
   end subroutine mobbrmsd_restart
+!
+  !| batch parallel run
+  subroutine mobbrmsd_batch_run(n_target, header, state, X, Y, W, cutoff, difflim, maxeval, rotate_y)
+    integer(IK), intent(in)              :: n_target
+    !! number of target coordinates
+    type(mobbrmsd_header), intent(in)    :: header
+    !! mobbrmsd_header
+    type(mobbrmsd_state), intent(inout)  :: state(n_target)
+    !! mobbrmsd_state, the result is contained in this structure.
+    real(RK), intent(in)                 :: X(*)
+    !! reference coordinate
+    real(RK), intent(inout)              :: Y(*)
+    !! target coordinate
+    real(RK), intent(inout)              :: W(*)
+    !! work array, must be > header%memsize()
+    real(RK), intent(in), optional       :: cutoff
+    !! The search ends when lowerbound is determined to be greater than to cutoff.
+    real(RK), intent(in), optional       :: difflim
+    !! The search ends when the difference between the lower and upper bounds is less than difflim.
+    integer(IK), intent(in), optional    :: maxeval
+    !! The search ends when ncount exceeds maxiter.
+    logical, intent(in), optional        :: rotate_y
+    !! The search ends when ncount exceeds maxiter.
+    integer(kind=IK)                     :: i, itgt, ijob, ypnt, wpnt, ldy, ldw
+!
+    i = 0
+    ldy = header%n_dims() * header%n_atoms()
+    ldw = header%memsize()
+!
+    !$omp parallel private(itgt, ijob, ypnt, wpnt)
+    do
+      !$omp critical
+      i = i + 1
+      itgt = i
+      !$omp end critical
+      if (itgt > n_target) exit
+      wpnt = ldw * omp_get_thread_num() + 1
+      ypnt = (itgt - 1) * ldy + 1
+      call mobbrmsd_run(header, state(itgt), X, Y(ypnt), W(wpnt), &
+     &                  cutoff=cutoff, difflim=difflim, maxeval=maxeval)
+      if (rotate_y) call mobbrmsd_rotate_y(header, state(itgt), Y(ypnt))
+    end do
+    !$omp end parallel
+!
+  end subroutine mobbrmsd_batch_run
+!
+  !| batch parallel nearest_neighbor get
+  subroutine mobbrmsd_nearest_neighbor(n_target, header, state, X, Y, W, cutoff, difflim, maxeval)
+    integer(IK), intent(in)              :: n_target
+    !! number of target coordinates
+    type(mobbrmsd_header), intent(in)    :: header
+    !! mobbrmsd_header
+    type(mobbrmsd_state), intent(inout)  :: state(n_target)
+    !! mobbrmsd_state, the result is contained in this structure.
+    real(kind=RK), intent(in)            :: X(*)
+   !! reference coordinate
+    real(kind=RK), intent(in)            :: y(*)
+   !! target coordinate
+    real(kind=RK), intent(inout)         :: W(*)
+   !! work memory
+    real(RK), intent(in), optional       :: cutoff
+    !! The search ends when lowerbound is determined to be greater than to cutoff.
+    real(RK), intent(in), optional       :: difflim
+    !! The search ends when the difference between the lower and upper bounds is less than difflim.
+    integer(IK), intent(in), optional    :: maxeval
+    !! The search ends when ncount exceeds maxiter.
+    real(kind=RK)                        :: cutoff_global, ub
+    integer(kind=IK)                     :: i, itgt, ypnt, wpnt, ldy, ldw
+!
+    ldy = header%n_dims() * header%n_atoms()
+    ldw = header%memsize()
+    cutoff_global = MERGE(RHUGE, cutoff, cutoff < ZERO)
+    i = 0
+!
+    !$omp parallel private(itgt, ub)
+    do
+      !$omp critical
+      i = i + 1
+      itgt = i
+      !$omp end critical
+      if (itgt > n_target) exit
+!
+      wpnt = ldw * omp_get_thread_num() + 1
+      ypnt = (itgt - 1) * ldy + 1
+      ub = cutoff_global
+      call mobbrmsd_run(header, state(itgt), X, Y(ypnt), W(wpnt), &
+     &                  cutoff=ub, difflim=difflim, maxeval=maxeval)
+      ub = state(itgt)%upperbound()
+!
+      !$omp critical
+      cutoff_global = MIN(ub, cutoff_global)
+      !$omp end critical
+    end do
+    !$omp end parallel
+!
+  end subroutine mobbrmsd_nearest_neighbor
 !
 !| swap target coordinate.
   pure subroutine mobbrmsd_swap_y(header, state, Y)

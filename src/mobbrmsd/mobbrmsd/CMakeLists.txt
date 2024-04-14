@@ -16,8 +16,6 @@ if ( INT )
   target_compile_definitions(${TARGET_GD} PUBLIC INT${INT})
 endif ()
 
-target_include_directories(${TARGET_GD} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-
 target_sources(${TARGET_GD} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
@@ -32,7 +30,9 @@ target_sources(${TARGET_GD} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90 )
+target_include_directories(${TARGET_GD} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 target_link_libraries( ${TARGET_GD} PRIVATE blas )
+target_link_libraries( ${TARGET_GD} PRIVATE ${OpenMP_Fortran_LIB_NAMES} )
 
 set_target_properties(${TARGET_GD} PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_GD_DIR})
 add_library(${TARGET_GD}_shared SHARED $<TARGET_OBJECTS:mobbrmsd>)
@@ -40,6 +40,7 @@ set_target_properties(${TARGET_GD}_shared PROPERTIES OUTPUT_NAME ${TARGET_GD})
 add_library(${TARGET_GD}_static STATIC $<TARGET_OBJECTS:mobbrmsd>)
 set_target_properties(${TARGET_GD}_static PROPERTIES OUTPUT_NAME ${TARGET_GD})
 target_link_libraries( ${TARGET_GD}_static PRIVATE blas )
+target_link_libraries( ${TARGET_GD}_static PRIVATE ${OpenMP_Fortran_LIB_NAMES} )
 
 install(TARGETS ${TARGET_GD}_static
         EXPORT ${TARGET_GD}-export
@@ -178,6 +179,7 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   target_include_directories( test_mobbrmsd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
   target_link_libraries( test_mobbrmsd PRIVATE unittest )
   target_link_libraries( test_mobbrmsd PRIVATE purelapack )
+  target_link_libraries( test_mobbrmsd PRIVATE ${OpenMP_Fortran_LIB_NAMES} )
   add_test( NAME test_mobbrmsd COMMAND test_mobbrmsd 4 )
 endif()
 
