@@ -51,9 +51,9 @@ mrmsd.add_molecule(n_apm, n_mol, sym)
 ub, lb = numpy.inf, 0.0
 ret = mrmsd.run(x, y, maxeval=0)
 
-print("    --------------------------------------------------------------------------")
-print("                  Molecular-oriented RMSD for Branch-and-bound")
-print("    --------------------------------------------------------------------------")
+print("  ----------------------------------------------------------------------------")
+print("                 Molecular-oriented RMSD for Branch-and-bound")
+print("  ----------------------------------------------------------------------------")
 print("        N_eval   Eval_ratio      Upperbound      Lowerbound      RMSD")
 i = 0
 xtra = ["|    ", " /   ", "  -  ", "   \\ ", "    |", "   \\ ", "  -  ", " /   "]
@@ -75,20 +75,18 @@ print(
     f"\r  {ret.n_eval:12d} {ret.eval_ratio:12.8f}{ret.bounds[0]:16.6f}{ret.bounds[1]:16.6f}{ret.rmsd:12.6f}       "
 )
 ret = mrmsd.restart(ret, maxeval=0, Y=y)
-print("    --------------------------------------------------------------------------")
+print("  ----------------------------------------------------------------------------")
 print("      -- Final results --")
 print("        N_eval   Eval_ratio      Upperbound      Lowerbound      RMSD")
 print(
     f"  {ret.n_eval:12d} {ret.eval_ratio:12.8f}{ret.bounds[0]:16.6f}{ret.bounds[1]:16.6f}{ret.rmsd:12.6f} "
 )
 print(
-    "    --------------------------------------------------------------------------\n"
+    "  ----------------------------------------------------------------------------\n"
 )
 
-print(
-    "  ------------------------------------------------------------------------------"
-)
-print("        Reference     | Target (original) |  disp. |  Target (rotate)  |  disp.")
+print("  -----------------------------------------------------------------------------")
+print("       Reference     | Target (original) |  disp. |  Target (rotate)  |  disp.")
 for xi, yi, zi in zip(
     x.reshape([n_mol, n_apm, 3]),
     y.reshape([n_mol, n_apm, 3]),
