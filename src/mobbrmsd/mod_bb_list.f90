@@ -235,15 +235,11 @@ contains
     pw = w_pointer(q)
 !
     s(sb) = MAX(s(sb), 1)
-!
-    coff = RHUGE
-    diff = ZERO
-    nlim = RHUGE
-!
-    if (PRESENT(cutoff)) coff = MIN(coff, cutoff)
-    if (PRESENT(difflim)) diff = MAX(diff, difflim)
-    if (PRESENT(maxeval)) nlim = MERGE(real(maxeval, RK), nlim, maxeval >= 0)
-!
+!&<
+    coff = RHUGE ; if (PRESENT(cutoff))  coff = MIN(coff, cutoff)
+    diff = ZERO  ; if (PRESENT(difflim)) diff = MAX(diff, difflim)
+    nlim = RHUGE ; if (PRESENT(maxeval)) nlim = MERGE(nlim, real(maxeval, RK), maxeval < 0)
+!&>
     call run_bb(n, q(pq), q(ps), q(pw), q, coff, diff, nlim, s(sb), s, W)
 !
   end subroutine bb_list_run
@@ -254,7 +250,9 @@ contains
   integer(IK), intent(inout) :: b, s(*)
   real(RK), intent(inout)    :: W(*)
 !
-    do
+    call update_lowerbound(b, pq, ps, pw, q, s, W)
+!
+    do while (W(nc) < nlim .and. coff > W(lb) .and. W(ub) - W(lb) > diff)
 !
 !     Expansion process
 !
@@ -302,10 +300,10 @@ contains
       end block
 !
       if (b == 1 .and. bb_block_queue_is_empty(q(pq(b)), s(ps(b)))) exit
-      if (nlim <= W(nc)) exit
-      if (W(lb) > coff) exit
-      if (W(ub) - W(lb) < diff) exit
+!
     end do
+!
+!   Calculate evaluate ratio
 !
     block
       integer(IK) :: i
