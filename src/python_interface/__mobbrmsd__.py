@@ -36,10 +36,8 @@ class mobbrmsd:
             self.driver = driver
             self.driver.setup_dimension(d)
 
-        self.ndim = self.driver.n_dims()
-        self.natom = 0
-        self.memsize = 0
-        self.njob = self.driver.n_jobs()
+        self.ndim, self.natom = self.driver.n_atoms()
+        self.memsize, self.njob = self.driver.workmemory_lengthes()
         self.n_header, self.n_int, self.n_float = self.driver.state_vector_lengthes()
 
     def add_molecule(self, n_apm, n_mol=1, swp=None):
@@ -51,8 +49,8 @@ class mobbrmsd:
             s = swp_.shape[0] + 1
             self.driver.add_molecule(n_apm, n_mol, s, swp_.flatten())
 
-        self.natom = self.driver.n_atoms()
-        self.memsize = self.driver.workmemory_length()
+        self.ndim, self.natom = self.driver.n_atoms()
+        self.memsize, self.njob = self.driver.workmemory_lengthes()
         self.n_header, self.n_int, self.n_float = self.driver.state_vector_lengthes()
 
     def run(
@@ -66,7 +64,12 @@ class mobbrmsd:
     ) -> mobbrmsd_result:
 
         x_, y_ = self.varidation_coordinates_1(x, y)
-        self.w = numpy.empty(self.memsize)
+
+        if hasattr(self, "w"):
+            if self.w.size != self.memsize:
+                self.w = numpy.empty(self.memsize)
+        else:
+            self.w = numpy.empty(self.memsize)
 
         hret, iret, rret = self.driver.run(
             self.n_header,
@@ -92,7 +95,7 @@ class mobbrmsd:
         Y: numpy.ndarray = None,
     ) -> mobbrmsd_result:
 
-        if self.w is None:
+        if not hasattr(self, "w"):
             raise ValueError
 
         self.driver.restart(
@@ -124,7 +127,12 @@ class mobbrmsd:
     ) -> list:
 
         x_, y_ = self.varidation_coordinates_2(x, y)
-        self.ww = numpy.empty(self.njob, self.memsize).T
+
+        if hasattr(self, "ww"):
+            if self.ww.shape[1] != self.memsize or self.ww.shape[0] != self.njob:
+                self.ww = numpy.empty(self.njob, self.memsize).T
+        else:
+            self.ww = numpy.empty(self.njob, self.memsize).T
 
         hret, iret, rret = self.driver.batch_run(
             self.n_header,

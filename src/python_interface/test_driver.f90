@@ -4,11 +4,11 @@ program main
   use mod_unittest
   implicit none
   type(unittest) :: u
-  integer        :: n_dim
+  integer        :: n_dim, n_atom
 !
   call u%init('test python_driver')
 !
-  call n_dims(n_dim)
+  call n_atoms(n_dim, n_atom)
   print*,n_dim
 !
   call test1(n_dim)
@@ -54,8 +54,7 @@ contains
       Y(:, :, :, l) = 0.2 * X + 0.8 * Y(:, :, :, l)
     end do
 !
-    call n_jobs(n_job)
-    call workmemory_length(n_mem)
+    call workmemory_lengthes(n_mem, n_job)
     call state_vector_lengthes(n_header, n_int, n_float)
     print*, n_header, n_int, n_float
 !
@@ -94,8 +93,7 @@ contains
 !
     call add_molecule(n_apm, n_mol, 2, [5, 6, 7, 8, 1, 2, 3, 4])
 !
-    call n_jobs(n_job)
-    call workmemory_length(n_mem)
+    call workmemory_lengthes(n_mem, n_job)
     print*, n_job, n_mem
     allocate (w(n_job * n_mem))
 !
