@@ -56,10 +56,9 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0
     mrmsd = mobbrmsd()
     mrmsd.add_molecule(n_apm, n_mol, sym)
 
-    for xi in x:
-        ind, bounds = mrmsd.nearest_neighbor(x[0], x)
-    print(x[ind])
-    print(bounds)
+    edges, weights, states =mrmsd.min_span_tree(x)
+    print(edges)
+    print(weights)
 
 
 if __name__ == "__main__":
