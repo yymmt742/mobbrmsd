@@ -37,6 +37,8 @@ target_link_libraries( ${TARGET_GD} PRIVATE ${OpenMP_Fortran_LIB_NAMES} )
 set_target_properties(${TARGET_GD} PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_GD_DIR})
 add_library(${TARGET_GD}_shared SHARED $<TARGET_OBJECTS:mobbrmsd>)
 set_target_properties(${TARGET_GD}_shared PROPERTIES OUTPUT_NAME ${TARGET_GD})
+target_link_libraries(${TARGET_GD}_shared PRIVATE ${OpenMP_Fortran_LIB_NAMES} )
+
 add_library(${TARGET_GD}_static STATIC $<TARGET_OBJECTS:mobbrmsd>)
 set_target_properties(${TARGET_GD}_static PROPERTIES OUTPUT_NAME ${TARGET_GD})
 target_link_libraries( ${TARGET_GD}_static PRIVATE blas )

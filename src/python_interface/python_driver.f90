@@ -1,10 +1,12 @@
 module driver
-!$ use omp_lib
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mobbrmsd, only: mobbrmsd, &
  &                         mobbrmsd_n_dims, &
+ &                         mobbrmsd_num_threads, &
  &                         mobbrmsd_run, &
  &                         mobbrmsd_restart, &
+ &                         mobbrmsd_batch_run, &
+ &                         mobbrmsd_nearest_neighbor, &
  &                         mobbrmsd_rotate_y, &
  &                         mobbrmsd_is_finished, &
  &                         mol_block_input, &
@@ -98,9 +100,7 @@ contains
       n_mem = 0
     endif
 
-    !$omp parallel
-    n_job = MAX(omp_get_num_threads(), 1)
-    !$omp end parallel
+    n_job = mobbrmsd_num_threads()
 
   end subroutine workmemory_lengthes
 
@@ -130,7 +130,7 @@ contains
     real(kind=RK), intent(out)   :: res
 
     res = SQRT(float_states(INDEX_OF_RCP_NATOM) &
-              &     * MAX(float_states(INDEX_OF_UPPERBOUND), ZERO))
+              & * MAX(float_states(INDEX_OF_UPPERBOUND), ZERO))
 
   end subroutine rmsd
 
@@ -293,34 +293,21 @@ contains
     integer(kind=IK), intent(out) :: int_states(n_int, n_target)
     real(kind=RK), intent(out)    :: float_states(n_float, n_target)
     type(mobbrmsd)                :: mob
+    type(mobbrmsd_state)          :: s(n_target)
     integer(kind=IK)              :: i
-    integer(kind=IK)              :: itgt, ijob
-    type(mobbrmsd_state)          :: s
 
     mob = mobbrmsd(blocks)
-    header = mob%h%dump()
-
-    i = 0
-
-    !$omp parallel private(itgt, ijob, s)
-    do
-      !$omp critical
-      i = i + 1
-      itgt = i
-      !$omp end critical
-
-      if (itgt > n_target) exit
-
-      ijob = omp_get_thread_num() + 1
-      s = mob%s
-      call mobbrmsd_run(mob%h, s, X, Y(1, 1, itgt), w(1, ijob), cutoff, difflim, maxeval)
-      if (rotate_y) call mobbrmsd_rotate_y(mob%h, s, Y(1, 1, itgt))
-
-      int_states(:, itgt) = s%dump()
-      float_states(:, itgt) = s%dump_real()
-
+    do concurrent(i=1:n_target)
+      s(i) = mob%s
     end do
-    !$omp end parallel
+
+    call mobbrmsd_batch_run(n_target, mob%h, s, X, Y, W, cutoff, difflim, maxeval, rotate_y)
+!
+    header = mob%h%dump()
+    do concurrent(i=1:n_target)
+      int_states(:, i) =  s(i)%dump()
+      float_states(:, i) =  s(i)%dump_real()
+    end do
 
   end subroutine batch_run
 
@@ -344,38 +331,20 @@ contains
     integer(kind=IK), intent(out) :: nn_index
     real(kind=RK), intent(out)    :: bounds(2, n_target)
     type(mobbrmsd)                :: mob
-    real(kind=RK)                 :: cutoff_global
-    integer(kind=IK)              :: i, itgt, ijob
-    real(kind=RK)                 :: ub
-    type(mobbrmsd_state)          :: s
+    type(mobbrmsd_state)          :: s(n_target)
+    integer(kind=IK)              :: i
 
     mob = mobbrmsd(blocks)
-    cutoff_global = MERGE(RHUGE, cutoff, cutoff < ZERO)
-    i = 0
-
-    !$omp parallel private(itgt, ijob, s)
-    do
-      !$omp critical
-      i = i + 1
-      itgt = i
-      !$omp end critical
-      if (itgt > n_target) exit
-
-      ijob = omp_get_thread_num() + 1
-      s = mob%s
-      ub = cutoff_global
-      call mobbrmsd_run(mob%h, s, X, Y(1, 1, itgt), w(1, ijob), &
-     &                  cutoff=ub, difflim=difflim, maxeval=maxeval)
-
-      bounds(1, itgt) = s%upperbound()
-      bounds(2, itgt) = s%lowerbound()
-
-      !$omp critical
-      cutoff_global = MIN(bounds(1, itgt), cutoff_global)
-      !$omp end critical
+    do concurrent(i=1:n_target)
+      s(i) = mob%s
     end do
-    !$omp end parallel
 
+    call mobbrmsd_nearest_neighbor(n_target, mob%h, s, X, Y, W, cutoff, difflim, maxeval)
+
+    do concurrent(i=1:n_target)
+      bounds(1, i) =  s(i)%upperbound()
+      bounds(2, i) =  s(i)%lowerbound()
+    end do
     nn_index = MINLOC(bounds(1, :), 1) - 1
 
   end subroutine nearest_neighbor

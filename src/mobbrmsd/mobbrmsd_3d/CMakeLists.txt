@@ -35,8 +35,11 @@ target_sources(${TARGET_3D} PRIVATE
 
 target_link_libraries(${TARGET_3D} PRIVATE ${OpenMP_Fortran_LIB_NAMES} )
 set_target_properties(${TARGET_3D} PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_3D_DIR})
+
 add_library(${TARGET_3D}_shared SHARED $<TARGET_OBJECTS:mobbrmsd_3d>)
 set_target_properties(${TARGET_3D}_shared PROPERTIES OUTPUT_NAME ${TARGET_3D})
+target_link_libraries(${TARGET_3D}_shared PRIVATE ${OpenMP_Fortran_LIB_NAMES} )
+
 add_library(${TARGET_3D}_static STATIC $<TARGET_OBJECTS:mobbrmsd_3d>)
 set_target_properties(${TARGET_3D}_static PROPERTIES OUTPUT_NAME ${TARGET_3D})
 target_link_libraries(${TARGET_3D}_static PRIVATE ${OpenMP_Fortran_LIB_NAMES} )

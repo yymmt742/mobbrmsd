@@ -1,34 +1,6 @@
 find_package(BLAS REQUIRED)
-find_package(OpenMP REQUIRED)
-find_package(Threads REQUIRED)
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-
-add_compile_options(
-  ${OpenMP_Fortran_FLAGS}
-  $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-O3>
-  $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-cpp>
-  $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-std=f2008>
-  $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fimplicit-none>
-  $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fall-intrinsics>
-  $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fexternal-blas>
-  $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-Wuninitialized>
-  $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fbounds-check>
-  $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-Wunused>
-  $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fbacktrace>
-  $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fcheck=array-temps,bounds,do,mem,pointer>
-  $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-O3>
-  $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-fpp>
-  $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-stand>
-  $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:f08>
-  $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-free>
-  $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-implicitnone>
-  $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-qopt-matmul>
-  $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-warn>
-  $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:all>
-  $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-check>
-  $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:bounds>
-  $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-traceback>
-)
+#find_package(Threads REQUIRED)
+#set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 if(SKBUILD)
   find_package(F2PY REQUIRED)
@@ -210,7 +182,6 @@ if(SKBUILD)
 endif()
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
-
   find_package(unittest REQUIRED)
   add_compile_options(${BLAS_Fortran_FLAGS} ${OpenMP_Fortran_FLAGS})
   add_compile_options(${BLAS_LINKER_FLAGS})

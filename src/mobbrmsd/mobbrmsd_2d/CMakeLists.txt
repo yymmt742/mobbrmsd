@@ -34,8 +34,11 @@ target_sources(${TARGET_2D} PRIVATE
 target_include_directories(${TARGET_2D} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 target_link_libraries(${TARGET_2D} PRIVATE ${OpenMP_Fortran_LIB_NAMES} )
 set_target_properties(${TARGET_2D} PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_2D_DIR})
+
 add_library(${TARGET_2D}_shared SHARED $<TARGET_OBJECTS:mobbrmsd_2d>)
 set_target_properties(${TARGET_2D}_shared PROPERTIES OUTPUT_NAME ${TARGET_2D})
+target_link_libraries(${TARGET_2D}_shared PRIVATE ${OpenMP_Fortran_LIB_NAMES} )
+
 add_library(${TARGET_2D}_static STATIC $<TARGET_OBJECTS:mobbrmsd_2d>)
 set_target_properties(${TARGET_2D}_static PROPERTIES OUTPUT_NAME ${TARGET_2D})
 target_link_libraries(${TARGET_2D}_static PRIVATE ${OpenMP_Fortran_LIB_NAMES} )

@@ -11,6 +11,7 @@ module mod_mobbrmsd
   public :: mol_block_input
   public :: mol_block_input_add
   public :: mobbrmsd_n_dims
+  public :: mobbrmsd_num_threads
   public :: mobbrmsd_header
   public :: mobbrmsd_state
   public :: mobbrmsd_run
@@ -380,6 +381,13 @@ contains
     integer(IK) :: res
     res = D
   end function mobbrmsd_n_dims
+!
+  function mobbrmsd_num_threads() result(res)
+    integer(IK)                        :: res
+    !$omp parallel
+    res = MAX(omp_get_num_threads(), 1)
+    !$omp end parallel
+  end function mobbrmsd_num_threads
 !
 !| run mobbrmsd
   pure subroutine mobbrmsd_run(header, state, X, Y, W, cutoff, difflim, maxeval)
