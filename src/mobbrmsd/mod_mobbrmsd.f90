@@ -678,7 +678,7 @@ contains
     !! minimum spanning tree weights
     logical                              :: mask(n_target)
     integer(kind=IK)                     :: list(2, n_target)
-    real(RK)                             :: vval(n_target - 1), nnval
+    real(RK)                             :: vval(n_target - 1), nnval, cutoff_
     integer(kind=IK)                     :: i, j, xpnt, ldx, nnidx
 !
     ldx = header%n_dims() * header%n_atoms()
@@ -693,25 +693,40 @@ contains
     list(2, 1) = 1
 !
     do j = 1, n_target - 1
+!
       vval(j) = RHUGE
+      if (PRESENT(cutoff)) then
+        cutoff_ = MIN(RHUGE, MAX(cutoff, ZERO))
+      else
+        cutoff_ = RHUGE
+      end if
+!
       do i = 1, j
+!
         xpnt = (list(2, i) - 1) * ldx + 1
-        call mobbrmsd_nearest_neighbor(n_target, header, &
-       &                               state(:, list(2, i)), &
-       &                               X(xpnt), X, W, &
-       &                               cutoff=vval(j), &
-       &                               difflim=difflim, &
-       &                               maxeval=maxeval, &
-       &                               mask=mask, &
-       &                               nnval=nnval,&
-       &                               nnidx=nnidx)
+!
+        call mobbrmsd_nearest_neighbor( &
+       &  n_target, header, &
+       &  state(:, list(2, i)), &
+       &  X(xpnt), X, W, &
+       &  cutoff=cutoff_, &
+       &  difflim=difflim, &
+       &  maxeval=maxeval, &
+       &  mask=mask, &
+       &  nnval=nnval,&
+       &  nnidx=nnidx)
+!
         if (nnval < vval(j)) then
           vval(j) = nnval
+          cutoff_ = MIN(cutoff_, vval(j))
           list(1, j + 1) = list(2, i)
           list(2, j + 1) = nnidx
         end if
+!
       end do
+!
       mask(list(2, j + 1)) = .false.
+!
     end do
 !
     do j = 1, n_target

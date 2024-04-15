@@ -6,7 +6,7 @@ module driver
  &                         mobbrmsd_run, &
  &                         mobbrmsd_restart, &
  &                         mobbrmsd_batch_run, &
- &                         mobbrmsd_nearest_neighbor, &
+ &                         mobbrmsd_min_span_tree, &
  &                         mobbrmsd_rotate_y, &
  &                         mobbrmsd_is_finished, &
  &                         mol_block_input, &
@@ -37,7 +37,7 @@ module driver
   public restart
   public rotate_y
   public batch_run
-  public nearest_neighbor
+  public min_span_tree
 
   type(mol_block_input), allocatable :: blocks(:)
 
@@ -311,43 +311,52 @@ contains
 
   end subroutine batch_run
 
-  subroutine nearest_neighbor(n_dim, n_atom, n_target, n_mem, n_job,&
- &                            x, y, w, cutoff, difflim, maxeval, &
- &                            nn_index, bounds)
-    integer(kind=IK), intent(in)  :: n_dim
-    integer(kind=IK), intent(in)  :: n_atom
-    integer(kind=IK), intent(in)  :: n_target
-    integer(kind=IK), intent(in)  :: n_mem
-    integer(kind=IK), intent(in)  :: n_job
-    real(kind=RK), intent(in)     :: x(n_dim, n_atom)
+  subroutine min_span_tree(n_dim, n_atom, n_target, n_head, &
+ &                         n_int, n_float, n_mem, n_job,&
+ &                         x, w, cutoff, difflim, maxeval, &
+ &                         edges, weights, header, int_states, float_states)
+    integer(kind=IK), intent(in)      :: n_dim
+    integer(kind=IK), intent(in)      :: n_atom
+    integer(kind=IK), intent(in)      :: n_target
+    integer(kind=IK), intent(in)      :: n_head
+    integer(kind=IK), intent(in)      :: n_int
+    integer(kind=IK), intent(in)      :: n_float
+    integer(kind=IK), intent(in)      :: n_mem
+    integer(kind=IK), intent(in)      :: n_job
+    real(kind=RK), intent(in)         :: x(n_dim, n_atom, n_target)
    !! reference coordinate
-    real(kind=RK), intent(in)     :: y(n_dim, n_atom, n_target)
-   !! target coordinate
-    real(kind=RK), intent(inout)  :: W(n_mem, n_job)
+    real(kind=RK), intent(inout)      :: W(n_mem, n_job)
    !! work memory
-    real(kind=RK), intent(in)     :: cutoff
-    real(kind=RK), intent(in)     :: difflim
-    integer(kind=IK), intent(in)  :: maxeval
-    integer(kind=IK), intent(out) :: nn_index
-    real(kind=RK), intent(out)    :: bounds(2, n_target)
-    type(mobbrmsd)                :: mob
-    type(mobbrmsd_state)          :: s(n_target)
-    integer(kind=IK)              :: i
+    real(kind=RK), intent(in)         :: cutoff
+    real(kind=RK), intent(in)         :: difflim
+    integer(kind=IK), intent(in)      :: maxeval
+    integer(kind=IK), intent(out)     :: edges(2, n_target - 1)
+    real(kind=RK), intent(out)        :: weights(n_target - 1)
+    integer(kind=IK), intent(out)     :: header(n_head)
+    integer(kind=IK), intent(out)     :: int_states(n_int, n_target, n_target)
+    real(kind=RK), intent(out)        :: float_states(n_float, n_target, n_target)
+    type(mobbrmsd)                    :: mob
+    type(mobbrmsd_state), allocatable :: s(:, :)
+    integer(kind=IK)                  :: i, j
 
     mob = mobbrmsd(blocks)
-    do concurrent(i=1:n_target)
-      s(i) = mob%s
+    allocate (s(n_target, n_target))
+
+    call mobbrmsd_min_span_tree( &
+   &  n_target, mob%h, s, X, W, &
+   &  cutoff=cutoff, &
+   &  difflim=difflim, &
+   &  maxeval=maxeval, &
+   &  edges=edges, &
+   &  weights=weights)
+
+    header = mob%h%dump()
+    do concurrent(i=1:n_target, j=1:n_target)
+      int_states(:, i, j) = s(i, j)%dump()
+      float_states(:, i, j) = s(i, j)%dump_real()
     end do
 
-    call mobbrmsd_nearest_neighbor(n_target, mob%h, s, X, Y, W, cutoff, difflim, maxeval)
-
-    do concurrent(i=1:n_target)
-      bounds(1, i) =  s(i)%upperbound()
-      bounds(2, i) =  s(i)%lowerbound()
-    end do
-    nn_index = MINLOC(bounds(1, :), 1) - 1
-
-  end subroutine nearest_neighbor
+  end subroutine min_span_tree
 
 end module driver
 

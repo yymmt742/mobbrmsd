@@ -27,8 +27,7 @@ contains
     integer(IK), parameter   :: n_apm = 8, n_mol = 8
     integer(IK), parameter   :: n_atm = n_apm * n_mol
     real(RK)                 :: X(n_dim, n_apm, n_mol), Y(n_dim, n_apm, n_mol, n_target)
-    integer(IK)              :: n_header, n_int, n_float
-    integer(IK)              :: n_job, n_mem
+    integer(IK)              :: n_header, n_int, n_float, n_job, n_mem
     integer(IK), allocatable :: h(:), si(:, :)
     real(RK), allocatable    :: sr(:, :), W(:, :)
     integer(IK)              :: i, j, k, l
@@ -67,9 +66,6 @@ contains
    &               X, Y, W, &
    &               999.0_RK, 0.0_RK, -1, .FALSE., h, si, sr)
     print'(10(I6))',h
-   !do i = 1, n_target
-   !  print'(*(I4))', si(:, i)
-   !end do
     do i = 1, n_target
       print'(5(F12.3))', sr(:4, i), EXP(sr(5, i))
     end do
@@ -79,32 +75,39 @@ contains
 !
   subroutine test2(n_dim)
     integer(IK), intent(in)  :: n_dim
-    integer(IK), parameter   :: n_apm = 8, n_mol = 8, n_target = 1000
+    integer(IK), parameter   :: n_apm = 8, n_mol = 5, n_target = 50
     integer(IK), parameter   :: n_atom = n_apm * n_mol
-    real(RK)                 :: X(n_dim, n_apm, n_mol), Y(n_dim, n_apm, n_mol, n_target)
-    integer(IK)              :: n_job, n_mem
-    integer(IK)              :: nn_index
-    real(RK)                 :: nn_values(2, n_target)
+    real(RK)                 :: X(n_dim, n_apm, n_mol, n_target)
+    integer(IK)              :: n_header, n_int, n_float, n_job, n_mem
+    integer(IK)              :: edges(2, n_target - 1)
+    real(RK)                 :: weights(n_target - 1)
     real(RK), allocatable    :: W(:)
+    integer(IK), allocatable :: header(:), int_states(:, :, :)
+    real(RK), allocatable    :: float_states(:, :, :)
+    integer(IK)              :: i
 !
     call RANDOM_NUMBER(X)
-    call RANDOM_NUMBER(Y)
-    Y(:, :, :, 83) = 0.3 * Y(:, :, :, 83) + 0.7 * X
 !
     call add_molecule(n_apm, n_mol, 2, [5, 6, 7, 8, 1, 2, 3, 4])
 !
     call workmemory_lengthes(n_mem, n_job)
-    print*, n_job, n_mem
+    call state_vector_lengthes(n_header, n_int, n_float)
+    print*, n_header, n_int, n_float, n_job, n_mem
+!
     allocate (w(n_job * n_mem))
+    allocate(header(n_header))
+    allocate(int_states(n_int, n_target, n_target))
+    allocate(float_states(n_float, n_target, n_target))
 !
-    call nearest_neighbor(n_dim, n_atom, n_target, n_mem, n_job,&
- &                        X, Y, W, RHUGE, ZERO, -1, &
- &                        nn_index, nn_values)
+    call min_span_tree( &
+ &    n_dim, n_atom, n_target, &
+ &    n_header, n_int, n_float, n_mem, n_job,&
+ &    X, W, RHUGE, ZERO, -1, &
+ &    edges, weights, header, int_states, float_states)
 !
-    print*,nn_index
-    print'(10f6.2)', nn_values(1, :)
-    print *
-    print'(10f6.2)', nn_values(2, :)
+    do i = 1, n_target - 1
+      print *, edges(:, i), weights(i)
+    end do
     print *
 !
     call clear_molecule()
