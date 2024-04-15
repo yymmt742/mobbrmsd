@@ -18,6 +18,7 @@ module mod_mobbrmsd
   public :: mobbrmsd_restart
   public :: mobbrmsd_batch_run
   public :: mobbrmsd_nearest_neighbor
+  public :: mobbrmsd_min_span_tree
   public :: mobbrmsd_swap_y
   public :: mobbrmsd_rotate_y
   public :: mobbrmsd_is_finished
@@ -59,7 +60,11 @@ module mod_mobbrmsd
   type mobbrmsd_header
     private
     integer(IK)              :: d
+    !! spatial dimension
     integer(IK), allocatable :: q(:)
+    !! header array
+    integer(IK), allocatable :: s(:)
+    !! state template
   contains
     procedure :: n_dims       => mobbrmsd_header_n_dims
     procedure :: n_block      => mobbrmsd_header_n_block
@@ -124,9 +129,10 @@ module mod_mobbrmsd
 !
 contains
 !
+!| add molecule
   pure subroutine mol_block_input_add(this, m, n, sym)
     type(mol_block_input), allocatable, intent(inout) :: this(:)
-    !! this
+    !! mol_block_input array
     integer(IK), intent(in)            :: m
     !! number of atoms per molecule
     integer(IK), intent(in)            :: n
@@ -156,6 +162,7 @@ contains
 !
   end subroutine mol_block_input_add
 !
+!| destractor
   pure elemental subroutine mol_block_input_destroy(this)
     type(mol_block_input), intent(inout) :: this
     if (ALLOCATED(this%sym)) deallocate (this%sym)
@@ -179,6 +186,7 @@ contains
     res = bb_list_n_block(this%q)
   end function mobbrmsd_header_n_block
 !
+!| Returns header_memsize
   pure elemental function mobbrmsd_header_memsize(this) result(res)
     class(mobbrmsd_header), intent(in) :: this
     !! mobbrmsd_header
@@ -186,6 +194,7 @@ contains
     res = bb_list_memsize(this%q)
   end function mobbrmsd_header_memsize
 !
+!| Returns n_atoms
   pure elemental function mobbrmsd_header_n_atoms(this) result(res)
     class(mobbrmsd_header), intent(in) :: this
     !! mobbrmsd_header
@@ -193,6 +202,7 @@ contains
     res = bb_list_n_atoms(this%q)
   end function mobbrmsd_header_n_atoms
 !
+!| Returns log_n_nodes
   pure elemental function mobbrmsd_header_log_n_nodes(this) result(res)
     class(mobbrmsd_header), intent(in) :: this
     !! mobbrmsd_header
@@ -222,63 +232,112 @@ contains
     class(mobbrmsd_header), intent(in) :: this
     !! mobbrmsd_header
     integer(IK), allocatable           :: res(:)
-    res = [this%d, this%q]
+    if (ALLOCATED(this%q) .and. ALLOCATED(this%s)) then
+      res = [this%d, SIZE(this%q), this%q, this%s]
+    else
+      res = [this%d, 0]
+    end if
   end function mobbrmsd_header_dump
 !
 !| load integer array as header
-  pure subroutine mobbrmsd_header_load(this, nq, q)
+  pure subroutine mobbrmsd_header_load(this, q)
     class(mobbrmsd_header), intent(inout) :: this
     !! mobbrmsd_header
-    integer(IK), intent(in)               :: nq, q(*)
+    integer(IK), intent(in)               :: q(:)
     !! header array
+    integer(IK)                           :: sq, i
     this%d = q(1)
-    this%q = q(2:nq)
+    sq = q(2)
+    if (sq < 1) then
+      this%q = [(0, i=1, 0)]
+      this%s = [(0, i=1, 0)]
+      return
+    else
+      this%q = q(3:2 + sq)
+      this%s = q(3 + sq:)
+    end if
   end subroutine mobbrmsd_header_load
 !
 !| destructer
   pure elemental subroutine mobbrmsd_header_destroy(this)
     type(mobbrmsd_header), intent(inout) :: this
     if (ALLOCATED(this%q)) deallocate (this%q)
+    if (ALLOCATED(this%s)) deallocate (this%s)
   end subroutine mobbrmsd_header_destroy
 !
 ! ------
 !
+!| returns upperbound
+  pure elemental subroutine mobbrmsd_state_reset(this, header)
+    class(mobbrmsd_state), intent(inout) :: this
+    type(mobbrmsd_header), intent(in)    :: header
+    real(RK)                             :: z(5 + header%n_dims()**2)
+!
+    this%s = header%s
+!
+    z(INDEX_OF_RCP_NATOM) = ONE / real(header%n_atoms(), RK)
+    z(INDEX_OF_UPPERBOUND) = RHUGE
+    z(INDEX_OF_LOWERBOUND) = ZERO
+    z(INDEX_OF_LOG_RATIO) = -RHUGE
+    z(INDEX_OF_N_EVAL) = ZERO
+    call eye(header%n_dims(), z(INDEX_TO_ROTMAT))
+!
+    this%z = z
+!
+  contains
+    pure subroutine eye(n_dims, e)
+      integer(IK), intent(in) :: n_dims
+      real(RK), intent(inout) :: e(n_dims, n_dims)
+      integer(IK)             :: i, j
+      do concurrent(i=1:n_dims, j=1:n_dims)
+        e(i, j) = MERGE(ONE, ZERO, i == j)
+      end do
+    end subroutine eye
+  end subroutine mobbrmsd_state_reset
+!
+!| returns upperbound
   pure elemental function mobbrmsd_state_upperbound(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
     real(RK)                          :: res
     res = this%z(INDEX_OF_UPPERBOUND)
   end function mobbrmsd_state_upperbound
 !
+!| returns lowerbound
   pure elemental function mobbrmsd_state_lowerbound(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
     real(RK)                          :: res
     res = this%z(INDEX_OF_LOWERBOUND)
   end function mobbrmsd_state_lowerbound
 !
+!| returns squared deviation
   pure elemental function mobbrmsd_state_sqrdev(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
     real(RK)                          :: res
     res = MAX(ZERO, this%z(INDEX_OF_UPPERBOUND))
   end function mobbrmsd_state_sqrdev
 !
+!| returns rmsd
   pure elemental function mobbrmsd_state_rmsd(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
     real(RK)                          :: res
     res = SQRT(this%z(INDEX_OF_RCP_NATOM) * MAX(ZERO, this%z(INDEX_OF_UPPERBOUND)))
   end function mobbrmsd_state_rmsd
 !
+!| returns n_eval
   pure elemental function mobbrmsd_state_n_eval(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
     integer(IK)                       :: res
     res = NINT(this%z(INDEX_OF_N_EVAL), IK)
   end function mobbrmsd_state_n_eval
 !
+!| returns eval_ratio
   pure elemental function mobbrmsd_state_eval_ratio(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
     real(RK)                          :: res
     res = EXP(this%z(INDEX_OF_LOG_RATIO))
   end function mobbrmsd_state_eval_ratio
 !
+!| returns log_eval_ratio
   pure elemental function mobbrmsd_state_log_eval_ratio(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
     real(RK)                          :: res
@@ -299,11 +358,6 @@ contains
     !! mobbrmsd_header
     real(RK), allocatable             :: res(:)
     res = this%z
-   !res = [this%rcnatm, &
-   !  &    this%uppbou, &
-   !  &    this%lowbou, &
-   !  &    this%lograt, &
-   !  &    this%numevl]
   end function mobbrmsd_state_dump_real
 !
 !| load integer array as header
@@ -316,11 +370,6 @@ contains
     !! state real array
     this%s = s(:ns)
     this%z = z(:nz)
-!   this%rcnatm = z(INDEX_OF_RCP_NATOM)
-!   this%uppbou = z(INDEX_OF_UPPERBOUND)
-!   this%lowbou = z(INDEX_OF_LOWERBOUND)
-!   this%lograt = z(INDEX_OF_LOG_RATIO)
-!   this%numevl = z(INDEX_OF_N_EVAL)
   end subroutine mobbrmsd_state_load
 !
   pure elemental subroutine mobbrmsd_state_destroy(this)
@@ -354,26 +403,11 @@ contains
       bblst = bb_list(bbblk)
       res%h%d = D
       res%h%q = bblst%q
+      res%h%s = bblst%s
       res%s%s = bblst%s
-      allocate (res%s%z(5 + D * D))
-      res%s%z(INDEX_OF_RCP_NATOM) = ONE / real(bb_list_n_atoms(bblst%q), RK)
+      call mobbrmsd_state_reset(res%s, res%h)
     end block
 !
-    res%s%z(INDEX_OF_UPPERBOUND) = RHUGE
-    res%s%z(INDEX_OF_LOWERBOUND) = ZERO
-    res%s%z(INDEX_OF_LOG_RATIO) = -RHUGE
-    res%s%z(INDEX_OF_N_EVAL) = ZERO
-    call eye(D, res%s%z(INDEX_TO_ROTMAT))
-!
-  contains
-    pure subroutine eye(n_dims, e)
-      integer(IK), intent(in) :: n_dims
-      real(RK), intent(inout) :: e(n_dims, n_dims)
-      integer(IK)             :: i, j
-      do concurrent(i=1:n_dims, j=1:n_dims)
-        e(i, j) = MERGE(ONE, ZERO, i == j)
-      end do
-    end subroutine eye
   end function mobbrmsd_new_from_block
 !
 !| returns spatial dimension
@@ -390,7 +424,9 @@ contains
   end function mobbrmsd_num_threads
 !
 !| run mobbrmsd
-  pure subroutine mobbrmsd_run(header, state, X, Y, W, cutoff, difflim, maxeval)
+  pure subroutine mobbrmsd_run(header, state, &
+ &                             X, Y, W, &
+ &                             cutoff, difflim, maxeval)
     type(mobbrmsd_header), intent(in)    :: header
     !! mobbrmsd_header
     type(mobbrmsd_state), intent(inout)  :: state
@@ -414,16 +450,34 @@ contains
 !
     if (PRESENT(W)) then
 !
-      call bb_list_setup(header%q, state%s, X, Y, W)
-      call mobbrmsd_restart(header, state, W, cutoff, difflim, maxeval)
+      call bb_list_setup(header%q, &
+     &                   state%s,  &
+     &                   X,  &
+     &                   Y,  &
+     &                   W)
+      call mobbrmsd_restart(header, &
+     &                      state,  &
+     &                      W, &
+     &                      cutoff=cutoff, &
+     &                      difflim=difflim, &
+     &                      maxeval=maxeval)
 !
     else
 !
       block
         real(RK), allocatable :: T(:)
         allocate (T(header%memsize()))
-        call bb_list_setup(header%q, state%s, X, Y, T)
-        call mobbrmsd_restart(header, state, W, cutoff, difflim, maxeval)
+        call bb_list_setup(header%q, &
+       &                   state%s,  &
+       &                   X,  &
+       &                   Y,  &
+       &                   T)
+        call mobbrmsd_restart(header, &
+       &                      state,  &
+       &                      T, &
+       &                      cutoff=cutoff, &
+       &                      difflim=difflim, &
+       &                      maxeval=maxeval)
       end block
 !
     end if
@@ -431,7 +485,8 @@ contains
   end subroutine mobbrmsd_run
 !
 !| run mobbrmsd
-  pure subroutine mobbrmsd_restart(header, state, W, cutoff, difflim, maxeval)
+  pure subroutine mobbrmsd_restart(header, state, W, &
+ &                                 cutoff, difflim, maxeval)
     type(mobbrmsd_header), intent(in)    :: header
     !! mobbrmsd_header
     type(mobbrmsd_state), intent(inout)  :: state
@@ -461,7 +516,9 @@ contains
   end subroutine mobbrmsd_restart
 !
   !| batch parallel run
-  subroutine mobbrmsd_batch_run(n_target, header, state, X, Y, W, cutoff, difflim, maxeval, rotate_y)
+  subroutine mobbrmsd_batch_run(n_target, header, state, &
+  &                             X, Y, W, &
+  &                             cutoff, difflim, maxeval, rotate_y)
     integer(IK), intent(in)              :: n_target
     !! number of target coordinates
     type(mobbrmsd_header), intent(in)    :: header
@@ -473,7 +530,7 @@ contains
     real(RK), intent(inout)              :: Y(*)
     !! target coordinate
     real(RK), intent(inout)              :: W(*)
-    !! work array, must be > header%memsize()
+   !! work memory, must be larger than header%memsize() * mobbrmsd_num_threads()
     real(RK), intent(in), optional       :: cutoff
     !! The search ends when lowerbound is determined to be greater than to cutoff.
     real(RK), intent(in), optional       :: difflim
@@ -505,32 +562,51 @@ contains
 !
   end subroutine mobbrmsd_batch_run
 !
-  !| batch parallel nearest_neighbor get
-  subroutine mobbrmsd_nearest_neighbor(n_target, header, state, X, Y, W, cutoff, difflim, maxeval)
-    integer(IK), intent(in)              :: n_target
+  !| batch parallel nearest_neighbor
+  subroutine mobbrmsd_nearest_neighbor(n_target, header, state, X, Y, W, &
+ &                                     cutoff, difflim, maxeval, mask, nnval, nnidx)
+    integer(IK), intent(in)             :: n_target
     !! number of target coordinates
-    type(mobbrmsd_header), intent(in)    :: header
+    type(mobbrmsd_header), intent(in)   :: header
     !! mobbrmsd_header
-    type(mobbrmsd_state), intent(inout)  :: state(n_target)
+    type(mobbrmsd_state), intent(inout) :: state(n_target)
     !! mobbrmsd_state, the result is contained in this structure.
-    real(kind=RK), intent(in)            :: X(*)
+    real(kind=RK), intent(in)           :: X(*)
    !! reference coordinate
-    real(kind=RK), intent(in)            :: y(*)
+    real(kind=RK), intent(in)           :: y(*)
    !! target coordinate
-    real(kind=RK), intent(inout)         :: W(*)
-   !! work memory
-    real(RK), intent(in), optional       :: cutoff
+    real(kind=RK), intent(inout)        :: W(*)
+   !! work memory, must be larger than header%memsize() * mobbrmsd_num_threads()
+    real(RK), intent(in), optional      :: cutoff
     !! The search ends when lowerbound is determined to be greater than to cutoff.
-    real(RK), intent(in), optional       :: difflim
+    real(RK), intent(in), optional      :: difflim
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
-    integer(IK), intent(in), optional    :: maxeval
+    integer(IK), intent(in), optional   :: maxeval
     !! The search ends when ncount exceeds maxiter.
-    real(kind=RK)                        :: cutoff_global, ub
-    integer(kind=IK)                     :: i, itgt, ypnt, wpnt, ldy, ldw
+    logical, intent(in), optional       :: mask(n_target)
+    !! If .false., skip the calculation.
+    real(RK), intent(out), optional     :: nnval
+    !! nearest neighbor index
+    integer(IK), intent(out), optional  :: nnidx
+    !! nearest neighbor index
+    real(kind=RK)                       :: cutoff_global, ub
+    integer(kind=IK)                    :: i, itgt, ypnt, wpnt, ldy, ldw
 !
     ldy = header%n_dims() * header%n_atoms()
     ldw = header%memsize()
-    cutoff_global = MERGE(RHUGE, cutoff, cutoff < ZERO)
+!
+    if(PRESENT(cutoff))then
+      cutoff_global = MERGE(RHUGE, cutoff, cutoff < ZERO)
+    else
+      cutoff_global = RHUGE
+    endif
+!
+    if (PRESENT(mask)) then
+      cutoff_global = MIN(MINVAL(state%upperbound(), mask), cutoff_global)
+    else
+      cutoff_global = MIN(MINVAL(state%upperbound()), cutoff_global)
+    end if
+!
     i = 0
 !
     !$omp parallel private(itgt, ub)
@@ -539,13 +615,21 @@ contains
       i = i + 1
       itgt = i
       !$omp end critical
+!
       if (itgt > n_target) exit
+!
+      if (PRESENT(mask)) then
+        if (.not. mask(itgt)) cycle
+      end if
 !
       wpnt = ldw * omp_get_thread_num() + 1
       ypnt = (itgt - 1) * ldy + 1
       ub = cutoff_global
-      call mobbrmsd_run(header, state(itgt), X, Y(ypnt), W(wpnt), &
-     &                  cutoff=ub, difflim=difflim, maxeval=maxeval)
+      call mobbrmsd_run(header, state(itgt), &
+     &                  X, Y(ypnt), W(wpnt), &
+     &                  cutoff=ub, &
+     &                  difflim=difflim, &
+     &                  maxeval=maxeval)
       ub = state(itgt)%upperbound()
 !
       !$omp critical
@@ -554,7 +638,103 @@ contains
     end do
     !$omp end parallel
 !
+    if (PRESENT(mask)) then
+      if(PRESENT(nnval)) nnval = MINVAL(state%upperbound(), mask)
+      if(PRESENT(nnidx)) nnidx = MINLOC(state%upperbound(), 1, mask)
+    else
+      if(PRESENT(nnval)) nnval = MINVAL(state%upperbound())
+      if(PRESENT(nnidx)) nnidx = MINLOC(state%upperbound(), 1)
+    end if
+!
   end subroutine mobbrmsd_nearest_neighbor
+!
+  !| batch parallel nearest_neighbor
+  subroutine mobbrmsd_min_span_tree(n_target, header, state, X, W, &
+ &                                  cutoff, difflim, maxeval, &
+ &                                  edges, weights)
+    integer(IK), intent(in)              :: n_target
+    !! number of coordinates
+    type(mobbrmsd_header), intent(in)    :: header
+    !! mobbrmsd_header
+    type(mobbrmsd_state), intent(inout)  :: state(n_target, n_target)
+    !! mobbrmsd_state, the result is contained in this structure.
+    real(kind=RK), intent(in)            :: X(*)
+    !! coordinate sequence
+    real(kind=RK), intent(inout)         :: W(*)
+    !! work memory, must be larger than header%memsize() * mobbrmsd_num_threads()
+    real(RK), intent(in), optional       :: cutoff
+    !! The search ends when lowerbound is determined to be greater than to cutoff.
+    real(RK), intent(in), optional       :: difflim
+    !! The search ends when the difference between the lower and upper bounds is less than difflim.
+    integer(IK), intent(in), optional    :: maxeval
+    !! The search ends when ncount exceeds maxiter.
+    integer(IK), intent(out), optional   :: edges(2, n_target - 1)
+    !! minimum spanning tree edges
+    real(RK), intent(out), optional      :: weights(n_target - 1)
+    !! minimum spanning tree weights
+    logical                              :: mask(n_target)
+    integer(kind=IK)                     :: list(2, n_target)
+    real(RK)                             :: vval(n_target - 1), nnval
+    integer(kind=IK)                     :: i, j, xpnt, ldx, nnidx
+!
+    ldx = header%n_dims() * header%n_atoms()
+!
+    do concurrent(i=1:n_target, j=1:n_target)
+      call mobbrmsd_state_reset(state(i, j), header)
+    enddo
+!
+    mask(:) = .true.
+    mask(1) = .false.
+    list(1, 1) = 0
+    list(2, 1) = 1
+!
+    do j = 1, n_target - 1
+      vval(j) = RHUGE
+      do i = 1, j
+        xpnt = (list(2, i) - 1) * ldx + 1
+        call mobbrmsd_nearest_neighbor(n_target, header, &
+       &                               state(:, list(2, i)), &
+       &                               X(xpnt), X, W, &
+       &                               cutoff=cutoff, &
+       &                               difflim=difflim, &
+       &                               maxeval=maxeval, &
+       &                               mask=mask, &
+       &                               nnval=nnval,&
+       &                               nnidx=nnidx)
+        if (nnval < vval(j)) then
+          vval(j) = nnval
+          list(1, j + 1) = list(2, i)
+          list(2, j + 1) = nnidx
+        end if
+      end do
+      mask(list(2, j + 1)) = .false.
+    end do
+!
+    do j = 1, n_target
+      state(j, j)%z(INDEX_OF_UPPERBOUND) = ZERO
+      do i = 1, j - 1
+        if (state(i, j)%upperbound() < state(j, i)%upperbound())then
+          state(j, i) = state(i, j)
+        else
+          state(i, j) = state(j, i)
+        end if
+      end do
+    end do
+!
+    if(PRESENT(edges))then
+      do concurrent(i=1:n_target - 1)
+        edges(1, i) = list(1, i + 1)
+        edges(2, i) = list(2, i + 1)
+      enddo
+    endif
+!
+    if(PRESENT(weights))then
+      do concurrent(i=1:n_target - 1)
+        weights(i) = vval(i)
+      enddo
+    endif
+!
+  end subroutine mobbrmsd_min_span_tree
 !
 !| swap target coordinate.
   pure subroutine mobbrmsd_swap_y(header, state, Y)

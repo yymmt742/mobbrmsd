@@ -175,7 +175,7 @@ contains
     type(mobbrmsd_header)         :: h
     type(mobbrmsd_state)          :: s
 
-    call h%load(n_head, header)
+    call h%load(header)
     call s%load(n_int, int_states, n_float, float_states)
     res = mobbrmsd_is_finished(h, s)
 
@@ -200,7 +200,7 @@ contains
     type(mobbrmsd_header)           :: h
     type(mobbrmsd_state)            :: s
 
-    call h%load(n_head, header)
+    call h%load(header)
     call s%load(n_int, int_states, n_float, float_states)
     call mobbrmsd_restart(h, s, W, cutoff, difflim, maxeval)
 
@@ -224,7 +224,7 @@ contains
     type(mobbrmsd_header)        :: h
     type(mobbrmsd_state)         :: s
 
-    call h%load(n_head, header)
+    call h%load(header)
     call s%load(n_int, int_states, n_float, float_states)
     call mobbrmsd_rotate_y(h, s, Y)
 
@@ -302,7 +302,7 @@ contains
     end do
 
     call mobbrmsd_batch_run(n_target, mob%h, s, X, Y, W, cutoff, difflim, maxeval, rotate_y)
-!
+
     header = mob%h%dump()
     do concurrent(i=1:n_target)
       int_states(:, i) =  s(i)%dump()

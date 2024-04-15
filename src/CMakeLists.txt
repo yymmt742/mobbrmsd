@@ -3,6 +3,7 @@ find_package(OpenMP REQUIRED)
 add_compile_options(
   ${OpenMP_Fortran_FLAGS}
   $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-O3>
+  $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-g>
   $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-cpp>
   $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-std=f2008>
   $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fimplicit-none>

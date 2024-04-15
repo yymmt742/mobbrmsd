@@ -38,6 +38,11 @@ program main
   call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,3,1)}')
   call test3(4, 8, 1, [0])
 !
+  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}')
+  call test4(4, 4, 1, [0], 10)
+  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,8,1)}')
+  call test4(4, 6, 1, [0], 20)
+!
   call u%finish_and_terminate()
 !
 contains
@@ -119,23 +124,58 @@ contains
     allocate(W(mobb%h%memsize()))
 !
     call mobbrmsd_run(mobb%h, mobb%s, X, Y, W, maxeval=0)
-    print *, mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
+    print'(I8, *(f16.9))', mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
 !
     do i = 1, 10
       call mobbrmsd_restart(mobb%h, mobb%s, W, maxeval=i * 500)
-      print *, mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
+      print'(I8, *(f16.9))', mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
     end do
 !
     call mobbrmsd_restart(mobb%h, mobb%s, W)
-    print *, mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
+    print'(I8, *(f16.9))', mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
     call u%assert_almost_equal(mobb%s%sqrdev(), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
 !
     call mobbrmsd_run(mobb%h, mobb%s, X, Y, W)
-    print *, mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
+    print'(I8, *(f16.9))', mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
 !
     deallocate(inp)
 !
   end subroutine test3
+!
+  subroutine test4(n, m, s, sym, n_target)
+    integer, intent(in)    :: n, m, s, sym(n * (s - 1)), n_target
+    type(mobbrmsd)         :: mobb
+    type(mobbrmsd_state)   :: state(n_target, n_target)
+    type(mol_block_input), allocatable :: inp(:)
+    real(RK)               :: X(D, n, m, n_target)
+    real(RK), allocatable  :: W(:)
+    integer(IK)            :: edges(2, n_target - 1)
+    real(RK)               :: weights(n_target - 1)
+    integer(IK)            :: i
+!
+    call mol_block_input_add(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
+    mobb = mobbrmsd(inp)
+!
+    do i = 1, n_target
+      X(:, :, :, i) = sample(n, m)
+    end do
+!
+    allocate (W(mobb%h%memsize() * mobbrmsd_num_threads()))
+!
+    call mobbrmsd_min_span_tree(n_target, mobb%h, state, X, W, &
+   &                            cutoff=4.0_RK, edges=edges, weights=weights)
+!
+    do i = 1, n_target - 1
+      print'(2i4, *(f9.3))', edges(:, i), weights(i), &
+     &                        state(edges(1, i), edges(2, i))%upperbound(), &
+     &                        state(edges(1, i), edges(2, i))%lowerbound(), &
+     &                        state(edges(1, i), edges(2, i))%upperbound()  &
+     &                      - state(edges(1, i), edges(2, i))%lowerbound()
+    end do
+!
+    deallocate(inp)
+!
+  end subroutine test4
 !
 end program main
 
