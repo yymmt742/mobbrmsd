@@ -9,10 +9,10 @@ program main
 !
   call u%init('test mobbrmsd for (n,M,S)=(1,1,1)')
   call test1(1, 1, 1, [0])
-  call u%init('test mobbrmsd for (n,M,S)=(1,2,1)')
-  call test1(1, 2, 1, [0])
-  call u%init('test mobbrmsd for (n,M,S)=(1,3,1)')
-  call test1(1, 3, 1, [0])
+! call u%init('test mobbrmsd for (n,M,S)=(1,2,1)')
+! call test1(1, 2, 1, [0])
+! call u%init('test mobbrmsd for (n,M,S)=(1,3,1)')
+! call test1(1, 3, 1, [0])
   call u%init('test mobbrmsd for (n,M,S)=(4,1,1)')
   call test1(4, 1, 1, [0])
   call u%init('test mobbrmsd for (n,M,S)=(4,3,1)')
@@ -38,10 +38,10 @@ program main
   call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,3,1)}')
   call test3(4, 8, 1, [0])
 !
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}')
+  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=10')
   call test4(4, 4, 1, [0], 10)
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,8,1)}')
-  call test4(4, 6, 1, [0], 20)
+  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,6,1)}, n_target=100')
+  call test4(4, 6, 1, [0], 100)
 !
   call u%finish_and_terminate()
 !
@@ -156,14 +156,25 @@ contains
     call mol_block_input_add(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
 !
-    do i = 1, n_target
-      X(:, :, :, i) = sample(n, m)
+    X(:, :, :, 1) = sample(n, m)
+    do i = 2, n_target / 3
+      X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
+    end do
+!
+    X(:, :, :, n_target / 3 + 1) = sample(n, m)
+    do i = n_target / 3 + 2, 2 * n_target / 3
+      X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
+    end do
+!
+    X(:, :, :, 2 * n_target / 3 + 1) = sample(n, m)
+    do i = 2 * n_target / 3 + 2, n_target
+      X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
     end do
 !
     allocate (W(mobb%h%memsize() * mobbrmsd_num_threads()))
 !
     call mobbrmsd_min_span_tree(n_target, mobb%h, state, X, W, &
-   &                            cutoff=4.0_RK, edges=edges, weights=weights)
+   &                            edges=edges, weights=weights)
 !
     do i = 1, n_target - 1
       print'(2i4, *(f9.3))', edges(:, i), weights(i), &

@@ -614,6 +614,7 @@ contains
       !$omp critical
       i = i + 1
       itgt = i
+      ub = cutoff_global
       !$omp end critical
 !
       if (itgt > n_target) exit
@@ -621,10 +622,13 @@ contains
       if (PRESENT(mask)) then
         if (.not. mask(itgt)) cycle
       end if
+      if (bb_list_is_finished(header%q, state(itgt)%s)) cycle
+!
+      if (ub < state(itgt)%lowerbound()) cycle
 !
       wpnt = ldw * omp_get_thread_num() + 1
       ypnt = (itgt - 1) * ldy + 1
-      ub = cutoff_global
+!
       call mobbrmsd_run(header, state(itgt), &
      &                  X, Y(ypnt), W(wpnt), &
      &                  cutoff=ub, &
@@ -695,7 +699,7 @@ contains
         call mobbrmsd_nearest_neighbor(n_target, header, &
        &                               state(:, list(2, i)), &
        &                               X(xpnt), X, W, &
-       &                               cutoff=cutoff, &
+       &                               cutoff=vval(j), &
        &                               difflim=difflim, &
        &                               maxeval=maxeval, &
        &                               mask=mask, &
