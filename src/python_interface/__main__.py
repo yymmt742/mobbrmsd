@@ -21,12 +21,14 @@ print(
 )
 print(bar2, "\n")
 
-def run_demo(demo, after=None):
+def run_demo(demo, read_input, after=None):
+
+  prms = read_input()
 
   start_wallclock_time = time.time()
   start_cpu_time = time.process_time()
 
-  ret = demo()
+  ret = demo(**prms)
 
   end_wallclock_time = time.time()
   end_cpu_time = time.process_time()
@@ -47,12 +49,15 @@ def run_demo(demo, after=None):
 while True:
       option, index = pick.pick(opts, 'Select demo code :', indicator='>')
       if option==demo1:
-          run_demo(demo_bb.main)
+          run_demo(demo_bb.main, demo_bb.read_input)
       elif option==demo2:
-          run_demo(demo_mst.main, after=demo_mst.show_graph)
+          run_demo(demo_mst.main, demo_mst.read_input, after=demo_mst.show_graph)
       elif option==exit_:
         break
       inp = input('  press any key to continue ("q" to exit) >> ')
+      print(inp)
+      if inp == "":
+        continue
       if inp[0]=="q":
         break
 
