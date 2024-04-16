@@ -141,16 +141,15 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
 def show_graph(g):
 
     while True:
-        inp = input("\r  show graph ? ['y', 'n'] >> ")
+        inp = input("  Show graph ? (Open matplotlib window) ['y'es, 'n'o, 's'ave] >> ")
         if inp == "":
             continue
-        if inp[0] == "y" or inp[0] == "Y":
-            break
-        elif inp[0] == "n" or inp[0] == "N":
+        if inp[0] == "n" or inp[0] == "N":
             print()
             return
         elif inp[0] == "q" or inp[0] == "Q":
             exit()
+        break
 
     n_target = len(g.nodes())
 
@@ -177,9 +176,38 @@ def show_graph(g):
         g, pos, node_size=int(5000 / n_target), node_color="white", edgecolors="red"
     )
     networkx.draw_networkx_labels(g, pos, font_size=int(50 / n_target) + 5)
-
     networkx.draw_networkx_edges(g, pos, width=weights, edge_color="tab:red")
-    plt.show()
+
+    while True:
+
+        if inp[0] == "n" or inp[0] == "N":
+            print()
+            return
+        elif inp[0] == "q" or inp[0] == "Q":
+            exit()
+
+        if inp[0] == "y" or inp[0] == "Y":
+            plt.show()
+        elif inp[0] == "s" or inp[0] == "S":
+            while True:
+                path = input("  Enter a file name >> ")
+                if path == "":
+                    continue
+                if path[0] == "q" or path[0] == "Q":
+                    exit()
+                break
+            plt.savefig(path)
+
+        while True:
+            inp = input(
+                "  Show graph ? ['y'es  (Open matplotlib window), 'n'o, 's'ave] >> "
+            )
+            if inp == "":
+                continue
+            break
+
+    plt.clear()
+    plt.clf()
     print()
 
 
