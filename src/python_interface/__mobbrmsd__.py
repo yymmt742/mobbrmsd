@@ -1,4 +1,5 @@
 import numpy
+import networkx
 
 
 class mobbrmsd_result:
@@ -180,9 +181,20 @@ class mobbrmsd:
             maxeval,
         )
 
-        return edges, weights, [[
-            mobbrmsd_result(self.driver, hret, irij, rrij) for irij, rrij in zip(iri, rri)
-            ] for iri, rri in zip(iret.T, rret.T)]
+        g = networkx.Graph()
+        for e, w in zip(edges.T, weights):
+            g.add_edge(e[0] - 1, e[1] - 1, weight=w)
+
+        return (
+            g,
+            [
+                [
+                    mobbrmsd_result(self.driver, hret, irij, rrij)
+                    for irij, rrij in zip(iri, rri)
+                ]
+                for iri, rri in zip(iret.T, rret.T)
+            ],
+        )
 
     def varidation_coordinates_1(self, x: numpy.ndarray) -> numpy.ndarray:
 
@@ -191,10 +203,7 @@ class mobbrmsd:
         else:
             raise ValueError
 
-        if (
-            x_.shape[0] != self.ndim
-            or x_.shape[1] != self.natom
-        ):
+        if x_.shape[0] != self.ndim or x_.shape[1] != self.natom:
             raise ValueError
         return x_
 
@@ -206,10 +215,6 @@ class mobbrmsd:
             x_ = x.transpose([2, 1, 0])
         else:
             raise ValueError
-        if (
-            x_.shape[0] != self.ndim
-            or x_.shape[1] != self.natom
-        ):
+        if x_.shape[0] != self.ndim or x_.shape[1] != self.natom:
             raise ValueError
         return x_
-
