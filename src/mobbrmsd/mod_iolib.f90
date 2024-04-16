@@ -268,13 +268,13 @@ contains
     character(:), allocatable, intent(inout) :: res
 !&<
     select case (optarg(clear, ' '))
-    case ('L');   call decorate____(color, style, carret, mod_iolib_CLEAR_LINE,          res)
-    case ('a');   call decorate____(color, style, carret, mod_iolib_CLEAR_LINE_AFTER,    res)
-    case ('b');   call decorate____(color, style, carret, mod_iolib_CLEAR_LINE_BEFORE,   res)
-    case ('S');   call decorate____(color, style, carret, mod_iolib_CLEAR_SCREEN,        res)
-    case ('A');   call decorate____(color, style, carret, mod_iolib_CLEAR_SCREEN_AFTER,  res)
-    case ('B');   call decorate____(color, style, carret, mod_iolib_CLEAR_SCREEN_BEFORE, res)
-    case default; call decorate____(color, style, carret, '',                            res)
+    case ('L', 'l'); call decorate____(color, style, carret, mod_iolib_CLEAR_LINE,          res)
+    case ('a');      call decorate____(color, style, carret, mod_iolib_CLEAR_LINE_AFTER,    res)
+    case ('b');      call decorate____(color, style, carret, mod_iolib_CLEAR_LINE_BEFORE,   res)
+    case ('S', 's'); call decorate____(color, style, carret, mod_iolib_CLEAR_SCREEN,        res)
+    case ('A');      call decorate____(color, style, carret, mod_iolib_CLEAR_SCREEN_AFTER,  res)
+    case ('B');      call decorate____(color, style, carret, mod_iolib_CLEAR_SCREEN_BEFORE, res)
+    case default;    call decorate____(color, style, carret, '',                            res)
     end select
 !&>
   end subroutine decorate___

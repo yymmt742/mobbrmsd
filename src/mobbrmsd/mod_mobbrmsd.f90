@@ -3,6 +3,7 @@ module mod_mobbrmsd
 !$ use omp_lib
   use blas_lapack_interface, only: D, setup_dimension
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, TEN => RTEN, LN_TO_L10, RHUGE
+  use mod_iolib
   use mod_bb_list
   use mod_bb_block
   implicit none
@@ -680,6 +681,7 @@ contains
     integer(kind=IK)                     :: list(2, n_target)
     real(RK)                             :: vval(n_target - 1), nnval, cutoff_
     integer(kind=IK)                     :: i, j, xpnt, ldx, nnidx
+    character(:), allocatable           :: deco, reset
 !
     ldx = header%n_dims() * header%n_atoms()
 !
@@ -692,8 +694,13 @@ contains
     list(1, 1) = 0
     list(2, 1) = 1
 !
+    deco = decorator(color='Y', carret=.true.)
+    reset = mod_iolib_FS_RESET
+!
     do j = 1, n_target - 1
 !
+      write (6, '(A, I8,A)', ADVANCE='NO') deco//'----------------', j, reset
+      flush(6)
       vval(j) = RHUGE
       if (PRESENT(cutoff)) then
         cutoff_ = MIN(RHUGE, MAX(cutoff, ZERO))
@@ -728,6 +735,8 @@ contains
       mask(list(2, j + 1)) = .false.
 !
     end do
+!
+    write (6, '(A)', ADVANCE='NO') decorate('', carret=.true., clear='l')
 !
     do j = 1, n_target
       state(j, j)%z(INDEX_OF_UPPERBOUND) = ZERO
