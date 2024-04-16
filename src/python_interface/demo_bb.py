@@ -25,7 +25,7 @@ def print_ret(ret, post="", end="\n", to_console: bool = False):
         print(f"  {ev:12d} {er:12.8f}{ub:16.6f}{lb:16.6f}{sd:12.6f}")
 
 
-def main(n_apm=3, n_mol=10, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0):
+def main(n_apm=3, n_mol=8, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0):
     cogen = coord_generator()
     x = cogen.generate(n_apm, n_mol, a, b).reshape([n_apm * n_mol, 3])
     y = cogen.generate(n_apm, n_mol, a, b).reshape([n_apm * n_mol, 3])
@@ -37,7 +37,7 @@ def main(n_apm=3, n_mol=10, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0):
     sep2 = "  ---------------------------------------|--------|-------------------|---------"
 
     print(sep1)
-    print("                  Molecular-oriented RMSD for Branch-and-bound")
+    print("                  Demonstration of mobbRMSD with random coordinates")
     print(sep1)
     print("      --System settings--")
     print(
@@ -57,14 +57,15 @@ def main(n_apm=3, n_mol=10, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0):
 
     ub, lb = numpy.inf, 0.0
     ret = mrmsd.run(x, y, maxeval=0)
+    mrmsd.clear()
 
     print("        N_eval   Eval_ratio      Upperbound      Lowerbound      RMSD")
     print(sep1)
     i = 0
-    xtra = ["|    ", " /   ", "  -  ", "   \\ ", "    |", "   \\ ", "  -  ", " /   "]
+    xtra = ["__-¯¯", "-__-¯", "¯-__-", "¯¯-__", "-¯¯-_", "_-¯¯-"]
     erace = "     "
     while not ret.is_finished:
-        print_ret(ret, post=xtra[int(i / 10000) % 8], end="", to_console=True)
+        print_ret(ret, post=xtra[int(i / 5000) % 6], end="", to_console=True)
         if ub > ret.bounds[0] or lb < ret.bounds[1]:
             print_ret(ret, post=erace)
         ub, lb = ret.bounds[0], ret.bounds[1]

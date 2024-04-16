@@ -5,36 +5,43 @@ import sys
 import numpy
 import time
 
-start_wallclock_time = time.time()
-start_cpu_time = time.process_time()
+bar1 = "  ------------------------------------------------------------------------------"
+bar2 = " ================================================================================"
 
-print(
-    " ================================================================================"
-)
+print(bar2)
 print(
     "                  --- demonstration of mobbrmsd ver.",
     __version__.__version__,
     " ---",
 )
-print(
-    " ================================================================================\n"
-)
+print(bar2,"\n")
 
-# demo_bb.main(n_apm=3, n_mol=10, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0)
-demo_nn.main()
+def run_demo(demo, after=None):
 
-end_wallclock_time = time.time()
-end_cpu_time = time.process_time()
-elapsed_cpu_time = end_wallclock_time - start_wallclock_time
-elapsed_wallclock_time = end_wallclock_time - start_wallclock_time
+  start_wallclock_time = time.time()
+  start_cpu_time = time.process_time()
 
-print("    -- Elapsed times --")
-print(
-    f"      cpu time : {elapsed_cpu_time:16.3f} sec   wallclock time : {elapsed_wallclock_time:16.3f} sec"
-)
-print(
-    " ================================================================================\n"
-)
+  ret = demo()
 
-demo_nn.show_graph()
+  end_wallclock_time = time.time()
+  end_cpu_time = time.process_time()
+  elapsed_cpu_time = end_wallclock_time - start_wallclock_time
+  elapsed_wallclock_time = end_wallclock_time - start_wallclock_time
+
+  print("    -- Elapsed times --")
+  print(
+      f"       cpu time : {elapsed_cpu_time:16.3f} sec",
+      f" wallclock time : {elapsed_wallclock_time:16.3f} sec"
+  )
+  print(bar2)
+
+  if after is None: return
+
+  after(ret)
+
+while True:
+      inp=input("select demo ['1', '2' or 'q'] >> ")
+      if inp=='q':break
+      if inp=='1': run_demo(demo_bb.main)
+      if inp=='2': run_demo(demo_nn.main, after=demo_nn.show_graph)
 

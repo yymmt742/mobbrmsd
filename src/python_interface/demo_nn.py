@@ -67,6 +67,7 @@ def main(n_apm=3, n_mol=6, n_target=20, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0
     mrmsd.add_molecule(n_apm, n_mol, sym)
 
     g, states = mrmsd.min_span_tree(x)
+    mrmsd.clear()
     print(sep1)
 
     print("")
@@ -77,9 +78,17 @@ def main(n_apm=3, n_mol=6, n_target=20, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0
             print_ret(i, j, states[i][j], g)
         print()
     print(sep1)
+    return g
 
 
 def show_graph(g):
+
+    while True:
+      print("\r  show graph ? ['y', 'n'] >> ", end='')
+      inp = input()
+      if inp=='y': break
+      if inp=='n': return
+
     n_target = len(g.nodes())
     pos = networkx.spring_layout(g)
     networkx.draw_networkx_nodes(
