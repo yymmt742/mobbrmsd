@@ -6,8 +6,12 @@ import numpy
 import time
 import pick
 
-bar1 = "  ------------------------------------------------------------------------------"
-bar2 = " ================================================================================"
+bar1 = (
+    "  ------------------------------------------------------------------------------"
+)
+bar2 = (
+    " ================================================================================"
+)
 demo1 = demo_bb.title
 demo2 = demo_mst.title
 exit_ = "exit"
@@ -21,38 +25,41 @@ print(
 )
 print(bar2, "\n")
 
+
 def run_demo(demo, after=None):
 
-  start_wallclock_time = time.time()
-  start_cpu_time = time.process_time()
+    start_wallclock_time = time.time()
+    start_cpu_time = time.process_time()
 
-  ret = demo()
+    ret = demo()
 
-  end_wallclock_time = time.time()
-  end_cpu_time = time.process_time()
-  elapsed_cpu_time = end_wallclock_time - start_wallclock_time
-  elapsed_wallclock_time = end_wallclock_time - start_wallclock_time
+    end_wallclock_time = time.time()
+    end_cpu_time = time.process_time()
+    elapsed_cpu_time = end_wallclock_time - start_wallclock_time
+    elapsed_wallclock_time = end_wallclock_time - start_wallclock_time
 
-  print("    -- Elapsed times --")
-  print(
-      f"       cpu time : {elapsed_cpu_time:16.3f} sec",
-      f" wallclock time : {elapsed_wallclock_time:16.3f} sec"
-  )
-  print(bar2, "\n")
-
-  if after is not None:
-    after(ret)
+    print("    -- Elapsed times --")
+    print(
+        f"       cpu time : {elapsed_cpu_time:16.3f} sec",
+        f" wallclock time : {elapsed_wallclock_time:16.3f} sec",
+    )
     print(bar2, "\n")
 
-while True:
-      option, index = pick.pick(opts, 'Select demo code :', indicator='>')
-      if option==demo1:
-          run_demo(demo_bb.main)
-      elif option==demo2:
-          run_demo(demo_mst.main, after=demo_mst.show_graph)
-      elif option==exit_:
-        break
-      inp = input('  press any key to continue ("q" to exit) >> ')
-      if inp[0]=="q":
-        break
+    if after is not None:
+        after(ret)
+        print(bar2, "\n")
 
+
+while True:
+    option, index = pick.pick(opts, "Select demo code :", indicator=">")
+    if option == demo1:
+        run_demo(demo_bb.main)
+    elif option == demo2:
+        run_demo(demo_mst.main, after=demo_mst.show_graph)
+    elif option == exit_:
+        break
+    inp = input('  press any key to continue ("q" to exit) >> ')
+    if inp == "":
+        continue
+    if inp[0] == "q":
+        break
