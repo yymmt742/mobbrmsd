@@ -7,7 +7,7 @@ import networkx
 import matplotlib.pyplot as plt
 
 
-def print_ret(i, j, ret, edges):
+def print_ret(i, j, ret, g):
     ev, er, ub, lb, df = (
         ret.n_eval,
         ret.eval_ratio,
@@ -16,25 +16,26 @@ def print_ret(i, j, ret, edges):
         ret.bounds[0] - ret.bounds[1],
     )
 
-    pre  = ''
-    post = ''
-    for e in edges:
-      if (e[0]==i and e[1]==j) or (e[0]==j and e[1]==i):
-        if sys.stdout.isatty():
-          pre  = '\033[36m'
-          post = '**\033[0m'
-          break
-        else:
-          post = '**'
+    pre = ""
+    post = ""
+
+    for e in networkx.edges(g):
+        if (e[0] == i and e[1] == j) or (e[0] == j and e[1] == i):
+            if sys.stdout.isatty():
+                pre = "\033[36m"
+                post = "**\033[0m"
+                break
+            else:
+                post = "**"
 
     print(
         pre,
-        f" {j:4d}{i:4d}{ev:12d} {er:12.6f}{ub:12.3f}{lb:12.3f}{df:8.3f}",
+        f" {j:4d}{i:4d}{ev:12d} {er:12.6f}{ub:16.6f}{lb:16.6f}{df:8.3f}",
         post,
     )
 
 
-def main(n_apm=3, n_mol=6, n_target=10, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0):
+def main(n_apm=3, n_mol=6, n_target=20, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0):
     cogen = coord_generator()
     x = numpy.array(
         [
@@ -65,31 +66,42 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0
     mrmsd = mobbrmsd()
     mrmsd.add_molecule(n_apm, n_mol, sym)
 
-    g, states =mrmsd.min_span_tree(x)
+    g, states = mrmsd.min_span_tree(x)
     print(sep1)
-
-    for e, w in  zip(edges, weights):
-      print(f"{e[0]:8d} {e[1]:8d} {w:12.3f}")
 
     print("")
-    print("     i   j      N_eval   Eval_ratio  Upperbound  Lowerbound    Gap")
+    print("     i   j      N_eval   Eval_ratio      Upperbound      Lowerbound    Gap")
     print(sep1)
-    for i in range(len(states)-1):
-      for j in range(i+1, len(states)):
-        print_ret(i, j, states[i][j], edges)
-      print()
+    for i in range(len(states) - 1):
+        for j in range(i + 1, len(states)):
+            print_ret(i, j, states[i][j], g)
+        print()
     print(sep1)
 
-    g = networkx.Graph()
-    for e, w in  zip(edges, weights):
-      g.add_edge(e[0], e[1], weight=w)
 
+def show_graph(g):
+    n_target = len(g.nodes())
     pos = networkx.spring_layout(g)
-    edge_labels = {k: '{:.1f}'.format(v) for k, v in networkx.get_edge_attributes(g, "weight").items()}
-    networkx.draw_networkx_nodes(g, pos, node_size=500,node_color="white", edgecolors="red")
+    networkx.draw_networkx_nodes(
+        g, pos, node_size=int(5000 / n_target), node_color="white", edgecolors="red"
+    )
     networkx.draw_networkx_labels(g, pos)
-    networkx.draw_networkx_edges(g, pos, width=5*((weights.max()-weights)/weights.max()), edge_color="tab:red")
-    networkx.draw_networkx_edge_labels(g, pos, edge_labels)
+    vmax = numpy.array(
+        [v for k, v in networkx.get_edge_attributes(g, "weight").items()]
+    ).max()
+    weights = [
+        5 * (vmax - v) / vmax
+        for k, v in networkx.get_edge_attributes(g, "weight").items()
+    ]
+
+    edge_labels = {
+        k: "{:.1f}".format(v)
+        for k, v in networkx.get_edge_attributes(g, "weight").items()
+    }
+    networkx.draw_networkx_edges(g, pos, width=weights, edge_color="tab:red")
+    networkx.draw_networkx_edge_labels(
+        g, pos, edge_labels, font_size=int(50 / n_target) + 5, rotate=False
+    )
     plt.show()
 
 
