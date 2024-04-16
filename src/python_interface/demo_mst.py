@@ -84,35 +84,44 @@ def main(n_apm=3, n_mol=6, n_target=20, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0
 def show_graph(g):
 
     while True:
-      print("\r  show graph ? ['y', 'n'] >> ", end='')
-      inp = input()
-      if inp=='y': break
-      if inp=='n':
-        print()
-        return
+        print("\r  show graph ? ['y', 'n'] >> ", end="")
+        inp = input()
+        if inp == "y":
+            break
+        if inp == "n":
+            print()
+            return
 
     n_target = len(g.nodes())
-    pos = networkx.spring_layout(g)
-    networkx.draw_networkx_nodes(
-        g, pos, node_size=int(5000 / n_target), node_color="white", edgecolors="red"
-    )
-    networkx.draw_networkx_labels(g, pos)
+
     vmax = numpy.array(
         [v for k, v in networkx.get_edge_attributes(g, "weight").items()]
     ).max()
     weights = [
-        5 * (vmax - v) / vmax
+        5 * (vmax - 0.95 * v) / vmax
         for k, v in networkx.get_edge_attributes(g, "weight").items()
     ]
-
+    reverse_weights = {
+        k: {"reverse_weights": 10 - 9 * v / vmax}
+        for k, v in networkx.get_edge_attributes(g, "weight").items()
+    }
     edge_labels = {
         k: "{:.1f}".format(v)
         for k, v in networkx.get_edge_attributes(g, "weight").items()
     }
-    networkx.draw_networkx_edges(g, pos, width=weights, edge_color="tab:red")
-    networkx.draw_networkx_edge_labels(
-        g, pos, edge_labels, font_size=int(50 / n_target) + 5, rotate=False
+
+    networkx.set_edge_attributes(g, reverse_weights)
+
+    pos = networkx.spring_layout(g, weight="reverse_weights")
+    networkx.draw_networkx_nodes(
+        g, pos, node_size=int(5000 / n_target), node_color="white", edgecolors="red"
     )
+    networkx.draw_networkx_labels(g, pos, font_size=int(50 / n_target) + 5)
+
+    networkx.draw_networkx_edges(g, pos, width=weights, edge_color="tab:red")
+    # networkx.draw_networkx_edge_labels(
+    #    g, pos, edge_labels, font_size=int(50 / n_target) + 5, rotate=False
+    # )
     plt.show()
     print()
 
