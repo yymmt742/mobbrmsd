@@ -218,3 +218,9 @@ class mobbrmsd:
         if x_.shape[0] != self.ndim or x_.shape[1] != self.natom:
             raise ValueError
         return x_
+
+    def clear(self) -> None:
+        self.driver.clear_molecule()
+        self.ndim, self.natom = self.driver.n_atoms()
+        self.memsize, self.njob = self.driver.workmemory_lengthes()
+        self.n_header, self.n_int, self.n_float = self.driver.state_vector_lengthes()
