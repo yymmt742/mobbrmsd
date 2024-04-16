@@ -1,6 +1,6 @@
 from . import __version__
 from . import demo_bb
-from . import demo_nn
+from . import demo_mst
 import sys
 import numpy
 import time
@@ -14,7 +14,7 @@ print(
     __version__.__version__,
     " ---",
 )
-print(bar2,"\n")
+print(bar2, "\n")
 
 def run_demo(demo, after=None):
 
@@ -33,15 +33,16 @@ def run_demo(demo, after=None):
       f"       cpu time : {elapsed_cpu_time:16.3f} sec",
       f" wallclock time : {elapsed_wallclock_time:16.3f} sec"
   )
-  print(bar2)
+  print(bar2, "\n")
 
   if after is None: return
 
   after(ret)
+  print(bar2, "\n")
 
 while True:
-      inp=input("select demo ['1', '2' or 'q'] >> ")
+      inp=input("  select demo ['1', '2' or 'q'] >> ")
       if inp=='q':break
       if inp=='1': run_demo(demo_bb.main)
-      if inp=='2': run_demo(demo_nn.main, after=demo_nn.show_graph)
+      if inp=='2': run_demo(demo_mst.main, after=demo_mst.show_graph)
 

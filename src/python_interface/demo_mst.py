@@ -87,7 +87,9 @@ def show_graph(g):
       print("\r  show graph ? ['y', 'n'] >> ", end='')
       inp = input()
       if inp=='y': break
-      if inp=='n': return
+      if inp=='n':
+        print()
+        return
 
     n_target = len(g.nodes())
     pos = networkx.spring_layout(g)
@@ -112,6 +114,7 @@ def show_graph(g):
         g, pos, edge_labels, font_size=int(50 / n_target) + 5, rotate=False
     )
     plt.show()
+    print()
 
 
 if __name__ == "__main__":
