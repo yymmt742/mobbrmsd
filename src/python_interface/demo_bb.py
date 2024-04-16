@@ -4,6 +4,7 @@ from . import mobbrmsd
 import sys
 import numpy
 
+title = "Demonstration of mobbRMSD with random coordinates"
 
 def print_ret(ret, post="", end="\n", to_console: bool = False):
     ev, er, ub, lb, sd = (
@@ -37,7 +38,7 @@ def main(n_apm=3, n_mol=8, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0):
     sep2 = "  ---------------------------------------|--------|-------------------|---------"
 
     print(sep1)
-    print("                  Demonstration of mobbRMSD with random coordinates")
+    print("                Demonstration of mobbRMSD with random coordinates")
     print(sep1)
     print("      --System settings--")
     print(

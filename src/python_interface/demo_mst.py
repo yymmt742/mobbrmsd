@@ -6,6 +6,7 @@ import numpy
 import networkx
 import matplotlib.pyplot as plt
 
+title = "Demonstration of minimum spanning tree construction with mobbrmsd"
 
 def print_ret(i, j, ret, g):
     ev, er, ub, lb, df = (

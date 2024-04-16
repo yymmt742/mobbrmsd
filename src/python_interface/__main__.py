@@ -4,9 +4,14 @@ from . import demo_mst
 import sys
 import numpy
 import time
+import pick
 
 bar1 = "  ------------------------------------------------------------------------------"
 bar2 = " ================================================================================"
+demo1 = demo_bb.title
+demo2 = demo_mst.title
+exit_ = "exit"
+opts = (demo1, demo2, exit_)
 
 print(bar2)
 print(
@@ -35,14 +40,19 @@ def run_demo(demo, after=None):
   )
   print(bar2, "\n")
 
-  if after is None: return
-
-  after(ret)
-  print(bar2, "\n")
+  if after is not None:
+    after(ret)
+    print(bar2, "\n")
 
 while True:
-      inp=input("  select demo ['1', '2' or 'q'] >> ")
-      if inp=='q':break
-      if inp=='1': run_demo(demo_bb.main)
-      if inp=='2': run_demo(demo_mst.main, after=demo_mst.show_graph)
+      option, index = pick.pick(opts, 'Select demo code :', indicator='>')
+      if option==demo1:
+          run_demo(demo_bb.main)
+      elif option==demo2:
+          run_demo(demo_mst.main, after=demo_mst.show_graph)
+      elif option==exit_:
+        break
+      inp = input('  press any key to continue ("q" to exit) >> ')
+      if inp[0]=="q":
+        break
 
