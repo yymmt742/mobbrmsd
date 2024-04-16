@@ -29,14 +29,46 @@ def print_ret(i, j, ret, g):
             else:
                 post = "**"
 
-    print(
-        pre,
-        f" {j:4d}{i:4d}{ev:12d} {er:12.6f}{ub:16.6f}{lb:16.6f}{df:8.3f}",
-        post,
-    )
+    if(ub>1.0e+10):
+        print(
+            pre,
+            f" {j:4d}{i:4d}{ev:12d} {er:12.6f}          +Infty{lb:16.6f}  +Infty",
+            post,
+        )
+    else:
+        print(
+            pre,
+            f" {j:4d}{i:4d}{ev:12d} {er:12.6f}{ub:16.6f}{lb:16.6f}{df:8.3f}",
+            post,
+        )
 
+def read_input()->tuple:
+  while True:
+    while True:
+      inp = input("  input number of molecules (default : 6)   >> ")
+      if inp=='' : inp = '6'
+      if inp.isdigit : n_mol = int(inp)
+      if(n_mol > 0): break
 
-def main(n_apm=3, n_mol=6, n_target=20, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0):
+    while True:
+      inp = input("  input number of structures (default : 10) >> ")
+      if inp=='': inp = '10'
+      if(inp.isdigit) : n_target = int(inp)
+      if(n_target > 1): break
+
+    if(n_mol > 8 or n_target > 30):
+      while True:
+        inp = input("  This parameter may take time to compute. May this be run ? [Y/n] > ")
+        if inp=='y' or inp=='Y' or inp=='n' or inp=='N':
+          break
+      if inp=='n' or inp=='N':
+        continue
+
+    break
+
+  return {"n_mol":n_mol, "n_target":n_target}
+
+def main(n_apm=3, n_mol=6, n_target=10, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0):
     cogen = coord_generator()
     x = numpy.array(
         [
@@ -85,8 +117,7 @@ def main(n_apm=3, n_mol=6, n_target=20, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0
 def show_graph(g):
 
     while True:
-        print("\r  show graph ? ['y', 'n'] >> ", end="")
-        inp = input()
+        inp = input("  show graph ? ['y', 'n'] >> ")
         if inp == "y":
             break
         if inp == "n":
