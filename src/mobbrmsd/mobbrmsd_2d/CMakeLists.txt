@@ -17,6 +17,8 @@ if ( INT )
 endif ()
 
 target_sources(${TARGET_2D} PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../isatty.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_iolib.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -179,6 +181,8 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../isatty.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_iolib.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_mobbrmsd.f90 )

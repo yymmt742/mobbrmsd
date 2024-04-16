@@ -8,7 +8,7 @@ add_compile_options(
   $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-std=f2008>
   $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fimplicit-none>
   $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fall-intrinsics>
-  $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fexternal-blas>
+  $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-fbackslash>
   $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-O3>
   $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-fpp>
   $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-stand>
