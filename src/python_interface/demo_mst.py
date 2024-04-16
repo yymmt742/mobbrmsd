@@ -3,10 +3,12 @@ from . import coord_generator
 from . import mobbrmsd
 import sys
 import numpy
+import pprint
 import networkx
 import matplotlib.pyplot as plt
 
 title = "Demonstration of minimum spanning tree construction with mobbrmsd"
+
 
 def print_ret(i, j, ret, g):
     ev, er, ub, lb, df = (
@@ -29,7 +31,7 @@ def print_ret(i, j, ret, g):
             else:
                 post = "**"
 
-    if(ub>1.0e+10):
+    if ub > 1.0e10:
         print(
             pre,
             f" {j:4d}{i:4d}{ev:12d} {er:12.6f}          +Infty{lb:16.6f}  +Infty",
@@ -42,33 +44,48 @@ def print_ret(i, j, ret, g):
             post,
         )
 
-def read_input()->tuple:
-  while True:
+
+def read_input() -> tuple:
     while True:
-      inp = input("  input number of molecules (default : 6)   >> ")
-      if inp=='' : inp = '6'
-      if inp.isdigit : n_mol = int(inp)
-      if(n_mol > 0): break
+        while True:
+            inp = input("    input number of molecules (default : 6)   >> ")
+            if inp == "":
+                inp = "6"
+            if inp[0] == "q" or inp[0] == "Q":
+                exit()
+            elif inp.isdigit:
+                n_mol = int(inp)
+            if n_mol > 0:
+                break
 
-    while True:
-      inp = input("  input number of structures (default : 10) >> ")
-      if inp=='': inp = '10'
-      if(inp.isdigit) : n_target = int(inp)
-      if(n_target > 1): break
+        while True:
+            inp = input("    input number of structures (default : 10) >> ")
+            if inp == "":
+                inp = "10"
+            if inp[0] == "q" or inp[0] == "Q":
+                exit()
+            elif inp.isdigit:
+                n_target = int(inp)
+            if n_target > 1:
+                break
 
-    if(n_mol > 8 or n_target > 30):
-      while True:
-        inp = input("  This parameter may take time to compute. May this be run ? [Y/n] > ")
-        if inp=='y' or inp=='Y' or inp=='n' or inp=='N':
-          break
-      if inp=='n' or inp=='N':
-        continue
+        if n_mol > 8 or n_target > 30:
+            while True:
+                inp = input(
+                    "    This parameter may take time to compute. May this be run ? [Y/n] > "
+                )
+                if inp == "y" or inp == "Y" or inp == "n" or inp == "N":
+                    break
+            if inp == "n" or inp == "N":
+                continue
 
-    break
+        break
 
-  return {"n_mol":n_mol, "n_target":n_target}
+    print()
+    return {"n_mol": n_mol, "n_target": n_target}
 
-def main(n_apm=3, n_mol=6, n_target=10, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0):
+
+def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
     cogen = coord_generator()
     x = numpy.array(
         [
@@ -85,15 +102,22 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0
     print(sep1)
     print("      --System settings--")
     print(
-        f"    Atoms per molecule :{n_apm:14d}  | Molecular symmetry :   0 ",
-        [i for i in range(len(sym[0]))],
+        f"    Atoms per molecule  :{n_apm:6d}",
     )
-    print(f"    Number of molecule :{n_mol:14d}  |                        1 ", sym[0])
-    for i in range(len(sym) - 1):
-        print(
-            f"                                        |                 {i+2:8d} ",
-            [si for si in sym[i + 1]],
-        )
+    print(f"    Number of molecule  :{n_mol:6d}")
+    print(f"    Number of structure :{n_target:6d}")
+
+    pp = pprint.pformat(tuple([i for i in range(n_apm)]), width=50, compact=True).split(
+        "\n"
+    )
+    print("    Molecular symmetry  :     1", pp[0])
+    for i, l in enumerate(pp[1:]):
+        print("                               ", l)
+    for i, s in enumerate(sym):
+        pp = pprint.pformat(s, width=50, compact=True).split("\n")
+        print(f"                        :{i+2:6d}", pp[0])
+        for l in pp[1:]:
+            print("                               ", l)
     print()
 
     mrmsd = mobbrmsd()
@@ -117,12 +141,16 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=[[1, 2, 0], [2, 0, 1]], a=0.5, b=1.0
 def show_graph(g):
 
     while True:
-        inp = input("  show graph ? ['y', 'n'] >> ")
-        if inp == "y":
+        inp = input("\r  show graph ? ['y', 'n'] >> ")
+        if inp == "":
+            continue
+        if inp[0] == "y" or inp[0] == "Y":
             break
-        if inp == "n":
+        elif inp[0] == "n" or inp[0] == "N":
             print()
             return
+        elif inp[0] == "q" or inp[0] == "Q":
+            exit()
 
     n_target = len(g.nodes())
 
@@ -151,9 +179,6 @@ def show_graph(g):
     networkx.draw_networkx_labels(g, pos, font_size=int(50 / n_target) + 5)
 
     networkx.draw_networkx_edges(g, pos, width=weights, edge_color="tab:red")
-    # networkx.draw_networkx_edge_labels(
-    #    g, pos, edge_labels, font_size=int(50 / n_target) + 5, rotate=False
-    # )
     plt.show()
     print()
 

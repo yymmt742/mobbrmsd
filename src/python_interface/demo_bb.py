@@ -7,6 +7,7 @@ import numpy
 
 title = "Demonstration of mobbRMSD with random coordinates"
 
+
 def print_ret(ret, post="", end="\n", to_console: bool = False):
     ev, er, ub, lb, sd = (
         ret.n_eval,
@@ -26,58 +27,91 @@ def print_ret(ret, post="", end="\n", to_console: bool = False):
             return
         print(f"  {ev:12d} {er:12.8f}{ub:16.6f}{lb:16.6f}{sd:12.6f}")
 
-def read_input()->tuple:
-  import itertools
-  import math
-  while True:
-    while True:
-      inp = input("  input number of molecules (default : 6)          >> ")
-      if inp=='' : inp = '6'
-      if inp.isdigit() : n_mol = int(inp)
-      else: continue
-      if(n_mol > 0): break
 
-    if(n_mol > 8):
-      while True:
-        inp = input("  This parameter may take time to compute. May this be run ? [Y/n] > ")
-        if inp=='y' or inp=='Y' or inp=='n' or inp=='N':
-          break
-      if inp=='n' or inp=='N':
-        continue
+def read_input() -> tuple:
+    import itertools
+    import math
 
     while True:
-      inp = input("  input number of atoms per molecule (default : 3) >> ")
-      if inp=='': inp = '3'
-      if inp.isdigit() : n_apm = int(inp)
-      else: continue
-      if(n_apm > 1): break
+        while True:
+            inp = input("    input number of molecules (default : 6)          >> ")
+            if inp == "":
+                n_mol = 6
+                break
+            if inp[0] == "q" or inp[0] == "Q":
+                exit()
+            elif inp.isdigit():
+                n_mol = int(inp)
+                if n_mol > 0:
+                    break
 
-    while True:
-      inp = input("  input number of molecular symmetry (default : 3) >> ")
-      if inp=='' : inp = '3'
-      if inp.isdigit() : n_sym = int(inp)
-      else: continue
-      if(n_sym > math.factorial(n_apm)):
-        print("  number of molecular symmetry must be less than factrial to atoms per molecule.")
-        continue
-      if(n_sym > 0): break
+        if n_mol > 8:
+            while True:
+                inp = input(
+                    "    This parameter may take time to compute. May this be run ? [Y/n] > "
+                )
+                if inp == "":
+                    continue
+                if inp[0] == "q" or inp[0] == "Q":
+                    exit()
+                elif inp == "y" or inp == "Y" or inp == "n" or inp == "N":
+                    break
+            if inp == "n" or inp == "N":
+                continue
 
-    cost = math.factorial(n_mol) * n_sym**n_mol
-    if(cost > 10000000):
-      while True:
-        inp = input(f"  This parameter may take time to compute. ({cost:10d}) May this be run ? [Y/n] > ")
-        if inp=='y' or inp=='Y' or inp=='n' or inp=='N':
-          break
-      if inp=='n' or inp=='N':
-        continue
+        while True:
+            inp = input("    input number of atoms per molecule (default : 3) >> ")
+            if inp == "":
+                n_apm = 3
+                break
+            if inp[0] == "q" or inp[0] == "Q":
+                exit()
+            elif inp.isdigit():
+                n_apm = int(inp)
+                if n_apm > 1:
+                    break
 
-    per = itertools.permutations(range(n_apm))
-    next(per)
-    sym = [next(per) for i in range(n_sym-1)]
+        while True:
+            inp = input("    input number of molecular symmetry (default : 3) >> ")
+            if inp == "":
+                n_sym = 3
+                break
+            if inp[0] == "q" or inp[0] == "Q":
+                exit()
+            elif inp.isdigit():
+                n_sym = int(inp)
+                if n_sym > 0:
+                    break
 
-    break
+            if n_sym > math.factorial(n_apm):
+                print(
+                    "    number of molecular symmetry must be less than factrial to atoms per molecule."
+                )
+                continue
 
-  return {"n_apm":n_apm, "n_mol":n_mol, "sym":sym}
+        cost = math.factorial(n_mol) * n_sym**n_mol
+        if cost > 10000000:
+            while True:
+                inp = input(
+                    f"    This parameter may take time to compute. ({cost:10d}) May this be run ? [Y/n] > "
+                )
+                if inp == "":
+                    continue
+                if inp[0] == "q" or inp[0] == "Q":
+                    exit()
+                elif inp == "y" or inp == "Y" or inp == "n" or inp == "N":
+                    break
+            if inp == "n" or inp == "N":
+                continue
+
+        per = itertools.permutations(range(n_apm))
+        next(per)
+        sym = [next(per) for i in range(n_sym - 1)]
+
+        break
+
+    return {"n_apm": n_apm, "n_mol": n_mol, "sym": sym}
+
 
 def main(n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
     cogen = coord_generator()
@@ -98,15 +132,15 @@ def main(n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
         f"    Atoms per molecule :{n_apm:6d}",
     )
     print(f"    Number of molecule :{n_mol:6d}")
-    print("    Molecular symmetry :       0 ")
+    print("    Molecular symmetry :     0 ")
     pp = pprint.pformat(tuple([i for i in range(n_apm)]), width=74, compact=True)
-    for l in pp.split('\n'):
-      print('      ', l)
+    for l in pp.split("\n"):
+        print("      ", l)
     for i, s in enumerate(sym):
-        print(f"    Molecular symmetry :{i+1:6d}")
+        print(f"                        {i+1:6d}")
         pp = pprint.pformat(s, width=74, compact=True)
-        for l in pp.split('\n'):
-          print('      ', l)
+        for l in pp.split("\n"):
+            print("      ", l)
     print()
 
     mrmsd = mobbrmsd()
