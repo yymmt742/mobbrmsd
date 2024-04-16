@@ -175,7 +175,7 @@ if(SKBUILD)
     "${CMAKE_CURRENT_SOURCE_DIR}/__mobbrmsd__.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/__coord_generator__.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_bb.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/demo_nn.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/demo_mst.py"
     DESTINATION
     "${CMAKE_INSTALL_PYTHON_LIBDIR}/mobbrmsd")
 
