@@ -41,7 +41,7 @@ program main
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=10')
   call test4(4, 4, 1, [0], 10)
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,6,1)}, n_target=100')
-  call test4(4, 6, 1, [0], 100)
+  call test4(4, 12, 1, [0], 100)
 !
   call u%finish_and_terminate()
 !

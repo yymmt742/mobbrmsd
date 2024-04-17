@@ -2,8 +2,18 @@
 module mod_mobbrmsd
 !$ use omp_lib
   use blas_lapack_interface, only: D, setup_dimension
-  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, TEN => RTEN, LN_TO_L10, RHUGE
-  use mod_iolib
+  use mod_params, only: &
+ &      IK, &
+ &      RK, &
+ &      ONE => RONE, &
+ &      ZERO => RZERO, &
+ &      RHUGE
+  use mod_iolib, only: &
+ &      STDOUT => mod_iolib_STDOUT, &
+ &      FS_RESET => mod_iolib_FS_RESET, &
+ &      isatty, &
+ &      decorate, &
+ &      decorator
   use mod_optarg
   use mod_bb_list
   use mod_bb_block
@@ -441,16 +451,19 @@ contains
     list(2, 1) = 1
 !
     if (PRESENT(unit)) then; unit_ = unit
-    else; unit_ = mod_iolib_STDOUT
+    else; unit_ = STDOUT
     end if
 !
     deco = decorator(color='Y', carret=.true.)
-    reset = mod_iolib_FS_RESET
+    reset = FS_RESET
 !
     do j = 1, n_target - 1
 !
-      write (6, '(A, I8,A)', ADVANCE='NO') deco//'----------------', j, reset
-      flush(6)
+      if (isatty(unit_)) then
+        write (unit_, '(A, I8,A)', ADVANCE='NO') deco//'----------------', j, reset
+        FLUSH (unit_)
+      end if
+!
       vval(j) = RHUGE
       if (PRESENT(cutoff)) then
         cutoff_ = MIN(RHUGE, MAX(cutoff, ZERO))
@@ -486,7 +499,9 @@ contains
 !
     end do
 !
-    write (6, '(A)', ADVANCE='NO') decorate('', carret=.true., clear='l')
+    if (isatty(unit_)) then
+      write (6, '(A)', ADVANCE='NO') decorate('', carret=.true., clear='l')
+    endif
 !
     do j = 1, n_target
       do i = 1, j - 1
@@ -512,33 +527,6 @@ contains
     endif
 !
   end subroutine mobbrmsd_min_span_tree
-!
-!| swap target coordinate.
-! pure subroutine mobbrmsd_swap_y(header, state, Y)
-!   class(mobbrmsd_header), intent(in) :: header
-!   !! mobbrmsd_header
-!   class(mobbrmsd_state), intent(in)  :: state
-!   !! mobbrmsd_state
-!   real(RK), intent(inout)            :: Y(*)
-!   !! target coordinate
-!
-!   call bb_list_swap_y(header%q, state%s, Y(1))
-!
-! end subroutine mobbrmsd_swap_y
-!
-!| swap and rotate target coordinate.
-! pure subroutine mobbrmsd_rotate_y(header, state, Y)
-!   type(mobbrmsd_header), intent(in) :: header
-!   !! mobbrmsd_header
-!   type(mobbrmsd_state), intent(in)  :: state
-!   !! mobbrmsd_state
-!   real(RK), intent(inout)           :: Y(*)
-!   !! target coordinate
-!
-!   call bb_list_swap_y(header%q, state%s, Y)
-!   call state%rotation(header, Y)
-!
-! end subroutine mobbrmsd_rotate_y
 !
 !| Returns bb process is finished.
   pure function mobbrmsd_is_finished(header, state) result(res)
