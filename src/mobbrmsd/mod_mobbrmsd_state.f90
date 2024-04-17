@@ -29,7 +29,7 @@ module mod_mobbrmsd_state
   type mobbrmsd_state
     private
     integer(IK), allocatable, public :: s(:)
-    real(RK), allocatable    :: z(:)
+    real(RK), allocatable            :: z(:)
   contains
     procedure :: update                 => mobbrmsd_state_update
     !! update state

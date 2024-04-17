@@ -176,9 +176,10 @@ contains
   end function mobbrmsd_num_threads
 !
 !| run mobbrmsd
-  pure subroutine mobbrmsd_run(header, state, &
- &                             X, Y, W, &
- &                             cutoff, difflim, maxeval)
+  subroutine mobbrmsd_run( &
+ &             header, state, &
+ &             X, Y, W, &
+ &             cutoff, difflim, maxeval)
     type(mobbrmsd_header), intent(in)    :: header
     !! mobbrmsd_header
     type(mobbrmsd_state), intent(inout)  :: state
@@ -233,7 +234,7 @@ contains
   end subroutine mobbrmsd_run
 !
 !| run mobbrmsd
-  pure subroutine mobbrmsd_restart(header, state, W, &
+  subroutine mobbrmsd_restart(header, state, W, &
  &                                 cutoff, difflim, maxeval)
     type(mobbrmsd_header), intent(in)    :: header
     !! mobbrmsd_header

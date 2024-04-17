@@ -41,7 +41,7 @@ contains
     integer(IK), intent(in) :: q(:)
     !! mobbrmsd_header sequence
     integer(IK), intent(in) :: s(:)
-    !! mobbrmsd_state sequence
+    !! mobbrmsd_state template sequence
     type(mobbrmsd_header)   :: res
     res%d = D
     ALLOCATE(res%q, source=q)
