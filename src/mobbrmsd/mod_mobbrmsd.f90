@@ -4,6 +4,7 @@ module mod_mobbrmsd
   use blas_lapack_interface, only: D, setup_dimension
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, TEN => RTEN, LN_TO_L10, RHUGE
   use mod_iolib
+  use mod_optarg
   use mod_bb_list
   use mod_bb_block
   implicit none
@@ -656,7 +657,8 @@ contains
   !| batch parallel nearest_neighbor
   subroutine mobbrmsd_min_span_tree(n_target, header, state, X, W, &
  &                                  cutoff, difflim, maxeval, &
- &                                  edges, weights)
+ &                                  edges, weights, show_progress, unit &
+ )
     integer(IK), intent(in)              :: n_target
     !! number of coordinates
     type(mobbrmsd_header), intent(in)    :: header
@@ -677,11 +679,17 @@ contains
     !! minimum spanning tree edges
     real(RK), intent(out), optional      :: weights(n_target - 1)
     !! minimum spanning tree weights
+    logical, intent(in), optional        :: show_progress
+    !! if true, show progress bar
+    integer(IK), intent(in), optional    :: unit
+    !! device number for progress bar
     logical                              :: mask(n_target)
     integer(kind=IK)                     :: list(2, n_target)
     real(RK)                             :: vval(n_target - 1), nnval, cutoff_
     integer(kind=IK)                     :: i, j, xpnt, ldx, nnidx
-    character(:), allocatable           :: deco, reset
+!
+    integer(kind=IK)                     :: unit_
+    character(:), allocatable            :: deco, reset
 !
     ldx = header%n_dims() * header%n_atoms()
 !
@@ -693,6 +701,10 @@ contains
     mask(1) = .false.
     list(1, 1) = 0
     list(2, 1) = 1
+!
+    if (PRESENT(unit)) then; unit_ = unit
+    else; unit_ = mod_iolib_STDOUT
+    end if
 !
     deco = decorator(color='Y', carret=.true.)
     reset = mod_iolib_FS_RESET
