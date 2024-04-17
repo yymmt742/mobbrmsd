@@ -182,7 +182,7 @@ contains
     endif
   end function decorate
 !
-  pure function decorator(color, style, carret, clear) result(res)
+  pure function decorator(color, style, carret, clear, clear_screen) result(res)
     character, intent(in), optional :: color
     !| Color specifier <br>
     !! 'K' :: Black <br>
@@ -204,82 +204,115 @@ contains
     !| If true, caredge return <br>
     character, intent(in), optional :: clear
     !| Clear options (before carret)<br>
-    !! 'L' :: Clear line <br>
-    !! 'a' :: Clear line after cursor <br>
-    !! 'b' :: Clear line before cursor <br>
-    !! 'S' :: Clear screen <br>
-    !! 'A' :: Clear screen after cursor <br>
-    !! 'B' :: Clear screen before cursor <br>
+    !! 'Z' :: Clear all <br>
+    !! 'A' :: Clear after cursor <br>
+    !! 'B' :: Clear before cursor <br>
+    logical, intent(in), optional   :: clear_screen
+    !| If true, clear screen. <br>
+    !! else, clear line (default). <br>
     character(:), allocatable       :: res
     !| decorator string
-!&<
-    select case (optarg(color, ' '))
-    case ('k', 'K'); call decorate_(mod_iolib_FC_BLACK,   style, carret, clear, res)
-    case ('r', 'R'); call decorate_(mod_iolib_FC_RED,     style, carret, clear, res)
-    case ('g', 'G'); call decorate_(mod_iolib_FC_GREEN,   style, carret, clear, res)
-    case ('b', 'B'); call decorate_(mod_iolib_FC_BLUE,    style, carret, clear, res)
-    case ('m', 'M'); call decorate_(mod_iolib_FC_MAGENTA, style, carret, clear, res)
-    case ('c', 'C'); call decorate_(mod_iolib_FC_CYAN,    style, carret, clear, res)
-    case ('y', 'Y'); call decorate_(mod_iolib_FC_YELLOW,  style, carret, clear, res)
-    case ('w', 'W'); call decorate_(mod_iolib_FC_WHITE,   style, carret, clear, res)
-    case default;    call decorate_('',                   style, carret, clear, res)
-    end select
-!&>
+    associate (BK => mod_iolib_FC_BLACK, &
+   &           RD => mod_iolib_FC_RED, &
+   &           GR => mod_iolib_FC_GREEN, &
+   &           BL => mod_iolib_FC_BLUE, &
+   &           MG => mod_iolib_FC_MAGENTA, &
+   &           CY => mod_iolib_FC_CYAN, &
+   &           YL => mod_iolib_FC_YELLOW, &
+   &           WH => mod_iolib_FC_WHITE &
+   &     )
+      select case (optarg(color, ' '))
+      case ('k', 'K'); call deco_(BK, style, carret, clear, clear_screen, res)
+      case ('r', 'R'); call deco_(RD, style, carret, clear, clear_screen, res)
+      case ('g', 'G'); call deco_(GR, style, carret, clear, clear_screen, res)
+      case ('b', 'B'); call deco_(BL, style, carret, clear, clear_screen, res)
+      case ('m', 'M'); call deco_(MG, style, carret, clear, clear_screen, res)
+      case ('c', 'C'); call deco_(CY, style, carret, clear, clear_screen, res)
+      case ('y', 'Y'); call deco_(YL, style, carret, clear, clear_screen, res)
+      case ('w', 'W'); call deco_(WH, style, carret, clear, clear_screen, res)
+      case default; call deco_('', style, carret, clear, clear_screen, res)
+      end select
+    end associate
   end function decorator
 !
-  pure subroutine decorate_(color, style, carret, clear, res)
+  pure subroutine deco_(color, style, carret, clear, clear_screen, res)
     character(*), intent(in)                 :: color
     character(*), intent(in), optional       :: style
     logical, intent(in), optional            :: carret
     character, intent(in), optional          :: clear
+    logical, intent(in), optional            :: clear_screen
     character(:), allocatable, intent(inout) :: res
-!&<
-    select case (optarg(style, ' '))
-    case ('b', 'B'); call decorate__(color, mod_iolib_FS_BOLD,        carret, clear, res)
-    case ('w', 'W'); call decorate__(color, mod_iolib_FS_WEAK,        carret, clear, res)
-    case ('u', 'U'); call decorate__(color, mod_iolib_FS_UNDER_LINE,  carret, clear, res)
-    case ('i', 'I'); call decorate__(color, mod_iolib_FS_INVERT,      carret, clear, res)
-    case ('c', 'C'); call decorate__(color, mod_iolib_FS_CROSSED_OUT, carret, clear, res)
-    case default;    call decorate__(color, '',                       carret, clear, res)
-    end select
-!&>
-  end subroutine decorate_
+    associate (BO => mod_iolib_FS_BOLD, &
+   &           WE => mod_iolib_FS_WEAK, &
+   &           UL => mod_iolib_FS_UNDER_LINE, &
+   &           IV => mod_iolib_FS_INVERT, &
+   &           CO => mod_iolib_FS_CROSSED_OUT &
+   &     )
+      select case (optarg(style, ' '))
+      case ('b', 'B'); call deco__(color, BO, carret, clear, clear_screen, res)
+      case ('w', 'W'); call deco__(color, WE, carret, clear, clear_screen, res)
+      case ('u', 'U'); call deco__(color, UL, carret, clear, clear_screen, res)
+      case ('i', 'I'); call deco__(color, IV, carret, clear, clear_screen, res)
+      case ('c', 'C'); call deco__(color, CO, carret, clear, clear_screen, res)
+      case default;    call deco__(color, '', carret, clear, clear_screen, res)
+      end select
+    end associate
+  end subroutine deco_
 !
-  pure subroutine decorate__(color, style, carret, clear, res)
+  pure subroutine deco__(color, style, carret, clear, clear_screen, res)
     character(*), intent(in)                 :: color
     character(*), intent(in)                 :: style
     logical, intent(in), optional            :: carret
     character, intent(in), optional          :: clear
+    logical, intent(in), optional            :: clear_screen
     character(:), allocatable, intent(inout) :: res
 !
-    if (optarg(carret, .false.)) then
-      call decorate___(color, style, mod_iolib_CAREDGE_RETURN, clear, res)
-    else
-      call decorate___(color, style, '', clear, res)
-    end if
+    associate (CR => mod_iolib_CAREDGE_RETURN, &
+   &           CL => mod_iolib_CLEAR_LINE, &
+   &           LA => mod_iolib_CLEAR_LINE_AFTER, &
+   &           LB => mod_iolib_CLEAR_LINE_BEFORE, &
+   &           CS => mod_iolib_CLEAR_SCREEN, &
+   &           SA => mod_iolib_CLEAR_SCREEN_AFTER, &
+   &           SB => mod_iolib_CLEAR_SCREEN_BEFORE &
+   &     )
+      if (optarg(carret, .false.)) then
+        if (optarg(clear_screen, .false.)) then
+          select case (optarg(clear, ' '))
+          case ('Z', 'z'); call deco___(color, style, CR, CL, res)
+          case ('A', 'a'); call deco___(color, style, CR, LA, res)
+          case ('B', 'b'); call deco___(color, style, CR, LB, res)
+          case default;    call deco___(color, style, CR, '', res)
+          end select
+        else
+          select case (optarg(clear, ' '))
+          case ('Z', 'z'); call deco___(color, style, CR, CS, res)
+          case ('A', 'a'); call deco___(color, style, CR, SA, res)
+          case ('B', 'b'); call deco___(color, style, CR, SB, res)
+          case default;    call deco___(color, style, CR, '', res)
+          end select
+        endif
+      else
+        if (optarg(clear_screen, .false.)) then
+          select case (optarg(clear, ' '))
+          case ('Z', 'z'); call deco___(color, style, '', CL, res)
+          case ('A', 'a'); call deco___(color, style, '', LA, res)
+          case ('B', 'b'); call deco___(color, style, '', LB, res)
+          case default;    call deco___(color, style, '', '', res)
+          end select
+        else
+          select case (optarg(clear, ' '))
+          case ('Z', 'z'); call deco___(color, style, '', CS, res)
+          case ('A', 'a'); call deco___(color, style, '', SA, res)
+          case ('B', 'b'); call deco___(color, style, '', SB, res)
+          case default;    call deco___(color, style, '', '', res)
+          end select
+        endif
+      end if
+    end associate
 !
-  end subroutine decorate__
+  end subroutine deco__
 !
-  pure subroutine decorate___(color, style, carret, clear, res)
-    character(*), intent(in)                 :: color
-    character(*), intent(in)                 :: style
-    character(*), intent(in)                 :: carret
-    character, intent(in), optional          :: clear
-    character(:), allocatable, intent(inout) :: res
-!&<
-    select case (optarg(clear, ' '))
-    case ('L', 'l'); call decorate____(color, style, carret, mod_iolib_CLEAR_LINE,          res)
-    case ('a');      call decorate____(color, style, carret, mod_iolib_CLEAR_LINE_AFTER,    res)
-    case ('b');      call decorate____(color, style, carret, mod_iolib_CLEAR_LINE_BEFORE,   res)
-    case ('S', 's'); call decorate____(color, style, carret, mod_iolib_CLEAR_SCREEN,        res)
-    case ('A');      call decorate____(color, style, carret, mod_iolib_CLEAR_SCREEN_AFTER,  res)
-    case ('B');      call decorate____(color, style, carret, mod_iolib_CLEAR_SCREEN_BEFORE, res)
-    case default;    call decorate____(color, style, carret, '',                            res)
-    end select
-!&>
-  end subroutine decorate___
-!
-  pure subroutine decorate____(color, style, carret, clear, res)
+  pure subroutine deco___(color, style, carret, clear, res)
     character(*), intent(in)                 :: color
     character(*), intent(in)                 :: style
     character(*), intent(in)                 :: carret
@@ -288,7 +321,7 @@ contains
 !
     res = clear//carret//color//style
 !
-  end subroutine decorate____
+  end subroutine deco___
 !
   pure function optarg_l(l, def)
     logical, intent(in), optional :: l
