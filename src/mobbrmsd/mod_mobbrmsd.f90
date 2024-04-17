@@ -8,13 +8,6 @@ module mod_mobbrmsd
  &      ONE => RONE, &
  &      ZERO => RZERO, &
  &      RHUGE
-  use mod_iolib, only: &
- &      STDOUT => mod_iolib_STDOUT, &
- &      FS_RESET => mod_iolib_FS_RESET, &
- &      isatty, &
- &      decorate, &
- &      decorator
-  use mod_optarg
   use mod_bb_list
   use mod_bb_block
   use mod_mobbrmsd_header
@@ -433,8 +426,8 @@ contains
     real(RK)                             :: vval(n_target - 1), nnval, cutoff_
     integer(kind=IK)                     :: i, j, xpnt, ldx, nnidx
 !
-    integer(kind=IK)                     :: unit_
-    character(:), allocatable            :: deco, reset
+!   integer(kind=IK)                     :: unit_
+!   character(:), allocatable            :: deco, reset
 !
     ldx = header%n_dims() * header%n_atoms()
 !
@@ -448,19 +441,19 @@ contains
     list(1, 1) = 0
     list(2, 1) = 1
 !
-    if (PRESENT(unit)) then; unit_ = unit
-    else; unit_ = STDOUT
-    end if
+!   if (PRESENT(unit)) then; unit_ = unit
+!   else; unit_ = STDOUT
+!   end if
 !
-    deco = decorator(color='Y', carret=.true.)
-    reset = FS_RESET
+!   deco = decorator(color='Y', carret=.true.)
+!   reset = FS_RESET
 !
     do j = 1, n_target - 1
 !
-      if (isatty(unit_)) then
-        write (unit_, '(A, I8,A)', ADVANCE='NO') deco//'----------------', j, reset
-        FLUSH (unit_)
-      end if
+!     if (isatty(unit_)) then
+!       write (unit_, '(A, I8,A)', ADVANCE='NO') deco//'----------------', j, reset
+!       FLUSH (unit_)
+!     end if
 !
       vval(j) = RHUGE
       if (PRESENT(cutoff)) then
@@ -497,9 +490,9 @@ contains
 !
     end do
 !
-    if (isatty(unit_)) then
-      write (6, '(A)', ADVANCE='NO') decorate('', carret=.true., clear='l')
-    endif
+!   if (isatty(unit_)) then
+!     write (6, '(A)', ADVANCE='NO') decorate('', carret=.true., clear='l')
+!   endif
 !
     do j = 1, n_target
       do i = 1, j - 1

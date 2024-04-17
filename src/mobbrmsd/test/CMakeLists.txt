@@ -36,16 +36,3 @@ target_include_directories( test_tree PRIVATE ${unittest_DIR}/mod_files )
 target_link_libraries( test_tree PRIVATE unittest )
 add_test( NAME test_tree COMMAND test_tree )
 
-add_executable( test_progress_bar )
-target_sources( test_progress_bar PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/../isatty.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_iolib.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_progress_bar.f90
-  test_progress_bar.f90 )
-target_include_directories( test_progress_bar PRIVATE ${unittest_DIR}/mod_files )
-target_link_libraries( test_progress_bar PRIVATE unittest )
-add_test( NAME test_progress_bar COMMAND test_progress_bar )
-

@@ -19,9 +19,6 @@ endif ()
 target_include_directories(${TARGET_3D} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 target_sources(${TARGET_3D} PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/../isatty.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_iolib.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -38,14 +35,17 @@ target_sources(${TARGET_3D} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90 )
 
+target_link_libraries(${TARGET_3D} PRIVATE forbar)
 target_link_libraries(${TARGET_3D} PRIVATE ${OpenMP_Fortran_LIB_NAMES} )
 set_target_properties(${TARGET_3D} PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_3D_DIR})
 
 add_library(${TARGET_3D}_shared SHARED $<TARGET_OBJECTS:mobbrmsd_3d>)
+target_link_libraries(${TARGET_3D}_shared PRIVATE forbar)
 set_target_properties(${TARGET_3D}_shared PROPERTIES OUTPUT_NAME ${TARGET_3D})
 target_link_libraries(${TARGET_3D}_shared PRIVATE ${OpenMP_Fortran_LIB_NAMES} )
 
 add_library(${TARGET_3D}_static STATIC $<TARGET_OBJECTS:mobbrmsd_3d>)
+target_link_libraries(${TARGET_3D}_static PRIVATE forbar)
 set_target_properties(${TARGET_3D}_static PROPERTIES OUTPUT_NAME ${TARGET_3D})
 target_link_libraries(${TARGET_3D}_static PRIVATE ${OpenMP_Fortran_LIB_NAMES} )
 
@@ -166,9 +166,6 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
-    ${CMAKE_CURRENT_SOURCE_DIR}/../isatty.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_iolib.f90
-    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_optarg.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_header.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_state.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
@@ -178,6 +175,7 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   target_include_directories( test_mobbrmsd_3d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include )
   target_link_libraries( test_mobbrmsd_3d PRIVATE unittest)
   target_link_libraries( test_mobbrmsd_3d PRIVATE purelapack)
+  target_link_libraries( test_mobbrmsd_3d PRIVATE forbar)
   target_link_libraries( test_mobbrmsd_3d PRIVATE ${OpenMP_Fortran_LIB_NAMES} )
   add_test( NAME test_mobbrmsd_3d COMMAND test_mobbrmsd_3d 0)
 endif()

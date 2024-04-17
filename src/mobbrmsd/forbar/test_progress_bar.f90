@@ -1,5 +1,4 @@
 program main
-  use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_progress_bar
   use mod_unittest
   implicit none
