@@ -33,8 +33,6 @@ module mod_mobbrmsd
   public :: mobbrmsd_batch_run
   public :: mobbrmsd_nearest_neighbor
   public :: mobbrmsd_min_span_tree
-! public :: mobbrmsd_swap_y
-! public :: mobbrmsd_rotate_y
   public :: mobbrmsd_is_finished
 !
 !| mobbrmsd_input
@@ -70,7 +68,7 @@ module mod_mobbrmsd
   end type mobbrmsd
 !
   interface mobbrmsd
-    module procedure mobbrmsd_new_from_block
+    module procedure mobbrmsd_new, mobbrmsd_new_from_block
   end interface mobbrmsd
 !
 contains
