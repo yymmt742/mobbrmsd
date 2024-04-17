@@ -133,7 +133,7 @@ contains
 !
     call mobbrmsd_restart(mobb%h, mobb%s, W)
     print'(I8, *(f16.9))', mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
-    call u%assert_almost_equal(mobb%s%sqrdev(), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
+    call u%assert_almost_equal(mobb%s%squared_deviation(), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
 !
     call mobbrmsd_run(mobb%h, mobb%s, X, Y, W)
     print'(I8, *(f16.9))', mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()

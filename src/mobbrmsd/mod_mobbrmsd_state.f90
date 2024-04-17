@@ -37,9 +37,9 @@ module mod_mobbrmsd_state
     !! upperbound
     procedure :: lowerbound             => mobbrmsd_state_lowerbound
     !! lowerbound
-    procedure :: sqrared_deviation      => mobbrmsd_state_sqrared_deviation
+    procedure :: squared_deviation      => mobbrmsd_state_squared_deviation
     !! sqrared_deviation
-    procedure :: mean_sqrared_deviation => mobbrmsd_state_mean_sqrared_deviation
+    procedure :: mean_squared_deviation => mobbrmsd_state_mean_squared_deviation
     !! sqrared_deviation
     procedure :: rmsd                   => mobbrmsd_state_rmsd
     !! rmsd
@@ -49,6 +49,8 @@ module mod_mobbrmsd_state
     !! ratio of evaluated node
     procedure :: log_eval_ratio         => mobbrmsd_state_log_eval_ratio
     !! log ratio of evaluated node
+    procedure :: rotation               => mobbrmsd_state_rotation
+    !! rotate given coordinate
     procedure :: dump                   => mobbrmsd_state_dump
     !! dump current state
     procedure :: dump_real              => mobbrmsd_state_dump_real
@@ -136,6 +138,7 @@ contains
 !| returns upperbound
   pure elemental function mobbrmsd_state_upperbound(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
+    !! this
     real(RK)                          :: res
     res = this%z(mobbrmsd_state_INDEX_OF_UPPERBOUND)
   end function mobbrmsd_state_upperbound
@@ -143,6 +146,7 @@ contains
 !| returns lowerbound
   pure elemental function mobbrmsd_state_lowerbound(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
+    !! this
     real(RK)                          :: res
     associate (UB => mobbrmsd_state_INDEX_OF_UPPERBOUND)
       res = this%z(UB)
@@ -150,17 +154,19 @@ contains
   end function mobbrmsd_state_lowerbound
 !
 !| returns squared deviation
-  pure elemental function mobbrmsd_state_sqrared_deviation(this) result(res)
+  pure elemental function mobbrmsd_state_squared_deviation(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
+    !! this
     real(RK)                          :: res
     associate (UB => mobbrmsd_state_INDEX_OF_UPPERBOUND)
       res = MAX(ZERO, this%z(UB))
     end associate
-  end function mobbrmsd_state_sqrared_deviation
+  end function mobbrmsd_state_squared_deviation
 !
 !| returns squared deviation
-  pure elemental function mobbrmsd_state_mean_sqrared_deviation(this) result(res)
+  pure elemental function mobbrmsd_state_mean_squared_deviation(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
+    !! this
     real(RK)                          :: res
     associate ( &
    &  RN => mobbrmsd_state_INDEX_OF_RCP_N_ATOMS, &
@@ -168,11 +174,12 @@ contains
    &  )
       res = MAX(ZERO, this%z(UB)) * this%z(RN)
     end associate
-  end function mobbrmsd_state_mean_sqrared_deviation
+  end function mobbrmsd_state_mean_squared_deviation
 !
 !| returns rmsd
   pure elemental function mobbrmsd_state_rmsd(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
+    !! this
     real(RK)                          :: res
     associate ( &
    &  RN => mobbrmsd_state_INDEX_OF_RCP_N_ATOMS, &
@@ -185,6 +192,7 @@ contains
 !| returns n_eval
   pure elemental function mobbrmsd_state_n_eval(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
+    !! this
     integer(IK)                       :: res
     associate (NE => mobbrmsd_state_INDEX_OF_N_EVAL)
       res = NINT(this%z(NE), IK)
@@ -194,11 +202,38 @@ contains
 !| returns eval_ratio
   pure elemental function mobbrmsd_state_eval_ratio(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
+    !! this
     real(RK)                          :: res
     associate (LR => mobbrmsd_state_INDEX_OF_LOG_RATIO)
       res = EXP(this%z(LR))
     end associate
   end function mobbrmsd_state_eval_ratio
+!
+!| returns eval_ratio
+  pure subroutine mobbrmsd_state_rotation(this, header, X)
+    class(mobbrmsd_state), intent(in) :: this
+    !! this
+    type(mobbrmsd_header), intent(in) :: header
+    !! mobbrmsd header
+    real(RK), intent(inout)           :: X(*)
+    !! coordinate
+!
+    associate (RT => mobbrmsd_state_INDEX_TO_ROTMAT)
+      call rotate(header%n_dims(), header%n_atoms(), this%z(RT), X)
+    end associate
+!
+  contains
+!
+    pure subroutine rotate(n_dims, n_atoms, R, X)
+      integer(IK), intent(in) :: n_dims, n_atoms
+      real(RK), intent(in)    :: R(n_dims, n_dims)
+      real(RK), intent(inout) :: X(n_dims, n_atoms)
+      real(RK)                :: T(n_dims, n_atoms)
+      T = MATMUL(TRANSPOSE(R), X)
+      X = T
+    end subroutine rotate
+!
+  end subroutine mobbrmsd_state_rotation
 !
 !| returns log_eval_ratio
   pure elemental function mobbrmsd_state_log_eval_ratio(this) result(res)
