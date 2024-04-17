@@ -218,6 +218,7 @@ contains
     real(RK), intent(inout)           :: X(*)
     !! coordinate
 !
+    call bb_list_swap_y(header%q, this%s, X)
     associate (RT => mobbrmsd_state_INDEX_TO_ROTMAT)
       call rotate(header%n_dims(), header%n_atoms(), this%z(RT), X)
     end associate

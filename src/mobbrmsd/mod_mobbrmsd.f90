@@ -23,8 +23,8 @@ module mod_mobbrmsd
   public :: mobbrmsd_batch_run
   public :: mobbrmsd_nearest_neighbor
   public :: mobbrmsd_min_span_tree
-  public :: mobbrmsd_swap_y
-  public :: mobbrmsd_rotate_y
+! public :: mobbrmsd_swap_y
+! public :: mobbrmsd_rotate_y
   public :: mobbrmsd_is_finished
 !
 !| mobbrmsd_input
@@ -294,7 +294,7 @@ contains
       ypnt = (itgt - 1) * ldy + 1
       call mobbrmsd_run(header, state(itgt), X, Y(ypnt), W(wpnt), &
      &                  cutoff=cutoff, difflim=difflim, maxeval=maxeval)
-      if (rotate_y) call mobbrmsd_rotate_y(header, state(itgt), Y(ypnt))
+      if (rotate_y) call state(itgt)%rotation(header, Y(ypnt))
     end do
     !$omp end parallel
 !
@@ -513,31 +513,31 @@ contains
   end subroutine mobbrmsd_min_span_tree
 !
 !| swap target coordinate.
-  pure subroutine mobbrmsd_swap_y(header, state, Y)
-    class(mobbrmsd_header), intent(in) :: header
-    !! mobbrmsd_header
-    class(mobbrmsd_state), intent(in)  :: state
-    !! mobbrmsd_state
-    real(RK), intent(inout)            :: Y(*)
-    !! target coordinate
+! pure subroutine mobbrmsd_swap_y(header, state, Y)
+!   class(mobbrmsd_header), intent(in) :: header
+!   !! mobbrmsd_header
+!   class(mobbrmsd_state), intent(in)  :: state
+!   !! mobbrmsd_state
+!   real(RK), intent(inout)            :: Y(*)
+!   !! target coordinate
 !
-    call bb_list_swap_y(header%q, state%s, Y(1))
+!   call bb_list_swap_y(header%q, state%s, Y(1))
 !
-  end subroutine mobbrmsd_swap_y
+! end subroutine mobbrmsd_swap_y
 !
 !| swap and rotate target coordinate.
-  pure subroutine mobbrmsd_rotate_y(header, state, Y)
-    type(mobbrmsd_header), intent(in) :: header
-    !! mobbrmsd_header
-    type(mobbrmsd_state), intent(in)  :: state
-    !! mobbrmsd_state
-    real(RK), intent(inout)           :: Y(*)
-    !! target coordinate
+! pure subroutine mobbrmsd_rotate_y(header, state, Y)
+!   type(mobbrmsd_header), intent(in) :: header
+!   !! mobbrmsd_header
+!   type(mobbrmsd_state), intent(in)  :: state
+!   !! mobbrmsd_state
+!   real(RK), intent(inout)           :: Y(*)
+!   !! target coordinate
 !
-    call bb_list_swap_y(header%q, state%s, Y)
-    call state%rotation(header, Y)
+!   call bb_list_swap_y(header%q, state%s, Y)
+!   call state%rotation(header, Y)
 !
-  end subroutine mobbrmsd_rotate_y
+! end subroutine mobbrmsd_rotate_y
 !
 !| Returns bb process is finished.
   pure function mobbrmsd_is_finished(header, state) result(res)
