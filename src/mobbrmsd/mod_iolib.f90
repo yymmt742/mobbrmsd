@@ -37,6 +37,7 @@ module mod_iolib
   public :: isatty
   public :: decorate
   public :: decorator
+
 !&<
 !| Newline
   character(*), parameter :: mod_iolib_NEWLINE             = NEW_LINE(' ')
@@ -91,6 +92,15 @@ module mod_iolib
   character(*), parameter :: mod_iolib_FC_CYAN             = mod_iolib_ESCAPE//'[36m'
 !| Font color white
   character(*), parameter :: mod_iolib_FC_WHITE            = mod_iolib_ESCAPE//'[37m'
+!
+!| Unicode character LIGHT_SHADE
+  character(*), parameter :: mod_iolib_LIGHT_SHADE         = '░'
+!| Unicode character MEDIUM_SHADE
+  character(*), parameter :: mod_iolib_MEDIUM_SHADE        = '▒'
+!| Unicode character DARK_SHADE
+  character(*), parameter :: mod_iolib_DARK_SHADE          = '▓'
+!| Unicode character HALF_BLOCK
+  character(*), parameter :: mod_iolib_HALF_BLOCK          = '█'
 !&>
   interface
     function isatty_stdin() bind(c)
@@ -135,7 +145,15 @@ contains
   end function isatty
 !
   !| Return decorator string
-  pure function decorate(s, color, style, carret, clear, trimed) result(res)
+  pure function decorate( &
+ &                s, &
+ &                color, &
+ &                style, &
+ &                carret, &
+ &                clear, &
+ &                clear_screen, &
+ &                trimed &
+ &              ) result(res)
     character(*), intent(in)        :: s
     !| decorated string <br>
     character, intent(in), optional :: color
@@ -159,17 +177,17 @@ contains
     !| If true, caredge return <br>
     character, intent(in), optional :: clear
     !| Clear options (before carret)<br>
-    !! 'L' :: Clear line <br>
-    !! 'a' :: Clear line after cursor <br>
-    !! 'b' :: Clear line before cursor <br>
-    !! 'S' :: Clear screen <br>
-    !! 'A' :: Clear screen after cursor <br>
-    !! 'B' :: Clear screen before cursor <br>
+    !! 'Z' :: Clear all <br>
+    !! 'A' :: Clear after cursor <br>
+    !! 'B' :: Clear before cursor <br>
+    logical, intent(in), optional   :: clear_screen
+    !| If true, clear screen. <br>
+    !! else, clear line (default). <br>
     logical, intent(in), optional   :: trimed
     !| If true, trim s <br>
     character(:), allocatable       :: dec, res
     !| decorator string
-    dec = decorator(color, style, carret, clear)
+    dec = decorator(color, style, carret, clear, clear_screen)
     if(dec=='')then
       if(optarg(trimed, .false.))then
         res = s
@@ -185,7 +203,13 @@ contains
     endif
   end function decorate
 !
-  pure function decorator(color, style, carret, clear, clear_screen) result(res)
+  pure function decorator( &
+ &                color, &
+ &                style, &
+ &                carret, &
+ &                clear, &
+ &                clear_screen &
+ &              ) result(res)
     character, intent(in), optional :: color
     !| Color specifier <br>
     !! 'K' :: Black <br>
