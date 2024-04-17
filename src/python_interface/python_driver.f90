@@ -1,24 +1,26 @@
 module driver
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
-  use mod_mobbrmsd, only: mobbrmsd, &
- &                         mobbrmsd_n_dims, &
- &                         mobbrmsd_num_threads, &
- &                         mobbrmsd_run, &
- &                         mobbrmsd_restart, &
- &                         mobbrmsd_batch_run, &
- &                         mobbrmsd_min_span_tree, &
- &                         mobbrmsd_rotate_y, &
- &                         mobbrmsd_is_finished, &
- &                         mol_block_input, &
- &                         mol_block_input_add, &
- &                         mobbrmsd_state, &
- &                         mobbrmsd_header, &
- &                         INDEX_OF_RCP_NATOM, &
- &                         INDEX_OF_UPPERBOUND, &
- &                         INDEX_OF_LOWERBOUND, &
- &                         INDEX_OF_LOG_RATIO, &
- &                         INDEX_OF_N_EVAL, &
- &                         setup_dimension_ => setup_dimension
+  use mod_mobbrmsd_header, only: &
+    mobbrmsd_header
+  use mod_mobbrmsd_state, only: &
+ &  mobbrmsd_state, &
+ &  RN => mobbrmsd_state_INDEX_TO_RCP_N_ATOMS, &
+ &  UB => mobbrmsd_state_INDEX_TO_UPPERBOUND, &
+ &  LB => mobbrmsd_state_INDEX_TO_LOWERBOUND, &
+ &  LR => mobbrmsd_state_INDEX_TO_LOG_RATIO, &
+ &  NE => mobbrmsd_state_INDEX_TO_N_EVAL, &
+ &  RT => mobbrmsd_state_INDEX_TO_ROTMAT
+  use mod_mobbrmsd, only: &
+ &  mobbrmsd, &
+ &  mobbrmsd_num_threads, &
+ &  mobbrmsd_run, &
+ &  mobbrmsd_restart, &
+ &  mobbrmsd_batch_run, &
+ &  mobbrmsd_min_span_tree, &
+ &  mobbrmsd_is_finished, &
+ &  mol_block_input, &
+ &  mol_block_input_add, &
+ &  setup_dimension_ => setup_dimension
 
   implicit none
   private
@@ -76,12 +78,12 @@ contains
     integer(kind=IK), intent(out) :: n_atom
     type(mobbrmsd)                :: mob
 
-    n_dim = mobbrmsd_n_dims()
-
     if (ALLOCATED(blocks)) then
       mob = mobbrmsd(blocks)
+      n_dim = mob%h%n_dims()
       n_atom = mob%h%n_atoms()
     else
+      n_dim = 0
       n_atom = 0
     end if
 
@@ -104,6 +106,7 @@ contains
 
   end subroutine workmemory_lengthes
 
+  !| return header and state vector lengthes
   pure subroutine state_vector_lengthes(n_head, n_int, n_float)
     integer(kind=IK), intent(out) :: n_head
     integer(kind=IK), intent(out) :: n_int
@@ -128,10 +131,7 @@ contains
     integer(kind=IK), intent(in) :: n_float
     real(kind=RK), intent(in)    :: float_states(n_float)
     real(kind=RK), intent(out)   :: res
-
-    res = SQRT(float_states(INDEX_OF_RCP_NATOM) &
-              & * MAX(float_states(INDEX_OF_UPPERBOUND), ZERO))
-
+    res = SQRT(float_states(RN) * MAX(float_states(UB), ZERO))
   end subroutine rmsd
 
   !| return bounds
@@ -139,10 +139,8 @@ contains
     integer(kind=IK), intent(in) :: n_float
     real(kind=RK), intent(in)    :: float_states(n_float)
     real(kind=RK), intent(out)   :: res(2)
-
-    res(1) = float_states(INDEX_OF_UPPERBOUND)
-    res(2) = float_states(INDEX_OF_LOWERBOUND)
-
+    res(1) = float_states(UB)
+    res(2) = float_states(LB)
   end subroutine bounds
 
   !| return n_eval
@@ -150,9 +148,7 @@ contains
     integer(kind=IK), intent(in)  :: n_float
     real(kind=RK), intent(in)     :: float_states(n_float)
     integer(kind=IK), intent(out) :: res
-
-    res = NINT(float_states(INDEX_OF_N_EVAL), IK)
-
+    res = NINT(float_states(NE), IK)
   end subroutine n_eval
 
   !| return log_eval_ratio
@@ -160,9 +156,7 @@ contains
     integer(kind=IK), intent(in) :: n_float
     real(kind=RK), intent(in)    :: float_states(n_float)
     real(kind=RK), intent(out)   :: res
-
-    res = float_states(INDEX_OF_LOG_RATIO)
-
+    res = float_states(LR)
   end subroutine log_eval_ratio
 
   !| inquire bb is finished
@@ -176,7 +170,7 @@ contains
     type(mobbrmsd_state)          :: s
 
     call h%load(header)
-    call s%load(n_int, int_states, n_float, float_states)
+    call s%load(int_states, float_states)
     res = mobbrmsd_is_finished(h, s)
 
   end subroutine is_finished
@@ -201,7 +195,7 @@ contains
     type(mobbrmsd_state)            :: s
 
     call h%load(header)
-    call s%load(n_int, int_states, n_float, float_states)
+    call s%load(int_states, float_states)
     call mobbrmsd_restart(h, s, W, cutoff, difflim, maxeval)
 
     int_states = s%dump()
@@ -225,8 +219,8 @@ contains
     type(mobbrmsd_state)         :: s
 
     call h%load(header)
-    call s%load(n_int, int_states, n_float, float_states)
-    call mobbrmsd_rotate_y(h, s, Y)
+    call s%load(int_states, float_states)
+    call s%rotation(h, Y)
 
   end subroutine rotate_y
 
@@ -257,7 +251,7 @@ contains
 
     mob = mobbrmsd(blocks)
     call mobbrmsd_run(mob%h, mob%s, X, Y, w, cutoff, difflim, maxeval)
-    if (rotate_y) call mobbrmsd_rotate_y(mob%h, mob%s, Y)
+    if (rotate_y) call mob%s%rotation(mob%h, Y)
 
     header = mob%h%dump()
     int_states = mob%s%dump()
@@ -266,11 +260,12 @@ contains
   end subroutine run
 
   !| batch parallel run
-  subroutine batch_run(n_dim, n_atom, n_target, &
- &                     n_head, n_int, n_float, n_mem, n_job,&
- &                     X, Y, W, &
- &                     cutoff, difflim, maxeval, rotate_y, &
- &                     header, int_states, float_states)
+  subroutine batch_run( &
+               n_dim, n_atom, n_target, &
+ &             n_head, n_int, n_float, n_mem, n_job,&
+ &             X, Y, W, &
+ &             cutoff, difflim, maxeval, rotate_y, &
+ &             header, int_states, float_states)
     integer(kind=IK), intent(in)  :: n_dim
     integer(kind=IK), intent(in)  :: n_atom
     integer(kind=IK), intent(in)  :: n_target
@@ -301,7 +296,10 @@ contains
       s(i) = mob%s
     end do
 
-    call mobbrmsd_batch_run(n_target, mob%h, s, X, Y, W, cutoff, difflim, maxeval, rotate_y)
+    call mobbrmsd_batch_run( &
+   &  n_target, mob%h, s, X, Y, W, &
+   &  cutoff, difflim, maxeval, rotate_y &
+   &  )
 
     header = mob%h%dump()
     do concurrent(i=1:n_target)

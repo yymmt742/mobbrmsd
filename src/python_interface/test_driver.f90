@@ -4,35 +4,37 @@ program main
   use mod_unittest
   implicit none
   type(unittest) :: u
-  integer        :: n_dim, n_atom
 !
   call u%init('test python_driver')
 !
-  call n_atoms(n_dim, n_atom)
-  print*,n_dim
+  call test1()
 !
-  call test1(n_dim)
-!
-  call u%init('test python_driver, nearest_neighbor')
-  call test2(n_dim)
+  call u%init('test python_driver, min_span_tree')
+  call test2()
 !
   call u%finish_and_terminate()
 !
 contains
 !
-  subroutine test1(n_dim)
-    integer(IK), intent(in)  :: n_dim
+  subroutine test1()
     integer(IK), parameter   :: s = 2
     integer(IK), parameter   :: n_target = 1000
     integer(IK), parameter   :: n_apm = 8, n_mol = 8
-    integer(IK), parameter   :: n_atm = n_apm * n_mol
-    real(RK)                 :: X(n_dim, n_apm, n_mol), Y(n_dim, n_apm, n_mol, n_target)
+    integer(IK)              :: n_atm
+    integer(IK)              :: n_dim
+    real(RK), allocatable    :: X(:, :, :), Y(:, :, :, :)
     integer(IK)              :: n_header, n_int, n_float, n_job, n_mem
     integer(IK), allocatable :: h(:), si(:, :)
     real(RK), allocatable    :: sr(:, :), W(:, :)
     integer(IK)              :: i, j, k, l
 !
+!
     call add_molecule(n_apm, n_mol, 2, [5, 6, 7, 8, 1, 2, 3, 4])
+    call n_atoms(n_dim, n_atm)
+    print*,n_dim, n_atm
+!
+    allocate(X(n_dim, n_apm, n_mol))
+    allocate(Y(n_dim, n_apm, n_mol, n_target))
 !
     do k = -1, 1, 2
       do j = -1, 1, 2
@@ -55,17 +57,20 @@ contains
 !
     call workmemory_lengthes(n_mem, n_job)
     call state_vector_lengthes(n_header, n_int, n_float)
-    print*, n_header, n_int, n_float
+    print*, n_mem, n_job, n_header, n_int, n_float
 !
     allocate(h(n_header))
     allocate(si(n_int, n_target))
     allocate(sr(n_float, n_target))
     allocate(W(n_mem, n_job))
 !
-    call batch_run(n_dim, n_atm, n_target, n_header, n_int, n_float, n_mem, n_job, &
-   &               X, Y, W, &
-   &               999.0_RK, 0.0_RK, -1, .FALSE., h, si, sr)
-    print'(10(I6))',h
+    call batch_run( &
+   &  n_dim, n_atm, n_target, n_header, &
+   &  n_int, n_float, n_mem, n_job, &
+   &  X, Y, W, &
+   &  999.0_RK, 0.0_RK, -1, .FALSE., &
+   &  h, si, sr)
+!
     do i = 1, n_target
       print'(5(F12.3))', sr(:4, i), EXP(sr(5, i))
     end do
@@ -73,11 +78,10 @@ contains
 !
   end subroutine test1
 !
-  subroutine test2(n_dim)
-    integer(IK), intent(in)  :: n_dim
+  subroutine test2()
     integer(IK), parameter   :: n_apm = 8, n_mol = 5, n_target = 50
-    integer(IK), parameter   :: n_atom = n_apm * n_mol
-    real(RK)                 :: X(n_dim, n_apm, n_mol, n_target)
+    real(RK), allocatable    :: X(:, :, :, :)
+    integer(IK)              :: n_dim, n_atm
     integer(IK)              :: n_header, n_int, n_float, n_job, n_mem
     integer(IK)              :: edges(2, n_target - 1)
     real(RK)                 :: weights(n_target - 1)
@@ -86,21 +90,23 @@ contains
     real(RK), allocatable    :: float_states(:, :, :)
     integer(IK)              :: i
 !
-    call RANDOM_NUMBER(X)
-!
     call add_molecule(n_apm, n_mol, 2, [5, 6, 7, 8, 1, 2, 3, 4])
-!
+    call n_atoms(n_dim, n_atm)
     call workmemory_lengthes(n_mem, n_job)
     call state_vector_lengthes(n_header, n_int, n_float)
-    print*, n_header, n_int, n_float, n_job, n_mem
 !
+    print'(*(I4))', n_dim, n_atm, n_header, n_int, n_float, n_job, n_mem
+!
+    allocate(X(n_dim, n_apm, n_mol, n_target))
     allocate (w(n_job * n_mem))
     allocate(header(n_header))
     allocate(int_states(n_int, n_target, n_target))
     allocate(float_states(n_float, n_target, n_target))
 !
+    call RANDOM_NUMBER(X)
+!
     call min_span_tree( &
- &    n_dim, n_atom, n_target, &
+ &    n_dim, n_atm, n_target, &
  &    n_header, n_int, n_float, n_mem, n_job,&
  &    X, W, RHUGE, ZERO, -1, &
  &    edges, weights, header, int_states, float_states)
