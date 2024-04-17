@@ -1,8 +1,15 @@
 module mod_iolib
   use ISO_C_BINDING
-  use ISO_FORTRAN_ENV, only: INPUT_UNIT, OUTPUT_UNIT, ERROR_UNIT
+  use ISO_FORTRAN_ENV, only: &
+ &   mod_iolib_STDIN => INPUT_UNIT, &
+ &   mod_iolib_STDOUT => OUTPUT_UNIT, &
+ &   mod_iolib_STDERR => ERROR_UNIT
+  use mod_optarg
   implicit none
   private
+  public :: mod_iolib_STDIN
+  public :: mod_iolib_STDOUT
+  public :: mod_iolib_STDERR
   public :: mod_iolib_NEWLINE
   public :: mod_iolib_NULLCHR
   public :: mod_iolib_CAREDGE_RETURN
@@ -102,10 +109,6 @@ module mod_iolib
     end function isatty_stderr
   end interface
 !
-  interface optarg
-    module procedure :: optarg_l, optarg_c
-  end interface optarg
-!
 contains
 !
   !| Return true if unit is tty
@@ -115,20 +118,20 @@ contains
     logical                       :: res
     integer                       :: cres
     if (.not. PRESENT(unit)) then
-      res = isatty_stdout() > 0
-      return
-    end if
-    select case (unit)
-    case (INPUT_UNIT)
-      cres = isatty_stdin()
-    case (OUTPUT_UNIT)
       cres = isatty_stdout()
-    case (ERROR_UNIT)
-      cres = isatty_stderr()
-    case default
-      cres = 0
-    end select
-    res = cres > 0
+    else
+      select case (unit)
+      case (mod_iolib_STDIN)
+        cres = isatty_stdin()
+      case (mod_iolib_STDOUT)
+        cres = isatty_stdout()
+      case (mod_iolib_STDERR)
+        cres = isatty_stderr()
+      case default
+        cres = 0
+      end select
+    end if
+    res = .not. cres == 0
   end function isatty
 !
   !| Return decorator string
@@ -322,27 +325,5 @@ contains
     res = clear//carret//color//style
 !
   end subroutine deco___
-!
-  pure function optarg_l(l, def)
-    logical, intent(in), optional :: l
-    logical, intent(in)           :: def
-    logical                       :: optarg_l
-    if (PRESENT(l)) then
-      optarg_l = l
-    else
-      optarg_l = def
-    end if
-  end function optarg_l
-!
-  pure function optarg_c(l, def)
-    character, intent(in), optional :: l
-    character, intent(in)           :: def
-    character                       :: optarg_c
-    if (PRESENT(l)) then
-      optarg_c = l
-    else
-      optarg_c = def
-    end if
-  end function optarg_c
 !
 end module mod_iolib
