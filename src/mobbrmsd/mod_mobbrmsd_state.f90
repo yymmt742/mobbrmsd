@@ -5,22 +5,22 @@ module mod_mobbrmsd_state
   use mod_bb_list
   implicit none
   public :: mobbrmsd_state
-! public :: mobbrmsd_state_INDEX_OF_RCP_NATOM
-! public :: mobbrmsd_state_INDEX_OF_UPPERBOUND
-! public :: mobbrmsd_state_INDEX_OF_LOWERBOUND
-! public :: mobbrmsd_state_INDEX_OF_LOG_RATIO
-! public :: mobbrmsd_state_INDEX_OF_N_EVAL
-! public :: mobbrmsd_state_INDEX_TO_ROTMAT
+  public :: mobbrmsd_state_INDEX_TO_RCP_N_ATOMS
+  public :: mobbrmsd_state_INDEX_TO_UPPERBOUND
+  public :: mobbrmsd_state_INDEX_TO_LOWERBOUND
+  public :: mobbrmsd_state_INDEX_TO_LOG_RATIO
+  public :: mobbrmsd_state_INDEX_TO_N_EVAL
+  public :: mobbrmsd_state_INDEX_TO_ROTMAT
 !&<
-  integer(IK), parameter :: mobbrmsd_state_INDEX_OF_RCP_N_ATOMS = 1
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_RCP_N_ATOMS = 1
   !! Index of reciprocal natom of dumped state
-  integer(IK), parameter :: mobbrmsd_state_INDEX_OF_UPPERBOUND  = 2
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_UPPERBOUND  = 2
   !! Index of upperbound of dumped state
-  integer(IK), parameter :: mobbrmsd_state_INDEX_OF_LOWERBOUND  = 3
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_LOWERBOUND  = 3
   !! Index of lowerbound of dumped state
-  integer(IK), parameter :: mobbrmsd_state_INDEX_OF_N_EVAL      = 4
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_N_EVAL      = 4
   !! Index of n_eval of dumped state
-  integer(IK), parameter :: mobbrmsd_state_INDEX_OF_LOG_RATIO   = 5
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_LOG_RATIO   = 5
   !! Index of log_ratio of dumped state
   integer(IK), parameter :: mobbrmsd_state_INDEX_TO_ROTMAT      = 6
   !! Index to rotmatrix of dumped state
@@ -75,11 +75,11 @@ contains
     type(mobbrmsd_state)              :: res
     real(RK)                          :: z(5 + header%n_dims()**2)
     associate ( &
-   &   RN => mobbrmsd_state_INDEX_OF_RCP_N_ATOMS, &
-   &   UB => mobbrmsd_state_INDEX_OF_UPPERBOUND, &
-   &   LB => mobbrmsd_state_INDEX_OF_LOWERBOUND, &
-   &   NE => mobbrmsd_state_INDEX_OF_N_EVAL, &
-   &   LR => mobbrmsd_state_INDEX_OF_LOG_RATIO, &
+   &   RN => mobbrmsd_state_INDEX_TO_RCP_N_ATOMS, &
+   &   UB => mobbrmsd_state_INDEX_TO_UPPERBOUND, &
+   &   LB => mobbrmsd_state_INDEX_TO_LOWERBOUND, &
+   &   NE => mobbrmsd_state_INDEX_TO_N_EVAL, &
+   &   LR => mobbrmsd_state_INDEX_TO_LOG_RATIO, &
    &   RT => mobbrmsd_state_INDEX_TO_ROTMAT &
     )
       z(RN) = ONE / real(header%n_atoms(), RK)
@@ -115,14 +115,14 @@ contains
     real(RK), intent(in)                 :: W(*)
     !! mobbrmsd workarray
     associate( &
-   &   UB => mobbrmsd_state_INDEX_OF_UPPERBOUND, &
-   &   LB => mobbrmsd_state_INDEX_OF_LOWERBOUND, &
-   &   NE => mobbrmsd_state_INDEX_OF_N_EVAL, &
-   &   LR => mobbrmsd_state_INDEX_OF_LOG_RATIO, &
+   &   UB => mobbrmsd_state_INDEX_TO_UPPERBOUND, &
+   &   LB => mobbrmsd_state_INDEX_TO_LOWERBOUND, &
+   &   NE => mobbrmsd_state_INDEX_TO_N_EVAL, &
+   &   LR => mobbrmsd_state_INDEX_TO_LOG_RATIO, &
    &   RT => mobbrmsd_state_INDEX_TO_ROTMAT, &
-   &   BBUB => bb_list_INDEX_OF_UPPERBOUND, &
-   &   BBLB => bb_list_INDEX_OF_LOWERBOUND, &
-   &   BBNE => bb_list_INDEX_OF_N_EVAL, &
+   &   BBUB => bb_list_INDEX_TO_UPPERBOUND, &
+   &   BBLB => bb_list_INDEX_TO_LOWERBOUND, &
+   &   BBNE => bb_list_INDEX_TO_N_EVAL, &
    &   BBLN => bb_list_INDEX_TO_LOG_N_COMB &
     )
 !
@@ -140,7 +140,7 @@ contains
     class(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
-    res = this%z(mobbrmsd_state_INDEX_OF_UPPERBOUND)
+    res = this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND)
   end function mobbrmsd_state_upperbound
 !
 !| returns lowerbound
@@ -148,7 +148,7 @@ contains
     class(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
-    associate (UB => mobbrmsd_state_INDEX_OF_UPPERBOUND)
+    associate (UB => mobbrmsd_state_INDEX_TO_UPPERBOUND)
       res = this%z(UB)
     end associate
   end function mobbrmsd_state_lowerbound
@@ -158,7 +158,7 @@ contains
     class(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
-    associate (UB => mobbrmsd_state_INDEX_OF_UPPERBOUND)
+    associate (UB => mobbrmsd_state_INDEX_TO_UPPERBOUND)
       res = MAX(ZERO, this%z(UB))
     end associate
   end function mobbrmsd_state_squared_deviation
@@ -169,8 +169,8 @@ contains
     !! this
     real(RK)                          :: res
     associate ( &
-   &  RN => mobbrmsd_state_INDEX_OF_RCP_N_ATOMS, &
-   &  UB => mobbrmsd_state_INDEX_OF_UPPERBOUND &
+   &  RN => mobbrmsd_state_INDEX_TO_RCP_N_ATOMS, &
+   &  UB => mobbrmsd_state_INDEX_TO_UPPERBOUND &
    &  )
       res = MAX(ZERO, this%z(UB)) * this%z(RN)
     end associate
@@ -182,8 +182,8 @@ contains
     !! this
     real(RK)                          :: res
     associate ( &
-   &  RN => mobbrmsd_state_INDEX_OF_RCP_N_ATOMS, &
-   &  UB => mobbrmsd_state_INDEX_OF_UPPERBOUND &
+   &  RN => mobbrmsd_state_INDEX_TO_RCP_N_ATOMS, &
+   &  UB => mobbrmsd_state_INDEX_TO_UPPERBOUND &
    &  )
       res = SQRT(this%z(RN) * MAX(ZERO, this%z(UB)))
     end associate
@@ -194,7 +194,7 @@ contains
     class(mobbrmsd_state), intent(in) :: this
     !! this
     integer(IK)                       :: res
-    associate (NE => mobbrmsd_state_INDEX_OF_N_EVAL)
+    associate (NE => mobbrmsd_state_INDEX_TO_N_EVAL)
       res = NINT(this%z(NE), IK)
     end associate
   end function mobbrmsd_state_n_eval
@@ -204,7 +204,7 @@ contains
     class(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
-    associate (LR => mobbrmsd_state_INDEX_OF_LOG_RATIO)
+    associate (LR => mobbrmsd_state_INDEX_TO_LOG_RATIO)
       res = EXP(this%z(LR))
     end associate
   end function mobbrmsd_state_eval_ratio
@@ -240,7 +240,7 @@ contains
   pure elemental function mobbrmsd_state_log_eval_ratio(this) result(res)
     class(mobbrmsd_state), intent(in) :: this
     real(RK)                          :: res
-    associate (LR => mobbrmsd_state_INDEX_OF_LOG_RATIO)
+    associate (LR => mobbrmsd_state_INDEX_TO_LOG_RATIO)
       res = this%z(LR)
     end associate
   end function mobbrmsd_state_log_eval_ratio

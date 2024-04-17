@@ -16,9 +16,9 @@ module mod_bb_list
   public :: bb_list_swap_y
   public :: bb_list_rotation_matrix
   public :: bb_list_is_finished
-  public :: bb_list_INDEX_OF_UPPERBOUND
-  public :: bb_list_INDEX_OF_LOWERBOUND
-  public :: bb_list_INDEX_OF_N_EVAL
+  public :: bb_list_INDEX_TO_UPPERBOUND
+  public :: bb_list_INDEX_TO_LOWERBOUND
+  public :: bb_list_INDEX_TO_N_EVAL
   public :: bb_list_INDEX_TO_LOG_N_COMB
 !
   integer(IK), parameter :: header_size = 1
@@ -29,15 +29,10 @@ module mod_bb_list
   integer(IK), parameter :: SS = 2 ! pointer to best state vector
 !
   integer(IK), parameter :: header_memsize = 4
-  integer(IK), parameter :: bb_list_INDEX_OF_UPPERBOUND = 1
-  integer(IK), parameter :: bb_list_INDEX_OF_LOWERBOUND = 2
-  integer(IK), parameter :: bb_list_INDEX_OF_N_EVAL     = 3
+  integer(IK), parameter :: bb_list_INDEX_TO_UPPERBOUND = 1
+  integer(IK), parameter :: bb_list_INDEX_TO_LOWERBOUND = 2
+  integer(IK), parameter :: bb_list_INDEX_TO_N_EVAL     = 3
   integer(IK), parameter :: bb_list_INDEX_TO_LOG_N_COMB = 4
-!
-  integer(IK), parameter :: UB =  bb_list_INDEX_OF_UPPERBOUND
-  integer(IK), parameter :: LB =  bb_list_INDEX_OF_LOWERBOUND
-  integer(IK), parameter :: NV =  bb_list_INDEX_OF_N_EVAL
-  integer(IK), parameter :: CM =  bb_list_INDEX_TO_LOG_N_COMB
 !
 !| bb_list<br>
 !  This is mainly used for passing during initialization.
@@ -96,7 +91,7 @@ contains
 !
     q(nb) = SIZE(blk)
     nstat = SUM([(bb_block_nmol(blk(i)%q), i=1, q(nb))])
-    s(sb) = 0
+    s(SB) = 0
 !
     j = header_size + 4 * q(nb) + 1
     do i = 1, q(nb)
@@ -199,30 +194,34 @@ contains
     real(RK), intent(inout)    :: W(*)
     !! work array
     integer(IK)                :: i, n, ps, pq, px, pw
+    associate( &
+   &   UB =>  bb_list_INDEX_TO_UPPERBOUND, &
+   &   LB =>  bb_list_INDEX_TO_LOWERBOUND, &
+   &   NV =>  bb_list_INDEX_TO_N_EVAL, &
+   &   CM =>  bb_list_INDEX_TO_LOG_N_COMB &
+   &  )
+      s(SB) = 0
+      W(UB) = RHUGE
+      W(LB) = ZERO
+      W(NV) = ZERO
+      W(CM) = ZERO
 !
-    s(sb) = 0
-    W(UB) = RHUGE
-    W(LB) = ZERO
-    W(NV) = ZERO
-    W(CM) = ZERO
+      ps = s_pointer(q)
+      px = x_pointer(q)
+      pw = w_pointer(q)
+      pq = q_pointer(q)
 !
-    ps = s_pointer(q)
-    px = x_pointer(q)
-    pw = w_pointer(q)
-    pq = q_pointer(q)
+      n = n_block(q)
 !
-    n = n_block(q)
+      do concurrent(i=0:n - 1)
+        call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
+      end do
+      do i = 0, N - 1
+        W(CM) = W(CM) + bb_block_log_ncomb(q(q(pq + i)))
+      end do
 !
-    do concurrent(i=0:n - 1)
-      call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
-    end do
-!
-    do i = 0, N - 1
-      W(CM) = W(CM) + bb_block_log_ncomb(q(q(pq + i)))
-    end do
-!
-    call save_state(n, q(pq), q(ps), q, s)
-!
+      call save_state(n, q(pq), q(ps), q, s)
+    end associate
   end subroutine bb_list_setup
 !
 !| run branch and bound
@@ -247,7 +246,7 @@ contains
     ps = s_pointer(q)
     pw = w_pointer(q)
 !
-    s(sb) = MAX(s(sb), 1)
+    s(SB) = MAX(s(SB), 1)
 !&<
     coff = RHUGE ; if (PRESENT(cutoff))  coff = MIN(coff, cutoff)
     diff = ZERO  ; if (PRESENT(difflim)) diff = MAX(diff, difflim)
@@ -256,7 +255,7 @@ contains
     if (PRESENT(maxeval))then
       if (maxeval == 0) then
         ! run only once, early return.
-        call run_bb(n, q(pq), q(ps), q(pw), q, s(sb), s, W)
+        call run_bb(n, q(pq), q(ps), q(pw), q, s(SB), s, W)
         return
       elseif (maxeval > 0) then
         ! finite run
@@ -270,20 +269,24 @@ contains
       nlim = RHUGE
     endif
 !
-    call update_lowerbound(s(sb), q(pq), q(ps), q(pw), q, s, W)
+    call update_lowerbound(s(SB), q(pq), q(ps), q(pw), q, s, W)
 !
-    do while ( &
-   &       W(NV) < nlim &
-   & .and. W(LB) < coff &
-   & .and. W(LB) + diff <= W(UB) &
-   &)
+    associate( &
+   &   UB =>  bb_list_INDEX_TO_UPPERBOUND, &
+   &   LB =>  bb_list_INDEX_TO_LOWERBOUND, &
+   &   NV =>  bb_list_INDEX_TO_N_EVAL &
+   &  )
+      do while ( &
+     &       W(NV) < nlim &
+     & .and. W(LB) < coff &
+     & .and. W(LB) + diff <= W(UB) &
+     &)
 !
-      call run_bb(n, q(pq), q(ps), q(pw), q, s(sb), s, W)
+        call run_bb(n, q(pq), q(ps), q(pw), q, s(SB), s, W)
+        if(bb_list_is_finished(q, s)) exit
 !
-      if(bb_list_is_finished(q, s)) exit
-!
-    end do
-!
+      end do
+    end associate
 !
   end subroutine bb_list_run
 !
@@ -294,11 +297,16 @@ contains
 !
 !     Expansion process
 !
+    associate( &
+   &   UB =>  bb_list_INDEX_TO_UPPERBOUND, &
+   &   LB =>  bb_list_INDEX_TO_LOWERBOUND, &
+   &   NV =>  bb_list_INDEX_TO_N_EVAL &
+   &  )
       do
-        call bb_block_expand(W(ub), q(pq(b)), s(ps(b)), W(pw(b)))
+        call bb_block_expand(W(UB), q(pq(b)), s(ps(b)), W(pw(b)))
         if (b == n .or. bb_block_queue_is_empty(q(pq(b)), s(ps(b)))) exit
         b = b + 1
-        call bb_block_inheritance(W(ub), q(pq(b)), s(ps(b)), W(pw(b)), &
+        call bb_block_inheritance(W(UB), q(pq(b)), s(ps(b)), W(pw(b)), &
        &                          q(pq(b - 1)), s(ps(b - 1)), W(pw(b - 1)))
       enddo
 !
@@ -310,8 +318,8 @@ contains
         block
           real(RK) :: cv
           cv = bb_block_current_value(q(pq(b)), s(ps(b)), W(pw(b)))
-          if (W(ub) > cv) then
-            W(ub) = cv
+          if (W(UB) > cv) then
+            W(UB) = cv
             call save_state(n, pq, ps, q, s)
           end if
         end block
@@ -324,7 +332,7 @@ contains
 !     Closure process
 !
       do
-        call bb_block_leave(W(ub), q(pq(b)), s(ps(b)), W(pw(b)))
+        call bb_block_leave(W(UB), q(pq(b)), s(ps(b)), W(pw(b)))
         if (b == 1 .or. .not. bb_block_queue_is_empty(q(pq(b)), s(ps(b)))) exit
         b = b - 1
       enddo
@@ -336,6 +344,8 @@ contains
           W(NV) = W(NV) + bb_block_evaluation_count(W(pw(i)))
         end do
       end block
+!
+    end associate
 !
   end subroutine run_bb
 !
@@ -352,7 +362,12 @@ contains
       lv = MIN(lv, bb_block_lowest_value(q(pq(b)), s(ps(b)), W(pw(b))))
     end do
 !
-    W(lb) = MIN(MAX(W(lb), lv), W(ub))
+    associate( &
+   &   UB =>  bb_list_INDEX_TO_UPPERBOUND, &
+   &   LB =>  bb_list_INDEX_TO_LOWERBOUND &
+   &  )
+      W(LB) = MIN(MAX(W(lb), lv), W(UB))
+    end associate
 !
   end subroutine update_lowerbound
 !
@@ -361,7 +376,7 @@ contains
   integer(IK), intent(in)    :: q(*)
   integer(IK), intent(inout) :: s(*)
   integer(IK)                :: b, p
-    p = ss
+    p = SS
     do b = 1, n
       call bb_block_save_state(q(pq(b)), s(ps(b)), s(p))
       p = p + bb_block_nmol(q(pq(b)))
@@ -380,7 +395,7 @@ contains
 !
     px = x_pointer(q)
     pq = q_pointer(q)
-    pb = ss
+    pb = SS
 !
     n = n_block(q)
 !
@@ -405,7 +420,7 @@ contains
     integer(IK)             :: i, n, pb, pq, pw
 !
     n = n_block(q)
-    pb = ss
+    pb = SS
     pw = w_pointer(q)
     pq = q_pointer(q)
 !
@@ -431,10 +446,10 @@ contains
     integer(IK)             :: bq, bs
 !
 !   early return
-    res = s(sb) == 1; if (.not. res) return
+    res = s(SB) == 1; if (.not. res) return
 !
-    bq = q(q_pointer(q) + s(sb) - 1)
-    bs = q(s_pointer(q) + s(sb) - 1)
+    bq = q(q_pointer(q) + s(SB) - 1)
+    bs = q(s_pointer(q) + s(SB) - 1)
     res = bb_block_queue_is_empty(q(bq), s(bs))
 !
   end function bb_list_is_finished
