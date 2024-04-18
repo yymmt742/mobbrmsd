@@ -27,7 +27,7 @@ contains
   end function word_iterator_new
 !
 !| iterator
-  pure subroutine word_iterator_next(this)
+  subroutine word_iterator_next(this)
     class(word_iterator), intent(inout) :: this
   end subroutine word_iterator_next
 !

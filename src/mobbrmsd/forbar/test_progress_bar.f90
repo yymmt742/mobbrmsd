@@ -4,6 +4,7 @@ program main
   use mod_repeat_iterator
   use mod_cycle_iterator
   use mod_progbar_iterator
+  use mod_timing_iterator
   use mod_forbar
   use mod_unittest
   implicit none
@@ -12,6 +13,7 @@ program main
   type(repeat_iterator)  :: rep1, rep2
   type(cycle_iterator)   :: cyc1, cyc2
   type(progbar_iterator) :: prog
+  type(timing_iterator)  :: time
   type(forbar)           :: fbar1, fbar2
   type(multi_forbar)     :: mbar
   integer                :: i
@@ -22,12 +24,14 @@ program main
   rep2 = repeat_iterator(set=2, delay = 1000)
   cyc1 = cycle_iterator(word='***  ', delay = 100)
   cyc2 = cycle_iterator(delay=1000)
-  prog = progbar_iterator(limit=100000, title='Test iterator   ', indent=4)
+  time = timing_iterator(delay=2000)
+  prog = progbar_iterator(limit=200000, title='Test iterator   ', indent=4)
   fbar1 = forbar(cyc1)
   fbar2 = forbar(prog)
   mbar = multi_forbar()
   call mbar%add(prog)
   call mbar%add(rep2)
+  call mbar%add(time)
 
   i = 0
   do while(fbar1%running())
