@@ -1,11 +1,13 @@
 program main
   use mod_progress_bar
   use mod_repeat_iterator
+  use mod_progbar_iterator
   use mod_unittest
   implicit none
   type(unittest) :: u
-  type(repeat_iterator) :: rep
-  type(progress_bar) :: prog
+  type(repeat_iterator)  :: rep
+  type(progbar_iterator) :: prog
+! type(progress_bar) :: prog
   integer        :: i
 !
   call u%finish_and_terminate()
@@ -44,9 +46,10 @@ program main
   call rep%next()
   print*, rep%var
 
-  prog = progress_bar(limit=110000, title='Title', indent=4)
-  do i = 1, 1100000001
-    call prog%update(i/10000)
+  prog = progbar_iterator(limit=800)
+  do i = 1, 810
+    call prog%next()
+    print'(A)', prog%var
   end do
   print*
 !

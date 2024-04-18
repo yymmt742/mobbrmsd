@@ -210,6 +210,10 @@ contains
     !| If true, trim s <br>
     character(:), allocatable       :: dec, res
     !| decorator string
+    if (s == '') then
+      allocate (character(0) :: res)
+      return
+    end if
     dec = decorator( &
    &        color, &
    &        bgcolor, &
