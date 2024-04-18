@@ -9,8 +9,9 @@ add_library(forbar STATIC
   ${CMAKE_CURRENT_SOURCE_DIR}/mod_iolib.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/mod_word_iterator.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/mod_repeat_iterator.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/mod_cycle_iterator.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/mod_progbar_iterator.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/mod_progress_bar.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/mod_forbar.f90
   )
 
 target_include_directories(forbar PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -36,8 +37,9 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_iolib.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_word_iterator.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_repeat_iterator.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/mod_cycle_iterator.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_progbar_iterator.f90
-    ${CMAKE_CURRENT_SOURCE_DIR}/mod_progress_bar.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/mod_forbar.f90
     test_progress_bar.f90 )
   target_include_directories( test_progress_bar PRIVATE ${unittest_DIR}/mod_files )
   target_link_libraries( test_progress_bar PRIVATE unittest )

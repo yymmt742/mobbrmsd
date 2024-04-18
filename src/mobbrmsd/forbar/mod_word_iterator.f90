@@ -8,6 +8,7 @@ module mod_word_iterator
     character(:), allocatable, public :: var
   contains
     procedure :: next => word_iterator_next
+    procedure :: var_length => word_iterator_var_length
     final :: word_iterator_destroy
   end type word_iterator
 !
@@ -27,6 +28,13 @@ contains
   pure subroutine word_iterator_next(this)
     class(word_iterator), intent(inout) :: this
   end subroutine word_iterator_next
+!
+!| var_length
+  pure elemental function word_iterator_var_length(this) result(res)
+    class(word_iterator), intent(in) :: this
+    integer                          :: res
+    res = LEN(this%var)
+  end function word_iterator_var_length
 !
 !| destractor
   pure elemental subroutine word_iterator_destroy(this)
