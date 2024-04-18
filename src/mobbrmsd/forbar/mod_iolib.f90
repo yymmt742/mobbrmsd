@@ -223,16 +223,16 @@ contains
    &        clear, &
    &        clear_screen)
     if(dec=='')then
-      if(optarg(trimed, .false.))then
-        res = s
-      else
+      if(optarg(trimed, .true.))then
         res = TRIM(s)
+      else
+        res = s
       endif
     else
-      if(optarg(trimed, .false.))then
-        res = dec//s//mod_iolib_FS_RESET
-      else
+      if(optarg(trimed, .true.))then
         res = dec//TRIM(s)//mod_iolib_FS_RESET
+      else
+        res = dec//TRIM(s)//mod_iolib_FS_RESET//REPEAT(' ', LEN(s) - LEN_TRIM(s))
       endif
     endif
   end function decorate
