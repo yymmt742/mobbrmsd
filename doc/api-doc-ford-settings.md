@@ -6,6 +6,7 @@ license: MIT
 src_dir: ./../src/mobbrmsd
 include: ./../src/mobbrmsd/include
 exclude_dir: ./../src/mobbrmsd/test
+exclude_dir: ./../src/mobbrmsd/forbar
 favicon: ./../images/favicon.png
 
 {!./api-doc-index.md!}
