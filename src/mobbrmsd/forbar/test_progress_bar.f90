@@ -37,10 +37,12 @@ program main
   end do
   print*
 !
+  i = 0
   do while(mbar%running())
     write (*, '(A)', advance='NO') decorator(carret=.true.)
+    i = i + 1
   end do
-  print*
+  print*, i
 !
   end block
 !contains

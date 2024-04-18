@@ -75,20 +75,31 @@ contains
       res = this%iter%running()
   end function forbar_running
 !
-  function multi_forbar_running(this) result(res)
+  function multi_forbar_running(this, unit) result(res)
     class(multi_forbar), intent(inout) :: this
+    integer, intent(in), optional      :: unit
     logical                            :: res
-    integer                            :: i
-    do concurrent(i=1:SIZE(this%f))
-      call this%f(i)%iter%next()
-    end do
+    integer                            :: unit_
+    integer                            :: i, ios
+    logical                            :: to_tty
+!
+    unit_ = optarg(unit, STDOUT)
+    to_tty = isatty(unit_)
+!
     do i = 1, SIZE(this%f)
-      write (*, '(A)', advance='NO') this%f(i)%iter%var
+      call this%f(i)%iter%next()
+      if (this%f(i)%iter%to_tty() .and. to_tty .or. &
+     &   .not. (this%f(i)%iter%to_tty() .or. to_tty) &
+     &   ) then
+        write (unit_, '(A)', advance='NO', iostat=ios) this%f(i)%iter%var
+      endif
     end do
+!
     res = .true.
     do i = 1, SIZE(this%f)
       res = res .and. this%f(i)%iter%running()
     end do
+!
   end function multi_forbar_running
 !
 !| destractor
