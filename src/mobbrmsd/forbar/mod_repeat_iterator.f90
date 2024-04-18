@@ -154,6 +154,7 @@ module mod_repeat_iterator
     character(:), allocatable :: words
   contains
     procedure :: next => repeat_iterator_next
+    procedure :: running => repeat_iterator_running
     final :: repeat_iterator_destroy
   end type repeat_iterator
 !
@@ -234,6 +235,13 @@ contains
         end block
       end do
   end subroutine repeat_iterator_next
+!
+!| running
+  pure elemental function repeat_iterator_running(this) result(res)
+    class(repeat_iterator), intent(in) :: this
+    logical                            :: res
+    res = .true.
+  end function repeat_iterator_running
 !
 !| destractor
   pure elemental subroutine repeat_iterator_destroy(this)

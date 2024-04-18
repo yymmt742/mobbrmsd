@@ -7,8 +7,10 @@ module mod_word_iterator
     private
     character(:), allocatable, public :: var
   contains
-    procedure :: next => word_iterator_next
+    procedure :: next       => word_iterator_next
     procedure :: var_length => word_iterator_var_length
+    procedure :: to_tty     => word_iterator_to_tty
+    procedure :: running    => word_iterator_running
     final :: word_iterator_destroy
   end type word_iterator
 !
@@ -35,6 +37,20 @@ contains
     integer                          :: res
     res = LEN(this%var)
   end function word_iterator_var_length
+!
+!| to_tty
+  pure elemental function word_iterator_to_tty(this) result(res)
+    class(word_iterator), intent(in) :: this
+    logical                          :: res
+    res = .true.
+  end function word_iterator_to_tty
+!
+!| running
+  pure elemental function word_iterator_running(this) result(res)
+    class(word_iterator), intent(in) :: this
+    logical                          :: res
+    res = .false.
+  end function word_iterator_running
 !
 !| destractor
   pure elemental subroutine word_iterator_destroy(this)

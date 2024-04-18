@@ -61,7 +61,8 @@ module mod_progbar_iterator
     character(:), allocatable :: cmid
     character(:), allocatable :: ifmt
   contains
-    procedure :: next => progbar_iterator_next
+    procedure :: next    => progbar_iterator_next
+    procedure :: running => progbar_iterator_running
     final :: progbar_iterator_destroy
   end type progbar_iterator
 !
@@ -95,9 +96,9 @@ contains
     character(*), intent(in), optional :: subcolor
     !! sub color, default ['R'reen]
     character(*), intent(in), optional :: mainfontcolor
-    !! main font color, default ['K']
+    !! main font color, default ['K'ey plate]
     character(*), intent(in), optional :: subfontcolor
-    !! sub font color, default ['W']
+    !! sub font color, default [' ']
     character(:), allocatable          :: title_, header, footer, deco, dres
     character                          :: main_, sub_, mainf_, subf_
     character(32)                      :: ifmt
@@ -117,7 +118,7 @@ contains
     indent_ = MAX(optarg(indent, 0), 0)
     res%n_bar = MAX( &
               &   MIN( &
-              &    optarg(bar_length, 60) - indent_ - LEN(title_), &
+              &    optarg(bar_length, 30) - indent_ - LEN(title_), &
               &    80 - indent_ - LEN(title_) &
               &   ), &
               &   digit * 2 + LEN(' of') + LEN(' ') &
@@ -130,12 +131,13 @@ contains
     main_  = optarg(maincolor, 'G')
     mainf_ = optarg(mainfontcolor, 'K')
     sub_   = optarg(subcolor, 'R')
-    subf_  = optarg(subfontcolor, 'W')
+    subf_  = optarg(subfontcolor, ' ')
 !
     header = REPEAT(' ', indent_)// &
            & decorate( &
            &   title_, &
-           &   style='Underline' &
+           &   style='Underline', &
+           &   trimed=.false. &
            & )// &
            & ' ▍▏'// &
            & decorator( &
@@ -143,6 +145,7 @@ contains
            &   bgcolor=main_,  &
            &   reset=.true.)
 !
+
     footer = decorator(reset=.true.)//' ▏▍'
 !
     allocate (character(res%n_bar) :: res%layer)
@@ -179,7 +182,7 @@ contains
     integer                                :: lp, p, q
 !
     this%counter = this%counter + 1
-    if (this%counter > this%limit) this%counter = 0
+    if (this%counter > this%limit) return
 !
     lp = (this%n_bar + 1) * this%counter
     p = (lp - 1) / this%limit
@@ -222,6 +225,13 @@ contains
     if (q2 <= LEN(res)) res(q1:q2) = layer(p1:p2)
 !
   end subroutine composite_bar
+!
+!| running
+  pure elemental function progbar_iterator_running(this) result(res)
+    class(progbar_iterator), intent(in) :: this
+    logical                             :: res
+    res = this%counter <= this%limit
+  end function progbar_iterator_running
 !
 !| destractor
   pure elemental subroutine progbar_iterator_destroy(this)
