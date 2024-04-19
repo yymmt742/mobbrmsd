@@ -21,19 +21,19 @@ jobs:
         sudo pip install ford markdown==3.3.4
     - name: Build Developer Documentation
       run: |
-        ford doc/ford-front-matter.md
+        ford doc/api-doc-ford-settings.md
     - name: Upload Documentation
       uses: actions/upload-artifact@v2
       with:
         name: documentation
-        path: doc/ford_site
+        path: doc/api-doc
         if-no-files-found: error
 
     - name: Broken Link Check
       if: ${{ github.ref == 'refs/heads/main'}}
       uses: technote-space/broken-link-checker-action@v1
       with:
-        TARGET: file://${{ github.workspace }}/ford_site/index.html
+        TARGET: file://${{ github.workspace }}/api-doc/index.html
         RECURSIVE: true
         ASSIGNEES: ${{ github.actor }}
 
@@ -42,4 +42,4 @@ jobs:
       if: ${{ github.event_name == 'push'  &&  github.ref == 'refs/heads/main' }}
       with:
         branch: gh-pages
-        folder: doc/ford_site
+        folder: doc/api-doc
