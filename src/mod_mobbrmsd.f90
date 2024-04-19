@@ -8,6 +8,7 @@ module mod_mobbrmsd
  &      ONE => RONE, &
  &      ZERO => RZERO, &
  &      RHUGE
+  use mod_forbar
   use mod_bb_list
   use mod_bb_block
   use mod_mobbrmsd_header
@@ -107,7 +108,7 @@ contains
     do concurrent(i=1:nblock - 1)
       blocks(i)%m = this(i)%m
       blocks(i)%n = this(i)%n
-      call move_alloc(from=this(i)%sym, to=blocks(i)%sym)
+      call MOVE_ALLOC(from=this(i)%sym, to=blocks(i)%sym)
     end do
 !
     blocks(nblock)%m = m
@@ -335,11 +336,11 @@ contains
     ldy = header%n_dims() * header%n_atoms()
     ldw = header%memsize()
 !
-    if(PRESENT(cutoff))then
+    if (PRESENT(cutoff)) then
       cutoff_global = MERGE(RHUGE, cutoff, cutoff < ZERO)
     else
       cutoff_global = RHUGE
-    endif
+    end if
 !
     if (PRESENT(mask)) then
       cutoff_global = MIN(MINVAL(state%upperbound(), mask), cutoff_global)
@@ -383,11 +384,11 @@ contains
     !$omp end parallel
 !
     if (PRESENT(mask)) then
-      if(PRESENT(nnval)) nnval = MINVAL(state%upperbound(), mask)
-      if(PRESENT(nnidx)) nnidx = MINLOC(state%upperbound(), 1, mask)
+      if (PRESENT(nnval)) nnval = MINVAL(state%upperbound(), mask)
+      if (PRESENT(nnidx)) nnidx = MINLOC(state%upperbound(), 1, mask)
     else
-      if(PRESENT(nnval)) nnval = MINVAL(state%upperbound())
-      if(PRESENT(nnidx)) nnidx = MINLOC(state%upperbound(), 1)
+      if (PRESENT(nnval)) nnval = MINVAL(state%upperbound())
+      if (PRESENT(nnidx)) nnidx = MINLOC(state%upperbound(), 1)
     end if
 !
   end subroutine mobbrmsd_nearest_neighbor
@@ -434,7 +435,7 @@ contains
 ! Initialize header
     do concurrent(i=1:n_target, j=1:n_target)
       state(i, j) = mobbrmsd_state(header)
-    enddo
+    end do
 !
     mask(:) = .true.
     mask(1) = .false.
@@ -496,7 +497,7 @@ contains
 !
     do j = 1, n_target
       do i = 1, j - 1
-        if (state(i, j)%upperbound() < state(j, i)%upperbound())then
+        if (state(i, j)%upperbound() < state(j, i)%upperbound()) then
           state(j, i) = state(i, j)
         else
           state(i, j) = state(j, i)
@@ -504,18 +505,18 @@ contains
       end do
     end do
 !
-    if(PRESENT(edges))then
+    if (PRESENT(edges)) then
       do concurrent(i=1:n_target - 1)
         edges(1, i) = list(1, i + 1)
         edges(2, i) = list(2, i + 1)
-      enddo
-    endif
+      end do
+    end if
 !
-    if(PRESENT(weights))then
+    if (PRESENT(weights)) then
       do concurrent(i=1:n_target - 1)
         weights(i) = vval(i)
-      enddo
-    endif
+      end do
+    end if
 !
   end subroutine mobbrmsd_min_span_tree
 !
