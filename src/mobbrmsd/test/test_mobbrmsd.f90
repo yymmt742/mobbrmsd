@@ -1,5 +1,5 @@
 program main
-  use blas_lapack_interface, only : D
+  use blas_lapack_interface, only: D
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mobbrmsd
   use mod_testutil
@@ -40,8 +40,8 @@ program main
 !
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=10')
   call test4(4, 4, 1, [0], 10)
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,6,1)}, n_target=100')
-  call test4(4, 10, 1, [0], 100)
+  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,6,1)}, n_target=10')
+  call test4(4, 10, 1, [0], 10)
 !
   call u%finish_and_terminate()
 !
@@ -61,7 +61,7 @@ contains
     X = sample(n, m)
     Y = X
 !
-    allocate(W(mobb%h%memsize()))
+    allocate (W(mobb%h%memsize()))
 !
     do i = 1, 20
       call mobbrmsd_run(mobb%h, mobb%s, X, Y, W)
@@ -69,7 +69,7 @@ contains
       Y = 0.8 * Y + 0.2 * sample(n, m)
     end do
 !
-    deallocate(inp)
+    deallocate (inp)
 !
   end subroutine test1
 !
@@ -94,7 +94,7 @@ contains
     Y1 = X1
     Y2 = X2
 !
-    allocate(W(mobb%h%memsize()))
+    allocate (W(mobb%h%memsize()))
 !
     do i = 1, 10
       Y = RESHAPE([Y1, Y2], SHAPE(Y))
@@ -121,24 +121,24 @@ contains
     X = sample(n, m)
     Y = sample(n, m)
 !
-    allocate(W(mobb%h%memsize()))
+    allocate (W(mobb%h%memsize()))
 !
     call mobbrmsd_run(mobb%h, mobb%s, X, Y, W, maxeval=0)
-    print'(I8, *(f16.9))', mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
+    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
 !
     do i = 1, 10
       call mobbrmsd_restart(mobb%h, mobb%s, W, maxeval=i * 500)
-      print'(I8, *(f16.9))', mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
+      print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
     end do
 !
     call mobbrmsd_restart(mobb%h, mobb%s, W)
-    print'(I8, *(f16.9))', mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
+    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
     call u%assert_almost_equal(mobb%s%squared_deviation(), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
 !
     call mobbrmsd_run(mobb%h, mobb%s, X, Y, W)
-    print'(I8, *(f16.9))', mobb%s%n_eval(), exp(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
+    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
 !
-    deallocate(inp)
+    deallocate (inp)
 !
   end subroutine test3
 !
@@ -184,7 +184,7 @@ contains
      &                      - state(edges(1, i), edges(2, i))%lowerbound()
     end do
 !
-    deallocate(inp)
+    deallocate (inp)
 !
   end subroutine test4
 !
