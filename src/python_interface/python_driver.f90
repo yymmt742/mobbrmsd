@@ -1,4 +1,5 @@
 module driver
+!$ use omp_lib
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mobbrmsd_header, only: &
     mobbrmsd_header
@@ -12,7 +13,6 @@ module driver
  &  RT => mobbrmsd_state_INDEX_TO_ROTMAT
   use mod_mobbrmsd, only: &
  &  mobbrmsd, &
- &  mobbrmsd_num_threads, &
  &  mobbrmsd_run, &
  &  mobbrmsd_restart, &
  &  mobbrmsd_is_finished, &
@@ -104,7 +104,9 @@ contains
       n_mem = 0
     end if
 
-    n_job = mobbrmsd_num_threads()
+    !$omp parallel
+    n_job = omp_get_num_threads()
+    !$omp end parallel
 
   end subroutine workmemory_lengthes
 
