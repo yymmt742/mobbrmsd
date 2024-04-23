@@ -39,10 +39,10 @@ program main
   call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,3,1)}')
   call test3(4, 8, 1, [0])
 !
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=10')
-  call test4(4, 4, 1, [0], 10)
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,6,1)}, n_target=10')
+  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
   call test4(4, 10, 1, [0], 10)
+  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=500')
+  call test4(4, 4, 1, [0], 500)
 !
   call u%finish_and_terminate()
 !
@@ -144,6 +144,7 @@ contains
   end subroutine test3
 !
   subroutine test4(n, m, s, sym, n_target)
+!$  use omp_lib
     integer, intent(in)    :: n, m, s, sym(n * (s - 1)), n_target
     type(mobbrmsd)         :: mobb
     type(mobbrmsd_state)   :: state(n_target, n_target)
@@ -152,7 +153,7 @@ contains
     real(RK), allocatable  :: W(:)
     integer(IK)            :: edges(2, n_target - 1)
     real(RK)               :: weights(n_target - 1)
-    integer(IK)            :: i
+    integer(IK)            :: i, n_job
 !
     call mol_block_input_add(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
@@ -172,7 +173,11 @@ contains
       X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
     end do
 !
-    allocate (W(mobb%h%memsize() * mobbrmsd_num_threads()))
+    !$omp parallel
+    n_job = omp_get_num_threads()
+    !$omp end parallel
+!
+    allocate (W(mobb%h%memsize() * n_job))
 !
     call mobbrmsd_min_span_tree(n_target, mobb%h, state, X, W, &
    &                            edges=edges, weights=weights, &

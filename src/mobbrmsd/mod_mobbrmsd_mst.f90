@@ -1,4 +1,6 @@
-!| molecular orientation corrected RMSD with branch-and-bound.
+!| Configure a minimum global tree with mobbrmsd. <br>
+!  MST construction is based on the Prim's algorithm,
+!  but the useless calculations are reduced using the cutoff possibilities of mobbrmsd.
 module mod_mobbrmsd_mst
 !$ use omp_lib
   use mod_params, only: &
@@ -15,9 +17,15 @@ module mod_mobbrmsd_mst
   implicit none
   public :: mobbrmsd_min_span_tree
 !
+  type priority_list
+    sequence
+    integer(IK) :: i
+    real(RK)    :: u
+  end type priority_list
+!
 contains
 !
-  !| batch parallel nearest_neighbor
+  !| nearest_neighbor calculation
   subroutine mobbrmsd_nearest_neighbor(n_target, header, state, X, Y, W, &
  &                                     cutoff, difflim, maxeval, &
  &                                     mask, nnval, nnidx)
@@ -45,8 +53,9 @@ contains
     !! nearest neighbor index
     integer(IK), intent(out), optional  :: nnidx
     !! nearest neighbor index
+    type(priority_list), allocatable    :: pl(:)
     real(kind=RK)                       :: cutoff_global, ub
-    integer(kind=IK)                    :: i, itgt, ypnt, wpnt, ldy, ldw
+    integer(kind=IK)                    :: i, j, itgt, ntgt, ypnt, wpnt, ldy, ldw
 !
     ldy = header%n_dims() * header%n_atoms()
     ldw = header%memsize()
@@ -59,9 +68,28 @@ contains
 !
     if (PRESENT(mask)) then
       cutoff_global = MIN(MINVAL(state%upperbound(), mask), cutoff_global)
+      ntgt = COUNT(mask)
     else
       cutoff_global = MIN(MINVAL(state%upperbound()), cutoff_global)
+      ntgt = n_target
     end if
+!
+    allocate (pl(ntgt))
+!
+    if (PRESENT(mask)) then
+      j = 0
+      do i = 1, n_target
+        if (.not. mask(i)) cycle
+        j = j + 1
+        pl(j) = priority_list(i, state(i)%upperbound())
+      end do
+    else
+      do concurrent(i=1:ntgt)
+        pl(i) = priority_list(i, state(i)%upperbound())
+      end do
+    end if
+!
+    if (ntgt > 1) call qs(ntgt, pl)
 !
     i = 0
 !
@@ -73,11 +101,10 @@ contains
       ub = cutoff_global
       !$omp end critical
 !
-      if (itgt > n_target) exit
+      if (itgt > ntgt) exit
 !
-      if (PRESENT(mask)) then
-        if (.not. mask(itgt)) cycle
-      end if
+      itgt = pl(itgt)%i
+!
       if (bb_list_is_finished(header%q, state(itgt)%s)) cycle
       if (ub < state(itgt)%lowerbound()) cycle
 !
@@ -146,7 +173,7 @@ contains
 !
     ldx = header%n_dims() * header%n_atoms()
 !
-! Initialize header
+!   Initialize header
     do concurrent(i=1:n_target, j=1:n_target)
       state(i, j) = mobbrmsd_state(header)
     end do
@@ -231,6 +258,28 @@ contains
     end if
 !
   end subroutine mobbrmsd_min_span_tree
+!
+! ---
+!
+  pure recursive subroutine qs(n, q)
+    integer, intent(in)                :: n
+    type(priority_list), intent(inout) :: q(*)
+    type(priority_list)                :: t
+    integer                            :: i, j, p
+    j = n; i = 1; p = j / 2
+    do
+      do while (q(i)%u < q(p)%u); i = i + 1; end do
+      do while (q(j)%u > q(p)%u); j = j - 1; end do
+      if (i >= j) exit
+      t = q(i); q(i) = q(j); q(j) = t
+      if (i == p) then; p = j
+      elseif (j == p) then; p = i
+      end if
+      i = i + 1; j = j - 1
+    end do
+    if (2 < i) call qs(i - 1, q(1))
+    if (j < n - 1) call qs(n - j, q(j + 1))
+  end subroutine qs
 !
 end module mod_mobbrmsd_mst
 

@@ -11,15 +11,12 @@ module mod_mobbrmsd
   use mod_bb_block
   use mod_mobbrmsd_header
   use mod_mobbrmsd_state
-  use mod_forbar
-  use mod_forbar_collections
   implicit none
   public :: setup_dimension
   public :: mobbrmsd_input
   public :: mol_block_input
   public :: mol_block_input_add
   public :: mobbrmsd
-  public :: mobbrmsd_num_threads
   public :: mobbrmsd_header
   public :: mobbrmsd_state
   public :: mobbrmsd_run
@@ -166,14 +163,6 @@ contains
 !
   end function mobbrmsd_new_from_block
 !
-!| returns omp_get_num_threads
-  function mobbrmsd_num_threads() result(res)
-    integer(IK) :: res
-    !$omp parallel
-    res = MAX(omp_get_num_threads(), 1)
-    !$omp end parallel
-  end function mobbrmsd_num_threads
-!
 !| run mobbrmsd
   subroutine mobbrmsd_run( &
  &             header, state, &
@@ -234,7 +223,7 @@ contains
 !
 !| run mobbrmsd
   subroutine mobbrmsd_restart(header, state, W, &
- &                                 cutoff, difflim, maxeval)
+ &                            cutoff, difflim, maxeval)
     type(mobbrmsd_header), intent(in)    :: header
     !! mobbrmsd_header
     type(mobbrmsd_state), intent(inout)  :: state
