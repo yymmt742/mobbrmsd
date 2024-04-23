@@ -135,11 +135,3 @@ if __name__ == "__main__":
         plt.savefig(path + ".png")
         plt.clf()
 """
-reformatted -
-
-All done! ✨ 🍰 ✨
-1 file reformatted.
-error: cannot format -: Cannot parse: 138:13: reformatted -
-
-Oh no! 💥 💔 💥
-1 file failed to reformat.

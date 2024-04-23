@@ -31,10 +31,10 @@ contains
 !
     call add_molecule(n_apm, n_mol, 2, [5, 6, 7, 8, 1, 2, 3, 4])
     call n_atoms(n_dim, n_atm)
-    print*,n_dim, n_atm
+    print *, n_dim, n_atm
 !
-    allocate(X(n_dim, n_apm, n_mol))
-    allocate(Y(n_dim, n_apm, n_mol, n_target))
+    allocate (X(n_dim, n_apm, n_mol))
+    allocate (Y(n_dim, n_apm, n_mol, n_target))
 !
     do k = -1, 1, 2
       do j = -1, 1, 2
@@ -57,18 +57,18 @@ contains
 !
     call workmemory_lengthes(n_mem, n_job)
     call state_vector_lengthes(n_header, n_int, n_float)
-    print*, n_mem, n_job, n_header, n_int, n_float
+    print *, n_mem, n_job, n_header, n_int, n_float
 !
-    allocate(h(n_header))
-    allocate(si(n_int, n_target))
-    allocate(sr(n_float, n_target))
-    allocate(W(n_mem, n_job))
+    allocate (h(n_header))
+    allocate (si(n_int, n_target))
+    allocate (sr(n_float, n_target))
+    allocate (W(n_mem, n_job))
 !
     call batch_run( &
    &  n_dim, n_atm, n_target, n_header, &
    &  n_int, n_float, n_mem, n_job, &
    &  X, Y, W, &
-   &  999.0_RK, 0.0_RK, -1, .FALSE., &
+   &  999.0_RK, 0.0_RK, -1, .false., &
    &  h, si, sr)
 !
     do i = 1, n_target
@@ -79,7 +79,7 @@ contains
   end subroutine test1
 !
   subroutine test2()
-    integer(IK), parameter   :: n_apm = 8, n_mol = 5, n_target = 50
+    integer(IK), parameter   :: n_apm = 8, n_mol = 8, n_target = 50
     real(RK), allocatable    :: X(:, :, :, :)
     integer(IK)              :: n_dim, n_atm
     integer(IK)              :: n_header, n_int, n_float, n_job, n_mem
@@ -97,18 +97,18 @@ contains
 !
     print'(*(I4))', n_dim, n_atm, n_header, n_int, n_float, n_job, n_mem
 !
-    allocate(X(n_dim, n_apm, n_mol, n_target))
+    allocate (X(n_dim, n_apm, n_mol, n_target))
     allocate (w(n_job * n_mem))
-    allocate(header(n_header))
-    allocate(int_states(n_int, n_target, n_target))
-    allocate(float_states(n_float, n_target, n_target))
+    allocate (header(n_header))
+    allocate (int_states(n_int, n_target, n_target))
+    allocate (float_states(n_float, n_target, n_target))
 !
     call RANDOM_NUMBER(X)
 !
     call min_span_tree( &
  &    n_dim, n_atm, n_target, &
  &    n_header, n_int, n_float, n_mem, n_job,&
- &    X, W, RHUGE, ZERO, -1, &
+ &    X, W, RHUGE, ZERO, -1, .true., &
  &    edges, weights, header, int_states, float_states)
 !
     do i = 1, n_target - 1
@@ -127,7 +127,7 @@ contains
     call RANDOM_NUMBER(res)
     do concurrent(i=1:n)
       res(:, i) = res(:, i) + 8 * com
-    enddo
+    end do
   end function sample
 !
 end program main

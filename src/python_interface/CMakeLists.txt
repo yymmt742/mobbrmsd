@@ -55,6 +55,8 @@ if(SKBUILD)
       --f2cmap ${f2cmap}
       "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
       "${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd/libmobbrmsd.a"
+      "${forbar_BINARY_DIR}/src/libforbar.a"
+      -I${forbar_BINARY_DIR}/src/include
       -I${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd/mod_files
       ${BLAS_LIBRARIES}
       ${lomp}
@@ -95,6 +97,8 @@ if(SKBUILD)
       --f2cmap ${f2cmap}
       "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
       "${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_2d/libmobbrmsd_2d.a"
+      "${forbar_BINARY_DIR}/src/libforbar.a"
+      -I${forbar_BINARY_DIR}/src/include
       -I${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_2d/mod_files
       ${BLAS_LIBRARIES}
       ${lomp}
@@ -135,6 +139,8 @@ if(SKBUILD)
       --f2cmap ${f2cmap}
       "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
       "${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_3d/libmobbrmsd_3d.a"
+      "${forbar_BINARY_DIR}/src/libforbar.a"
+      -I${forbar_BINARY_DIR}/src/include
       -I${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_3d/mod_files
       ${BLAS_LIBRARIES}
       ${lomp}

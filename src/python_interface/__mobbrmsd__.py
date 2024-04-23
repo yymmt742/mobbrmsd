@@ -160,6 +160,7 @@ class mobbrmsd:
         cutoff: float = float("inf"),
         difflim: float = 0.0,
         maxeval: int = -1,
+        verbose: bool = False,
     ) -> tuple:
 
         x_ = self.varidation_coordinates_2(x)
@@ -179,6 +180,7 @@ class mobbrmsd:
             cutoff,
             difflim,
             maxeval,
+            verbose,
         )
 
         g = networkx.Graph()

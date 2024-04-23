@@ -100,7 +100,7 @@ contains
       n_mem = mob%h%memsize()
     else
       n_mem = 0
-    endif
+    end if
 
     n_job = mobbrmsd_num_threads()
 
@@ -303,16 +303,18 @@ contains
 
     header = mob%h%dump()
     do concurrent(i=1:n_target)
-      int_states(:, i) =  s(i)%dump()
-      float_states(:, i) =  s(i)%dump_real()
+      int_states(:, i) = s(i)%dump()
+      float_states(:, i) = s(i)%dump_real()
     end do
 
   end subroutine batch_run
 
   subroutine min_span_tree(n_dim, n_atom, n_target, n_head, &
  &                         n_int, n_float, n_mem, n_job,&
- &                         x, w, cutoff, difflim, maxeval, &
- &                         edges, weights, header, int_states, float_states)
+ &                         x, w, cutoff, difflim,  &
+ &                         maxeval, verbose, &
+ &                         edges, weights, header, &
+ &                         int_states, float_states)
     integer(kind=IK), intent(in)      :: n_dim
     integer(kind=IK), intent(in)      :: n_atom
     integer(kind=IK), intent(in)      :: n_target
@@ -328,6 +330,7 @@ contains
     real(kind=RK), intent(in)         :: cutoff
     real(kind=RK), intent(in)         :: difflim
     integer(kind=IK), intent(in)      :: maxeval
+    logical, intent(in)               :: verbose
     integer(kind=IK), intent(out)     :: edges(2, n_target - 1)
     real(kind=RK), intent(out)        :: weights(n_target - 1)
     integer(kind=IK), intent(out)     :: header(n_head)
@@ -346,7 +349,8 @@ contains
    &  difflim=difflim, &
    &  maxeval=maxeval, &
    &  edges=edges, &
-   &  weights=weights)
+   &  weights=weights, &
+   &  verbose=verbose)
 
     header = mob%h%dump()
     do concurrent(i=1:n_target, j=1:n_target)
