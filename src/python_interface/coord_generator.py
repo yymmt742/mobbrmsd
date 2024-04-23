@@ -73,13 +73,17 @@ class coord_generator:
         self.rng = numpy.random.default_rng()
 
     def generate(
-        self, n: int, m: int, a: float | Iterable[float], b: float | Iterable[float]
+        self,
+        n_apm: int,
+        n_mol: int,
+        a: float | Iterable[float],
+        b: float | Iterable[float],
     ) -> numpy.ndarray:
 
-        Xstr = self.rng.standard_normal((m, n, self.d))
-        temp = self.rng.standard_normal((n, self.d))
-        Xtem = numpy.array([temp @ self.sog.generate() for i in range(m)])
-        Xvar = self.rng.standard_normal((m, 1, self.d))
+        Xstr = self.rng.standard_normal((n_mol, n_apm, self.d))
+        temp = self.rng.standard_normal((n_apm, self.d))
+        Xtem = numpy.array([temp @ self.sog.generate() for i in range(n_mol)])
+        Xvar = self.rng.standard_normal((n_mol, 1, self.d))
 
         def x_sample(a, b, Xvar, Xtem, Xstr):
             a_ = 0.5 * numpy.pi * a
