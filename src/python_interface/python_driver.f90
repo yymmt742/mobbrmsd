@@ -15,12 +15,14 @@ module driver
  &  mobbrmsd_num_threads, &
  &  mobbrmsd_run, &
  &  mobbrmsd_restart, &
- &  mobbrmsd_batch_run, &
- &  mobbrmsd_min_span_tree, &
  &  mobbrmsd_is_finished, &
  &  mol_block_input, &
  &  mol_block_input_add, &
  &  setup_dimension_ => setup_dimension
+  use mod_mobbrmsd_batch_run, only: &
+ &  mobbrmsd_batch_run
+  use mod_mobbrmsd_mst, only: &
+ &  mobbrmsd_min_span_tree
 
   implicit none
   private
