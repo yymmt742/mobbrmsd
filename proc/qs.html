@@ -8,7 +8,7 @@
     <meta name="author" content="yymmt742" >
     <link rel="icon" href="../favicon.png">
 
-    <title>sdmin_worksize &ndash; mobbrmsd</title>
+    <title>qs &ndash; mobbrmsd</title>
 
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
@@ -76,8 +76,8 @@
 
     <div class="container">
   <div class="row">
-    <h1>sdmin_worksize
-      <small>Function</small>
+    <h1>qs
+      <small>Subroutine</small>
     </h1>
     <div class="row">
   <div class="col-lg-12">
@@ -87,14 +87,14 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 0.2% of total for procedures.">4 statements</a>
+    title=" 1.6% of total for procedures.">30 statements</a>
      </li> 
-    <li><i class="fa fa-code"></i><a href="../src/mod_rotation.f90"> Source File</a></li>
+    <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd_mst.f90"> Source File</a></li>
   </ul>
   <ol class="breadcrumb in-well text-right">
-     <li><a href='../sourcefile/mod_rotation.f90~3.html'>mod_rotation.f90</a></li>
-     <li><a href='../module/mod_rotation~3.html'>mod_rotation</a></li>
-     <li class="active">sdmin_worksize</li>
+     <li><a href='../sourcefile/mod_mobbrmsd_mst.f90.html'>mod_mobbrmsd_mst.f90</a></li>
+     <li><a href='../module/mod_mobbrmsd_mst.html'>mod_mobbrmsd_mst</a></li>
+     <li class="active">qs</li>
   </ol>
 </div>
 </div>
@@ -119,16 +119,29 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure elemental function sdmin_worksize() result(res)</h2>
+    <h2>public pure recursive subroutine qs(n, q)</h2>
     
 
-    <p>Inquire function for memory size of estimate_sdmin.</p>
 
     <h3>Arguments</h3>
-    <em>None</em>
-    <br>
-   <h3>Return Value <small><span class="anchor" id="variable-res~83"></span>integer(kind=IK)</small></h3>
-    
+      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" id="variable-n~6"></span>integer,</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>n</strong></td><td></td>
+</tr>
+<tr>
+  <td><span class="anchor" id="variable-q~66"></span>type(<a href='../type/priority_list.html'>priority_list</a>),</td>
+<td>intent(inout)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>q</strong>(*)</td><td></td>
+</tr>
+</tbody>
+</table>
+
     <br>
 
     <section class="visible-xs visible-sm hidden-md">

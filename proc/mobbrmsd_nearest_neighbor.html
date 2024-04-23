@@ -87,13 +87,13 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 2.9% of total for procedures.">52 statements</a>
+    title=" 3.6% of total for procedures.">67 statements</a>
      </li> 
-    <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd.f90"> Source File</a></li>
+    <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd_mst.f90"> Source File</a></li>
   </ul>
   <ol class="breadcrumb in-well text-right">
-     <li><a href='../sourcefile/mod_mobbrmsd.f90.html'>mod_mobbrmsd.f90</a></li>
-     <li><a href='../module/mod_mobbrmsd.html'>mod_mobbrmsd</a></li>
+     <li><a href='../sourcefile/mod_mobbrmsd_mst.f90.html'>mod_mobbrmsd_mst.f90</a></li>
+     <li><a href='../module/mod_mobbrmsd_mst.html'>mod_mobbrmsd_mst</a></li>
      <li class="active">mobbrmsd_nearest_neighbor</li>
   </ol>
 </div>
@@ -122,7 +122,7 @@
     <h2>public subroutine mobbrmsd_nearest_neighbor(n_target, header, state, X, y, W, cutoff, difflim, maxeval, mask, nnval, nnidx)</h2>
     
 
-    <p>batch parallel nearest_neighbor</p>
+    <p>nearest_neighbor calculation</p>
 
     <h3>Arguments</h3>
       <table class="table table-striped varlist">
@@ -135,7 +135,7 @@
   <td><strong>n_target</strong></td><td><p>number of target coordinates</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-header~5"></span>type(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
+  <td><span class="anchor" id="variable-header~8"></span>type(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>header</strong></td><td><p>mobbrmsd_header</p></td>
@@ -147,7 +147,7 @@
   <td><strong>state</strong>(n_target)</td><td><p>mobbrmsd_state, the result is contained in this structure.</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-x~9"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-x~10"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>X</strong>(*)</td><td><p>reference coordinate</p></td>
@@ -159,7 +159,7 @@
   <td><strong>y</strong>(*)</td><td><p>target coordinate</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-w~12"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-w~13"></span>real(kind=RK),</td>
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>W</strong>(*)</td><td><p>work memory, must be larger than header%memsize() * mobbrmsd_num_threads()</p></td>

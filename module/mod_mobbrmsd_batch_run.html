@@ -8,7 +8,7 @@
     <meta name="author" content="yymmt742" >
     <link rel="icon" href="../favicon.png">
 
-    <title>sdmin_worksize &ndash; mobbrmsd</title>
+    <title>mod_mobbrmsd_batch_run &ndash; mobbrmsd</title>
 
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
@@ -76,8 +76,8 @@
 
     <div class="container">
   <div class="row">
-    <h1>sdmin_worksize
-      <small>Function</small>
+    <h1>mod_mobbrmsd_batch_run 
+    <small>Module</small>
     </h1>
     <div class="row">
   <div class="col-lg-12">
@@ -87,14 +87,13 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 0.2% of total for procedures.">4 statements</a>
+    title=" 1.1% of total for modules and submodules.">36 statements</a>
      </li> 
-    <li><i class="fa fa-code"></i><a href="../src/mod_rotation.f90"> Source File</a></li>
+    <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd_batch_run.f90"> Source File</a></li>
   </ul>
   <ol class="breadcrumb in-well text-right">
-     <li><a href='../sourcefile/mod_rotation.f90~3.html'>mod_rotation.f90</a></li>
-     <li><a href='../module/mod_rotation~3.html'>mod_rotation</a></li>
-     <li class="active">sdmin_worksize</li>
+     <li><a href='../sourcefile/mod_mobbrmsd_batch_run.f90.html'>mod_mobbrmsd_batch_run.f90</a></li>
+     <li class="active">mod_mobbrmsd_batch_run</li>
   </ol>
 </div>
 </div>
@@ -112,29 +111,53 @@
     <div id="sidebar">
   <h3>Contents</h3>
  
-<em>None</em>
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#subs-0">Subroutines</a></h3></div>
+  <div class="list-group">
+    <div id="subs-0" class="panel-collapse collapse">
+      <a class="list-group-item" href="../module/mod_mobbrmsd_batch_run.html#proc-mobbrmsd_batch_run">mobbrmsd_batch_run</a>
+    </div>
+  </div>
+</div>
 
 </div>
 
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure elemental function sdmin_worksize() result(res)</h2>
-    
+    <p>molecular orientation corrected RMSD with branch-and-bound.</p>
+<br>        <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Uses</h3>
+      </div>
+      <ul class="list-group">
+      <li class="list-group-item">
+  <ul class="list-inline">
+    <li><a href='../module/mod_mobbrmsd_state.html'>mod_mobbrmsd_state</a></li>
+    <li><a href='../module/mod_mobbrmsd.html'>mod_mobbrmsd</a></li>
+    <li><a href='../module/mod_mobbrmsd_header.html'>mod_mobbrmsd_header</a></li>
+    <li>mod_forbar</li>
+    <li>mod_forbar_collections</li>
+    <li><a href='../module/mod_params.html'>mod_params</a></li>
+  </ul>
+      </li>
+      </ul>
+    </div>
 
-    <p>Inquire function for memory size of estimate_sdmin.</p>
-
-    <h3>Arguments</h3>
-    <em>None</em>
-    <br>
-   <h3>Return Value <small><span class="anchor" id="variable-res~83"></span>integer(kind=IK)</small></h3>
     
     <br>
 
     <section class="visible-xs visible-sm hidden-md">
       <h3>Contents</h3>
  
-<em>None</em>
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#subs-1">Subroutines</a></h3></div>
+  <div class="list-group">
+    <div id="subs-1" class="panel-collapse collapse">
+      <a class="list-group-item" href="../module/mod_mobbrmsd_batch_run.html#proc-mobbrmsd_batch_run">mobbrmsd_batch_run</a>
+    </div>
+  </div>
+</div>
 
     </section>
     <br class="visible-xs visible-sm hidden-md">
@@ -146,8 +169,86 @@
     
     
 
-
+    <section>
+    <h2>Subroutines</h2>
+      <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-mobbrmsd_batch_run"></span><h3>public subroutine <a href='../proc/mobbrmsd_batch_run.html'>mobbrmsd_batch_run</a>(n_target, header, state, X, Y, W, cutoff, difflim, maxeval, rotate_y)</h3></div>
+  <div class="panel-body">
+       
+<p>batch parallel run</p>
     
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>n_target</strong></td><td><p>number of target coordinates</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>type(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>header</strong></td><td><p>mobbrmsd_header</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>type(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
+<td>intent(inout)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>state</strong>(n_target)</td><td><p>mobbrmsd_state, the result is contained in this structure.</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>X</strong>(*)</td><td><p>reference coordinate</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(inout)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>Y</strong>(*)</td><td><p>target coordinate</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(inout)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>W</strong>(*)</td><td><p>work memory, must be larger than header%memsize() * mobbrmsd_num_threads()</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(in),</td>
+  <td>optional</td>  <td></td><td>::</td>
+  <td><strong>cutoff</strong></td><td><p>The search ends when lowerbound is determined to be greater than to cutoff.</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(in),</td>
+  <td>optional</td>  <td></td><td>::</td>
+  <td><strong>difflim</strong></td><td><p>The search ends when the difference between the lower and upper bounds is less than difflim.</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in),</td>
+  <td>optional</td>  <td></td><td>::</td>
+  <td><strong>maxeval</strong></td><td><p>The search ends when ncount exceeds maxiter.</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>logical,</td>
+<td>intent(in),</td>
+  <td>optional</td>  <td></td><td>::</td>
+  <td><strong>rotate_y</strong></td><td><p>The search ends when ncount exceeds maxiter.</p></td>
+</tr>
+</tbody>
+</table>
+
+
+  </div>
+  </div>
+
+    </section>    
+    <br>
     
     </div>
   </div>

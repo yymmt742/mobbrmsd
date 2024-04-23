@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title="10.0% of total for modules and submodules.">311 statements</a>
+    title=" 4.6% of total for modules and submodules.">147 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd.f90"> Source File</a></li>
   </ul>
@@ -135,7 +135,6 @@
     <div class="list-group">
       <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_new">mobbrmsd_new</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_new_from_block">mobbrmsd_new_from_block</a>
-      <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_num_threads">mobbrmsd_num_threads</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_is_finished">mobbrmsd_is_finished</a>
     </div>
   </div>
@@ -150,9 +149,6 @@
       <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mol_block_input_destroy">mol_block_input_destroy</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_run">mobbrmsd_run</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_restart">mobbrmsd_restart</a>
-      <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_batch_run">mobbrmsd_batch_run</a>
-      <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_nearest_neighbor">mobbrmsd_nearest_neighbor</a>
-      <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_min_span_tree">mobbrmsd_min_span_tree</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_destroy">mobbrmsd_destroy</a>
     </div>
   </div>
@@ -171,14 +167,12 @@
       <ul class="list-group">
       <li class="list-group-item">
   <ul class="list-inline">
-    <li>mod_forbar</li>
-    <li><a href='../module/mod_mobbrmsd_header.html'>mod_mobbrmsd_header</a></li>
-    <li><a href='../module/mod_bb_block.html'>mod_bb_block</a></li>
-    <li>mod_forbar_collections</li>
-    <li><a href='../module/mod_bb_list.html'>mod_bb_list</a></li>
-    <li><a href='../module/blas_lapack_interface.html'>blas_lapack_interface</a></li>
     <li><a href='../module/mod_mobbrmsd_state.html'>mod_mobbrmsd_state</a></li>
+    <li><a href='../module/mod_mobbrmsd_header.html'>mod_mobbrmsd_header</a></li>
+    <li><a href='../module/mod_bb_list.html'>mod_bb_list</a></li>
     <li><a href='../module/mod_params.html'>mod_params</a></li>
+    <li><a href='../module/blas_lapack_interface.html'>blas_lapack_interface</a></li>
+    <li><a href='../module/mod_bb_block.html'>mod_bb_block</a></li>
   </ul>
       </li>
       </ul>
@@ -214,7 +208,6 @@
     <div class="list-group">
       <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_new">mobbrmsd_new</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_new_from_block">mobbrmsd_new_from_block</a>
-      <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_num_threads">mobbrmsd_num_threads</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_is_finished">mobbrmsd_is_finished</a>
     </div>
   </div>
@@ -229,9 +222,6 @@
       <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mol_block_input_destroy">mol_block_input_destroy</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_run">mobbrmsd_run</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_restart">mobbrmsd_restart</a>
-      <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_batch_run">mobbrmsd_batch_run</a>
-      <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_nearest_neighbor">mobbrmsd_nearest_neighbor</a>
-      <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_min_span_tree">mobbrmsd_min_span_tree</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd.html#proc-mobbrmsd_destroy">mobbrmsd_destroy</a>
     </div>
   </div>
@@ -451,18 +441,6 @@
 </table>
 
 <h4>Return Value <small>type(<a href='../type/mobbrmsd.html'>mobbrmsd</a>)</small></h4>  
-
-  </div>
-  </div>
-
-      <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-mobbrmsd_num_threads"></span><h3>public function <a href='../proc/mobbrmsd_num_threads.html'>mobbrmsd_num_threads</a>() result(res)</h3></div>
-  <div class="panel-body">
-       
-<p>returns omp_get_num_threads</p>
-    
-<h4>Arguments</h4>      <em>None</em>
-<h4>Return Value <small>integer(kind=IK)</small></h4>  
 
   </div>
   </div>
@@ -733,258 +711,6 @@
 <td>intent(in),</td>
   <td>optional</td>  <td></td><td>::</td>
   <td><strong>maxeval</strong></td><td><p>The search ends when ncount exceeds maxiter.</p></td>
-</tr>
-</tbody>
-</table>
-
-
-  </div>
-  </div>
-
-      <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-mobbrmsd_batch_run"></span><h3>public subroutine <a href='../proc/mobbrmsd_batch_run.html'>mobbrmsd_batch_run</a>(n_target, header, state, X, Y, W, cutoff, difflim, maxeval, rotate_y)</h3></div>
-  <div class="panel-body">
-       
-<p>batch parallel run</p>
-    
-<h4>Arguments</h4>      <table class="table table-striped varlist">
-<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
-<tbody>
-<tr>
-  <td><span class="anchor" ></span>integer(kind=IK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>n_target</strong></td><td><p>number of target coordinates</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>type(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>header</strong></td><td><p>mobbrmsd_header</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>type(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
-<td>intent(inout)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>state</strong>(n_target)</td><td><p>mobbrmsd_state, the result is contained in this structure.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>X</strong>(*)</td><td><p>reference coordinate</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(inout)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>Y</strong>(*)</td><td><p>target coordinate</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(inout)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>W</strong>(*)</td><td><p>work memory, must be larger than header%memsize() * mobbrmsd_num_threads()</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>cutoff</strong></td><td><p>The search ends when lowerbound is determined to be greater than to cutoff.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>difflim</strong></td><td><p>The search ends when the difference between the lower and upper bounds is less than difflim.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>integer(kind=IK),</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>maxeval</strong></td><td><p>The search ends when ncount exceeds maxiter.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>logical,</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>rotate_y</strong></td><td><p>The search ends when ncount exceeds maxiter.</p></td>
-</tr>
-</tbody>
-</table>
-
-
-  </div>
-  </div>
-
-      <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-mobbrmsd_nearest_neighbor"></span><h3>public subroutine <a href='../proc/mobbrmsd_nearest_neighbor.html'>mobbrmsd_nearest_neighbor</a>(n_target, header, state, X, y, W, cutoff, difflim, maxeval, mask, nnval, nnidx)</h3></div>
-  <div class="panel-body">
-       
-<p>batch parallel nearest_neighbor</p>
-    
-<h4>Arguments</h4>      <table class="table table-striped varlist">
-<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
-<tbody>
-<tr>
-  <td><span class="anchor" ></span>integer(kind=IK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>n_target</strong></td><td><p>number of target coordinates</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>type(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>header</strong></td><td><p>mobbrmsd_header</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>type(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
-<td>intent(inout)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>state</strong>(n_target)</td><td><p>mobbrmsd_state, the result is contained in this structure.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>X</strong>(*)</td><td><p>reference coordinate</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>y</strong>(*)</td><td><p>target coordinate</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(inout)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>W</strong>(*)</td><td><p>work memory, must be larger than header%memsize() * mobbrmsd_num_threads()</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>cutoff</strong></td><td><p>The search ends when lowerbound is determined to be greater than to cutoff.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>difflim</strong></td><td><p>The search ends when the difference between the lower and upper bounds is less than difflim.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>integer(kind=IK),</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>maxeval</strong></td><td><p>The search ends when ncount exceeds maxiter.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>logical,</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>mask</strong>(n_target)</td><td><p>If .false., skip the calculation.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(out),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>nnval</strong></td><td><p>nearest neighbor index</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>integer(kind=IK),</td>
-<td>intent(out),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>nnidx</strong></td><td><p>nearest neighbor index</p></td>
-</tr>
-</tbody>
-</table>
-
-
-  </div>
-  </div>
-
-      <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-mobbrmsd_min_span_tree"></span><h3>public subroutine <a href='../proc/mobbrmsd_min_span_tree.html'>mobbrmsd_min_span_tree</a>(n_target, header, state, X, W, cutoff, difflim, maxeval, edges, weights, show_progress, verbose)</h3></div>
-  <div class="panel-body">
-       
-<p>min_span_tree construction</p>
-    
-<h4>Arguments</h4>      <table class="table table-striped varlist">
-<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
-<tbody>
-<tr>
-  <td><span class="anchor" ></span>integer(kind=IK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>n_target</strong></td><td><p>number of coordinates</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>type(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>header</strong></td><td><p>mobbrmsd_header</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>type(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
-<td>intent(inout)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>state</strong>(n_target,n_target)</td><td><p>mobbrmsd_state, the result is contained in this structure.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>X</strong>(*)</td><td><p>coordinate sequence</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(inout)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>W</strong>(*)</td><td><p>work memory, must be larger than header%memsize() * mobbrmsd_num_threads()</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>cutoff</strong></td><td><p>The search ends when lowerbound is determined to be greater than to cutoff.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>difflim</strong></td><td><p>The search ends when the difference between the lower and upper bounds is less than difflim.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>integer(kind=IK),</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>maxeval</strong></td><td><p>The search ends when ncount exceeds maxiter.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>integer(kind=IK),</td>
-<td>intent(out),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>edges</strong>(2,n_target-1)</td><td><p>minimum spanning tree edges</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(out),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>weights</strong>(n_target-1)</td><td><p>minimum spanning tree weights</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>logical,</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>show_progress</strong></td><td><p>if true, show progress bar</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>logical,</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>verbose</strong></td><td><p>show progress bar</p></td>
 </tr>
 </tbody>
 </table>
