@@ -10,8 +10,9 @@ bar1 = (
     "  ------------------------------------------------------------------------------"
 )
 bar2 = (
-    " ================================================================================"
+    "  =============================================================================="
 )
+bar3 = "==========================================="
 demo1 = demo_bb.title
 demo2 = demo_mst.title
 exit_ = "exit"
@@ -47,12 +48,12 @@ def run_demo(demo, read_input, after=None):
 
 
 title = (
-    bar2
+    bar3
     + "\n"
-    + "                  --- demonstration of mobbrmsd ver."
+    + "--- demonstration of mobbrmsd ver."
     + __version__.__version__
     + " ---\n"
-    + bar2
+    + bar3
     + "\n"
     + "    Select demo code :"
 )

@@ -7,7 +7,7 @@ import pprint
 import networkx
 import matplotlib.pyplot as plt
 
-title = "Demonstration of minimum spanning tree construction with mobbrmsd"
+title = "Minimum spanning tree with mobbrmsd"
 
 
 def print_ret(i, j, ret, g):

@@ -5,7 +5,7 @@ import sys
 import pprint
 import numpy
 
-title =              "Demonstration of mobbRMSD with random coordinates"
+title = "mobbRMSD with random coordinates"
 
 
 def print_ret(ret, post="", end="\n", to_console: bool = False):
