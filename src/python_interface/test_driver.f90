@@ -79,7 +79,7 @@ contains
   end subroutine test1
 !
   subroutine test2()
-    integer(IK), parameter   :: n_apm = 8, n_mol = 8, n_target = 50
+    integer(IK), parameter   :: n_apm = 8, n_mol = 5, n_target = 50
     real(RK), allocatable    :: X(:, :, :, :)
     integer(IK)              :: n_dim, n_atm
     integer(IK)              :: n_header, n_int, n_float, n_job, n_mem

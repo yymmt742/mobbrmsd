@@ -123,10 +123,9 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
     mrmsd = mobbrmsd()
     mrmsd.add_molecule(n_apm, n_mol, sym)
 
-    g, states = mrmsd.min_span_tree(x)
+    g, states = mrmsd.min_span_tree(x, verbose=True)
     mrmsd.clear()
     print(sep1)
-
     print("")
     print("     i   j      N_eval   Eval_ratio      Upperbound      Lowerbound    Gap")
     print(sep1)
