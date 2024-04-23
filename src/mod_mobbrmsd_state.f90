@@ -31,31 +31,31 @@ module mod_mobbrmsd_state
     integer(IK), allocatable, public :: s(:)
     real(RK), allocatable            :: z(:)
   contains
-    procedure :: update                 => mobbrmsd_state_update
+    procedure :: update => mobbrmsd_state_update
     !! update state
-    procedure :: upperbound             => mobbrmsd_state_upperbound
+    procedure :: upperbound => mobbrmsd_state_upperbound
     !! upperbound
-    procedure :: lowerbound             => mobbrmsd_state_lowerbound
+    procedure :: lowerbound => mobbrmsd_state_lowerbound
     !! lowerbound
-    procedure :: squared_deviation      => mobbrmsd_state_squared_deviation
+    procedure :: squared_deviation => mobbrmsd_state_squared_deviation
     !! sqrared_deviation
     procedure :: mean_squared_deviation => mobbrmsd_state_mean_squared_deviation
     !! sqrared_deviation
-    procedure :: rmsd                   => mobbrmsd_state_rmsd
+    procedure :: rmsd => mobbrmsd_state_rmsd
     !! rmsd
-    procedure :: n_eval                 => mobbrmsd_state_n_eval
+    procedure :: n_eval => mobbrmsd_state_n_eval
     !! number of lowerbound evaluation
-    procedure :: eval_ratio             => mobbrmsd_state_eval_ratio
+    procedure :: eval_ratio => mobbrmsd_state_eval_ratio
     !! ratio of evaluated node
-    procedure :: log_eval_ratio         => mobbrmsd_state_log_eval_ratio
+    procedure :: log_eval_ratio => mobbrmsd_state_log_eval_ratio
     !! log ratio of evaluated node
-    procedure :: rotation               => mobbrmsd_state_rotation
+    procedure :: rotation => mobbrmsd_state_rotation
     !! rotate given coordinate
-    procedure :: dump                   => mobbrmsd_state_dump
+    procedure :: dump => mobbrmsd_state_dump
     !! dump current state
-    procedure :: dump_real              => mobbrmsd_state_dump_real
+    procedure :: dump_real => mobbrmsd_state_dump_real
     !! dump real part of current state
-    procedure :: load                   => mobbrmsd_state_load
+    procedure :: load => mobbrmsd_state_load
     !! load state
     final     :: mobbrmsd_state_destroy
     !! destracter
@@ -114,7 +114,7 @@ contains
     !! mobbrmsd header
     real(RK), intent(in)                 :: W(*)
     !! mobbrmsd workarray
-    associate( &
+    associate ( &
    &   UB => mobbrmsd_state_INDEX_TO_UPPERBOUND, &
    &   LB => mobbrmsd_state_INDEX_TO_LOWERBOUND, &
    &   NE => mobbrmsd_state_INDEX_TO_N_EVAL, &
@@ -140,7 +140,9 @@ contains
     class(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
-    res = this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND)
+    associate (UB => mobbrmsd_state_INDEX_TO_UPPERBOUND)
+      res = this%z(UB)
+    end associate
   end function mobbrmsd_state_upperbound
 !
 !| returns lowerbound
@@ -148,8 +150,8 @@ contains
     class(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
-    associate (UB => mobbrmsd_state_INDEX_TO_UPPERBOUND)
-      res = this%z(UB)
+    associate (LB => mobbrmsd_state_INDEX_TO_LOWERBOUND)
+      res = this%z(LB)
     end associate
   end function mobbrmsd_state_lowerbound
 !
@@ -250,7 +252,7 @@ contains
     class(mobbrmsd_state), intent(in) :: this
     !! mobbrmsd_header
     integer(IK), allocatable          :: res(:)
-    ALLOCATE(res, source=this%s)
+    allocate (res, source=this%s)
   end function mobbrmsd_state_dump
 !
 !| dump header as integer array (for python interface api)
@@ -258,7 +260,7 @@ contains
     class(mobbrmsd_state), intent(in) :: this
     !! mobbrmsd_header
     real(RK), allocatable             :: res(:)
-    ALLOCATE(res, source=this%z)
+    allocate (res, source=this%z)
   end function mobbrmsd_state_dump_real
 !
 !| load integer array as header (for python interface api)
@@ -271,10 +273,10 @@ contains
     !! state real array
     integer(IK), allocatable             :: s_(:)
     real(RK), allocatable                :: z_(:)
-    ALLOCATE(s_, source=s)
-    ALLOCATE(z_, source=z)
-    call move_alloc(from=s_, to=this%s)
-    call move_alloc(from=z_, to=this%z)
+    allocate (s_, source=s)
+    allocate (z_, source=z)
+    call MOVE_ALLOC(from=s_, to=this%s)
+    call MOVE_ALLOC(from=z_, to=this%z)
   end subroutine mobbrmsd_state_load
 !
   pure elemental subroutine mobbrmsd_state_destroy(this)

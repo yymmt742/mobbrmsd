@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 9.7% of total for modules and submodules.">298 statements</a>
+    title="10.0% of total for modules and submodules.">311 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd.f90"> Source File</a></li>
   </ul>
@@ -171,13 +171,14 @@
       <ul class="list-group">
       <li class="list-group-item">
   <ul class="list-inline">
-    <li><a href='../module/mod_mobbrmsd_header.html'>mod_mobbrmsd_header</a></li>
     <li>mod_forbar</li>
-    <li><a href='../module/blas_lapack_interface.html'>blas_lapack_interface</a></li>
-    <li><a href='../module/mod_params.html'>mod_params</a></li>
-    <li><a href='../module/mod_bb_list.html'>mod_bb_list</a></li>
-    <li><a href='../module/mod_mobbrmsd_state.html'>mod_mobbrmsd_state</a></li>
+    <li><a href='../module/mod_mobbrmsd_header.html'>mod_mobbrmsd_header</a></li>
     <li><a href='../module/mod_bb_block.html'>mod_bb_block</a></li>
+    <li>mod_forbar_collections</li>
+    <li><a href='../module/mod_bb_list.html'>mod_bb_list</a></li>
+    <li><a href='../module/blas_lapack_interface.html'>blas_lapack_interface</a></li>
+    <li><a href='../module/mod_mobbrmsd_state.html'>mod_mobbrmsd_state</a></li>
+    <li><a href='../module/mod_params.html'>mod_params</a></li>
   </ul>
       </li>
       </ul>
@@ -905,7 +906,7 @@
   </div>
 
       <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-mobbrmsd_min_span_tree"></span><h3>public subroutine <a href='../proc/mobbrmsd_min_span_tree.html'>mobbrmsd_min_span_tree</a>(n_target, header, state, X, W, cutoff, difflim, maxeval, edges, weights, show_progress, unit)</h3></div>
+  <div class="panel-heading codesum"><span class="anchor" id="proc-mobbrmsd_min_span_tree"></span><h3>public subroutine <a href='../proc/mobbrmsd_min_span_tree.html'>mobbrmsd_min_span_tree</a>(n_target, header, state, X, W, cutoff, difflim, maxeval, edges, weights, show_progress, verbose)</h3></div>
   <div class="panel-body">
        
 <p>min_span_tree construction</p>
@@ -980,10 +981,10 @@
   <td><strong>show_progress</strong></td><td><p>if true, show progress bar</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" ></span>integer(kind=IK),</td>
+  <td><span class="anchor" ></span>logical,</td>
 <td>intent(in),</td>
   <td>optional</td>  <td></td><td>::</td>
-  <td><strong>unit</strong></td><td><p>device number for progress bar</p></td>
+  <td><strong>verbose</strong></td><td><p>show progress bar</p></td>
 </tr>
 </tbody>
 </table>

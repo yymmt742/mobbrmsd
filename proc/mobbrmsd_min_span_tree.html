@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 3.6% of total for procedures.">65 statements</a>
+    title=" 4.3% of total for procedures.">77 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd.f90"> Source File</a></li>
   </ul>
@@ -119,7 +119,7 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public subroutine mobbrmsd_min_span_tree(n_target, header, state, X, W, cutoff, difflim, maxeval, edges, weights, show_progress, unit)</h2>
+    <h2>public subroutine mobbrmsd_min_span_tree(n_target, header, state, X, W, cutoff, difflim, maxeval, edges, weights, show_progress, verbose)</h2>
     
 
     <p>min_span_tree construction</p>
@@ -195,10 +195,10 @@
   <td><strong>show_progress</strong></td><td><p>if true, show progress bar</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-unit"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-verbose"></span>logical,</td>
 <td>intent(in),</td>
   <td>optional</td>  <td></td><td>::</td>
-  <td><strong>unit</strong></td><td><p>device number for progress bar</p></td>
+  <td><strong>verbose</strong></td><td><p>show progress bar</p></td>
 </tr>
 </tbody>
 </table>
