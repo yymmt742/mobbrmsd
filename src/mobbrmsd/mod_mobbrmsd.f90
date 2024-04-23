@@ -8,11 +8,12 @@ module mod_mobbrmsd
  &      ONE => RONE, &
  &      ZERO => RZERO, &
  &      RHUGE
-  use mod_forbar
   use mod_bb_list
   use mod_bb_block
   use mod_mobbrmsd_header
   use mod_mobbrmsd_state
+  use mod_forbar
+  use mod_forbar_collections
   implicit none
   public :: setup_dimension
   public :: mobbrmsd_input
@@ -305,7 +306,8 @@ contains
 !
   !| batch parallel nearest_neighbor
   subroutine mobbrmsd_nearest_neighbor(n_target, header, state, X, Y, W, &
- &                                     cutoff, difflim, maxeval, mask, nnval, nnidx)
+ &                                     cutoff, difflim, maxeval, &
+ &                                     mask, nnval, nnidx)
     integer(IK), intent(in)             :: n_target
     !! number of target coordinates
     type(mobbrmsd_header), intent(in)   :: header
@@ -364,7 +366,6 @@ contains
         if (.not. mask(itgt)) cycle
       end if
       if (bb_list_is_finished(header%q, state(itgt)%s)) cycle
-!
       if (ub < state(itgt)%lowerbound()) cycle
 !
       wpnt = ldw * omp_get_thread_num() + 1
@@ -396,39 +397,39 @@ contains
 !| min_span_tree construction
   subroutine mobbrmsd_min_span_tree(n_target, header, state, X, W, &
  &                                  cutoff, difflim, maxeval, &
- &                                  edges, weights, show_progress, unit &
+ &                                  edges, weights, show_progress, &
+ &                                  verbose &
  )
-    integer(IK), intent(in)              :: n_target
+    integer(IK), intent(in)             :: n_target
     !! number of coordinates
-    type(mobbrmsd_header), intent(in)    :: header
+    type(mobbrmsd_header), intent(in)   :: header
     !! mobbrmsd_header
-    type(mobbrmsd_state), intent(inout)  :: state(n_target, n_target)
+    type(mobbrmsd_state), intent(inout) :: state(n_target, n_target)
     !! mobbrmsd_state, the result is contained in this structure.
-    real(kind=RK), intent(in)            :: X(*)
+    real(kind=RK), intent(in)           :: X(*)
     !! coordinate sequence
-    real(kind=RK), intent(inout)         :: W(*)
+    real(kind=RK), intent(inout)        :: W(*)
     !! work memory, must be larger than header%memsize() * mobbrmsd_num_threads()
-    real(RK), intent(in), optional       :: cutoff
+    real(RK), intent(in), optional      :: cutoff
     !! The search ends when lowerbound is determined to be greater than to cutoff.
-    real(RK), intent(in), optional       :: difflim
+    real(RK), intent(in), optional      :: difflim
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
-    integer(IK), intent(in), optional    :: maxeval
+    integer(IK), intent(in), optional   :: maxeval
     !! The search ends when ncount exceeds maxiter.
-    integer(IK), intent(out), optional   :: edges(2, n_target - 1)
+    integer(IK), intent(out), optional  :: edges(2, n_target - 1)
     !! minimum spanning tree edges
-    real(RK), intent(out), optional      :: weights(n_target - 1)
+    real(RK), intent(out), optional     :: weights(n_target - 1)
     !! minimum spanning tree weights
-    logical, intent(in), optional        :: show_progress
+    logical, intent(in), optional       :: show_progress
     !! if true, show progress bar
-    integer(IK), intent(in), optional    :: unit
-    !! device number for progress bar
-    logical                              :: mask(n_target)
-    integer(kind=IK)                     :: list(2, n_target)
-    real(RK)                             :: vval(n_target - 1), nnval, cutoff_
-    integer(kind=IK)                     :: i, j, xpnt, ldx, nnidx
-!
-!   integer(kind=IK)                     :: unit_
-!   character(:), allocatable            :: deco, reset
+    logical, intent(in), optional       :: verbose
+    !! show progress bar
+    type(forbar)                        :: fbar
+    logical                             :: verbose_
+    logical                             :: mask(n_target)
+    integer(kind=IK)                    :: list(2, n_target)
+    real(RK)                            :: vval(n_target - 1), nnval, cutoff_
+    integer(kind=IK)                    :: i, j, xpnt, ldx, nnidx
 !
     ldx = header%n_dims() * header%n_atoms()
 !
@@ -442,19 +443,19 @@ contains
     list(1, 1) = 0
     list(2, 1) = 1
 !
-!   if (PRESENT(unit)) then; unit_ = unit
-!   else; unit_ = STDOUT
-!   end if
+    if (PRESENT(verbose)) then
+      verbose_ = verbose
+    else
+      verbose_ = .false.
+    end if
 !
-!   deco = decorator(color='Y', carret=.true.)
-!   reset = FS_RESET
+    if (verbose_) then
+      fbar = progress_bar(limit=n_target - 1)
+    end if
 !
     do j = 1, n_target - 1
 !
-!     if (isatty(unit_)) then
-!       write (unit_, '(A, I8,A)', ADVANCE='NO') deco//'----------------', j, reset
-!       FLUSH (unit_)
-!     end if
+      if (verbose_) call fbar%update_and_display()
 !
       vval(j) = RHUGE
       if (PRESENT(cutoff)) then
@@ -491,9 +492,7 @@ contains
 !
     end do
 !
-!   if (isatty(unit_)) then
-!     write (6, '(A)', ADVANCE='NO') decorate('', carret=.true., clear='l')
-!   endif
+    if (verbose_) call fbar%clean_up()
 !
     do j = 1, n_target
       do i = 1, j - 1
