@@ -171,9 +171,9 @@ contains
       do
         p = p - 1
         call tree_leave(t%q, t%s)
-        if (.not. tree_queue_is_empty(t%q, t%s) .or. p == 0) exit
+        if (tree_queue_is_left(t%q, t%s) .or. tree_queue_is_root(t%q, t%s)) exit
       end do
-      if (p == 0) exit
+      if (tree_queue_is_empty(t%q, t%s) .and. tree_queue_is_root(t%q, t%s)) exit
     end do
 !
   end subroutine test2
