@@ -2,6 +2,27 @@ molecular symmetry corrected RMSD by branch and bound
 
 [project page](https://github.com/yymmt742/mobbrmsd)
 
+@bug
+
+A bug may exist in the degenerate case of the mod_rotation (3d) routines.
+
+Neval curve does not reproduce even if experimented.
+There seems to be a mistake in the implementation of the algorithm.
+
+@endbug
+
+@todo
+
+- Add Usage <br>
+
+- Compatible with compilers other than gnu <br>
+
+- Add detail documentation <br>
+
+- Add benchmarks <br>
+
+@endtodo
+
 ## Algorithm
 
 # 一般化RMSD-fitを枝刈りする
@@ -491,16 +512,3 @@ $$
 @note
 note
 @endnote
-
-@todo
-- Enable pip build <br>
-- Add Usage <br>
-- Compatible with compilers other than gnu <br>
-- Enable CI documentation <br>
-- Add detail documentation <br>
-- Add benchmarks <br>
-@endtodo
-
-@bug
-- A bug may exist in the degenerate case of the mod_rotation (3d) routines. <br>
-@endbug
