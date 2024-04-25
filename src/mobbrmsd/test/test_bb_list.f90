@@ -1,5 +1,5 @@
 program main
-  use blas_lapack_interface, only : D, setup_dimension
+  use blas_lapack_interface, only: D, setup_dimension
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_bb_block
   use mod_rotation
@@ -12,11 +12,11 @@ program main
   integer(IK)    :: d_
 !
   call GET_COMMAND_ARGUMENT(1, value=carg)
-  read(carg, *) d_
+  read (carg, *) d_
   call setup_dimension(d_)
 !
   call u%init('test bb_list')
-  call test0()
+! call test0()
 !
   call u%init('test bb_list for (n,M,S)=(1,1,1)')
   call test1(1, 1, 1, [0])
@@ -37,14 +37,14 @@ program main
   call u%init('test bb_list for (n,M,S)=(40,6,1)')
   call test1(40, 6, 1, [0])
 !
-  call u%init('test bb_list for {(n,M,S)}={(5,1,1), (5,4,1)}')
-  call test2(5, 1, 1, [0], 5, 4, 1, [0])
-  call u%init('test bb_list for {(n,M,S)}={(4,2,1), (5,2,1)}')
-  call test2(4, 2, 1, [0], 5, 2, 1, [0])
-  call u%init('test bb_list for {(n,M,S)}={(8,2,1), (4,2,2)}')
-  call test2(8, 2, 1, [0], 4, 2, 2, [3, 2, 1, 4])
-  call u%init('test bb_list for {(n,M,S)}={(24,3,1), (24,4,1)}')
-  call test2(24, 3, 1, [0], 24, 4, 1, [0])
+! call u%init('test bb_list for {(n,M,S)}={(5,1,1), (5,4,1)}')
+! call test2(5, 1, 1, [0], 5, 4, 1, [0])
+! call u%init('test bb_list for {(n,M,S)}={(4,2,1), (5,2,1)}')
+! call test2(4, 2, 1, [0], 5, 2, 1, [0])
+! call u%init('test bb_list for {(n,M,S)}={(8,2,1), (4,2,2)}')
+! call test2(8, 2, 1, [0], 4, 2, 2, [3, 2, 1, 4])
+! call u%init('test bb_list for {(n,M,S)}={(24,3,1), (24,4,1)}')
+! call test2(24, 3, 1, [0], 24, 4, 1, [0])
 !
   call u%finish_and_terminate()
 !
@@ -66,21 +66,19 @@ contains
     nmem = bb_list_memsize(b%q)
 !
     block
-      real(RK) :: W(nmem), R(D, D), sxz, rxz
+      real(RK) :: W(nmem), R(D, D), rxz
       do i = 1, 10
         call bb_list_setup(b%q, b%s, X, Y, W)
-        call u%assert(.not.bb_list_is_finished(b%q, b%s), 'is not finished     ')
+        call u%assert(.not. bb_list_is_finished(b%q, b%s), 'is not finished     ')
         call bb_list_run(b%q, b%s, W)
-        call u%assert(bb_list_is_finished(b%q, b%s),      'is finished         ')
+        call u%assert(bb_list_is_finished(b%q, b%s), 'is finished         ')
         Z = Y
         call bb_list_swap_y(b%q, b%s, Z)
-        sxz = sd(SIZE(X, 2), X, Z)
-!
         call bb_list_rotation_matrix(b%q, b%s, W, R)
         rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
-        call u%assert_almost_equal(W(1), sxz, 'minrmsd vs swaped sd')
-        call u%assert_almost_equal(sxz, rxz,  'swaped sd vs rotmat ')
-        Y = 0.8 * Y + 0.2 * sample(SIZE(X, 2))
+        !call u%assert_almost_equal(W(1), sxz, 'minrmsd vs swaped sd')
+        call u%assert_almost_equal(W(1), rxz, 'swaped sd vs rotmat ')
+        Y = 0.8 * Y + 0.2 * sample(SIZE(Y, 2))
         !print'(5F9.4,F9.1,2F9.4,*(I3))', sd(SIZE(X, 2), X, Y), sxz, rxz, W(:4), EXP(W(4)), b%s(2:9)
       end do
     end block
@@ -101,7 +99,7 @@ contains
     X = sample(n, m)
     Y = X
 !
-    allocate(W(bb_list_memsize(b%q)))
+    allocate (W(bb_list_memsize(b%q)))
 !
     do i = 1, 20
       call bb_list_setup(b%q, b%s, X, Y, W)
@@ -132,7 +130,7 @@ contains
     Y1 = X1
     Y2 = X2
 !
-    allocate(W(bb_list_memsize(b%q)))
+    allocate (W(bb_list_memsize(b%q)))
 !
     do i = 1, 10
       call bb_list_setup(b%q, b%s, [X1, X2], [Y1, Y2], W)

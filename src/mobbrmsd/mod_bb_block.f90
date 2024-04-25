@@ -73,8 +73,6 @@ module mod_bb_block
   integer(IK), parameter :: stree = 1
   !! pointer to tree interger work array (fixed)
   integer(IK), parameter :: qblck = header_size + 1
-  !! pointer to mol_block interger array (fixed)
-  real(RK), parameter    :: ZEROS(ND) = ZERO
 !
 !| bb_block<br>
 !  This is mainly used for passing during initialization.
@@ -192,7 +190,7 @@ contains
   end function bb_block_molsize
 !
 !| Setup C matrix and F matrix in root node.
-  subroutine bb_block_setup(q, X, Y, s, W, zfill)
+  pure subroutine bb_block_setup(q, X, Y, s, W, zfill)
     integer(IK), intent(in)    :: q(*)
     !! integer array
     real(RK), intent(in)       :: X(*)
@@ -215,6 +213,8 @@ contains
 !
     block
       integer(IK) :: nmol
+      real(RK)    :: ZEROS(ND)
+      ZEROS = ZERO
       nmol = mol_block_nmol(q(qblck))
       call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(stree), W(wcov), W(q(fx)), ZEROS, W(q(tx)), W(nc))
       call tree_select_top_node(q(q(tq)), s(stree), ND, RHUGE, W(q(tx)))
