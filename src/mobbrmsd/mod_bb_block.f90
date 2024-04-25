@@ -405,15 +405,17 @@ contains
   end function bb_block_current_value
 !
 !| Returns the minimum value of the surviving nodes, excluding the current value.
-  pure function bb_block_lowest_value(q, s, X) result(res)
+  pure function bb_block_lowest_value(q, s, W) result(res)
     integer(IK), intent(in) :: q(*)
     !! header
     integer(IK), intent(in) :: s(*)
     !! state
-    real(RK), intent(in)    :: X(*)
+    real(RK), intent(in)    :: W(*)
     !! main memory
     real(RK)                :: res
-    res = tree_lowest_value(q(q(tq)), s(stree), ND, X(q(tx)))
+    associate (qtree => q(tq), wtree => q(tx))
+      res = tree_lowest_value(q(qtree), s(stree), ND, W(wtree))
+    end associate
   end function bb_block_lowest_value
 !
 !| Returns the minimum value of the surviving nodes, excluding the current value.

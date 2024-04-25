@@ -168,7 +168,7 @@ contains
 !!  state
     integer(IK)                :: i
 !
-    s(sl) = 1 ! current state
+    s(sl) = 1 ! current level
     do concurrent(i=1:q(qd))
       s(sr + state_blocksize * (i - 1) + ss - 1) = is_unexplored ! queue state
     end do
@@ -435,38 +435,31 @@ contains
 !!  work array
     real(RK)                :: res
     integer(IK)             :: i
-!
-    res = RHUGE
-    do i = 1, s(sl)
-      if (queue_state(s(sr), i) < 0) return
-      call queue_second_value(q(qr), s(sr), i, ld, W, res)
-    end do
-!
+    associate (p => s(sl))
+      res = RHUGE
+      do i = 1, p
+        call queue_second_value(q(qr), s(sr), i, ld, W, res)
+      end do
+    end associate
   end function tree_lowest_value
 !
   pure subroutine queue_second_value(r, s, i, ld, W, res)
     integer(IK), intent(in) :: r(queue_blocksize, *), s(*), i, ld
     real(RK), intent(in)    :: W(ld, *)
     real(RK), intent(inout) :: res
-    real(RK)                :: cv
-    integer(IK)             :: p, c, l, u
-!
-    l = r(qp, i)
-    u = l + r(qn, i) - 1
-    c = l + s(i)
-!
-    cv = W(1, c)
-!
-    do p = l, c - 1
-      if (W(1, p) < cv) cycle
-      res = MIN(W(1, p), res)
-    end do
-!
-    do p = c + 1, u
-      if (W(1, p) < cv) cycle
-      res = MIN(W(1, p), res)
-    end do
-!
+    integer(IK)             :: p, c, u
+    associate (l => r(qp, i))
+      u = l + r(qn, i) - 1
+      c = l + s(i)
+      do p = l, c - 1
+        if (W(1, p) < W(1, c)) cycle
+        res = MIN(W(1, p), res)
+      end do
+      do p = c + 1, u
+        if (W(1, p) < W(1, c)) cycle
+        res = MIN(W(1, p), res)
+      end do
+    end associate
   end subroutine queue_second_value
 !
 !| Returns number of symmetry in queue.

@@ -1,4 +1,5 @@
-!| mod_bb_list
+!| mod_bb_list <br>
+!
 module mod_bb_list
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use blas_lapack_interface, only: DD
@@ -227,7 +228,7 @@ contains
   end subroutine bb_list_setup
 !
 !| run branch and bound
-  pure subroutine bb_list_run(q, s, W, cutoff, difflim, maxeval)
+  subroutine bb_list_run(q, s, W, cutoff, difflim, maxeval)
     integer(IK), intent(in)           :: q(*)
     !! header
     integer(IK), intent(inout)        :: s(*)
@@ -243,26 +244,24 @@ contains
     real(RK)                          :: coff, diff, nlim
     integer(IK)                       :: pq, ps, pw, n
     associate ( &
-   &   SB => bb_list_INDEX_TO_SPEACIES, &
-   &   UB => bb_list_INDEX_TO_UPPERBOUND, &
-   &   LB => bb_list_INDEX_TO_LOWERBOUND, &
-   &   NV => bb_list_INDEX_TO_N_EVAL &
+   &   b => s(bb_list_INDEX_TO_SPEACIES), &
+   &   ub => W(bb_list_INDEX_TO_UPPERBOUND), &
+   &   lb => W(bb_list_INDEX_TO_LOWERBOUND), &
+   &   nv => W(bb_list_INDEX_TO_N_EVAL) &
    &  )
-      n = n_block(q)
+!&<
+      b = MAX(b, 1)
+      n  = n_block(q)
       pq = q_pointer(q)
       ps = s_pointer(q)
       pw = w_pointer(q)
-!
-      s(SB) = MAX(s(SB), 1)
-!&<
       coff = RHUGE ; if (PRESENT(cutoff))  coff = MIN(coff, cutoff)
       diff = ZERO  ; if (PRESENT(difflim)) diff = MAX(diff, difflim)
 !&>
-!
       if (PRESENT(maxeval)) then
         if (maxeval == 0) then
           ! run only once, and early return.
-          call run_bb(n, q(pq), q(ps), q(pw), q, s(SB), s, W)
+          call run_bb(n, q(pq), q(ps), q(pw), q, s, W)
           return
         elseif (maxeval > 0) then
           ! finite run
@@ -276,36 +275,35 @@ contains
         nlim = RHUGE
       end if
 !
-      call update_lowerbound(s(SB), q(pq), q(ps), q(pw), q, s, W)
+      call update_lowerbound(b, q(pq), q(ps), q(pw), q, s, W)
 !
-      do while ( &
-     &       W(NV) < nlim &
-     & .and. W(LB) < coff &
-     & .and. W(LB) + diff <= W(UB) &
-     &)
-        call run_bb(n, q(pq), q(ps), q(pw), q, s(SB), s, W)
+      do while (nv < nlim &
+     &    .and. lb < coff &
+     &    .and. lb + diff <= ub)
+        call run_bb(n, q(pq), q(ps), q(pw), q, s, W)
         if (bb_list_is_finished(q, s)) exit
       end do
     end associate
   end subroutine bb_list_run
 !
-  pure subroutine run_bb(n, pq, ps, pw, q, b, s, W)
+  subroutine run_bb(n, pq, ps, pw, q, s, W)
     integer(IK), intent(in)    :: n, pq(n), ps(n), pw(n), q(*)
-    integer(IK), intent(inout) :: b, s(*)
+    integer(IK), intent(inout) :: s(*)
     real(RK), intent(inout)    :: W(*)
+    associate ( &
+   &   b => s(bb_list_INDEX_TO_SPEACIES), &
+   &   ub => W(bb_list_INDEX_TO_UPPERBOUND), &
+   &   lb => W(bb_list_INDEX_TO_LOWERBOUND), &
+   &   nv => W(bb_list_INDEX_TO_N_EVAL) &
+   &  )
 !
 !     Expansion process
 !
-    associate ( &
-   &   UB => bb_list_INDEX_TO_UPPERBOUND, &
-   &   LB => bb_list_INDEX_TO_LOWERBOUND, &
-   &   NV => bb_list_INDEX_TO_N_EVAL &
-   &  )
       do
-        call bb_block_expand(W(UB), q(pq(b)), s(ps(b)), W(pw(b)))
+        call bb_block_expand(ub, q(pq(b)), s(ps(b)), W(pw(b)))
         if (b == n .or. bb_block_tree_is_empty(q(pq(b)), s(ps(b)))) exit
         b = b + 1
-        call bb_block_inheritance(W(UB), q(pq(b)), s(ps(b)), W(pw(b)), &
+        call bb_block_inheritance(ub, q(pq(b)), s(ps(b)), W(pw(b)), &
        &                          q(pq(b - 1)), s(ps(b - 1)), W(pw(b - 1)))
       end do
 !
@@ -316,8 +314,8 @@ contains
         block
           real(RK) :: cv
           cv = bb_block_current_value(q(pq(b)), s(ps(b)), W(pw(b)))
-          if (W(UB) > cv) then
-            W(UB) = cv
+          if (ub > cv) then
+            !ub = cv
             call save_state(n, pq, ps, q, s)
           end if
         end block
@@ -330,43 +328,35 @@ contains
 !     Closure process
 !
       do
-        call bb_block_closure(W(UB), q(pq(b)), s(ps(b)), W(pw(b)))
+        call bb_block_closure(ub, q(pq(b)), s(ps(b)), W(pw(b)))
         if (b == 1 .or. .not. bb_block_tree_is_empty(q(pq(b)), s(ps(b)))) exit
         b = b - 1
       end do
 !
       block
         integer(IK) :: i
-        W(NV) = ZERO
+        nv = ZERO
         do i = 1, n
-          W(NV) = W(NV) + bb_block_evaluation_count(W(pw(i)))
+          nv = nv + bb_block_evaluation_count(W(pw(i)))
         end do
       end block
-!
     end associate
-!
   end subroutine run_bb
 !
-  pure subroutine update_lowerbound(n, pq, ps, pw, q, s, W)
+  subroutine update_lowerbound(n, pq, ps, pw, q, s, W)
     integer(IK), intent(in)    :: n, pq(n), ps(n), pw(n)
     integer(IK), intent(in)    :: q(*), s(*)
     real(RK), intent(inout)    :: W(*)
     real(RK)                   :: lv
     integer(IK)                :: b
-!
-    lv = RHUGE
-!
-    do b = 1, n
-      lv = MIN(lv, bb_block_lowest_value(q(pq(b)), s(ps(b)), W(pw(b))))
-    end do
-!
-    associate ( &
-   &   UB => bb_list_INDEX_TO_UPPERBOUND, &
-   &   LB => bb_list_INDEX_TO_LOWERBOUND &
-   &  )
-      W(LB) = MIN(MAX(W(lb), lv), W(UB))
+    associate (ub => W(bb_list_INDEX_TO_UPPERBOUND), &
+   &           lb => W(bb_list_INDEX_TO_LOWERBOUND))
+      lv = 9999D9
+      do b = 1, n
+        lv = MIN(lv, bb_block_lowest_value(q(pq(b)), s(ps(b)), W(pw(b))))
+      end do
+      lb = MIN(MAX(lb, lv), ub)
     end associate
-!
   end subroutine update_lowerbound
 !
   pure subroutine save_state(n, pq, ps, q, s)
