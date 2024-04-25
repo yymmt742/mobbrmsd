@@ -143,38 +143,47 @@ contains
     type(tree)            :: t
     real(RK)              :: ub
     real(RK), allocatable :: w(:)
-    integer(IK)           :: p, q
+    integer(IK)           :: p, q, r
 !
-    p = 0
+    p = 1
     t = tree(4, 1)
     ub = 999.0_RK
     allocate (W(tree_nnodes(t%q)))
     call RANDOM_NUMBER(w)
-    print *, tree_nnodes(t%q)
 !
     do
       do
         call tree_select_top_node(t%q, t%s, 1, ub, w)
         if (tree_queue_is_empty(t%q, t%s) .or. tree_queue_is_bottom(t%q, t%s)) exit
-        call tree_expand(t%q, t%s)
         p = p + 1
-        q = tree_current_pointer(t%q, t%s)
+        call tree_expand(t%q, t%s)
+        q = tree_queue_pointer(t%q, t%s)
+        r = tree_current_pointer(t%q, t%s)
         call RANDOM_NUMBER(w(q:q + 4 - p))
-        print *, q, q + 4 - p
-        print'(*(F9.3))', w(q:q + 4 - p)
-        print *, p, tree_queue_is_empty(t%q, t%s), tree_queue_is_bottom(t%q, t%s)
+        w(q:q + 4 - p) = w(q:q + 4 - p) + w(r)
       end do
+      if (p == 4) ub = MIN(ub, w(tree_current_pointer(t%q, t%s)))
+      print *, ub
       do
         p = p - 1
         call tree_leave(t%q, t%s)
-        call tree_select_top_node(t%q, t%s, 1, ub, w)
         if (.not. tree_queue_is_empty(t%q, t%s) .or. p == 0) exit
-        print *, p
       end do
       if (p == 0) exit
     end do
 !
   end subroutine test2
+!
+  subroutine dump(n, w)
+    integer(IK), intent(in) :: n
+    real(RK), intent(in)    :: w(*)
+    integer(IK)             :: i, p
+    p = 1
+    do i = 1, n
+      print'(*(F9.3))', w(p:p + n - i)
+      p = p + n - i + 1
+    end do
+  end subroutine dump
 !
 end program main
 
