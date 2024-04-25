@@ -151,27 +151,30 @@ contains
     allocate (W(tree_nnodes(t%q)))
     call RANDOM_NUMBER(w)
 !
+    call tree_select_top_node(t%q, t%s, 1, ub, w)
+!
     do
       do
-        call tree_select_top_node(t%q, t%s, 1, ub, w)
         if (tree_queue_is_empty(t%q, t%s) .or. tree_queue_is_bottom(t%q, t%s)) exit
         p = p + 1
         call tree_expand(t%q, t%s)
         q = tree_queue_pointer(t%q, t%s)
         r = tree_current_pointer(t%q, t%s)
         call RANDOM_NUMBER(w(q:q + 4 - p))
-        w(q:q + 4 - p) = w(q:q + 4 - p) * 0.2 + w(r)
+        w(q:q + 4 - p) = w(q:q + 4 - p) * 1.0 + w(r)
+        call tree_select_top_node(t%q, t%s, 1, ub, w)
       end do
-      if (tree_queue_is_bottom(t%q, t%s) .and. .not. tree_queue_is_empty(t%q, t%s)) then
+      if (tree_queue_is_bottom(t%q, t%s) .and. tree_queue_is_left(t%q, t%s)) then
         print '(2f9.3,3L4,*(I4))', ub, w(tree_current_pointer(t%q, t%s)), tree_queue_is_empty(t%q, t%s),&
        &         tree_queue_is_explored(t%q, t%s), tree_queue_is_unexplored(t%q, t%s),&
        &         tree_current_sequence(t%q, t%s) + 1, tree_current_pointer(t%q, t%s)
         ub = MIN(ub, w(tree_current_pointer(t%q, t%s)))
       end if
       do
-        p = p - 1
-        call tree_leave(t%q, t%s)
+        call tree_select_top_node(t%q, t%s, 1, ub, w)
         if (tree_queue_is_left(t%q, t%s) .or. tree_queue_is_root(t%q, t%s)) exit
+        call tree_leave(t%q, t%s)
+        p = p - 1
       end do
       if (tree_queue_is_empty(t%q, t%s) .and. tree_queue_is_root(t%q, t%s)) exit
     end do

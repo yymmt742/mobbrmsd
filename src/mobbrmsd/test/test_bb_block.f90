@@ -1,5 +1,5 @@
 program main
-  use blas_lapack_interface, only : D
+  use blas_lapack_interface, only: D
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_rotation
@@ -11,8 +11,11 @@ program main
 !
   call u%init('test bb_block')
   call test0()
-  call test1(8, 4, 1, [3,4,2,1], [1,1,1,1], [0])
-  call test1(8, 4, 2, [3,4,2,1], [1,2,1,2], [2, 3, 5, 4, 8, 6, 7, 1])
+  call u%init('test bb_block manual')
+  call test1(1, 1, 1, [1], [1], [0])
+  call test1(1, 2, 1, [1, 2], [1, 1], [0])
+  call test1(8, 4, 1, [3, 4, 2, 1], [1, 1, 1, 1], [0])
+  call test1(8, 4, 2, [3, 4, 2, 1], [1, 2, 1, 2], [2, 3, 5, 4, 8, 6, 7, 1])
 !
   call u%finish_and_terminate()
 !
@@ -92,19 +95,18 @@ contains
     real(RK)                   :: ub
 !
     ub = 999.9_RK
-    call bb_block_setup(q, X, Y, s, W, zfill=.TRUE.)
+    call bb_block_setup(q, X, Y, s, W, zfill=.true.)
 !
     do
       call bb_block_expand(ub, q, s, W)
-!
-      if (.not. bb_block_queue_is_empty(q, s) &
-        & .and. bb_block_queue_is_bottom(q, s)) then
-        if (bb_block_current_value(q, s, w) < ub) call bb_block_save_state(q, s, sb)
-        ub = MIN(bb_block_current_value(q, s, w), ub)
+      if (bb_block_tree_is_bottom(q, s)) then
+        if (bb_block_current_value(q, s, w) < ub) then
+          call bb_block_save_state(q, s, sb)
+          ub = bb_block_current_value(q, s, w)
+        end if
       end if
-!
-      call bb_block_leave(ub, q, s, W)
-      if(bb_block_queue_is_empty(q, s)) exit
+      call bb_block_closure(ub, q, s, W)
+      if (bb_block_tree_is_empty(q, s)) exit
     end do
 !
     W(1) = ub
@@ -112,3 +114,4 @@ contains
   end subroutine run
 !
 end program main
+

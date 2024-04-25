@@ -2,7 +2,7 @@
 !   This structure handles factorial trees with nodes of constant memory size, ld. <br>
 !
 !   The factorial tree is completely defined by the number of level \(M\in\mathbb Z\) and a constant \(S\in\mathbb Z\).
-!   A node in level \(p\in \{1,2,\dots,m\}\) has \((M-p)S\) childs,
+!   A node in level \(p\in \{1,2,\dots,M\}\) has \((M-p)S\) childs,
 !   and each level has \(S^p \prod_{i=1}^p (M-i+1)\) nodes.
 !   Here, only \(M-p+1\) nodes for level \(p=1,2,\dots,M\) are kept as state vector.
 !   All other information is discarded. <br>
@@ -358,7 +358,7 @@ contains
 !!  header
     integer(IK), intent(inout) :: s(*)
 !!  state
-    if (tree_queue_is_empty(q, s) .or. tree_queue_is_bottom(q, s)) return
+    if (tree_queue_is_bottom(q, s)) return
     s(sl) = s(sl) + 1
     call set_state(s, is_unexplored)
   end subroutine tree_expand
@@ -369,8 +369,7 @@ contains
 !!  header
     integer(IK), intent(inout) :: s(*)
 !!  state
-    if (s(sl) < 2) return
-    s(sl) = s(sl) - 1
+    if (s(sl) > 1) s(sl) = s(sl) - 1
   end subroutine tree_leave
 !
 !| Select top node, using W(1, \*).
@@ -386,31 +385,39 @@ contains
     real(RK), intent(in)       :: W(ld, *)
 !!  work array
     real(RK)                   :: uv, lv
-    integer(IK)                :: i, p, n
+    integer(IK)                :: i, p1, pn, cp
 !
     uv = UB
 !
     if (tree_queue_is_explored(q, s)) then
       return
     elseif (tree_queue_is_unexplored(q, s)) then
+      cp = tree_queue_pointer(q, s) - 1
       lv = -RHUGE
     else
-      lv = W(1, tree_current_pointer(q, s))
+      cp = tree_current_pointer(q, s)
+      lv = W(1, cp)
     end if
 !
     call set_state(s, is_explored)
 !
     if (uv < lv) return
 !
-    p = tree_queue_pointer(q, s)
-    n = queue_nnodes(q(qr), s(sl)) - 1
+    p1 = tree_queue_pointer(q, s)
+    pn = p1 + queue_nnodes(q(qr), s(sl)) - 1
 !
-    do i = 0, n
-      if (lv < W(1, p) .and. W(1, p) < uv) then
-        call set_state(s, i)
-        uv = W(1, p)
+    do i = p1, cp - 1
+      if (lv < W(1, i) .and. W(1, i) < uv) then
+        call set_state(s, i - p1)
+        uv = W(1, i)
       end if
-      p = p + 1
+    end do
+!
+    do i = cp + 1, pn
+      if (lv < W(1, i) .and. W(1, i) < uv) then
+        call set_state(s, i - p1)
+        uv = W(1, i)
+      end if
     end do
 !
   end subroutine tree_select_top_node
@@ -537,7 +544,7 @@ contains
     integer(IK), intent(in) :: s(*)
 !!  state
     logical                 :: res
-    res = queue_state(s(sr), s(sl)) == -1
+    res = queue_state(s(sr), s(sl)) == is_unexplored
   end function tree_queue_is_unexplored
 !
 !| Returns true if current node is explored.
@@ -547,7 +554,7 @@ contains
     integer(IK), intent(in) :: s(*)
 !!  state
     logical                 :: res
-    res = queue_state(s(sr), s(sl)) < -1
+    res = queue_state(s(sr), s(sl)) < is_unexplored
   end function tree_queue_is_explored
 !
 !| Returns true if \(p\)-queue is explored.
