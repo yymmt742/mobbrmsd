@@ -135,7 +135,7 @@
     
     <div class="col-md-9" id='text'>
       <h2>type, public :: tree</h2>
-    <p>Factorial tree.
+    <p>Factorial tree.<br>
  This is mainly used for passing during initialization.</p>
     <br>
 
@@ -170,7 +170,8 @@
   <ul class="list-group">
     <li class="list-group-item">
     <h3>private pure function tree_new(nmol, nsym) result(res)</h3><p>Constructer of factorial tree.<br>
- [s<em>m, s</em>(m-1),..., s*2, s]</p>
+ <script type="math/tex">[sm, s(m-1),\dots, 2s, s]</script>
+</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
@@ -210,7 +211,8 @@
   </div>
   <ul class="list-group">
      <li class="list-group-item">
-       <h3>private pure elemental subroutine tree_destroy(this)</h3>    
+       <h3>private pure elemental subroutine tree_destroy(this)</h3><p>Destoructer</p>
+    
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>

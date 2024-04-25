@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title="12.5% of total for modules and submodules.">394 statements</a>
+    title="12.8% of total for modules and submodules.">408 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_tree.f90"> Source File</a></li>
   </ul>
@@ -155,6 +155,8 @@
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_unexplored">tree_queue_is_unexplored</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_explored">tree_queue_is_explored</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_empty">tree_queue_is_empty</a>
+      <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_left">tree_queue_is_left</a>
+      <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_root">tree_queue_is_root</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_bottom">tree_queue_is_bottom</a>
     </div>
   </div>
@@ -176,13 +178,38 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <p>Tree structure for branch and bound. <br>
-  queue, a collection of nodes in a hierarchy. <br>
-  data is stored in heap by turning S first, [[a_1,...,a_S], [b_1,...,b_S],...] <br>
-  i :: Current pointer.<br>
-       i in [0,1,...,n-1] :: current node<br>
-       i == -1 :: unexplored<br>
-       i &lt;  -1 :: explored</p>
+    <p>Factorial tree for branch and bound. <br>
+  This structure handles factorial trees with nodes of constant memory size, ld. <br></p>
+<p>The factorial tree is completely defined by the number of level <script type="math/tex">M\in\mathbb Z</script> and a constant <script type="math/tex">S\in\mathbb Z</script>.
+  A node in level <script type="math/tex">p\in \{1,2,\dots,m\}</script> has <script type="math/tex">(M-p)S</script> childs,
+  and each level has <script type="math/tex">S^p \prod_{i=1}^p (M-i+1)</script> nodes.
+  Here, only <script type="math/tex">M-p+1</script> nodes for level <script type="math/tex">p=1,2,\dots,M</script> are kept as state vector.
+  All other information is discarded. <br></p>
+<p>The tree type has states <script type="math/tex">p</script> and <script type="math/tex">\mathbf{q}^{(p)}</script>,
+  where <script type="math/tex">p=1,2,\dots,M</script> is the current level
+  and <script type="math/tex">\mathbf{q}^{(p)}=\{q_1^{(p)},q_2^{(p)},\dots,q_p^{(p)}\}</script> is the selected node indices.
+  Let $q_p^{(p)}$ be current node,
+  and a retained nodes belonging to <script type="math/tex">p</script> is defined as a <script type="math/tex">p</script>-queue. <br></p>
+<p>A <script type="math/tex">p</script>-queue has one of the following states,
+  corresponding to the state of the current node. <br>
+  - Node <script type="math/tex">i</script> is selected :: <script type="math/tex">q_i^{(p)} \in [0,1,\dots,(M-p+1)S-1]</script><br>
+  - <script type="math/tex">p</script>-queue is unexplored :: <script type="math/tex">\(q_i^{(p)} = -1</script><br>
+  - <script type="math/tex">p</script>-queue is explored :: <script type="math/tex">\(q_i^{(p)} < -1</script><br></p>
+<p></p><div class="alert alert-info" role="alert"><h4>Note</h4><p><script type="math/tex">\mathbf{q}</script> constant and should be treated as an immutable variable. <br>
+  However, it is defined as an int-type array
+  so that it can be treated as part of a data structure
+  at a higher level of hierarchy.<br>
+  </p></div>
+<p>
+<p>The real data is kept in an external heap in the form W(ld, <em>).
+  The value stored in W(1, </em>) is treated as a node evaluation value.
+  (to be implemented by the user). <br></p>
+<p></p><div class="alert alert-info" role="alert"><h4>Note</h4><p>W can be updated dynamically,
+  but changes to the memory referenced by nodes
+  in the hierarchy below <script type="math/tex">p</script> will destroy the tree structure.
+  The user should control when to update W. <br>
+  </p></div>
+<p>
 <br>        <div class="panel panel-default">
       <div class="panel-heading">
   <h3 class="panel-title">Uses</h3>
@@ -246,6 +273,8 @@
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_unexplored">tree_queue_is_unexplored</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_explored">tree_queue_is_explored</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_empty">tree_queue_is_empty</a>
+      <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_left">tree_queue_is_left</a>
+      <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_root">tree_queue_is_root</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_bottom">tree_queue_is_bottom</a>
     </div>
   </div>
@@ -275,7 +304,8 @@
   <ul class="list-group">
     <li class="list-group-item">
     <h3>private pure function tree_new(nmol, nsym) result(res)</h3><p>Constructer of factorial tree.<br>
- [s<em>m, s</em>(m-1),..., s*2, s]</p>
+ <script type="math/tex">[sm, s(m-1),\dots, 2s, s]</script>
+</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
@@ -310,14 +340,15 @@
      <div class="panel panel-default">
   <div class="panel-heading codesum"><span class="anchor" id="type-tree"></span><h3>type, public :: <a href='../type/tree.html'>tree</a>  </h3></div>
   <div class="panel-body">
-    <p>Factorial tree.
+    <p>Factorial tree.<br>
  This is mainly used for passing during initialization.</p>
      <h4>Constructor</h4>
          
        <table class="table table-striped varlist">
       <tbody>
              <tr><td>private pure function <strong>tree_new</strong>(nmol, nsym)</td><td><p>Constructer of factorial tree.<br>
- [s<em>m, s</em>(m-1),..., s*2, s]</p></td></tr>
+ <script type="math/tex">[sm, s(m-1),\dots, 2s, s]</script>
+</p></td></tr>
        </tbody>
        </table>
      <h4>Finalizations Procedures</h4>
@@ -741,7 +772,7 @@
   <div class="panel-body">
        
 <p>Returns the minimum value of the surviving nodes, excluding the current value.
- If tree is empty, returns -infty.</p>
+ If tree is empty, Returns -infty.</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
@@ -782,7 +813,7 @@
   <div class="panel-heading codesum"><span class="anchor" id="proc-tree_n_sym"></span><h3>public pure function <a href='../proc/tree_n_sym.html'>tree_n_sym</a>(q) result(res)</h3></div>
   <div class="panel-body">
        
-<p>returns number of symmetry in queue.</p>
+<p>Returns number of symmetry in queue.</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
@@ -805,7 +836,7 @@
   <div class="panel-heading codesum"><span class="anchor" id="proc-tree_n_perm"></span><h3>public pure function <a href='../proc/tree_n_perm.html'>tree_n_perm</a>(q, s) result(res)</h3></div>
   <div class="panel-body">
        
-<p>returns number of permutation in queue.</p>
+<p>Returns number of permutation in queue.</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
@@ -834,7 +865,7 @@
   <div class="panel-heading codesum"><span class="anchor" id="proc-tree_n_depth"></span><h3>public pure function <a href='../proc/tree_n_depth.html'>tree_n_depth</a>(q) result(res)</h3></div>
   <div class="panel-body">
        
-<p>returns number tree depth (without root node).</p>
+<p>Returns number tree depth (without root node).</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
@@ -857,7 +888,7 @@
   <div class="panel-heading codesum"><span class="anchor" id="proc-tree_log_ncomb"></span><h3>public pure function <a href='../proc/tree_log_ncomb.html'>tree_log_ncomb</a>(q) result(res)</h3></div>
   <div class="panel-body">
        
-<p>returns number of nodes in tree.</p>
+<p>Returns number of nodes in tree.</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
@@ -880,7 +911,7 @@
   <div class="panel-heading codesum"><span class="anchor" id="proc-tree_ncomb_frac"></span><h3>public pure function <a href='../proc/tree_ncomb_frac.html'>tree_ncomb_frac</a>(q) result(res)</h3></div>
   <div class="panel-body">
        
-<p>returns number of nodes in fraction.</p>
+<p>Returns number of nodes in fraction.</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
@@ -903,7 +934,7 @@
   <div class="panel-heading codesum"><span class="anchor" id="proc-tree_ncomb_exp"></span><h3>public pure function <a href='../proc/tree_ncomb_exp.html'>tree_ncomb_exp</a>(q) result(res)</h3></div>
   <div class="panel-body">
        
-<p>returns number of nodes in exp.</p>
+<p>Returns number of nodes in exp.</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
@@ -925,7 +956,9 @@
       <div class="panel panel-default">
   <div class="panel-heading codesum"><span class="anchor" id="proc-tree_queue_is_unexplored"></span><h3>public pure function <a href='../proc/tree_queue_is_unexplored.html'>tree_queue_is_unexplored</a>(q, s) result(res)</h3></div>
   <div class="panel-body">
-           
+       
+<p>Returns true if current node is unexplored.</p>
+    
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
@@ -952,7 +985,9 @@
       <div class="panel panel-default">
   <div class="panel-heading codesum"><span class="anchor" id="proc-tree_queue_is_explored"></span><h3>public pure function <a href='../proc/tree_queue_is_explored.html'>tree_queue_is_explored</a>(q, s) result(res)</h3></div>
   <div class="panel-body">
-           
+       
+<p>Returns true if current node is explored.</p>
+    
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
@@ -979,7 +1014,9 @@
       <div class="panel panel-default">
   <div class="panel-heading codesum"><span class="anchor" id="proc-tree_queue_is_empty"></span><h3>public pure function <a href='../proc/tree_queue_is_empty.html'>tree_queue_is_empty</a>(q, s) result(res)</h3></div>
   <div class="panel-body">
-           
+       
+<p>Returns true if <script type="math/tex">p</script>-queue is explored.</p>
+    
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
@@ -1004,9 +1041,69 @@
   </div>
 
       <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-tree_queue_is_left"></span><h3>public pure function <a href='../proc/tree_queue_is_left.html'>tree_queue_is_left</a>(q, s) result(res)</h3></div>
+  <div class="panel-body">
+       
+<p>Returns true if <script type="math/tex">p</script>-queue has current node.</p>
+    
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>q</strong>(*)</td><td><p>queue</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>s</strong>(*)</td><td><p>state</p></td>
+</tr>
+</tbody>
+</table>
+
+<h4>Return Value <small>logical</small></h4>  
+
+  </div>
+  </div>
+
+      <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-tree_queue_is_root"></span><h3>public pure function <a href='../proc/tree_queue_is_root.html'>tree_queue_is_root</a>(q, s) result(res)</h3></div>
+  <div class="panel-body">
+       
+<p>Returns true if <script type="math/tex">p=1</script>.</p>
+    
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>q</strong>(*)</td><td><p>queue</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>s</strong>(*)</td><td><p>current level</p></td>
+</tr>
+</tbody>
+</table>
+
+<h4>Return Value <small>logical</small></h4>  
+
+  </div>
+  </div>
+
+      <div class="panel panel-default">
   <div class="panel-heading codesum"><span class="anchor" id="proc-tree_queue_is_bottom"></span><h3>public pure function <a href='../proc/tree_queue_is_bottom.html'>tree_queue_is_bottom</a>(q, s) result(res)</h3></div>
   <div class="panel-body">
-           
+       
+<p>Returns true if <script type="math/tex">p=M</script>.</p>
+    
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
@@ -1039,7 +1136,7 @@
   <div class="panel-heading codesum"><span class="anchor" id="proc-tree_reset"></span><h3>public pure subroutine <a href='../proc/tree_reset.html'>tree_reset</a>(q, s)</h3></div>
   <div class="panel-body">
        
-<p>reset tree</p>
+<p>Reset tree state</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>

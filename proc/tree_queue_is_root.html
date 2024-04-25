@@ -8,7 +8,7 @@
     <meta name="author" content="yymmt742" >
     <link rel="icon" href="../favicon.png">
 
-    <title>tree_queue_is_unexplored &ndash; mobbrmsd</title>
+    <title>tree_queue_is_root &ndash; mobbrmsd</title>
 
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
@@ -76,7 +76,7 @@
 
     <div class="container">
   <div class="row">
-    <h1>tree_queue_is_unexplored
+    <h1>tree_queue_is_root
       <small>Function</small>
     </h1>
     <div class="row">
@@ -94,7 +94,7 @@
   <ol class="breadcrumb in-well text-right">
      <li><a href='../sourcefile/mod_tree.f90.html'>mod_tree.f90</a></li>
      <li><a href='../module/mod_tree.html'>mod_tree</a></li>
-     <li class="active">tree_queue_is_unexplored</li>
+     <li class="active">tree_queue_is_root</li>
   </ol>
 </div>
 </div>
@@ -119,31 +119,31 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure function tree_queue_is_unexplored(q, s) result(res)</h2>
+    <h2>public pure function tree_queue_is_root(q, s) result(res)</h2>
     
 
-    <p>Returns true if current node is unexplored.</p>
+    <p>Returns true if <script type="math/tex">p=1</script>.</p>
 
     <h3>Arguments</h3>
       <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-q~56"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-q~60"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>q</strong>(*)</td><td><p>queue</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-s~28"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-s~32"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>s</strong>(*)</td><td><p>state</p></td>
+  <td><strong>s</strong>(*)</td><td><p>current level</p></td>
 </tr>
 </tbody>
 </table>
 
-   <h3>Return Value <small><span class="anchor" id="variable-res~39"></span>logical</small></h3>
+   <h3>Return Value <small><span class="anchor" id="variable-res~43"></span>logical</small></h3>
     
     <br>
 
