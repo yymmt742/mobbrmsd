@@ -160,10 +160,14 @@ contains
         q = tree_queue_pointer(t%q, t%s)
         r = tree_current_pointer(t%q, t%s)
         call RANDOM_NUMBER(w(q:q + 4 - p))
-        w(q:q + 4 - p) = w(q:q + 4 - p) + w(r)
+        w(q:q + 4 - p) = w(q:q + 4 - p) * 0.2 + w(r)
       end do
-      if (p == 4) ub = MIN(ub, w(tree_current_pointer(t%q, t%s)))
-      print *, ub
+      if (tree_queue_is_bottom(t%q, t%s) .and. .not. tree_queue_is_empty(t%q, t%s)) then
+        print '(2f9.3,3L4,*(I4))', ub, w(tree_current_pointer(t%q, t%s)), tree_queue_is_empty(t%q, t%s),&
+       &         tree_queue_is_explored(t%q, t%s), tree_queue_is_unexplored(t%q, t%s),&
+       &         tree_current_sequence(t%q, t%s) + 1, tree_current_pointer(t%q, t%s)
+        ub = MIN(ub, w(tree_current_pointer(t%q, t%s)))
+      end if
       do
         p = p - 1
         call tree_leave(t%q, t%s)
@@ -174,16 +178,16 @@ contains
 !
   end subroutine test2
 !
-  subroutine dump(n, w)
-    integer(IK), intent(in) :: n
-    real(RK), intent(in)    :: w(*)
-    integer(IK)             :: i, p
-    p = 1
-    do i = 1, n
-      print'(*(F9.3))', w(p:p + n - i)
-      p = p + n - i + 1
-    end do
-  end subroutine dump
+! subroutine dump(n, w)
+!   integer(IK), intent(in) :: n
+!   real(RK), intent(in)    :: w(*)
+!   integer(IK)             :: i, p
+!   p = 1
+!   do i = 1, n
+!     print'(*(F9.3))', w(p:p + n - i)
+!     p = p + n - i + 1
+!   end do
+! end subroutine dump
 !
 end program main
 

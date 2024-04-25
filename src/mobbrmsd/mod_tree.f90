@@ -262,7 +262,7 @@ contains
         res(j) = res(j - 1)
       end do
       res(i) = t
-    enddo
+    end do
   end function tree_current_permutation
 !
 !| Convert sequence to permutation.
@@ -286,7 +286,7 @@ contains
         res(j) = res(j - 1)
       end do
       res(i) = t
-    enddo
+    end do
   end function tree_sequence_to_permutation
 !
 !| Returns current mapping.
@@ -319,8 +319,8 @@ contains
 !!  queue
     integer(IK), intent(inout) :: s(*)
 !!  state
-     if(tree_queue_is_empty(q, s).or.tree_queue_is_bottom(q, s)) return
-     s(sl) = s(sl) + 1
+    if (tree_queue_is_empty(q, s) .or. tree_queue_is_bottom(q, s)) return
+    s(sl) = s(sl) + 1
     call set_state(s, is_unexplored)
   end subroutine tree_expand
 !
@@ -459,8 +459,8 @@ contains
     res = ZERO
     tmp = ZERO
     j = qr + (q(qd) - 1) * queue_blocksize + qn - 1
-    do i =  q(qd), 1, -1
-      tmp = tmp - LOG(REAL(q(j), RK))
+    do i = q(qd), 1, -1
+      tmp = tmp - LOG(real(q(j), RK))
       res = res + EXP(tmp)
       j = j - queue_blocksize
     end do
@@ -478,7 +478,7 @@ contains
 !!  queue
     real(RK)                :: tmp, res
     tmp = LN_TO_L10 * tree_log_ncomb(q)
-    res = TEN**(tmp - REAL(INT(tmp), RK))
+    res = TEN**(tmp - real(INT(tmp), RK))
   end function tree_ncomb_frac
 !
 !| returns number of nodes in exp.
