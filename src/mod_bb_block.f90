@@ -14,7 +14,7 @@
 !  @endnote
 module mod_bb_block
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
-  use blas_lapack_interface, only : D, ND
+  use blas_lapack_interface, only: D, ND
   use mod_mol_block
   use mod_c_matrix
   use mod_f_matrix
@@ -32,9 +32,9 @@ module mod_bb_block
   public :: bb_block_setup
   public :: bb_block_inheritance
   public :: bb_block_expand
-  public :: bb_block_leave
-  public :: bb_block_queue_is_empty
-  public :: bb_block_queue_is_bottom
+  public :: bb_block_closure
+  public :: bb_block_tree_is_empty
+  public :: bb_block_tree_is_bottom
   public :: bb_block_current_value
   public :: bb_block_lowest_value
   public :: bb_block_log_ncomb
@@ -68,12 +68,13 @@ module mod_bb_block
 !
   integer(IK), parameter :: nc = 1
   !! pointer to evaluation count (fixed)
-  integer(IK), parameter :: cx = 2
+  integer(IK), parameter :: wcov = 2
   !! pointer to c_matrix array (fixed)
-  integer(IK), parameter :: ts = 1
+  integer(IK), parameter :: stree = 1
   !! pointer to tree interger work array (fixed)
-  integer(IK), parameter :: bq = header_size + 1
+  integer(IK), parameter :: qblck = header_size + 1
   !! pointer to mol_block interger array (fixed)
+  real(RK), parameter    :: ZEROS(ND) = ZERO
 !
 !| bb_block<br>
 !  This is mainly used for passing during initialization.
@@ -98,7 +99,7 @@ contains
     !! number of molecules.
     integer(IK), intent(in) :: M
     !! number of atoms per molecule.
-    integer(IK), intent(in), optional :: sym(:,:)
+    integer(IK), intent(in), optional :: sym(:, :)
     !! symmetric codomains, [[a1,a2,...,am], [b1,b2,...,bm], ...].
     type(mol_block)         :: b
     type(c_matrix)          :: c
@@ -112,11 +113,11 @@ contains
     f = f_matrix(b%q)
     t = tree(mol_block_nmol(b%q), mol_block_nsym(b%q))
 !
-    q(cq) = bq + SIZE(b%q)
+    q(cq) = qblck + SIZE(b%q)
     q(fq) = q(cq) + SIZE(c%q)
     q(tq) = q(fq) + SIZE(f%q)
 !
-    q(cw) = cx + c_matrix_memsize(c%q)
+    q(cw) = wcov + c_matrix_memsize(c%q)
     q(fx) = q(cw)
     q(fw) = q(fx) + f_matrix_memsize(f%q)
     q(tx) = q(fw)
@@ -146,8 +147,8 @@ contains
     integer(IK)             :: p, nmol, nsym, buf, tmp, swrk, hwrk
     integer(IK)             :: res
 !
-    nmol = mol_block_nmol(q(bq))
-    nsym = mol_block_nsym(q(bq))
+    nmol = mol_block_nmol(q(qblck))
+    nsym = mol_block_nsym(q(qblck))
     swrk = sdmin_worksize()
 !
     buf = bb_block_memsize(q)
@@ -171,7 +172,7 @@ contains
     integer(IK), intent(in) :: q(*)
     !! bb_block header array.
     integer(IK)             :: res
-    res = mol_block_nmol(q(bq))
+    res = mol_block_nmol(q(qblck))
   end function bb_block_nmol
 !
 !| Returns the number of molecules.
@@ -179,7 +180,7 @@ contains
     integer(IK), intent(in) :: q(*)
     !! bb_block header array.
     integer(IK)             :: res
-    res = mol_block_natm(q(bq))
+    res = mol_block_natm(q(qblck))
   end function bb_block_natm
 !
 !| Returns the memory size of molecular block size.
@@ -187,11 +188,11 @@ contains
     integer(IK), intent(in) :: q(*)
     !! bb_block header array.
     integer(IK)             :: res
-    res = mol_block_total_size(q(bq))
+    res = mol_block_total_size(q(qblck))
   end function bb_block_molsize
 !
 !| Setup C matrix and F matrix in root node.
-  pure subroutine bb_block_setup(q, X, Y, s, W, zfill)
+  subroutine bb_block_setup(q, X, Y, s, W, zfill)
     integer(IK), intent(in)    :: q(*)
     !! integer array
     real(RK), intent(in)       :: X(*)
@@ -206,19 +207,17 @@ contains
     !! if true, the root node is filled by zero.
 !
     W(nc) = ZERO
-    call tree_reset(q(q(tq)), s(ts))
-    call c_matrix_eval(q(q(cq)), q(bq), X, Y, W(cx), W(q(cw)))
-    call f_matrix_eval(q(q(fq)), q(q(cq)), W(cx), W(q(fx)), W(q(fw)))
+    call tree_reset(q(q(tq)), s(stree))
+    call c_matrix_eval(q(q(cq)), q(qblck), X, Y, W(wcov), W(q(cw)))
+    call f_matrix_eval(q(q(fq)), q(q(cq)), W(wcov), W(q(fx)), W(q(fw)))
 !
-    if(.not.zfill) return
+    if (.not. zfill) return
 !
     block
-      real(RK)    :: ZEROS(ND)
       integer(IK) :: nmol
-      nmol = mol_block_nmol(q(bq))
-      call zfill(ND, ZEROS, 1)
-      call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(ts), W(cx), W(q(fx)), ZEROS, W(q(tx)), W(nc))
-      call tree_select_top_node(q(q(tq)), s(ts), ND, RHUGE, W(q(tx)))
+      nmol = mol_block_nmol(q(qblck))
+      call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(stree), W(wcov), W(q(fx)), ZEROS, W(q(tx)), W(nc))
+      call tree_select_top_node(q(q(tq)), s(stree), ND, RHUGE, W(q(tx)))
     end block
 !
   end subroutine bb_block_setup
@@ -241,42 +240,46 @@ contains
     !! parent work array
     integer(IK)                :: pp, nmol
 !
-    nmol = mol_block_nmol(q(bq))
-    pp = p(tx) + (tree_current_pointer(p(p(tq)), r(ts)) - 1) * ND
+    nmol = mol_block_nmol(q(qblck))
+    pp = p(tx) + (tree_current_pointer(p(p(tq)), r(stree)) - 1) * ND
 !
-    call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(ts), X(cx), X(q(fx)), Z(pp), X(q(tx)), X(nc))
-    call tree_reset(q(q(tq)), s(ts))
-    call tree_select_top_node(q(q(tq)), s(ts), ND, UB, X(q(tx)))
+    call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(stree), X(wcov), X(q(fx)), Z(pp), X(q(tx)), X(nc))
+    call tree_reset(q(q(tq)), s(stree))
+    call tree_select_top_node(q(q(tq)), s(stree), ND, UB, X(q(tx)))
 !
   end subroutine bb_block_inheritance
 !
 !| Expand top node in queue.
-  pure subroutine bb_block_expand(UB, q, s, X)
+  pure subroutine bb_block_expand(UB, q, s, W)
     real(RK), intent(in)       :: UB
     !! upper bound
     integer(IK), intent(in)    :: q(*)
-    !! work integer array
+    !! header
     integer(IK), intent(inout) :: s(*)
-    !! work integer array
-    real(RK), intent(inout)    :: X(*)
+    !! state
+    real(RK), intent(inout)    :: W(*)
     !! main memory
-    integer(IK)                :: nmol, pp
+    integer(IK)                :: nmol
+    integer(IK)                :: pp ! previous current node
 !
-     nmol = mol_block_nmol(q(bq))
-     block
-       do
-         if (bb_block_queue_is_empty(q, s) .or. bb_block_queue_is_bottom(q, s)) return
-         pp = q(tx) + (tree_current_pointer(q(q(tq)), s(ts)) - 1) * ND
-         call tree_expand(q(q(tq)), s(ts))
-         call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(ts), X(cx), X(q(fx)), X(pp), X(q(tx)), X(nc))
-         call tree_select_top_node(q(q(tq)), s(ts), ND, UB, X(q(tx)))
-       end do
-     end block
+    associate (qtree => q(tq), wtree => q(tx), qcov => q(cq), wfrx => q(fx))
 !
+      nmol = mol_block_nmol(q(qblck))
+      block
+        do
+          if (tree_queue_is_empty(q(qtree), s(stree)) .or. tree_queue_is_bottom(q(qtree), s(stree))) exit
+          pp = q(tx) + (tree_current_pointer(q(qtree), s(stree)) - 1) * ND
+          call tree_expand(q(qtree), s(stree))
+          call evaluate_nodes(nmol, q(qcov), q(qtree), s(stree), W(wcov), W(wfrx), W(pp), W(wtree), W(nc))
+          call tree_select_top_node(q(q(tq)), s(stree), ND, UB, W(q(tx)))
+        end do
+      end block
+!
+    end associate
   end subroutine bb_block_expand
 !
-!| leave current node.
-  pure subroutine bb_block_leave(UB, q, s, X)
+!| closure current node.
+  pure subroutine bb_block_closure(UB, q, s, X)
     real(RK), intent(in)       :: UB
     !! upper bound
     integer(IK), intent(in)    :: q(*)
@@ -285,16 +288,14 @@ contains
     !! work integer array
     real(RK), intent(in)       :: X(*)
     !! main memory
-    integer(IK)                :: l
-!
-     do
-       call tree_select_top_node(q(q(tq)), s(ts), ND, UB, X(q(tx)))
-       l = tree_current_level(s(ts))
-       if (l == 1 .or. .not. bb_block_queue_is_empty(q, s)) return
-       call tree_leave(q(q(tq)), s(ts))
-     enddo
-!
-  end subroutine bb_block_leave
+    associate (qtree => q(tq), wtree => q(tx))
+      do
+        call tree_select_top_node(q(qtree), s(stree), ND, UB, X(wtree))
+        if (tree_queue_is_left(q(qtree), s(stree)) .or. tree_queue_is_root(q(qtree), s(stree))) exit
+        call tree_leave(q(qtree), s(stree))
+      end do
+    end associate
+  end subroutine bb_block_closure
 !
   pure subroutine evaluate_nodes(nmol, qcov, q, s, CX, FX, Z, X, neval)
     integer(IK), intent(in) :: nmol, qcov(*), q(*), s(*)
@@ -303,14 +304,13 @@ contains
     integer(IK)             :: l, px, pw, m, nw, nper, nsym, iper, perm(nmol)
 !
     l = tree_current_level(s)
-    m = nmol - l
+    m = nmol - l ! residual dimension
     nw = sdmin_worksize()
     px = tree_queue_pointer(q, s)
 !
     nsym = tree_n_sym(q)
     nper = tree_n_perm(q, s)
     perm = tree_current_permutation(q, s)
-!
     pw = px + nsym
 !
     do iper = 1, nper
@@ -328,18 +328,19 @@ contains
     integer(IK), intent(in) :: qcov(*), perm(*)
     real(RK), intent(in)    :: CX(*), FX(*), Z(ND)
     real(RK), intent(inout) :: X(ND, nsym, nper), W1(*), W2(nw, *)
-    integer(IK)             :: isym, iprm
+    integer(IK)             :: iabp ! absolute perm index
+    integer(IK)             :: isym
 !
-    iprm = perm(l + iper - 1)
+    iabp = perm(l + iper - 1)
 !
     call copy(ND, Z, X(1, 1, iper))
-    call c_matrix_add(qcov, l, iprm, 1, CX, X(mmap_G, 1, iper), X(mmap_C, 1, iper))
-    call subm(l, nmol, iper, perm, FX, W1)
-    call Hungarian(m, m, W1(1), W1(m * m + 1))
+    call c_matrix_add(qcov, l, iabp, 1, CX, X(mmap_G, 1, iper), X(mmap_C, 1, iper))
+    call subm(l, nmol, iper, perm, FX, W1(m * m + 1))
+    call Hungarian(m, m, W1(m * m + 1), W1(1))
 !
     do concurrent(isym=2:nsym)
       call copy(ND, Z, X(1, isym, iper))
-      call c_matrix_add(qcov, l, iprm, isym, CX, X(mmap_G, isym, iper), X(mmap_C, isym, iper))
+      call c_matrix_add(qcov, l, iabp, isym, CX, X(mmap_G, isym, iper), X(mmap_C, isym, iper))
       call estimate_sdmin(X(mmap_G, isym, iper), X(mmap_C, isym, iper), W2(1, isym - 1))
       X(mmap_L, isym, iper) = W1(1) + W2(1, isym - 1)
     end do
@@ -367,25 +368,27 @@ contains
   end subroutine subm
 !
 !
-!| Returns true when queue is empty
-  pure function bb_block_queue_is_empty(q, s) result(res)
+!| Returns true when tree is empty
+  pure function bb_block_tree_is_empty(q, s) result(res)
     integer(IK), intent(in) :: q(*)
     !! integer array
     integer(IK), intent(in) :: s(*)
     !! work integer array
     logical                 :: res
-    res = tree_queue_is_empty(q(q(tq)), s(ts))
-  end function bb_block_queue_is_empty
+    res = tree_queue_is_empty(q(q(tq)), s(stree)) &
+   &.and. tree_queue_is_root(q(q(tq)), s(stree))
+  end function bb_block_tree_is_empty
 !
-!| Returns true when queue is bottom
-  pure function bb_block_queue_is_bottom(q, s) result(res)
+!| Returns true when tree is bottom
+  pure function bb_block_tree_is_bottom(q, s) result(res)
     integer(IK), intent(in) :: q(*)
     !! integer array
     integer(IK), intent(in) :: s(*)
     !! work integer array
     logical                 :: res
-    res = tree_queue_is_bottom(q(q(tq)), s(ts))
-  end function bb_block_queue_is_bottom
+    res = tree_queue_is_left(q(q(tq)), s(stree)) &
+   &.and. tree_queue_is_bottom(q(q(tq)), s(stree))
+  end function bb_block_tree_is_bottom
 !
 !| Returns current_value
   pure function bb_block_current_value(q, s, X) result(res)
@@ -397,20 +400,20 @@ contains
     !! main memory
     real(RK)                :: res
     integer(IK)             :: t
-    t = q(tx) + ND * (tree_current_pointer(q(q(tq)), s(ts)) - 1)
+    t = q(tx) + ND * (tree_current_pointer(q(q(tq)), s(stree)) - 1)
     res = X(t)
   end function bb_block_current_value
 !
 !| Returns the minimum value of the surviving nodes, excluding the current value.
   pure function bb_block_lowest_value(q, s, X) result(res)
     integer(IK), intent(in) :: q(*)
-    !! integer array
+    !! header
     integer(IK), intent(in) :: s(*)
-    !! state vector
+    !! state
     real(RK), intent(in)    :: X(*)
     !! main memory
     real(RK)                :: res
-    res = tree_lowest_value(q(q(tq)), s(ts), ND, X(q(tx)))
+    res = tree_lowest_value(q(q(tq)), s(stree), ND, X(q(tx)))
   end function bb_block_lowest_value
 !
 !| Returns the minimum value of the surviving nodes, excluding the current value.
@@ -439,8 +442,8 @@ contains
     !! memory
     integer(IK)                :: nmol
 !
-    nmol = mol_block_nmol(q(bq))
-    z(:nmol) = tree_current_sequence(q(q(tq)), s(ts))
+    nmol = mol_block_nmol(q(qblck))
+    z(:nmol) = tree_current_sequence(q(q(tq)), s(stree))
 !
   end subroutine bb_block_save_state
 !
@@ -454,13 +457,13 @@ contains
     !! target coordinate
     integer(IK)             :: nmol, napm
 !
-    nmol = mol_block_nmol(q(bq))
-    napm = mol_block_napm(q(bq))
+    nmol = mol_block_nmol(q(qblck))
+    napm = mol_block_napm(q(qblck))
     block
       integer(IK) :: iper(nmol), imap(nmol)
       iper = tree_sequence_to_permutation(q(q(tq)), z)
       imap = tree_sequence_to_mapping(q(q(tq)), z)
-      call swap_y(nmol, napm, iper, imap, q(bq), Y)
+      call swap_y(nmol, napm, iper, imap, q(qblck), Y)
     end block
 !
   contains
@@ -492,13 +495,13 @@ contains
     real(RK), intent(inout) :: C(*)
     !! covariance matrix
     integer(IK)             :: nmol
-    nmol = mol_block_nmol(q(bq))
+    nmol = mol_block_nmol(q(qblck))
     block
       integer(IK) :: i, iper(nmol), imap(nmol)
       iper = tree_sequence_to_permutation(q(q(tq)), z)
       imap = tree_sequence_to_mapping(q(q(tq)), z) + 1
       do i = 1, nmol
-        call c_matrix_add(q(q(cq)), i, iper(i), imap(i), W(cx), G, C)
+        call c_matrix_add(q(q(cq)), i, iper(i), imap(i), W(wcov), G, C)
       end do
     end block
   end subroutine bb_block_covmat_add
@@ -511,17 +514,6 @@ contains
     if (ALLOCATED(this%q)) deallocate (this%q)
     if (ALLOCATED(this%s)) deallocate (this%s)
   end subroutine bb_block_destroy
-!
-  pure subroutine zfill(d, x, ld)
-    integer(IK), intent(in) :: d
-    real(RK), intent(inout) :: x(*)
-    integer(IK), intent(in) :: ld
-    integer(IK)             :: i, dld
-    dld = d * ld
-    do concurrent(i=1:dld:ld)
-      x(i) = ZERO
-    end do
-  end subroutine zfill
 !
   pure subroutine copy(N, X, Y)
     integer(IK), intent(in) :: N

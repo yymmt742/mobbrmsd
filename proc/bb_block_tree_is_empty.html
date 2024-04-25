@@ -8,7 +8,7 @@
     <meta name="author" content="yymmt742" >
     <link rel="icon" href="../favicon.png">
 
-    <title>bb_block_leave &ndash; mobbrmsd</title>
+    <title>bb_block_tree_is_empty &ndash; mobbrmsd</title>
 
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
@@ -76,8 +76,8 @@
 
     <div class="container">
   <div class="row">
-    <h1>bb_block_leave
-      <small>Subroutine</small>
+    <h1>bb_block_tree_is_empty
+      <small>Function</small>
     </h1>
     <div class="row">
   <div class="col-lg-12">
@@ -87,14 +87,14 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 0.7% of total for procedures.">13 statements</a>
+    title=" 0.3% of total for procedures.">6 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_bb_block.f90"> Source File</a></li>
   </ul>
   <ol class="breadcrumb in-well text-right">
      <li><a href='../sourcefile/mod_bb_block.f90.html'>mod_bb_block.f90</a></li>
      <li><a href='../module/mod_bb_block.html'>mod_bb_block</a></li>
-     <li class="active">bb_block_leave</li>
+     <li class="active">bb_block_tree_is_empty</li>
   </ol>
 </div>
 </div>
@@ -119,42 +119,32 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure subroutine bb_block_leave(UB, q, s, X)</h2>
+    <h2>public pure function bb_block_tree_is_empty(q, s) result(res)</h2>
     
 
-    <p>leave current node.</p>
+    <p>Returns true when tree is empty</p>
 
     <h3>Arguments</h3>
       <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-ub~4"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-q~74"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>UB</strong></td><td><p>upper bound</p></td>
+  <td><strong>q</strong>(*)</td><td><p>integer array</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-q~82"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-s~40"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>q</strong>(*)</td><td><p>work integer array</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-s~47"></span>integer(kind=IK),</td>
-<td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>s</strong>(*)</td><td><p>work integer array</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-x~18"></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>X</strong>(*)</td><td><p>main memory</p></td>
 </tr>
 </tbody>
 </table>
 
+   <h3>Return Value <small><span class="anchor" id="variable-res~75"></span>logical</small></h3>
+    
     <br>
 
     <section class="visible-xs visible-sm hidden-md">
