@@ -122,7 +122,9 @@
     <h2>public pure subroutine estimate_sdmin(g, cov, w)</h2>
     
 
-    <p>Compute the least-squares sum_i^n |x_i-Ry_i|^2 from cov = YX^T and g = tr[XX^T] + tr[YY^T].</p>
+    <p>Compute <script type="math/tex">\min_{\mathbf{R}}(g-2\text{tr}[\mathbf{R}\mathbf{C}])</script>,
+ where <script type="math/tex">g = tr[\mathbf{X}\mathbf{X}^\top] + tr[\mathbf{Y}\mathbf{Y}^\top]</script>
+</p>
 
     <h3>Arguments</h3>
       <table class="table table-striped varlist">

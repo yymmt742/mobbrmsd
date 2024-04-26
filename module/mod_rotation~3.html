@@ -136,8 +136,8 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <p>Calculate the rotation matrix that minimizes |X-RY|^2 for general dimension. <br>
- Here, RR^T=I and det(R)=1 are satisfied. <br>
+    <p>Calculate the rotation matrix that minimizes <script type="math/tex">|\mathbf{X}-\mathbf{R}\mathbf{Y}|^2</script>. <br>
+ Here, <script type="math/tex">\mathbf{R}\mathbf{R}^\top=\mathbf{I}</script> and <script type="math/tex">\det(\mathbf{R})=1</script> are satisfied. <br>
  This code is based on the Kabsch algorithm. doi : 10.1107/S0567739476001873</p>
 <br>        <div class="panel panel-default">
       <div class="panel-heading">
@@ -146,8 +146,8 @@
       <ul class="list-group">
       <li class="list-group-item">
   <ul class="list-inline">
-    <li><a href='../module/mod_kinds.html'>mod_kinds</a></li>
     <li><a href='../module/blas_lapack_interface.html'>blas_lapack_interface</a></li>
+    <li><a href='../module/mod_kinds.html'>mod_kinds</a></li>
   </ul>
       </li>
       </ul>
@@ -207,7 +207,7 @@
   <div class="panel-heading codesum"><span class="anchor" id="proc-rotation_worksize~3"></span><h3>public pure elemental function <a href='../proc/rotation_worksize~3.html'>rotation_worksize</a>() result(res)</h3></div>
   <div class="panel-body">
        
-<p>Inquire function for memory size of rotation.</p>
+<p>Inquire function for memory size of estimate_rotation().</p>
     
 <h4>Arguments</h4>      <em>None</em>
 <h4>Return Value <small>integer(kind=IK)</small></h4>  
@@ -224,7 +224,7 @@
   <div class="panel-heading codesum"><span class="anchor" id="proc-estimate_rcmax~3"></span><h3>public pure subroutine <a href='../proc/estimate_rcmax~3.html'>estimate_rcmax</a>(g, cov, w)</h3></div>
   <div class="panel-body">
        
-<p>Compute <script type="math/tex">\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]</script>.</p>
+<p>Compute <script type="math/tex">\max_{\mathbf{R}}\text{tr}[\mathbf{R}\mathbf{C}]</script>.</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
@@ -258,7 +258,9 @@
   <div class="panel-heading codesum"><span class="anchor" id="proc-estimate_sdmin~3"></span><h3>public pure subroutine <a href='../proc/estimate_sdmin~3.html'>estimate_sdmin</a>(g, cov, w)</h3></div>
   <div class="panel-body">
        
-<p>Compute the least-squares sum_i^n |x_i-Ry_i|^2 from cov = YX^T and g = tr[XX^T] + tr[YY^T].</p>
+<p>Compute <script type="math/tex">\min_{\mathbf{R}}(g-2\text{tr}[\mathbf{R}\mathbf{C}])</script>,
+ where <script type="math/tex">g = tr[\mathbf{X}\mathbf{X}^\top] + tr[\mathbf{Y}\mathbf{Y}^\top]</script>
+</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
@@ -292,7 +294,8 @@
   <div class="panel-heading codesum"><span class="anchor" id="proc-estimate_rotation~3"></span><h3>public pure subroutine <a href='../proc/estimate_rotation~3.html'>estimate_rotation</a>(g, cov, rot, w)</h3></div>
   <div class="panel-body">
        
-<p>Compute the transpose rotation matrix for minimize tr[CR] from cov = YX^T and g = tr[XX^T] + tr[YY^T].</p>
+<p>Compute the transpose of rotation matrix <script type="math/tex">\mathbf{R}</script>
+ that maximize <script type="math/tex">\text{tr}[\mathbf{R}\mathbf{Y}\mathbf{X}^\top]</script>.</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
@@ -301,19 +304,21 @@
   <td><span class="anchor" ></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>g</strong></td><td><p>g = tr[XX^T] + tr[YY^T]</p></td>
+  <td><strong>g</strong></td><td><p>
+<script type="math/tex">g=\text{tr}[\mathbf{X}\mathbf{X}^\top}]+\text{tr}[\mathbf{X}\mathbf{X}^\top}]</script>.</p></td>
 </tr>
 <tr>
   <td><span class="anchor" ></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>cov</strong>(*)</td><td><p>covariance dxd matrix, YX^T</p></td>
+  <td><strong>cov</strong>(*)</td><td><p>covariance matrix <script type="math/tex">\mathbf{C}=\mathbf{Y}\mathbf{X}^\top\in\mathbb R^{D\times D}</script>
+rotation</p></td>
 </tr>
 <tr>
   <td><span class="anchor" ></span>real(kind=RK),</td>
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>rot</strong>(*)</td><td><p>rotation dxd matrix</p></td>
+  <td><strong>rot</strong>(*)</td><td><p>rotation matrix, <script type="math/tex">\mathbf{R}\in\mathbb R^{D\times D}</script>.</p></td>
 </tr>
 <tr>
   <td><span class="anchor" ></span>real(kind=RK),</td>

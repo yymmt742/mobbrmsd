@@ -122,7 +122,8 @@
     <h2>public pure subroutine estimate_rotation(g, cov, rot, w)</h2>
     
 
-    <p>Compute the transpose rotation matrix for minimize tr[CR] from cov = YX^T and g = tr[XX^T] + tr[YY^T].</p>
+    <p>Compute the transpose of rotation matrix <script type="math/tex">\mathbf{R}</script>
+ that maximize <script type="math/tex">\text{tr}[\mathbf{R}\mathbf{Y}\mathbf{X}^\top]</script>.</p>
 
     <h3>Arguments</h3>
       <table class="table table-striped varlist">
@@ -132,19 +133,21 @@
   <td><span class="anchor" id="variable-g~9"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>g</strong></td><td><p>g = tr[XX^T] + tr[YY^T]</p></td>
+  <td><strong>g</strong></td><td><p>
+<script type="math/tex">g=\text{tr}[\mathbf{X}\mathbf{X}^\top}]+\text{tr}[\mathbf{X}\mathbf{X}^\top}]</script>.</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-cov~9"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>cov</strong>(*)</td><td><p>covariance dxd matrix, YX^T</p></td>
+  <td><strong>cov</strong>(*)</td><td><p>covariance matrix <script type="math/tex">\mathbf{C}=\mathbf{Y}\mathbf{X}^\top\in\mathbb R^{D\times D}</script>
+rotation</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-rot~3"></span>real(kind=RK),</td>
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>rot</strong>(*)</td><td><p>rotation dxd matrix</p></td>
+  <td><strong>rot</strong>(*)</td><td><p>rotation matrix, <script type="math/tex">\mathbf{R}\in\mathbb R^{D\times D}</script>.</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-w~9"></span>real(kind=RK),</td>

@@ -36,7 +36,6 @@ module mod_bb_block
   public :: bb_block_tree_is_empty
   public :: bb_block_tree_is_bottom
   public :: bb_block_current_value
-  public :: bb_block_current_sqrdev
   public :: bb_block_lowest_value
   public :: bb_block_log_ncomb
   public :: bb_block_evaluation_count
@@ -387,21 +386,6 @@ contains
     res = tree_queue_is_left(q(q(tq)), s(stree)) &
    &.and. tree_queue_is_bottom(q(q(tq)), s(stree))
   end function bb_block_tree_is_bottom
-!
-!| Returns current suquared deviation.
-  pure function bb_block_current_sqrdev(q, s, W) result(res)
-    integer(IK), intent(in) :: q(*)
-    !! integer array
-    integer(IK), intent(in) :: s(*)
-    !! work integer array
-    real(RK), intent(in)    :: W(*)
-    !! main memory
-    real(RK)                :: res
-    integer(IK)             :: l, g
-    l = q(tx) + mmap_L - 1 + ND * (tree_current_pointer(q(q(tq)), s(stree)) - 1)
-    g = mmap_G - mmap_L + l
-    res = W(g)! + W(l) + W(l)
-  end function bb_block_current_sqrdev
 !
 !| Returns current L value.
   pure function bb_block_current_value(q, s, W) result(res)

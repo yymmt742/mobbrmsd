@@ -14,7 +14,7 @@
 !    Data blocks are defined by \( \left[ G_{IJ}, \mathbf{C}_{IJ1}, \mathbf{C}_{IJ2}, \dots, \mathbf{C}_{IJS} \right] \) <br>
 !  @endnote
 module mod_c_matrix
-  use blas_lapack_interface, only : D, DD
+  use blas_lapack_interface, only: D, DD
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mol_block
   implicit none
@@ -37,13 +37,16 @@ module mod_c_matrix
   integer(IK), parameter :: nw = 4
   !! number of work array. nw = MAX(dmn + dm, n + n)
 !
-!| c_matrix <br>
-!  This is mainly used for passing during initialization. <br>
+!| C matrix manager.<br>
+!   @note
+!   This type is mainly used for passing during initialization.
+!   @endnote
   type c_matrix
     integer(IK)              :: q(header_size)
     !! header
   end type c_matrix
 !
+!| Constructer
   interface c_matrix
     module procedure c_matrix_new
   end interface c_matrix
@@ -183,27 +186,27 @@ contains
       real(RK), intent(inout)     :: WY(D, m), C(cb, n)
       integer(IK)                 :: i, j, ic
 !
-        ic = 2
+      ic = 2
+      do concurrent(i=1:n)
+#ifdef REAL32
+        call SGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
+#else
+        call DGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
+#endif
+      end do
+!
+      do j = 1, s - 1
+        ic = ic + DD
+        call mol_block_swap(b, j, WY)
         do concurrent(i=1:n)
 #ifdef REAL32
           call SGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
 #else
           call DGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
 #endif
-        enddo
-!
-        do j = 1, s - 1
-          ic = ic + DD
-          call mol_block_swap(b, j, WY)
-          do concurrent(i=1:n)
-#ifdef REAL32
-            call SGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
-#else
-            call DGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
-#endif
-          end do
-          call mol_block_inverse_swap(b, j, WY)
         end do
+        call mol_block_inverse_swap(b, j, WY)
+      end do
 !
     end subroutine calc_covariance
 !
