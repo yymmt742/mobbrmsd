@@ -1,5 +1,5 @@
-!| Calculate the rotation matrix that minimizes |X-RY|^2 for general dimension. <br>
-!  Here, RR^T=I and det(R)=1 are satisfied. <br>
+!| Calculate the rotation matrix that minimizes \(|\mathbf{X}-\mathbf{R}\mathbf{Y}|^2\). <br>
+!  Here, \(\mathbf{R}\mathbf{R}^\top=\mathbf{I}\) and \(\det(\mathbf{R})=1\) are satisfied. <br>
 !  This code is based on the Kabsch algorithm. doi : 10.1107/S0567739476001873
 module mod_rotation
   use mod_kinds, only: IK, RK
@@ -32,7 +32,7 @@ contains
     res = worksize_Kabsch() + DD + 1
   end function sdmin_worksize
 !
-!| Compute \(\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]\).
+!| Compute \(\max_{\mathbf{R}}\text{tr}[\mathbf{R}\mathbf{C}]\).
   pure subroutine estimate_rcmax(g, cov, w)
     real(RK), intent(in)    :: g
     !! sum of auto covariance matrix
@@ -46,7 +46,8 @@ contains
 !
   end subroutine estimate_rcmax
 !
-!| Compute the least-squares sum_i^n |x_i-Ry_i|^2 from cov = YX^T and g = tr[XX^T] + tr[YY^T].
+!| Compute \(\min_{\mathbf{R}}(g-2\text{tr}[\mathbf{R}\mathbf{C}])\),
+!  where \(g = tr[\mathbf{X}\mathbf{X}^\top] + tr[\mathbf{Y}\mathbf{Y}^\top]\)
   pure subroutine estimate_sdmin(g, cov, w)
     real(RK), intent(in)    :: g
     !! sum of auto covariance matrix
@@ -62,20 +63,22 @@ contains
 !
   end subroutine estimate_sdmin
 !
-!| Inquire function for memory size of rotation.
+!| Inquire function for memory size of estimate_rotation().
   pure elemental function rotation_worksize() result(res)
     integer(IK) :: res
     res = worksize_Kabsch()
   end function rotation_worksize
 !
-!| Compute the transpose rotation matrix for minimize tr[CR] from cov = YX^T and g = tr[XX^T] + tr[YY^T].
+!| Compute the transpose of rotation matrix \(\mathbf{R}\)
+!  that maximize \(\text{tr}[\mathbf{R}\mathbf{Y}\mathbf{X}^\top]\).
   pure subroutine estimate_rotation(g, cov, rot, w)
     real(RK), intent(in)    :: g
-    !! g = tr[XX^T] + tr[YY^T]
+    !! \(g=\text{tr}[\mathbf{X}\mathbf{X}^\top}]+\text{tr}[\mathbf{X}\mathbf{X}^\top}]\).
     real(RK), intent(in)    :: cov(*)
-    !! covariance dxd matrix, YX^T
+    !! covariance matrix \(\mathbf{C}=\mathbf{Y}\mathbf{X}^\top\in\mathbb R^{D\times D}\)
+    !! rotation
     real(RK), intent(inout) :: rot(*)
-    !! rotation dxd matrix
+    !! rotation matrix, \(\mathbf{R}\in\mathbb R^{D\times D}\).
     real(RK), intent(inout) :: w(*)
     !! work array, must be larger than worksize_rotation().
 !
@@ -83,7 +86,7 @@ contains
 !
   end subroutine estimate_rotation
 !
-  !| work array size for Kabsch algorithm.
+!| work array size for Kabsch algorithm.
   pure elemental function worksize_Kabsch() result(res)
     real(RK)    :: w(1)
     integer(IK) :: res, info
@@ -97,7 +100,6 @@ contains
 !
   end function worksize_Kabsch
 !
-!| Calculate the rotation matrix R^T from covariance matrix.
   pure subroutine Kabsch(cov, rot, w)
     real(RK), intent(in)    :: cov(*)
     !! target d*n array

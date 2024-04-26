@@ -1,4 +1,4 @@
-!| Module for managing f-matrix, free rotation cost matrix, F(M, M). <br>
+!| Module for managing free rotation cost matrix, \(\mathbf{F}\). <br>
 !  \[ \mathbf{F}_{IJ} = \min_{\mathbf{R},s}\text{Tr}\left[\mathbf{C}_{IJs} \mathbf{R} \right] \] <br>
 !  \( \mathbf{C}_{IJs} \) :: Covariance matrix of \( \mathbf{X}_I \) and \( \mathbf{Y}_I \) with \( s \)-th molecular permutation.<br>
 !  \( \mathbf{R} \) :: Rotation matrix on \( \mathbb{R}^{d\times d} \).<br>
@@ -19,13 +19,16 @@ module mod_f_matrix
   integer(IK), parameter :: header_size = 1
   integer(IK), parameter :: nn = 1
 !
-!| f_matrix <br>
-!  This is mainly used for passing during initialization.
+!| F matrix manager.<br>
+!   @note
+!   This type is mainly used for passing during initialization.
+!   @endnote
   type f_matrix
     integer(IK)           :: q(header_size)
     !! header
   end type f_matrix
 !
+!| Constructer
   interface f_matrix
     module procedure f_matrix_new
   end interface f_matrix
