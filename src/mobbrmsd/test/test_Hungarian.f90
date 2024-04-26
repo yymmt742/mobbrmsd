@@ -32,6 +32,7 @@ contains
     real(RK)               :: minsp
 !
     call RANDOM_NUMBER(C)
+    C = C - 5
     minsp = 999
     minsp = MIN(minsp, SP(n, n, [1_IK, 2_IK, 3_IK], C))
     minsp = MIN(minsp, SP(n, n, [1_IK, 3_IK, 2_IK], C))

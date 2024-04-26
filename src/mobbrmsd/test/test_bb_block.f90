@@ -11,11 +11,11 @@ program main
 !
   call u%init('test bb_block')
   call test0()
-! call u%init('test bb_block manual')
-! call test1(1, 1, 1, [1], [1], [0])
-! call test1(1, 2, 1, [1, 2], [1, 1], [0])
-! call test1(8, 4, 1, [3, 4, 2, 1], [1, 1, 1, 1], [0])
-! call test1(8, 4, 2, [3, 4, 2, 1], [1, 2, 1, 2], [2, 3, 5, 4, 8, 6, 7, 1])
+  call u%init('test bb_block manual')
+  call test1(1, 1, 1, [1], [1], [0])
+  call test1(1, 2, 1, [1, 2], [1, 1], [0])
+  call test1(8, 4, 1, [3, 4, 2, 1], [1, 1, 1, 1], [0])
+  call test1(8, 4, 2, [3, 4, 2, 1], [1, 2, 1, 2], [2, 3, 5, 4, 8, 6, 7, 1])
 !
   call u%finish_and_terminate()
 !
@@ -38,12 +38,11 @@ contains
     allocate (W(bb_block_memsize(bm%q) + bb_block_worksize(bm%q)))
 !
     X = sample(n, m)
-    Y = sample(n, m)
-!   Y(:, :, :2) = X(:, :, 2:)
-!   Y(:, :, 3) = X(:, :, 1)
+    Y(:, :, :2) = X(:, :, 2:)
+    Y(:, :, 3) = X(:, :, 1)
 !
-    do i = 1, 1
-      call run(bm%q, bm%s, X, Y, W, sb)
+    do i = 1, 20
+      call run(bm%q, bm%s, X, Y, SUM(X * X + Y * Y), W, sb)
       call u%assert_almost_equal(W(1), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
       Z = Y
       call bb_block_swap_y(bm%q, sb, Z)
@@ -77,7 +76,7 @@ contains
     X = sample(n, m)
     Y = swp(n, m, s, per, map, sym, X)
     do i = 1, 20
-      call run(bm%q, bm%s, X, Y, W, sb)
+      call run(bm%q, bm%s, X, Y, SUM(X * X + Y * Y), W, sb)
       call u%assert_almost_equal(W(1), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
       Z = Y
       call bb_block_swap_y(bm%q, sb, Z)
@@ -87,32 +86,30 @@ contains
 !
   end subroutine test1
 !
-  subroutine run(q, s, X, Y, W, sb)
+  subroutine run(q, s, X, Y, g, W, sb)
     integer(IK), intent(in)    :: q(*)
     integer(IK), intent(inout) :: s(*)
-    real(RK), intent(in)       :: X(*), Y(*)
+    real(RK), intent(in)       :: X(*), Y(*), g
     real(RK), intent(inout)    :: W(*)
     integer(IK), intent(inout) :: sb(*)
-    real(RK)                   :: ub, ret
+    real(RK)                   :: ub
 !
     ub = 999.9_RK
-    ret = ub
     call bb_block_setup(q, X, Y, s, W, zfill=.true.)
 !
     do
       call bb_block_expand(ub, q, s, W)
       if (bb_block_tree_is_bottom(q, s)) then
         if (bb_block_current_value(q, s, w) < ub) then
-          call bb_block_save_state(q, s, sb)
           ub = bb_block_current_value(q, s, w)
-          ret = bb_block_current_sqrdev(q, s, w)
+          call bb_block_save_state(q, s, sb)
         end if
       end if
       call bb_block_closure(ub, q, s, W)
       if (bb_block_tree_is_empty(q, s)) exit
     end do
 !
-    W(1) = ret
+    W(1) = g + ub + ub
 !
   end subroutine run
 !

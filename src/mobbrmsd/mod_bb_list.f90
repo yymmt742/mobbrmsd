@@ -198,17 +198,16 @@ contains
     !! work array
     integer(IK)                :: i, n, ps, pq, px, pw
     associate ( &
-   &   SB => bb_list_INDEX_TO_SPEACIES, &
-   &   UB => bb_list_INDEX_TO_UPPERBOUND, &
-   &   LB => bb_list_INDEX_TO_LOWERBOUND, &
-   &   NV => bb_list_INDEX_TO_N_EVAL, &
-   &   CM => bb_list_INDEX_TO_LOG_N_COMB &
+   &   SB => s(bb_list_INDEX_TO_SPEACIES), &
+   &   UB => W(bb_list_INDEX_TO_UPPERBOUND), &
+   &   LB => W(bb_list_INDEX_TO_LOWERBOUND), &
+   &   NV => W(bb_list_INDEX_TO_N_EVAL), &
+   &   CM => W(bb_list_INDEX_TO_LOG_N_COMB) &
    &  )
-      s(SB) = 0
-      W(UB) = RHUGE
-      W(LB) = ZERO
-      W(NV) = ZERO
-      W(CM) = ZERO
+      sb = 0
+      ub = RHUGE
+      lb = ZERO
+      nv = ZERO
 !
       ps = s_pointer(q)
       px = x_pointer(q)
@@ -219,8 +218,10 @@ contains
       do concurrent(i=0:n - 1)
         call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
       end do
+!
+      cm = ZERO
       do i = 0, N - 1
-        W(CM) = W(CM) + bb_block_log_ncomb(q(q(pq + i)))
+        cm = cm + bb_block_log_ncomb(q(q(pq + i)))
       end do
 !
       call save_state(n, q(pq), q(ps), q, s)

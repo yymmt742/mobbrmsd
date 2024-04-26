@@ -155,7 +155,7 @@ contains
     res = 0
     do p = 1, nmol
       hwrk = Hungarian_worksize(p, p)
-      tmp = MAX(MAX(swrk, p**2 + hwrk), swrk * MAX(1, nsym - 1) + 1)
+      tmp = MAX(MAX(swrk, p**2 + hwrk), swrk * MAX(1, nsym) + 1)
       res = MAX(res, buf + tmp)
       buf = buf - p * nsym * ND
     end do
@@ -191,7 +191,7 @@ contains
   end function bb_block_molsize
 !
 !| Setup C matrix and F matrix in root node.
-  subroutine bb_block_setup(q, X, Y, s, W, zfill)
+  pure subroutine bb_block_setup(q, X, Y, s, W, zfill)
     integer(IK), intent(in)    :: q(*)
     !! integer array
     real(RK), intent(in)       :: X(*)
@@ -218,7 +218,7 @@ contains
       ZEROS = ZERO
       nmol = mol_block_nmol(q(qblck))
       call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(stree), W(wcov), W(q(fx)), ZEROS, W(q(tx)), W(nc))
-      call tree_select_top_node(q(q(tq)), s(stree), ND, RHUGE, W(q(tx)))
+!     call tree_select_top_node(q(q(tq)), s(stree), ND, RHUGE, W(q(tx)))
     end block
 !
   end subroutine bb_block_setup
@@ -246,7 +246,7 @@ contains
 !
     call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(stree), X(wcov), X(q(fx)), Z(pp), X(q(tx)), X(nc))
     call tree_reset(q(q(tq)), s(stree))
-    call tree_select_top_node(q(q(tq)), s(stree), ND, UB, X(q(tx)))
+!   call tree_select_top_node(q(q(tq)), s(stree), ND, UB, X(q(tx)))
 !
   end subroutine bb_block_inheritance
 !
@@ -262,20 +262,23 @@ contains
     !! main memory
     integer(IK)                :: nmol
     integer(IK)                :: pp ! previous current node
-!
-    associate (qtree => q(tq), wtree => q(tx), qcov => q(cq), wfrx => q(fx))
-!
+    associate ( &
+   &  qtree => q(tq),&
+   &  wtree => q(tx),&
+   &  qcov => q(cq), &
+   &  wfrx => q(fx)&
+   &  )
       nmol = mol_block_nmol(q(qblck))
       block
         do
-          if (tree_queue_is_empty(q(qtree), s(stree)) .or. tree_queue_is_bottom(q(qtree), s(stree))) exit
+          call tree_select_top_node(q(q(tq)), s(stree), ND, UB, W(q(tx)))
+          if (tree_queue_is_bottom(q(qtree), s(stree)) &
+       & .or. tree_queue_is_empty(q(qtree), s(stree))) exit
           pp = q(tx) + (tree_current_pointer(q(qtree), s(stree)) - 1) * ND
           call tree_expand(q(qtree), s(stree))
           call evaluate_nodes(nmol, q(qcov), q(qtree), s(stree), W(wcov), W(wfrx), W(pp), W(wtree), W(nc))
-          call tree_select_top_node(q(q(tq)), s(stree), ND, UB, W(q(tx)))
         end do
       end block
-!
     end associate
   end subroutine bb_block_expand
 !
@@ -291,22 +294,23 @@ contains
     !! main memory
     associate (qtree => q(tq), wtree => q(tx))
       do
-        call tree_select_top_node(q(qtree), s(stree), ND, UB, X(wtree))
-        if (tree_queue_is_left(q(qtree), s(stree)) .or. tree_queue_is_root(q(qtree), s(stree))) exit
+        if (tree_queue_is_left(q(qtree), s(stree)) &
+     & .or. tree_queue_is_root(q(qtree), s(stree))) exit
         call tree_leave(q(qtree), s(stree))
       end do
     end associate
   end subroutine bb_block_closure
 !
-  pure subroutine evaluate_nodes(nmol, qcov, q, s, CX, FX, Z, X, neval)
+!| Evaluate nodes in tree_current_level.
+  pure subroutine evaluate_nodes(nmol, qcov, q, s, C, F, Z, W, neval)
     integer(IK), intent(in) :: nmol, qcov(*), q(*), s(*)
-    real(RK), intent(in)    :: CX(*), FX(*), Z(ND)
-    real(RK), intent(inout) :: X(ND, *), neval
-    integer(IK)             :: l, px, pw, m, nw, nper, nsym, iper, perm(nmol)
-!
+    real(RK), intent(in)    :: C(*), F(*), Z(ND)
+    real(RK), intent(inout) :: W(ND, *), neval
+    integer(IK)             :: l, px, pw, m, nw, nh, nper, nsym, iper, perm(nmol)
     l = tree_current_level(s)
     m = nmol - l ! residual dimension
     nw = sdmin_worksize()
+    nh = Hungarian_worksize(m, m)
     px = tree_queue_pointer(q, s)
 !
     nsym = tree_n_sym(q)
@@ -315,40 +319,34 @@ contains
     pw = px + nsym
 !
     do iper = 1, nper
-      call evaluate_queue(iper, l, m, nw, nsym, nper, nmol, qcov, perm, &
-     &                    CX, FX, Z, X(1, px), X(1, pw), X(2, pw))
+      call evaluate_queue(iper, perm(l + iper - 1), l, &
+     &                    m, nw, nh, nsym, nper, nmol, qcov, perm, &
+     &                    C, F, Z, W(1, px), W(1, pw), W(2, pw))
       pw = pw + nsym
     end do
 !
     neval = neval + real(nsym * nper, RK)
-!
   end subroutine evaluate_nodes
 !
-  pure subroutine evaluate_queue(iper, l, m, nw, nsym, nper, nmol, qcov, perm, CX, FX, Z, X, W1, W2)
-    integer(IK), intent(in) :: iper, l, m, nw, nsym, nper, nmol
+!| Evaluate nodes in tree_current_level and iper.
+  pure subroutine evaluate_queue(iper, iabp, l, m, nw, nh, nsym, nper, nmol, qcov, perm, C, F, Z, X, W1, W2)
+    integer(IK), intent(in) :: iper, iabp, l, m, nw, nh, nsym, nper, nmol
     integer(IK), intent(in) :: qcov(*), perm(*)
-    real(RK), intent(in)    :: CX(*), FX(*), Z(ND)
+    real(RK), intent(in)    :: C(*), F(*), Z(ND)
     real(RK), intent(inout) :: X(ND, nsym, nper), W1(*), W2(nw, *)
-    integer(IK)             :: iabp ! absolute perm index
     integer(IK)             :: isym
-!
-    iabp = perm(l + iper - 1)
-!
-    call copy(ND, Z, X(1, 1, iper))
-    call c_matrix_add(qcov, l, iabp, 1, CX, X(mmap_G, 1, iper), X(mmap_C, 1, iper))
-    call subm(l, nmol, iper, perm, FX, W1(m * m + 1))
-    call Hungarian(m, m, W1(m * m + 1), W1(1))
-!
-    do concurrent(isym=2:nsym)
+    if (m == 0) then
+      W1(1) = ZERO
+    else
+      call subm(l, nmol, iper, perm, F, W1(nh + 1))
+      call Hungarian(m, m, W1(nh + 1), W1(1))
+    end if
+    do concurrent(isym=1:nsym)
       call copy(ND, Z, X(1, isym, iper))
-      call c_matrix_add(qcov, l, iabp, isym, CX, X(mmap_G, isym, iper), X(mmap_C, isym, iper))
-      call estimate_rcmin(X(mmap_G, isym, iper), X(mmap_C, isym, iper), W2(1, isym - 1))
-      X(mmap_L, isym, iper) = W1(1) - W2(1, isym - 1)
+      call c_matrix_add(qcov, l, iabp, isym, C, X(mmap_G, isym, iper), X(mmap_C, isym, iper))
+      call estimate_rcmax(X(mmap_G, isym, iper), X(mmap_C, isym, iper), W2(1, isym))
+      X(mmap_L, isym, iper) = W1(1) - W2(1, isym)
     end do
-!
-    call estimate_rcmin(X(mmap_G, 1, iper), X(mmap_C, 1, iper), W1(2))
-    X(mmap_L, 1, iper) = W1(1) - W1(2)
-!
   end subroutine evaluate_queue
 !
   pure subroutine subm(l, n, r, perm, X, Y)
@@ -367,7 +365,6 @@ contains
     end do
 !
   end subroutine subm
-!
 !
 !| Returns true when tree is empty
   pure function bb_block_tree_is_empty(q, s) result(res)
@@ -403,7 +400,7 @@ contains
     integer(IK)             :: l, g
     l = q(tx) + mmap_L - 1 + ND * (tree_current_pointer(q(q(tq)), s(stree)) - 1)
     g = mmap_G - mmap_L + l
-    res = W(g) + W(l) + W(l)
+    res = W(g)! + W(l) + W(l)
   end function bb_block_current_sqrdev
 !
 !| Returns current L value.

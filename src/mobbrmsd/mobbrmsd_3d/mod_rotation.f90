@@ -6,7 +6,7 @@ module mod_rotation
   implicit none
   private
   public :: sdmin_worksize
-  public :: estimate_rcmin
+  public :: estimate_rcmax
   public :: estimate_sdmin
   public :: rotation_worksize
   public :: estimate_rotation
@@ -30,7 +30,7 @@ contains
   end function sdmin_worksize
 !
 !| Compute \(\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]\).
-  pure subroutine estimate_rcmin(g, cov, w)
+  pure subroutine estimate_rcmax(g, cov, w)
     real(RK), intent(in)    :: g
     !! sum of auto covariance matrix
     real(RK), intent(in)    :: cov(*)
@@ -38,7 +38,7 @@ contains
     real(RK), intent(inout) :: w(*)
     !! work array, must be larger than worksize_sdmin().
     call find_lambda_max(g, cov, w)
-  end subroutine estimate_rcmin
+  end subroutine estimate_rcmax
 !
 !| Compute the least-squares sum_i^n |x_i-Ry_i|^2 from cov = YX^T and g = tr[XX^T] + tr[YY^T].
   pure subroutine estimate_sdmin(g, cov, w)
@@ -48,10 +48,8 @@ contains
     !! target d*n array
     real(RK), intent(inout) :: w(*)
     !! work array, must be larger than worksize_sdmin().
-!
     call find_lambda_max(g, cov, w)
     w(1) = g - w(1) - w(1)
-!
   end subroutine estimate_sdmin
 !
 !| Inquire function for memory size of rotation.
@@ -81,7 +79,6 @@ contains
     integer(IK), parameter  :: v1 = 3, v2 = 4, v3 = 5, v4 = 6
     integer(IK), parameter  :: v11 = 7, v21 = 8, v31 = 9, v41 = 10
     integer(IK), parameter  :: v22 = 11, v32 = 12, v42 = 13, v33 = 14, v43 = 15, v44 = 16
-!
     if (g < THRESHOLD) then
       rot(1) = ONE; rot(2) = ZERO; rot(3) = ZERO
       rot(4) = ZERO; rot(5) = ONE; rot(6) = ZERO
@@ -208,7 +205,6 @@ contains
     rot(7) = w(l3) * (w(v42) - w(v31))
     rot(8) = w(l3) * (w(v43) + w(v21))
     rot(9) = w(l2) * (w(v11) - w(v22) - w(v33) + w(v44))
-!
   end subroutine estimate_rotation
 !
 !| Compute maximum eigen value of S. <br>
