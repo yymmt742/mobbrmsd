@@ -85,7 +85,8 @@
 			   <tr><td><a href='../interface/bb_block.html'>bb_block</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Interface</td><td></td></tr>
 			   <tr><td><a href='../proc/bb_block_closure.html'>bb_block_closure</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Subroutine</td><td><p>closure current node.</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_covmat_add.html'>bb_block_covmat_add</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Subroutine</td><td><p>Sum covariance matrix by saved state z.</p></td></tr>
-			   <tr><td><a href='../proc/bb_block_current_value.html'>bb_block_current_value</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns current_value</p></td></tr>
+			   <tr><td><a href='../proc/bb_block_current_sqrdev.html'>bb_block_current_sqrdev</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns current suquared deviation.</p></td></tr>
+			   <tr><td><a href='../proc/bb_block_current_value.html'>bb_block_current_value</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns current L value.</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_evaluation_count.html'>bb_block_evaluation_count</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns the minimum value of the surviving nodes, excluding the current value.</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_expand.html'>bb_block_expand</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Subroutine</td><td><p>Expand top node in queue.</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_inheritance.html'>bb_block_inheritance</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Subroutine</td><td><p>Expands the latest node of the parent block to the top-level queue of the child block.</p></td></tr>
@@ -128,6 +129,9 @@
 			   <tr><td><a href='../proc/dgemm~2.html'>DGEMM</a></td><td><a href='../sourcefile/blas_lapack_interface.f90~2.html'>blas_lapack_interface.f90</a></td><td>Subroutine</td><td><p>DGEMM for M=N=3. <br>
  N and M are provided for compatibility with BLAS and are not used here. <br>
  </p><a href="../proc/dgemm~2.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
+			   <tr><td><a href='../proc/estimate_rcmin.html'>estimate_rcmin</a></td><td><a href='../module/mod_rotation.html'>mod_rotation</a></td><td>Subroutine</td><td><p>Compute <script type="math/tex">\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]</script>.</p></td></tr>
+			   <tr><td><a href='../proc/estimate_rcmin~2.html'>estimate_rcmin</a></td><td><a href='../module/mod_rotation~2.html'>mod_rotation</a></td><td>Subroutine</td><td><p>Compute <script type="math/tex">\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]</script>.</p></td></tr>
+			   <tr><td><a href='../proc/estimate_rcmin~3.html'>estimate_rcmin</a></td><td><a href='../module/mod_rotation~3.html'>mod_rotation</a></td><td>Subroutine</td><td><p>Compute <script type="math/tex">\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]</script>.</p></td></tr>
 			   <tr><td><a href='../proc/estimate_rotation.html'>estimate_rotation</a></td><td><a href='../module/mod_rotation.html'>mod_rotation</a></td><td>Subroutine</td><td><p>Compute the transpose rotation matrix for minimize tr[CR] from cov = YX^T and g = tr[XX^T] + tr[YY^T].</p></td></tr>
 			   <tr><td><a href='../proc/estimate_rotation~2.html'>estimate_rotation</a></td><td><a href='../module/mod_rotation~2.html'>mod_rotation</a></td><td>Subroutine</td><td><p>Compute the transpose rotation matrix for minimize tr[CR] from cov = YX^T and g = tr[XX^T] + tr[YY^T].
  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802</p></td></tr>

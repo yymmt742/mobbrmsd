@@ -8,7 +8,7 @@
     <meta name="author" content="yymmt742" >
     <link rel="icon" href="../favicon.png">
 
-    <title>mobbrmsd_nearest_neighbor &ndash; mobbrmsd</title>
+    <title>estimate_rcmin &ndash; mobbrmsd</title>
 
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
@@ -76,7 +76,7 @@
 
     <div class="container">
   <div class="row">
-    <h1>mobbrmsd_nearest_neighbor
+    <h1>estimate_rcmin
       <small>Subroutine</small>
     </h1>
     <div class="row">
@@ -87,14 +87,14 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 3.5% of total for procedures.">67 statements</a>
+    title=" 0.4% of total for procedures.">7 statements</a>
      </li> 
-    <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd_mst.f90"> Source File</a></li>
+    <li><i class="fa fa-code"></i><a href="../src/mod_rotation.f90"> Source File</a></li>
   </ul>
   <ol class="breadcrumb in-well text-right">
-     <li><a href='../sourcefile/mod_mobbrmsd_mst.f90.html'>mod_mobbrmsd_mst.f90</a></li>
-     <li><a href='../module/mod_mobbrmsd_mst.html'>mod_mobbrmsd_mst</a></li>
-     <li class="active">mobbrmsd_nearest_neighbor</li>
+     <li><a href='../sourcefile/mod_rotation.f90~3.html'>mod_rotation.f90</a></li>
+     <li><a href='../module/mod_rotation~3.html'>mod_rotation</a></li>
+     <li class="active">estimate_rcmin</li>
   </ol>
 </div>
 </div>
@@ -119,86 +119,32 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public subroutine mobbrmsd_nearest_neighbor(n_target, header, state, X, y, W, cutoff, difflim, maxeval, mask, nnval, nnidx)</h2>
+    <h2>public pure subroutine estimate_rcmin(g, cov, w)</h2>
     
 
-    <p>nearest_neighbor calculation</p>
+    <p>Compute <script type="math/tex">\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]</script>.</p>
 
     <h3>Arguments</h3>
       <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-n_target~2"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-g~7"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>n_target</strong></td><td><p>number of target coordinates</p></td>
+  <td><strong>g</strong></td><td><p>sum of auto covariance matrix</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-header~8"></span>type(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
+  <td><span class="anchor" id="variable-cov~7"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>header</strong></td><td><p>mobbrmsd_header</p></td>
+  <td><strong>cov</strong>(*)</td><td><p>target d*n array</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-state~5"></span>type(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
+  <td><span class="anchor" id="variable-w~7"></span>real(kind=RK),</td>
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>state</strong>(n_target)</td><td><p>mobbrmsd_state, the result is contained in this structure.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-x~10"></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>X</strong>(*)</td><td><p>reference coordinate</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-y"></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>y</strong>(*)</td><td><p>target coordinate</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-w~13"></span>real(kind=RK),</td>
-<td>intent(inout)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>W</strong>(*)</td><td><p>work memory, must be larger than header%memsize() * mobbrmsd_num_threads()</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-cutoff~5"></span>real(kind=RK),</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>cutoff</strong></td><td><p>The search ends when lowerbound is determined to be greater than to cutoff.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-difflim~5"></span>real(kind=RK),</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>difflim</strong></td><td><p>The search ends when the difference between the lower and upper bounds is less than difflim.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-maxeval~5"></span>integer(kind=IK),</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>maxeval</strong></td><td><p>The search ends when ncount exceeds maxiter.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-mask"></span>logical,</td>
-<td>intent(in),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>mask</strong>(n_target)</td><td><p>If .false., skip the calculation.</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-nnval"></span>real(kind=RK),</td>
-<td>intent(out),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>nnval</strong></td><td><p>nearest neighbor index</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-nnidx"></span>integer(kind=IK),</td>
-<td>intent(out),</td>
-  <td>optional</td>  <td></td><td>::</td>
-  <td><strong>nnidx</strong></td><td><p>nearest neighbor index</p></td>
+  <td><strong>w</strong>(*)</td><td><p>work array, must be larger than worksize_sdmin().</p></td>
 </tr>
 </tbody>
 </table>

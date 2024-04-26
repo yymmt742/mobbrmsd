@@ -36,6 +36,7 @@ module mod_bb_block
   public :: bb_block_tree_is_empty
   public :: bb_block_tree_is_bottom
   public :: bb_block_current_value
+  public :: bb_block_current_sqrdev
   public :: bb_block_lowest_value
   public :: bb_block_log_ncomb
   public :: bb_block_evaluation_count
@@ -190,7 +191,7 @@ contains
   end function bb_block_molsize
 !
 !| Setup C matrix and F matrix in root node.
-  pure subroutine bb_block_setup(q, X, Y, s, W, zfill)
+  subroutine bb_block_setup(q, X, Y, s, W, zfill)
     integer(IK), intent(in)    :: q(*)
     !! integer array
     real(RK), intent(in)       :: X(*)
@@ -341,12 +342,12 @@ contains
     do concurrent(isym=2:nsym)
       call copy(ND, Z, X(1, isym, iper))
       call c_matrix_add(qcov, l, iabp, isym, CX, X(mmap_G, isym, iper), X(mmap_C, isym, iper))
-      call estimate_sdmin(X(mmap_G, isym, iper), X(mmap_C, isym, iper), W2(1, isym - 1))
-      X(mmap_L, isym, iper) = W1(1) + W2(1, isym - 1)
+      call estimate_rcmin(X(mmap_G, isym, iper), X(mmap_C, isym, iper), W2(1, isym - 1))
+      X(mmap_L, isym, iper) = W1(1) - W2(1, isym - 1)
     end do
 !
-    call estimate_sdmin(X(mmap_G, 1, iper), X(mmap_C, 1, iper), W2)
-    X(mmap_L, 1, iper) = W1(1) + W2(1, 1)
+    call estimate_rcmin(X(mmap_G, 1, iper), X(mmap_C, 1, iper), W1(2))
+    X(mmap_L, 1, iper) = W1(1) - W1(2)
 !
   end subroutine evaluate_queue
 !
@@ -390,30 +391,47 @@ contains
    &.and. tree_queue_is_bottom(q(q(tq)), s(stree))
   end function bb_block_tree_is_bottom
 !
-!| Returns current_value
-  pure function bb_block_current_value(q, s, X) result(res)
+!| Returns current suquared deviation.
+  pure function bb_block_current_sqrdev(q, s, W) result(res)
     integer(IK), intent(in) :: q(*)
     !! integer array
     integer(IK), intent(in) :: s(*)
     !! work integer array
-    real(RK), intent(in)    :: X(*)
+    real(RK), intent(in)    :: W(*)
+    !! main memory
+    real(RK)                :: res
+    integer(IK)             :: l, g
+    l = q(tx) + mmap_L - 1 + ND * (tree_current_pointer(q(q(tq)), s(stree)) - 1)
+    g = mmap_G - mmap_L + l
+    res = W(g) + W(l) + W(l)
+  end function bb_block_current_sqrdev
+!
+!| Returns current L value.
+  pure function bb_block_current_value(q, s, W) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! integer array
+    integer(IK), intent(in) :: s(*)
+    !! work integer array
+    real(RK), intent(in)    :: W(*)
     !! main memory
     real(RK)                :: res
     integer(IK)             :: t
-    t = q(tx) + ND * (tree_current_pointer(q(q(tq)), s(stree)) - 1)
-    res = X(t)
+    t = q(tx) + mmap_L - 1 + ND * (tree_current_pointer(q(q(tq)), s(stree)) - 1)
+    res = W(t)
   end function bb_block_current_value
 !
 !| Returns the minimum value of the surviving nodes, excluding the current value.
-  pure function bb_block_lowest_value(q, s, X) result(res)
+  pure function bb_block_lowest_value(q, s, W) result(res)
     integer(IK), intent(in) :: q(*)
     !! header
     integer(IK), intent(in) :: s(*)
     !! state
-    real(RK), intent(in)    :: X(*)
+    real(RK), intent(in)    :: W(*)
     !! main memory
     real(RK)                :: res
-    res = tree_lowest_value(q(q(tq)), s(stree), ND, X(q(tx)))
+    associate (qtree => q(tq), wtree => q(tx))
+      res = tree_lowest_value(q(qtree), s(stree), ND, W(wtree))
+    end associate
   end function bb_block_lowest_value
 !
 !| Returns the minimum value of the surviving nodes, excluding the current value.

@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 8.9% of total for modules and submodules.">282 statements</a>
+    title=" 9.0% of total for modules and submodules.">289 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_rotation.f90"> Source File</a></li>
   </ul>
@@ -124,6 +124,7 @@
   <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#subs-0">Subroutines</a></h3></div>
   <div class="list-group">
     <div id="subs-0" class="panel-collapse collapse">
+      <a class="list-group-item" href="../module/mod_rotation~2.html#proc-estimate_rcmin~2">estimate_rcmin</a>
       <a class="list-group-item" href="../module/mod_rotation~2.html#proc-estimate_sdmin~2">estimate_sdmin</a>
       <a class="list-group-item" href="../module/mod_rotation~2.html#proc-estimate_rotation~2">estimate_rotation</a>
     </div>
@@ -135,8 +136,8 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <p>Calculate the rotation matrix that minimizes |X-RY|^2 for D=3. <br>
- Here, RR^T=I and det(R)=1 are satisfied. <br>
+    <p>Calculate the rotation matrix that minimizes <script type="math/tex">|\mathbf{X}-\mathbf{R}\mathbf{Y}|^2</script> for <script type="math/tex">D=3</script>. <br>
+ Here, <script type="math/tex">\mathbf{R}\mathbf{R}^\top=\mathbf{I}</script> and <script type="math/tex">\det(\mathbf{R})=1</script> are satisfied. <br>
  This code is based on the method of Coutsias et.al. 10.1002/jcc.25802</p>
 <br>        <div class="panel panel-default">
       <div class="panel-heading">
@@ -170,6 +171,7 @@
   <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#subs-1">Subroutines</a></h3></div>
   <div class="list-group">
     <div id="subs-1" class="panel-collapse collapse">
+      <a class="list-group-item" href="../module/mod_rotation~2.html#proc-estimate_rcmin~2">estimate_rcmin</a>
       <a class="list-group-item" href="../module/mod_rotation~2.html#proc-estimate_sdmin~2">estimate_sdmin</a>
       <a class="list-group-item" href="../module/mod_rotation~2.html#proc-estimate_rotation~2">estimate_rotation</a>
     </div>
@@ -217,6 +219,40 @@
 
     <section>
     <h2>Subroutines</h2>
+      <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-estimate_rcmin~2"></span><h3>public pure subroutine <a href='../proc/estimate_rcmin~2.html'>estimate_rcmin</a>(g, cov, w)</h3></div>
+  <div class="panel-body">
+       
+<p>Compute <script type="math/tex">\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]</script>.</p>
+    
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>g</strong></td><td><p>sum of auto covariance matrix</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>cov</strong>(*)</td><td><p>target d*n array</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(inout)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>w</strong>(*)</td><td><p>work array, must be larger than worksize_sdmin().</p></td>
+</tr>
+</tbody>
+</table>
+
+
+  </div>
+  </div>
+
       <div class="panel panel-default">
   <div class="panel-heading codesum"><span class="anchor" id="proc-estimate_sdmin~2"></span><h3>public pure subroutine <a href='../proc/estimate_sdmin~2.html'>estimate_sdmin</a>(g, cov, w)</h3></div>
   <div class="panel-body">
