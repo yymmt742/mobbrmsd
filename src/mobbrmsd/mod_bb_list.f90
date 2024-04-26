@@ -17,6 +17,7 @@ module mod_bb_list
   public :: bb_list_swap_y
   public :: bb_list_rotation_matrix
   public :: bb_list_is_finished
+  public :: bb_list_INDEX_TO_AUTOCORR
   public :: bb_list_INDEX_TO_UPPERBOUND
   public :: bb_list_INDEX_TO_LOWERBOUND
   public :: bb_list_INDEX_TO_N_EVAL

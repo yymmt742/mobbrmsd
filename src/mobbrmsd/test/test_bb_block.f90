@@ -42,8 +42,9 @@ contains
     Y(:, :, 3) = X(:, :, 1)
 !
     do i = 1, 20
-      call run(bm%q, bm%s, X, Y, SUM(X * X + Y * Y), W, sb)
+      call run(bm%q, bm%s, X, Y, W, sb)
       call u%assert_almost_equal(W(1), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
+      call u%assert_almost_equal(W(2), SUM(X * X + Y * Y), 'autocorr     ')
       Z = Y
       call bb_block_swap_y(bm%q, sb, Z)
       sxz = sd(m * n, X, Z)
@@ -76,8 +77,9 @@ contains
     X = sample(n, m)
     Y = swp(n, m, s, per, map, sym, X)
     do i = 1, 20
-      call run(bm%q, bm%s, X, Y, SUM(X * X + Y * Y), W, sb)
+      call run(bm%q, bm%s, X, Y, W, sb)
       call u%assert_almost_equal(W(1), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
+      call u%assert_almost_equal(W(2), SUM(X * X + Y * Y), 'autocorr     ')
       Z = Y
       call bb_block_swap_y(bm%q, sb, Z)
       call u%assert_almost_equal(W(1), sd(m * n, X, Z), 'swap sd value')
@@ -86,16 +88,17 @@ contains
 !
   end subroutine test1
 !
-  subroutine run(q, s, X, Y, g, W, sb)
+  subroutine run(q, s, X, Y, W, sb)
     integer(IK), intent(in)    :: q(*)
     integer(IK), intent(inout) :: s(*)
-    real(RK), intent(in)       :: X(*), Y(*), g
+    real(RK), intent(in)       :: X(*), Y(*)
     real(RK), intent(inout)    :: W(*)
     integer(IK), intent(inout) :: sb(*)
-    real(RK)                   :: ub
+    real(RK)                   :: ub, g
 !
     ub = 999.9_RK
     call bb_block_setup(q, X, Y, s, W, zfill=.true.)
+    g = bb_block_autocorr(q, W)
 !
     do
       call bb_block_expand(ub, q, s, W)
@@ -110,6 +113,7 @@ contains
     end do
 !
     W(1) = g + ub + ub
+    W(2) = g
 !
   end subroutine run
 !

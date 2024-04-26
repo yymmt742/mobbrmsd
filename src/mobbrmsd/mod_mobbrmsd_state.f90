@@ -116,21 +116,23 @@ contains
     real(RK), intent(in)                 :: W(*)
     !! mobbrmsd workarray
     associate ( &
-   &   AC => mobbrmsd_state_INDEX_TO_AUTOCORR, &
-   &   UB => mobbrmsd_state_INDEX_TO_UPPERBOUND, &
-   &   LB => mobbrmsd_state_INDEX_TO_LOWERBOUND, &
-   &   NE => mobbrmsd_state_INDEX_TO_N_EVAL, &
-   &   LR => mobbrmsd_state_INDEX_TO_LOG_RATIO, &
-   &   RT => mobbrmsd_state_INDEX_TO_ROTMAT, &
-   &   BBUB => W(bb_list_INDEX_TO_UPPERBOUND), &
-   &   BBLB => W(bb_list_INDEX_TO_LOWERBOUND), &
-   &   BBNE => W(bb_list_INDEX_TO_N_EVAL), &
-   &   BBLN => W(bb_list_INDEX_TO_LOG_N_COMB) &
+   &   ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
+   &   ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND), &
+   &   lb => this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND), &
+   &   ne => this%z(mobbrmsd_state_INDEX_TO_N_EVAL), &
+   &   lr => this%z(mobbrmsd_state_INDEX_TO_LOG_RATIO), &
+   &   rt => mobbrmsd_state_INDEX_TO_ROTMAT, &
+   &   bbau => W(bb_list_INDEX_TO_AUTOCORR), &
+   &   bbub => W(bb_list_INDEX_TO_UPPERBOUND), &
+   &   bblb => W(bb_list_INDEX_TO_LOWERBOUND), &
+   &   bbne => W(bb_list_INDEX_TO_N_EVAL), &
+   &   bbln => W(bb_list_INDEX_TO_LOG_N_COMB) &
     )
-      this%z(UB) = BBUB
-      this%z(LB) = BBLB
-      this%z(NE) = BBNE
-      this%z(LR) = LOG(BBNE) - BBLN
+      ac = bbau
+      ub = bbub
+      lb = bblb
+      ne = bbne
+      lr = LOG(bbne) - bbln
       call bb_list_rotation_matrix(header%q, this%s, W, this%z(RT))
     end associate
   end subroutine mobbrmsd_state_update

@@ -462,7 +462,11 @@ contains
     real(RK), intent(in)    :: W(*)
     !! main memory
     real(RK)                :: res
-    res = ZERO
+    associate ( &
+   &  qcov => q(cq) &
+   &  )
+      call c_matrix_autocorr(q(qcov), W(wcov), res)
+    end associate
   end function bb_block_autocorr
 !
 !| Save current state.
@@ -474,10 +478,8 @@ contains
     integer(IK), intent(inout) :: z(*)
     !! memory
     integer(IK)                :: nmol
-!
     nmol = mol_block_nmol(q(qblck))
     z(:nmol) = tree_current_sequence(q(q(tq)), s(stree))
-!
   end subroutine bb_block_save_state
 !
 !| swap Y by saved state z.
@@ -489,7 +491,6 @@ contains
     real(RK), intent(inout) :: Y(*)
     !! target coordinate
     integer(IK)             :: nmol, napm
-!
     nmol = mol_block_nmol(q(qblck))
     napm = mol_block_napm(q(qblck))
     block
@@ -498,7 +499,6 @@ contains
       imap = tree_sequence_to_mapping(q(q(tq)), z)
       call swap_y(nmol, napm, iper, imap, q(qblck), Y)
     end block
-!
   contains
     pure subroutine swap_y(nmol, napm, iper, imap, b, Y)
       integer(IK), intent(in) :: nmol, napm, iper(nmol), imap(nmol), b(*)
