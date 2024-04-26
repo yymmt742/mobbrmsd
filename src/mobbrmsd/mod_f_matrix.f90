@@ -3,7 +3,7 @@
 !  \( \mathbf{C}_{IJs} \) :: Covariance matrix of \( \mathbf{X}_I \) and \( \mathbf{Y}_I \) with \( s \)-th molecular permutation.<br>
 !  \( \mathbf{R} \) :: Rotation matrix on \( \mathbb{R}^{d\times d} \).<br>
 module mod_f_matrix
-  use blas_lapack_interface, only : D, DD
+  use blas_lapack_interface, only: D, DD
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_c_matrix
   use mod_mol_block
@@ -96,8 +96,8 @@ contains
 !   get squared displacement
     W(1) = RHUGE
     do i = 2, cb, DD
-      call estimate_sdmin(C(1), C(i), W(2))
-      W(1) = MIN(W(1), W(2))
+      call estimate_rcmin(C(1), C(i), W(2))
+      W(1) = MIN(W(1), -W(2))
     end do
 !
   end subroutine eval_f_matrix

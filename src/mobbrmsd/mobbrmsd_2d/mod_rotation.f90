@@ -6,6 +6,7 @@ module mod_rotation
   implicit none
   private
   public :: sdmin_worksize
+  public :: estimate_rcmin
   public :: estimate_sdmin
   public :: rotation_worksize
   public :: estimate_rotation
@@ -22,6 +23,27 @@ contains
     integer(IK) :: res
     res = 2
   end function sdmin_worksize
+!
+!| Compute \(\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]\).
+  pure subroutine estimate_rcmin(g, cov, w)
+    real(RK), intent(in)    :: g
+    !! sum of auto covariance matrix
+    real(RK), intent(in)    :: cov(*)
+    !! target d*n array
+    real(RK), intent(inout) :: w(*)
+    !! work array, must be larger than worksize_sdmin().
+!
+    if (g < THRESHOLD) then
+      w(1) = ZERO
+    else
+      w(1) = cov(1) + cov(4)
+      w(1) = w(1) * w(1)
+      w(2) = cov(2) - cov(3)
+      w(2) = w(2) * w(2)
+      w(1) = SQRT(w(1) + w(2))
+    end if
+!
+  end subroutine estimate_rcmin
 !
 !| Compute the least-squares sum_i^n |x_i-Ry_i|^2 from cov = YX^T and g = tr[XX^T] + tr[YY^T].
   pure subroutine estimate_sdmin(g, cov, w)
@@ -74,7 +96,7 @@ contains
     rot(3) = rot(1) * rot(1) + rot(2) * rot(2)
 !
     if (rot(3) < THRESHOLD) then
-      rot(1) = ONE;  rot(2) = ZERO
+      rot(1) = ONE; rot(2) = ZERO
       rot(3) = ZERO; rot(4) = ONE
       return
     end if

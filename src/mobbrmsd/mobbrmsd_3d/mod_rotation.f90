@@ -1,20 +1,21 @@
-!| Calculate the rotation matrix that minimizes |X-RY|^2 for D=3. <br>
-!  Here, RR^T=I and det(R)=1 are satisfied. <br>
+!| Calculate the rotation matrix that minimizes \(|\mathbf{X}-\mathbf{R}\mathbf{Y}|^2\) for \(D=3\). <br>
+!  Here, \(\mathbf{R}\mathbf{R}^\top=\mathbf{I}\) and \(\det(\mathbf{R})=1\) are satisfied. <br>
 !  This code is based on the method of Coutsias et.al. 10.1002/jcc.25802
 module mod_rotation
   use mod_kinds, only: IK, RK
   implicit none
   private
   public :: sdmin_worksize
+  public :: estimate_rcmin
   public :: estimate_sdmin
   public :: rotation_worksize
   public :: estimate_rotation
 !
-  real(RK), parameter    :: ZERO  = 0.0_RK
-  real(RK), parameter    :: HALF  = 0.5_RK
-  real(RK), parameter    :: ONE   = 1.0_RK
-  real(RK), parameter    :: TWO   = 2.0_RK
-  real(RK), parameter    :: FOUR  = 4.0_RK
+  real(RK), parameter    :: ZERO = 0.0_RK
+  real(RK), parameter    :: HALF = 0.5_RK
+  real(RK), parameter    :: ONE = 1.0_RK
+  real(RK), parameter    :: TWO = 2.0_RK
+  real(RK), parameter    :: FOUR = 4.0_RK
   real(RK), parameter    :: EIGHT = 8.0_RK
   real(RK), parameter    :: THRESHOLD = 1E-14_RK
   real(RK), parameter    :: DEGENERACY = 1E-6_RK
@@ -27,6 +28,17 @@ contains
     integer(IK) :: res
     res = 8
   end function sdmin_worksize
+!
+!| Compute \(\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]\).
+  pure subroutine estimate_rcmin(g, cov, w)
+    real(RK), intent(in)    :: g
+    !! sum of auto covariance matrix
+    real(RK), intent(in)    :: cov(*)
+    !! target d*n array
+    real(RK), intent(inout) :: w(*)
+    !! work array, must be larger than worksize_sdmin().
+    call find_lambda_max(g, cov, w)
+  end subroutine estimate_rcmin
 !
 !| Compute the least-squares sum_i^n |x_i-Ry_i|^2 from cov = YX^T and g = tr[XX^T] + tr[YY^T].
   pure subroutine estimate_sdmin(g, cov, w)
@@ -65,15 +77,15 @@ contains
     integer(IK), parameter  :: aa1 = 1, aa2 = 2, aa3 = 2, aa4 = 1
     integer(IK), parameter  :: a11 = 4, a21 = 5, a31 = 6, a41 = 12
     integer(IK), parameter  :: a22 = 13, a32 = 14, a42 = 15, a33 = 16, a43 = 17, a44 = 18
-    integer(IK), parameter  :: s22 = 7, s23 = 8, s24 = 9, s33 =10, s34 =11, s44 =12
+    integer(IK), parameter  :: s22 = 7, s23 = 8, s24 = 9, s33 = 10, s34 = 11, s44 = 12
     integer(IK), parameter  :: v1 = 3, v2 = 4, v3 = 5, v4 = 6
     integer(IK), parameter  :: v11 = 7, v21 = 8, v31 = 9, v41 = 10
     integer(IK), parameter  :: v22 = 11, v32 = 12, v42 = 13, v33 = 14, v43 = 15, v44 = 16
 !
     if (g < THRESHOLD) then
-      rot(1) =  ONE; rot(2) = ZERO; rot(3) = ZERO
-      rot(4) = ZERO; rot(5) =  ONE; rot(6) = ZERO
-      rot(7) = ZERO; rot(8) = ZERO; rot(9) =  ONE
+      rot(1) = ONE; rot(2) = ZERO; rot(3) = ZERO
+      rot(4) = ZERO; rot(5) = ONE; rot(6) = ZERO
+      rot(7) = ZERO; rot(8) = ZERO; rot(9) = ONE
       return
     end if
 !
@@ -86,19 +98,19 @@ contains
 !       (R31-R13      R12+R21     -R11+R22-R33  R23+R32    )
 !       (R12-R21      R13+R31      R23+R32     -R11-R22+R33)
 !
-    w(dg4) =  cov(9) - w(1)
-    w(dg3) =  cov(9) + w(1)
-    w(dg2) =  cov(1) - cov(5)
-    w(dg1) =  cov(1) + cov(5)
-    w(a11) =  w(dg1) + w(dg4)
-    w(a21) =  cov(8) - cov(6)
-    w(a31) =  cov(3) - cov(7)
-    w(a41) =  cov(4) - cov(2)
-    w(a22) =  w(dg2) - w(dg3)
-    w(a32) =  cov(4) + cov(2)
-    w(a42) =  cov(7) + cov(3)
+    w(dg4) = cov(9) - w(1)
+    w(dg3) = cov(9) + w(1)
+    w(dg2) = cov(1) - cov(5)
+    w(dg1) = cov(1) + cov(5)
+    w(a11) = w(dg1) + w(dg4)
+    w(a21) = cov(8) - cov(6)
+    w(a31) = cov(3) - cov(7)
+    w(a41) = cov(4) - cov(2)
+    w(a22) = w(dg2) - w(dg3)
+    w(a32) = cov(4) + cov(2)
+    w(a42) = cov(7) + cov(3)
     w(a33) = -w(dg2) - w(dg3)
-    w(a43) =  cov(8) + cov(6)
+    w(a43) = cov(8) + cov(6)
     w(a44) = -w(dg1) + w(dg4)
 !
     w(aa1) = ABS(w(a11))
@@ -118,7 +130,7 @@ contains
         w(s34) = w(a43) - w(a31) * w(l4)
         w(s44) = w(a44) - w(a41) * w(l4)
         call find_null_vector(w)
-        w(v1) = - w(l2) * w(y2) - w(l3) * w(Y3) - w(l4) * w(y4)
+        w(v1) = -w(l2) * w(y2) - w(l3) * w(Y3) - w(l4) * w(y4)
       else
         w(l4) = ONE / w(a22)
         w(l2) = w(A21) * w(l4)
@@ -131,7 +143,7 @@ contains
         w(s34) = w(a43) - w(a32) * w(l4)
         w(s44) = w(a44) - w(a42) * w(l4)
         call find_null_vector(w)
-        w(l2) = - w(l2) * w(y2) - w(l3) * w(Y3) - w(l4) * w(y4)
+        w(l2) = -w(l2) * w(y2) - w(l3) * w(Y3) - w(l4) * w(y4)
         w(v1) = w(y2)
         w(v2) = w(l2)
       end if
@@ -149,7 +161,7 @@ contains
         w(s34) = w(a42) - w(a32) * w(l4)
         w(s44) = w(a44) - w(a43) * w(l4)
         call find_null_vector(w)
-        w(l2) = - w(l2) * w(y2) - w(l3) * w(y3) - w(l4) * w(y4)
+        w(l2) = -w(l2) * w(y2) - w(l3) * w(y3) - w(l4) * w(y4)
         w(v1) = w(y2)
         w(v2) = w(y3)
         w(v3) = w(l2)
@@ -165,7 +177,7 @@ contains
         w(s34) = w(a32) - w(a42) * w(l4)
         w(s44) = w(a33) - w(a43) * w(l4)
         call find_null_vector(w)
-        w(l2) = - w(l2) * w(y2) - w(l3) * w(Y3) - w(l4) * w(y4)
+        w(l2) = -w(l2) * w(y2) - w(l3) * w(Y3) - w(l4) * w(y4)
         w(v1) = w(y2)
         w(v2) = w(y3)
         w(v3) = w(y4)
@@ -221,7 +233,7 @@ contains
 !
 !   K1 = - 8 det|R|
 !
-    w(k1) = - cov(1) * (cov(5) * cov(9) - cov(8) * cov(6)) &
+    w(k1) = -cov(1) * (cov(5) * cov(9) - cov(8) * cov(6)) &
    &        - cov(4) * (cov(8) * cov(3) - cov(2) * cov(9)) &
    &        - cov(7) * (cov(2) * cov(6) - cov(5) * cov(3))
     w(k1) = EIGHT * w(k1)
@@ -277,7 +289,7 @@ contains
       w(s) = ONE
       w(xk) = HALF * g
 !
-      do k=1, MAXITER
+      do k = 1, MAXITER
         w(xx) = w(xk) * w(xk)
         w(a) = w(k2) + w(xx)
         w(f) = w(a) * w(xx) + w(k1) * w(xk) + w(k0)

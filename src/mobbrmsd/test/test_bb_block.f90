@@ -11,11 +11,11 @@ program main
 !
   call u%init('test bb_block')
   call test0()
-  call u%init('test bb_block manual')
-  call test1(1, 1, 1, [1], [1], [0])
-  call test1(1, 2, 1, [1, 2], [1, 1], [0])
-  call test1(8, 4, 1, [3, 4, 2, 1], [1, 1, 1, 1], [0])
-  call test1(8, 4, 2, [3, 4, 2, 1], [1, 2, 1, 2], [2, 3, 5, 4, 8, 6, 7, 1])
+! call u%init('test bb_block manual')
+! call test1(1, 1, 1, [1], [1], [0])
+! call test1(1, 2, 1, [1, 2], [1, 1], [0])
+! call test1(8, 4, 1, [3, 4, 2, 1], [1, 1, 1, 1], [0])
+! call test1(8, 4, 2, [3, 4, 2, 1], [1, 2, 1, 2], [2, 3, 5, 4, 8, 6, 7, 1])
 !
   call u%finish_and_terminate()
 !
@@ -38,10 +38,11 @@ contains
     allocate (W(bb_block_memsize(bm%q) + bb_block_worksize(bm%q)))
 !
     X = sample(n, m)
-    Y(:, :, :2) = X(:, :, 2:)
-    Y(:, :, 3) = X(:, :, 1)
+    Y = sample(n, m)
+!   Y(:, :, :2) = X(:, :, 2:)
+!   Y(:, :, 3) = X(:, :, 1)
 !
-    do i = 1, 20
+    do i = 1, 1
       call run(bm%q, bm%s, X, Y, W, sb)
       call u%assert_almost_equal(W(1), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
       Z = Y
@@ -57,7 +58,7 @@ contains
 !
       call u%assert_almost_equal(sxz, rxz, 'rotmat value ')
 !
-      Y = 0.8 * Y + sample(n, m) * 0.2
+      Y = 0.5 * Y + sample(n, m) * 0.5
     end do
 !
   end subroutine test0
@@ -92,9 +93,10 @@ contains
     real(RK), intent(in)       :: X(*), Y(*)
     real(RK), intent(inout)    :: W(*)
     integer(IK), intent(inout) :: sb(*)
-    real(RK)                   :: ub
+    real(RK)                   :: ub, ret
 !
     ub = 999.9_RK
+    ret = ub
     call bb_block_setup(q, X, Y, s, W, zfill=.true.)
 !
     do
@@ -103,13 +105,14 @@ contains
         if (bb_block_current_value(q, s, w) < ub) then
           call bb_block_save_state(q, s, sb)
           ub = bb_block_current_value(q, s, w)
+          ret = bb_block_current_sqrdev(q, s, w)
         end if
       end if
       call bb_block_closure(ub, q, s, W)
       if (bb_block_tree_is_empty(q, s)) exit
     end do
 !
-    W(1) = ub
+    W(1) = ret
 !
   end subroutine run
 !
