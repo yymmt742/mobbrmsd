@@ -69,6 +69,8 @@ module mod_tree
   public :: tree_log_ncomb
   public :: tree_ncomb_frac
   public :: tree_ncomb_exp
+  public :: tree_is_empty
+  public :: tree_is_unexplored
   public :: tree_queue_is_empty
   public :: tree_queue_is_left
   public :: tree_queue_is_explored
@@ -435,6 +437,10 @@ contains
 !!  work array
     real(RK)                :: res
     integer(IK)             :: i
+    if (tree_is_unexplored(q, s)) then
+      res = -RHUGE
+      return
+    end if
     associate (p => s(sl))
       res = RHUGE
       do i = 1, p
@@ -549,6 +555,26 @@ contains
     logical                 :: res
     res = queue_state(s(sr), s(sl)) < is_unexplored
   end function tree_queue_is_explored
+!
+!| Returns true if \(p\)-queue is empty.
+  pure function tree_is_empty(q, s) result(res)
+    integer(IK), intent(in) :: q(*)
+!!  header
+    integer(IK), intent(in) :: s(*)
+!!  state
+    logical                 :: res
+    res = tree_queue_is_empty(q, s) .and. tree_queue_is_bottom(q, s)
+  end function tree_is_empty
+!
+!| Returns true if tree is unexplored.
+  pure function tree_is_unexplored(q, s) result(res)
+    integer(IK), intent(in) :: q(*)
+!!  header
+    integer(IK), intent(in) :: s(*)
+!!  state
+    logical                 :: res
+    res = tree_queue_is_root(q, s) .and. tree_queue_is_root(q, s)
+  end function tree_is_unexplored
 !
 !| Returns true if \(p\)-queue is explored.
   pure function tree_queue_is_empty(q, s) result(res)

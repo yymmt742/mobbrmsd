@@ -206,7 +206,7 @@ contains
    &  )
       sb = 0
       ub = RHUGE
-      lb = ZERO
+      lb = -RHUGE
       nv = ZERO
 !
       ps = s_pointer(q)
