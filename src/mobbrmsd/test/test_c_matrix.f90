@@ -1,5 +1,5 @@
 program main
-  use blas_lapack_interface, only : D, DD
+  use blas_lapack_interface, only: D, DD
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
   use mod_rotation
@@ -30,6 +30,7 @@ contains
     type(c_matrix)          :: c
     real(RK)                :: X(D, m, n)
     real(RK)                :: Y(D, m, n)
+    real(RK)                :: G
     real(RK), allocatable   :: Z(:), W(:)
     integer(IK)             :: i, j, p
 !
@@ -52,6 +53,9 @@ contains
         p = p + 1 + DD * s
       end do
     end do
+!
+    call c_matrix_autocorr(c%q, Z, G)
+    call u%assert_almost_equal(G, SUM(X * X) + SUM(Y * Y), 'c_matrix_autocorr')
 !
   end subroutine test0
 !
@@ -101,11 +105,11 @@ contains
     call c_matrix_eval(c(3)%q, b(3)%q, X(1, x3), Y(1, x3), W(p3), W(w3))
 !
     print'(10f5.1)', W(p1:p1 + c_matrix_memsize(c(1)%q) - 1)
-    print*
+    print *
     print'(10f5.1)', W(p2:p2 + c_matrix_memsize(c(2)%q) - 1)
-    print*
+    print *
     print'(10f5.1)', W(p3:p3 + c_matrix_memsize(c(3)%q) - 1)
-    print*
+    print *
 !
   end subroutine test1
 !
@@ -114,7 +118,7 @@ contains
     real(RK), intent(in)    :: C(*), X(D, m), Y(D, m)
     integer(IK)             :: i
 !
-    call u%assert_almost_equal(C(1), SUM(X * X) + SUM(Y * Y),          'auto variance')
+    call u%assert_almost_equal(C(1), SUM(X * X) + SUM(Y * Y), 'auto variance')
     call u%assert_almost_equal(C(2:1 + DD), [MATMUL(Y, TRANSPOSE(X))], 'covariance 1 ')
 !
     do i = 1, s - 1
