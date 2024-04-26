@@ -186,7 +186,6 @@ contains
     !! The search ends when ncount exceeds maxiter.
 !
     if (PRESENT(W)) then
-!
       call bb_list_setup(header%q, &
      &                   state%s,  &
      &                   X,  &
@@ -198,9 +197,7 @@ contains
      &                      cutoff=cutoff, &
      &                      difflim=difflim, &
      &                      maxeval=maxeval)
-!
     else
-!
       block
         real(RK), allocatable :: T(:)
         allocate (T(header%memsize()))
@@ -216,9 +213,7 @@ contains
        &                      difflim=difflim, &
        &                      maxeval=maxeval)
       end block
-!
     end if
-!
   end subroutine mobbrmsd_run
 !
 !| run mobbrmsd
@@ -236,10 +231,8 @@ contains
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
     integer(IK), intent(in), optional    :: maxeval
     !! The search ends when ncount exceeds maxiter.
-!
     call bb_list_run(header%q, state%s, W, cutoff=cutoff, difflim=difflim, maxeval=maxeval)
     call state%update(header, W)
-!
   end subroutine mobbrmsd_restart
 !
 !| Returns bb process is finished.
@@ -249,14 +242,11 @@ contains
     class(mobbrmsd_state), intent(in)  :: state
     !! mobbrmsd_state
     logical                            :: res
-!
     res = bb_list_is_finished(header%q, state%s)
-!
   end function mobbrmsd_is_finished
 !
   pure elemental subroutine mobbrmsd_destroy(this)
     type(mobbrmsd), intent(inout) :: this
   end subroutine mobbrmsd_destroy
-!
 end module mod_mobbrmsd
 

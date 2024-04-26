@@ -37,6 +37,7 @@ module mod_bb_block
   public :: bb_block_tree_is_bottom
   public :: bb_block_current_value
   public :: bb_block_lowest_value
+  public :: bb_block_autocorr
   public :: bb_block_log_ncomb
   public :: bb_block_evaluation_count
   public :: bb_block_save_state
@@ -66,9 +67,10 @@ module mod_bb_block
 !
   integer(IK), parameter :: header_memsize = 1
 !
-  integer(IK), parameter :: nc = 1
+  integer(IK), parameter :: INDEX_TO_N_EVAL = 1
   !! pointer to evaluation count (fixed)
   integer(IK), parameter :: wcov = 2
+!
   !! pointer to c_matrix array (fixed)
   integer(IK), parameter :: stree = 1
   !! pointer to tree interger work array (fixed)
@@ -203,34 +205,42 @@ contains
     !! work integer array
     logical, intent(in)        :: zfill
     !! if true, the root node is filled by zero.
+    associate ( &
+   &  neval => W(INDEX_TO_N_EVAL), &
+   &  qtree => q(tq), &
+   &  qcov => q(cq), &
+   &  qfre => q(fq), &
+   &  wtree => q(tx), &
+   &  wfre => q(fx), &
+   &  cwork => q(cw), &
+   &  fwork => q(fw) &
+   &  )
+      neval = ZERO
+      call tree_reset(q(qtree), s(stree))
+      call c_matrix_eval(q(qcov), q(qblck), X, Y, W(wcov), W(cwork))
+      call f_matrix_eval(q(qfre), q(qcov), W(wcov), W(wfre), W(fwork))
 !
-    W(nc) = ZERO
-    call tree_reset(q(q(tq)), s(stree))
-    call c_matrix_eval(q(q(cq)), q(qblck), X, Y, W(wcov), W(q(cw)))
-    call f_matrix_eval(q(q(fq)), q(q(cq)), W(wcov), W(q(fx)), W(q(fw)))
+      if (.not. zfill) return
 !
-    if (.not. zfill) return
-!
-    block
-      integer(IK) :: nmol
-      real(RK)    :: ZEROS(ND)
-      ZEROS = ZERO
-      nmol = mol_block_nmol(q(qblck))
-      call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(stree), W(wcov), W(q(fx)), ZEROS, W(q(tx)), W(nc))
-!     call tree_select_top_node(q(q(tq)), s(stree), ND, RHUGE, W(q(tx)))
-    end block
-!
+      block
+        integer(IK) :: nmol
+        real(RK)    :: ZEROS(ND)
+        ZEROS = ZERO
+        nmol = mol_block_nmol(q(qblck))
+        call evaluate_nodes(nmol, q(qcov), q(qtree), s(stree), W(wcov), W(wfre), ZEROS, W(wtree), neval)
+      end block
+    end associate
   end subroutine bb_block_setup
 !
 !| Expands the latest node of the parent block to the top-level queue of the child block.
-  pure subroutine bb_block_inheritance(UB, q, s, X, p, r, Z)
+  pure subroutine bb_block_inheritance(UB, q, s, W, p, r, Z)
     real(RK), intent(in)       :: UB
     !! upper bound
     integer(IK), intent(in)    :: q(*)
     !! work integer array
     integer(IK), intent(inout) :: s(*)
     !! work integer array
-    real(RK), intent(inout)    :: X(*)
+    real(RK), intent(inout)    :: W(*)
     !! main memory
     integer(IK), intent(in)    :: p(*)
     !! parent integer array
@@ -238,15 +248,26 @@ contains
     !! parent integer work array
     real(RK), intent(in)       :: Z(*)
     !! parent work array
-    integer(IK)                :: pp, nmol
+    integer(IK)                :: znode, nmol
+    associate ( &
+   &  neval => W(INDEX_TO_N_EVAL), &
+   &  qtree => q(tq), &
+   &  qcov => q(cq), &
+   &  qfre => q(fq), &
+   &  wtree => q(tx), &
+   &  wfre => q(fx), &
+   &  cwork => q(cw), &
+   &  fwork => q(fw), &
+   &  qtree_par => p(tq), &
+   &  wtree_par => p(tx), &
+   &  stree_par => stree &
+   &  )
 !
-    nmol = mol_block_nmol(q(qblck))
-    pp = p(tx) + (tree_current_pointer(p(p(tq)), r(stree)) - 1) * ND
-!
-    call evaluate_nodes(nmol, q(q(cq)), q(q(tq)), s(stree), X(wcov), X(q(fx)), Z(pp), X(q(tx)), X(nc))
-    call tree_reset(q(q(tq)), s(stree))
-!   call tree_select_top_node(q(q(tq)), s(stree), ND, UB, X(q(tx)))
-!
+      nmol = mol_block_nmol(q(qblck))
+      znode = wtree_par + (tree_current_pointer(p(qtree_par), r(stree_par)) - 1) * ND
+      call evaluate_nodes(nmol, q(qcov), q(qtree), s(stree), W(wcov), W(wfre), Z(znode), W(wtree), neval)
+      call tree_reset(q(qtree), s(stree))
+    end associate
   end subroutine bb_block_inheritance
 !
 !| Expand top node in queue.
@@ -262,6 +283,7 @@ contains
     integer(IK)                :: nmol
     integer(IK)                :: pp ! previous current node
     associate ( &
+   &  neval => W(INDEX_TO_N_EVAL), &
    &  qtree => q(tq),&
    &  wtree => q(tx),&
    &  qcov => q(cq), &
@@ -275,7 +297,7 @@ contains
        & .or. tree_queue_is_empty(q(qtree), s(stree))) exit
           pp = q(tx) + (tree_current_pointer(q(qtree), s(stree)) - 1) * ND
           call tree_expand(q(qtree), s(stree))
-          call evaluate_nodes(nmol, q(qcov), q(qtree), s(stree), W(wcov), W(wfrx), W(pp), W(wtree), W(nc))
+          call evaluate_nodes(nmol, q(qcov), q(qtree), s(stree), W(wcov), W(wfrx), W(pp), W(wtree), neval)
         end do
       end block
     end associate
@@ -397,8 +419,10 @@ contains
     !! main memory
     real(RK)                :: res
     integer(IK)             :: t
-    t = q(tx) + mmap_L - 1 + ND * (tree_current_pointer(q(q(tq)), s(stree)) - 1)
-    res = W(t)
+    associate (qtree => q(tq), wtree => q(tx))
+      t = wtree + mmap_L - 1 + ND * (tree_current_pointer(q(qtree), s(stree)) - 1)
+      res = W(t)
+    end associate
   end function bb_block_current_value
 !
 !| Returns the minimum value of the surviving nodes, excluding the current value.
@@ -416,11 +440,11 @@ contains
   end function bb_block_lowest_value
 !
 !| Returns the minimum value of the surviving nodes, excluding the current value.
-  pure function bb_block_evaluation_count(X) result(res)
-    real(RK), intent(in)    :: X(*)
+  pure function bb_block_evaluation_count(W) result(res)
+    real(RK), intent(in)    :: W(*)
     !! main memory
     real(RK)                :: res
-    res = X(nc)
+    res = W(INDEX_TO_N_EVAL)
   end function bb_block_evaluation_count
 !
 !| Returns the minimum value of the surviving nodes, excluding the current value.
@@ -430,6 +454,16 @@ contains
     real(RK)                :: res
     res = tree_log_ncomb(q(q(tq)))
   end function bb_block_log_ncomb
+!
+!| Returns the minimum value of the surviving nodes, excluding the current value.
+  pure function bb_block_autocorr(q, W) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! header
+    real(RK), intent(in)    :: W(*)
+    !! main memory
+    real(RK)                :: res
+    res = ZERO
+  end function bb_block_autocorr
 !
 !| Save current state.
   pure subroutine bb_block_save_state(q, s, z)
