@@ -8,7 +8,7 @@
     <meta name="author" content="yymmt742" >
     <link rel="icon" href="../favicon.png">
 
-    <title>estimate_rcmin &ndash; mobbrmsd</title>
+    <title>estimate_rcmax &ndash; mobbrmsd</title>
 
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
@@ -76,7 +76,7 @@
 
     <div class="container">
   <div class="row">
-    <h1>estimate_rcmin
+    <h1>estimate_rcmax
       <small>Subroutine</small>
     </h1>
     <div class="row">
@@ -87,14 +87,14 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 0.7% of total for procedures.">14 statements</a>
+    title=" 0.4% of total for procedures.">7 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_rotation.f90"> Source File</a></li>
   </ul>
   <ol class="breadcrumb in-well text-right">
-     <li><a href='../sourcefile/mod_rotation.f90.html'>mod_rotation.f90</a></li>
-     <li><a href='../module/mod_rotation.html'>mod_rotation</a></li>
-     <li class="active">estimate_rcmin</li>
+     <li><a href='../sourcefile/mod_rotation.f90~3.html'>mod_rotation.f90</a></li>
+     <li><a href='../module/mod_rotation~3.html'>mod_rotation</a></li>
+     <li class="active">estimate_rcmax</li>
   </ol>
 </div>
 </div>
@@ -119,7 +119,7 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure subroutine estimate_rcmin(g, cov, w)</h2>
+    <h2>public pure subroutine estimate_rcmax(g, cov, w)</h2>
     
 
     <p>Compute <script type="math/tex">\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]</script>.</p>
@@ -129,19 +129,19 @@
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-g"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-g~7"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>g</strong></td><td><p>sum of auto covariance matrix</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-cov"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-cov~7"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>cov</strong>(*)</td><td><p>target d*n array</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-w"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-w~7"></span>real(kind=RK),</td>
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>w</strong>(*)</td><td><p>work array, must be larger than worksize_sdmin().</p></td>

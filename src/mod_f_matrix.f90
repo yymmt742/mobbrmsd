@@ -92,14 +92,12 @@ contains
     real(RK), intent(in)    :: C(cb)
     real(RK), intent(inout) :: W(*)
     integer(IK)             :: i
-!
-!   get squared displacement
+!   get - max tr[CR]
     W(1) = RHUGE
     do i = 2, cb, DD
-      call estimate_rcmin(C(1), C(i), W(2))
+      call estimate_rcmax(C(1), C(i), W(2))
       W(1) = MIN(W(1), -W(2))
     end do
-!
   end subroutine eval_f_matrix
 !
 end module mod_f_matrix

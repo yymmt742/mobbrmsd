@@ -7,7 +7,7 @@ module mod_rotation
   implicit none
   private
   public :: sdmin_worksize
-  public :: estimate_rcmin
+  public :: estimate_rcmax
   public :: estimate_sdmin
   public :: rotation_worksize
   public :: estimate_rotation
@@ -33,7 +33,7 @@ contains
   end function sdmin_worksize
 !
 !| Compute \(\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]\).
-  pure subroutine estimate_rcmin(g, cov, w)
+  pure subroutine estimate_rcmax(g, cov, w)
     real(RK), intent(in)    :: g
     !! sum of auto covariance matrix
     real(RK), intent(in)    :: cov(*)
@@ -44,7 +44,7 @@ contains
     call Kabsch(cov, w(2), w(DD + 2))
     w(1) = dot(DD, cov, w(2))
 !
-  end subroutine estimate_rcmin
+  end subroutine estimate_rcmax
 !
 !| Compute the least-squares sum_i^n |x_i-Ry_i|^2 from cov = YX^T and g = tr[XX^T] + tr[YY^T].
   pure subroutine estimate_sdmin(g, cov, w)

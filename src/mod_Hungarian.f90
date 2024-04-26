@@ -44,13 +44,13 @@ contains
     elseif (n < 0 .or. m < 0) then
       ! query work array size
       W(1) = MAX(ABS(n), ABS(m)) * 2 + 5
-    elseif (m <= n)then
+    elseif (m <= n) then
       block
         integer(IK) :: iw(n + n + n + 3)
         call get_piv(m, n, C, iw(1), iw(n + 2), iw(n + n + 3), &
        &             W(5), W(n + 5), W(2), W(3), W(4), W(1))
       end block
-    elseif (m > n)then
+    elseif (m > n) then
       block
         integer(IK) :: iw(m + m + m + 3)
         call get_piv_T(m, n, C, iw(1), iw(m + 2), iw(m + m + 3), &
@@ -71,7 +71,6 @@ contains
     do concurrent(i=1:l)
       piv(i) = -1
     end do
-!
     do concurrent(i=1:l)
       y(i) = ZERO
     end do
@@ -83,11 +82,9 @@ contains
       do concurrent(i=1:l)
         is_visited(i) = 0
       end do
-!
       do concurrent(i=1:l)
         prv(i) = -1
       end do
-!
       do concurrent(i=1:n)
         cij(i) = RHUGE
       end do
@@ -118,16 +115,16 @@ contains
         ic = ix
       end do
 !
-      do concurrent(i = 1:n)
-        if(i/=ic) cij(i) = MIN(cij(i), cij(ic))
+      do concurrent(i=1:n)
+        if (i /= ic) cij(i) = MIN(cij(i), cij(ic))
       end do
-      do concurrent(i = 1:n)
+      do concurrent(i=1:n)
         y(i) = y(i) + cij(i)
       end do
 !
       res = res + y(ic)
 !
-      do while(ic /= l)
+      do while (ic /= l)
         i = prv(ic)
         piv(ic) = piv(i)
         ic = i
@@ -195,16 +192,16 @@ contains
         ic = ix
       end do
 !
-      do concurrent(i = 1:m)
-        if(i/=ic) cij(i) = MIN(cij(i), cij(ic))
+      do concurrent(i=1:m)
+        if (i /= ic) cij(i) = MIN(cij(i), cij(ic))
       end do
-      do concurrent(i = 1:m)
+      do concurrent(i=1:m)
         y(i) = y(i) + cij(i)
       end do
 !
       res = res + y(ic)
 !
-      do while(ic /= l)
+      do while (ic /= l)
         i = prv(ic)
         piv(ic) = piv(i)
         ic = i
