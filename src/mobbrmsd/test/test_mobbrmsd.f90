@@ -10,10 +10,10 @@ program main
 !
   call u%init('test mobbrmsd for (n,M,S)=(1,1,1)')
   call test1(1, 1, 1, [0])
-! call u%init('test mobbrmsd for (n,M,S)=(1,2,1)')
-! call test1(1, 2, 1, [0])
-! call u%init('test mobbrmsd for (n,M,S)=(1,3,1)')
-! call test1(1, 3, 1, [0])
+  call u%init('test mobbrmsd for (n,M,S)=(1,2,1)')
+  call test1(1, 2, 1, [0])
+  call u%init('test mobbrmsd for (n,M,S)=(1,3,1)')
+  call test1(1, 3, 1, [0])
   call u%init('test mobbrmsd for (n,M,S)=(4,1,1)')
   call test1(4, 1, 1, [0])
   call u%init('test mobbrmsd for (n,M,S)=(4,3,1)')
@@ -40,7 +40,7 @@ program main
   call test3(4, 8, 1, [0])
 !
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
-  call test4(4, 10, 1, [0], 10)
+  call test4(4, 8, 1, [0], 10)
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=500')
   call test4(4, 4, 1, [0], 500)
 !
@@ -124,20 +124,20 @@ contains
 !
     allocate (W(mobb%h%memsize()))
 !
-    call mobbrmsd_run(mobb%h, mobb%s, X, Y, W, maxeval=0)
-    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
-!
     do i = 1, 10
-      call mobbrmsd_restart(mobb%h, mobb%s, W, maxeval=i * 500)
-      print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
+      call mobbrmsd_restart(mobb%h, mobb%s, W, maxeval=0)
+      print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
+     &                       mobb%s%upperbound(), mobb%s%lowerbound()
     end do
 !
     call mobbrmsd_restart(mobb%h, mobb%s, W)
-    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
+    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
+   &                       mobb%s%upperbound(), mobb%s%lowerbound()
     call u%assert_almost_equal(mobb%s%squared_deviation(), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
 !
     call mobbrmsd_run(mobb%h, mobb%s, X, Y, W)
-    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), mobb%s%upperbound(), mobb%s%lowerbound()
+    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
+   &                       mobb%s%upperbound(), mobb%s%lowerbound()
 !
     deallocate (inp)
 !
