@@ -8,7 +8,7 @@
     <meta name="author" content="yymmt742" >
     <link rel="icon" href="../favicon.png">
 
-    <title>mobbrmsd_header_load &ndash; mobbrmsd</title>
+    <title>c_matrix_autocorr &ndash; mobbrmsd</title>
 
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
@@ -76,7 +76,7 @@
 
     <div class="container">
   <div class="row">
-    <h1>mobbrmsd_header_load
+    <h1>c_matrix_autocorr
       <small>Subroutine</small>
     </h1>
     <div class="row">
@@ -87,14 +87,14 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 0.8% of total for procedures.">15 statements</a>
+    title=" 0.6% of total for procedures.">12 statements</a>
      </li> 
-    <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd_header.f90"> Source File</a></li>
+    <li><i class="fa fa-code"></i><a href="../src/mod_c_matrix.f90"> Source File</a></li>
   </ul>
   <ol class="breadcrumb in-well text-right">
-     <li><a href='../sourcefile/mod_mobbrmsd_header.f90.html'>mod_mobbrmsd_header.f90</a></li>
-     <li><a href='../module/mod_mobbrmsd_header.html'>mod_mobbrmsd_header</a></li>
-     <li class="active">mobbrmsd_header_load</li>
+     <li><a href='../sourcefile/mod_c_matrix.f90.html'>mod_c_matrix.f90</a></li>
+     <li><a href='../module/mod_c_matrix.html'>mod_c_matrix</a></li>
+     <li class="active">c_matrix_autocorr</li>
   </ol>
 </div>
 </div>
@@ -119,26 +119,32 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure subroutine mobbrmsd_header_load(this, q)</h2>
+    <h2>public pure subroutine c_matrix_autocorr(q, C, G)</h2>
     
 
-    <p>load integer array as header</p>
+    <p>Calc <script type="math/tex"> G:=\text{tr}[\mathbf{X}\mathbf{X}^\top]+\text{tr}[\mathbf{Y}\mathbf{Y}^\top] </script>. <br></p>
 
     <h3>Arguments</h3>
       <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-this~15"></span>class(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
-<td>intent(inout)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>this</strong></td><td><p>this</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-q~71"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-q~27"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>q</strong>(:)</td><td><p>header array</p></td>
+  <td><strong>q</strong>(*)</td><td><p>c_matrix</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" id="variable-c~7"></span>real(kind=RK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>C</strong>(*)</td><td><p>main memory, calculated by c_matrix_eval.</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" id="variable-g"></span>real(kind=RK),</td>
+<td>intent(inout)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>G</strong></td><td><p>partial covariance matrix, must be larger than <script type="math/tex">d^2</script>.</p></td>
 </tr>
 </tbody>
 </table>

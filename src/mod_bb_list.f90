@@ -17,23 +17,25 @@ module mod_bb_list
   public :: bb_list_swap_y
   public :: bb_list_rotation_matrix
   public :: bb_list_is_finished
+  public :: bb_list_INDEX_TO_AUTOCORR
   public :: bb_list_INDEX_TO_UPPERBOUND
   public :: bb_list_INDEX_TO_LOWERBOUND
   public :: bb_list_INDEX_TO_N_EVAL
   public :: bb_list_INDEX_TO_LOG_N_COMB
 !
   integer(IK), parameter :: header_size = 1
-  integer(IK), parameter :: NB = 1 ! number of block
+  integer(IK), parameter :: bb_list_NUMBER_OF_SPEACIES = 1 ! number of block
 !
   integer(IK), parameter :: header_sttsize = 1
   integer(IK), parameter :: bb_list_INDEX_TO_SPEACIES = 1
-  integer(IK), parameter :: SS = 2 ! pointer to best state vector
+  integer(IK), parameter :: bb_list_INDEX_TO_BESTSTATE = 2 ! pointer to best state vector
 !
-  integer(IK), parameter :: header_memsize = 4
-  integer(IK), parameter :: bb_list_INDEX_TO_UPPERBOUND = 1
-  integer(IK), parameter :: bb_list_INDEX_TO_LOWERBOUND = 2
-  integer(IK), parameter :: bb_list_INDEX_TO_N_EVAL = 3
-  integer(IK), parameter :: bb_list_INDEX_TO_LOG_N_COMB = 4
+  integer(IK), parameter :: header_memsize = 5
+  integer(IK), parameter :: bb_list_INDEX_TO_AUTOCORR = 1
+  integer(IK), parameter :: bb_list_INDEX_TO_UPPERBOUND = 2
+  integer(IK), parameter :: bb_list_INDEX_TO_LOWERBOUND = 3
+  integer(IK), parameter :: bb_list_INDEX_TO_N_EVAL = 4
+  integer(IK), parameter :: bb_list_INDEX_TO_LOG_N_COMB = 5
 !
 !| bb_list<br>
 !  This is mainly used for passing during initialization.
@@ -52,28 +54,28 @@ module mod_bb_list
 !
 contains
 !
-  pure function n_block(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    integer(IK)             :: res
-    res = q(nb)
-  end function n_block
+! pure function n_block(q) result(res)
+!   integer(IK), intent(in) :: q(*)
+!   integer(IK)             :: res
+!   res = q(bb_list_NUMBER_OF_SPEACIES)
+! end function n_block
 !
   pure function s_pointer(q) result(res)
     integer(IK), intent(in) :: q(*)
     integer(IK)             :: res
-    res = header_size + q(nb) + 1
+    res = header_size + q(bb_list_NUMBER_OF_SPEACIES) + 1
   end function s_pointer
 !
   pure function w_pointer(q) result(res)
     integer(IK), intent(in) :: q(*)
     integer(IK)             :: res
-    res = header_size + 2 * q(nb) + 1
+    res = header_size + 2 * q(bb_list_NUMBER_OF_SPEACIES) + 1
   end function w_pointer
 !
   pure function x_pointer(q) result(res)
     integer(IK), intent(in) :: q(*)
     integer(IK)             :: res
-    res = header_size + 3 * q(nb) + 1
+    res = header_size + 3 * q(bb_list_NUMBER_OF_SPEACIES) + 1
   end function x_pointer
 !
   pure function q_pointer(q) result(res)
@@ -89,39 +91,40 @@ contains
     integer(IK)                :: q(header_size), s(header_sttsize)
     integer(IK)                :: pq(SIZE(blk)), px(SIZE(blk)), ps(SIZE(blk)), pw(SIZE(blk))
     integer(IK)                :: i, j, nstat
-    associate (SB => bb_list_INDEX_TO_SPEACIES)
+    associate ( &
+   &  nb => q(bb_list_NUMBER_OF_SPEACIES), &
+   &  sb => s(bb_list_INDEX_TO_SPEACIES) &
+   &  )
+      nb = SIZE(blk)
+      sb = 0
+      nstat = SUM([(bb_block_nmol(blk(i)%q), i=1, nb)])
 !
-      q(nb) = SIZE(blk)
-      nstat = SUM([(bb_block_nmol(blk(i)%q), i=1, q(nb))])
-      s(SB) = 0
-!
-      j = header_size + 4 * q(nb) + 1
-      do i = 1, q(nb)
+      j = header_size + 4 * nb + 1
+      do i = 1, nb
         pq(i) = j
         j = j + SIZE(blk(i)%q)
       end do
 !
       j = header_sttsize + nstat + 1
-      do i = 1, q(nb)
+      do i = 1, nb
         ps(i) = j
         j = j + SIZE(blk(i)%s)
       end do
 !
       j = header_memsize + 1
-      do i = 1, q(nb)
+      do i = 1, nb
         pw(i) = j
         j = j + bb_block_memsize(blk(i)%q) + bb_block_worksize(blk(i)%q)
       end do
 !
       j = 1
-      do i = 1, q(nb)
+      do i = 1, nb
         px(i) = j
         j = j + bb_block_molsize(blk(i)%q)
       end do
 !
       allocate (res%q, source=[q, pq, ps, pw, px, [(blk(i)%q, i=1, SIZE(blk))]])
       allocate (res%s, source=[s, [(-1, i=1, nstat)], [(blk(i)%s, i=1, SIZE(blk))]])
-!
     end associate
   end function bb_list_new
 !
@@ -129,16 +132,15 @@ contains
   pure function bb_list_memsize(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! bb_block.
-    integer(IK)             :: res, i, j, n
-!
-    res = header_memsize
-    n = n_block(q)
-    j = q_pointer(q)
-    do i = 1, n
-      res = res + bb_block_memsize(q(q(j))) + bb_block_worksize(q(q(j)))
-      j = j + 1
-    end do
-!
+    integer(IK)             :: res, i, j
+    associate (n => q(bb_list_NUMBER_OF_SPEACIES))
+      res = header_memsize
+      j = q_pointer(q)
+      do i = 1, n
+        res = res + bb_block_memsize(q(q(j))) + bb_block_worksize(q(q(j)))
+        j = j + 1
+      end do
+    end associate
   end function bb_list_memsize
 !
 !| Returns number of molecular blocks.
@@ -146,46 +148,44 @@ contains
     integer(IK), intent(in) :: q(*)
     !! bb_block.
     integer(IK)             :: res
-!
-    res = q(nb)
-!
+    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
+      res = n_block
+    end associate
   end function bb_list_n_block
 !
 !| Returns number of total atoms.
   pure function bb_list_n_atoms(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! bb_block.
-    integer(IK)             :: res, i, j, n
-!
-    res = 0
-    n = n_block(q)
-    j = q_pointer(q)
-    do i = 1, n
-      res = res + bb_block_natm(q(q(j)))
-      j = j + 1
-    end do
-!
+    integer(IK)             :: res, i, j
+    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
+      res = 0
+      j = q_pointer(q)
+      do i = 1, n_block
+        res = res + bb_block_natm(q(q(j)))
+        j = j + 1
+      end do
+    end associate
   end function bb_list_n_atoms
 !
 !| Returns the logarithm of the total number of nodes.
   pure function bb_list_log_n_nodes(q) result(res)
     integer(IK), intent(in) :: q(*)
     !! bb_block.
-    integer(IK)             :: i, j, n
+    integer(IK)             :: i, j
     real(RK)                :: res
-!
-    res = ZERO
-    n = n_block(q)
-    j = q_pointer(q)
-    do i = 1, n
-      res = res + bb_block_log_ncomb(q(q(j)))
-      j = j + 1
-    end do
-!
+    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
+      res = ZERO
+      j = q_pointer(q)
+      do i = 1, n_block
+        res = res + bb_block_log_ncomb(q(q(j)))
+        j = j + 1
+      end do
+    end associate
   end function bb_list_log_n_nodes
 !
 !| Setup
-  pure subroutine bb_list_setup(q, s, X, Y, W)
+  subroutine bb_list_setup(q, s, X, Y, W)
     integer(IK), intent(in)    :: q(*)
     !! header
     integer(IK), intent(inout) :: s(*)
@@ -196,13 +196,15 @@ contains
     !! target coordinate
     real(RK), intent(inout)    :: W(*)
     !! work array
-    integer(IK)                :: i, n, ps, pq, px, pw
+    integer(IK)                :: i, ps, pq, px, pw
     associate ( &
-   &   SB => s(bb_list_INDEX_TO_SPEACIES), &
-   &   UB => W(bb_list_INDEX_TO_UPPERBOUND), &
-   &   LB => W(bb_list_INDEX_TO_LOWERBOUND), &
-   &   NV => W(bb_list_INDEX_TO_N_EVAL), &
-   &   CM => W(bb_list_INDEX_TO_LOG_N_COMB) &
+       n_block => q(bb_list_NUMBER_OF_SPEACIES), &
+   &   sb => s(bb_list_INDEX_TO_SPEACIES), &
+   &   ac => W(bb_list_INDEX_TO_AUTOCORR), &
+   &   ub => W(bb_list_INDEX_TO_UPPERBOUND), &
+   &   lb => W(bb_list_INDEX_TO_LOWERBOUND), &
+   &   nv => W(bb_list_INDEX_TO_N_EVAL), &
+   &   cm => W(bb_list_INDEX_TO_LOG_N_COMB) &
    &  )
       sb = 0
       ub = RHUGE
@@ -213,18 +215,23 @@ contains
       px = x_pointer(q)
       pw = w_pointer(q)
       pq = q_pointer(q)
-      n = n_block(q)
 !
-      do concurrent(i=0:n - 1)
+      do i = 0, n_block - 1
+        print *, 'setup list', i, n_block
         call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
       end do
-!
+!     do concurrent(i=0:n_block - 1)
+!       call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
+!     end do
+      ac = ZERO
+      do i = 0, n_block - 1
+        ac = ac + bb_block_autocorr(q(q(pq + i)), W(q(pw + i)))
+      end do
       cm = ZERO
-      do i = 0, N - 1
+      do i = 0, n_block - 1
         cm = cm + bb_block_log_ncomb(q(q(pq + i)))
       end do
-!
-      call save_state(n, q(pq), q(ps), q, s)
+      call save_state(q(pq), q(ps), q, s)
     end associate
   end subroutine bb_list_setup
 !
@@ -243,7 +250,7 @@ contains
     integer(IK), intent(in), optional :: maxeval
     !! The search ends when ncount exceeds maxiter. If maxeval=0, run only once, and early return.
     real(RK)                          :: coff, diff, nlim
-    integer(IK)                       :: pq, ps, pw, n
+    integer(IK)                       :: pq, ps, pw
     associate ( &
    &   b => s(bb_list_INDEX_TO_SPEACIES), &
    &   ub => W(bb_list_INDEX_TO_UPPERBOUND), &
@@ -252,7 +259,6 @@ contains
    &  )
 !&<
       b = MAX(b, 1)
-      n  = n_block(q)
       pq = q_pointer(q)
       ps = s_pointer(q)
       pw = w_pointer(q)
@@ -262,17 +268,17 @@ contains
       if (PRESENT(maxeval)) then
         if (maxeval == 0) then
           ! run only once, and early return.
-          call run_bb(n, q(pq), q(ps), q(pw), q, s, W)
+          call run_bb(q(pq), q(ps), q(pw), q, s, W)
           return
         elseif (maxeval > 0) then
           ! finite run
           nlim = real(maxeval, RK)
         else
-          ! infinite run if maxeval < 0
+          ! unlimited run if maxeval < 0
           nlim = RHUGE
         end if
       else
-        ! finite run
+        ! unlimited run
         nlim = RHUGE
       end if
 !
@@ -281,18 +287,21 @@ contains
       do while (nv < nlim &
      &    .and. lb < coff &
      &    .and. lb + diff <= ub)
-        call run_bb(n, q(pq), q(ps), q(pw), q, s, W)
+        call run_bb(q(pq), q(ps), q(pw), q, s, W)
         if (bb_list_is_finished(q, s)) exit
       end do
     end associate
   end subroutine bb_list_run
 !
-  subroutine run_bb(n, pq, ps, pw, q, s, W)
-    integer(IK), intent(in)    :: n, pq(n), ps(n), pw(n), q(*)
+  subroutine run_bb(pq, ps, pw, q, s, W)
+    integer(IK), intent(in)    :: pq(*), ps(*), pw(*), q(*)
     integer(IK), intent(inout) :: s(*)
     real(RK), intent(inout)    :: W(*)
+    real(RK) :: tmp
     associate ( &
+   &   n => q(bb_list_NUMBER_OF_SPEACIES), &
    &   b => s(bb_list_INDEX_TO_SPEACIES), &
+   &   au => W(bb_list_INDEX_TO_AUTOCORR), &
    &   ub => W(bb_list_INDEX_TO_UPPERBOUND), &
    &   lb => W(bb_list_INDEX_TO_LOWERBOUND), &
    &   nv => W(bb_list_INDEX_TO_N_EVAL) &
@@ -300,25 +309,31 @@ contains
 !
 !     Expansion process
 !
+      print *, 'runbb'
+      tmp = 999D0
       do
+        print *, 'expand    ', b, bb_block_current_level(s(ps(b)))
         call bb_block_expand(ub, q(pq(b)), s(ps(b)), W(pw(b)))
+        !call bb_block_expand(tmp, q(pq(b)), s(ps(b)), W(pw(b)))
         if (b == n .or. bb_block_tree_is_empty(q(pq(b)), s(ps(b)))) exit
         b = b + 1
-        call bb_block_inheritance(ub, q(pq(b)), s(ps(b)), W(pw(b)), &
+        call bb_block_inheritance(q(pq(b)), s(ps(b)), W(pw(b)), &
        &                          q(pq(b - 1)), s(ps(b - 1)), W(pw(b - 1)))
       end do
 !
 !     Update upperbound and state
 !
-      if (b == n &
-     &.and. bb_block_tree_is_bottom(q(pq(b)), s(ps(b)))) then
+      print *, b, bb_block_is_bottom(q(pq(b)), s(ps(b)))
+      if (bb_block_is_bottom(q(pq(b)), s(ps(b))) .and.&
+     &    b == n) then
         block
           real(RK) :: cv
           cv = bb_block_current_value(q(pq(b)), s(ps(b)), W(pw(b)))
           if (ub > cv) then
-            !ub = cv
-            call save_state(n, pq, ps, q, s)
+            ub = cv
+            call save_state(pq, ps, q, s)
           end if
+          print *, au + ub + ub, au + cv + cv
         end block
       end if
 !
@@ -329,10 +344,17 @@ contains
 !     Closure process
 !
       do
-        call bb_block_closure(ub, q(pq(b)), s(ps(b)), W(pw(b)))
-        if (b == 1 .or. .not. bb_block_tree_is_empty(q(pq(b)), s(ps(b)))) exit
+        !  call bb_block_closure(ub, q(pq(b)), s(ps(b)), W(pw(b)))
+        !  print *, 'closure    ', b, bb_block_current_level(s(ps(b))), &
+        ! &  bb_block_is_left(ub, q(pq(b)), s(ps(b)), W(pw(b)))
+        !  if (b == 1 .or. bb_block_is_left(ub, q(pq(b)), s(ps(b)), W(pw(b)))) exit
+        call bb_block_closure(tmp, q(pq(b)), s(ps(b)), W(pw(b)))
+        print *, 'closure    ', b, bb_block_current_level(s(ps(b))), &
+         &  bb_block_is_left(ub, q(pq(b)), s(ps(b)), W(pw(b)))
+        if (b == 1 .or. bb_block_is_left(tmp, q(pq(b)), s(ps(b)), W(pw(b)))) exit
         b = b - 1
       end do
+      print *, 'closure end', b, bb_block_current_level(s(ps(b)))
 !
       block
         integer(IK) :: i
@@ -350,9 +372,11 @@ contains
     real(RK), intent(inout)    :: W(*)
     real(RK)                   :: lv
     integer(IK)                :: b
-    associate (ub => W(bb_list_INDEX_TO_UPPERBOUND), &
-   &           lb => W(bb_list_INDEX_TO_LOWERBOUND))
-      lv = 9999D9
+    associate ( &
+   &  ub => W(bb_list_INDEX_TO_UPPERBOUND), &
+   &  lb => W(bb_list_INDEX_TO_LOWERBOUND) &
+   &  )
+      lv = RHUGE
       do b = 1, n
         lv = MIN(lv, bb_block_lowest_value(q(pq(b)), s(ps(b)), W(pw(b))))
       end do
@@ -360,16 +384,18 @@ contains
     end associate
   end subroutine update_lowerbound
 !
-  pure subroutine save_state(n, pq, ps, q, s)
-    integer(IK), intent(in)    :: n, pq(n), ps(n)
+  pure subroutine save_state(pq, ps, q, s)
+    integer(IK), intent(in)    :: pq(*), ps(*)
     integer(IK), intent(in)    :: q(*)
     integer(IK), intent(inout) :: s(*)
-    integer(IK)                :: b, p
-    p = SS
-    do b = 1, n
-      call bb_block_save_state(q(pq(b)), s(ps(b)), s(p))
-      p = p + bb_block_nmol(q(pq(b)))
-    end do
+    integer(IK)                :: i, j
+    associate (n => q(bb_list_NUMBER_OF_SPEACIES))
+      j = bb_list_INDEX_TO_BESTSTATE
+      do i = 1, n
+        call bb_block_save_state(q(pq(i)), s(ps(i)), s(j))
+        j = j + bb_block_nmol(q(pq(i)))
+      end do
+    end associate
   end subroutine save_state
 !
 !| Swap target coordinate.
@@ -380,19 +406,19 @@ contains
     !! state
     real(RK), intent(inout) :: Y(*)
     !! target coordinate
-    integer(IK)             :: i, n, pb, pq, px
+    integer(IK)             :: i, pb, pq, px
+    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
 !
-    px = x_pointer(q)
-    pq = q_pointer(q)
-    pb = SS
+      px = x_pointer(q)
+      pq = q_pointer(q)
+      pb = bb_list_INDEX_TO_BESTSTATE
 !
-    n = n_block(q)
+      do i = 0, n_block - 1
+        call bb_block_swap_y(q(q(pq + i)), s(pb), Y(q(px + i)))
+        pb = pb + bb_block_nmol(q(q(pq + i)))
+      end do
 !
-    do i = 0, n - 1
-      call bb_block_swap_y(q(q(pq + i)), s(pb), Y(q(px + i)))
-      pb = pb + bb_block_nmol(q(q(pq + i)))
-    end do
-!
+    end associate
   end subroutine bb_list_swap_y
 !
 !| Sum covariance matrix by saved state z.
@@ -406,23 +432,22 @@ contains
     real(RK), intent(inout) :: R(*)
     !! rotation matrix
     real(RK)                :: G, C(DD), V(rotation_worksize())
-    integer(IK)             :: i, n, pb, pq, pw
+    integer(IK)             :: i, pb, pq, pw
+    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
+      pb = bb_list_INDEX_TO_BESTSTATE
+      pw = w_pointer(q)
+      pq = q_pointer(q)
 !
-    n = n_block(q)
-    pb = SS
-    pw = w_pointer(q)
-    pq = q_pointer(q)
+      G = ZERO
+      C = ZERO
 !
-    G = ZERO
-    C = ZERO
+      do i = 0, n_block - 1
+        call bb_block_covmat_add(q(q(pq + i)), s(pb), W(q(pw + i)), G, C)
+        pb = pb + bb_block_nmol(q(q(pq + i)))
+      end do
 !
-    do i = 0, n - 1
-      call bb_block_covmat_add(q(q(pq + i)), s(pb), W(q(pw + i)), G, C)
-      pb = pb + bb_block_nmol(q(q(pq + i)))
-    end do
-!
-    call estimate_rotation(G, C, R, V)
-!
+      call estimate_rotation(G, C, R, V)
+    end associate
   end subroutine bb_list_rotation_matrix
 !
 !| Returns bb is finished.
@@ -433,11 +458,11 @@ contains
     !! state
     logical                 :: res
     integer(IK)             :: bq, bs
-    associate (SB => bb_list_INDEX_TO_SPEACIES)
+    associate (sb => s(bb_list_INDEX_TO_SPEACIES))
 !     early return
-      res = s(SB) == 1; if (.not. res) return
-      bq = q(q_pointer(q) + s(SB) - 1)
-      bs = q(s_pointer(q) + s(SB) - 1)
+      res = sb == 1; if (.not. res) return
+      bq = q(q_pointer(q) + sb - 1)
+      bs = q(s_pointer(q) + sb - 1)
       res = bb_block_tree_is_empty(q(bq), s(bs))
     end associate
   end function bb_list_is_finished

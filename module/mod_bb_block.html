@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title="10.8% of total for modules and submodules.">347 statements</a>
+    title="11.4% of total for modules and submodules.">380 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_bb_block.f90"> Source File</a></li>
   </ul>
@@ -136,12 +136,15 @@
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_nmol">bb_block_nmol</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_natm">bb_block_natm</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_molsize">bb_block_molsize</a>
+      <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_is_left">bb_block_is_left</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_tree_is_empty">bb_block_tree_is_empty</a>
-      <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_tree_is_bottom">bb_block_tree_is_bottom</a>
+      <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_is_bottom">bb_block_is_bottom</a>
+      <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_current_level">bb_block_current_level</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_current_value">bb_block_current_value</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_lowest_value">bb_block_lowest_value</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_evaluation_count">bb_block_evaluation_count</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_log_ncomb">bb_block_log_ncomb</a>
+      <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_autocorr">bb_block_autocorr</a>
     </div>
   </div>
 </div>
@@ -186,13 +189,13 @@
       <ul class="list-group">
       <li class="list-group-item">
   <ul class="list-inline">
-    <li><a href='../module/mod_f_matrix.html'>mod_f_matrix</a></li>
-    <li><a href='../module/mod_params.html'>mod_params</a></li>
-    <li><a href='../module/blas_lapack_interface.html'>blas_lapack_interface</a></li>
-    <li><a href='../module/mod_rotation.html'>mod_rotation</a></li>
     <li><a href='../module/mod_mol_block.html'>mod_mol_block</a></li>
-    <li><a href='../module/mod_hungarian.html'>mod_Hungarian</a></li>
+    <li><a href='../module/mod_f_matrix.html'>mod_f_matrix</a></li>
+    <li><a href='../module/blas_lapack_interface.html'>blas_lapack_interface</a></li>
+    <li><a href='../module/mod_params.html'>mod_params</a></li>
     <li><a href='../module/mod_c_matrix.html'>mod_c_matrix</a></li>
+    <li><a href='../module/mod_rotation.html'>mod_rotation</a></li>
+    <li><a href='../module/mod_hungarian.html'>mod_Hungarian</a></li>
     <li><a href='../module/mod_tree.html'>mod_tree</a></li>
   </ul>
       </li>
@@ -230,12 +233,15 @@
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_nmol">bb_block_nmol</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_natm">bb_block_natm</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_molsize">bb_block_molsize</a>
+      <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_is_left">bb_block_is_left</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_tree_is_empty">bb_block_tree_is_empty</a>
-      <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_tree_is_bottom">bb_block_tree_is_bottom</a>
+      <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_is_bottom">bb_block_is_bottom</a>
+      <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_current_level">bb_block_current_level</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_current_value">bb_block_current_value</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_lowest_value">bb_block_lowest_value</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_evaluation_count">bb_block_evaluation_count</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_log_ncomb">bb_block_log_ncomb</a>
+      <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_autocorr">bb_block_autocorr</a>
     </div>
   </div>
 </div>
@@ -448,6 +454,47 @@
   </div>
 
       <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_is_left"></span><h3>public pure function <a href='../proc/bb_block_is_left.html'>bb_block_is_left</a>(UB, q, s, W) result(res)</h3></div>
+  <div class="panel-body">
+       
+<p>Returns true when tree is empty</p>
+    
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>UB</strong></td><td><p>upper bound</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>q</strong>(*)</td><td><p>integer array</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>s</strong>(*)</td><td><p>work integer array</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>W</strong>(*)</td><td><p>main memory</p></td>
+</tr>
+</tbody>
+</table>
+
+<h4>Return Value <small>logical</small></h4>  
+
+  </div>
+  </div>
+
+      <div class="panel panel-default">
   <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_tree_is_empty"></span><h3>public pure function <a href='../proc/bb_block_tree_is_empty.html'>bb_block_tree_is_empty</a>(q, s) result(res)</h3></div>
   <div class="panel-body">
        
@@ -477,7 +524,7 @@
   </div>
 
       <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_tree_is_bottom"></span><h3>public pure function <a href='../proc/bb_block_tree_is_bottom.html'>bb_block_tree_is_bottom</a>(q, s) result(res)</h3></div>
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_is_bottom"></span><h3>public pure function <a href='../proc/bb_block_is_bottom.html'>bb_block_is_bottom</a>(q, s) result(res)</h3></div>
   <div class="panel-body">
        
 <p>Returns true when tree is bottom</p>
@@ -501,6 +548,29 @@
 </table>
 
 <h4>Return Value <small>logical</small></h4>  
+
+  </div>
+  </div>
+
+      <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_current_level"></span><h3>public pure function <a href='../proc/bb_block_current_level.html'>bb_block_current_level</a>(s) result(res)</h3></div>
+  <div class="panel-body">
+       
+<p>Returns current level.</p>
+    
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>s</strong>(*)</td><td><p>work integer array</p></td>
+</tr>
+</tbody>
+</table>
+
+<h4>Return Value <small>integer(kind=IK)</small></h4>  
 
   </div>
   </div>
@@ -576,7 +646,7 @@
   </div>
 
       <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_evaluation_count"></span><h3>public pure function <a href='../proc/bb_block_evaluation_count.html'>bb_block_evaluation_count</a>(X) result(res)</h3></div>
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_evaluation_count"></span><h3>public pure function <a href='../proc/bb_block_evaluation_count.html'>bb_block_evaluation_count</a>(W) result(res)</h3></div>
   <div class="panel-body">
        
 <p>Returns the minimum value of the surviving nodes, excluding the current value.</p>
@@ -588,7 +658,7 @@
   <td><span class="anchor" ></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>X</strong>(*)</td><td><p>main memory</p></td>
+  <td><strong>W</strong>(*)</td><td><p>main memory</p></td>
 </tr>
 </tbody>
 </table>
@@ -621,13 +691,42 @@
   </div>
   </div>
 
+      <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_autocorr"></span><h3>public pure function <a href='../proc/bb_block_autocorr.html'>bb_block_autocorr</a>(q, W) result(res)</h3></div>
+  <div class="panel-body">
+       
+<p>Returns the minimum value of the surviving nodes, excluding the current value.</p>
+    
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>q</strong>(*)</td><td><p>header</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>W</strong>(*)</td><td><p>main memory</p></td>
+</tr>
+</tbody>
+</table>
+
+<h4>Return Value <small>real(kind=RK)</small></h4>  
+
+  </div>
+  </div>
+
     </section>
     <br>
 
     <section>
     <h2>Subroutines</h2>
       <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_setup"></span><h3>public pure subroutine <a href='../proc/bb_block_setup.html'>bb_block_setup</a>(q, X, Y, s, W, zfill)</h3></div>
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_setup"></span><h3>public subroutine <a href='../proc/bb_block_setup.html'>bb_block_setup</a>(q, X, Y, s, W, zfill)</h3></div>
   <div class="panel-body">
        
 <p>Setup C matrix and F matrix in root node.</p>
@@ -679,7 +778,7 @@
   </div>
 
       <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_inheritance"></span><h3>public pure subroutine <a href='../proc/bb_block_inheritance.html'>bb_block_inheritance</a>(UB, q, s, X, p, r, Z)</h3></div>
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_inheritance"></span><h3>public subroutine <a href='../proc/bb_block_inheritance.html'>bb_block_inheritance</a>(q, s, W, p, r, Z)</h3></div>
   <div class="panel-body">
        
 <p>Expands the latest node of the parent block to the top-level queue of the child block.</p>
@@ -687,12 +786,6 @@
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>UB</strong></td><td><p>upper bound</p></td>
-</tr>
 <tr>
   <td><span class="anchor" ></span>integer(kind=IK),</td>
 <td>intent(in)</td>
@@ -709,7 +802,7 @@
   <td><span class="anchor" ></span>real(kind=RK),</td>
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>X</strong>(*)</td><td><p>main memory</p></td>
+  <td><strong>W</strong>(*)</td><td><p>main memory</p></td>
 </tr>
 <tr>
   <td><span class="anchor" ></span>integer(kind=IK),</td>
@@ -737,7 +830,7 @@
   </div>
 
       <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_expand"></span><h3>public pure subroutine <a href='../proc/bb_block_expand.html'>bb_block_expand</a>(UB, q, s, W)</h3></div>
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_expand"></span><h3>public subroutine <a href='../proc/bb_block_expand.html'>bb_block_expand</a>(UB, q, s, W)</h3></div>
   <div class="panel-body">
        
 <p>Expand top node in queue.</p>
@@ -777,7 +870,7 @@
   </div>
 
       <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_closure"></span><h3>public pure subroutine <a href='../proc/bb_block_closure.html'>bb_block_closure</a>(UB, q, s, X)</h3></div>
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_closure"></span><h3>public pure subroutine <a href='../proc/bb_block_closure.html'>bb_block_closure</a>(UB, q, s, W)</h3></div>
   <div class="panel-body">
        
 <p>closure current node.</p>
@@ -807,7 +900,7 @@
   <td><span class="anchor" ></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>X</strong>(*)</td><td><p>main memory</p></td>
+  <td><strong>W</strong>(*)</td><td><p>main memory</p></td>
 </tr>
 </tbody>
 </table>

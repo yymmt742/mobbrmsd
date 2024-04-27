@@ -8,7 +8,7 @@
     <meta name="author" content="yymmt742" >
     <link rel="icon" href="../favicon.png">
 
-    <title>mobbrmsd_header_load &ndash; mobbrmsd</title>
+    <title>tree_queue_is_selected &ndash; mobbrmsd</title>
 
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
@@ -76,8 +76,8 @@
 
     <div class="container">
   <div class="row">
-    <h1>mobbrmsd_header_load
-      <small>Subroutine</small>
+    <h1>tree_queue_is_selected
+      <small>Function</small>
     </h1>
     <div class="row">
   <div class="col-lg-12">
@@ -87,14 +87,14 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 0.8% of total for procedures.">15 statements</a>
+    title=" 0.3% of total for procedures.">6 statements</a>
      </li> 
-    <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd_header.f90"> Source File</a></li>
+    <li><i class="fa fa-code"></i><a href="../src/mod_tree.f90"> Source File</a></li>
   </ul>
   <ol class="breadcrumb in-well text-right">
-     <li><a href='../sourcefile/mod_mobbrmsd_header.f90.html'>mod_mobbrmsd_header.f90</a></li>
-     <li><a href='../module/mod_mobbrmsd_header.html'>mod_mobbrmsd_header</a></li>
-     <li class="active">mobbrmsd_header_load</li>
+     <li><a href='../sourcefile/mod_tree.f90.html'>mod_tree.f90</a></li>
+     <li><a href='../module/mod_tree.html'>mod_tree</a></li>
+     <li class="active">tree_queue_is_selected</li>
   </ol>
 </div>
 </div>
@@ -119,30 +119,32 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure subroutine mobbrmsd_header_load(this, q)</h2>
+    <h2>public pure function tree_queue_is_selected(q, s) result(res)</h2>
     
 
-    <p>load integer array as header</p>
+    <p>Returns true if <script type="math/tex">p</script>-queue has current node.</p>
 
     <h3>Arguments</h3>
       <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-this~15"></span>class(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
-<td>intent(inout)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>this</strong></td><td><p>this</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-q~71"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-q~62"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>q</strong>(:)</td><td><p>header array</p></td>
+  <td><strong>q</strong>(*)</td><td><p>header</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" id="variable-s~33"></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>s</strong>(*)</td><td><p>state</p></td>
 </tr>
 </tbody>
 </table>
 
+   <h3>Return Value <small><span class="anchor" id="variable-res~44"></span>logical</small></h3>
+    
     <br>
 
     <section class="visible-xs visible-sm hidden-md">

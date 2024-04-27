@@ -23,6 +23,7 @@ module mod_c_matrix
   public :: c_matrix_memsize
   public :: c_matrix_worksize
   public :: c_matrix_blocksize
+  public :: c_matrix_autocorr
   public :: c_matrix_eval
   public :: c_matrix_add
 !
@@ -211,6 +212,23 @@ contains
     end subroutine calc_covariance
 !
   end subroutine c_matrix_eval
+!
+!| Calc \( G:=\text{tr}[\mathbf{X}\mathbf{X}^\top]+\text{tr}[\mathbf{Y}\mathbf{Y}^\top] \). <br>
+  pure subroutine c_matrix_autocorr(q, C, G)
+    integer(IK), intent(in) :: q(*)
+    !! c_matrix
+    real(RK), intent(in)    :: C(*)
+    !! main memory, calculated by c_matrix_eval.
+    real(RK), intent(inout) :: G
+    !! partial covariance matrix, must be larger than \(d^2\).
+    integer(IK)             :: i, nn, nc
+    nn = q(nl) * q(nl) * q(cb)
+    nc = (1 + q(nl)) * q(cb)
+    G = ZERO
+    do i = 1, nn, nc
+      G = G + C(i)
+    end do
+  end subroutine c_matrix_autocorr
 !
 !| Adds \( G_{IJ} \) and \( \mathbf{C}_{IJs} \) specified by index \( i, j, s \) to the arguments. <br>
 !  This routine adds directly to G and C(:DD), so they must be initialized. <br>

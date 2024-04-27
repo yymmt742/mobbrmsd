@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 0.3% of total for procedures.">6 statements</a>
+    title=" 1.8% of total for procedures.">36 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_tree.f90"> Source File</a></li>
   </ul>
@@ -119,31 +119,49 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure function tree_queue_is_left(q, s) result(res)</h2>
+    <h2>public pure function tree_queue_is_left(q, s, ld, UB, W) result(res)</h2>
     
 
-    <p>Returns true if <script type="math/tex">p</script>-queue has current node.</p>
+    <p>Returns true if <script type="math/tex">p</script>-queue has an unexplored node other than the selected node.</p>
 
     <h3>Arguments</h3>
       <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-q~61"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-q~63"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>q</strong>(*)</td><td><p>header</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-s~33"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-s~34"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>s</strong>(*)</td><td><p>state</p></td>
 </tr>
+<tr>
+  <td><span class="anchor" id="variable-ld~2"></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>ld</strong></td><td><p>leading dimension</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" id="variable-ub"></span>real(kind=RK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>UB</strong></td><td><p>upperbound</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" id="variable-w~7"></span>real(kind=RK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>W</strong>(ld,*)</td><td><p>work array</p></td>
+</tr>
 </tbody>
 </table>
 
-   <h3>Return Value <small><span class="anchor" id="variable-res~44"></span>logical</small></h3>
+   <h3>Return Value <small><span class="anchor" id="variable-res~45"></span>logical</small></h3>
     
     <br>
 

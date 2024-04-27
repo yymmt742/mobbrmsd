@@ -83,12 +83,16 @@
 			 <thead><tr><th>Procedure</th><th>Location</th><th>Procedure Type</th><th>Description</th></tr></thead>
 			 <tbody>
 			   <tr><td><a href='../interface/bb_block.html'>bb_block</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Interface</td><td></td></tr>
+			   <tr><td><a href='../proc/bb_block_autocorr.html'>bb_block_autocorr</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns the minimum value of the surviving nodes, excluding the current value.</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_closure.html'>bb_block_closure</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Subroutine</td><td><p>closure current node.</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_covmat_add.html'>bb_block_covmat_add</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Subroutine</td><td><p>Sum covariance matrix by saved state z.</p></td></tr>
+			   <tr><td><a href='../proc/bb_block_current_level.html'>bb_block_current_level</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns current level.</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_current_value.html'>bb_block_current_value</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns current L value.</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_evaluation_count.html'>bb_block_evaluation_count</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns the minimum value of the surviving nodes, excluding the current value.</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_expand.html'>bb_block_expand</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Subroutine</td><td><p>Expand top node in queue.</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_inheritance.html'>bb_block_inheritance</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Subroutine</td><td><p>Expands the latest node of the parent block to the top-level queue of the child block.</p></td></tr>
+			   <tr><td><a href='../proc/bb_block_is_bottom.html'>bb_block_is_bottom</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns true when tree is bottom</p></td></tr>
+			   <tr><td><a href='../proc/bb_block_is_left.html'>bb_block_is_left</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns true when tree is empty</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_log_ncomb.html'>bb_block_log_ncomb</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns the minimum value of the surviving nodes, excluding the current value.</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_lowest_value.html'>bb_block_lowest_value</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns the minimum value of the surviving nodes, excluding the current value.</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_memsize.html'>bb_block_memsize</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns the memory size array size.</p></td></tr>
@@ -98,7 +102,6 @@
 			   <tr><td><a href='../proc/bb_block_save_state.html'>bb_block_save_state</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Subroutine</td><td><p>Save current state.</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_setup.html'>bb_block_setup</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Subroutine</td><td><p>Setup C matrix and F matrix in root node.</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_swap_y.html'>bb_block_swap_y</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Subroutine</td><td><p>swap Y by saved state z.</p></td></tr>
-			   <tr><td><a href='../proc/bb_block_tree_is_bottom.html'>bb_block_tree_is_bottom</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns true when tree is bottom</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_tree_is_empty.html'>bb_block_tree_is_empty</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns true when tree is empty</p></td></tr>
 			   <tr><td><a href='../proc/bb_block_worksize.html'>bb_block_worksize</a></td><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td>Function</td><td><p>Returns the work memory size array size.</p></td></tr>
 			   <tr><td><a href='../interface/bb_list.html'>bb_list</a></td><td><a href='../module/mod_bb_list.html'>mod_bb_list</a></td><td>Interface</td><td></td></tr>
@@ -115,6 +118,7 @@
 			   <tr><td><a href='../proc/c_matrix_add.html'>c_matrix_add</a></td><td><a href='../module/mod_c_matrix.html'>mod_c_matrix</a></td><td>Subroutine</td><td><p>Adds <script type="math/tex"> G_{IJ} </script> and <script type="math/tex"> \mathbf{C}_{IJs} </script> specified by index <script type="math/tex"> i, j, s </script> to the arguments. <br>
  This routine adds directly to G and C(:DD), so they must be initialized. <br>
  If indices outside the area defined by q(*) is specified, operation results are not guaranteed. <br></p></td></tr>
+			   <tr><td><a href='../proc/c_matrix_autocorr.html'>c_matrix_autocorr</a></td><td><a href='../module/mod_c_matrix.html'>mod_c_matrix</a></td><td>Subroutine</td><td><p>Calc <script type="math/tex"> G:=\text{tr}[\mathbf{X}\mathbf{X}^\top]+\text{tr}[\mathbf{Y}\mathbf{Y}^\top] </script>. <br></p></td></tr>
 			   <tr><td><a href='../proc/c_matrix_blocksize.html'>c_matrix_blocksize</a></td><td><a href='../module/mod_c_matrix.html'>mod_c_matrix</a></td><td>Function</td><td><p>Inquire blocksize of c_matrix.</p></td></tr>
 			   <tr><td><a href='../proc/c_matrix_eval.html'>c_matrix_eval</a></td><td><a href='../module/mod_c_matrix.html'>mod_c_matrix</a></td><td>Subroutine</td><td><p>Evaluation the c-matrix.<br>
  g-matrix is also calculated at the same time.<br>
@@ -255,8 +259,9 @@
 			   <tr><td><a href='../proc/tree_queue_is_bottom.html'>tree_queue_is_bottom</a></td><td><a href='../module/mod_tree.html'>mod_tree</a></td><td>Function</td><td><p>Returns true if <script type="math/tex">p=M</script>.</p></td></tr>
 			   <tr><td><a href='../proc/tree_queue_is_empty.html'>tree_queue_is_empty</a></td><td><a href='../module/mod_tree.html'>mod_tree</a></td><td>Function</td><td><p>Returns true if <script type="math/tex">p</script>-queue is explored.</p></td></tr>
 			   <tr><td><a href='../proc/tree_queue_is_explored.html'>tree_queue_is_explored</a></td><td><a href='../module/mod_tree.html'>mod_tree</a></td><td>Function</td><td><p>Returns true if current node is explored.</p></td></tr>
-			   <tr><td><a href='../proc/tree_queue_is_left.html'>tree_queue_is_left</a></td><td><a href='../module/mod_tree.html'>mod_tree</a></td><td>Function</td><td><p>Returns true if <script type="math/tex">p</script>-queue has current node.</p></td></tr>
+			   <tr><td><a href='../proc/tree_queue_is_left.html'>tree_queue_is_left</a></td><td><a href='../module/mod_tree.html'>mod_tree</a></td><td>Function</td><td><p>Returns true if <script type="math/tex">p</script>-queue has an unexplored node other than the selected node.</p></td></tr>
 			   <tr><td><a href='../proc/tree_queue_is_root.html'>tree_queue_is_root</a></td><td><a href='../module/mod_tree.html'>mod_tree</a></td><td>Function</td><td><p>Returns true if <script type="math/tex">p=1</script>.</p></td></tr>
+			   <tr><td><a href='../proc/tree_queue_is_selected.html'>tree_queue_is_selected</a></td><td><a href='../module/mod_tree.html'>mod_tree</a></td><td>Function</td><td><p>Returns true if <script type="math/tex">p</script>-queue has current node.</p></td></tr>
 			   <tr><td><a href='../proc/tree_queue_is_unexplored.html'>tree_queue_is_unexplored</a></td><td><a href='../module/mod_tree.html'>mod_tree</a></td><td>Function</td><td><p>Returns true if current node is unexplored.</p></td></tr>
 			   <tr><td><a href='../proc/tree_queue_pointer.html'>tree_queue_pointer</a></td><td><a href='../module/mod_tree.html'>mod_tree</a></td><td>Function</td><td><p>Returns a pointer to the current queue.</p></td></tr>
 			   <tr><td><a href='../proc/tree_reset.html'>tree_reset</a></td><td><a href='../module/mod_tree.html'>mod_tree</a></td><td>Subroutine</td><td><p>Reset the state</p></td></tr>

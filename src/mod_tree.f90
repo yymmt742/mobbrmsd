@@ -72,6 +72,7 @@ module mod_tree
   public :: tree_is_empty
   public :: tree_is_unexplored
   public :: tree_queue_is_empty
+  public :: tree_queue_is_selected
   public :: tree_queue_is_left
   public :: tree_queue_is_explored
   public :: tree_queue_is_unexplored
@@ -587,13 +588,60 @@ contains
   end function tree_queue_is_empty
 !
 !| Returns true if \(p\)-queue has current node.
-  pure function tree_queue_is_left(q, s) result(res)
+  pure function tree_queue_is_selected(q, s) result(res)
     integer(IK), intent(in) :: q(*)
 !!  header
     integer(IK), intent(in) :: s(*)
 !!  state
     logical                 :: res
     res = queue_state(s(sr), s(sl)) >= 0
+  end function tree_queue_is_selected
+!
+!| Returns true if \(p\)-queue has an unexplored node other than the selected node.
+  pure function tree_queue_is_left(q, s, ld, UB, W) result(res)
+    integer(IK), intent(in) :: q(*)
+!!  header
+    integer(IK), intent(in) :: s(*)
+!!  state
+    integer(IK), intent(in) :: ld
+!!  leading dimension
+    real(RK), intent(in)    :: UB
+!!  upperbound
+    real(RK), intent(in)    :: W(ld, *)
+!!  work array
+    real(RK)                :: uv, lv
+    integer(IK)             :: i, p1, pn, cp
+    logical                 :: res
+    res = .false.
+    uv = UB
+!
+    if (tree_queue_is_explored(q, s)) then
+      return
+    elseif (tree_queue_is_unexplored(q, s)) then
+      cp = tree_queue_pointer(q, s) - 1
+      lv = -RHUGE
+    else
+      cp = tree_current_pointer(q, s)
+      lv = W(1, cp)
+    end if
+!
+    if (uv < lv) return
+!
+    p1 = tree_queue_pointer(q, s)
+    pn = p1 + queue_nnodes(q(qr), s(sl)) - 1
+!
+    do i = p1, cp - 1
+      if (lv < W(1, i) .and. W(1, i) < uv) then
+        res = .true.
+        return
+      end if
+    end do
+    do i = cp + 1, pn
+      if (lv < W(1, i) .and. W(1, i) < uv) then
+        res = .true.
+        return
+      end if
+    end do
   end function tree_queue_is_left
 !
 !| Returns true if \(p=1\).

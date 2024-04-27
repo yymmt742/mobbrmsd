@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 6.1% of total for modules and submodules.">197 statements</a>
+    title=" 6.3% of total for modules and submodules.">210 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_c_matrix.f90"> Source File</a></li>
   </ul>
@@ -142,6 +142,7 @@
   <div class="list-group">
     <div id="subs-0" class="panel-collapse collapse">
       <a class="list-group-item" href="../module/mod_c_matrix.html#proc-c_matrix_eval">c_matrix_eval</a>
+      <a class="list-group-item" href="../module/mod_c_matrix.html#proc-c_matrix_autocorr">c_matrix_autocorr</a>
       <a class="list-group-item" href="../module/mod_c_matrix.html#proc-c_matrix_add">c_matrix_add</a>
     </div>
   </div>
@@ -174,8 +175,8 @@
       <ul class="list-group">
       <li class="list-group-item">
   <ul class="list-inline">
-    <li><a href='../module/mod_params.html'>mod_params</a></li>
     <li><a href='../module/blas_lapack_interface.html'>blas_lapack_interface</a></li>
+    <li><a href='../module/mod_params.html'>mod_params</a></li>
     <li><a href='../module/mod_mol_block.html'>mod_mol_block</a></li>
   </ul>
       </li>
@@ -219,6 +220,7 @@
   <div class="list-group">
     <div id="subs-1" class="panel-collapse collapse">
       <a class="list-group-item" href="../module/mod_c_matrix.html#proc-c_matrix_eval">c_matrix_eval</a>
+      <a class="list-group-item" href="../module/mod_c_matrix.html#proc-c_matrix_autocorr">c_matrix_autocorr</a>
       <a class="list-group-item" href="../module/mod_c_matrix.html#proc-c_matrix_add">c_matrix_add</a>
     </div>
   </div>
@@ -408,6 +410,40 @@
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>W</strong>(*)</td><td><p>work memory</p></td>
+</tr>
+</tbody>
+</table>
+
+
+  </div>
+  </div>
+
+      <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-c_matrix_autocorr"></span><h3>public pure subroutine <a href='../proc/c_matrix_autocorr.html'>c_matrix_autocorr</a>(q, C, G)</h3></div>
+  <div class="panel-body">
+       
+<p>Calc <script type="math/tex"> G:=\text{tr}[\mathbf{X}\mathbf{X}^\top]+\text{tr}[\mathbf{Y}\mathbf{Y}^\top] </script>. <br></p>
+    
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>q</strong>(*)</td><td><p>c_matrix</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>C</strong>(*)</td><td><p>main memory, calculated by c_matrix_eval.</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(inout)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>G</strong></td><td><p>partial covariance matrix, must be larger than <script type="math/tex">d^2</script>.</p></td>
 </tr>
 </tbody>
 </table>

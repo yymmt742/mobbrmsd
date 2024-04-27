@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title="13.4% of total for modules and submodules.">432 statements</a>
+    title="14.1% of total for modules and submodules.">469 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_tree.f90"> Source File</a></li>
   </ul>
@@ -157,6 +157,7 @@
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_is_empty">tree_is_empty</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_is_unexplored">tree_is_unexplored</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_empty">tree_queue_is_empty</a>
+      <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_selected">tree_queue_is_selected</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_left">tree_queue_is_left</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_root">tree_queue_is_root</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_bottom">tree_queue_is_bottom</a>
@@ -278,6 +279,7 @@
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_is_empty">tree_is_empty</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_is_unexplored">tree_is_unexplored</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_empty">tree_queue_is_empty</a>
+      <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_selected">tree_queue_is_selected</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_left">tree_queue_is_left</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_root">tree_queue_is_root</a>
       <a class="list-group-item" href="../module/mod_tree.html#proc-tree_queue_is_bottom">tree_queue_is_bottom</a>
@@ -1101,7 +1103,7 @@
   </div>
 
       <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-tree_queue_is_left"></span><h3>public pure function <a href='../proc/tree_queue_is_left.html'>tree_queue_is_left</a>(q, s) result(res)</h3></div>
+  <div class="panel-heading codesum"><span class="anchor" id="proc-tree_queue_is_selected"></span><h3>public pure function <a href='../proc/tree_queue_is_selected.html'>tree_queue_is_selected</a>(q, s) result(res)</h3></div>
   <div class="panel-body">
        
 <p>Returns true if <script type="math/tex">p</script>-queue has current node.</p>
@@ -1120,6 +1122,53 @@
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>s</strong>(*)</td><td><p>state</p></td>
+</tr>
+</tbody>
+</table>
+
+<h4>Return Value <small>logical</small></h4>  
+
+  </div>
+  </div>
+
+      <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-tree_queue_is_left"></span><h3>public pure function <a href='../proc/tree_queue_is_left.html'>tree_queue_is_left</a>(q, s, ld, UB, W) result(res)</h3></div>
+  <div class="panel-body">
+       
+<p>Returns true if <script type="math/tex">p</script>-queue has an unexplored node other than the selected node.</p>
+    
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>q</strong>(*)</td><td><p>header</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>s</strong>(*)</td><td><p>state</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>ld</strong></td><td><p>leading dimension</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>UB</strong></td><td><p>upperbound</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>W</strong>(ld,*)</td><td><p>work array</p></td>
 </tr>
 </tbody>
 </table>

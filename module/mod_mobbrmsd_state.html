@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 5.5% of total for modules and submodules.">179 statements</a>
+    title=" 5.3% of total for modules and submodules.">176 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd_state.f90"> Source File</a></li>
   </ul>
@@ -116,6 +116,7 @@
   <div id="vars-0" class="panel-collapse collapse">
     <div class="list-group">
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#variable-mobbrmsd_state_index_to_rcp_n_atoms">mobbrmsd_state_INDEX_TO_RCP_N_ATOMS</a>
+      <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#variable-mobbrmsd_state_index_to_autocorr">mobbrmsd_state_INDEX_TO_AUTOCORR</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#variable-mobbrmsd_state_index_to_upperbound">mobbrmsd_state_INDEX_TO_UPPERBOUND</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#variable-mobbrmsd_state_index_to_lowerbound">mobbrmsd_state_INDEX_TO_LOWERBOUND</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#variable-mobbrmsd_state_index_to_n_eval">mobbrmsd_state_INDEX_TO_N_EVAL</a>
@@ -183,9 +184,9 @@
       <ul class="list-group">
       <li class="list-group-item">
   <ul class="list-inline">
-    <li><a href='../module/mod_params.html'>mod_params</a></li>
-    <li><a href='../module/mod_mobbrmsd_header.html'>mod_mobbrmsd_header</a></li>
     <li><a href='../module/mod_bb_list.html'>mod_bb_list</a></li>
+    <li><a href='../module/mod_mobbrmsd_header.html'>mod_mobbrmsd_header</a></li>
+    <li><a href='../module/mod_params.html'>mod_params</a></li>
   </ul>
       </li>
       </ul>
@@ -202,6 +203,7 @@
   <div id="vars-1" class="panel-collapse collapse">
     <div class="list-group">
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#variable-mobbrmsd_state_index_to_rcp_n_atoms">mobbrmsd_state_INDEX_TO_RCP_N_ATOMS</a>
+      <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#variable-mobbrmsd_state_index_to_autocorr">mobbrmsd_state_INDEX_TO_AUTOCORR</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#variable-mobbrmsd_state_index_to_upperbound">mobbrmsd_state_INDEX_TO_UPPERBOUND</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#variable-mobbrmsd_state_index_to_lowerbound">mobbrmsd_state_INDEX_TO_LOWERBOUND</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#variable-mobbrmsd_state_index_to_n_eval">mobbrmsd_state_INDEX_TO_N_EVAL</a>
@@ -271,29 +273,34 @@
   <td><strong>mobbrmsd_state_INDEX_TO_RCP_N_ATOMS</strong></td><td> =</td><td>1</td><td><p>Index of reciprocal natom of dumped state</p></td>
 </tr>
 <tr>
+  <td><span class="anchor" id="variable-mobbrmsd_state_index_to_autocorr"></span>integer(kind=IK),</td>
+<td>public,</td>  <td>parameter</td><td>::</td>
+  <td><strong>mobbrmsd_state_INDEX_TO_AUTOCORR</strong></td><td> =</td><td>2</td><td><p>Index to auto correlation</p></td>
+</tr>
+<tr>
   <td><span class="anchor" id="variable-mobbrmsd_state_index_to_upperbound"></span>integer(kind=IK),</td>
 <td>public,</td>  <td>parameter</td><td>::</td>
-  <td><strong>mobbrmsd_state_INDEX_TO_UPPERBOUND</strong></td><td> =</td><td>2</td><td><p>Index of upperbound of dumped state</p></td>
+  <td><strong>mobbrmsd_state_INDEX_TO_UPPERBOUND</strong></td><td> =</td><td>3</td><td><p>Index of upperbound of dumped state</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-mobbrmsd_state_index_to_lowerbound"></span>integer(kind=IK),</td>
 <td>public,</td>  <td>parameter</td><td>::</td>
-  <td><strong>mobbrmsd_state_INDEX_TO_LOWERBOUND</strong></td><td> =</td><td>3</td><td><p>Index of lowerbound of dumped state</p></td>
+  <td><strong>mobbrmsd_state_INDEX_TO_LOWERBOUND</strong></td><td> =</td><td>4</td><td><p>Index of lowerbound of dumped state</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-mobbrmsd_state_index_to_n_eval"></span>integer(kind=IK),</td>
 <td>public,</td>  <td>parameter</td><td>::</td>
-  <td><strong>mobbrmsd_state_INDEX_TO_N_EVAL</strong></td><td> =</td><td>4</td><td><p>Index of n_eval of dumped state</p></td>
+  <td><strong>mobbrmsd_state_INDEX_TO_N_EVAL</strong></td><td> =</td><td>5</td><td><p>Index of n_eval of dumped state</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-mobbrmsd_state_index_to_log_ratio"></span>integer(kind=IK),</td>
 <td>public,</td>  <td>parameter</td><td>::</td>
-  <td><strong>mobbrmsd_state_INDEX_TO_LOG_RATIO</strong></td><td> =</td><td>5</td><td><p>Index of log_ratio of dumped state</p></td>
+  <td><strong>mobbrmsd_state_INDEX_TO_LOG_RATIO</strong></td><td> =</td><td>6</td><td><p>Index of log_ratio of dumped state</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-mobbrmsd_state_index_to_rotmat"></span>integer(kind=IK),</td>
 <td>public,</td>  <td>parameter</td><td>::</td>
-  <td><strong>mobbrmsd_state_INDEX_TO_ROTMAT</strong></td><td> =</td><td>6</td><td><p>Index to rotmatrix of dumped state</p></td>
+  <td><strong>mobbrmsd_state_INDEX_TO_ROTMAT</strong></td><td> =</td><td>7</td><td><p>Index to rotmatrix of dumped state</p></td>
 </tr>
 </tbody>
 </table>
