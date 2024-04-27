@@ -15,6 +15,7 @@ module mod_mobbrmsd_mst
   use mod_forbar
   use mod_forbar_collections
   implicit none
+  private
   public :: mobbrmsd_min_span_tree
 !
   type priority_list
