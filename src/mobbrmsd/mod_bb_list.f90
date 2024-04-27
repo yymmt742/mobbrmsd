@@ -312,9 +312,9 @@ contains
       print *, 'runbb'
       tmp = 999D0
       do
-        !call bb_block_expand(ub, q(pq(b)), s(ps(b)), W(pw(b)))
-        call bb_block_expand(tmp, q(pq(b)), s(ps(b)), W(pw(b)))
         print *, 'expand    ', b, bb_block_current_level(s(ps(b)))
+        call bb_block_expand(ub, q(pq(b)), s(ps(b)), W(pw(b)))
+        !call bb_block_expand(tmp, q(pq(b)), s(ps(b)), W(pw(b)))
         if (b == n .or. bb_block_tree_is_empty(q(pq(b)), s(ps(b)))) exit
         b = b + 1
         call bb_block_inheritance(q(pq(b)), s(ps(b)), W(pw(b)), &

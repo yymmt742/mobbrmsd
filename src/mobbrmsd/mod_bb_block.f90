@@ -292,6 +292,11 @@ contains
       block
         do
           call tree_select_top_node(q(q(tq)), s(stree), ND, UB, W(wtree))
+          print'(A,2L4,*(I4))', 'select', &
+        & tree_queue_is_bottom(q(qtree), s(stree)), &
+        & tree_queue_is_empty(q(qtree), s(stree)), &
+        & tree_current_level(s(stree)), &
+        & tree_current_sequence(q(qtree), s(stree))
           if (tree_queue_is_bottom(q(qtree), s(stree)) &
        & .or. tree_queue_is_empty(q(qtree), s(stree))) exit
           pp = q(tx) + (tree_current_pointer(q(qtree), s(stree)) - 1) * ND
