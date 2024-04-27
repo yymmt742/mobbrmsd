@@ -438,33 +438,34 @@ contains
 !!  work array
     real(RK)                :: res
     integer(IK)             :: i
-    if (tree_is_unexplored(q, s)) then
-      res = -RHUGE
-      return
-    end if
-    associate (p => s(sl))
+    associate (ncur => s(sl))
+      if (tree_is_unexplored(q, s)) then
+        res = -RHUGE
+        return
+      end if
       res = RHUGE
-      do i = 1, p
+      do i = 1, ncur
+        if (queue_state(s(sr), i) < 0) cycle
         call queue_second_value(q(qr), s(sr), i, ld, W, res)
       end do
     end associate
   end function tree_lowest_value
 !
-  pure subroutine queue_second_value(r, s, i, ld, W, res)
-    integer(IK), intent(in) :: r(queue_blocksize, *), s(*), i, ld
+  pure subroutine queue_second_value(r, s, ri, ld, W, res)
+    integer(IK), intent(in) :: r(queue_blocksize, *), s(*), ri, ld
     real(RK), intent(in)    :: W(ld, *)
     real(RK), intent(inout) :: res
-    integer(IK)             :: p, c, u
-    associate (l => r(qp, i))
-      u = l + r(qn, i) - 1
-      c = l + s(i)
-      do p = l, c - 1
-        if (W(1, p) < W(1, c)) cycle
-        res = MIN(W(1, p), res)
+    integer(IK)             :: i, c, u
+    associate (l => r(qp, ri))
+      u = l + r(qn, ri) - 1
+      c = l + s(ri)
+      do i = l, c - 1
+        if (W(1, i) < W(1, c)) cycle
+        res = MIN(W(1, i), res)
       end do
-      do p = c + 1, u
-        if (W(1, p) < W(1, c)) cycle
-        res = MIN(W(1, p), res)
+      do i = c + 1, u
+        if (W(1, i) < W(1, c)) cycle
+        res = MIN(W(1, i), res)
       end do
     end associate
   end subroutine queue_second_value

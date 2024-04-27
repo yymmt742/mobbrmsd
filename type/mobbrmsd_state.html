@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title="<p>18.1% of total for derived types.</p>Including implementation: 127 statements, 41.5% of total for derived types.">20 statements</a>
+    title="<p>18.2% of total for derived types.</p>Including implementation: 118 statements, 40.4% of total for derived types.">19 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd_state.f90"> Source File</a></li>
   </ul>
@@ -141,9 +141,9 @@
   <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#boundprocs-0">Type-Bound Procedures</a></h3></div>
   <div id="boundprocs-0" class="panel-collapse collapse">
     <div class="list-group">
-      <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-update">update</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-upperbound">upperbound</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-lowerbound">lowerbound</a>
+      <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-autovariance">autovariance</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-squared_deviation">squared_deviation</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-mean_squared_deviation">mean_squared_deviation</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-rmsd">rmsd</a>
@@ -199,9 +199,9 @@
   <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#boundprocs-1">Type-Bound Procedures</a></h3></div>
   <div id="boundprocs-1" class="panel-collapse collapse">
     <div class="list-group">
-      <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-update">update</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-upperbound">upperbound</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-lowerbound">lowerbound</a>
+      <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-autovariance">autovariance</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-squared_deviation">squared_deviation</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-mean_squared_deviation">mean_squared_deviation</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-rmsd">rmsd</a>
@@ -307,46 +307,6 @@
     <section>
     <h2>Type-Bound Procedures</h2>
      <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="boundprocedure-update"></span><h3>procedure, public :: <strong>update</strong>  => <a href='../proc/mobbrmsd_state_update.html'>mobbrmsd_state_update</a>   </h3></div>
-  <div class="panel-body">
-    
-    <p>update state</p>
-  </div>
-  <ul class="list-group">
-      <li class="list-group-item">
-          <h3>public pure subroutine <a href='../proc/mobbrmsd_state_update.html'>mobbrmsd_state_update</a>(this, header, W)</h3>
-<p>update mobbrmsd_state</p>
-    
-<h4>Arguments</h4>      <table class="table table-striped varlist">
-<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
-<tbody>
-<tr>
-  <td><span class="anchor" ></span>class(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
-<td>intent(inout)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>this</strong></td><td><p>mobbrmsd header</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>type(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>header</strong></td><td><p>mobbrmsd header</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>W</strong>(*)</td><td><p>mobbrmsd workarray</p></td>
-</tr>
-</tbody>
-</table>
-
-
-      </li>
-  </ul>
-</div>
-
-     <div class="panel panel-default">
   <div class="panel-heading codesum"><span class="anchor" id="boundprocedure-upperbound"></span><h3>procedure, public :: <strong>upperbound</strong>  => <a href='../proc/mobbrmsd_state_upperbound.html'>mobbrmsd_state_upperbound</a>   </h3></div>
   <div class="panel-body">
     
@@ -385,6 +345,35 @@
       <li class="list-group-item">
           <h3>public pure elemental function <a href='../proc/mobbrmsd_state_lowerbound.html'>mobbrmsd_state_lowerbound</a>(this) result(res)</h3>
 <p>returns lowerbound</p>
+    
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>class(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>this</strong></td><td><p>this</p></td>
+</tr>
+</tbody>
+</table>
+
+<h4>Return Value <small>real(kind=RK)</small></h4>  
+
+      </li>
+  </ul>
+</div>
+
+     <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="boundprocedure-autovariance"></span><h3>procedure, public :: <strong>autovariance</strong>  => <a href='../proc/mobbrmsd_state_autovariance.html'>mobbrmsd_state_autovariance</a>   </h3></div>
+  <div class="panel-body">
+    
+    <p>lowerbound</p>
+  </div>
+  <ul class="list-group">
+      <li class="list-group-item">
+          <h3>public pure elemental function <a href='../proc/mobbrmsd_state_autovariance.html'>mobbrmsd_state_autovariance</a>(this) result(res)</h3>
+<p>returns autovariance</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>

@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 3.8% of total for procedures.">77 statements</a>
+    title=" 4.0% of total for procedures.">77 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd_mst.f90"> Source File</a></li>
   </ul>
@@ -129,49 +129,49 @@
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-n_target~3"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-n_target~2"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>n_target</strong></td><td><p>number of coordinates</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-header~9"></span>type(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
+  <td><span class="anchor" id="variable-header~8"></span>type(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>header</strong></td><td><p>mobbrmsd_header</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-state~6"></span>type(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
+  <td><span class="anchor" id="variable-state~5"></span>type(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>state</strong>(n_target,n_target)</td><td><p>mobbrmsd_state, the result is contained in this structure.</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-x~11"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-x~10"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>X</strong>(*)</td><td><p>coordinate sequence</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-w~15"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-w~14"></span>real(kind=RK),</td>
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>W</strong>(*)</td><td><p>work memory, must be larger than header%memsize() * mobbrmsd_num_threads()</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-cutoff~6"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-cutoff~5"></span>real(kind=RK),</td>
 <td>intent(in),</td>
   <td>optional</td>  <td></td><td>::</td>
   <td><strong>cutoff</strong></td><td><p>The search ends when lowerbound is determined to be greater than to cutoff.</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-difflim~6"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-difflim~5"></span>real(kind=RK),</td>
 <td>intent(in),</td>
   <td>optional</td>  <td></td><td>::</td>
   <td><strong>difflim</strong></td><td><p>The search ends when the difference between the lower and upper bounds is less than difflim.</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-maxeval~6"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-maxeval~5"></span>integer(kind=IK),</td>
 <td>intent(in),</td>
   <td>optional</td>  <td></td><td>::</td>
   <td><strong>maxeval</strong></td><td><p>The search ends when ncount exceeds maxiter.</p></td>

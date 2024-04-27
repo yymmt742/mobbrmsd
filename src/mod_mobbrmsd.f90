@@ -164,7 +164,7 @@ contains
   end function mobbrmsd_new_from_block
 !
 !| run mobbrmsd
-  subroutine mobbrmsd_run( &
+  pure subroutine mobbrmsd_run( &
  &             header, state, &
  &             X, Y, W, &
  &             cutoff, difflim, maxeval)
@@ -217,8 +217,8 @@ contains
   end subroutine mobbrmsd_run
 !
 !| run mobbrmsd
-  subroutine mobbrmsd_restart(header, state, W, &
- &                            cutoff, difflim, maxeval)
+  pure subroutine mobbrmsd_restart(header, state, W, &
+&                            cutoff, difflim, maxeval)
     type(mobbrmsd_header), intent(in)    :: header
     !! mobbrmsd_header
     type(mobbrmsd_state), intent(inout)  :: state
@@ -232,8 +232,38 @@ contains
     integer(IK), intent(in), optional    :: maxeval
     !! The search ends when ncount exceeds maxiter.
     call bb_list_run(header%q, state%s, W, cutoff=cutoff, difflim=difflim, maxeval=maxeval)
-    call state%update(header, W)
+    call mobbrmsd_state_update(state, header, W)
   end subroutine mobbrmsd_restart
+!
+!| update mobbrmsd_state
+  pure subroutine mobbrmsd_state_update(this, header, W)
+    type(mobbrmsd_state), intent(inout) :: this
+    !! mobbrmsd header
+    type(mobbrmsd_header), intent(in)   :: header
+    !! mobbrmsd header
+    real(RK), intent(in)                :: W(*)
+    !! mobbrmsd workarray
+    associate ( &
+   &   ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
+   &   ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND), &
+   &   lb => this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND), &
+   &   ne => this%z(mobbrmsd_state_INDEX_TO_N_EVAL), &
+   &   lr => this%z(mobbrmsd_state_INDEX_TO_LOG_RATIO), &
+   &   rt => mobbrmsd_state_INDEX_TO_ROTMAT, &
+   &   bbac => W(bb_list_INDEX_TO_AUTOCORR), &
+   &   bbub => W(bb_list_INDEX_TO_UPPERBOUND), &
+   &   bblb => W(bb_list_INDEX_TO_LOWERBOUND), &
+   &   bbne => W(bb_list_INDEX_TO_N_EVAL), &
+   &   bbln => W(bb_list_INDEX_TO_LOG_N_COMB) &
+    )
+      ac = bbac
+      ub = bbub
+      lb = bblb
+      ne = bbne
+      lr = LOG(bbne) - bbln
+      call bb_list_rotation_matrix(header%q, this%s, W, this%z(rt))
+    end associate
+  end subroutine mobbrmsd_state_update
 !
 !| Returns bb process is finished.
   pure function mobbrmsd_is_finished(header, state) result(res)

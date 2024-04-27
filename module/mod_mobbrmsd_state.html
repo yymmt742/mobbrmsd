@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 5.2% of total for modules and submodules.">176 statements</a>
+    title=" 5.0% of total for modules and submodules.">168 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd_state.f90"> Source File</a></li>
   </ul>
@@ -148,6 +148,7 @@
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_new">mobbrmsd_state_new</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_upperbound">mobbrmsd_state_upperbound</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_lowerbound">mobbrmsd_state_lowerbound</a>
+      <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_autovariance">mobbrmsd_state_autovariance</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_squared_deviation">mobbrmsd_state_squared_deviation</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_mean_squared_deviation">mobbrmsd_state_mean_squared_deviation</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_rmsd">mobbrmsd_state_rmsd</a>
@@ -163,7 +164,6 @@
   <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#subs-0">Subroutines</a></h3></div>
   <div class="list-group">
     <div id="subs-0" class="panel-collapse collapse">
-      <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_update">mobbrmsd_state_update</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_rotation">mobbrmsd_state_rotation</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_load">mobbrmsd_state_load</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_destroy">mobbrmsd_state_destroy</a>
@@ -184,9 +184,9 @@
       <ul class="list-group">
       <li class="list-group-item">
   <ul class="list-inline">
+    <li><a href='../module/mod_params.html'>mod_params</a></li>
     <li><a href='../module/mod_bb_list.html'>mod_bb_list</a></li>
     <li><a href='../module/mod_mobbrmsd_header.html'>mod_mobbrmsd_header</a></li>
-    <li><a href='../module/mod_params.html'>mod_params</a></li>
   </ul>
       </li>
       </ul>
@@ -235,6 +235,7 @@
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_new">mobbrmsd_state_new</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_upperbound">mobbrmsd_state_upperbound</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_lowerbound">mobbrmsd_state_lowerbound</a>
+      <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_autovariance">mobbrmsd_state_autovariance</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_squared_deviation">mobbrmsd_state_squared_deviation</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_mean_squared_deviation">mobbrmsd_state_mean_squared_deviation</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_rmsd">mobbrmsd_state_rmsd</a>
@@ -250,7 +251,6 @@
   <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#subs-1">Subroutines</a></h3></div>
   <div class="list-group">
     <div id="subs-1" class="panel-collapse collapse">
-      <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_update">mobbrmsd_state_update</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_rotation">mobbrmsd_state_rotation</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_load">mobbrmsd_state_load</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_destroy">mobbrmsd_state_destroy</a>
@@ -380,11 +380,11 @@
      <h4>Type-Bound Procedures</h4>
       <table class="table table-striped varlist">
       <tbody>
-       <tr><td>procedure, public :: <strong><a href='../type/mobbrmsd_state.html#boundprocedure-update'>update</a></strong>  => mobbrmsd_state_update </td>
-       <td><p>update state</p></td></tr>
        <tr><td>procedure, public :: <strong><a href='../type/mobbrmsd_state.html#boundprocedure-upperbound'>upperbound</a></strong>  => mobbrmsd_state_upperbound </td>
        <td><p>upperbound</p></td></tr>
        <tr><td>procedure, public :: <strong><a href='../type/mobbrmsd_state.html#boundprocedure-lowerbound'>lowerbound</a></strong>  => mobbrmsd_state_lowerbound </td>
+       <td><p>lowerbound</p></td></tr>
+       <tr><td>procedure, public :: <strong><a href='../type/mobbrmsd_state.html#boundprocedure-autovariance'>autovariance</a></strong>  => mobbrmsd_state_autovariance </td>
        <td><p>lowerbound</p></td></tr>
        <tr><td>procedure, public :: <strong><a href='../type/mobbrmsd_state.html#boundprocedure-squared_deviation'>squared_deviation</a></strong>  => mobbrmsd_state_squared_deviation </td>
        <td><p>sqrared_deviation</p></td></tr>
@@ -468,6 +468,29 @@
   <div class="panel-body">
        
 <p>returns lowerbound</p>
+    
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>class(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>this</strong></td><td><p>this</p></td>
+</tr>
+</tbody>
+</table>
+
+<h4>Return Value <small>real(kind=RK)</small></h4>  
+
+  </div>
+  </div>
+
+      <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-mobbrmsd_state_autovariance"></span><h3>public pure elemental function <a href='../proc/mobbrmsd_state_autovariance.html'>mobbrmsd_state_autovariance</a>(this) result(res)</h3></div>
+  <div class="panel-body">
+       
+<p>returns autovariance</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
@@ -675,40 +698,6 @@
 
     <section>
     <h2>Subroutines</h2>
-      <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-mobbrmsd_state_update"></span><h3>public pure subroutine <a href='../proc/mobbrmsd_state_update.html'>mobbrmsd_state_update</a>(this, header, W)</h3></div>
-  <div class="panel-body">
-       
-<p>update mobbrmsd_state</p>
-    
-<h4>Arguments</h4>      <table class="table table-striped varlist">
-<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
-<tbody>
-<tr>
-  <td><span class="anchor" ></span>class(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
-<td>intent(inout)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>this</strong></td><td><p>mobbrmsd header</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>type(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>header</strong></td><td><p>mobbrmsd header</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>W</strong>(*)</td><td><p>mobbrmsd workarray</p></td>
-</tr>
-</tbody>
-</table>
-
-
-  </div>
-  </div>
-
       <div class="panel panel-default">
   <div class="panel-heading codesum"><span class="anchor" id="proc-mobbrmsd_state_rotation"></span><h3>public pure subroutine <a href='../proc/mobbrmsd_state_rotation.html'>mobbrmsd_state_rotation</a>(this, header, X)</h3></div>
   <div class="panel-body">
