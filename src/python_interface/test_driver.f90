@@ -6,7 +6,6 @@ program main
   type(unittest) :: u
 !
   call u%init('test python_driver')
-!
   call test1()
 !
   call u%init('test python_driver, min_span_tree')
@@ -28,10 +27,8 @@ contains
     real(RK), allocatable    :: sr(:, :), W(:, :)
     integer(IK)              :: i, j, k, l
 !
-!
     call add_molecule(n_apm, n_mol, 2, [5, 6, 7, 8, 1, 2, 3, 4])
     call n_atoms(n_dim, n_atm)
-    print *, n_dim, n_atm
 !
     allocate (X(n_dim, n_apm, n_mol))
     allocate (Y(n_dim, n_apm, n_mol, n_target))
@@ -57,6 +54,7 @@ contains
 !
     call workmemory_lengthes(n_mem, n_job)
     call state_vector_lengthes(n_header, n_int, n_float)
+    print *, n_dim, n_atm
     print *, n_mem, n_job, n_header, n_int, n_float
 !
     allocate (h(n_header))
@@ -72,7 +70,7 @@ contains
    &  h, si, sr)
 !
     do i = 1, n_target
-      print'(5(F12.3))', sr(:4, i), EXP(sr(5, i))
+      print'(F9.6,4(F9.1),F16.9)', sr(:5, i), EXP(sr(6, i))
     end do
     call clear_molecule()
 !
