@@ -1,7 +1,7 @@
 !| mod_bb_list <br>
 !
 module mod_bb_list
-  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use mod_params, only: IK, RK, ONE => RONE, HALF => RHALF, ZERO => RZERO, RHUGE
   use blas_lapack_interface, only: DD
   use mod_bb_block
   use mod_rotation
@@ -175,42 +175,50 @@ contains
     real(RK), intent(inout)           :: W(*)
     !! work array
     real(RK), intent(in), optional    :: cutoff
-    !! The search ends when lowerbound is determined to be greater than to cutoff.
+    !! The search ends when lowerbound is determined
+    !  to be greater than to cutoff (in RMSD).
     real(RK), intent(in), optional    :: difflim
-    !! The search ends when the difference between the lower and upper bounds is less than difflim.
+    !! The search ends when the difference
+    !  between the lower and upper bounds is less than difflim.
     integer(IK), intent(in), optional :: maxeval
-    !! The search ends when ncount exceeds maxiter. If maxeval=0, run only once, and early return.
+    !! The search ends when ncount exceeds maxiter.
+    !  If maxeval=0, run only once, and early return.
     real(RK)                          :: coff, diff, nlim
     integer(IK)                       :: pq, ps, pw
     associate ( &
    &   b => s(bb_list_INDEX_TO_SPEACIES), &
+   &   au => W(bb_list_INDEX_TO_AUTOCORR), &
    &   ub => W(bb_list_INDEX_TO_UPPERBOUND), &
    &   lb => W(bb_list_INDEX_TO_LOWERBOUND), &
    &   nv => W(bb_list_INDEX_TO_N_EVAL) &
    &  )
-!&<
-      b  = MAX(b, 1)
+!
+      b = MAX(b, 1)
       pq = q_pointer(q)
       ps = s_pointer(q)
       pw = w_pointer(q)
-      coff = RHUGE ; if (PRESENT(cutoff))  coff = MIN(coff, cutoff)
-      diff = ZERO  ; if (PRESENT(difflim)) diff = MAX(diff, difflim)
-!&>
+      if (PRESENT(cutoff)) then
+        coff = MIN(ZERO, HALF * (cutoff**2 * bb_list_n_atoms(q) - au))
+      else
+        coff = RHUGE
+      end if
+      if (PRESENT(difflim)) then
+        diff = MAX(ZERO, difflim)
+      else
+        diff = ZERO
+      end if
+!
       if (PRESENT(maxeval)) then
         if (maxeval == 0) then
-          ! run only once, and early return.
-          call run_bb(q(pq), q(ps), q(pw), q, s, W)
+          call run_bb(q(pq), q(ps), q(pw), q, s, W) ! run only once, and early return.
           return
         elseif (maxeval > 0) then
-          ! finite run
-          nlim = real(maxeval, RK)
+          nlim = real(maxeval, RK)  ! finite run
         else
-          ! unlimited run if maxeval < 0
-          nlim = RHUGE
+          nlim = RHUGE ! unlimited run if maxeval < 0
         end if
       else
-        ! unlimited run
-        nlim = RHUGE
+        nlim = RHUGE ! unlimited run
       end if
 !
       call update_lowerbound(b, q(pq), q(ps), q(pw), q, s, W)
@@ -231,7 +239,6 @@ contains
     associate ( &
    &   n => q(bb_list_NUMBER_OF_SPEACIES), &
    &   b => s(bb_list_INDEX_TO_SPEACIES), &
-   &   au => W(bb_list_INDEX_TO_AUTOCORR), &
    &   ub => W(bb_list_INDEX_TO_UPPERBOUND), &
    &   lb => W(bb_list_INDEX_TO_LOWERBOUND), &
    &   nv => W(bb_list_INDEX_TO_N_EVAL) &
