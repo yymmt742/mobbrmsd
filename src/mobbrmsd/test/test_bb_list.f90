@@ -43,6 +43,12 @@ program main
   call u%init('test bb_list for {(n,M,S)}={(24,3,1), (24,4,1)}')
   call test2(24, 3, 1, [0], 24, 4, 1, [0])
 !
+  call u%init('test bb_list iterative for {(n,M,S)}={(5,1,1), (5,4,1)}')
+  call test3(5, 1, 1, [0], 5, 4, 1, [0])
+  call u%init('test bb_list iterative for {(n,M,S)}={(4,2,1), (5,2,1)}')
+  call test3(4, 2, 1, [0], 5, 2, 1, [0])
+  call u%init('test bb_list iterative for {(n,M,S)}={(8,3,1), (4,1,2)}')
+  call test3(8, 3, 1, [0], 4, 1, 1, [0])
   call u%init('test bb_list iterative for {(n,M,S)}={(24,3,1), (24,4,1)}')
   call test3(24, 3, 1, [0], 24, 4, 1, [0])
 !
@@ -72,7 +78,7 @@ contains
       sd = w(bb_list_INDEX_TO_AUTOCORR) + w(bb_list_INDEX_TO_UPPERBOUND) + w(bb_list_INDEX_TO_UPPERBOUND)
       brute = brute_sd(n, m, s, sym, X, Y)
       call u%assert_almost_equal(sd, brute, 'minrmsd value')
-      Y = 0.8 * Y + 0.2 * sample(n, m)
+      Y = 0.5 * Y + 0.5 * sample(n, m)
     end do
 !
   end subroutine test1
@@ -142,8 +148,10 @@ contains
       real(RK) :: W(bb_list_memsize(b%q)), R(D, D), rxz
       call bb_list_setup(b%q, b%s, [X1, X2], [Y1, Y2], W)
       do while (.not. bb_list_is_finished(b%q, b%s))
+        print '(3f9.3)', w(bb_list_INDEX_TO_N_EVAL), &
+       &                 w(bb_list_INDEX_TO_UPPERBOUND), &
+       &                 w(bb_list_INDEX_TO_LOWERBOUND)
         call bb_list_run(b%q, b%s, W, maxeval=0)
-        print *, w(bb_list_INDEX_TO_UPPERBOUND), w(bb_list_INDEX_TO_LOWERBOUND)
       end do
       sd = w(bb_list_INDEX_TO_AUTOCORR) + w(bb_list_INDEX_TO_UPPERBOUND) + w(bb_list_INDEX_TO_UPPERBOUND)
       brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
