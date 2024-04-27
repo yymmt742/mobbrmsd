@@ -497,7 +497,7 @@ contains
     !! main memory
     real(RK)                :: res
     associate (qtree => q(tq), wtree => q(tx))
-      res = tree_lowest_value(q(qtree), s(stree), ND, W(wtree))
+      res = tree_lowest_value(q(qtree), s(stree), ND, W(wtree)) + W(INDEX_TO_OFFSET)
     end associate
   end function bb_block_lowest_value
 !

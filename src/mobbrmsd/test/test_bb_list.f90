@@ -43,6 +43,9 @@ program main
   call u%init('test bb_list for {(n,M,S)}={(24,3,1), (24,4,1)}')
   call test2(24, 3, 1, [0], 24, 4, 1, [0])
 !
+  call u%init('test bb_list iterative for {(n,M,S)}={(24,3,1), (24,4,1)}')
+  call test3(24, 3, 1, [0], 24, 4, 1, [0])
+!
   call u%finish_and_terminate()
 !
 contains
@@ -115,6 +118,44 @@ contains
     end block
 !
   end subroutine test2
+!
+  subroutine test3(n1, m1, s1, sym1, n2, m2, s2, sym2)
+    integer, intent(in)   :: n1, m1, s1, sym1(n1 * (s1 - 1))
+    integer, intent(in)   :: n2, m2, s2, sym2(n2 * (s2 - 1))
+    type(bb_block)        :: blk(2)
+    type(bb_list)         :: b
+    real(RK)              :: sd, brute
+    real(RK)              :: X1(D, n1, m1), X2(D, n2, m2)
+    real(RK)              :: Y1(D, n1, m1), Y2(D, n2, m2)
+    real(RK)              :: Z(D, n1 * m1 + n2 * m2)
+!
+    blk(1) = bb_block(n1, m1, sym=RESHAPE(sym1, [n1, s1 - 1]))
+    blk(2) = bb_block(n2, m2, sym=RESHAPE(sym2, [n2, s2 - 1]))
+    b = bb_list(blk)
+!
+    X1 = sample(n1, m1)
+    X2 = sample(n2, m2)
+    Y1 = sample(n1, m1)
+    Y2 = sample(n2, m2)
+!
+    block
+      real(RK) :: W(bb_list_memsize(b%q)), R(D, D), rxz
+      call bb_list_setup(b%q, b%s, [X1, X2], [Y1, Y2], W)
+      do while (.not. bb_list_is_finished(b%q, b%s))
+        call bb_list_run(b%q, b%s, W, maxeval=0)
+        print *, w(bb_list_INDEX_TO_UPPERBOUND), w(bb_list_INDEX_TO_LOWERBOUND)
+      end do
+      sd = w(bb_list_INDEX_TO_AUTOCORR) + w(bb_list_INDEX_TO_UPPERBOUND) + w(bb_list_INDEX_TO_UPPERBOUND)
+      brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
+      call u%assert_almost_equal(sd, brute, 'minrmsd value       ')
+      Z = RESHAPE([Y1, Y2], SHAPE(Z))
+      call bb_list_swap_y(b%q, b%s, Z)
+      call bb_list_rotation_matrix(b%q, b%s, W, R)
+      rxz = SUM(([X1, X2] - [MATMUL(TRANSPOSE(R), Z)])**2)
+      call u%assert_almost_equal(sd, rxz, 'swaped sd vs rotmat ')
+    end block
+!
+  end subroutine test3
 !
 end program main
 
