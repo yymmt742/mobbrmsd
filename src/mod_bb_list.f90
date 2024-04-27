@@ -1,7 +1,7 @@
 !| mod_bb_list <br>
 !
 module mod_bb_list
-  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
+  use mod_params, only: IK, RK, ONE => RONE, HALF => RHALF, ZERO => RZERO, RHUGE
   use blas_lapack_interface, only: DD
   use mod_bb_block
   use mod_rotation
@@ -53,36 +53,6 @@ module mod_bb_list
   end interface bb_list
 !
 contains
-!
-! pure function n_block(q) result(res)
-!   integer(IK), intent(in) :: q(*)
-!   integer(IK)             :: res
-!   res = q(bb_list_NUMBER_OF_SPEACIES)
-! end function n_block
-!
-  pure function s_pointer(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    integer(IK)             :: res
-    res = header_size + q(bb_list_NUMBER_OF_SPEACIES) + 1
-  end function s_pointer
-!
-  pure function w_pointer(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    integer(IK)             :: res
-    res = header_size + 2 * q(bb_list_NUMBER_OF_SPEACIES) + 1
-  end function w_pointer
-!
-  pure function x_pointer(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    integer(IK)             :: res
-    res = header_size + 3 * q(bb_list_NUMBER_OF_SPEACIES) + 1
-  end function x_pointer
-!
-  pure function q_pointer(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    integer(IK)             :: res
-    res = header_size + 1
-  end function q_pointer
 !
 !| generate node instance
   pure function bb_list_new(blk) result(res)
@@ -143,49 +113,8 @@ contains
     end associate
   end function bb_list_memsize
 !
-!| Returns number of molecular blocks.
-  pure function bb_list_n_block(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    !! bb_block.
-    integer(IK)             :: res
-    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
-      res = n_block
-    end associate
-  end function bb_list_n_block
-!
-!| Returns number of total atoms.
-  pure function bb_list_n_atoms(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    !! bb_block.
-    integer(IK)             :: res, i, j
-    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
-      res = 0
-      j = q_pointer(q)
-      do i = 1, n_block
-        res = res + bb_block_natm(q(q(j)))
-        j = j + 1
-      end do
-    end associate
-  end function bb_list_n_atoms
-!
-!| Returns the logarithm of the total number of nodes.
-  pure function bb_list_log_n_nodes(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    !! bb_block.
-    integer(IK)             :: i, j
-    real(RK)                :: res
-    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
-      res = ZERO
-      j = q_pointer(q)
-      do i = 1, n_block
-        res = res + bb_block_log_ncomb(q(q(j)))
-        j = j + 1
-      end do
-    end associate
-  end function bb_list_log_n_nodes
-!
 !| Setup
-  subroutine bb_list_setup(q, s, X, Y, W)
+  pure subroutine bb_list_setup(q, s, X, Y, W)
     integer(IK), intent(in)    :: q(*)
     !! header
     integer(IK), intent(inout) :: s(*)
@@ -216,13 +145,15 @@ contains
       pw = w_pointer(q)
       pq = q_pointer(q)
 !
-      do i = 0, n_block - 1
-        print *, 'setup list', i, n_block
+      do concurrent(i=0:n_block - 1)
         call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
       end do
-!     do concurrent(i=0:n_block - 1)
-!       call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
-!     end do
+!
+      ac = ZERO
+      do i = n_block - 1, 0, -1
+        call bb_block_set_ub_offset(W(q(pw + i)), ac)
+        ac = ac + bb_block_lowerbound(W(q(pw + i)))
+      end do
       ac = ZERO
       do i = 0, n_block - 1
         ac = ac + bb_block_autocorr(q(q(pq + i)), W(q(pw + i)))
@@ -236,7 +167,7 @@ contains
   end subroutine bb_list_setup
 !
 !| run branch and bound
-  subroutine bb_list_run(q, s, W, cutoff, difflim, maxeval)
+  pure subroutine bb_list_run(q, s, W, cutoff, difflim, maxeval)
     integer(IK), intent(in)           :: q(*)
     !! header
     integer(IK), intent(inout)        :: s(*)
@@ -244,42 +175,50 @@ contains
     real(RK), intent(inout)           :: W(*)
     !! work array
     real(RK), intent(in), optional    :: cutoff
-    !! The search ends when lowerbound is determined to be greater than to cutoff.
+    !! The search ends when lowerbound is determined
+    !  to be greater than to cutoff (in RMSD).
     real(RK), intent(in), optional    :: difflim
-    !! The search ends when the difference between the lower and upper bounds is less than difflim.
+    !! The search ends when the difference
+    !  between the lower and upper bounds is less than difflim.
     integer(IK), intent(in), optional :: maxeval
-    !! The search ends when ncount exceeds maxiter. If maxeval=0, run only once, and early return.
+    !! The search ends when ncount exceeds maxiter.
+    !  If maxeval=0, run only once, and early return.
     real(RK)                          :: coff, diff, nlim
     integer(IK)                       :: pq, ps, pw
     associate ( &
    &   b => s(bb_list_INDEX_TO_SPEACIES), &
+   &   au => W(bb_list_INDEX_TO_AUTOCORR), &
    &   ub => W(bb_list_INDEX_TO_UPPERBOUND), &
    &   lb => W(bb_list_INDEX_TO_LOWERBOUND), &
    &   nv => W(bb_list_INDEX_TO_N_EVAL) &
    &  )
-!&<
+!
       b = MAX(b, 1)
       pq = q_pointer(q)
       ps = s_pointer(q)
       pw = w_pointer(q)
-      coff = RHUGE ; if (PRESENT(cutoff))  coff = MIN(coff, cutoff)
-      diff = ZERO  ; if (PRESENT(difflim)) diff = MAX(diff, difflim)
-!&>
+      if (PRESENT(cutoff)) then
+        coff = MIN(ZERO, HALF * (cutoff**2 * bb_list_n_atoms(q) - au))
+      else
+        coff = RHUGE
+      end if
+      if (PRESENT(difflim)) then
+        diff = MAX(ZERO, difflim)
+      else
+        diff = ZERO
+      end if
+!
       if (PRESENT(maxeval)) then
         if (maxeval == 0) then
-          ! run only once, and early return.
-          call run_bb(q(pq), q(ps), q(pw), q, s, W)
+          call run_bb(q(pq), q(ps), q(pw), q, s, W) ! run only once, and early return.
           return
         elseif (maxeval > 0) then
-          ! finite run
-          nlim = real(maxeval, RK)
+          nlim = real(maxeval, RK)  ! finite run
         else
-          ! unlimited run if maxeval < 0
-          nlim = RHUGE
+          nlim = RHUGE ! unlimited run if maxeval < 0
         end if
       else
-        ! unlimited run
-        nlim = RHUGE
+        nlim = RHUGE ! unlimited run
       end if
 !
       call update_lowerbound(b, q(pq), q(ps), q(pw), q, s, W)
@@ -293,15 +232,13 @@ contains
     end associate
   end subroutine bb_list_run
 !
-  subroutine run_bb(pq, ps, pw, q, s, W)
+  pure subroutine run_bb(pq, ps, pw, q, s, W)
     integer(IK), intent(in)    :: pq(*), ps(*), pw(*), q(*)
     integer(IK), intent(inout) :: s(*)
     real(RK), intent(inout)    :: W(*)
-    real(RK) :: tmp
     associate ( &
    &   n => q(bb_list_NUMBER_OF_SPEACIES), &
    &   b => s(bb_list_INDEX_TO_SPEACIES), &
-   &   au => W(bb_list_INDEX_TO_AUTOCORR), &
    &   ub => W(bb_list_INDEX_TO_UPPERBOUND), &
    &   lb => W(bb_list_INDEX_TO_LOWERBOUND), &
    &   nv => W(bb_list_INDEX_TO_N_EVAL) &
@@ -309,12 +246,8 @@ contains
 !
 !     Expansion process
 !
-      print *, 'runbb'
-      tmp = 999D0
       do
-        print *, 'expand    ', b, bb_block_current_level(s(ps(b)))
         call bb_block_expand(ub, q(pq(b)), s(ps(b)), W(pw(b)))
-        !call bb_block_expand(tmp, q(pq(b)), s(ps(b)), W(pw(b)))
         if (b == n .or. bb_block_tree_is_empty(q(pq(b)), s(ps(b)))) exit
         b = b + 1
         call bb_block_inheritance(q(pq(b)), s(ps(b)), W(pw(b)), &
@@ -323,9 +256,7 @@ contains
 !
 !     Update upperbound and state
 !
-      print *, b, bb_block_is_bottom(q(pq(b)), s(ps(b)))
-      if (bb_block_is_bottom(q(pq(b)), s(ps(b))) .and.&
-     &    b == n) then
+      if (bb_block_is_bottom(q(pq(b)), s(ps(b))) .and. b == n) then
         block
           real(RK) :: cv
           cv = bb_block_current_value(q(pq(b)), s(ps(b)), W(pw(b)))
@@ -333,7 +264,6 @@ contains
             ub = cv
             call save_state(pq, ps, q, s)
           end if
-          print *, au + ub + ub, au + cv + cv
         end block
       end if
 !
@@ -344,17 +274,10 @@ contains
 !     Closure process
 !
       do
-        !  call bb_block_closure(ub, q(pq(b)), s(ps(b)), W(pw(b)))
-        !  print *, 'closure    ', b, bb_block_current_level(s(ps(b))), &
-        ! &  bb_block_is_left(ub, q(pq(b)), s(ps(b)), W(pw(b)))
-        !  if (b == 1 .or. bb_block_is_left(ub, q(pq(b)), s(ps(b)), W(pw(b)))) exit
-        call bb_block_closure(tmp, q(pq(b)), s(ps(b)), W(pw(b)))
-        print *, 'closure    ', b, bb_block_current_level(s(ps(b))), &
-         &  bb_block_is_left(ub, q(pq(b)), s(ps(b)), W(pw(b)))
-        if (b == 1 .or. bb_block_is_left(tmp, q(pq(b)), s(ps(b)), W(pw(b)))) exit
+        call bb_block_closure(ub, q(pq(b)), s(ps(b)), W(pw(b)))
+        if (b == 1 .or. bb_block_is_left(ub, q(pq(b)), s(ps(b)), W(pw(b)))) exit
         b = b - 1
       end do
-      print *, 'closure end', b, bb_block_current_level(s(ps(b)))
 !
       block
         integer(IK) :: i
@@ -366,7 +289,7 @@ contains
     end associate
   end subroutine run_bb
 !
-  subroutine update_lowerbound(n, pq, ps, pw, q, s, W)
+  pure subroutine update_lowerbound(n, pq, ps, pw, q, s, W)
     integer(IK), intent(in)    :: n, pq(n), ps(n), pw(n)
     integer(IK), intent(in)    :: q(*), s(*)
     real(RK), intent(inout)    :: W(*)
@@ -450,6 +373,47 @@ contains
     end associate
   end subroutine bb_list_rotation_matrix
 !
+!| Returns number of molecular blocks.
+  pure function bb_list_n_block(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! bb_block.
+    integer(IK)             :: res
+    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
+      res = n_block
+    end associate
+  end function bb_list_n_block
+!
+!| Returns number of total atoms.
+  pure function bb_list_n_atoms(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! bb_block.
+    integer(IK)             :: res, i, j
+    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
+      res = 0
+      j = q_pointer(q)
+      do i = 1, n_block
+        res = res + bb_block_natm(q(q(j)))
+        j = j + 1
+      end do
+    end associate
+  end function bb_list_n_atoms
+!
+!| Returns the logarithm of the total number of nodes.
+  pure function bb_list_log_n_nodes(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! bb_block.
+    integer(IK)             :: i, j
+    real(RK)                :: res
+    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
+      res = ZERO
+      j = q_pointer(q)
+      do i = 1, n_block
+        res = res + bb_block_log_ncomb(q(q(j)))
+        j = j + 1
+      end do
+    end associate
+  end function bb_list_log_n_nodes
+!
 !| Returns bb is finished.
   pure function bb_list_is_finished(q, s) result(res)
     integer(IK), intent(in) :: q(*)
@@ -463,7 +427,7 @@ contains
       res = sb == 1; if (.not. res) return
       bq = q(q_pointer(q) + sb - 1)
       bs = q(s_pointer(q) + sb - 1)
-      res = bb_block_tree_is_empty(q(bq), s(bs))
+      res = bb_block_tree_is_finished(q(bq), s(bs))
     end associate
   end function bb_list_is_finished
 !
@@ -472,6 +436,32 @@ contains
     type(bb_list), intent(inout) :: this
     if (ALLOCATED(this%q)) deallocate (this%q)
   end subroutine bb_list_destroy
+!
+!  ---
+!
+  pure function s_pointer(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    integer(IK)             :: res
+    res = header_size + q(bb_list_NUMBER_OF_SPEACIES) + 1
+  end function s_pointer
+!
+  pure function w_pointer(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    integer(IK)             :: res
+    res = header_size + 2 * q(bb_list_NUMBER_OF_SPEACIES) + 1
+  end function w_pointer
+!
+  pure function x_pointer(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    integer(IK)             :: res
+    res = header_size + 3 * q(bb_list_NUMBER_OF_SPEACIES) + 1
+  end function x_pointer
+!
+  pure function q_pointer(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    integer(IK)             :: res
+    res = header_size + 1
+  end function q_pointer
 !
 end module mod_bb_list
 

@@ -35,10 +35,13 @@ module mod_bb_block
   public :: bb_block_closure
   public :: bb_block_is_left
   public :: bb_block_tree_is_empty
+  public :: bb_block_tree_is_finished
   public :: bb_block_is_bottom
   public :: bb_block_current_level
   public :: bb_block_current_value
   public :: bb_block_lowest_value
+  public :: bb_block_lowerbound
+  public :: bb_block_set_ub_offset
   public :: bb_block_autocorr
   public :: bb_block_log_ncomb
   public :: bb_block_evaluation_count
@@ -67,11 +70,12 @@ module mod_bb_block
   integer(IK), parameter :: fw = 7
   !! pointer to f_matrix work memory
 !
-  integer(IK), parameter :: header_memsize = 1
-!
+  integer(IK), parameter :: header_memsize = 3
   integer(IK), parameter :: INDEX_TO_N_EVAL = 1
+  integer(IK), parameter :: INDEX_TO_LBOUND = 2
+  integer(IK), parameter :: INDEX_TO_OFFSET = 3
   !! pointer to evaluation count (fixed)
-  integer(IK), parameter :: wcov = 2
+  integer(IK), parameter :: wcov = 4
 !
   !! pointer to c_matrix array (fixed)
   integer(IK), parameter :: stree = 1
@@ -154,7 +158,6 @@ contains
     swrk = sdmin_worksize()
 !
     buf = bb_block_memsize(q)
-!
     res = 0
     do p = 1, nmol
       hwrk = Hungarian_worksize(p, p)
@@ -162,7 +165,7 @@ contains
       res = MAX(res, buf + tmp)
       buf = buf - p * nsym * ND
     end do
-    res = MAX(res, buf + f_matrix_worksize(q(q(fq))))
+    res = MAX(res, buf + MAX(Hungarian_worksize(nmol, nmol), f_matrix_worksize(q(q(fq)))))
     buf = buf - f_matrix_memsize(q(q(fq)))
     res = MAX(res, buf + c_matrix_worksize(q(q(cq))))
     res = res - bb_block_memsize(q)
@@ -194,7 +197,7 @@ contains
   end function bb_block_molsize
 !
 !| Setup C matrix and F matrix in root node.
-  subroutine bb_block_setup(q, X, Y, s, W, zfill)
+  pure subroutine bb_block_setup(q, X, Y, s, W, zfill)
     integer(IK), intent(in)    :: q(*)
     !! integer array
     real(RK), intent(in)       :: X(*)
@@ -207,8 +210,11 @@ contains
     !! work integer array
     logical, intent(in)        :: zfill
     !! if true, the root node is filled by zero.
+    integer(IK)                :: nmol
     associate ( &
    &  neval => W(INDEX_TO_N_EVAL), &
+   &  lboud => W(INDEX_TO_LBOUND), &
+   &  ubofs => W(INDEX_TO_OFFSET), &
    &  qtree => q(tq), &
    &  qcov => q(cq), &
    &  qfre => q(fq), &
@@ -217,25 +223,27 @@ contains
    &  cwork => q(cw), &
    &  fwork => q(fw) &
    &  )
+      nmol = mol_block_nmol(q(qblck))
       neval = ZERO
       call tree_reset(q(qtree), s(stree))
       call c_matrix_eval(q(qcov), q(qblck), X, Y, W(wcov), W(cwork))
       call f_matrix_eval(q(qfre), q(qcov), W(wcov), W(wfre), W(fwork))
+      call Hungarian(nmol, nmol, W(wfre), W(fwork))
+      lboud = W(fwork)
+      ubofs = ZERO
 !
       if (.not. zfill) return
 !
       block
-        integer(IK) :: nmol
         real(RK)    :: ZEROS(ND)
         ZEROS = ZERO
-        nmol = mol_block_nmol(q(qblck))
         call evaluate_nodes(nmol, q(qcov), q(qtree), s(stree), W(wcov), W(wfre), ZEROS, W(wtree), neval)
       end block
     end associate
   end subroutine bb_block_setup
 !
 !| Expands the latest node of the parent block to the top-level queue of the child block.
-  subroutine bb_block_inheritance(q, s, W, p, r, Z)
+  pure subroutine bb_block_inheritance(q, s, W, p, r, Z)
     integer(IK), intent(in)    :: q(*)
     !! work integer array
     integer(IK), intent(inout) :: s(*)
@@ -270,7 +278,7 @@ contains
   end subroutine bb_block_inheritance
 !
 !| Expand top node in queue.
-  subroutine bb_block_expand(UB, q, s, W)
+  pure subroutine bb_block_expand(UB, q, s, W)
     real(RK), intent(in)       :: UB
     !! upper bound
     integer(IK), intent(in)    :: q(*)
@@ -279,24 +287,22 @@ contains
     !! state
     real(RK), intent(inout)    :: W(*)
     !! main memory
+    real(RK)                   :: ubval
     integer(IK)                :: nmol
     integer(IK)                :: pp ! previous current node
     associate ( &
    &  neval => W(INDEX_TO_N_EVAL), &
+   &  ubofs => W(INDEX_TO_OFFSET), &
    &  qtree => q(tq),&
    &  wtree => q(tx),&
    &  qcov => q(cq), &
    &  wfrx => q(fx)&
    &  )
       nmol = mol_block_nmol(q(qblck))
+      ubval = UB - ubofs
       block
         do
-          call tree_select_top_node(q(q(tq)), s(stree), ND, UB, W(wtree))
-          print'(A,2L4,*(I4))', 'select', &
-        & tree_queue_is_bottom(q(qtree), s(stree)), &
-        & tree_queue_is_empty(q(qtree), s(stree)), &
-        & tree_current_level(s(stree)), &
-        & tree_current_sequence(q(qtree), s(stree))
+          call tree_select_top_node(q(q(tq)), s(stree), ND, ubval, W(wtree))
           if (tree_queue_is_bottom(q(qtree), s(stree)) &
        & .or. tree_queue_is_empty(q(qtree), s(stree))) exit
           pp = q(tx) + (tree_current_pointer(q(qtree), s(stree)) - 1) * ND
@@ -316,10 +322,16 @@ contains
     integer(IK), intent(inout) :: s(*)
     !! work integer array
     real(RK), intent(in)       :: W(*)
+    real(RK)                   :: ubval
     !! main memory
-    associate (qtree => q(tq), wtree => q(tx))
+    associate (&
+   &  ubofs => W(INDEX_TO_OFFSET), &
+   &  qtree => q(tq), &
+   &  wtree => q(tx) &
+   &  )
+      ubval = UB - ubofs
       do
-        if (tree_queue_is_left(q(qtree), s(stree), ND, UB, W(wtree)) &
+        if (tree_queue_is_left(q(qtree), s(stree), ND, ubval, W(wtree)) &
      & .or. tree_queue_is_root(q(qtree), s(stree))) exit
         call tree_leave(q(qtree), s(stree))
       end do
@@ -327,7 +339,7 @@ contains
   end subroutine bb_block_closure
 !
 !| Evaluate nodes in tree_current_level.
-  subroutine evaluate_nodes(nmol, qcov, q, s, C, F, Z, W, neval)
+  pure subroutine evaluate_nodes(nmol, qcov, q, s, C, F, Z, W, neval)
     integer(IK), intent(in) :: nmol, qcov(*), q(*), s(*)
     real(RK), intent(in)    :: C(*), F(*), Z(ND)
     real(RK), intent(inout) :: W(ND, *), neval
@@ -349,7 +361,6 @@ contains
      &                    C, F, Z, W(1, px), W(1, pw), W(2, pw))
       pw = pw + nsym
     end do
-    print'(*(f9.3))', W(1, px:px + nper * nsym - 1)
 !
     neval = neval + real(nsym * nper, RK)
   end subroutine evaluate_nodes
@@ -402,9 +413,15 @@ contains
     !! work integer array
     real(RK), intent(in)    :: W(*)
     !! main memory
+    real(RK)                :: ubval
     logical                 :: res
-    associate (qtree => q(tq), wtree => q(tx))
-      res = tree_queue_is_left(q(qtree), s(stree), ND, UB, W(wtree))
+    associate ( &
+   &  ubofs => W(INDEX_TO_OFFSET), &
+   &  qtree => q(tq), &
+   &  wtree => q(tx) &
+   &  )
+      ubval = UB - ubofs
+      res = tree_queue_is_left(q(qtree), s(stree), ND, ubval, W(wtree))
     end associate
   end function bb_block_is_left
 !
@@ -415,9 +432,23 @@ contains
     integer(IK), intent(in) :: s(*)
     !! work integer array
     logical                 :: res
-    res = tree_queue_is_empty(q(q(tq)), s(stree)) &
-   &.and. tree_queue_is_root(q(q(tq)), s(stree))
+    associate (qtree => q(tq))
+      res = tree_queue_is_empty(q(qtree), s(stree))
+    end associate
   end function bb_block_tree_is_empty
+!
+!| Returns true when tree is finished
+  pure function bb_block_tree_is_finished(q, s) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! integer array
+    integer(IK), intent(in) :: s(*)
+    !! work integer array
+    logical                 :: res
+    associate (qtree => q(tq))
+      res = tree_queue_is_empty(q(qtree), s(stree)) &
+     &.and. tree_queue_is_root(q(qtree), s(stree))
+    end associate
+  end function bb_block_tree_is_finished
 !
 !| Returns true when tree is bottom
   pure function bb_block_is_bottom(q, s) result(res)
@@ -426,8 +457,10 @@ contains
     integer(IK), intent(in) :: s(*)
     !! work integer array
     logical                 :: res
-    res = tree_queue_is_selected(q(q(tq)), s(stree)) &
-   &.and. tree_queue_is_bottom(q(q(tq)), s(stree))
+    associate (qtree => q(tq))
+      res = tree_queue_is_selected(q(qtree), s(stree)) &
+     &.and. tree_queue_is_bottom(q(qtree), s(stree))
+    end associate
   end function bb_block_is_bottom
 !
 !| Returns current level.
@@ -467,6 +500,23 @@ contains
       res = tree_lowest_value(q(qtree), s(stree), ND, W(wtree))
     end associate
   end function bb_block_lowest_value
+!
+!| Set ub offset value
+  pure subroutine bb_block_set_ub_offset(W, ubofs)
+    real(RK), intent(inout) :: W(*)
+    !! main memory
+    real(RK), intent(in)    :: ubofs
+    !! main memory
+    W(INDEX_TO_OFFSET) = ubofs
+  end subroutine bb_block_set_ub_offset
+!
+!| Returns the minimum value of the surviving nodes, excluding the current value.
+  pure function bb_block_lowerbound(W) result(res)
+    real(RK), intent(in)    :: W(*)
+    !! main memory
+    real(RK)                :: res
+    res = W(INDEX_TO_LBOUND)
+  end function bb_block_lowerbound
 !
 !| Returns the minimum value of the surviving nodes, excluding the current value.
   pure function bb_block_evaluation_count(W) result(res)

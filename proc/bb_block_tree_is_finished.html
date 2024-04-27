@@ -8,7 +8,7 @@
     <meta name="author" content="yymmt742" >
     <link rel="icon" href="../favicon.png">
 
-    <title>bb_list_swap_y &ndash; mobbrmsd</title>
+    <title>bb_block_tree_is_finished &ndash; mobbrmsd</title>
 
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
@@ -76,8 +76,8 @@
 
     <div class="container">
   <div class="row">
-    <h1>bb_list_swap_y
-      <small>Subroutine</small>
+    <h1>bb_block_tree_is_finished
+      <small>Function</small>
     </h1>
     <div class="row">
   <div class="col-lg-12">
@@ -87,14 +87,14 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 0.7% of total for procedures.">15 statements</a>
+    title=" 0.4% of total for procedures.">8 statements</a>
      </li> 
-    <li><i class="fa fa-code"></i><a href="../src/mod_bb_list.f90"> Source File</a></li>
+    <li><i class="fa fa-code"></i><a href="../src/mod_bb_block.f90"> Source File</a></li>
   </ul>
   <ol class="breadcrumb in-well text-right">
-     <li><a href='../sourcefile/mod_bb_list.f90.html'>mod_bb_list.f90</a></li>
-     <li><a href='../module/mod_bb_list.html'>mod_bb_list</a></li>
-     <li class="active">bb_list_swap_y</li>
+     <li><a href='../sourcefile/mod_bb_block.f90.html'>mod_bb_block.f90</a></li>
+     <li><a href='../module/mod_bb_block.html'>mod_bb_block</a></li>
+     <li class="active">bb_block_tree_is_finished</li>
   </ol>
 </div>
 </div>
@@ -119,36 +119,32 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure subroutine bb_list_swap_y(q, s, Y)</h2>
+    <h2>public pure function bb_block_tree_is_finished(q, s) result(res)</h2>
     
 
-    <p>Swap target coordinate.</p>
+    <p>Returns true when tree is finished</p>
 
     <h3>Arguments</h3>
       <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-q~36"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-q~80"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>q</strong>(*)</td><td><p>header</p></td>
+  <td><strong>q</strong>(*)</td><td><p>integer array</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-s~13"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-s~45"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>s</strong>(*)</td><td><p>state</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-y~3"></span>real(kind=RK),</td>
-<td>intent(inout)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>Y</strong>(*)</td><td><p>target coordinate</p></td>
+  <td><strong>s</strong>(*)</td><td><p>work integer array</p></td>
 </tr>
 </tbody>
 </table>
 
+   <h3>Return Value <small><span class="anchor" id="variable-res~80"></span>logical</small></h3>
+    
     <br>
 
     <section class="visible-xs visible-sm hidden-md">
