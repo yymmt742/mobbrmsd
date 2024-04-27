@@ -97,28 +97,28 @@ contains
    &  )
       nb = SIZE(blk)
       sb = 0
-      nstat = SUM([(bb_block_nmol(blk(i)%q), i=1, q(nb))])
+      nstat = SUM([(bb_block_nmol(blk(i)%q), i=1, nb)])
 !
-      j = header_size + 4 * q(nb) + 1
-      do i = 1, q(nb)
+      j = header_size + 4 * nb + 1
+      do i = 1, nb
         pq(i) = j
         j = j + SIZE(blk(i)%q)
       end do
 !
       j = header_sttsize + nstat + 1
-      do i = 1, q(nb)
+      do i = 1, nb
         ps(i) = j
         j = j + SIZE(blk(i)%s)
       end do
 !
       j = header_memsize + 1
-      do i = 1, q(nb)
+      do i = 1, nb
         pw(i) = j
         j = j + bb_block_memsize(blk(i)%q) + bb_block_worksize(blk(i)%q)
       end do
 !
       j = 1
-      do i = 1, q(nb)
+      do i = 1, nb
         px(i) = j
         j = j + bb_block_molsize(blk(i)%q)
       end do
@@ -185,7 +185,7 @@ contains
   end function bb_list_log_n_nodes
 !
 !| Setup
-  pure subroutine bb_list_setup(q, s, X, Y, W)
+  subroutine bb_list_setup(q, s, X, Y, W)
     integer(IK), intent(in)    :: q(*)
     !! header
     integer(IK), intent(inout) :: s(*)
@@ -199,12 +199,12 @@ contains
     integer(IK)                :: i, ps, pq, px, pw
     associate ( &
        n_block => q(bb_list_NUMBER_OF_SPEACIES), &
-   &   SB => s(bb_list_INDEX_TO_SPEACIES), &
-   &   AC => W(bb_list_INDEX_TO_AUTOCORR), &
-   &   UB => W(bb_list_INDEX_TO_UPPERBOUND), &
-   &   LB => W(bb_list_INDEX_TO_LOWERBOUND), &
-   &   NV => W(bb_list_INDEX_TO_N_EVAL), &
-   &   CM => W(bb_list_INDEX_TO_LOG_N_COMB) &
+   &   sb => s(bb_list_INDEX_TO_SPEACIES), &
+   &   ac => W(bb_list_INDEX_TO_AUTOCORR), &
+   &   ub => W(bb_list_INDEX_TO_UPPERBOUND), &
+   &   lb => W(bb_list_INDEX_TO_LOWERBOUND), &
+   &   nv => W(bb_list_INDEX_TO_N_EVAL), &
+   &   cm => W(bb_list_INDEX_TO_LOG_N_COMB) &
    &  )
       sb = 0
       ub = RHUGE
@@ -216,9 +216,13 @@ contains
       pw = w_pointer(q)
       pq = q_pointer(q)
 !
-      do concurrent(i=0:n_block - 1)
+      do i = 0, n_block - 1
+        print *, 'setup list', i, n_block
         call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
       end do
+!     do concurrent(i=0:n_block - 1)
+!       call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
+!     end do
       ac = ZERO
       do i = 0, n_block - 1
         ac = ac + bb_block_autocorr(q(q(pq + i)), W(q(pw + i)))
@@ -293,9 +297,11 @@ contains
     integer(IK), intent(in)    :: pq(*), ps(*), pw(*), q(*)
     integer(IK), intent(inout) :: s(*)
     real(RK), intent(inout)    :: W(*)
+    real(RK) :: tmp
     associate ( &
    &   n => q(bb_list_NUMBER_OF_SPEACIES), &
    &   b => s(bb_list_INDEX_TO_SPEACIES), &
+   &   au => W(bb_list_INDEX_TO_AUTOCORR), &
    &   ub => W(bb_list_INDEX_TO_UPPERBOUND), &
    &   lb => W(bb_list_INDEX_TO_LOWERBOUND), &
    &   nv => W(bb_list_INDEX_TO_N_EVAL) &
@@ -303,17 +309,22 @@ contains
 !
 !     Expansion process
 !
+      print *, 'runbb'
+      tmp = 999D0
       do
-        call bb_block_expand(ub, q(pq(b)), s(ps(b)), W(pw(b)))
+        !call bb_block_expand(ub, q(pq(b)), s(ps(b)), W(pw(b)))
+        call bb_block_expand(tmp, q(pq(b)), s(ps(b)), W(pw(b)))
+        print *, 'expand    ', b, bb_block_current_level(s(ps(b)))
         if (b == n .or. bb_block_tree_is_empty(q(pq(b)), s(ps(b)))) exit
         b = b + 1
-        call bb_block_inheritance(ub, q(pq(b)), s(ps(b)), W(pw(b)), &
+        call bb_block_inheritance(q(pq(b)), s(ps(b)), W(pw(b)), &
        &                          q(pq(b - 1)), s(ps(b - 1)), W(pw(b - 1)))
       end do
 !
 !     Update upperbound and state
 !
-      if (bb_block_tree_is_bottom(q(pq(b)), s(ps(b))) .and.&
+      print *, b, bb_block_is_bottom(q(pq(b)), s(ps(b)))
+      if (bb_block_is_bottom(q(pq(b)), s(ps(b))) .and.&
      &    b == n) then
         block
           real(RK) :: cv
@@ -322,6 +333,7 @@ contains
             ub = cv
             call save_state(pq, ps, q, s)
           end if
+          print *, au + ub + ub, au + cv + cv
         end block
       end if
 !
@@ -332,10 +344,17 @@ contains
 !     Closure process
 !
       do
-        call bb_block_closure(ub, q(pq(b)), s(ps(b)), W(pw(b)))
-        if (b == 1 .or. .not. bb_block_tree_is_empty(q(pq(b)), s(ps(b)))) exit
+        !  call bb_block_closure(ub, q(pq(b)), s(ps(b)), W(pw(b)))
+        !  print *, 'closure    ', b, bb_block_current_level(s(ps(b))), &
+        ! &  bb_block_is_left(ub, q(pq(b)), s(ps(b)), W(pw(b)))
+        !  if (b == 1 .or. bb_block_is_left(ub, q(pq(b)), s(ps(b)), W(pw(b)))) exit
+        call bb_block_closure(tmp, q(pq(b)), s(ps(b)), W(pw(b)))
+        print *, 'closure    ', b, bb_block_current_level(s(ps(b))), &
+         &  bb_block_is_left(ub, q(pq(b)), s(ps(b)), W(pw(b)))
+        if (b == 1 .or. bb_block_is_left(tmp, q(pq(b)), s(ps(b)), W(pw(b)))) exit
         b = b - 1
       end do
+      print *, 'closure end', b, bb_block_current_level(s(ps(b)))
 !
       block
         integer(IK) :: i

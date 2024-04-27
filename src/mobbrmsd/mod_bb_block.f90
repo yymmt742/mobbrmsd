@@ -33,8 +33,10 @@ module mod_bb_block
   public :: bb_block_inheritance
   public :: bb_block_expand
   public :: bb_block_closure
+  public :: bb_block_is_left
   public :: bb_block_tree_is_empty
-  public :: bb_block_tree_is_bottom
+  public :: bb_block_is_bottom
+  public :: bb_block_current_level
   public :: bb_block_current_value
   public :: bb_block_lowest_value
   public :: bb_block_autocorr
@@ -192,7 +194,7 @@ contains
   end function bb_block_molsize
 !
 !| Setup C matrix and F matrix in root node.
-  pure subroutine bb_block_setup(q, X, Y, s, W, zfill)
+  subroutine bb_block_setup(q, X, Y, s, W, zfill)
     integer(IK), intent(in)    :: q(*)
     !! integer array
     real(RK), intent(in)       :: X(*)
@@ -233,9 +235,7 @@ contains
   end subroutine bb_block_setup
 !
 !| Expands the latest node of the parent block to the top-level queue of the child block.
-  pure subroutine bb_block_inheritance(UB, q, s, W, p, r, Z)
-    real(RK), intent(in)       :: UB
-    !! upper bound
+  subroutine bb_block_inheritance(q, s, W, p, r, Z)
     integer(IK), intent(in)    :: q(*)
     !! work integer array
     integer(IK), intent(inout) :: s(*)
@@ -258,20 +258,19 @@ contains
    &  wfre => q(fx), &
    &  cwork => q(cw), &
    &  fwork => q(fw), &
-   &  qtree_par => p(tq), &
-   &  wtree_par => p(tx), &
-   &  stree_par => stree &
+   &  ptree => p(tq), &
+   &  ztree => p(tx), &
+   &  rtree => stree &
    &  )
-!
       nmol = mol_block_nmol(q(qblck))
-      znode = wtree_par + (tree_current_pointer(p(qtree_par), r(stree_par)) - 1) * ND
-      call evaluate_nodes(nmol, q(qcov), q(qtree), s(stree), W(wcov), W(wfre), Z(znode), W(wtree), neval)
+      znode = ztree + (tree_current_pointer(p(ptree), r(rtree)) - 1) * ND
       call tree_reset(q(qtree), s(stree))
+      call evaluate_nodes(nmol, q(qcov), q(qtree), s(stree), W(wcov), W(wfre), Z(znode), W(wtree), neval)
     end associate
   end subroutine bb_block_inheritance
 !
 !| Expand top node in queue.
-  pure subroutine bb_block_expand(UB, q, s, W)
+  subroutine bb_block_expand(UB, q, s, W)
     real(RK), intent(in)       :: UB
     !! upper bound
     integer(IK), intent(in)    :: q(*)
@@ -292,7 +291,7 @@ contains
       nmol = mol_block_nmol(q(qblck))
       block
         do
-          call tree_select_top_node(q(q(tq)), s(stree), ND, UB, W(q(tx)))
+          call tree_select_top_node(q(q(tq)), s(stree), ND, UB, W(wtree))
           if (tree_queue_is_bottom(q(qtree), s(stree)) &
        & .or. tree_queue_is_empty(q(qtree), s(stree))) exit
           pp = q(tx) + (tree_current_pointer(q(qtree), s(stree)) - 1) * ND
@@ -304,18 +303,18 @@ contains
   end subroutine bb_block_expand
 !
 !| closure current node.
-  pure subroutine bb_block_closure(UB, q, s, X)
+  pure subroutine bb_block_closure(UB, q, s, W)
     real(RK), intent(in)       :: UB
     !! upper bound
     integer(IK), intent(in)    :: q(*)
     !! work integer array
     integer(IK), intent(inout) :: s(*)
     !! work integer array
-    real(RK), intent(in)       :: X(*)
+    real(RK), intent(in)       :: W(*)
     !! main memory
     associate (qtree => q(tq), wtree => q(tx))
       do
-        if (tree_queue_is_left(q(qtree), s(stree)) &
+        if (tree_queue_is_left(q(qtree), s(stree), ND, UB, W(wtree)) &
      & .or. tree_queue_is_root(q(qtree), s(stree))) exit
         call tree_leave(q(qtree), s(stree))
       end do
@@ -323,7 +322,7 @@ contains
   end subroutine bb_block_closure
 !
 !| Evaluate nodes in tree_current_level.
-  pure subroutine evaluate_nodes(nmol, qcov, q, s, C, F, Z, W, neval)
+  subroutine evaluate_nodes(nmol, qcov, q, s, C, F, Z, W, neval)
     integer(IK), intent(in) :: nmol, qcov(*), q(*), s(*)
     real(RK), intent(in)    :: C(*), F(*), Z(ND)
     real(RK), intent(inout) :: W(ND, *), neval
@@ -345,6 +344,7 @@ contains
      &                    C, F, Z, W(1, px), W(1, pw), W(2, pw))
       pw = pw + nsym
     end do
+    print'(*(f9.3))', W(1, px:px + nper * nsym - 1)
 !
     neval = neval + real(nsym * nper, RK)
   end subroutine evaluate_nodes
@@ -388,6 +388,22 @@ contains
   end subroutine subm
 !
 !| Returns true when tree is empty
+  pure function bb_block_is_left(UB, q, s, W) result(res)
+    real(RK), intent(in)    :: UB
+    !! upper bound
+    integer(IK), intent(in) :: q(*)
+    !! integer array
+    integer(IK), intent(in) :: s(*)
+    !! work integer array
+    real(RK), intent(in)    :: W(*)
+    !! main memory
+    logical                 :: res
+    associate (qtree => q(tq), wtree => q(tx))
+      res = tree_queue_is_left(q(qtree), s(stree), ND, UB, W(wtree))
+    end associate
+  end function bb_block_is_left
+!
+!| Returns true when tree is empty
   pure function bb_block_tree_is_empty(q, s) result(res)
     integer(IK), intent(in) :: q(*)
     !! integer array
@@ -399,15 +415,23 @@ contains
   end function bb_block_tree_is_empty
 !
 !| Returns true when tree is bottom
-  pure function bb_block_tree_is_bottom(q, s) result(res)
+  pure function bb_block_is_bottom(q, s) result(res)
     integer(IK), intent(in) :: q(*)
     !! integer array
     integer(IK), intent(in) :: s(*)
     !! work integer array
     logical                 :: res
-    res = tree_queue_is_left(q(q(tq)), s(stree)) &
+    res = tree_queue_is_selected(q(q(tq)), s(stree)) &
    &.and. tree_queue_is_bottom(q(q(tq)), s(stree))
-  end function bb_block_tree_is_bottom
+  end function bb_block_is_bottom
+!
+!| Returns current level.
+  pure function bb_block_current_level(s) result(res)
+    integer(IK), intent(in) :: s(*)
+    !! work integer array
+    integer(IK)             :: res
+    res = tree_current_level(s(stree))
+  end function bb_block_current_level
 !
 !| Returns current L value.
   pure function bb_block_current_value(q, s, W) result(res)

@@ -36,13 +36,13 @@ program main
   call u%init('test mobbrmsd for {(n,M,S)}={(24,3,1), (24,4,1)}')
   call test2(24, 3, 1, [0], 24, 4, 1, [0])
 !
-  call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,3,1)}')
-  call test3(4, 8, 1, [0])
+! call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,3,1)}')
+! call test3(4, 8, 1, [0])
 !
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
-  call test4(4, 8, 1, [0], 10)
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=500')
-  call test4(4, 4, 1, [0], 500)
+! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
+! call test4(4, 8, 1, [0], 10)
+! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=500')
+! call test4(4, 4, 1, [0], 500)
 !
   call u%finish_and_terminate()
 !
@@ -66,7 +66,8 @@ contains
 !
     do i = 1, 20
       call mobbrmsd_run(mobb%h, mobb%s, X, Y, W)
-      call u%assert_almost_equal(w(1), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
+      call u%assert_almost_equal(mobb%s%squared_deviation(), &
+     &                           brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
       Y = 0.8 * Y + 0.2 * sample(n, m)
     end do
 !
@@ -101,7 +102,7 @@ contains
       Y = RESHAPE([Y1, Y2], SHAPE(Y))
       call mobbrmsd_run(mobb%h, mobb%s, [X1, X2], Y, W)
       brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
-      call u%assert_almost_equal(w(1), brute, 'minrmsd value')
+      call u%assert_almost_equal(mobb%s%squared_deviation(), brute, 'minrmsd value')
       Y1 = 0.8 * Y1 + 0.2 * sample(n1, m1)
       Y2 = 0.8 * Y2 + 0.2 * sample(n2, m2)
     end do

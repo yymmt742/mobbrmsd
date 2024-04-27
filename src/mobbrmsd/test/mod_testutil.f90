@@ -1,22 +1,22 @@
 module mod_permutation
-use mod_params, only : IK, RK
-use,intrinsic :: ISO_FORTRAN_ENV, only : I8 => INT64
-implicit none
-private
-public :: permutation
+  use mod_params, only: IK, RK
+  use, intrinsic :: ISO_FORTRAN_ENV, only: I8 => INT64
+  implicit none
+  private
+  public :: permutation
 !
   type :: permutation
 !
     private
-    integer( IK )                    :: n, r
-    integer( IK ),allocatable        :: cy(:), ix(:), ip
-    integer( IK ),allocatable,public :: id(:)
+    integer(IK)                    :: n, r
+    integer(IK), allocatable        :: cy(:), ix(:), ip
+    integer(IK), allocatable, public :: id(:)
 !
   contains
 !
-    procedure         :: next    => permutation_next
-    procedure         :: reset   => permutation_reset
-    procedure         :: endl    => permutation_endl
+    procedure         :: next => permutation_next
+    procedure         :: reset => permutation_reset
+    procedure         :: endl => permutation_endl
     final             :: permutation_destroy
 !
   end type permutation
@@ -25,93 +25,93 @@ public :: permutation
     module procedure permutation_new
   end interface permutation
 !
-  real(RK),parameter              :: ULIM = LOG( REAL( HUGE( 0_I8 ), RK ) )
+  real(RK), parameter              :: ULIM = LOG(real(HUGE(0_I8), RK))
 !
 contains
 !
-  pure elemental function permutation_new( n, r ) result( res )
-  integer( IK ),intent( in )          :: n
-  integer( IK ),intent( in ),optional :: r
-  type( permutation )                 :: res
+  pure elemental function permutation_new(n, r) result(res)
+    integer(IK), intent(in)          :: n
+    integer(IK), intent(in), optional :: r
+    type(permutation)                 :: res
 !
     res%n = n
 !
-    if( PRESENT(r) )then ;   res%r = r
-    else                 ;   res%r = n
-    endif
+    if (PRESENT(r)) then; res%r = r
+    else; res%r = n
+    end if
 !
-    if( res%n<1     ) res%n = 0
-    if( res%n<res%r ) res%r = 0
+    if (res%n < 1) res%n = 0
+    if (res%n < res%r) res%r = 0
 !
-    ALLOCATE( res%id( res%r ), res%ix( 0 ), res%cy( 0 ) )
+    allocate (res%id(res%r), res%ix(0), res%cy(0))
 !
     call res%reset()
 !
   end function permutation_new
 !
-  pure elemental subroutine permutation_next( this )
-  class( permutation ),intent( inout ) :: this
-  integer( IK )                        :: i, j, swp
+  pure elemental subroutine permutation_next(this)
+    class(permutation), intent(inout) :: this
+    integer(IK)                        :: i, j, swp
 !
-    do while( .not.this%endl() )
+    do while (.not. this%endl())
 !
       i = this%ip
 !
-      this%cy( i ) = this%cy( i ) - 1
+      this%cy(i) = this%cy(i) - 1
 !
-      if( this%cy( i ) < 1 )then
+      if (this%cy(i) < 1) then
 !
-        this%ix( i: ) = [ this%ix( i+1: ), this%ix( i:i ) ]
-        this%cy( i )  = this%n + 1 - i
-        this%ip       = this%ip - 1
+        this%ix(i:) = [this%ix(i + 1:), this%ix(i:i)]
+        this%cy(i) = this%n + 1 - i
+        this%ip = this%ip - 1
 !
       else
 !
-        j             = this%n + 1 - this%cy( i )
-        swp           = this%ix( i )
-        this%ix( i )  = this%ix( j )
-        this%ix( j )  = swp
-        this%ip       = this%r
+        j = this%n + 1 - this%cy(i)
+        swp = this%ix(i)
+        this%ix(i) = this%ix(j)
+        this%ix(j) = swp
+        this%ip = this%r
 !
-        this%id( : )  = this%ix( :this%r )
+        this%id(:) = this%ix(:this%r)
 !
-        RETURN
+        return
 !
-       endif
+      end if
 !
-    enddo
+    end do
 !
   end subroutine permutation_next
 !
   pure elemental subroutine permutation_reset(this)
-  class( permutation ),intent( inout ) :: this
-  integer( IK )                        :: i
+    class(permutation), intent(inout) :: this
+    integer(IK)                        :: i
 !
-    this%ix = [( i, i = 1, this%n )]
-    this%cy = [( i, i = this%n, this%n - this%r + 1, -1 )]
-    this%id = [( i, i = 1, this%r )]
+    this%ix = [(i, i=1, this%n)]
+    this%cy = [(i, i=this%n, this%n - this%r + 1, -1)]
+    this%id = [(i, i=1, this%r)]
 !
     this%ip = this%r
 !
   end subroutine permutation_reset
 !
   pure elemental function permutation_endl(this) result(res)
-  class( permutation ),intent( in ) :: this
-  logical                           :: res
+    class(permutation), intent(in) :: this
+    logical                           :: res
 !
     res = this%ip < 1
 !
   end function permutation_endl
 !
   pure elemental subroutine permutation_destroy(this)
-  type( permutation ),intent( inout ) :: this
+    type(permutation), intent(inout) :: this
 !
     this%n = 0
     this%r = 0
 !
-    if( ALLOCATED(this%id) ) DEALLOCATE( this%id )
-    if( ALLOCATED(this%ix) ) DEALLOCATE( this%ix )
-    if( ALLOCATED(this%cy) ) DEALLOCATE( this%cy )
+    if (ALLOCATED(this%id)) deallocate (this%id)
+    if (ALLOCATED(this%ix)) deallocate (this%ix)
+    if (ALLOCATED(this%cy)) deallocate (this%cy)
 !
   end subroutine permutation_destroy
 !
@@ -119,7 +119,7 @@ end module mod_permutation
 !
 !| Utility functions for testing.
 module mod_testutil
-  use blas_lapack_interface, only : D, DD
+  use blas_lapack_interface, only: D, DD
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, PI => RPI, RHUGE
   use mod_permutation
   use mod_rotation
@@ -221,7 +221,7 @@ contains
     integer            :: i, j
     do concurrent(j=1:D, i=1:D)
       res(i, j) = MERGE(ONE, ZERO, i == j)
-    enddo
+    end do
   end function eye
 !
   pure function sd(n, X, Y) result(res)
@@ -247,18 +247,18 @@ contains
     integer(IK)             :: map(m)
     per = permutation(m, m)
     res = RHUGE
-    map = 1
     do while (.not. per%endl())
+      map = 1
       do
         res = MIN(res, sd(n * m, X, pws(n, m, s, per%id, map, sym, Y)))
         call map_next(m, s, map)
         if (ALL(map == 1)) exit
-      enddo
+      end do
       call per%next()
     end do
   end function brute_sd
 !
-  pure function brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2) result(res)
+  function brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2) result(res)
     integer(IK), intent(in) :: n1, m1, s1, sym1(n1 * (s1 - 1))
     integer(IK), intent(in) :: n2, m2, s2, sym2(n2 * (s2 - 1))
     real(RK), intent(in)    :: X1(D, n1, m1), Y1(D, n1, m1)
@@ -272,15 +272,16 @@ contains
     nz = m1 * n1 + m2 * n2
 !
     per2 = permutation(m2, m2)
-    map2 = 1
     do while (.not. per2%endl())
+      map2 = 1
       do
         Z2 = pws(n2, m2, s2, per2%id, map2, sym2, Y2)
         per1 = permutation(m1, m1)
-        map1 = 1
         do while (.not. per1%endl())
+          map1 = 1
           do
             Z1 = pws(n1, m1, s1, per1%id, map1, sym1, Y1)
+            print *, sd(nz, RESHAPE([X1, X2], [D, nz]), RESHAPE([Z1, Z2], [D, nz]))
             res = MIN(res, sd(nz, RESHAPE([X1, X2], [D, nz]), RESHAPE([Z1, Z2], [D, nz])))
             call map_next(m1, s1, map1)
             if (ALL(map1 == 1)) exit
@@ -299,10 +300,10 @@ contains
     integer(IK), intent(inout) :: map(n)
     integer(IK)                :: i
     do i = 1, n
-      if (map(i) < s)then
+      if (map(i) < s) then
         map(i) = map(i) + 1
         return
-      endif
+      end if
       map(i) = 1
     end do
   end subroutine map_next

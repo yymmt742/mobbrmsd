@@ -102,7 +102,7 @@ contains
 !
     do
       call bb_block_expand(ub, q, s, W)
-      if (bb_block_tree_is_bottom(q, s)) then
+      if (bb_block_is_bottom(q, s)) then
         if (bb_block_current_value(q, s, w) < ub) then
           ub = bb_block_current_value(q, s, w)
           call bb_block_save_state(q, s, sb)
