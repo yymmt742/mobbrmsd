@@ -281,7 +281,7 @@ contains
           map1 = 1
           do
             Z1 = pws(n1, m1, s1, per1%id, map1, sym1, Y1)
-            print *, sd(nz, RESHAPE([X1, X2], [D, nz]), RESHAPE([Z1, Z2], [D, nz]))
+            !print *, sd(nz, RESHAPE([X1, X2], [D, nz]), RESHAPE([Z1, Z2], [D, nz]))
             res = MIN(res, sd(nz, RESHAPE([X1, X2], [D, nz]), RESHAPE([Z1, Z2], [D, nz])))
             call map_next(m1, s1, map1)
             if (ALL(map1 == 1)) exit

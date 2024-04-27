@@ -31,15 +31,15 @@ program main
 ! call test1(4, 1, 2, [3, 2, 1, 4])
 ! call u%init('test bb_list for (n,M,S)=(4,2,2)')
 ! call test1(4, 2, 2, [3, 2, 1, 4])
-! call u%init('test bb_list for (n,M,S)=(40,6,1)')
-! call test1(40, 6, 1, [0])
+  call u%init('test bb_list for (n,M,S)=(40,6,1)')
+  call test1(40, 6, 1, [0])
 !
 ! call u%init('test bb_list for {(n,M,S)}={(5,1,1), (5,4,1)}')
 ! call test2(5, 1, 1, [0], 5, 4, 1, [0])
-  call u%init('test bb_list for {(n,M,S)}={(4,2,1), (5,2,1)}')
-  call test2(4, 2, 1, [0], 5, 2, 1, [0])
-! call u%init('test bb_list for {(n,M,S)}={(8,2,1), (4,2,2)}')
-! call test2(8, 2, 1, [0], 4, 2, 2, [3, 2, 1, 4])
+! call u%init('test bb_list for {(n,M,S)}={(4,2,1), (5,2,1)}')
+! call test2(4, 2, 1, [0], 5, 2, 1, [0])
+  call u%init('test bb_list for {(n,M,S)}={(8,2,1), (4,2,2)}')
+  call test2(8, 3, 1, [0], 4, 2, 2, [3, 2, 1, 4])
 ! call u%init('test bb_list for {(n,M,S)}={(24,3,1), (24,4,1)}')
 ! call test2(24, 3, 1, [0], 24, 4, 1, [0])
 !
@@ -91,14 +91,12 @@ contains
 !
     X1 = sample(n1, m1)
     X2 = sample(n2, m2)
-    Y1 = sample(n1, m1)
-    Y2 = sample(n2, m2)
-    !Y1 = X1
-    !Y2 = X2
+    Y1 = X1
+    Y2 = X2
 !
     block
       real(RK) :: W(bb_list_memsize(b%q)), R(D, D), rxz
-      do i = 1, 1
+      do i = 1, 20
         call bb_list_setup(b%q, b%s, [X1, X2], [Y1, Y2], W)
         call u%assert(.not. bb_list_is_finished(b%q, b%s), 'is not finished     ')
         call bb_list_run(b%q, b%s, W)

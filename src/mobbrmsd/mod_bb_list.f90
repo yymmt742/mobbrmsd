@@ -185,7 +185,7 @@ contains
   end function bb_list_log_n_nodes
 !
 !| Setup
-  subroutine bb_list_setup(q, s, X, Y, W)
+  pure subroutine bb_list_setup(q, s, X, Y, W)
     integer(IK), intent(in)    :: q(*)
     !! header
     integer(IK), intent(inout) :: s(*)
@@ -217,12 +217,17 @@ contains
       pq = q_pointer(q)
 !
       do i = 0, n_block - 1
-        print *, 'setup list', i, n_block
         call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
       end do
 !     do concurrent(i=0:n_block - 1)
 !       call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
 !     end do
+!
+      ac = ZERO
+      do i = n_block - 1, 0, -1
+        call bb_block_set_ub_offset(W(q(pw + i)), ac)
+        ac = ac + bb_block_lowerbound(W(q(pw + i)))
+      end do
       ac = ZERO
       do i = 0, n_block - 1
         ac = ac + bb_block_autocorr(q(q(pq + i)), W(q(pw + i)))
@@ -293,11 +298,10 @@ contains
     end associate
   end subroutine bb_list_run
 !
-  subroutine run_bb(pq, ps, pw, q, s, W)
+  pure subroutine run_bb(pq, ps, pw, q, s, W)
     integer(IK), intent(in)    :: pq(*), ps(*), pw(*), q(*)
     integer(IK), intent(inout) :: s(*)
     real(RK), intent(inout)    :: W(*)
-    real(RK) :: tmp
     associate ( &
    &   n => q(bb_list_NUMBER_OF_SPEACIES), &
    &   b => s(bb_list_INDEX_TO_SPEACIES), &
@@ -309,12 +313,8 @@ contains
 !
 !     Expansion process
 !
-      print *, 'runbb'
-      tmp = 999D0
       do
-        print *, 'expand    ', b, bb_block_current_level(s(ps(b)))
         call bb_block_expand(ub, q(pq(b)), s(ps(b)), W(pw(b)))
-        !call bb_block_expand(tmp, q(pq(b)), s(ps(b)), W(pw(b)))
         if (b == n .or. bb_block_tree_is_empty(q(pq(b)), s(ps(b)))) exit
         b = b + 1
         call bb_block_inheritance(q(pq(b)), s(ps(b)), W(pw(b)), &
@@ -323,9 +323,7 @@ contains
 !
 !     Update upperbound and state
 !
-      print *, b, bb_block_is_bottom(q(pq(b)), s(ps(b)))
-      if (bb_block_is_bottom(q(pq(b)), s(ps(b))) .and.&
-     &    b == n) then
+      if (bb_block_is_bottom(q(pq(b)), s(ps(b))) .and. b == n) then
         block
           real(RK) :: cv
           cv = bb_block_current_value(q(pq(b)), s(ps(b)), W(pw(b)))
@@ -333,7 +331,6 @@ contains
             ub = cv
             call save_state(pq, ps, q, s)
           end if
-          print *, au + ub + ub, au + cv + cv
         end block
       end if
 !
@@ -344,17 +341,10 @@ contains
 !     Closure process
 !
       do
-        !  call bb_block_closure(ub, q(pq(b)), s(ps(b)), W(pw(b)))
-        !  print *, 'closure    ', b, bb_block_current_level(s(ps(b))), &
-        ! &  bb_block_is_left(ub, q(pq(b)), s(ps(b)), W(pw(b)))
-        !  if (b == 1 .or. bb_block_is_left(ub, q(pq(b)), s(ps(b)), W(pw(b)))) exit
-        call bb_block_closure(tmp, q(pq(b)), s(ps(b)), W(pw(b)))
-        print *, 'closure    ', b, bb_block_current_level(s(ps(b))), &
-         &  bb_block_is_left(ub, q(pq(b)), s(ps(b)), W(pw(b)))
-        if (b == 1 .or. bb_block_is_left(tmp, q(pq(b)), s(ps(b)), W(pw(b)))) exit
+        call bb_block_closure(ub, q(pq(b)), s(ps(b)), W(pw(b)))
+        if (b == 1 .or. bb_block_is_left(ub, q(pq(b)), s(ps(b)), W(pw(b)))) exit
         b = b - 1
       end do
-      print *, 'closure end', b, bb_block_current_level(s(ps(b)))
 !
       block
         integer(IK) :: i
@@ -366,7 +356,7 @@ contains
     end associate
   end subroutine run_bb
 !
-  subroutine update_lowerbound(n, pq, ps, pw, q, s, W)
+  pure subroutine update_lowerbound(n, pq, ps, pw, q, s, W)
     integer(IK), intent(in)    :: n, pq(n), ps(n), pw(n)
     integer(IK), intent(in)    :: q(*), s(*)
     real(RK), intent(inout)    :: W(*)
