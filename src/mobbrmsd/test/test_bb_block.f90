@@ -16,6 +16,7 @@ program main
   call test1(1, 2, 1, [1, 2], [1, 1], [0])
   call test1(8, 4, 1, [3, 4, 2, 1], [1, 1, 1, 1], [0])
   call test1(8, 4, 2, [3, 4, 2, 1], [1, 2, 1, 2], [2, 3, 5, 4, 8, 6, 7, 1])
+  call test1(8, 8, 1, [3, 4, 2, 1, 5, 7, 6, 8], [1, 1, 1, 1, 1, 1, 1, 1], [0])
 !
   call u%finish_and_terminate()
 !
@@ -83,7 +84,7 @@ contains
       Z = Y
       call bb_block_swap_y(bm%q, sb, Z)
       call u%assert_almost_equal(W(1), sd(m * n, X, Z), 'swap sd value')
-      Y = 0.8 * Y + sample(n, m) * 0.2
+      Y = 0.5 * Y + sample(n, m) * 0.5
     end do
 !
   end subroutine test1

@@ -35,6 +35,7 @@ module mod_bb_block
   public :: bb_block_closure
   public :: bb_block_is_left
   public :: bb_block_tree_is_empty
+  public :: bb_block_tree_is_finished
   public :: bb_block_is_bottom
   public :: bb_block_current_level
   public :: bb_block_current_value
@@ -330,7 +331,7 @@ contains
    &  )
       ubval = UB - ubofs
       do
-        if (tree_queue_is_left(q(qtree), s(stree), ND, UB, W(wtree)) &
+        if (tree_queue_is_left(q(qtree), s(stree), ND, ubval, W(wtree)) &
      & .or. tree_queue_is_root(q(qtree), s(stree))) exit
         call tree_leave(q(qtree), s(stree))
       end do
@@ -412,9 +413,15 @@ contains
     !! work integer array
     real(RK), intent(in)    :: W(*)
     !! main memory
+    real(RK)                :: ubval
     logical                 :: res
-    associate (qtree => q(tq), wtree => q(tx))
-      res = tree_queue_is_left(q(qtree), s(stree), ND, UB, W(wtree))
+    associate ( &
+   &  ubofs => W(INDEX_TO_OFFSET), &
+   &  qtree => q(tq), &
+   &  wtree => q(tx) &
+   &  )
+      ubval = UB - ubofs
+      res = tree_queue_is_left(q(qtree), s(stree), ND, ubval, W(wtree))
     end associate
   end function bb_block_is_left
 !
@@ -425,9 +432,23 @@ contains
     integer(IK), intent(in) :: s(*)
     !! work integer array
     logical                 :: res
-    res = tree_queue_is_empty(q(q(tq)), s(stree)) &
-   &.and. tree_queue_is_root(q(q(tq)), s(stree))
+    associate (qtree => q(tq))
+      res = tree_queue_is_empty(q(qtree), s(stree))
+    end associate
   end function bb_block_tree_is_empty
+!
+!| Returns true when tree is finished
+  pure function bb_block_tree_is_finished(q, s) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! integer array
+    integer(IK), intent(in) :: s(*)
+    !! work integer array
+    logical                 :: res
+    associate (qtree => q(tq))
+      res = tree_queue_is_empty(q(qtree), s(stree)) &
+     &.and. tree_queue_is_root(q(qtree), s(stree))
+    end associate
+  end function bb_block_tree_is_finished
 !
 !| Returns true when tree is bottom
   pure function bb_block_is_bottom(q, s) result(res)
@@ -436,8 +457,10 @@ contains
     integer(IK), intent(in) :: s(*)
     !! work integer array
     logical                 :: res
-    res = tree_queue_is_selected(q(q(tq)), s(stree)) &
-   &.and. tree_queue_is_bottom(q(q(tq)), s(stree))
+    associate (qtree => q(tq))
+      res = tree_queue_is_selected(q(qtree), s(stree)) &
+     &.and. tree_queue_is_bottom(q(qtree), s(stree))
+    end associate
   end function bb_block_is_bottom
 !
 !| Returns current level.

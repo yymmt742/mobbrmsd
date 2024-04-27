@@ -54,36 +54,6 @@ module mod_bb_list
 !
 contains
 !
-! pure function n_block(q) result(res)
-!   integer(IK), intent(in) :: q(*)
-!   integer(IK)             :: res
-!   res = q(bb_list_NUMBER_OF_SPEACIES)
-! end function n_block
-!
-  pure function s_pointer(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    integer(IK)             :: res
-    res = header_size + q(bb_list_NUMBER_OF_SPEACIES) + 1
-  end function s_pointer
-!
-  pure function w_pointer(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    integer(IK)             :: res
-    res = header_size + 2 * q(bb_list_NUMBER_OF_SPEACIES) + 1
-  end function w_pointer
-!
-  pure function x_pointer(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    integer(IK)             :: res
-    res = header_size + 3 * q(bb_list_NUMBER_OF_SPEACIES) + 1
-  end function x_pointer
-!
-  pure function q_pointer(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    integer(IK)             :: res
-    res = header_size + 1
-  end function q_pointer
-!
 !| generate node instance
   pure function bb_list_new(blk) result(res)
     type(bb_block), intent(in) :: blk(:)
@@ -143,47 +113,6 @@ contains
     end associate
   end function bb_list_memsize
 !
-!| Returns number of molecular blocks.
-  pure function bb_list_n_block(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    !! bb_block.
-    integer(IK)             :: res
-    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
-      res = n_block
-    end associate
-  end function bb_list_n_block
-!
-!| Returns number of total atoms.
-  pure function bb_list_n_atoms(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    !! bb_block.
-    integer(IK)             :: res, i, j
-    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
-      res = 0
-      j = q_pointer(q)
-      do i = 1, n_block
-        res = res + bb_block_natm(q(q(j)))
-        j = j + 1
-      end do
-    end associate
-  end function bb_list_n_atoms
-!
-!| Returns the logarithm of the total number of nodes.
-  pure function bb_list_log_n_nodes(q) result(res)
-    integer(IK), intent(in) :: q(*)
-    !! bb_block.
-    integer(IK)             :: i, j
-    real(RK)                :: res
-    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
-      res = ZERO
-      j = q_pointer(q)
-      do i = 1, n_block
-        res = res + bb_block_log_ncomb(q(q(j)))
-        j = j + 1
-      end do
-    end associate
-  end function bb_list_log_n_nodes
-!
 !| Setup
   pure subroutine bb_list_setup(q, s, X, Y, W)
     integer(IK), intent(in)    :: q(*)
@@ -216,12 +145,9 @@ contains
       pw = w_pointer(q)
       pq = q_pointer(q)
 !
-      do i = 0, n_block - 1
+      do concurrent(i=0:n_block - 1)
         call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
       end do
-!     do concurrent(i=0:n_block - 1)
-!       call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
-!     end do
 !
       ac = ZERO
       do i = n_block - 1, 0, -1
@@ -241,7 +167,7 @@ contains
   end subroutine bb_list_setup
 !
 !| run branch and bound
-  subroutine bb_list_run(q, s, W, cutoff, difflim, maxeval)
+  pure subroutine bb_list_run(q, s, W, cutoff, difflim, maxeval)
     integer(IK), intent(in)           :: q(*)
     !! header
     integer(IK), intent(inout)        :: s(*)
@@ -263,7 +189,7 @@ contains
    &   nv => W(bb_list_INDEX_TO_N_EVAL) &
    &  )
 !&<
-      b = MAX(b, 1)
+      b  = MAX(b, 1)
       pq = q_pointer(q)
       ps = s_pointer(q)
       pw = w_pointer(q)
@@ -440,6 +366,47 @@ contains
     end associate
   end subroutine bb_list_rotation_matrix
 !
+!| Returns number of molecular blocks.
+  pure function bb_list_n_block(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! bb_block.
+    integer(IK)             :: res
+    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
+      res = n_block
+    end associate
+  end function bb_list_n_block
+!
+!| Returns number of total atoms.
+  pure function bb_list_n_atoms(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! bb_block.
+    integer(IK)             :: res, i, j
+    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
+      res = 0
+      j = q_pointer(q)
+      do i = 1, n_block
+        res = res + bb_block_natm(q(q(j)))
+        j = j + 1
+      end do
+    end associate
+  end function bb_list_n_atoms
+!
+!| Returns the logarithm of the total number of nodes.
+  pure function bb_list_log_n_nodes(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! bb_block.
+    integer(IK)             :: i, j
+    real(RK)                :: res
+    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
+      res = ZERO
+      j = q_pointer(q)
+      do i = 1, n_block
+        res = res + bb_block_log_ncomb(q(q(j)))
+        j = j + 1
+      end do
+    end associate
+  end function bb_list_log_n_nodes
+!
 !| Returns bb is finished.
   pure function bb_list_is_finished(q, s) result(res)
     integer(IK), intent(in) :: q(*)
@@ -453,7 +420,7 @@ contains
       res = sb == 1; if (.not. res) return
       bq = q(q_pointer(q) + sb - 1)
       bs = q(s_pointer(q) + sb - 1)
-      res = bb_block_tree_is_empty(q(bq), s(bs))
+      res = bb_block_tree_is_finished(q(bq), s(bs))
     end associate
   end function bb_list_is_finished
 !
@@ -462,6 +429,32 @@ contains
     type(bb_list), intent(inout) :: this
     if (ALLOCATED(this%q)) deallocate (this%q)
   end subroutine bb_list_destroy
+!
+!  ---
+!
+  pure function s_pointer(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    integer(IK)             :: res
+    res = header_size + q(bb_list_NUMBER_OF_SPEACIES) + 1
+  end function s_pointer
+!
+  pure function w_pointer(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    integer(IK)             :: res
+    res = header_size + 2 * q(bb_list_NUMBER_OF_SPEACIES) + 1
+  end function w_pointer
+!
+  pure function x_pointer(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    integer(IK)             :: res
+    res = header_size + 3 * q(bb_list_NUMBER_OF_SPEACIES) + 1
+  end function x_pointer
+!
+  pure function q_pointer(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    integer(IK)             :: res
+    res = header_size + 1
+  end function q_pointer
 !
 end module mod_bb_list
 
