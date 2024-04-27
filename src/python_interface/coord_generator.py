@@ -18,7 +18,7 @@ class so_generator:
             return numpy.array([[a, -b], [b, a]])
 
         def so_3():
-            q = self.rng.random(4)
+            q = 2 * self.rng.random(4) - 1.0
             q /= numpy.linalg.norm(q)
             qq = numpy.power(q, 2)
             q02 = 2 * q[0] * q[2]
@@ -93,8 +93,8 @@ class coord_generator:
             ca = numpy.cos(a_)
             sb = numpy.sin(b_)
             cb = numpy.cos(b_)
-
-            return ca * (cb * Xstr + sb * Xtem) + sa * Xvar
+            ret = ca * (cb * Xstr + sb * Xtem) + sa * Xvar
+            return ret - numpy.mean(ret.reshape((n_apm * n_mol, self.d)), 0)
 
         if isinstance(a, float):
             if isinstance(b, float):
@@ -108,34 +108,3 @@ class coord_generator:
                 return numpy.array(
                     [[x_sample(ai, bi, Xvar, Xtem, Xstr) for bi in b] for ai in a]
                 )
-
-
-if __name__ == "__main__":
-    import itertools
-
-    cogen = coord_generator(2)
-    n = 3
-    m = 5
-    a = (0.0, 0.8, 0.9, 0.99)
-    b = (0.0, 1.0)
-    x = cogen.generate(n, m, a, b)
-
-    print("--- coord_generator.py ---")
-    print("This is sampled coordinates.\n")
-    for i, j in itertools.product((range(len(a))), (range(len(b)))):
-        print("    a = ", a[i], "b = ", b[j], "\n")
-        print(x[i, j], "\n")
-
-"""
-        sa = "{:d}".format(round(a[i] * 100)).zfill(3)
-        sb = "{:d}".format(round(b[j] * 100)).zfill(3)
-        path = "sample_" + sa + "_" + sb
-        plt.xlim(-3.0, 3.0)
-        plt.ylim(-3.0, 3.0)
-        for xk in x[i, j]:
-            plt.plot(xk[:, 0], xk[:, 1])
-            plt.scatter(xk[:, 0], xk[:, 1])
-        plt.savefig(path + ".eps")
-        plt.savefig(path + ".png")
-        plt.clf()
-"""
