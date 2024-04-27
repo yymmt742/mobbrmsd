@@ -68,10 +68,10 @@ contains
     end if
 !
     if (PRESENT(mask)) then
-      cutoff_global = MIN(MINVAL(state%upperbound(), mask), cutoff_global)
+      cutoff_global = MIN(MINVAL(state%rmsd(), mask), cutoff_global)
       ntgt = COUNT(mask)
     else
-      cutoff_global = MIN(MINVAL(state%upperbound()), cutoff_global)
+      cutoff_global = MIN(MINVAL(state%rmsd()), cutoff_global)
       ntgt = n_target
     end if
 !
@@ -126,11 +126,11 @@ contains
     !$omp end parallel
 !
     if (PRESENT(mask)) then
-      if (PRESENT(nnval)) nnval = MINVAL(state%upperbound(), mask)
-      if (PRESENT(nnidx)) nnidx = MINLOC(state%upperbound(), 1, mask)
+      if (PRESENT(nnval)) nnval = MINVAL(state%rmsd(), mask)
+      if (PRESENT(nnidx)) nnidx = MINLOC(state%rmsd(), 1, mask)
     else
-      if (PRESENT(nnval)) nnval = MINVAL(state%upperbound())
-      if (PRESENT(nnidx)) nnidx = MINLOC(state%upperbound(), 1)
+      if (PRESENT(nnval)) nnval = MINVAL(state%rmsd())
+      if (PRESENT(nnidx)) nnidx = MINLOC(state%rmsd(), 1)
     end if
 !
   end subroutine mobbrmsd_nearest_neighbor
