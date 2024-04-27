@@ -439,6 +439,10 @@ contains
     real(RK)                :: res
     integer(IK)             :: i
     associate (ncur => s(sl))
+      if (tree_is_unexplored(q, s)) then
+        res = -RHUGE
+        return
+      end if
       res = RHUGE
       do i = 1, ncur
         if (queue_state(s(sr), i) < 0) cycle

@@ -139,7 +139,6 @@ contains
       ub = RHUGE
       lb = -RHUGE
       nv = ZERO
-!
       ps = s_pointer(q)
       px = x_pointer(q)
       pw = w_pointer(q)

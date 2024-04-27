@@ -36,8 +36,10 @@ program main
   call u%init('test mobbrmsd for {(n,M,S)}={(24,3,1), (24,4,1)}')
   call test2(24, 3, 1, [0], 24, 4, 1, [0])
 !
-! call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,3,1)}')
-! call test3(4, 8, 1, [0])
+  call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,4,2)}')
+  call test3(4, 4, 2, [3, 2, 1, 4])
+  call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,8,1)}')
+  call test3(4, 8, 1, [0])
 !
 ! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
 ! call test4(4, 8, 1, [0], 10)
@@ -115,6 +117,7 @@ contains
     type(mol_block_input), allocatable :: inp(:)
     real(RK)               :: X(D, n, m), Y(D, n, m)
     real(RK), allocatable  :: W(:)
+    real(RK)               :: sd, brute, sd2
     integer(IK)            :: i
 !
     call mol_block_input_add(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
@@ -125,6 +128,8 @@ contains
 !
     allocate (W(mobb%h%memsize()))
 !
+    call mobbrmsd_run(mobb%h, mobb%s, X, Y, W, maxeval=0)
+!
     do i = 1, 10
       call mobbrmsd_restart(mobb%h, mobb%s, W, maxeval=0)
       print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
@@ -134,11 +139,15 @@ contains
     call mobbrmsd_restart(mobb%h, mobb%s, W)
     print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
    &                       mobb%s%upperbound(), mobb%s%lowerbound()
-    call u%assert_almost_equal(mobb%s%squared_deviation(), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
+    sd = mobb%s%squared_deviation()
+    brute = brute_sd(n, m, s, sym, X, Y)
 !
-    call mobbrmsd_run(mobb%h, mobb%s, X, Y, W)
+    call mobbrmsd_run(mobb%h, mobb%s, X, Y)
+    sd2 = mobb%s%squared_deviation()
     print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
    &                       mobb%s%upperbound(), mobb%s%lowerbound()
+    call u%assert_almost_equal(sd, brute, 'minrmsd value')
+    call u%assert_almost_equal(sd, sd2, 'vs at once   ')
 !
     deallocate (inp)
 !

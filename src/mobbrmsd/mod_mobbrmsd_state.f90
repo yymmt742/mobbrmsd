@@ -6,10 +6,11 @@ module mod_mobbrmsd_state
   implicit none
   public :: mobbrmsd_state
   public :: mobbrmsd_state_INDEX_TO_RCP_N_ATOMS
+  public :: mobbrmsd_state_INDEX_TO_AUTOCORR
   public :: mobbrmsd_state_INDEX_TO_UPPERBOUND
   public :: mobbrmsd_state_INDEX_TO_LOWERBOUND
-  public :: mobbrmsd_state_INDEX_TO_LOG_RATIO
   public :: mobbrmsd_state_INDEX_TO_N_EVAL
+  public :: mobbrmsd_state_INDEX_TO_LOG_RATIO
   public :: mobbrmsd_state_INDEX_TO_ROTMAT
 !&<
   integer(IK), parameter :: mobbrmsd_state_INDEX_TO_RCP_N_ATOMS = 1
@@ -29,12 +30,9 @@ module mod_mobbrmsd_state
 !&>
 !| mobbrmsd_state
   type mobbrmsd_state
-    private
-    integer(IK), allocatable, public :: s(:)
-    real(RK), allocatable            :: z(:)
+    integer(IK), allocatable :: s(:)
+    real(RK), allocatable    :: z(:)
   contains
-    procedure :: update => mobbrmsd_state_update
-    !! update state
     procedure :: upperbound => mobbrmsd_state_upperbound
     !! upperbound
     procedure :: lowerbound => mobbrmsd_state_lowerbound
@@ -106,36 +104,6 @@ contains
       end do
     end subroutine eye
   end function mobbrmsd_state_new
-!
-!| update mobbrmsd_state
-  pure subroutine mobbrmsd_state_update(this, header, W)
-    class(mobbrmsd_state), intent(inout) :: this
-    !! mobbrmsd header
-    type(mobbrmsd_header), intent(in)    :: header
-    !! mobbrmsd header
-    real(RK), intent(in)                 :: W(*)
-    !! mobbrmsd workarray
-    associate ( &
-   &   ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
-   &   ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND), &
-   &   lb => this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND), &
-   &   ne => this%z(mobbrmsd_state_INDEX_TO_N_EVAL), &
-   &   lr => this%z(mobbrmsd_state_INDEX_TO_LOG_RATIO), &
-   &   rt => mobbrmsd_state_INDEX_TO_ROTMAT, &
-   &   bbau => W(bb_list_INDEX_TO_AUTOCORR), &
-   &   bbub => W(bb_list_INDEX_TO_UPPERBOUND), &
-   &   bblb => W(bb_list_INDEX_TO_LOWERBOUND), &
-   &   bbne => W(bb_list_INDEX_TO_N_EVAL), &
-   &   bbln => W(bb_list_INDEX_TO_LOG_N_COMB) &
-    )
-      ac = bbau
-      ub = bbub
-      lb = bblb
-      ne = bbne
-      lr = LOG(bbne) - bbln
-      call bb_list_rotation_matrix(header%q, this%s, W, this%z(RT))
-    end associate
-  end subroutine mobbrmsd_state_update
 !
 !| returns upperbound
   pure elemental function mobbrmsd_state_upperbound(this) result(res)

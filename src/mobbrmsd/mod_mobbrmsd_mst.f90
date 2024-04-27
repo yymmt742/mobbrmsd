@@ -117,7 +117,7 @@ contains
      &                  cutoff=ub, &
      &                  difflim=difflim, &
      &                  maxeval=maxeval)
-      ub = state(itgt)%upperbound()
+      ub = state(itgt)%rmsd()
 !
       !$omp critical
       cutoff_global = MIN(ub, cutoff_global)
