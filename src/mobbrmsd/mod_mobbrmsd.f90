@@ -164,7 +164,7 @@ contains
   end function mobbrmsd_new_from_block
 !
 !| run mobbrmsd
-  subroutine mobbrmsd_run( &
+  pure subroutine mobbrmsd_run( &
  &             header, state, &
  &             X, Y, W, &
  &             cutoff, difflim, maxeval)
@@ -218,7 +218,7 @@ contains
 !
 !| run mobbrmsd
   pure subroutine mobbrmsd_restart(header, state, W, &
- &                            cutoff, difflim, maxeval)
+&                            cutoff, difflim, maxeval)
     type(mobbrmsd_header), intent(in)    :: header
     !! mobbrmsd_header
     type(mobbrmsd_state), intent(inout)  :: state

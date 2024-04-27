@@ -37,6 +37,8 @@ module mod_mobbrmsd_state
     !! upperbound
     procedure :: lowerbound => mobbrmsd_state_lowerbound
     !! lowerbound
+    procedure :: autovariance => mobbrmsd_state_autovariance
+    !! lowerbound
     procedure :: squared_deviation => mobbrmsd_state_squared_deviation
     !! sqrared_deviation
     procedure :: mean_squared_deviation => mobbrmsd_state_mean_squared_deviation
@@ -120,6 +122,14 @@ contains
     real(RK)                          :: res
     res = this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND)
   end function mobbrmsd_state_lowerbound
+!
+!| returns autovariance
+  pure elemental function mobbrmsd_state_autovariance(this) result(res)
+    class(mobbrmsd_state), intent(in) :: this
+    !! this
+    real(RK)                          :: res
+    res = this%z(mobbrmsd_state_INDEX_TO_AUTOCORR)
+  end function mobbrmsd_state_autovariance
 !
 !| returns squared deviation
   pure elemental function mobbrmsd_state_squared_deviation(this) result(res)

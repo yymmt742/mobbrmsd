@@ -41,6 +41,11 @@ program main
   call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,8,1)}')
   call test3(4, 8, 1, [0])
 !
+  call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,4,2)}')
+  call test4(4, 4, 2, [3, 2, 1, 4])
+  call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,8,1)}')
+  call test4(4, 8, 1, [0])
+!
 ! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
 ! call test4(4, 8, 1, [0], 10)
 ! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=500')
@@ -153,7 +158,58 @@ contains
 !
   end subroutine test3
 !
-  subroutine test4(n, m, s, sym, n_target)
+  subroutine test4(n, m, s, sym)
+    integer, intent(in)    :: n, m, s, sym(n * (s - 1))
+    type(mobbrmsd)         :: mobb
+    type(mol_block_input), allocatable :: inp(:)
+    real(RK)               :: X(D, n, m), Y(D, n, m)
+    real(RK), allocatable  :: W(:)
+!
+    call mol_block_input_add(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
+    mobb = mobbrmsd(inp)
+!
+    X = sample(n, m)
+    Y = sample(n, m)
+!
+    allocate (W(mobb%h%memsize()))
+!
+    call mobbrmsd_run(mobb%h, mobb%s, X, Y, W, maxeval=0)
+    call mobbrmsd_restart(mobb%h, mobb%s, W, cutoff=0.0_RK)
+    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
+   &                       mobb%s%upperbound(), mobb%s%lowerbound(), &
+   &                       SQRT((mobb%s%autovariance() + 2 * mobb%s%lowerbound()) / (n * m)), &
+   &                       mobb%s%rmsd()
+    call mobbrmsd_restart(mobb%h, mobb%s, W, cutoff=0.1_RK)
+    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
+   &                       mobb%s%upperbound(), mobb%s%lowerbound(), &
+   &                       SQRT((mobb%s%autovariance() + 2 * mobb%s%lowerbound()) / (n * m)), &
+   &                       mobb%s%rmsd()
+    call mobbrmsd_restart(mobb%h, mobb%s, W, cutoff=0.2_RK)
+    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
+   &                       mobb%s%upperbound(), mobb%s%lowerbound(), &
+   &                       SQRT((mobb%s%autovariance() + 2 * mobb%s%lowerbound()) / (n * m)), &
+   &                       mobb%s%rmsd()
+    call mobbrmsd_restart(mobb%h, mobb%s, W, cutoff=0.3_RK)
+    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
+   &                       mobb%s%upperbound(), mobb%s%lowerbound(), &
+   &                       SQRT((mobb%s%autovariance() + 2 * mobb%s%lowerbound()) / (n * m)), &
+   &                       mobb%s%rmsd()
+    call mobbrmsd_run(mobb%h, mobb%s, X, Y, W, cutoff=0.4_RK)
+    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
+   &                       mobb%s%upperbound(), mobb%s%lowerbound(), &
+   &                       SQRT((mobb%s%autovariance() + 2 * mobb%s%lowerbound()) / (n * m)), &
+   &                       mobb%s%rmsd()
+    call mobbrmsd_restart(mobb%h, mobb%s, W)
+    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
+   &                       mobb%s%upperbound(), mobb%s%lowerbound(), &
+   &                       SQRT((mobb%s%autovariance() + 2 * mobb%s%lowerbound()) / (n * m)), &
+   &                       mobb%s%rmsd()
+!
+    deallocate (inp)
+!
+  end subroutine test4
+!
+  subroutine test5(n, m, s, sym, n_target)
 !$  use omp_lib
     integer, intent(in)    :: n, m, s, sym(n * (s - 1)), n_target
     type(mobbrmsd)         :: mobb
@@ -203,7 +259,7 @@ contains
 !
     deallocate (inp)
 !
-  end subroutine test4
+  end subroutine test5
 !
 end program main
 
