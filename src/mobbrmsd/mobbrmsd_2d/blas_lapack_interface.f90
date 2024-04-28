@@ -20,7 +20,7 @@ contains
   subroutine setup_dimension(d_)
     integer, intent(in) :: d_
   end subroutine setup_dimension
-
+!
 end module blas_lapack_interface
 !
 !| DGEMM for M=N=2. <br>
@@ -207,3 +207,4 @@ pure subroutine SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, L
   end select
 !
 end subroutine SGEMM
+

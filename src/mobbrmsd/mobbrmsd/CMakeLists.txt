@@ -34,7 +34,8 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_batch_run.f90
           ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_mst.f90
           ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90)
+          ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
+          ${CMAKE_CURRENT_SOURCE_DIR}/mod_cov.f90)
 
 target_include_directories(${TARGET_GD}
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
@@ -108,6 +109,7 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
     test_c_matrix
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
+            ${CMAKE_CURRENT_SOURCE_DIR}/mod_cov.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -127,6 +129,7 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
     test_f_matrix
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
+            ${CMAKE_CURRENT_SOURCE_DIR}/mod_cov.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -148,6 +151,7 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
     test_bb_block
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
+            ${CMAKE_CURRENT_SOURCE_DIR}/mod_cov.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -171,6 +175,7 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
     test_bb_list
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
+            ${CMAKE_CURRENT_SOURCE_DIR}/mod_cov.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -195,6 +200,7 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
     test_mobbrmsd
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
+            ${CMAKE_CURRENT_SOURCE_DIR}/mod_cov.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
