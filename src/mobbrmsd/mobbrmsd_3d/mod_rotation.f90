@@ -1,6 +1,7 @@
 !| Calculate the rotation matrix that minimizes \(|\mathbf{X}-\mathbf{R}\mathbf{Y}|^2\) for \(D=3\). <br>
 !  Here, \(\mathbf{R}\mathbf{R}^\top=\mathbf{I}\) and \(\det(\mathbf{R})=1\) are satisfied. <br>
-!  This code is based on the method of Coutsias et.al. 10.1002/jcc.25802
+!  This code is based on the method of Coutsias et.al.
+!  doi : [10.1002/jcc.25802](https://onlinelibrary.wiley.com/doi/10.1002/jcc.25802)
 module mod_rotation
   use mod_kinds, only: IK, RK
   implicit none

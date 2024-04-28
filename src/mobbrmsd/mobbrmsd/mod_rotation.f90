@@ -1,6 +1,7 @@
 !| Calculate the rotation matrix that minimizes \(|\mathbf{X}-\mathbf{R}\mathbf{Y}|^2\). <br>
 !  Here, \(\mathbf{R}\mathbf{R}^\top=\mathbf{I}\) and \(\det(\mathbf{R})=1\) are satisfied. <br>
-!  This code is based on the Kabsch algorithm. doi : 10.1107/S0567739476001873
+!  This code is based on the Kabsch algorithm.
+!  doi : [10.1107/S0567739476001873](https://scripts.iucr.org/cgi-bin/paper?S0567739476001873)
 module mod_rotation
   use mod_kinds, only: IK, RK
   use blas_lapack_interface, only: D, DD
@@ -81,23 +82,19 @@ contains
     !! rotation matrix, \(\mathbf{R}\in\mathbb R^{D\times D}\).
     real(RK), intent(inout) :: w(*)
     !! work array, must be larger than worksize_rotation().
-!
     call Kabsch(cov, rot, w)
-!
   end subroutine estimate_rotation
 !
 !| work array size for Kabsch algorithm.
   pure elemental function worksize_Kabsch() result(res)
     real(RK)    :: w(1)
     integer(IK) :: res, info
-!
 #ifdef REAL32
     call SGESVD('A', 'A', D, D, w, D, w, w, D, w, D, w, -1, info)
 #else
     call DGESVD('A', 'A', D, D, w, D, w, w, D, w, D, w, -1, info)
 #endif
     res = NINT(w(1)) + DD * 3 + D
-!
   end function worksize_Kabsch
 !
   pure subroutine Kabsch(cov, rot, w)
@@ -115,7 +112,6 @@ contains
     vt = u + DD
     s = vt + DD
     iw = s + D
-!
 #ifdef REAL32
     call SGESVD('A', 'A', D, D, w(m), D, w(s), w(u), D, w(vt), D, w(iw), -1, info)
     lw = NINT(w(iw))
@@ -141,7 +137,6 @@ contains
     call DGEMM('N', 'N', D, D, D, ONE, w(u), D, w(vt), D, ZERO, w(s), D)
     call copy(DD, w(s), rot(1))
 #endif
-!
   end subroutine Kabsch
 !
 !| calculate determinant sign of square matrix x, with leading dimension.

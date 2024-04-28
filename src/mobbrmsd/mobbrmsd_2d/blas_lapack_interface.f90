@@ -1,26 +1,25 @@
-!| Module for blas lapack interface, D=2. <br>
-!  Spatial dimension is defined here.
+!| Define spatial dimension, \(D=2\), and provide an optimized blas/lapack interface.
 module blas_lapack_interface
   implicit none
   private
   public  :: D, DD, ND
   public  :: setup_dimension
 !
-  integer, parameter :: D = 2
   !! Spatial dimension
-  integer, parameter :: DD = 4
+  integer, parameter :: D = 2
   !! Square spatial dimension
+  integer, parameter :: DD = 4
+  !| Node memory size, defined by \(1 + 1 + D^2\).
+  !  Let \([L, G, \mathbf{C}]\) be a node,
+  !  where \(L, G\in\mathbb{R}\) and \(\mathbf{C}\in\mathbb{R}^{D\times D}\).
   integer, parameter :: ND = DD + 2
-  !! Node size, defined by [L, G, C(D,D)]
 !
 contains
-!
 !| Sets the dimensions of the space. <br>
 !  This is dummy interface.
   subroutine setup_dimension(d_)
     integer, intent(in) :: d_
   end subroutine setup_dimension
-!
 end module blas_lapack_interface
 !
 !| DGEMM for M=N=2. <br>

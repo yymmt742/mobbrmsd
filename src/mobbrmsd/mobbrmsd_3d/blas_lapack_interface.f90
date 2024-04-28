@@ -1,26 +1,25 @@
-!| Module for blas lapack interface, D=3.
-!  Spatial dimension is defined here.
+!| Define spatial dimension, \(D=3\), and provide an optimized blas/lapack interface.
 module blas_lapack_interface
   implicit none
   private
   public  :: D, DD, ND
   public  :: setup_dimension
 !
-  integer, parameter :: D  = 3
-  !! Spatial dimension
+  !| Spatial dimension.
+  integer, parameter :: D = 3
+  !| Square spatial dimension.
   integer, parameter :: DD = 9
-  !! Square spatial dimension
+  !| Node memory size, defined by \(1 + 1 + D^2\).
+  !  Let \([L, G, \mathbf{C}]\) be a node,
+  !  where \(L, G\in\mathbb{R}\) and \(\mathbf{C}\in\mathbb{R}^{D\times D}\).
   integer, parameter :: ND = DD + 2
-  !! Node size, defined by [L, G, C(D,D)]
 !
 contains
-!
 !| Sets the dimensions of the space. <br>
 !  Caution, this routine affects global.
   subroutine setup_dimension(d_)
     integer, intent(in) :: d_
   end subroutine setup_dimension
-!
 end module blas_lapack_interface
 !
 !| DGEMM for M=N=3. <br>
@@ -138,7 +137,7 @@ pure subroutine DGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, L
    &                  + A(2, K - 0) * B(3, K - 0)
     C(3, 3) = C(3, 3) + A(3, K - 1) * B(3, K - 1) &
    &                  + A(3, K - 0) * B(3, K - 0)
-    case (3)
+  case (3)
     C(1, 1) = C(1, 1) + A(1, K - 2) * B(1, K - 2) &
    &                  + A(1, K - 1) * B(1, K - 1) &
    &                  + A(1, K - 0) * B(1, K - 0)
@@ -334,7 +333,7 @@ pure subroutine SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, L
    &                  + A(2, K - 0) * B(3, K - 0)
     C(3, 3) = C(3, 3) + A(3, K - 1) * B(3, K - 1) &
    &                  + A(3, K - 0) * B(3, K - 0)
-    case (3)
+  case (3)
     C(1, 1) = C(1, 1) + A(1, K - 2) * B(1, K - 2) &
    &                  + A(1, K - 1) * B(1, K - 1) &
    &                  + A(1, K - 0) * B(1, K - 0)
