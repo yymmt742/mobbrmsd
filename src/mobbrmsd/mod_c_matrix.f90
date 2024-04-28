@@ -15,6 +15,7 @@
 !  @endnote
 module mod_c_matrix
   use blas_lapack_interface, only: D, DD
+  use mod_cov, only: covdot, covcopy
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mol_block
   implicit none
@@ -43,7 +44,7 @@ module mod_c_matrix
 !   This type is mainly used for passing during initialization.
 !   @endnote
   type c_matrix
-    integer(IK)              :: q(header_size)
+    integer(IK) :: q(header_size)
     !! header
   end type c_matrix
 !
