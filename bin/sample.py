@@ -16,7 +16,7 @@ def sample_run(a, b, nhist, nsample):
     hist = np.zeros(nhist)
     for i in range(nsample):
         x = cog.generate(n_apm, n_mol, a, b).reshape((n_apm * n_mol, 3))
-        y = cog.generate(n_apm, n_mol, a, b).reshape((n_apm * n_mol, 3))
+        y = 0.5 * x + 0.5 * cog.generate(n_apm, n_mol, a, b).reshape((n_apm * n_mol, 3))
         ret = mrmsd.run(x, y)
         hist[ret.n_eval - 1] += 1.0
     hsum = np.sum(hist)
