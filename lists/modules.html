@@ -93,23 +93,23 @@
 <!---->			   <tr class="active"><td><a href='../module/mod_c_matrix.html'>mod_c_matrix</a></td><td><a href='../sourcefile/mod_c_matrix.f90.html'>mod_c_matrix.f90</a></td><td><p>A module for managing c-matrices, tensor of covariance matrices. <br>
  <script type="math/tex"> \{\mathbf{C}_{IJs}\}_{IJs} </script> is third-order ( <script type="math/tex">M\times M\times s </script> ) tensor of matrix <script type="math/tex"> \mathbf{C}_{IJs}\in\mathbb{R}^{d\times d} </script>,
  defined by<br>
- <script type="math/tex; mode=display"> \mathbf{C}_{IJs} = \mathbf{Y}_J \mathbf{Q}_s \mathbf{X}_I^\top </script> <br>
- <script type="math/tex"> \mathbf{X}_I </script> :: <script type="math/tex"> I </script>-th molecule in reference coordinate, <script type="math/tex"> \mathbf{X} \in\mathbb{R}^{d\times n}</script>.<br>
+ <script type="math/tex; mode=display"> \mathbf{C}_{IJs} = \mathbf{Y}_J \mathbf{Q}_s \mathbf{X}_I^\top </script>
+<script type="math/tex"> \mathbf{X}_I </script> :: <script type="math/tex"> I </script>-th molecule in reference coordinate, <script type="math/tex"> \mathbf{X} \in\mathbb{R}^{d\times n}</script>.<br>
  <script type="math/tex"> \mathbf{Y}_J </script> :: <script type="math/tex"> J </script>-th molecule in target coordinate,    <script type="math/tex"> \mathbf{Y} \in\mathbb{R}^{d\times n} </script>.<br>
  <script type="math/tex"> \mathbf{Q}_s </script> :: Molecular permutation matrix on <script type="math/tex"> n </script>. <br>
  To quickly find the rotation matrix, <script type="math/tex"> \mathbf{C}_{IJs} </script> is stored with autocorrelation <script type="math/tex"> G_{IJ} </script>, defined by <br>
- <script type="math/tex; mode=display"> G_{IJ} = \text{Tr}\left[\mathbf{X}_I\mathbf{X}_I^\top\right] + \text{Tr}\left[\mathbf{Y}_J\mathbf{Y}_J^\top\right] </script> <br>
+ <script type="math/tex; mode=display"> G_{IJ} = \text{Tr}\left[\mathbf{X}_I\mathbf{X}_I^\top\right] + \text{Tr}\left[\mathbf{Y}_J\mathbf{Y}_J^\top\right] </script>
  </p><a href="../module/mod_c_matrix.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
 <!--active-->			   <tr class=""><td><a href='../module/mod_dimspec_functions.html'>mod_dimspec_functions</a></td><td><a href='../sourcefile/mod_dimspec_functions.f90.html'>mod_dimspec_functions.f90</a></td><td><p>Define spatial dimension, <script type="math/tex">D=2</script>,
- and provide optimized functions for dimension.
-Spatial dimension</p></td></tr>
-<!---->			   <tr class="active"><td><a href='../module/mod_dimspec_functions~2.html'>mod_dimspec_functions</a></td><td><a href='../sourcefile/mod_dimspec_functions.f90~2.html'>mod_dimspec_functions.f90</a></td><td><p>Define spatial dimension, <script type="math/tex">D=3</script>, and provide an optimized blas/lapack interface.</p></td></tr>
+ and provide optimized functions for dimension.</p></td></tr>
+<!---->			   <tr class="active"><td><a href='../module/mod_dimspec_functions~2.html'>mod_dimspec_functions</a></td><td><a href='../sourcefile/mod_dimspec_functions.f90~2.html'>mod_dimspec_functions.f90</a></td><td><p>Define spatial dimension, <script type="math/tex">D=3</script>,
+ and provide an optimized blas/lapack interface.</p></td></tr>
 <!--active-->			   <tr class=""><td><a href='../module/mod_dimspec_functions~3.html'>mod_dimspec_functions</a></td><td><a href='../sourcefile/mod_dimspec_functions.f90~3.html'>mod_dimspec_functions.f90</a></td><td><p>Define spatial dimension, <script type="math/tex">D</script>,
  and provide optimized functions for dimension.</p></td></tr>
 <!---->			   <tr class="active"><td><a href='../module/mod_f_matrix.html'>mod_f_matrix</a></td><td><a href='../sourcefile/mod_f_matrix.f90.html'>mod_f_matrix.f90</a></td><td><p>Module for managing free rotation cost matrix, <script type="math/tex">\mathbf{F}</script>. <br>
- <script type="math/tex; mode=display"> \mathbf{F}_{IJ} = \min_{\mathbf{R},s}\text{Tr}\left[\mathbf{C}_{IJs} \mathbf{R} \right] </script> <br>
- <script type="math/tex"> \mathbf{C}_{IJs} </script> :: Covariance matrix of <script type="math/tex"> \mathbf{X}_I </script> and <script type="math/tex"> \mathbf{Y}_I </script> with <script type="math/tex"> s </script>-th molecular permutation.<br>
- <script type="math/tex"> \mathbf{R} </script> :: Rotation matrix on <script type="math/tex"> \mathbb{R}^{d\times d} </script>.<br></p></td></tr>
+ <script type="math/tex; mode=display"> \mathbf{F}_{IJ} = \min_{\mathbf{R},s}\text{Tr}\left[\mathbf{C}_{IJs} \mathbf{R} \right] </script>
+<script type="math/tex"> \mathbf{C}_{IJs} </script> :: Covariance matrix of <script type="math/tex"> \mathbf{X}_I </script> and <script type="math/tex"> \mathbf{Y}_I </script> with <script type="math/tex"> s </script>-th molecular permutation.<br>
+ <script type="math/tex"> \mathbf{R} </script> :: Rotation matrix on <script type="math/tex"> \mathbb{R}^{d} </script>.<br></p></td></tr>
 <!--active-->			   <tr class=""><td><a href='../module/mod_group_permutation.html'>mod_group_permutation</a></td><td><a href='../sourcefile/mod_group_permutation.f90.html'>mod_group_permutation.f90</a></td><td><p>Module for order permutation by decomposed cyclic groups. <br>
  This module provides swap operations on sequences equivalent to X(:, :) = X(:, perm(:)). <br>
  A given swap index perm(:) is decomposed into periodic substitutions. <br>

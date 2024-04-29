@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 5.7% of total for modules and submodules.">206 statements</a>
+    title=" 5.2% of total for modules and submodules.">187 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_c_matrix.f90"> Source File</a></li>
   </ul>
@@ -156,12 +156,12 @@
     <p>A module for managing c-matrices, tensor of covariance matrices. <br>
  <script type="math/tex"> \{\mathbf{C}_{IJs}\}_{IJs} </script> is third-order ( <script type="math/tex">M\times M\times s </script> ) tensor of matrix <script type="math/tex"> \mathbf{C}_{IJs}\in\mathbb{R}^{d\times d} </script>,
  defined by<br>
- <script type="math/tex; mode=display"> \mathbf{C}_{IJs} = \mathbf{Y}_J \mathbf{Q}_s \mathbf{X}_I^\top </script> <br>
- <script type="math/tex"> \mathbf{X}_I </script> :: <script type="math/tex"> I </script>-th molecule in reference coordinate, <script type="math/tex"> \mathbf{X} \in\mathbb{R}^{d\times n}</script>.<br>
+ <script type="math/tex; mode=display"> \mathbf{C}_{IJs} = \mathbf{Y}_J \mathbf{Q}_s \mathbf{X}_I^\top </script>
+<script type="math/tex"> \mathbf{X}_I </script> :: <script type="math/tex"> I </script>-th molecule in reference coordinate, <script type="math/tex"> \mathbf{X} \in\mathbb{R}^{d\times n}</script>.<br>
  <script type="math/tex"> \mathbf{Y}_J </script> :: <script type="math/tex"> J </script>-th molecule in target coordinate,    <script type="math/tex"> \mathbf{Y} \in\mathbb{R}^{d\times n} </script>.<br>
  <script type="math/tex"> \mathbf{Q}_s </script> :: Molecular permutation matrix on <script type="math/tex"> n </script>. <br>
  To quickly find the rotation matrix, <script type="math/tex"> \mathbf{C}_{IJs} </script> is stored with autocorrelation <script type="math/tex"> G_{IJ} </script>, defined by <br>
- <script type="math/tex; mode=display"> G_{IJ} = \text{Tr}\left[\mathbf{X}_I\mathbf{X}_I^\top\right] + \text{Tr}\left[\mathbf{Y}_J\mathbf{Y}_J^\top\right] </script> <br>
+ <script type="math/tex; mode=display"> G_{IJ} = \text{Tr}\left[\mathbf{X}_I\mathbf{X}_I^\top\right] + \text{Tr}\left[\mathbf{Y}_J\mathbf{Y}_J^\top\right] </script>
  </p><div class="alert alert-info" role="alert"><h4>Note</h4><p><script type="math/tex"> G_{IJ} </script> does not change with respect to molecular symmetry permutation index, <script type="math/tex"> s </script>. <br>
    Therefore, data blocks are stored in three-dimensional array C(bs,M,M)
    with the leading dimension with <script type="math/tex"> \text{bs}=1 + Sd^2 </script>. <br>
@@ -175,9 +175,9 @@
       <ul class="list-group">
       <li class="list-group-item">
   <ul class="list-inline">
-    <li><a href='../module/mod_dimspec_functions.html'>mod_dimspec_functions</a></li>
-    <li><a href='../module/mod_params.html'>mod_params</a></li>
     <li><a href='../module/mod_mol_block.html'>mod_mol_block</a></li>
+    <li><a href='../module/mod_params.html'>mod_params</a></li>
+    <li><a href='../module/mod_dimspec_functions.html'>mod_dimspec_functions</a></li>
   </ul>
       </li>
       </ul>
@@ -270,8 +270,8 @@
      <div class="panel panel-default">
   <div class="panel-heading codesum"><span class="anchor" id="type-c_matrix"></span><h3>type, public :: <a href='../type/c_matrix.html'>c_matrix</a>  </h3></div>
   <div class="panel-body">
-    <p>C matrix manager.<br>
-  </p><a href="../type/c_matrix.html" class="pull-right"><emph>Read more&hellip;</emph></a>
+    <p>C matrix manager.
+  This derived type is mainly used for passing during initialization.</p>
      <h4>Constructor</h4>
          <p>Constructer</p>
        <table class="table table-striped varlist">
@@ -279,6 +279,12 @@
              <tr><td>private pure function <strong>c_matrix_new</strong>(b)</td><td><p>Constructer</p></td></tr>
        </tbody>
        </table>
+     <h4>Finalizations Procedures</h4>
+      <table class="table table-striped varlist">
+      <tbody>
+       <tr><td>final :: <strong>c_matrix_destroy</strong></h3></td><td></td></tr>
+       </tbody>
+       </table>  
      
   </div>
 </div>

@@ -1,7 +1,7 @@
 !| Module for managing free rotation cost matrix, \(\mathbf{F}\). <br>
-!  \[ \mathbf{F}_{IJ} = \min_{\mathbf{R},s}\text{Tr}\left[\mathbf{C}_{IJs} \mathbf{R} \right] \] <br>
+!  \[ \mathbf{F}_{IJ} = \min_{\mathbf{R},s}\text{Tr}\left[\mathbf{C}_{IJs} \mathbf{R} \right] \]
 !  \( \mathbf{C}_{IJs} \) :: Covariance matrix of \( \mathbf{X}_I \) and \( \mathbf{Y}_I \) with \( s \)-th molecular permutation.<br>
-!  \( \mathbf{R} \) :: Rotation matrix on \( \mathbb{R}^{d\times d} \).<br>
+!  \( \mathbf{R} \) :: Rotation matrix on \( \mathbb{R}^{d} \).<br>
 module mod_f_matrix
   use mod_dimspec_functions, only: D, DD
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
@@ -19,10 +19,8 @@ module mod_f_matrix
   integer(IK), parameter :: header_size = 1
   integer(IK), parameter :: nn = 1
 !
-!| F matrix manager.<br>
-!   @note
-!   This type is mainly used for passing during initialization.
-!   @endnote
+!| F matrix manager.
+!  This derived type is mainly used for passing during initialization.
   type f_matrix
     integer(IK)           :: q(header_size)
     !! header

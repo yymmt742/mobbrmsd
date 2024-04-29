@@ -151,9 +151,9 @@
     
     <div class="col-md-9" id='text'>
     <p>Module for managing free rotation cost matrix, <script type="math/tex">\mathbf{F}</script>. <br>
- <script type="math/tex; mode=display"> \mathbf{F}_{IJ} = \min_{\mathbf{R},s}\text{Tr}\left[\mathbf{C}_{IJs} \mathbf{R} \right] </script> <br>
- <script type="math/tex"> \mathbf{C}_{IJs} </script> :: Covariance matrix of <script type="math/tex"> \mathbf{X}_I </script> and <script type="math/tex"> \mathbf{Y}_I </script> with <script type="math/tex"> s </script>-th molecular permutation.<br>
- <script type="math/tex"> \mathbf{R} </script> :: Rotation matrix on <script type="math/tex"> \mathbb{R}^{d\times d} </script>.<br></p>
+ <script type="math/tex; mode=display"> \mathbf{F}_{IJ} = \min_{\mathbf{R},s}\text{Tr}\left[\mathbf{C}_{IJs} \mathbf{R} \right] </script>
+<script type="math/tex"> \mathbf{C}_{IJs} </script> :: Covariance matrix of <script type="math/tex"> \mathbf{X}_I </script> and <script type="math/tex"> \mathbf{Y}_I </script> with <script type="math/tex"> s </script>-th molecular permutation.<br>
+ <script type="math/tex"> \mathbf{R} </script> :: Rotation matrix on <script type="math/tex"> \mathbb{R}^{d} </script>.<br></p>
 <br>        <div class="panel panel-default">
       <div class="panel-heading">
   <h3 class="panel-title">Uses</h3>
@@ -161,12 +161,12 @@
       <ul class="list-group">
       <li class="list-group-item">
   <ul class="list-inline">
+    <li><a href='../module/mod_mol_block.html'>mod_mol_block</a></li>
+    <li><a href='../module/mod_c_matrix.html'>mod_c_matrix</a></li>
+    <li><a href='../module/mod_params.html'>mod_params</a></li>
+    <li><a href='../module/mod_rotation.html'>mod_rotation</a></li>
     <li><a href='../module/mod_dimspec_functions.html'>mod_dimspec_functions</a></li>
     <li><a href='../module/mod_hungarian.html'>mod_Hungarian</a></li>
-    <li><a href='../module/mod_mol_block.html'>mod_mol_block</a></li>
-    <li><a href='../module/mod_params.html'>mod_params</a></li>
-    <li><a href='../module/mod_c_matrix.html'>mod_c_matrix</a></li>
-    <li><a href='../module/mod_rotation.html'>mod_rotation</a></li>
   </ul>
       </li>
       </ul>
@@ -256,8 +256,8 @@
      <div class="panel panel-default">
   <div class="panel-heading codesum"><span class="anchor" id="type-f_matrix"></span><h3>type, public :: <a href='../type/f_matrix.html'>f_matrix</a>  </h3></div>
   <div class="panel-body">
-    <p>F matrix manager.<br>
-  </p><a href="../type/f_matrix.html" class="pull-right"><emph>Read more&hellip;</emph></a>
+    <p>F matrix manager.
+ This derived type is mainly used for passing during initialization.</p>
      <h4>Constructor</h4>
          <p>Constructer</p>
        <table class="table table-striped varlist">

@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title="<p> 5.0% of total for derived types.</p>Including implementation: 3 statements,  1.0% of total for derived types.">3 statements</a>
+    title="<p> 7.3% of total for derived types.</p>Including implementation: 10 statements,  3.3% of total for derived types.">6 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_c_matrix.f90"> Source File</a></li>
   </ul>
@@ -120,6 +120,14 @@
     </div>
   </div>
 </div>
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#fins-0">Finalization Procedures</a></h3></div>
+  <div id="fins-0" class="panel-collapse collapse">
+    <div class="list-group">
+      <a class="list-group-item" href="../type/c_matrix.html#finalproc-c_matrix_destroy">c_matrix_destroy</a>
+    </div>
+  </div>
+</div>
 
 </div>
 
@@ -127,10 +135,8 @@
     
     <div class="col-md-9" id='text'>
       <h2>type, public :: c_matrix</h2>
-    <p>C matrix manager.<br>
-  </p><div class="alert alert-info" role="alert"><h4>Note</h4><p>This type is mainly used for passing during initialization.
-  </p></div>
-<p>
+    <p>C matrix manager.
+  This derived type is mainly used for passing during initialization.</p>
     <br>
 
     <section class="visible-xs visible-sm hidden-md">
@@ -141,6 +147,14 @@
   <div id="cons-1" class="panel-collapse collapse">
     <div class="list-group">
       <a class="list-group-item" href="../type/c_matrix.html#interface-c_matrix">c_matrix</a>
+    </div>
+  </div>
+</div>
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#fins-1">Finalization Procedures</a></h3></div>
+  <div id="fins-1" class="panel-collapse collapse">
+    <div class="list-group">
+      <a class="list-group-item" href="../type/c_matrix.html#finalproc-c_matrix_destroy">c_matrix_destroy</a>
     </div>
   </div>
 </div>
@@ -181,6 +195,38 @@
    </section>
    <br>
     
+    <section>
+    <h2>Finalization Procedures</h2>
+         <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="finalproc-c_matrix_destroy"></span><h3>final :: <strong>c_matrix_destroy</strong> 
+</h3></div>
+  <div class="panel-body">
+    
+    
+  </div>
+  <ul class="list-group">
+     <li class="list-group-item">
+       <h3>private pure elemental subroutine c_matrix_destroy(this)</h3>    
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>type(<a href='../type/c_matrix.html'>c_matrix</a>),</td>
+<td>intent(inout)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>this</strong></td><td></td>
+</tr>
+</tbody>
+</table>
+
+
+     </li>
+  </ul>
+</div>
+
+  
+    </section>
+    <br>
     
     
     
