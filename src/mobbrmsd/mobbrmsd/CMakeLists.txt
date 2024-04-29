@@ -95,7 +95,10 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_covdot.f90)
   target_include_directories(test_covdot
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+  target_include_directories(test_covdot
+                             PRIVATE ${forbar_BINARY_DIR}/src/include)
   target_include_directories(test_covdot PRIVATE ${unittest_DIR}/mod_files)
+  target_link_libraries(test_covdot PRIVATE purelapack)
   target_link_libraries(test_covdot PRIVATE unittest)
   add_test(NAME test_covdot COMMAND test_covdot)
 

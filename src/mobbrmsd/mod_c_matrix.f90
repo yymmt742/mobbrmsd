@@ -14,7 +14,7 @@
 !    Data blocks are defined by \( \left[ G_{IJ}, \mathbf{C}_{IJ1}, \mathbf{C}_{IJ2}, \dots, \mathbf{C}_{IJS} \right] \) <br>
 !  @endnote
 module mod_c_matrix
-  use mod_dimspec_functions, only: D, DD, covdot, covcopy
+  use mod_dimspec_functions, only: D, DD, compute_cov, covcopy
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mol_block
   implicit none
@@ -186,22 +186,14 @@ contains
 !
       ic = 2
       do concurrent(i=1:n)
-#ifdef REAL32
-        call SGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
-#else
-        call DGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
-#endif
+        call compute_cov(D, m, WX(1, 1, i), WY, C(ic, i))
       end do
 !
       do j = 1, s - 1
         ic = ic + DD
         call mol_block_swap(b, j, WY)
         do concurrent(i=1:n)
-#ifdef REAL32
-          call SGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
-#else
-          call DGEMM('N', 'T', D, D, m, ONE, WY, D, WX(1, 1, i), D, ZERO, C(ic, i), D)
-#endif
+          call compute_cov(D, m, WX(1, 1, i), WY, C(ic, i))
         end do
         call mol_block_inverse_swap(b, j, WY)
       end do

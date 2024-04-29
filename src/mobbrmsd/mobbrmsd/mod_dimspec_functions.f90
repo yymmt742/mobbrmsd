@@ -7,6 +7,7 @@ module mod_dimspec_functions
   public  :: D, DD, ND
   public  :: setup_dimension
   public  :: compute_com
+  public  :: compute_cov
   public  :: covcopy
   !| Spatial dimension, \(D\).
   integer(IK), protected, save :: D = 3
@@ -21,6 +22,11 @@ module mod_dimspec_functions
   real(RK), parameter :: HALF = 0.5_RK
   real(RK), parameter :: ONETHIRD = 1.0_RK / 3.0_RK
   real(RK), parameter :: ONE = 1.0_RK
+!
+  interface
+    include 'dgemm.h'
+    include 'sgemm.h'
+  end interface
 !
 contains
 !| Sets the dimensions of the space. <br>
@@ -82,6 +88,18 @@ contains
     end do
   end subroutine compute_com
 !
+!| Calculate covariance matrix.
+  pure subroutine compute_cov(d, n, X, Y, C)
+    integer(IK), intent(in) :: d, n
+    real(RK), intent(in)    :: X(d, *), Y(d, *)
+    real(RK), intent(inout) :: C(d, d)
+#ifdef REAL32
+    call SGEMM('N', 'T', D, D, n, ONE, Y, D, X, D, ZERO, C, D)
+#else
+    call DGEMM('N', 'T', D, D, n, ONE, Y, D, X, D, ZERO, C, D)
+#endif
+  end subroutine compute_cov
+
 !| Compute \(\mathbf{Y} \gets \mathbf{X}-\bar{\mathbf{X}}\).
   pure subroutine covcopy(d, n, X, CX, Y)
     integer(IK), intent(in) :: d, n
