@@ -7,7 +7,7 @@ module mod_dimspec_functions
   public  :: D, DD, ND
   public  :: setup_dimension
   public  :: compute_com
-  public  :: covdot
+  public  :: compute_cov
   public  :: covcopy
   !| Spatial dimension, \(D\).
   integer(IK), protected, save :: D = 3
@@ -19,7 +19,14 @@ module mod_dimspec_functions
   integer(IK), protected, save :: ND = 9 + 2
 !
   real(RK), parameter :: ZERO = 0.0_RK
+  real(RK), parameter :: HALF = 0.5_RK
+  real(RK), parameter :: ONETHIRD = 1.0_RK / 3.0_RK
   real(RK), parameter :: ONE = 1.0_RK
+!
+  interface
+    include 'dgemm.h'
+    include 'sgemm.h'
+  end interface
 !
 contains
 !| Sets the dimensions of the space. <br>
@@ -38,41 +45,61 @@ contains
     real(RK), intent(inout) :: C(d)
     real(RK)                :: rn
     integer(IK)             :: i, j
+    if (n < 0) then
+      do concurrent(i=1:d)
+        C(i) = ZERO
+      end do
+      return
+    elseif (n == 1) then
+      do concurrent(i=1:d)
+        C(i) = X(i, 1)
+      end do
+      return
+    elseif (n == 2) then
+      do concurrent(i=1:d)
+        C(i) = (X(i, 1) + X(i, 2)) * HALF
+      end do
+      return
+    elseif (n == 3) then
+      do concurrent(i=1:d)
+        C(i) = (X(i, 1) + X(i, 2) + X(i, 3)) * ONETHIRD
+      end do
+      return
+    end if
     do concurrent(i=1:d)
       C(i) = ZERO
     end do
-    do j = 1, n
+    do j = 2, n, 2
       do concurrent(i=1:d)
-        C(i) = C(i) + X(i, j)
+        C(i) = C(i) + X(i, j - 1)
+      end do
+      do concurrent(i=1:d)
+        C(i) = C(i) + X(i, j - 0)
       end do
     end do
+    if (MODULO(n, 2) == 1) then
+      do concurrent(i=1:d)
+        C(i) = C(i) + X(i, n)
+      end do
+    end if
     rn = ONE / real(n, RK)
     do concurrent(i=1:d)
       C(i) = C(i) * rn
     end do
   end subroutine compute_com
 !
-!| Calculate \(\text{tr}[(\mathbf Y-\bar{\mathbf Y})(\mathbf X-\bar{\mathbf X})^\top]\).
-  pure function covdot(d, n, X, Y, CX, CY) result(res)
+!| Calculate covariance matrix.
+  pure subroutine compute_cov(d, n, X, Y, C)
     integer(IK), intent(in) :: d, n
     real(RK), intent(in)    :: X(d, *), Y(d, *)
-    real(RK), intent(in)    :: CX(d), CY(d)
-    real(RK)                :: res, su(d)
-    integer(IK)             :: i, j
-    do concurrent(i=1:d)
-      su(i) = ZERO
-    end do
-    do j = 1, n
-      do concurrent(i=1:d)
-        su(i) = su(i) + (X(i, j) - CX(i)) * (Y(i, j) - CY(i))
-      end do
-    end do
-    res = ZERO
-    do i = 1, d
-      res = res + su(i)
-    end do
-  end function covdot
-!
+    real(RK), intent(inout) :: C(d, d)
+#ifdef REAL32
+    call SGEMM('N', 'T', D, D, n, ONE, Y, D, X, D, ZERO, C, D)
+#else
+    call DGEMM('N', 'T', D, D, n, ONE, Y, D, X, D, ZERO, C, D)
+#endif
+  end subroutine compute_cov
+
 !| Compute \(\mathbf{Y} \gets \mathbf{X}-\bar{\mathbf{X}}\).
   pure subroutine covcopy(d, n, X, CX, Y)
     integer(IK), intent(in) :: d, n

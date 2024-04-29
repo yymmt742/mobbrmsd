@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 2.0% of total for modules and submodules.">70 statements</a>
+    title=" 2.9% of total for modules and submodules.">105 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_dimspec_functions.f90"> Source File</a></li>
   </ul>
@@ -122,19 +122,12 @@
   </div>
 </div>
 <div class="panel panel-primary">
-  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#funcs-0">Functions</a></h3></div>
-  <div id="funcs-0" class="panel-collapse collapse">
-    <div class="list-group">
-      <a class="list-group-item" href="../module/mod_dimspec_functions~2.html#proc-covdot~2">covdot</a>
-    </div>
-  </div>
-</div>
-<div class="panel panel-primary">
   <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#subs-0">Subroutines</a></h3></div>
   <div class="list-group">
     <div id="subs-0" class="panel-collapse collapse">
       <a class="list-group-item" href="../module/mod_dimspec_functions~2.html#proc-setup_dimension~2">setup_dimension</a>
       <a class="list-group-item" href="../module/mod_dimspec_functions~2.html#proc-compute_com~2">compute_com</a>
+      <a class="list-group-item" href="../module/mod_dimspec_functions~2.html#proc-compute_cov~2">compute_cov</a>
       <a class="list-group-item" href="../module/mod_dimspec_functions~2.html#proc-covcopy~2">covcopy</a>
     </div>
   </div>
@@ -176,19 +169,12 @@
   </div>
 </div>
 <div class="panel panel-primary">
-  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#funcs-1">Functions</a></h3></div>
-  <div id="funcs-1" class="panel-collapse collapse">
-    <div class="list-group">
-      <a class="list-group-item" href="../module/mod_dimspec_functions~2.html#proc-covdot~2">covdot</a>
-    </div>
-  </div>
-</div>
-<div class="panel panel-primary">
   <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#subs-1">Subroutines</a></h3></div>
   <div class="list-group">
     <div id="subs-1" class="panel-collapse collapse">
       <a class="list-group-item" href="../module/mod_dimspec_functions~2.html#proc-setup_dimension~2">setup_dimension</a>
       <a class="list-group-item" href="../module/mod_dimspec_functions~2.html#proc-compute_com~2">compute_com</a>
+      <a class="list-group-item" href="../module/mod_dimspec_functions~2.html#proc-compute_cov~2">compute_cov</a>
       <a class="list-group-item" href="../module/mod_dimspec_functions~2.html#proc-covcopy~2">covcopy</a>
     </div>
   </div>
@@ -230,66 +216,6 @@
 
     
     
- 
-    <section>
-    <h2>Functions</h2>
-      <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-covdot~2"></span><h3>public pure function <a href='../proc/covdot~2.html'>covdot</a>(d, n, X, Y, CX, CY) result(res)</h3></div>
-  <div class="panel-body">
-       
-<p>Calculate <script type="math/tex">\text{tr}[(\mathbf Y-\bar{\mathbf Y})(\mathbf X-\bar{\mathbf X})^\top]</script>
- for <script type="math/tex">D=3</script>
-</p>
-    
-<h4>Arguments</h4>      <table class="table table-striped varlist">
-<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
-<tbody>
-<tr>
-  <td><span class="anchor" ></span>integer(kind=IK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>d</strong></td><td></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>integer(kind=IK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>n</strong></td><td></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>X</strong>(d,*)</td><td></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>Y</strong>(d,*)</td><td></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>CX</strong>(d)</td><td></td>
-</tr>
-<tr>
-  <td><span class="anchor" ></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>CY</strong>(d)</td><td></td>
-</tr>
-</tbody>
-</table>
-
-<h4>Return Value <small>real(kind=RK)</small></h4>  
-
-  </div>
-  </div>
-
-    </section>
-    <br>
 
     <section>
     <h2>Subroutines</h2>
@@ -349,6 +275,52 @@
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>C</strong>(d)</td><td></td>
+</tr>
+</tbody>
+</table>
+
+
+  </div>
+  </div>
+
+      <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-compute_cov~2"></span><h3>public pure subroutine <a href='../proc/compute_cov~2.html'>compute_cov</a>(d, n, X, Y, C)</h3></div>
+  <div class="panel-body">
+       
+<p>Calculate covariance matrix.</p>
+    
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>d</strong></td><td></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>n</strong></td><td></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>X</strong>(d,*)</td><td></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>Y</strong>(d,*)</td><td></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>real(kind=RK),</td>
+<td>intent(inout)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>C</strong>(d,d)</td><td></td>
 </tr>
 </tbody>
 </table>

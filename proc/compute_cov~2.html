@@ -8,7 +8,7 @@
     <meta name="author" content="yymmt742" >
     <link rel="icon" href="../favicon.png">
 
-    <title>covdot &ndash; mobbrmsd</title>
+    <title>compute_cov &ndash; mobbrmsd</title>
 
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
@@ -76,8 +76,8 @@
 
     <div class="container">
   <div class="row">
-    <h1>covdot
-      <small>Function</small>
+    <h1>compute_cov
+      <small>Subroutine</small>
     </h1>
     <div class="row">
   <div class="col-lg-12">
@@ -87,14 +87,14 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 0.8% of total for procedures.">16 statements</a>
+    title=" 0.3% of total for procedures.">7 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_dimspec_functions.f90"> Source File</a></li>
   </ul>
   <ol class="breadcrumb in-well text-right">
      <li><a href='../sourcefile/mod_dimspec_functions.f90~2.html'>mod_dimspec_functions.f90</a></li>
      <li><a href='../module/mod_dimspec_functions~2.html'>mod_dimspec_functions</a></li>
-     <li class="active">covdot</li>
+     <li class="active">compute_cov</li>
   </ol>
 </div>
 </div>
@@ -119,31 +119,29 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure function covdot(d, n, X, Y, CX, CY) result(res)</h2>
+    <h2>public pure subroutine compute_cov(d, n, X, Y, C)</h2>
     
 
-    <p>Calculate <script type="math/tex">\text{tr}[(\mathbf Y-\bar{\mathbf Y})(\mathbf X-\bar{\mathbf X})^\top]</script>
- for <script type="math/tex">D=3</script>
-</p>
+    <p>Calculate covariance matrix.</p>
 
     <h3>Arguments</h3>
       <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-d~7"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-d~8"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>d</strong></td><td></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-n~9"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-n~10"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>n</strong></td><td></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-x~15"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-x~16"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>X</strong>(d,*)</td><td></td>
@@ -155,22 +153,14 @@
   <td><strong>Y</strong>(d,*)</td><td></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-cx~5"></span>real(kind=RK),</td>
-<td>intent(in)</td>
+  <td><span class="anchor" id="variable-c~14"></span>real(kind=RK),</td>
+<td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>CX</strong>(d)</td><td></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-cy~4"></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>CY</strong>(d)</td><td></td>
+  <td><strong>C</strong>(d,d)</td><td></td>
 </tr>
 </tbody>
 </table>
 
-   <h3>Return Value <small><span class="anchor" id="variable-res~93"></span>real(kind=RK)</small></h3>
-    
     <br>
 
     <section class="visible-xs visible-sm hidden-md">
