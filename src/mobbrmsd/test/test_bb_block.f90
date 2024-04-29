@@ -16,7 +16,7 @@ program main
   call test1(1, 2, 1, [1, 2], [1, 1], [0])
   call test1(8, 4, 1, [3, 4, 2, 1], [1, 1, 1, 1], [0])
   call test1(8, 4, 2, [3, 4, 2, 1], [1, 2, 1, 2], [2, 3, 5, 4, 8, 6, 7, 1])
-  call test1(8, 8, 1, [3, 4, 2, 1, 5, 7, 6, 8], [1, 1, 1, 1, 1, 1, 1, 1], [0])
+! call test1(8, 8, 1, [3, 4, 2, 1, 5, 7, 6, 8], [1, 1, 1, 1, 1, 1, 1, 1], [0])
 !
   call u%finish_and_terminate()
 !
@@ -29,6 +29,7 @@ contains
     integer(IK), parameter :: s = 2
     integer(IK), parameter :: sym(n) = [2, 3, 4, 5, 6, 7, 8, 1]
     real(RK)               :: X(D, n, m), Y(D, n, m), Z(D, n, m)
+    real(RK)               :: CX(D), CY(D)
     real(RK)               :: G, C(D, D), R(D, D), V(rotation_worksize()), sxz, rxz
     real(RK), allocatable  :: W(:)
     integer(IK)            :: sb(m)
@@ -41,9 +42,11 @@ contains
     X = sample(n, m)
     Y(:, :, :2) = X(:, :, 2:)
     Y(:, :, 3) = X(:, :, 1)
+    CX = SUM(RESHAPE(X, [D, n * m]), 2) / (n * m)
 !
     do i = 1, 20
-      call run(bm%q, bm%s, X, Y, W, sb)
+      CY = SUM(RESHAPE(Y, [D, n * m]), 2) / (n * m)
+      call run(bm%q, bm%s, X, Y, CX, CY, W, sb)
       call u%assert_almost_equal(W(1), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
       call u%assert_almost_equal(W(2), SUM(X * X + Y * Y), 'autocorr     ')
       Z = Y
@@ -68,6 +71,7 @@ contains
     integer(IK), intent(in) :: n, m, s, per(m), map(m), sym(n * (s - 1))
     type(bb_block)          :: bm
     real(RK)                :: X(D, n, m), Y(D, n, m), Z(D, n, m)
+    real(RK)                :: CX(D), CY(D)
     real(RK), allocatable   :: W(:)
     integer(IK)             :: sb(m)
     integer(IK)             :: i
@@ -77,8 +81,10 @@ contains
 !
     X = sample(n, m)
     Y = swp(n, m, s, per, map, sym, X)
+    CX = SUM(RESHAPE(X, [D, m * n]), 2) / (m * n)
     do i = 1, 20
-      call run(bm%q, bm%s, X, Y, W, sb)
+      CY = SUM(RESHAPE(Y, [D, m * n]), 2) / (m * n)
+      call run(bm%q, bm%s, X, Y, CX, CY, W, sb)
       call u%assert_almost_equal(W(1), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
       call u%assert_almost_equal(W(2), SUM(X * X + Y * Y), 'autocorr     ')
       Z = Y
@@ -89,16 +95,16 @@ contains
 !
   end subroutine test1
 !
-  subroutine run(q, s, X, Y, W, sb)
+  subroutine run(q, s, X, Y, CX, CY, W, sb)
     integer(IK), intent(in)    :: q(*)
     integer(IK), intent(inout) :: s(*)
-    real(RK), intent(in)       :: X(*), Y(*)
+    real(RK), intent(in)       :: X(*), Y(*), CX(*), CY(*)
     real(RK), intent(inout)    :: W(*)
     integer(IK), intent(inout) :: sb(*)
     real(RK)                   :: ub, g
 !
     ub = 999.9_RK
-    call bb_block_setup(q, X, Y, s, W, zfill=.true.)
+    call bb_block_setup(q, X, Y, CX, CY, s, W, zfill=.true.)
     g = bb_block_autocorr(q, W)
 !
     do

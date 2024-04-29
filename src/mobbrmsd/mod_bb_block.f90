@@ -197,13 +197,17 @@ contains
   end function bb_block_molsize
 !
 !| Setup C matrix and F matrix in root node.
-  pure subroutine bb_block_setup(q, X, Y, s, W, zfill)
+  pure subroutine bb_block_setup(q, X, Y, CX, CY, s, W, zfill)
     integer(IK), intent(in)    :: q(*)
     !! integer array
     real(RK), intent(in)       :: X(*)
     !! reference coordinate
     real(RK), intent(in)       :: Y(*)
     !! target coordinate
+    real(RK), intent(in)       :: CX(*)
+    !! centroid of X
+    real(RK), intent(in)       :: CY(*)
+    !! centroid of Y
     integer(IK), intent(inout) :: s(*)
     !! integer work array
     real(RK), intent(inout)    :: W(*)
@@ -226,7 +230,7 @@ contains
       nmol = mol_block_nmol(q(qblck))
       neval = ZERO
       call tree_reset(q(qtree), s(stree))
-      call c_matrix_eval(q(qcov), q(qblck), X, Y, W(wcov), W(cwork))
+      call c_matrix_eval(q(qcov), q(qblck), X, Y, CX, CY, W(wcov), W(cwork))
       call f_matrix_eval(q(qfre), q(qcov), W(wcov), W(wfre), W(fwork))
       call Hungarian(nmol, nmol, W(wfre), W(fwork))
       lboud = W(fwork)
