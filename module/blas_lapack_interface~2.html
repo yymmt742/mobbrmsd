@@ -135,8 +135,7 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <p>Module for blas lapack interface, D=3.
- Spatial dimension is defined here.</p>
+    <p>Define spatial dimension, <script type="math/tex">D=3</script>, and provide an optimized blas/lapack interface.</p>
     
     
     <br>
@@ -175,17 +174,19 @@
 <tr>
   <td><span class="anchor" id="variable-d~2"></span>integer,</td>
 <td>public,</td>  <td>parameter</td><td>::</td>
-  <td><strong>D</strong></td><td> =</td><td>3</td><td><p>Spatial dimension</p></td>
+  <td><strong>D</strong></td><td> =</td><td>3</td><td><p>Spatial dimension.</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-dd~2"></span>integer,</td>
 <td>public,</td>  <td>parameter</td><td>::</td>
-  <td><strong>DD</strong></td><td> =</td><td>9</td><td><p>Square spatial dimension</p></td>
+  <td><strong>DD</strong></td><td> =</td><td>9</td><td><p>Square spatial dimension.</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-nd~2"></span>integer,</td>
 <td>public,</td>  <td>parameter</td><td>::</td>
-  <td><strong>ND</strong></td><td> =</td><td>DD+2</td><td><p>Node size, defined by [L, G, C(D,D)]</p></td>
+  <td><strong>ND</strong></td><td> =</td><td>DD+2</td><td><p>Node memory size, defined by <script type="math/tex">1 + 1 + D^2</script>.
+ Let <script type="math/tex">[L, G, \mathbf{C}]</script> be a node,
+ where <script type="math/tex">L, G\in\mathbb{R}</script> and <script type="math/tex">\mathbf{C}\in\mathbb{R}^{D\times D}</script>.</p></td>
 </tr>
 </tbody>
 </table>
