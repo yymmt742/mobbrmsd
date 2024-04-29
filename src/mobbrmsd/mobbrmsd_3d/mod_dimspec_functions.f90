@@ -1,4 +1,5 @@
-!| Define spatial dimension, \(D=3\), and provide an optimized blas/lapack interface.
+!| Define spatial dimension, \(D=3\),
+!  and provide an optimized blas/lapack interface.
 module mod_dimspec_functions
   use mod_kinds, only: RK, IK
   implicit none

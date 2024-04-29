@@ -38,8 +38,8 @@ contains
 !
     X = sample(m, n)
     Y = sample(m, n)
-    CX = SUM(RESHAPE(X, [D, m * n]), 2)
-    CY = SUM(RESHAPE(X, [D, m * n]), 2)
+    CX = SUM(RESHAPE(X, [D, m * n]), 2) / (m * n)
+    CY = SUM(RESHAPE(X, [D, m * n]), 2) / (m * n)
 !
     b = mol_block(m, n, sym=RESHAPE(sym, [m, (s - 1)]))
     c = c_matrix(b%q)
@@ -53,7 +53,7 @@ contains
     p = 1
     do j = 1, n
       do i = 1, n
-        call check_gcov(m, s, sym, Z(p), X(1, 1, i), Y(1, 1, j))
+        call check_gcov(m, s, sym, Z(p), X(1, 1, i), Y(1, 1, j), CX, CY)
         p = p + 1 + DD * s
       end do
     end do
@@ -120,13 +120,20 @@ contains
 !
   end subroutine test1
 !
-  subroutine check_gcov(m, s, sym, C, X, Y)
+  subroutine check_gcov(m, s, sym, C, X, Y, CX, CY)
     integer(IK), intent(in) :: m, s, sym(m, s - 1)
-    real(RK), intent(in)    :: C(*), X(D, m), Y(D, m)
+    real(RK), intent(in)    :: C(*), X(D, m), Y(D, m), CX(D), CY(D)
+    real(RK)                :: X_(D, m), Y_(D, m)
     integer(IK)             :: i
+    do concurrent(i=1:m)
+      X_(:, i) = X(:, i) - CX
+    end do
+    do concurrent(i=1:m)
+      Y_(:, i) = Y(:, i) - CY
+    end do
 !
-    call u%assert_almost_equal(C(1), SUM(X * X) + SUM(Y * Y), 'auto variance')
-    call u%assert_almost_equal(C(2:1 + DD), [MATMUL(Y, TRANSPOSE(X))], 'covariance 1 ')
+    call u%assert_almost_equal(C(1), SUM(X_ * X_) + SUM(Y_ * Y_), 'auto variance')
+    call u%assert_almost_equal(C(2:1 + DD), [MATMUL(Y_, TRANSPOSE(X_))], 'covariance 1 ')
 !
     do i = 1, s - 1
       call u%assert_almost_equal(C(2 + DD * i:1 + DD * (i + 1)), [MATMUL(Y(:, sym(:, i)), TRANSPOSE(X))], 'covariance i ')

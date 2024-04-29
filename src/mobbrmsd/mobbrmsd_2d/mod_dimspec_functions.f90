@@ -10,9 +10,9 @@ module mod_dimspec_functions
   public  :: compute_cov
   public  :: covcopy
 !
-  !! Spatial dimension
+  !| Spatial dimension
   integer(IK), parameter :: D = 2
-  !! Square spatial dimension
+  !| Square spatial dimension
   integer(IK), parameter :: DD = 4
   !| Node memory size, defined by \(1 + 1 + D^2\).
   !  Let \([L, G, \mathbf{C}]\) be a node,

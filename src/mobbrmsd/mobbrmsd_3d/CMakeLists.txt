@@ -100,6 +100,7 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
     test_covdot_3d
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
+            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_covdot.f90)
   target_include_directories(test_covdot_3d
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
