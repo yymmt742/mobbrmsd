@@ -1,6 +1,6 @@
 !| molecular orientation corrected RMSD with branch-and-bound.
 module mod_mobbrmsd_header
-  use blas_lapack_interface, only: D, setup_dimension
+  use mod_dimspec_functions, only: D
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, TEN => RTEN, LN_TO_L10, RHUGE
   use mod_bb_list
   use mod_bb_block
@@ -17,16 +17,16 @@ module mod_mobbrmsd_header
     integer(IK), allocatable :: s(:)
     !! state template
   contains
-    procedure :: n_dims         => mobbrmsd_header_n_dims
-    procedure :: n_block        => mobbrmsd_header_n_block
-    procedure :: n_atoms        => mobbrmsd_header_n_atoms
-    procedure :: log_n_nodes    => mobbrmsd_header_log_n_nodes
-    procedure :: frac_n_nodes   => mobbrmsd_header_frac_n_nodes
-    procedure :: exp_n_nodes    => mobbrmsd_header_exp_n_nodes
-    procedure :: memsize        => mobbrmsd_header_memsize
+    procedure :: n_dims => mobbrmsd_header_n_dims
+    procedure :: n_block => mobbrmsd_header_n_block
+    procedure :: n_atoms => mobbrmsd_header_n_atoms
+    procedure :: log_n_nodes => mobbrmsd_header_log_n_nodes
+    procedure :: frac_n_nodes => mobbrmsd_header_frac_n_nodes
+    procedure :: exp_n_nodes => mobbrmsd_header_exp_n_nodes
+    procedure :: memsize => mobbrmsd_header_memsize
     procedure :: state_template => mobbrmsd_header_state_template
-    procedure :: dump           => mobbrmsd_header_dump
-    procedure :: load           => mobbrmsd_header_load
+    procedure :: dump => mobbrmsd_header_dump
+    procedure :: load => mobbrmsd_header_load
     final     :: mobbrmsd_header_destroy
   end type mobbrmsd_header
 !
@@ -44,8 +44,8 @@ contains
     !! mobbrmsd_state template sequence
     type(mobbrmsd_header)   :: res
     res%d = D
-    ALLOCATE(res%q, source=q)
-    ALLOCATE(res%s, source=s)
+    allocate (res%q, source=q)
+    allocate (res%s, source=s)
   end function mobbrmsd_header_new
 !
 !| Returns spatial dimension
@@ -94,7 +94,7 @@ contains
     !! this
     real(RK)                           :: tmp, res
     tmp = LN_TO_L10 * bb_list_log_n_nodes(this%q)
-    res = TEN**(tmp - REAL(INT(tmp), RK))
+    res = TEN**(tmp - real(INT(tmp), RK))
   end function mobbrmsd_header_frac_n_nodes
 !
 !| returns number of nodes in exp.
@@ -111,7 +111,7 @@ contains
     !! this
     integer(IK), allocatable           :: res(:)
 !
-    ALLOCATE(res, source=this%s)
+    allocate (res, source=this%s)
 !
   end function mobbrmsd_header_state_template
 !
@@ -121,7 +121,7 @@ contains
     !! this
     integer(IK), allocatable           :: res(:)
 !
-    ALLOCATE(res, source=[this%d, SIZE(this%q), this%q, this%s])
+    allocate (res, source=[this%d, SIZE(this%q), this%q, this%s])
 !
   end function mobbrmsd_header_dump
 !

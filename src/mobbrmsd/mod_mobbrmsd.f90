@@ -1,6 +1,6 @@
 !| molecular orientation corrected RMSD with branch-and-bound.
 module mod_mobbrmsd
-  use blas_lapack_interface, only: D, setup_dimension
+  use mod_dimspec_functions, only: D, setup_dimension
   use mod_params, only: &
  &      IK, &
  &      RK, &

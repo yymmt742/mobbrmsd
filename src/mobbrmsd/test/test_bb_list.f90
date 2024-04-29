@@ -1,5 +1,5 @@
 program main
-  use blas_lapack_interface, only: D, setup_dimension
+  use mod_dimspec_functions, only: D, setup_dimension
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_bb_block
   use mod_rotation

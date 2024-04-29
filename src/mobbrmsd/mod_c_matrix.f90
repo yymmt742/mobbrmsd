@@ -14,8 +14,7 @@
 !    Data blocks are defined by \( \left[ G_{IJ}, \mathbf{C}_{IJ1}, \mathbf{C}_{IJ2}, \dots, \mathbf{C}_{IJS} \right] \) <br>
 !  @endnote
 module mod_c_matrix
-  use blas_lapack_interface, only: D, DD
-  use mod_cov, only: covdot, covcopy
+  use mod_dimspec_functions, only: D, DD, covdot, covcopy
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mol_block
   implicit none

@@ -33,9 +33,8 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
           ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_batch_run.f90
           ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_mst.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/mod_cov.f90)
+          ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
+          ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90)
 
 target_include_directories(${TARGET_GD}
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
@@ -91,7 +90,7 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   add_executable(test_rotation)
   target_sources(
     test_rotation
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
@@ -107,9 +106,8 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   add_executable(test_c_matrix)
   target_sources(
     test_c_matrix
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_cov.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -127,9 +125,8 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   add_executable(test_f_matrix)
   target_sources(
     test_f_matrix
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_cov.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -149,9 +146,8 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   add_executable(test_bb_block)
   target_sources(
     test_bb_block
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_cov.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -173,9 +169,8 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   add_executable(test_bb_list)
   target_sources(
     test_bb_list
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_cov.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
@@ -198,9 +193,8 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   add_executable(test_mobbrmsd)
   target_sources(
     test_mobbrmsd
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/blas_lapack_interface.f90
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_cov.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90

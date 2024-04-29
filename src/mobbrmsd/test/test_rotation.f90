@@ -1,5 +1,5 @@
 program main
-  use blas_lapack_interface, only : D, DD
+  use mod_dimspec_functions, only: D, DD
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_rotation
   use mod_testutil
@@ -94,7 +94,7 @@ contains
       call DGESVD('A', 'A', D, D, M, D, S, U, D, VT, D, w, nw, info)
       UVT = MATMUL(U, VT)
       call det_sign(UVT)
-      if (UVT(1,1) < ZERO) call neg(d, U(1, D))
+      if (UVT(1, 1) < ZERO) call neg(d, U(1, D))
       rot(:DD) = [MATMUL(U, VT)]
     end block
 !
@@ -109,41 +109,41 @@ contains
   end function worksize_Kabsch
 !
 !| calculate determinant sign of square matrix x, with leading dimension.
-   pure subroutine det_sign(x)
-     real(RK), intent(inout) :: x(*)
+  pure subroutine det_sign(x)
+    real(RK), intent(inout) :: x(*)
      !! square matrix, on exit, x(1) is assigned the determinant sign of x, <br>
      !! and the other elements are undefined.
 !
-     if (D < 1) then
-       return
-     elseif (D == 1) then
-       x(1) = SIGN(ONE, x(1))
-     elseif (D == 2) then
-       x(1) = SIGN(ONE, x(1) * x(4) - x(2) * x(3))
-     elseif (D == 3) then
-       x(1) = SIGN(ONE, x(1) * (x(5) * x(9) - x(8) * x(6)) +&
-         &              x(4) * (x(8) * x(3) - x(2) * x(9)) +&
-         &              x(7) * (x(2) * x(6) - x(5) * x(3)))
-     else
-       block
-         integer(IK) :: i, j, k, ipiv(D)
-         call DGETRF(D, D, x, D, ipiv, j)
-         ipiv(1) = COUNT([(ipiv(i) == i, i=1, D)])
-         j = 1
-         k = D + 1
-         do i = 1, D
-           if (x(j) <= ZERO) ipiv(1) = ipiv(1) + 1
-           j = j + k
-         end do
-         if (MODULO(ipiv(1), 2) == 0) then
-           x(1) = ONE
-         else
-           x(1) = -ONE
-         end if
-       end block
-     end if
+    if (D < 1) then
+      return
+    elseif (D == 1) then
+      x(1) = SIGN(ONE, x(1))
+    elseif (D == 2) then
+      x(1) = SIGN(ONE, x(1) * x(4) - x(2) * x(3))
+    elseif (D == 3) then
+      x(1) = SIGN(ONE, x(1) * (x(5) * x(9) - x(8) * x(6)) +&
+        &              x(4) * (x(8) * x(3) - x(2) * x(9)) +&
+        &              x(7) * (x(2) * x(6) - x(5) * x(3)))
+    else
+      block
+        integer(IK) :: i, j, k, ipiv(D)
+        call DGETRF(D, D, x, D, ipiv, j)
+        ipiv(1) = COUNT([(ipiv(i) == i, i=1, D)])
+        j = 1
+        k = D + 1
+        do i = 1, D
+          if (x(j) <= ZERO) ipiv(1) = ipiv(1) + 1
+          j = j + k
+        end do
+        if (MODULO(ipiv(1), 2) == 0) then
+          x(1) = ONE
+        else
+          x(1) = -ONE
+        end if
+      end block
+    end if
 !
-   end subroutine det_sign
+  end subroutine det_sign
 !
   pure subroutine neg(N, X)
     integer(IK), intent(in) :: N

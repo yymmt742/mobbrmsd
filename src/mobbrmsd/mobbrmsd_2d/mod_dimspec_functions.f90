@@ -1,29 +1,90 @@
-!| Define spatial dimension, \(D=2\), and provide an optimized blas/lapack interface.
-module blas_lapack_interface
+!| Define spatial dimension, \(D=2\),
+!  and provide optimized functions for dimension.
+module mod_dimspec_functions
+  use mod_kinds, only: RK, IK
   implicit none
   private
   public  :: D, DD, ND
   public  :: setup_dimension
+  public  :: compute_com
+  public  :: covdot
+  public  :: covcopy
 !
   !! Spatial dimension
-  integer, parameter :: D = 2
+  integer(IK), parameter :: D = 2
   !! Square spatial dimension
-  integer, parameter :: DD = 4
+  integer(IK), parameter :: DD = 4
   !| Node memory size, defined by \(1 + 1 + D^2\).
   !  Let \([L, G, \mathbf{C}]\) be a node,
   !  where \(L, G\in\mathbb{R}\) and \(\mathbf{C}\in\mathbb{R}^{D\times D}\).
-  integer, parameter :: ND = DD + 2
+  integer(IK), parameter :: ND = DD + 2
+!
+  real(RK), parameter :: ZERO = 0.0_RK
+  real(RK), parameter :: ONE = 1.0_RK
 !
 contains
 !| Sets the dimensions of the space. <br>
 !  This is dummy interface.
   subroutine setup_dimension(d_)
-    integer, intent(in) :: d_
+    integer(IK), intent(in) :: d_
   end subroutine setup_dimension
-end module blas_lapack_interface
 !
-!| DGEMM for M=N=2. <br>
-!  N and M are provided for compatibility with BLAS and are not used here. <br>
+!| Calculate center of mass for \(D=2\)
+  pure subroutine compute_com(d, n, X, C)
+    integer(IK), intent(in) :: d, n
+    real(RK), intent(in)    :: X(d, *)
+    real(RK), intent(inout) :: C(d)
+    real(RK)                :: rn
+    integer(IK)             :: i
+    C(1) = ZERO
+    C(2) = ZERO
+    do i = 1, n, 2
+      C(1) = C(1) + X(1, i + 0) + X(1, i + 1)
+      C(2) = C(2) + X(2, i + 0) + X(2, i + 1)
+    end do
+    if (MODULO(n, 2) == 1) then
+      C(1) = C(1) + X(1, n)
+      C(2) = C(2) + X(2, n)
+    end if
+    rn = ONE / real(n, RK)
+    C(1) = C(1) * rn
+    C(2) = C(2) * rn
+  end subroutine compute_com
+!
+!| Calculate \(\text{tr}[(\mathbf Y-\bar{\mathbf Y})(\mathbf X-\bar{\mathbf X})^\top]\)
+!  for \(D=2\)
+  pure function covdot(d, n, X, Y, CX, CY) result(res)
+    integer(IK), intent(in) :: d, n
+    real(RK), intent(in)    :: X(d, *), Y(d, *)
+    real(RK), intent(in)    :: CX(d), CY(d)
+    real(RK)                :: res, su1
+    integer(IK)             :: i
+    res = ZERO
+    su1 = ZERO
+    do i = 1, n
+      res = res + (X(1, i) - CX(1)) * (Y(1, i) - CY(1))
+      su1 = su1 + (X(2, i) - CX(2)) * (Y(2, i) - CY(2))
+    end do
+    res = res + su1
+  end function covdot
+!
+!| Compute \(\mathbf{Y} \gets \mathbf{X}-\bar{\mathbf{X}} \)
+!  for \(D=2\)
+  pure subroutine covcopy(d, n, X, CX, Y)
+    integer(IK), intent(in) :: d, n
+    real(RK), intent(in)    :: X(d, *), CX(d)
+    real(RK), intent(inout) :: Y(d, *)
+    integer(IK)             :: i
+    do concurrent(i=1:n)
+      Y(1, i) = X(1, i) - CX(1)
+      Y(2, i) = X(2, i) - CX(2)
+    end do
+  end subroutine covcopy
+!
+end module mod_dimspec_functions
+!
+!| DGEMM for \(M=N=2\). <br>
+!  \(N\) and \(M\) are provided for compatibility with BLAS and are not used here. <br>
 !  @warning
 !    This is not a full-featured routine for GEMM. <br>
 !    Do not use this routine for anything other than calculating the covariance matrix. <br>
@@ -134,8 +195,8 @@ pure subroutine DGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, L
 !
 end subroutine DGEMM
 
-!| SGEMM for M=N=2. <br>
-!  N and M are provided for compatibility with BLAS and are not used here. <br>
+!| SGEMM for \(M=N=2\). <br>
+!  \(N\) and \(M\) are provided for compatibility with BLAS and are not used here. <br>
 !  @warning
 !    This is not a full-featured routine for GEMM. <br>
 !    Do not use this routine for anything other than calculating the covariance matrix. <br>
@@ -206,4 +267,3 @@ pure subroutine SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, L
   end select
 !
 end subroutine SGEMM
-

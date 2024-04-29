@@ -1,5 +1,5 @@
 program main
-  use blas_lapack_interface, only: D
+  use mod_dimspec_functions, only: D
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mobbrmsd
   use mod_mobbrmsd_mst

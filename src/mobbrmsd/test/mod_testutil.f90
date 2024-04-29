@@ -119,7 +119,7 @@ end module mod_permutation
 !
 !| Utility functions for testing.
 module mod_testutil
-  use blas_lapack_interface, only: D, DD
+  use mod_dimspec_functions, only: D, DD
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, PI => RPI, RHUGE
   use mod_permutation
   use mod_rotation

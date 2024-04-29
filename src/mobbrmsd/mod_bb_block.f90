@@ -14,7 +14,7 @@
 !  @endnote
 module mod_bb_block
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
-  use blas_lapack_interface, only: D, ND
+  use mod_dimspec_functions, only: D, ND
   use mod_mol_block
   use mod_c_matrix
   use mod_f_matrix
