@@ -7,7 +7,6 @@ module mod_dimspec_functions
   public  :: D, DD, ND
   public  :: setup_dimension
   public  :: compute_com
-  public  :: covdot
   public  :: covcopy
 !
   !! Spatial dimension
@@ -20,6 +19,8 @@ module mod_dimspec_functions
   integer(IK), parameter :: ND = DD + 2
 !
   real(RK), parameter :: ZERO = 0.0_RK
+  real(RK), parameter :: HALF = 0.5_RK
+  real(RK), parameter :: ONETHIRD = 1.0_RK / 3.0_RK
   real(RK), parameter :: ONE = 1.0_RK
 !
 contains
@@ -36,11 +37,30 @@ contains
     real(RK), intent(inout) :: C(d)
     real(RK)                :: rn
     integer(IK)             :: i
+    if (n < 0) then
+      C(1) = ZERO
+      C(2) = ZERO
+      return
+    elseif (n == 1) then
+      C(1) = X(1, 1)
+      C(2) = X(2, 1)
+      return
+    elseif (n == 2) then
+      C(1) = (X(1, 1) + X(1, 2)) * HALF
+      C(2) = (X(2, 1) + X(2, 2)) * HALF
+      return
+    elseif (n == 3) then
+      C(1) = (X(1, 1) + X(1, 2) + X(1, 3)) * ONETHIRD
+      C(2) = (X(2, 1) + X(2, 2) + X(2, 3)) * ONETHIRD
+      return
+    end if
     C(1) = ZERO
     C(2) = ZERO
-    do i = 1, n, 2
-      C(1) = C(1) + X(1, i + 0) + X(1, i + 1)
-      C(2) = C(2) + X(2, i + 0) + X(2, i + 1)
+    do i = 2, n, 2
+      C(1) = C(1) + X(1, i - 1)
+      C(2) = C(2) + X(2, i - 1)
+      C(1) = C(1) + X(1, i - 0)
+      C(2) = C(2) + X(2, i - 0)
     end do
     if (MODULO(n, 2) == 1) then
       C(1) = C(1) + X(1, n)
@@ -50,23 +70,6 @@ contains
     C(1) = C(1) * rn
     C(2) = C(2) * rn
   end subroutine compute_com
-!
-!| Calculate \(\text{tr}[(\mathbf Y-\bar{\mathbf Y})(\mathbf X-\bar{\mathbf X})^\top]\)
-!  for \(D=2\)
-  pure function covdot(d, n, X, Y, CX, CY) result(res)
-    integer(IK), intent(in) :: d, n
-    real(RK), intent(in)    :: X(d, *), Y(d, *)
-    real(RK), intent(in)    :: CX(d), CY(d)
-    real(RK)                :: res, su1
-    integer(IK)             :: i
-    res = ZERO
-    su1 = ZERO
-    do i = 1, n
-      res = res + (X(1, i) - CX(1)) * (Y(1, i) - CY(1))
-      su1 = su1 + (X(2, i) - CX(2)) * (Y(2, i) - CY(2))
-    end do
-    res = res + su1
-  end function covdot
 !
 !| Compute \(\mathbf{Y} \gets \mathbf{X}-\bar{\mathbf{X}} \)
 !  for \(D=2\)

@@ -95,6 +95,18 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   target_link_libraries(test_gemm_3d PRIVATE unittest)
   add_test(NAME test_gemm_3d COMMAND test_gemm_3d)
 
+  add_executable(test_covdot_3d)
+  target_sources(
+    test_covdot_3d
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
+            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
+            ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_covdot.f90)
+  target_include_directories(test_covdot_3d
+                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+  target_include_directories(test_covdot_3d PRIVATE ${unittest_DIR}/mod_files)
+  target_link_libraries(test_covdot_3d PRIVATE unittest)
+  add_test(NAME test_covdot_3d COMMAND test_covdot_3d)
+
   add_executable(test_rotation_3d)
   target_sources(
     test_rotation_3d
