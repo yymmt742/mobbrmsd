@@ -30,12 +30,16 @@ contains
     type(c_matrix)          :: c
     real(RK)                :: X(D, m, n)
     real(RK)                :: Y(D, m, n)
+    real(RK)                :: CX(D)
+    real(RK)                :: CY(D)
     real(RK)                :: G
     real(RK), allocatable   :: Z(:), W(:)
     integer(IK)             :: i, j, p
 !
     X = sample(m, n)
     Y = sample(m, n)
+    CX = SUM(RESHAPE(X, [D, m * n]), 2)
+    CY = SUM(RESHAPE(X, [D, m * n]), 2)
 !
     b = mol_block(m, n, sym=RESHAPE(sym, [m, (s - 1)]))
     c = c_matrix(b%q)
@@ -44,7 +48,7 @@ contains
     Z(:) = 999
     W(:) = 999
 !
-    call c_matrix_eval(c%q, b%q, X, Y, Z, W)
+    call c_matrix_eval(c%q, b%q, X, Y, CX, CY, Z, W)
 !
     p = 1
     do j = 1, n
@@ -64,12 +68,15 @@ contains
     type(c_matrix)        :: c(3)
     real(RK)              :: X(D, 5 * 3 + 3 * 4 + 8 * 3)
     real(RK)              :: Y(D, 5 * 3 + 3 * 2 + 8 * 5)
+    real(RK)              :: CX(D), CY(D)
     real(RK), allocatable :: W(:)
     integer(IK)           :: nw, x1, x2, x3
     integer(IK)           :: p1, p2, p3, w1, w2, w3
 !
     X = sample(SIZE(X, 2))
     Y = sample(SIZE(Y, 2))
+    CX = SUM(X, 2) / SIZE(X, 2)
+    CY = SUM(Y, 2) / SIZE(Y, 2)
 !
     b(1) = mol_block(5, 3)
     b(2) = mol_block(3, 2, sym=RESHAPE([2, 3, 1, 3, 1, 2], [3, 2]))
@@ -100,9 +107,9 @@ contains
     allocate (W(nw))
     W(:) = 999
 !
-    call c_matrix_eval(c(1)%q, b(1)%q, X(1, x1), Y(1, x1), W(p1), W(w1))
-    call c_matrix_eval(c(2)%q, b(2)%q, X(1, x2), Y(1, x2), W(p2), W(w2))
-    call c_matrix_eval(c(3)%q, b(3)%q, X(1, x3), Y(1, x3), W(p3), W(w3))
+    call c_matrix_eval(c(1)%q, b(1)%q, X(1, x1), Y(1, x1), CX, CY, W(p1), W(w1))
+    call c_matrix_eval(c(2)%q, b(2)%q, X(1, x2), Y(1, x2), CX, CY, W(p2), W(w2))
+    call c_matrix_eval(c(3)%q, b(3)%q, X(1, x3), Y(1, x3), CX, CY, W(p3), W(w3))
 !
     print'(10f5.1)', W(p1:p1 + c_matrix_memsize(c(1)%q) - 1)
     print *

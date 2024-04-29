@@ -99,7 +99,7 @@ contains
 !  g-matrix is also calculated at the same time.<br>
 !  At the end of the calculation, save the c-matrix C(cb,M,M) to C(\*). <br>
 !  workarray W(\*) must be larger than c_matrix_worksize(q). <br>
-  pure subroutine c_matrix_eval(q, b, X, Y, CX, XY, C, W)
+  pure subroutine c_matrix_eval(q, b, X, Y, CX, CY, C, W)
     integer(IK), intent(in) :: q(*)
     !! c_matrix header.
     integer(IK), intent(in) :: b(*)
