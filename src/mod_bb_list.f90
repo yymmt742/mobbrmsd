@@ -1,8 +1,8 @@
 !| mod_bb_list <br>
-!
+!  Manage multiple bb_blocks and execute multi-component BB.
 module mod_bb_list
   use mod_params, only: IK, RK, ONE => RONE, HALF => RHALF, ZERO => RZERO, RHUGE
-  use blas_lapack_interface, only: DD
+  use mod_dimspec_functions, only: D, DD, compute_com
   use mod_bb_block
   use mod_rotation
   implicit none
@@ -48,13 +48,14 @@ module mod_bb_list
     final           :: bb_list_destroy
   end type bb_list
 !
+!| Constructer
   interface bb_list
     module procedure bb_list_new
   end interface bb_list
 !
 contains
 !
-!| generate node instance
+!| Constructer
   pure function bb_list_new(blk) result(res)
     type(bb_block), intent(in) :: blk(:)
     type(bb_list)              :: res
@@ -125,6 +126,8 @@ contains
     !! target coordinate
     real(RK), intent(inout)    :: W(*)
     !! work array
+    real(RK)                   :: CX(D), CY(D)
+    !! centroids
     integer(IK)                :: i, ps, pq, px, pw
     associate ( &
        n_block => q(bb_list_NUMBER_OF_SPEACIES), &
@@ -143,9 +146,13 @@ contains
       px = x_pointer(q)
       pw = w_pointer(q)
       pq = q_pointer(q)
+      CX = ZERO
+      CY = ZERO
 !
       do concurrent(i=0:n_block - 1)
-        call bb_block_setup(q(q(pq + i)), X(q(px + i)), Y(q(px + i)), s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
+        call bb_block_setup(q(q(pq + i)), &
+       &                    X(q(px + i)), Y(q(px + i)), CX, CY, &
+       &                    s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
       end do
 !
       ac = ZERO

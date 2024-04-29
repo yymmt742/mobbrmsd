@@ -4,7 +4,7 @@
 !  doi : [10.1107/S0567739476001873](https://scripts.iucr.org/cgi-bin/paper?S0567739476001873)
 module mod_rotation
   use mod_kinds, only: IK, RK
-  use blas_lapack_interface, only: D, DD
+  use mod_dimspec_functions, only: D, DD
   implicit none
   private
   public :: sdmin_worksize

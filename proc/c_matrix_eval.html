@@ -119,7 +119,7 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure subroutine c_matrix_eval(q, b, X, Y, CX, XY, C, W)</h2>
+    <h2>public pure subroutine c_matrix_eval(q, b, X, Y, CX, CY, C, W)</h2>
     
 
     <p>Evaluation the c-matrix.<br>
@@ -162,10 +162,10 @@
   <td><strong>CX</strong>(*)</td><td><p>centroid of <script type="math/tex">\mathbf{X}</script>.</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-xy"></span>real</td>
-<td></td>
+  <td><span class="anchor" id="variable-cy"></span>real(kind=RK),</td>
+<td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>XY</strong></td><td></td>
+  <td><strong>CY</strong>(*)</td><td><p>centroid of <script type="math/tex">\mathbf{Y}</script>.</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-c~6"></span>real(kind=RK),</td>

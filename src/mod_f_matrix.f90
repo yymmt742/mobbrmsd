@@ -3,7 +3,7 @@
 !  \( \mathbf{C}_{IJs} \) :: Covariance matrix of \( \mathbf{X}_I \) and \( \mathbf{Y}_I \) with \( s \)-th molecular permutation.<br>
 !  \( \mathbf{R} \) :: Rotation matrix on \( \mathbb{R}^{d\times d} \).<br>
 module mod_f_matrix
-  use blas_lapack_interface, only: D, DD
+  use mod_dimspec_functions, only: D, DD
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_c_matrix
   use mod_mol_block

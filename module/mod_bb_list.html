@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 9.5% of total for modules and submodules.">335 statements</a>
+    title=" 9.6% of total for modules and submodules.">338 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_bb_list.f90"> Source File</a></li>
   </ul>
@@ -168,7 +168,8 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <p>mod_bb_list <br></p>
+    <p>mod_bb_list <br>
+ Manage multiple bb_blocks and execute multi-component BB.</p>
 <br>        <div class="panel panel-default">
       <div class="panel-heading">
   <h3 class="panel-title">Uses</h3>
@@ -176,10 +177,10 @@
       <ul class="list-group">
       <li class="list-group-item">
   <ul class="list-inline">
-    <li><a href='../module/mod_rotation.html'>mod_rotation</a></li>
     <li><a href='../module/mod_bb_block.html'>mod_bb_block</a></li>
-    <li><a href='../module/blas_lapack_interface.html'>blas_lapack_interface</a></li>
+    <li><a href='../module/mod_rotation.html'>mod_rotation</a></li>
     <li><a href='../module/mod_params.html'>mod_params</a></li>
+    <li><a href='../module/mod_dimspec_functions.html'>mod_dimspec_functions</a></li>
   </ul>
       </li>
       </ul>
@@ -288,9 +289,12 @@
    <h2>Interfaces</h2>
      <div class="panel panel-default">
   <div class="panel-heading codesum"><span class="anchor" id="interface-bb_list"></span><h3>public interface <a href='../interface/bb_list.html'>bb_list</a>  </h3></div>
+  <div class="panel-body">
+    <p>Constructer</p>
+  </div>
   <ul class="list-group">
     <li class="list-group-item">
-    <h3>private pure function bb_list_new(blk) result(res)</h3><p>generate node instance</p>
+    <h3>private pure function bb_list_new(blk) result(res)</h3><p>Constructer</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
@@ -322,10 +326,10 @@
     <p>bb_list<br>
  This is mainly used for passing during initialization.</p>
      <h4>Constructor</h4>
-         
+         <p>Constructer</p>
        <table class="table table-striped varlist">
       <tbody>
-             <tr><td>private pure function <strong>bb_list_new</strong>(blk)</td><td><p>generate node instance</p></td></tr>
+             <tr><td>private pure function <strong>bb_list_new</strong>(blk)</td><td><p>Constructer</p></td></tr>
        </tbody>
        </table>
      <h4>Finalizations Procedures</h4>

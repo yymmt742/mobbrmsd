@@ -8,7 +8,7 @@
     <meta name="author" content="yymmt742" >
     <link rel="icon" href="../favicon.png">
 
-    <title>com &ndash; mobbrmsd</title>
+    <title>compute_com &ndash; mobbrmsd</title>
 
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
@@ -76,7 +76,7 @@
 
     <div class="container">
   <div class="row">
-    <h1>com
+    <h1>compute_com
       <small>Subroutine</small>
     </h1>
     <div class="row">
@@ -87,14 +87,14 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 1.2% of total for procedures.">24 statements</a>
+    title=" 0.9% of total for procedures.">19 statements</a>
      </li> 
-    <li><i class="fa fa-code"></i><a href="../src/mod_cov.f90"> Source File</a></li>
+    <li><i class="fa fa-code"></i><a href="../src/mod_dimspec_functions.f90"> Source File</a></li>
   </ul>
   <ol class="breadcrumb in-well text-right">
-     <li><a href='../sourcefile/mod_cov.f90~2.html'>mod_cov.f90</a></li>
-     <li><a href='../module/mod_cov~2.html'>mod_cov</a></li>
-     <li class="active">com</li>
+     <li><a href='../sourcefile/mod_dimspec_functions.f90~3.html'>mod_dimspec_functions.f90</a></li>
+     <li><a href='../module/mod_dimspec_functions~3.html'>mod_dimspec_functions</a></li>
+     <li class="active">compute_com</li>
   </ol>
 </div>
 </div>
@@ -119,36 +119,35 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure subroutine com(d, n, X, C)</h2>
+    <h2>public pure subroutine compute_com(d, n, X, C)</h2>
     
 
-    <p>Calculate center of mass for <script type="math/tex">D=3</script>
-</p>
+    <p>Calculate center of mass.</p>
 
     <h3>Arguments</h3>
       <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-d~8"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-d~11"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>d</strong></td><td></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-n~10"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-n~13"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>n</strong></td><td></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-x~16"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-x~19"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>X</strong>(d,*)</td><td></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-c~12"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-c~13"></span>real(kind=RK),</td>
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>C</strong>(d)</td><td></td>

@@ -82,18 +82,15 @@
 			 <table class="table">
 			 <thead><tr><th>Module</th><th>Source File</th><th>Description</th></tr></thead>
 			 <tbody>
-			   <tr class="active"><td><a href='../module/blas_lapack_interface.html'>blas_lapack_interface</a></td><td><a href='../sourcefile/blas_lapack_interface.f90.html'>blas_lapack_interface.f90</a></td><td><p>Define spatial dimension, <script type="math/tex">D=2</script>, and provide an optimized blas/lapack interface.
-Spatial dimension</p></td></tr>
-<!--active-->			   <tr class=""><td><a href='../module/blas_lapack_interface~2.html'>blas_lapack_interface</a></td><td><a href='../sourcefile/blas_lapack_interface.f90~2.html'>blas_lapack_interface.f90</a></td><td><p>Define spatial dimension, <script type="math/tex">D=3</script>, and provide an optimized blas/lapack interface.</p></td></tr>
-<!---->			   <tr class="active"><td><a href='../module/blas_lapack_interface~3.html'>blas_lapack_interface</a></td><td><a href='../sourcefile/blas_lapack_interface.f90~3.html'>blas_lapack_interface.f90</a></td><td><p>Define spatial dimension, <script type="math/tex">D</script>, and provide an optimized blas/lapack interface.</p></td></tr>
-<!--active-->			   <tr class=""><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td><a href='../sourcefile/mod_bb_block.f90.html'>mod_bb_block.f90</a></td><td><p>Module for handling <script type="math/tex"> \{\mathbf{C}\}_{IJs}, \mathbf{F} </script> and the factrial tree. <br>
+			   <tr class="active"><td><a href='../module/mod_bb_block.html'>mod_bb_block</a></td><td><a href='../sourcefile/mod_bb_block.f90.html'>mod_bb_block.f90</a></td><td><p>Module for handling <script type="math/tex"> \{\mathbf{C}\}_{IJs}, \mathbf{F} </script> and the factrial tree. <br>
  This module provides procedures for performing branch-and-bound algorithms (BB)
  on assemblies consisting of homologous molecules. <br>
  Since the BB procedure is implemented for multi-component systems,
  this module does not provide the BB itself. <br>
  </p><a href="../module/mod_bb_block.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
-<!---->			   <tr class="active"><td><a href='../module/mod_bb_list.html'>mod_bb_list</a></td><td><a href='../sourcefile/mod_bb_list.f90.html'>mod_bb_list.f90</a></td><td><p>mod_bb_list <br></p></td></tr>
-<!--active-->			   <tr class=""><td><a href='../module/mod_c_matrix.html'>mod_c_matrix</a></td><td><a href='../sourcefile/mod_c_matrix.f90.html'>mod_c_matrix.f90</a></td><td><p>A module for managing c-matrices, tensor of covariance matrices. <br>
+<!--active-->			   <tr class=""><td><a href='../module/mod_bb_list.html'>mod_bb_list</a></td><td><a href='../sourcefile/mod_bb_list.f90.html'>mod_bb_list.f90</a></td><td><p>mod_bb_list <br>
+ Manage multiple bb_blocks and execute multi-component BB.</p></td></tr>
+<!---->			   <tr class="active"><td><a href='../module/mod_c_matrix.html'>mod_c_matrix</a></td><td><a href='../sourcefile/mod_c_matrix.f90.html'>mod_c_matrix.f90</a></td><td><p>A module for managing c-matrices, tensor of covariance matrices. <br>
  <script type="math/tex"> \{\mathbf{C}_{IJs}\}_{IJs} </script> is third-order ( <script type="math/tex">M\times M\times s </script> ) tensor of matrix <script type="math/tex"> \mathbf{C}_{IJs}\in\mathbb{R}^{d\times d} </script>,
  defined by<br>
  <script type="math/tex; mode=display"> \mathbf{C}_{IJs} = \mathbf{Y}_J \mathbf{Q}_s \mathbf{X}_I^\top </script> <br>
@@ -103,48 +100,51 @@ Spatial dimension</p></td></tr>
  To quickly find the rotation matrix, <script type="math/tex"> \mathbf{C}_{IJs} </script> is stored with autocorrelation <script type="math/tex"> G_{IJ} </script>, defined by <br>
  <script type="math/tex; mode=display"> G_{IJ} = \text{Tr}\left[\mathbf{X}_I\mathbf{X}_I^\top\right] + \text{Tr}\left[\mathbf{Y}_J\mathbf{Y}_J^\top\right] </script> <br>
  </p><a href="../module/mod_c_matrix.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
-<!---->			   <tr class="active"><td><a href='../module/mod_cov.html'>mod_cov</a></td><td><a href='../sourcefile/mod_cov.f90.html'>mod_cov.f90</a></td><td><p>Calculate the covariance matrix for <script type="math/tex">D=2</script>. <br></p></td></tr>
-<!--active-->			   <tr class=""><td><a href='../module/mod_cov~2.html'>mod_cov</a></td><td><a href='../sourcefile/mod_cov.f90~2.html'>mod_cov.f90</a></td><td><p>Calculate the covariance matrix for <script type="math/tex">D=3</script>. <br></p></td></tr>
-<!---->			   <tr class="active"><td><a href='../module/mod_cov~3.html'>mod_cov</a></td><td><a href='../sourcefile/mod_cov.f90~3.html'>mod_cov.f90</a></td><td><p>Calculate the covariance matrix. <br></p></td></tr>
-<!--active-->			   <tr class=""><td><a href='../module/mod_f_matrix.html'>mod_f_matrix</a></td><td><a href='../sourcefile/mod_f_matrix.f90.html'>mod_f_matrix.f90</a></td><td><p>Module for managing free rotation cost matrix, <script type="math/tex">\mathbf{F}</script>. <br>
+<!--active-->			   <tr class=""><td><a href='../module/mod_dimspec_functions.html'>mod_dimspec_functions</a></td><td><a href='../sourcefile/mod_dimspec_functions.f90.html'>mod_dimspec_functions.f90</a></td><td><p>Define spatial dimension, <script type="math/tex">D=2</script>,
+ and provide optimized functions for dimension.
+Spatial dimension</p></td></tr>
+<!---->			   <tr class="active"><td><a href='../module/mod_dimspec_functions~2.html'>mod_dimspec_functions</a></td><td><a href='../sourcefile/mod_dimspec_functions.f90~2.html'>mod_dimspec_functions.f90</a></td><td><p>Define spatial dimension, <script type="math/tex">D=3</script>, and provide an optimized blas/lapack interface.</p></td></tr>
+<!--active-->			   <tr class=""><td><a href='../module/mod_dimspec_functions~3.html'>mod_dimspec_functions</a></td><td><a href='../sourcefile/mod_dimspec_functions.f90~3.html'>mod_dimspec_functions.f90</a></td><td><p>Define spatial dimension, <script type="math/tex">D</script>,
+ and provide optimized functions for dimension.</p></td></tr>
+<!---->			   <tr class="active"><td><a href='../module/mod_f_matrix.html'>mod_f_matrix</a></td><td><a href='../sourcefile/mod_f_matrix.f90.html'>mod_f_matrix.f90</a></td><td><p>Module for managing free rotation cost matrix, <script type="math/tex">\mathbf{F}</script>. <br>
  <script type="math/tex; mode=display"> \mathbf{F}_{IJ} = \min_{\mathbf{R},s}\text{Tr}\left[\mathbf{C}_{IJs} \mathbf{R} \right] </script> <br>
  <script type="math/tex"> \mathbf{C}_{IJs} </script> :: Covariance matrix of <script type="math/tex"> \mathbf{X}_I </script> and <script type="math/tex"> \mathbf{Y}_I </script> with <script type="math/tex"> s </script>-th molecular permutation.<br>
  <script type="math/tex"> \mathbf{R} </script> :: Rotation matrix on <script type="math/tex"> \mathbb{R}^{d\times d} </script>.<br></p></td></tr>
-<!---->			   <tr class="active"><td><a href='../module/mod_group_permutation.html'>mod_group_permutation</a></td><td><a href='../sourcefile/mod_group_permutation.f90.html'>mod_group_permutation.f90</a></td><td><p>Module for order permutation by decomposed cyclic groups. <br>
+<!--active-->			   <tr class=""><td><a href='../module/mod_group_permutation.html'>mod_group_permutation</a></td><td><a href='../sourcefile/mod_group_permutation.f90.html'>mod_group_permutation.f90</a></td><td><p>Module for order permutation by decomposed cyclic groups. <br>
  This module provides swap operations on sequences equivalent to X(:, :) = X(:, perm(:)). <br>
  A given swap index perm(:) is decomposed into periodic substitutions. <br>
  </p><a href="../module/mod_group_permutation.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
-<!--active-->			   <tr class=""><td><a href='../module/mod_hungarian.html'>mod_Hungarian</a></td><td><a href='../sourcefile/mod_hungarian.f90.html'>mod_Hungarian.f90</a></td><td><p>Calculate the minimum linear assignment cost using Hungarian method.</p></td></tr>
-<!---->			   <tr class="active"><td><a href='../module/mod_kinds.html'>mod_kinds</a></td><td><a href='../sourcefile/mod_kinds.f90.html'>mod_kinds.f90</a></td><td><p>variable kinds correction</p></td></tr>
-<!--active-->			   <tr class=""><td><a href='../module/mod_mobbrmsd.html'>mod_mobbrmsd</a></td><td><a href='../sourcefile/mod_mobbrmsd.f90.html'>mod_mobbrmsd.f90</a></td><td><p>molecular orientation corrected RMSD with branch-and-bound.</p></td></tr>
-<!---->			   <tr class="active"><td><a href='../module/mod_mobbrmsd_batch_run.html'>mod_mobbrmsd_batch_run</a></td><td><a href='../sourcefile/mod_mobbrmsd_batch_run.f90.html'>mod_mobbrmsd_batch_run.f90</a></td><td><p>molecular orientation corrected RMSD with branch-and-bound.</p></td></tr>
-<!--active-->			   <tr class=""><td><a href='../module/mod_mobbrmsd_header.html'>mod_mobbrmsd_header</a></td><td><a href='../sourcefile/mod_mobbrmsd_header.f90.html'>mod_mobbrmsd_header.f90</a></td><td><p>molecular orientation corrected RMSD with branch-and-bound.</p></td></tr>
-<!---->			   <tr class="active"><td><a href='../module/mod_mobbrmsd_mst.html'>mod_mobbrmsd_mst</a></td><td><a href='../sourcefile/mod_mobbrmsd_mst.f90.html'>mod_mobbrmsd_mst.f90</a></td><td><p>Configure a minimum global tree with mobbrmsd. <br>
+<!---->			   <tr class="active"><td><a href='../module/mod_hungarian.html'>mod_Hungarian</a></td><td><a href='../sourcefile/mod_hungarian.f90.html'>mod_Hungarian.f90</a></td><td><p>Calculate the minimum linear assignment cost using Hungarian method.</p></td></tr>
+<!--active-->			   <tr class=""><td><a href='../module/mod_kinds.html'>mod_kinds</a></td><td><a href='../sourcefile/mod_kinds.f90.html'>mod_kinds.f90</a></td><td><p>variable kinds correction</p></td></tr>
+<!---->			   <tr class="active"><td><a href='../module/mod_mobbrmsd.html'>mod_mobbrmsd</a></td><td><a href='../sourcefile/mod_mobbrmsd.f90.html'>mod_mobbrmsd.f90</a></td><td><p>molecular orientation corrected RMSD with branch-and-bound.</p></td></tr>
+<!--active-->			   <tr class=""><td><a href='../module/mod_mobbrmsd_batch_run.html'>mod_mobbrmsd_batch_run</a></td><td><a href='../sourcefile/mod_mobbrmsd_batch_run.f90.html'>mod_mobbrmsd_batch_run.f90</a></td><td><p>molecular orientation corrected RMSD with branch-and-bound.</p></td></tr>
+<!---->			   <tr class="active"><td><a href='../module/mod_mobbrmsd_header.html'>mod_mobbrmsd_header</a></td><td><a href='../sourcefile/mod_mobbrmsd_header.f90.html'>mod_mobbrmsd_header.f90</a></td><td><p>molecular orientation corrected RMSD with branch-and-bound.</p></td></tr>
+<!--active-->			   <tr class=""><td><a href='../module/mod_mobbrmsd_mst.html'>mod_mobbrmsd_mst</a></td><td><a href='../sourcefile/mod_mobbrmsd_mst.f90.html'>mod_mobbrmsd_mst.f90</a></td><td><p>Configure a minimum global tree with mobbrmsd. <br>
  MST construction is based on the Prim's algorithm,
  but the useless calculations are reduced using the cutoff possibilities of mobbrmsd.</p></td></tr>
-<!--active-->			   <tr class=""><td><a href='../module/mod_mobbrmsd_state.html'>mod_mobbrmsd_state</a></td><td><a href='../sourcefile/mod_mobbrmsd_state.f90.html'>mod_mobbrmsd_state.f90</a></td><td><p>molecular orientation corrected RMSD with branch-and-bound.</p></td></tr>
-<!---->			   <tr class="active"><td><a href='../module/mod_mol_block.html'>mod_mol_block</a></td><td><a href='../sourcefile/mod_mol_block.f90.html'>mod_mol_block.f90</a></td><td><p>Module for molecular coodinate block indicator.<br>
+<!---->			   <tr class="active"><td><a href='../module/mod_mobbrmsd_state.html'>mod_mobbrmsd_state</a></td><td><a href='../sourcefile/mod_mobbrmsd_state.f90.html'>mod_mobbrmsd_state.f90</a></td><td><p>molecular orientation corrected RMSD with branch-and-bound.</p></td></tr>
+<!--active-->			   <tr class=""><td><a href='../module/mod_mol_block.html'>mod_mol_block</a></td><td><a href='../sourcefile/mod_mol_block.f90.html'>mod_mol_block.f90</a></td><td><p>Module for molecular coodinate block indicator.<br>
  Coordinates must be stored in the 3-D array, X(d, n, M).<br>
   <br>
    - <script type="math/tex">d</script> :: spatial dimension.<br>
    - <script type="math/tex">n</script> :: number of atom in a molecule.<br>
    - <script type="math/tex">M</script> :: number of molecule.<br></p></td></tr>
-<!--active-->			   <tr class=""><td><a href='../module/mod_params.html'>mod_params</a></td><td><a href='../sourcefile/mod_params.f90.html'>mod_params.f90</a></td><td><p>Module with constant collection.</p></td></tr>
-<!---->			   <tr class="active"><td><a href='../module/mod_rotation.html'>mod_rotation</a></td><td><a href='../sourcefile/mod_rotation.f90.html'>mod_rotation.f90</a></td><td><p>Calculate the rotation matrix that minimizes |X-RY|^2 for D=2. <br>
+<!---->			   <tr class="active"><td><a href='../module/mod_params.html'>mod_params</a></td><td><a href='../sourcefile/mod_params.f90.html'>mod_params.f90</a></td><td><p>Module with constant collection.</p></td></tr>
+<!--active-->			   <tr class=""><td><a href='../module/mod_rotation.html'>mod_rotation</a></td><td><a href='../sourcefile/mod_rotation.f90.html'>mod_rotation.f90</a></td><td><p>Calculate the rotation matrix that minimizes |X-RY|^2 for D=2. <br>
  Here, RR^T=I and det(R)=1 are satisfied. <br>
  This code is based on the method of Theobald.
  doi : <a href="https://scripts.iucr.org/cgi-bin/paper?S0108767305015266">10.1107/S0108767305015266</a></p></td></tr>
-<!--active-->			   <tr class=""><td><a href='../module/mod_rotation~2.html'>mod_rotation</a></td><td><a href='../sourcefile/mod_rotation.f90~2.html'>mod_rotation.f90</a></td><td><p>Calculate the rotation matrix that minimizes <script type="math/tex">|\mathbf{X}-\mathbf{R}\mathbf{Y}|^2</script> for <script type="math/tex">D=3</script>. <br>
+<!---->			   <tr class="active"><td><a href='../module/mod_rotation~2.html'>mod_rotation</a></td><td><a href='../sourcefile/mod_rotation.f90~2.html'>mod_rotation.f90</a></td><td><p>Calculate the rotation matrix that minimizes <script type="math/tex">|\mathbf{X}-\mathbf{R}\mathbf{Y}|^2</script> for <script type="math/tex">D=3</script>. <br>
  Here, <script type="math/tex">\mathbf{R}\mathbf{R}^\top=\mathbf{I}</script> and <script type="math/tex">\det(\mathbf{R})=1</script> are satisfied. <br>
  This code is based on the method of Coutsias et.al.
  doi : <a href="https://onlinelibrary.wiley.com/doi/10.1002/jcc.25802">10.1002/jcc.25802</a></p></td></tr>
-<!---->			   <tr class="active"><td><a href='../module/mod_rotation~3.html'>mod_rotation</a></td><td><a href='../sourcefile/mod_rotation.f90~3.html'>mod_rotation.f90</a></td><td><p>Calculate the rotation matrix that minimizes <script type="math/tex">|\mathbf{X}-\mathbf{R}\mathbf{Y}|^2</script>. <br>
+<!--active-->			   <tr class=""><td><a href='../module/mod_rotation~3.html'>mod_rotation</a></td><td><a href='../sourcefile/mod_rotation.f90~3.html'>mod_rotation.f90</a></td><td><p>Calculate the rotation matrix that minimizes <script type="math/tex">|\mathbf{X}-\mathbf{R}\mathbf{Y}|^2</script>. <br>
  Here, <script type="math/tex">\mathbf{R}\mathbf{R}^\top=\mathbf{I}</script> and <script type="math/tex">\det(\mathbf{R})=1</script> are satisfied. <br>
  This code is based on the Kabsch algorithm.
  doi : <a href="https://scripts.iucr.org/cgi-bin/paper?S0567739476001873">10.1107/S0567739476001873</a></p></td></tr>
-<!--active-->			   <tr class=""><td><a href='../module/mod_tree.html'>mod_tree</a></td><td><a href='../sourcefile/mod_tree.f90.html'>mod_tree.f90</a></td><td><p>Factorial tree for branch and bound. <br>
+<!---->			   <tr class="active"><td><a href='../module/mod_tree.html'>mod_tree</a></td><td><a href='../sourcefile/mod_tree.f90.html'>mod_tree.f90</a></td><td><p>Factorial tree for branch and bound. <br>
   This structure handles factorial trees with nodes of constant memory size, ld. <br></p><a href="../module/mod_tree.html" class="pull-right"><emph>Read more&hellip;</emph></a></td></tr>
-<!---->			 </tbody></table>
+<!--active-->			 </tbody></table>
              
         </div>
       </div>

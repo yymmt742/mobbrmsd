@@ -5,7 +5,7 @@
 !    - \(n\) :: number of atom in a molecule.<br>
 !    - \(M\) :: number of molecule.<br>
 module mod_mol_block
-  use blas_lapack_interface, only : D
+  use mod_dimspec_functions, only: D
   use mod_params, only: IK, RK
   use mod_group_permutation
   implicit none
@@ -44,7 +44,7 @@ contains
     !! number of atoms per molecule
     integer(IK), intent(in) :: M
     !! number of molecules
-    integer(IK), intent(in), optional :: sym(:,:)
+    integer(IK), intent(in), optional :: sym(:, :)
     !! symmetric codomains, sym(n, S)
     !! \( [[\nu_1^{(1)},\dots,\nu_n^{(1)}],[\nu_1^{(2)},\dots,\nu_n^{(2)}]],\dots, [\nu_1^{(S)},\dots,\nu_n^{(S)}]]\)
     type(mol_block)         :: res

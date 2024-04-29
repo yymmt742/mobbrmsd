@@ -14,8 +14,7 @@
 !    Data blocks are defined by \( \left[ G_{IJ}, \mathbf{C}_{IJ1}, \mathbf{C}_{IJ2}, \dots, \mathbf{C}_{IJS} \right] \) <br>
 !  @endnote
 module mod_c_matrix
-  use blas_lapack_interface, only: D, DD
-  use mod_cov, only: covdot, covcopy
+  use mod_dimspec_functions, only: D, DD, covdot, covcopy
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_mol_block
   implicit none
@@ -99,7 +98,7 @@ contains
 !  g-matrix is also calculated at the same time.<br>
 !  At the end of the calculation, save the c-matrix C(cb,M,M) to C(\*). <br>
 !  workarray W(\*) must be larger than c_matrix_worksize(q). <br>
-  pure subroutine c_matrix_eval(q, b, X, Y, CX, XY, C, W)
+  pure subroutine c_matrix_eval(q, b, X, Y, CX, CY, C, W)
     integer(IK), intent(in) :: q(*)
     !! c_matrix header.
     integer(IK), intent(in) :: b(*)
