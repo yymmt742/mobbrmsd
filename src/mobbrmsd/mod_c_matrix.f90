@@ -63,25 +63,18 @@ contains
 !| Constructer
   pure function c_matrix_new(b) result(res)
     integer(IK), intent(in) :: b(*)
-    !! mol_block, must be initialized.
+    !! mol_block header, must be initialized.
     type(c_matrix)          :: res
-    integer(IK)             :: n, m, s
-!
-    n = mol_block_nmol(b)
-    m = mol_block_napm(b)
-    s = mol_block_nsym(b)
-!
-    res%q(cb) = 1 + DD * s
-    res%q(nl) = n
+    res%q(cb) = 1 + DD * mol_block_nsym(b)
+    res%q(nl) = mol_block_nmol(b)
     res%q(cl) = res%q(cb) * res%q(nl)
-    res%q(nw) = MERGE(MAX((res%q(nl) + 1) * mol_block_each_size(b), res%q(nl) * 2), 0, m > 0)
-!
+    res%q(nw) = MERGE(MAX((res%q(nl) + 1) * mol_block_each_size(b), res%q(nl) * 2), 0, res%q(nl) > 0)
   end function c_matrix_new
 !
 !| Inquire blocksize of c_matrix.
   pure function c_matrix_blocksize(q) result(res)
     integer(IK), intent(in) :: q(*)
-    !! c_matrix
+    !! c_matrix header.
     integer(IK)             :: res
     res = q(cb)
   end function c_matrix_blocksize
@@ -89,7 +82,7 @@ contains
 !| Inquire memsize of c_matrix.
   pure function c_matrix_memsize(q) result(res)
     integer(IK), intent(in) :: q(*)
-    !! c_matrix
+    !! c_matrix header.
     integer(IK)             :: res
     res = q(cl) * q(nl)
   end function c_matrix_memsize
@@ -97,7 +90,7 @@ contains
 !| Inquire worksize of c_matrix evaluation.
   pure function c_matrix_worksize(q) result(res)
     integer(IK), intent(in) :: q(*)
-    !! c_matrix
+    !! c_matrix header.
     integer(IK)             :: res
     res = q(nw)
   end function c_matrix_worksize
@@ -106,15 +99,19 @@ contains
 !  g-matrix is also calculated at the same time.<br>
 !  At the end of the calculation, save the c-matrix C(cb,M,M) to C(\*). <br>
 !  workarray W(\*) must be larger than c_matrix_worksize(q). <br>
-  pure subroutine c_matrix_eval(q, b, X, Y, C, W)
+  pure subroutine c_matrix_eval(q, b, X, Y, CX, XY, C, W)
     integer(IK), intent(in) :: q(*)
-    !! c_matrix header
+    !! c_matrix header.
     integer(IK), intent(in) :: b(*)
     !! mol block header.
     real(RK), intent(in)    :: X(*)
-    !! reference coordinate, X(d, n, M)
+    !! reference coordinate, \(\mathbf{X}\). Arrays must be stored as X(D, n_apm, n_mol).
     real(RK), intent(in)    :: Y(*)
-    !! target coordinate, Y(d, n, M)
+    !! target coordinate, \(\mathbf{Y}\). Arrays must be stored as Y(D, n_apm, n_mol).
+    real(RK), intent(in)    :: CX(*)
+    !! centroid of \(\mathbf{X}\).
+    real(RK), intent(in)    :: CY(*)
+    !! centroid of \(\mathbf{Y}\).
     real(RK), intent(inout) :: C(*)
     !! main memory
     real(RK), intent(inout) :: W(*)

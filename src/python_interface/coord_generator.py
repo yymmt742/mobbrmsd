@@ -85,7 +85,13 @@ class coord_generator:
         Xtem = numpy.array([temp @ self.sog.generate() for i in range(n_mol)])
         Xvar = self.rng.standard_normal((n_mol, 1, self.d))
 
-        def x_sample(a, b, Xvar, Xtem, Xstr):
+        def x_sample(
+            a: float,
+            b: float,
+            Xvar: numpy.ndarray,
+            Xtem: numpy.ndarray,
+            Xstr: numpy.ndarray,
+        ):
             a_ = 0.5 * numpy.pi * a
             b_ = 0.5 * numpy.pi * b
 
@@ -108,3 +114,41 @@ class coord_generator:
                 return numpy.array(
                     [[x_sample(ai, bi, Xvar, Xtem, Xstr) for bi in b] for ai in a]
                 )
+
+    def generate_pair(
+        self,
+        n_apm: int,
+        n_mol: int,
+        a: float,
+        b: float,
+    ) -> tuple:
+
+        def x_sample(
+            a: float,
+            b: float,
+            Xvar: numpy.ndarray,
+            Xtem: numpy.ndarray,
+            Xstr: numpy.ndarray,
+        ):
+            a_ = 0.5 * numpy.pi * a
+            b_ = 0.5 * numpy.pi * b
+
+            sa = numpy.sin(a_)
+            ca = numpy.cos(a_)
+            sb = numpy.sin(b_)
+            cb = numpy.cos(b_)
+            ret = ca * (cb * Xstr + sb * Xtem) + sa * Xvar
+            return ret - numpy.mean(ret.reshape((n_apm * n_mol, self.d)), 0)
+
+        temp = self.rng.standard_normal((n_apm, self.d))
+
+        Xstr = self.rng.standard_normal((n_mol, n_apm, self.d))
+        Xtem = numpy.array([temp @ self.sog.generate() for i in range(n_mol)])
+        Xvar = self.rng.standard_normal((n_mol, 1, self.d))
+        X = x_sample(a, b, Xvar, Xtem, Xstr)
+        Xstr = self.rng.standard_normal((n_mol, n_apm, self.d))
+        Xtem = numpy.array([temp @ self.sog.generate() for i in range(n_mol)])
+        Xvar = self.rng.standard_normal((n_mol, 1, self.d))
+        Y = x_sample(a, b, Xvar, Xtem, Xstr)
+
+        return X, Y
