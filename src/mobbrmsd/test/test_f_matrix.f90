@@ -48,7 +48,7 @@ contains
     FX(:) = 999
     FW(:) = 999
 !
-    call c_matrix_eval(c%q, b%q, X, X, MX, MX, CX, CW)
+    call c_matrix_eval(c%q, b%q, c%s, X, X, MX, MX, CX, CW)
     call f_matrix_eval(f%q, c%q, CX, FX, FW)
 !
     print'(4f9.3)', FX
@@ -121,11 +121,11 @@ contains
     allocate (w(nx))
     W(:) = 999
 !
-    call c_matrix_eval(c(1)%q, b(1)%q, X(1, x1), Y(1, x1), CX, CY, W(c1), W(v1))
+    call c_matrix_eval(c(1)%q, b(1)%q, c(1)%s, X(1, x1), Y(1, x1), CX, CY, W(c1), W(v1))
     call f_matrix_eval(f(1)%q, c(1)%q, W(c1), W(f1), W(w1))
-    call c_matrix_eval(c(2)%q, b(2)%q, X(1, x2), Y(1, x2), CX, CY, W(c2), W(v2))
+    call c_matrix_eval(c(2)%q, b(2)%q, c(1)%s, X(1, x2), Y(1, x2), CX, CY, W(c2), W(v2))
     call f_matrix_eval(f(2)%q, c(2)%q, W(c2), W(f2), W(w2))
-    call c_matrix_eval(c(3)%q, b(3)%q, X(1, x3), Y(1, x3), CX, CY, W(c3), W(v3))
+    call c_matrix_eval(c(3)%q, b(3)%q, c(1)%s, X(1, x3), Y(1, x3), CX, CY, W(c3), W(v3))
     call f_matrix_eval(f(3)%q, c(3)%q, W(c3), W(f3), W(w3))
 !
     print'(3f9.3)', W(f1:f1 + f_matrix_memsize(f(1)%q) - 1)

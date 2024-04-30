@@ -32,7 +32,7 @@ contains
     real(RK)               :: CX(D), CY(D)
     real(RK)               :: G, C(D, D), R(D, D), V(rotation_worksize()), sxz, rxz
     real(RK), allocatable  :: W(:)
-    integer(IK)            :: sb(m)
+    integer(IK)            :: sb(m + m)
     integer(IK)            :: i
 !
     bm = bb_block(n, m, sym=RESHAPE(sym, [n, 1]))
@@ -73,7 +73,7 @@ contains
     real(RK)                :: X(D, n, m), Y(D, n, m), Z(D, n, m)
     real(RK)                :: CX(D), CY(D)
     real(RK), allocatable   :: W(:)
-    integer(IK)             :: sb(m)
+    integer(IK)             :: sb(m + m)
     integer(IK)             :: i
 !
     bm = bb_block(n, m, RESHAPE(sym, [n, s - 1]))

@@ -26,6 +26,7 @@ module mod_c_matrix
   public :: c_matrix_autocorr
   public :: c_matrix_eval
   public :: c_matrix_add
+  public :: c_matrix_swap_indices
 !
   integer(IK), parameter :: header_size = 4
 !
@@ -244,6 +245,19 @@ contains
     call xpy(DD, C(k), Cp)
 !
   end subroutine c_matrix_add
+!
+  pure function c_matrix_swap_indices(q, s) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! header
+    integer(IK), intent(in) :: s(*)
+    !! state
+    integer(IK)             :: res(q(nl))
+    !! swap indice
+    integer(IK)             :: i
+    do concurrent(i=1:q(nl))
+      res(i) = s(i)
+    end do
+  end function c_matrix_swap_indices
 !
   pure elemental subroutine c_matrix_destroy(this)
     type(c_matrix), intent(inout) :: this
