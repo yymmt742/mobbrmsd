@@ -23,7 +23,6 @@ program main
   call u%finish_and_terminate()
 !
 contains
-!
   subroutine test0(m, n, s, sym)
     integer(IK), intent(in) :: m, n, s, sym(m * (s - 1))
     type(mol_block)         :: b
@@ -48,19 +47,16 @@ contains
     Z(:) = 999
     W(:) = 999
 !
-    call c_matrix_eval(c%q, b%q, X, Y, CX, CY, Z, W)
-!
+    call c_matrix_eval(c%q, b%q, c%s, X, Y, CX, CY, Z, W)
     p = 1
     do j = 1, n
       do i = 1, n
-        call check_gcov(m, s, sym, Z(p), X(1, 1, i), Y(1, 1, j), CX, CY)
+        call check_gcov(m, s, sym, Z(p), X(1, 1, c%s(i)), Y(1, 1, j), CX, CY)
         p = p + 1 + DD * s
       end do
     end do
-!
     call c_matrix_autocorr(c%q, Z, G)
     call u%assert_almost_equal(G, SUM(X * X) + SUM(Y * Y), 'c_matrix_autocorr')
-!
   end subroutine test0
 !
   subroutine test1()
@@ -107,9 +103,9 @@ contains
     allocate (W(nw))
     W(:) = 999
 !
-    call c_matrix_eval(c(1)%q, b(1)%q, X(1, x1), Y(1, x1), CX, CY, W(p1), W(w1))
-    call c_matrix_eval(c(2)%q, b(2)%q, X(1, x2), Y(1, x2), CX, CY, W(p2), W(w2))
-    call c_matrix_eval(c(3)%q, b(3)%q, X(1, x3), Y(1, x3), CX, CY, W(p3), W(w3))
+    call c_matrix_eval(c(1)%q, b(1)%q, c(1)%s, X(1, x1), Y(1, x1), CX, CY, W(p1), W(w1))
+    call c_matrix_eval(c(2)%q, b(2)%q, c(2)%s, X(1, x2), Y(1, x2), CX, CY, W(p2), W(w2))
+    call c_matrix_eval(c(3)%q, b(3)%q, c(3)%s, X(1, x3), Y(1, x3), CX, CY, W(p3), W(w3))
 !
     print'(10f5.1)', W(p1:p1 + c_matrix_memsize(c(1)%q) - 1)
     print *
@@ -120,8 +116,8 @@ contains
 !
   end subroutine test1
 !
-  subroutine check_gcov(m, s, sym, C, X, Y, CX, CY)
-    integer(IK), intent(in) :: m, s, sym(m, s - 1)
+  subroutine check_gcov(m, nsym, sym, C, X, Y, CX, CY)
+    integer(IK), intent(in) :: m, nsym, sym(m, nsym - 1)
     real(RK), intent(in)    :: C(*), X(D, m), Y(D, m), CX(D), CY(D)
     real(RK)                :: X_(D, m), Y_(D, m)
     integer(IK)             :: i
@@ -131,14 +127,11 @@ contains
     do concurrent(i=1:m)
       Y_(:, i) = Y(:, i) - CY
     end do
-!
     call u%assert_almost_equal(C(1), SUM(X_ * X_) + SUM(Y_ * Y_), 'auto variance')
     call u%assert_almost_equal(C(2:1 + DD), [MATMUL(Y_, TRANSPOSE(X_))], 'covariance 1 ')
-!
-    do i = 1, s - 1
-      call u%assert_almost_equal(C(2 + DD * i:1 + DD * (i + 1)), [MATMUL(Y(:, sym(:, i)), TRANSPOSE(X))], 'covariance i ')
+    do i = 1, nsym - 1
+      call u%assert_almost_equal(C(2 + DD * i:1 + DD * (i + 1)), [MATMUL(Y_(:, sym(:, i)), TRANSPOSE(X_))], 'covariance i ')
     end do
-!
   end subroutine check_gcov
 !
 end program main
