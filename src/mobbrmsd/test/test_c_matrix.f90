@@ -23,24 +23,24 @@ program main
   call u%finish_and_terminate()
 !
 contains
-  subroutine test0(m, n, s, sym)
-    integer(IK), intent(in) :: m, n, s, sym(m * (s - 1))
+  subroutine test0(n_apm, n_mol, n_sym, sym)
+    integer(IK), intent(in) :: n_apm, n_mol, n_sym, sym(n_apm * (n_sym - 1))
     type(mol_block)         :: b
     type(c_matrix)          :: c
-    real(RK)                :: X(D, m, n)
-    real(RK)                :: Y(D, m, n)
+    real(RK)                :: X(D, n_apm, n_mol)
+    real(RK)                :: Y(D, n_apm, n_mol)
     real(RK)                :: CX(D)
     real(RK)                :: CY(D)
     real(RK)                :: G
     real(RK), allocatable   :: Z(:), W(:)
     integer(IK)             :: i, j, p
 !
-    X = sample(m, n)
-    Y = sample(m, n)
-    CX = SUM(RESHAPE(X, [D, m * n]), 2) / (m * n)
-    CY = SUM(RESHAPE(X, [D, m * n]), 2) / (m * n)
+    X = sample(n_apm, n_mol)
+    Y = sample(n_apm, n_mol)
+    CX = SUM(RESHAPE(X, [D, n_apm * n_mol]), 2) / (n_apm * n_mol)
+    CY = SUM(RESHAPE(Y, [D, n_apm * n_mol]), 2) / (n_apm * n_mol)
 !
-    b = mol_block(m, n, sym=RESHAPE(sym, [m, (s - 1)]))
+    b = mol_block(n_apm, n_mol, sym=RESHAPE(sym, [n_apm, n_sym - 1]))
     c = c_matrix(b%q)
     allocate (Z(c_matrix_memsize(c%q)))
     allocate (W(c_matrix_worksize(c%q)))
@@ -49,13 +49,15 @@ contains
 !
     call c_matrix_eval(c%q, b%q, c%s, X, Y, CX, CY, Z, W)
     p = 1
-    do j = 1, n
-      do i = 1, n
-        call check_gcov(m, s, sym, Z(p), X(1, 1, c%s(i)), Y(1, 1, j), CX, CY)
-        p = p + 1 + DD * s
+    do j = 1, n_mol
+      do i = 1, n_mol
+        call check_gcov(n_apm, n_sym, sym, Z(p), X(1, 1, c%s(i)), Y(1, 1, j), CX, CY)
+        p = p + 1 + DD * n_sym
       end do
     end do
     call c_matrix_autocorr(c%q, Z, G)
+    call centering(n_apm, n_mol, X)
+    call centering(n_apm, n_mol, Y)
     call u%assert_almost_equal(G, SUM(X * X) + SUM(Y * Y), 'c_matrix_autocorr')
   end subroutine test0
 !
@@ -135,3 +137,4 @@ contains
   end subroutine check_gcov
 !
 end program main
+

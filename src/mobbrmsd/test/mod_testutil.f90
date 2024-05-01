@@ -126,6 +126,7 @@ module mod_testutil
   implicit none
   private
   public :: sample
+  public :: centering
   public :: covmat
   public :: gcov
   public :: SO
@@ -139,29 +140,45 @@ module mod_testutil
     module procedure :: sample_2, sample_3
   end interface sample
 !
+  interface centering
+    module procedure :: centering_2, centering_3
+  end interface centering
+!
 contains
 !
   function sample_2(n) result(res)
     integer(IK), intent(in) :: n
-    real(RK)                :: cnt(D), res(D, n)
-    integer(IK)             :: i
+    real(RK)                :: res(D, n)
     call RANDOM_NUMBER(res)
-    cnt = SUM(res, 2) / real(n, RK)
-    do concurrent(i=1:n)
-      res(:, i) = res(:, i) - cnt
-    end do
   end function sample_2
 !
   function sample_3(m, n) result(res)
     integer(IK), intent(in) :: m, n
-    real(RK)                :: cnt(D), res(D, m, n)
-    integer(IK)             :: i, j
+    real(RK)                :: res(D, m, n)
     call RANDOM_NUMBER(res)
-    cnt = SUM(RESHAPE(res, [D, m * n]), 2) / real(m * n, RK)
-    do concurrent(i=1:m, j=1:n)
-      res(:, i, j) = res(:, i, j) - cnt
-    end do
   end function sample_3
+!
+  subroutine centering_2(n, X)
+    integer(IK), intent(in) :: n
+    real(RK), intent(inout) :: X(D, n)
+    real(RK)                :: C(D)
+    integer(IK)             :: i
+    C = SUM(X, 2) / real(n, RK)
+    do concurrent(i=1:n)
+      X(:, i) = X(:, i) - C
+    end do
+  end subroutine centering_2
+!
+  subroutine centering_3(n, m, X)
+    integer(IK), intent(in) :: n, m
+    real(RK), intent(inout) :: X(D, n, m)
+    real(RK)                :: C(D)
+    integer(IK)             :: i, j
+    C = SUM(RESHAPE(X, [D, m * n]), 2) / real(m * n, RK)
+    do concurrent(i=1:n, j=1:m)
+      X(:, i, j) = X(:, i, j) - C
+    end do
+  end subroutine centering_3
 !
   function covmat(n) result(res)
     integer(IK), intent(in) :: n
