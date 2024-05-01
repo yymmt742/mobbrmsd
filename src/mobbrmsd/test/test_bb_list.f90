@@ -23,7 +23,7 @@ program main
   call test1(1, 3, 1, [0])
   call u%init('test bb_list for (n,M,S)=(4,1,1)')
   call test1(4, 1, 1, [0])
-  call u%init('test bb_list for (n,M,S)=(4,3,1)')
+  call u%init('test bb_list for (n,M,S)=(4,2,1)')
   call test1(4, 2, 1, [0])
   call u%init('test bb_list for (n,M,S)=(4,3,1)')
   call test1(4, 3, 1, [0])

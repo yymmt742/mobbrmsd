@@ -30,15 +30,20 @@ module mod_bb_list
   integer(IK), parameter :: bb_list_INDEX_TO_SPEACIES = 1
   integer(IK), parameter :: bb_list_INDEX_TO_BESTSTATE = 2 ! pointer to best state vector
 !
-  integer(IK), parameter :: header_memsize = 5
   integer(IK), parameter :: bb_list_INDEX_TO_AUTOCORR = 1
   integer(IK), parameter :: bb_list_INDEX_TO_UPPERBOUND = 2
   integer(IK), parameter :: bb_list_INDEX_TO_LOWERBOUND = 3
   integer(IK), parameter :: bb_list_INDEX_TO_N_EVAL = 4
   integer(IK), parameter :: bb_list_INDEX_TO_LOG_N_COMB = 5
-!
-!| bb_list<br>
-!  This is mainly used for passing during initialization.
+  integer(IK), parameter :: header_memsize = &
+                          & SIZE([ &
+                          &   bb_list_INDEX_TO_AUTOCORR, &
+                          &   bb_list_INDEX_TO_UPPERBOUND, &
+                          &   bb_list_INDEX_TO_LOWERBOUND, &
+                          &   bb_list_INDEX_TO_N_EVAL, &
+                          &   bb_list_INDEX_TO_LOG_N_COMB &
+                          & ])
+!| This derived type is mainly used for passing during initialization.
   type bb_list
     integer(IK), allocatable :: q(:)
     !! integer array
@@ -54,7 +59,6 @@ module mod_bb_list
   end interface bb_list
 !
 contains
-!
 !| Constructer
   pure function bb_list_new(blk) result(res)
     type(bb_block), intent(in) :: blk(:)
@@ -68,26 +72,23 @@ contains
    &  )
       nb = SIZE(blk)
       sb = 0
-      nstat = SUM([(bb_block_nmol(blk(i)%q), i=1, nb)])
 !
       j = header_size + 4 * nb + 1
       do i = 1, nb
         pq(i) = j
         j = j + SIZE(blk(i)%q)
       end do
-!
+      nstat = SUM([(bb_block_statesize(blk(i)%q), i=1, nb)])
       j = header_sttsize + nstat + 1
       do i = 1, nb
         ps(i) = j
         j = j + SIZE(blk(i)%s)
       end do
-!
       j = header_memsize + 1
       do i = 1, nb
         pw(i) = j
         j = j + bb_block_memsize(blk(i)%q) + bb_block_worksize(blk(i)%q)
       end do
-!
       j = 1
       do i = 1, nb
         px(i) = j
@@ -115,7 +116,7 @@ contains
   end function bb_list_memsize
 !
 !| Setup
-  pure subroutine bb_list_setup(q, s, X, Y, W)
+  subroutine bb_list_setup(q, s, X, Y, W)
     integer(IK), intent(in)    :: q(*)
     !! header
     integer(IK), intent(inout) :: s(*)
@@ -150,9 +151,13 @@ contains
       CY = ZERO
 !
       do concurrent(i=0:n_block - 1)
-        call bb_block_setup(q(q(pq + i)), &
-       &                    X(q(px + i)), Y(q(px + i)), CX, CY, &
-       &                    s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
+        call bb_block_setup( &
+       &  q(q(pq + i)), &
+       &  X(q(px + i)), &
+       &  Y(q(px + i)), &
+       &  CX, CY, &
+       &  s(q(ps + i)), W(q(pw + i)), &
+       &  zfill=(i == 0))
       end do
 !
       ac = ZERO
@@ -198,7 +203,6 @@ contains
    &   lb => W(bb_list_INDEX_TO_LOWERBOUND), &
    &   nv => W(bb_list_INDEX_TO_N_EVAL) &
    &  )
-!
       b = MAX(b, 1)
       pq = q_pointer(q)
       ps = s_pointer(q)
@@ -322,7 +326,7 @@ contains
       j = bb_list_INDEX_TO_BESTSTATE
       do i = 1, n
         call bb_block_save_state(q(pq(i)), s(ps(i)), s(j))
-        j = j + bb_block_nmol(q(pq(i)))
+        j = j + bb_block_statesize(q(pq(i)))
       end do
     end associate
   end subroutine save_state
@@ -335,18 +339,17 @@ contains
     !! state
     real(RK), intent(inout) :: Y(*)
     !! target coordinate
-    integer(IK)             :: i, pb, pq, px
+    integer(IK)             :: i, pb, pq, ps, px
     associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
-!
       px = x_pointer(q)
+      ps = s_pointer(q)
       pq = q_pointer(q)
       pb = bb_list_INDEX_TO_BESTSTATE
 !
       do i = 0, n_block - 1
-        call bb_block_swap_y(q(q(pq + i)), s(pb), Y(q(px + i)))
-        pb = pb + bb_block_nmol(q(q(pq + i)))
+        call bb_block_swap_y(q(q(pq + i)), s(q(ps + i)), s(pb), Y(q(px + i)))
+        pb = pb + bb_block_statesize(q(q(pq + i)))
       end do
-!
     end associate
   end subroutine bb_list_swap_y
 !

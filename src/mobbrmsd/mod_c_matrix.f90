@@ -65,7 +65,10 @@ contains
     res%q(cb) = 1 + DD * mol_block_nsym(b)
     res%q(nl) = mol_block_nmol(b)
     res%q(cl) = res%q(cb) * res%q(nl)
-    res%q(nw) = MERGE(MAX((res%q(nl) + 1) * mol_block_each_size(b), 2 * res%q(nl)), 0, res%q(nl) > 0)
+    res%q(nw) = MAX( &
+              &  mol_block_total_size(b) + mol_block_each_size(b), &
+              &  2 * res%q(nl) &
+              & )
     allocate (res%s(res%q(nl)))
   end function c_matrix_new
 !
@@ -90,7 +93,7 @@ contains
     integer(IK), intent(in) :: q(*)
     !! c_matrix header.
     integer(IK)             :: res
-    res = q(nw)
+    res = MERGE(q(nw), 0, q(nl) > 0)
   end function c_matrix_worksize
 !
 !| Evaluation the c-matrix.<br>

@@ -27,6 +27,7 @@ module mod_bb_block
   public :: bb_block_nmol
   public :: bb_block_natm
   public :: bb_block_molsize
+  public :: bb_block_statesize
   public :: bb_block_memsize
   public :: bb_block_worksize
   public :: bb_block_setup
@@ -53,36 +54,48 @@ module mod_bb_block
   integer(IK), parameter :: mmap_G = 2
   integer(IK), parameter :: mmap_C = 3
 !
-  integer(IK), parameter :: header_size = 8
-  integer(IK), parameter :: cq = 1
+  integer(IK), parameter :: INDEX_TO_Q_COV = 1
   !! pointer to c_matrix interger array
-  integer(IK), parameter :: fq = 2
+  integer(IK), parameter :: INDEX_TO_Q_FRE = 2
   !! pointer to f_matrix interger array
-  integer(IK), parameter :: tq = 3
+  integer(IK), parameter :: INDEX_TO_Q_TREE = 3
   !! pointer to tree interger array
-  integer(IK), parameter :: fx = 4
+  integer(IK), parameter :: INDEX_TO_X_FRE = 4
   !! pointer to f_matrix memory
-  integer(IK), parameter :: tx = 5
+  integer(IK), parameter :: INDEX_TO_X_TREE = 5
   !! pointer to tree memory
-  integer(IK), parameter :: cw = 6
+  integer(IK), parameter :: INDEX_TO_W_COV = 6
   !! pointer to c_matrix work memory
-  integer(IK), parameter :: fw = 7
+  integer(IK), parameter :: INDEX_TO_W_FRE = 7
   !! pointer to f_matrix work memory
-  integer(IK), parameter :: INDEX_TO_S_TREE = 8
+  integer(IK), parameter :: INDEX_TO_S_COV = 8
   !! pointer to f_matrix work memory
+  integer(IK), parameter :: bb_block_HEADER_FIXED_SIZE &
+                           &  = SIZE([INDEX_TO_Q_COV, &
+                           &          INDEX_TO_Q_FRE, &
+                           &          INDEX_TO_Q_TREE, &
+                           &          INDEX_TO_X_FRE, &
+                           &          INDEX_TO_X_TREE, &
+                           &          INDEX_TO_W_COV, &
+                           &          INDEX_TO_W_FRE, &
+                           &          INDEX_TO_S_COV &
+                           &         ])
 !
-  integer(IK), parameter :: POINTER_TO_Q_MOL = header_size + 1
-  integer(IK), parameter :: POINTER_TO_S_COV = 1
-  !! pointer to c_matrix state (fixed)
-! integer(IK), parameter :: stree = 1
+  integer(IK), parameter :: q_POINTER_TO_Q_MOL = bb_block_HEADER_FIXED_SIZE + 1
+  !! pointer to mol_block header (fixed)
+  integer(IK), parameter :: s_POINTER_TO_S_TREE = 1
+  !! pointer to tree state (fixed)
 !
-  !! pointer to tree interger work array (fixed)
-  integer(IK), parameter :: header_memsize = 3
   integer(IK), parameter :: INDEX_TO_N_EVAL = 1
   integer(IK), parameter :: INDEX_TO_LBOUND = 2
   integer(IK), parameter :: INDEX_TO_OFFSET = 3
+  integer(IK), parameter :: bb_block_MEM_FIXED_SIZE &
+                           &  = SIZE([INDEX_TO_N_EVAL, &
+                           &          INDEX_TO_LBOUND, &
+                           &          INDEX_TO_OFFSET &
+                           &         ])
   !! pointer to evaluation count (fixed)
-  integer(IK), parameter :: POINTER_TO_X_COV = 4
+  integer(IK), parameter :: w_POINTER_TO_X_COV = bb_block_MEM_FIXED_SIZE + 1
   !! pointer to c_matrix array (fixed)
 !
 !| bb_block<br>
@@ -115,17 +128,18 @@ contains
     type(f_matrix)          :: f
     type(tree)              :: t
     type(bb_block)          :: res
-    integer(IK)             :: q(header_size)
+    integer(IK)             :: q(bb_block_HEADER_FIXED_SIZE)
     associate ( &
-   &  qmol => POINTER_TO_Q_MOL, &
-   &  qcov => q(cq), &
-   &  qfre => q(fq), &
-   &  qtree => q(tq), &
-   &  stree => q(INDEX_TO_S_TREE), &
-   &  zcov => q(cw), &
-   &  xfre => q(fx), &
-   &  zfre => q(fw), &
-   &  xtree => q(tx) &
+   &  qmol => q_POINTER_TO_Q_MOL, &
+   &  qcov => q(INDEX_TO_Q_COV), &
+   &  qfre => q(INDEX_TO_Q_FRE), &
+   &  qtree => q(INDEX_TO_Q_TREE), &
+   &  xfre => q(INDEX_TO_X_FRE), &
+   &  xtree => q(INDEX_TO_X_TREE), &
+   &  wcov => q(INDEX_TO_W_COV), &
+   &  wfre => q(INDEX_TO_W_FRE), &
+   &  scov => q(INDEX_TO_S_COV), &
+   &  stree => s_POINTER_TO_S_TREE &
    &  )
       b = mol_block(n_apm, n_mol, sym)
       c = c_matrix(b%q)
@@ -136,15 +150,15 @@ contains
       qfre = qcov + SIZE(c%q)
       qtree = qfre + SIZE(f%q)
 !
-      stree = POINTER_TO_S_COV + SIZE(c%s)
+      scov = stree + SIZE(t%s)
 !
-      zcov = POINTER_TO_X_COV + c_matrix_memsize(c%q)
-      xfre = zcov
-      zfre = xfre + f_matrix_memsize(f%q)
-      xtree = zfre
+      wcov = w_POINTER_TO_X_COV + c_matrix_memsize(c%q)
+      xfre = wcov
+      wfre = xfre + f_matrix_memsize(f%q)
+      xtree = wfre
 !
       allocate (res%q, source=[q, b%q, c%q, f%q, t%q])
-      allocate (res%s, source=[c%s, t%s])
+      allocate (res%s, source=[t%s, c%s])
     end associate
   end function bb_block_new
 !
@@ -154,11 +168,11 @@ contains
     !! bb_block header array.
     integer(IK)             :: res
     associate ( &
-   &  qcov => q(cq), &
-   &  qfre => q(fq), &
-   &  qtree => q(tq) &
+   &  qcov => q(INDEX_TO_Q_COV), &
+   &  qfre => q(INDEX_TO_Q_FRE), &
+   &  qtree => q(INDEX_TO_Q_TREE) &
    &    )
-      res = header_memsize &
+      res = bb_block_MEM_FIXED_SIZE &
      &    + c_matrix_memsize(q(qcov)) &
      &    + f_matrix_memsize(q(qfre)) &
      &    + tree_nnodes(q(qtree)) * ND
@@ -172,10 +186,10 @@ contains
     integer(IK)             :: p, nmol, nsym, buf, tmp, swrk, hwrk, fwrk, cwrk
     integer(IK)             :: res
     associate (&
-   &  qmol => POINTER_TO_Q_MOL, &
-   &  qcov => q(cq), &
-   &  qfre => q(fq), &
-   &  qtree => q(tq) &
+   &  qmol => q_POINTER_TO_Q_MOL, &
+   &  qcov => q(INDEX_TO_Q_COV), &
+   &  qfre => q(INDEX_TO_Q_FRE), &
+   &  qtree => q(INDEX_TO_Q_TREE) &
    &  )
       nmol = mol_block_nmol(q(qmol))
       nsym = mol_block_nsym(q(qmol))
@@ -186,14 +200,13 @@ contains
       res = 0
       do p = 1, nmol
         hwrk = Hungarian_worksize(p, p)
-        tmp = MAX(MAX(swrk, p**2 + hwrk), swrk * MAX(1, nsym) + 1)
+        tmp = MAX(p**2 + hwrk, swrk * nsym + 1)
         res = MAX(res, buf + tmp)
         buf = buf - p * nsym * ND
       end do
-      res = MAX(res, buf + MAX(Hungarian_worksize(nmol, nmol), fwrk))
-      buf = buf - fwrk
-      res = MAX(res, buf + cwrk)
-      res = res - bb_block_memsize(q)
+      hwrk = Hungarian_worksize(nmol, nmol)
+      res = MAX(res, buf + MAX(hwrk, fwrk))
+      res = MAX(res, c_matrix_memsize(q(qcov)) + cwrk)
     end associate
   end function bb_block_worksize
 !
@@ -202,7 +215,7 @@ contains
     integer(IK), intent(in) :: q(*)
     !! header.
     integer(IK)             :: res
-    associate (qmol => POINTER_TO_Q_MOL)
+    associate (qmol => q_POINTER_TO_Q_MOL)
       res = mol_block_nmol(q(qmol))
     end associate
   end function bb_block_nmol
@@ -212,7 +225,7 @@ contains
     integer(IK), intent(in) :: q(*)
     !! header.
     integer(IK)             :: res
-    associate (qmol => POINTER_TO_Q_MOL)
+    associate (qmol => q_POINTER_TO_Q_MOL)
       res = mol_block_natm(q(qmol))
     end associate
   end function bb_block_natm
@@ -222,10 +235,20 @@ contains
     integer(IK), intent(in) :: q(*)
     !! bb_block header array.
     integer(IK)             :: res
-    associate (qmol => POINTER_TO_Q_MOL)
+    associate (qmol => q_POINTER_TO_Q_MOL)
       res = mol_block_total_size(q(qmol))
     end associate
   end function bb_block_molsize
+!
+!| Returns size of saved state.
+  pure function bb_block_statesize(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! header.
+    integer(IK)             :: res
+    associate (qmol => q_POINTER_TO_Q_MOL)
+      res = mol_block_nmol(q(qmol))
+    end associate
+  end function bb_block_statesize
 !
 !| Setup C matrix and F matrix in root node.
   pure subroutine bb_block_setup(q, X, Y, CX, CY, s, W, zfill)
@@ -247,25 +270,25 @@ contains
     !! if true, the root node is filled by zero.
     integer(IK)                :: nmol
     associate ( &
-   &  qmol => POINTER_TO_Q_MOL, &
+   &  qmol => q_POINTER_TO_Q_MOL, &
    &  neval => W(INDEX_TO_N_EVAL), &
    &  lboud => W(INDEX_TO_LBOUND), &
    &  ubofs => W(INDEX_TO_OFFSET), &
-   &  scov => POINTER_TO_S_COV, &
-   &  stree => q(INDEX_TO_S_TREE), &
-   &  qtree => q(tq), &
-   &  qcov => q(cq), &
-   &  qfre => q(fq), &
-   &  xcov => POINTER_TO_X_COV, &
-   &  wtree => q(tx), &
-   &  wfre => q(fx), &
-   &  cwork => q(cw), &
-   &  fwork => q(fw) &
+   &  scov => q(INDEX_TO_S_COV), &
+   &  stree => s_POINTER_TO_S_TREE, &
+   &  qtree => q(INDEX_TO_Q_TREE), &
+   &  qcov => q(INDEX_TO_Q_COV), &
+   &  qfre => q(INDEX_TO_Q_FRE), &
+   &  xcov => w_POINTER_TO_X_COV, &
+   &  wtree => q(INDEX_TO_X_TREE), &
+   &  wfre => q(INDEX_TO_X_FRE), &
+   &  wcov => q(INDEX_TO_W_COV), &
+   &  fwork => q(INDEX_TO_W_FRE) &
    &  )
       nmol = mol_block_nmol(q(qmol))
       neval = ZERO
       call tree_reset(q(qtree), s(stree))
-      call c_matrix_eval(q(qcov), q(qmol), s(scov), X, Y, CX, CY, W(xcov), W(cwork))
+      call c_matrix_eval(q(qcov), q(qmol), s(scov), X, Y, CX, CY, W(xcov), W(wcov))
       call f_matrix_eval(q(qfre), q(qcov), W(xcov), W(wfre), W(fwork))
       call Hungarian(nmol, nmol, W(wfre), W(fwork))
       lboud = W(fwork)
@@ -297,20 +320,18 @@ contains
     !! parent work array
     integer(IK)                :: znode, nmol
     associate ( &
-   &  qmol => POINTER_TO_Q_MOL, &
+   &  qmol => q_POINTER_TO_Q_MOL, &
    &  neval => W(INDEX_TO_N_EVAL), &
-   &  qtree => q(tq), &
-   &  qcov => q(cq), &
-   &  qfre => q(fq), &
-   &  stree => q(INDEX_TO_S_TREE), &
-   &  wtree => q(tx), &
-   &  wfre => q(fx), &
-   &  xcov => POINTER_TO_X_COV, &
-   &  cwork => q(cw), &
-   &  fwork => q(fw), &
-   &  ptree => p(tq), &
-   &  ztree => p(tx), &
-   &  rtree => q(INDEX_TO_S_TREE) &
+   &  qtree => q(INDEX_TO_Q_TREE), &
+   &  qcov => q(INDEX_TO_Q_COV), &
+   &  qfre => q(INDEX_TO_Q_FRE), &
+   &  stree => s_POINTER_TO_S_TREE, &
+   &  wtree => q(INDEX_TO_X_TREE), &
+   &  wfre => q(INDEX_TO_X_FRE), &
+   &  xcov => w_POINTER_TO_X_COV, &
+   &  ptree => p(INDEX_TO_Q_TREE), &
+   &  ztree => p(INDEX_TO_X_TREE), &
+   &  rtree => s_POINTER_TO_S_TREE &
    &  )
       nmol = mol_block_nmol(q(qmol))
       znode = ztree + (tree_current_pointer(p(ptree), r(rtree)) - 1) * ND
@@ -333,24 +354,24 @@ contains
     integer(IK)                :: nmol
     integer(IK)                :: pp ! previous current node
     associate ( &
-   &  qmol => POINTER_TO_Q_MOL, &
+   &  qmol => q_POINTER_TO_Q_MOL, &
    &  neval => W(INDEX_TO_N_EVAL), &
    &  ubofs => W(INDEX_TO_OFFSET), &
-   &  stree => q(INDEX_TO_S_TREE), &
-   &  qtree => q(tq),&
-   &  xcov => POINTER_TO_X_COV, &
-   &  wtree => q(tx),&
-   &  qcov => q(cq), &
-   &  wfrx => q(fx)&
+   &  stree => s_POINTER_TO_S_TREE, &
+   &  qtree => q(INDEX_TO_Q_TREE),&
+   &  xcov => w_POINTER_TO_X_COV, &
+   &  wtree => q(INDEX_TO_X_TREE),&
+   &  qcov => q(INDEX_TO_Q_COV), &
+   &  wfrx => q(INDEX_TO_X_FRE)&
    &  )
       nmol = mol_block_nmol(q(qmol))
       ubval = UB - ubofs
       block
         do
-          call tree_select_top_node(q(q(tq)), s(stree), ND, ubval, W(wtree))
+          call tree_select_top_node(q(qtree), s(stree), ND, ubval, W(wtree))
           if (tree_queue_is_bottom(q(qtree), s(stree)) &
        & .or. tree_queue_is_empty(q(qtree), s(stree))) exit
-          pp = q(tx) + (tree_current_pointer(q(qtree), s(stree)) - 1) * ND
+          pp = wtree + (tree_current_pointer(q(qtree), s(stree)) - 1) * ND
           call tree_expand(q(qtree), s(stree))
           call evaluate_nodes(nmol, q(qcov), q(qtree), s(stree), W(xcov), W(wfrx), W(pp), W(wtree), neval)
         end do
@@ -371,9 +392,9 @@ contains
     !! main memory
     associate (&
    &  ubofs => W(INDEX_TO_OFFSET), &
-   &  stree => q(INDEX_TO_S_TREE), &
-   &  qtree => q(tq), &
-   &  wtree => q(tx) &
+   &  stree => s_POINTER_TO_S_TREE, &
+   &  qtree => q(INDEX_TO_Q_TREE), &
+   &  wtree => q(INDEX_TO_X_TREE) &
    &  )
       ubval = UB - ubofs
       do
@@ -463,9 +484,9 @@ contains
     logical                 :: res
     associate ( &
    &  ubofs => W(INDEX_TO_OFFSET), &
-   &  stree => q(INDEX_TO_S_TREE), &
-   &  qtree => q(tq), &
-   &  wtree => q(tx) &
+   &  stree => s_POINTER_TO_S_TREE, &
+   &  qtree => q(INDEX_TO_Q_TREE), &
+   &  wtree => q(INDEX_TO_X_TREE) &
    &  )
       ubval = UB - ubofs
       res = tree_queue_is_left(q(qtree), s(stree), ND, ubval, W(wtree))
@@ -480,8 +501,8 @@ contains
     !! work integer array
     logical                 :: res
     associate (&
-   &  stree => q(INDEX_TO_S_TREE), &
-   &  qtree => q(tq) &
+   &  stree => s_POINTER_TO_S_TREE, &
+   &  qtree => q(INDEX_TO_Q_TREE) &
    &  )
       res = tree_queue_is_empty(q(qtree), s(stree))
     end associate
@@ -495,8 +516,8 @@ contains
     !! work integer array
     logical                 :: res
     associate ( &
-   &  stree => q(INDEX_TO_S_TREE), &
-   &  qtree => q(tq))
+   &  stree => s_POINTER_TO_S_TREE, &
+   &  qtree => q(INDEX_TO_Q_TREE))
       res = tree_queue_is_empty(q(qtree), s(stree)) &
      &.and. tree_queue_is_root(q(qtree), s(stree))
     end associate
@@ -510,8 +531,8 @@ contains
     !! work integer array
     logical                 :: res
     associate ( &
-   &  stree => q(INDEX_TO_S_TREE), &
-   &  qtree => q(tq) &
+   &  stree => s_POINTER_TO_S_TREE, &
+   &  qtree => q(INDEX_TO_Q_TREE) &
    &  )
       res = tree_queue_is_selected(q(qtree), s(stree)) &
      &.and. tree_queue_is_bottom(q(qtree), s(stree))
@@ -526,7 +547,7 @@ contains
     !! work integer array
     integer(IK)             :: res
     associate ( &
-   &  stree => q(INDEX_TO_S_TREE) &
+   &  stree => s_POINTER_TO_S_TREE &
    &     )
       res = tree_current_level(s(stree))
     end associate
@@ -543,9 +564,9 @@ contains
     real(RK)                :: res
     integer(IK)             :: t
     associate ( &
-   &  stree => q(INDEX_TO_S_TREE), &
-   &  qtree => q(tq), &
-   &  wtree => q(tx) &
+   &  stree => s_POINTER_TO_S_TREE, &
+   &  qtree => q(INDEX_TO_Q_TREE), &
+   &  wtree => q(INDEX_TO_X_TREE) &
    &  )
       t = wtree + mmap_L - 1 + ND * (tree_current_pointer(q(qtree), s(stree)) - 1)
       res = W(t)
@@ -562,9 +583,9 @@ contains
     !! main memory
     real(RK)                :: res
     associate (&
-   &  stree => q(INDEX_TO_S_TREE), &
-   &  qtree => q(tq), &
-   &  wtree => q(tx))
+   &  stree => s_POINTER_TO_S_TREE, &
+   &  qtree => q(INDEX_TO_Q_TREE), &
+   &  wtree => q(INDEX_TO_X_TREE))
       res = tree_lowest_value(q(qtree), s(stree), ND, W(wtree)) + W(INDEX_TO_OFFSET)
     end associate
   end function bb_block_lowest_value
@@ -599,7 +620,7 @@ contains
     integer(IK), intent(in) :: q(*)
     !! integer array
     real(RK)                :: res
-    associate (qtree => q(tq))
+    associate (qtree => q(INDEX_TO_Q_TREE))
       res = tree_log_ncomb(q(qtree))
     end associate
   end function bb_block_log_ncomb
@@ -612,8 +633,8 @@ contains
     !! main memory
     real(RK)                :: res
     associate ( &
-   &  qcov => q(cq), &
-   &  xcov => POINTER_TO_X_COV &
+   &  qcov => q(INDEX_TO_Q_COV), &
+   &  xcov => w_POINTER_TO_X_COV &
    &  )
       call c_matrix_autocorr(q(qcov), W(xcov), res)
     end associate
@@ -629,9 +650,9 @@ contains
     !! memory
     integer(IK)                :: nmol
     associate ( &
-   &  stree => q(INDEX_TO_S_TREE), &
-   &  qtree => q(tq), &
-   &  qmol => POINTER_TO_Q_MOL &
+   &  stree => s_POINTER_TO_S_TREE, &
+   &  qtree => q(INDEX_TO_Q_TREE), &
+   &  qmol => q_POINTER_TO_Q_MOL &
    &  )
       nmol = mol_block_nmol(q(qmol))
       z(:nmol) = tree_current_sequence(q(qtree), s(stree))
@@ -650,10 +671,10 @@ contains
     !! target coordinate
     integer(IK)             :: nmol, napm
     associate ( &
-   &  qcov => q(cq), &
-   &  scov => POINTER_TO_S_COV, &
-   &  qtree => q(tq), &
-   &  qmol => POINTER_TO_Q_MOL &
+   &  qcov => q(INDEX_TO_Q_COV), &
+   &  scov => q(INDEX_TO_S_COV), &
+   &  qtree => q(INDEX_TO_Q_TREE), &
+   &  qmol => q_POINTER_TO_Q_MOL &
    &  )
       nmol = mol_block_nmol(q(qmol))
       napm = mol_block_napm(q(qmol))
@@ -698,9 +719,10 @@ contains
     !! covariance matrix
     integer(IK)             :: nmol
     associate ( &
-   &  qtree => q(tq), &
-   &  xcov => POINTER_TO_X_COV, &
-   &  qmol => POINTER_TO_Q_MOL &
+   &  qcov => q(INDEX_TO_Q_COV), &
+   &  qtree => q(INDEX_TO_Q_TREE), &
+   &  xcov => w_POINTER_TO_X_COV, &
+   &  qmol => q_POINTER_TO_Q_MOL &
    &  )
       nmol = mol_block_nmol(q(qmol))
       block
@@ -708,7 +730,7 @@ contains
         iper = tree_sequence_to_permutation(q(qtree), z)
         imap = tree_sequence_to_mapping(q(qtree), z) + 1
         do i = 1, nmol
-          call c_matrix_add(q(q(cq)), i, iper(i), imap(i), W(xcov), G, C)
+          call c_matrix_add(q(qcov), i, iper(i), imap(i), W(xcov), G, C)
         end do
       end block
     end associate
