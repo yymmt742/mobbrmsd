@@ -116,7 +116,7 @@ contains
   end function bb_list_memsize
 !
 !| Setup
-  subroutine bb_list_setup(q, s, X, Y, W)
+  pure subroutine bb_list_setup(q, s, X, Y, W)
     integer(IK), intent(in)    :: q(*)
     !! header
     integer(IK), intent(inout) :: s(*)
@@ -129,7 +129,7 @@ contains
     !! work array
     real(RK)                   :: CX(D), CY(D)
     !! centroids
-    integer(IK)                :: i, ps, pq, px, pw
+    integer(IK)                :: i, ps, pq, px, pw, n_atoms
     associate ( &
        n_block => q(bb_list_NUMBER_OF_SPEACIES), &
    &   sb => s(bb_list_INDEX_TO_SPEACIES), &
@@ -147,8 +147,10 @@ contains
       px = x_pointer(q)
       pw = w_pointer(q)
       pq = q_pointer(q)
-      CX = ZERO
-      CY = ZERO
+!
+      n_atoms = bb_list_n_atoms(q)
+      call compute_com(D, n_atoms, X, CX)
+      call compute_com(D, n_atoms, Y, CY)
 !
       do concurrent(i=0:n_block - 1)
         call bb_block_setup( &
