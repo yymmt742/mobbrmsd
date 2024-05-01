@@ -75,7 +75,7 @@ contains
       call mobbrmsd_run(mobb%h, mobb%s, X, Y, W)
       call u%assert_almost_equal(mobb%s%squared_deviation(), &
      &                           brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
-      Y = 0.8 * Y + 0.2 * sample(n, m)
+      Y = 0.5 * Y + 0.5 * sample(n, m)
     end do
 !
     deallocate (inp)
@@ -110,8 +110,8 @@ contains
       call mobbrmsd_run(mobb%h, mobb%s, [X1, X2], Y, W)
       brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
       call u%assert_almost_equal(mobb%s%squared_deviation(), brute, 'minrmsd value')
-      Y1 = 0.8 * Y1 + 0.2 * sample(n1, m1)
-      Y2 = 0.8 * Y2 + 0.2 * sample(n2, m2)
+      Y1 = 0.5 * Y1 + 0.5 * sample(n1, m1)
+      Y2 = 0.5 * Y2 + 0.5 * sample(n2, m2)
     end do
 !
   end subroutine test2
