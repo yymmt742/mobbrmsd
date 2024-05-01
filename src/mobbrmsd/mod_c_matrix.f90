@@ -100,25 +100,29 @@ contains
 !  g-matrix is also calculated at the same time.<br>
 !  At the end of the calculation, save the c-matrix C(cb,M,M) to C(\*). <br>
 !  workarray W(\*) must be larger than c_matrix_worksize(q). <br>
-  pure subroutine c_matrix_eval(q, b, s, X, Y, CX, CY, C, W)
-    integer(IK), intent(in)    :: q(*)
+  pure subroutine c_matrix_eval(q, b, s, X, Y, CX, CY, C, W, sort_by_g)
+    integer(IK), intent(in)       :: q(*)
     !! c_matrix header.
-    integer(IK), intent(in)    :: b(*)
+    integer(IK), intent(in)       :: b(*)
     !! mol block header.
-    integer(IK), intent(inout) :: s(*)
+    integer(IK), intent(inout)    :: s(*)
     !! swap_indice
-    real(RK), intent(in)       :: X(*)
-    !! reference coordinate, \(\mathbf{X}\). Arrays must be stored as X(D, n_apm, n_mol).
-    real(RK), intent(in)       :: Y(*)
-    !! target coordinate, \(\mathbf{Y}\). Arrays must be stored as Y(D, n_apm, n_mol).
-    real(RK), intent(in)       :: CX(*)
+    real(RK), intent(in)          :: X(*)
+    !! reference coordinate,
+    !  \(\mathbf{X}\). Arrays must be stored as X(D, n_apm, n_mol).
+    real(RK), intent(in)          :: Y(*)
+    !! target coordinate,
+    ! \(\mathbf{Y}\). Arrays must be stored as Y(D, n_apm, n_mol).
+    real(RK), intent(in)          :: CX(*)
     !! centroid of \(\mathbf{X}\).
-    real(RK), intent(in)       :: CY(*)
+    real(RK), intent(in)          :: CY(*)
     !! centroid of \(\mathbf{Y}\).
-    real(RK), intent(inout)    :: C(*)
+    real(RK), intent(inout)       :: C(*)
     !! main memory
-    real(RK), intent(inout)    :: W(*)
+    real(RK), intent(inout)       :: W(*)
     !! work memory
+    logical, intent(in), optional :: sort_by_g
+    !! if true, row is sorted respect to G of reference coordinate.
     integer(IK), parameter     :: gx = 1
     integer(IK), parameter     :: wx = 1
     integer(IK)                :: n_sym, n_apm, gy, wy, i
@@ -136,7 +140,11 @@ contains
       wy = wx + mol_block_total_size(b)
       call eval_g(D, n_apm, n_mol, X, CX, W(gx))
       call eval_g(D, n_apm, n_mol, Y, CY, W(gy))
-      if (n_mol > 1) call qs(n_mol, s, W(gx))
+      if (PRESENT(sort_by_g)) then
+        if (sort_by_g .and. n_mol > 1) call qs(n_mol, s, W(gx))
+      else
+        if (n_mol > 1) call qs(n_mol, s, W(gx))
+      end if
       call set_g(n_mol, n_blk, W(gx), W(gy), C)
       call eval_c_matrix(b, s, n_sym, n_apm, n_mol, n_blk, X, Y, CX, CY, C, W(wx), W(wy))
     end associate

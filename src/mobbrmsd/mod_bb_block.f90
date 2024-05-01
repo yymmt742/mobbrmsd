@@ -251,24 +251,26 @@ contains
   end function bb_block_statesize
 !
 !| Setup C matrix and F matrix in root node.
-  pure subroutine bb_block_setup(q, X, Y, CX, CY, s, W, zfill)
-    integer(IK), intent(in)    :: q(*)
+  pure subroutine bb_block_setup(q, X, Y, CX, CY, s, W, zfill, sort_by_g)
+    integer(IK), intent(in)       :: q(*)
     !! integer array
-    real(RK), intent(in)       :: X(*)
+    real(RK), intent(in)          :: X(*)
     !! reference coordinate
-    real(RK), intent(in)       :: Y(*)
+    real(RK), intent(in)          :: Y(*)
     !! target coordinate
-    real(RK), intent(in)       :: CX(*)
+    real(RK), intent(in)          :: CX(*)
     !! centroid of X
-    real(RK), intent(in)       :: CY(*)
+    real(RK), intent(in)          :: CY(*)
     !! centroid of Y
-    integer(IK), intent(inout) :: s(*)
+    integer(IK), intent(inout)    :: s(*)
     !! integer work array
-    real(RK), intent(inout)    :: W(*)
+    real(RK), intent(inout)       :: W(*)
     !! work integer array
-    logical, intent(in)        :: zfill
+    logical, intent(in)           :: zfill
     !! if true, the root node is filled by zero.
-    integer(IK)                :: nmol
+    logical, intent(in), optional :: sort_by_g
+    !! if true, row is sorted respect to G of reference coordinate.
+    integer(IK)                   :: nmol
     associate ( &
    &  qmol => q_POINTER_TO_Q_MOL, &
    &  neval => W(INDEX_TO_N_EVAL), &
@@ -280,7 +282,7 @@ contains
    &  qcov => q(INDEX_TO_Q_COV), &
    &  qfre => q(INDEX_TO_Q_FRE), &
    &  xcov => w_POINTER_TO_X_COV, &
-   &  wtree => q(INDEX_TO_X_TREE), &
+   &  xtree => q(INDEX_TO_X_TREE), &
    &  wfre => q(INDEX_TO_X_FRE), &
    &  wcov => q(INDEX_TO_W_COV), &
    &  fwork => q(INDEX_TO_W_FRE) &
@@ -288,7 +290,18 @@ contains
       nmol = mol_block_nmol(q(qmol))
       neval = ZERO
       call tree_reset(q(qtree), s(stree))
-      call c_matrix_eval(q(qcov), q(qmol), s(scov), X, Y, CX, CY, W(xcov), W(wcov))
+      call c_matrix_eval( &
+     &   q(qcov), &
+     &   q(qmol), &
+     &   s(scov), &
+     &   X, &
+     &   Y, &
+     &   CX, &
+     &   CY, &
+     &   W(xcov), &
+     &   W(wcov), &
+     &   sort_by_g=sort_by_g &
+     & )
       call f_matrix_eval(q(qfre), q(qcov), W(xcov), W(wfre), W(fwork))
       call Hungarian(nmol, nmol, W(wfre), W(fwork))
       lboud = W(fwork)
@@ -299,7 +312,7 @@ contains
       block
         real(RK)    :: ZEROS(ND)
         ZEROS = ZERO
-        call evaluate_nodes(nmol, q(qcov), q(qtree), s(stree), W(xcov), W(wfre), ZEROS, W(wtree), neval)
+        call evaluate_nodes(nmol, q, s, ZEROS, W, W(xtree), neval)
       end block
     end associate
   end subroutine bb_block_setup
@@ -326,7 +339,7 @@ contains
    &  qcov => q(INDEX_TO_Q_COV), &
    &  qfre => q(INDEX_TO_Q_FRE), &
    &  stree => s_POINTER_TO_S_TREE, &
-   &  wtree => q(INDEX_TO_X_TREE), &
+   &  xtree => q(INDEX_TO_X_TREE), &
    &  wfre => q(INDEX_TO_X_FRE), &
    &  xcov => w_POINTER_TO_X_COV, &
    &  ptree => p(INDEX_TO_Q_TREE), &
@@ -336,7 +349,7 @@ contains
       nmol = mol_block_nmol(q(qmol))
       znode = ztree + (tree_current_pointer(p(ptree), r(rtree)) - 1) * ND
       call tree_reset(q(qtree), s(stree))
-      call evaluate_nodes(nmol, q(qcov), q(qtree), s(stree), W(xcov), W(wfre), Z(znode), W(wtree), neval)
+      call evaluate_nodes(nmol, q, s, Z(znode), W, W(xtree), neval)
     end associate
   end subroutine bb_block_inheritance
 !
@@ -360,7 +373,7 @@ contains
    &  stree => s_POINTER_TO_S_TREE, &
    &  qtree => q(INDEX_TO_Q_TREE),&
    &  xcov => w_POINTER_TO_X_COV, &
-   &  wtree => q(INDEX_TO_X_TREE),&
+   &  xtree => q(INDEX_TO_X_TREE),&
    &  qcov => q(INDEX_TO_Q_COV), &
    &  wfrx => q(INDEX_TO_X_FRE)&
    &  )
@@ -368,12 +381,12 @@ contains
       ubval = UB - ubofs
       block
         do
-          call tree_select_top_node(q(qtree), s(stree), ND, ubval, W(wtree))
+          call tree_select_top_node(q(qtree), s(stree), ND, ubval, W(xtree))
           if (tree_queue_is_bottom(q(qtree), s(stree)) &
        & .or. tree_queue_is_empty(q(qtree), s(stree))) exit
-          pp = wtree + (tree_current_pointer(q(qtree), s(stree)) - 1) * ND
+          pp = xtree + (tree_current_pointer(q(qtree), s(stree)) - 1) * ND
           call tree_expand(q(qtree), s(stree))
-          call evaluate_nodes(nmol, q(qcov), q(qtree), s(stree), W(xcov), W(wfrx), W(pp), W(wtree), neval)
+          call evaluate_nodes(nmol, q, s, W(pp), W, W(xtree), neval)
         end do
       end block
     end associate
@@ -394,11 +407,11 @@ contains
    &  ubofs => W(INDEX_TO_OFFSET), &
    &  stree => s_POINTER_TO_S_TREE, &
    &  qtree => q(INDEX_TO_Q_TREE), &
-   &  wtree => q(INDEX_TO_X_TREE) &
+   &  xtree => q(INDEX_TO_X_TREE) &
    &  )
       ubval = UB - ubofs
       do
-        if (tree_queue_is_left(q(qtree), s(stree), ND, ubval, W(wtree)) &
+        if (tree_queue_is_left(q(qtree), s(stree), ND, ubval, W(xtree)) &
      & .or. tree_queue_is_root(q(qtree), s(stree))) exit
         call tree_leave(q(qtree), s(stree))
       end do
@@ -406,30 +419,39 @@ contains
   end subroutine bb_block_closure
 !
 !| Evaluate nodes in tree_current_level.
-  pure subroutine evaluate_nodes(nmol, qcov, q, s, C, F, Z, W, neval)
-    integer(IK), intent(in) :: nmol, qcov(*), q(*), s(*)
-    real(RK), intent(in)    :: C(*), F(*), Z(ND)
-    real(RK), intent(inout) :: W(ND, *), neval
+  pure subroutine evaluate_nodes(nmol, q, s, Z, W, xtree, neval)
+    integer(IK), intent(in) :: nmol, q(*), s(*)
+    real(RK), intent(in)    :: Z(ND), W(*)
+    real(RK), intent(inout) :: xtree(ND, *), neval
     integer(IK)             :: l, px, pw, m, nw, nh, nper, nsym, iper, perm(nmol)
-    l = tree_current_level(s)
-    m = nmol - l ! residual dimension
-    nw = sdmin_worksize()
-    nh = Hungarian_worksize(m, m)
-    px = tree_queue_pointer(q, s)
+    associate (&
+   &  qcov => q(INDEX_TO_Q_COV), &
+   &  stree => s_POINTER_TO_S_TREE, &
+   &  qtree => q(INDEX_TO_Q_TREE), &
+   &  xcov => w_POINTER_TO_X_COV, &
+   &  xfre => q(INDEX_TO_X_FRE) &
+   &  )
+      l = tree_current_level(s(stree))
+      m = nmol - l ! residual dimension
+      nw = sdmin_worksize()
+      nh = Hungarian_worksize(m, m)
+      px = tree_queue_pointer(q(qtree), s(stree))
 !
-    nsym = tree_n_sym(q)
-    nper = tree_n_perm(q, s)
-    perm = tree_current_permutation(q, s)
-    pw = px + nsym
+      nsym = tree_n_sym(q(qtree))
+      nper = tree_n_perm(q(qtree), s(stree))
+      perm = tree_current_permutation(q(qtree), s(stree))
+      pw = px + nsym
 !
-    do iper = 1, nper
-      call evaluate_queue(iper, perm(l + iper - 1), l, &
-     &                    m, nw, nh, nsym, nper, nmol, qcov, perm, &
-     &                    C, F, Z, W(1, px), W(1, pw), W(2, pw))
-      pw = pw + nsym
-    end do
+      do iper = 1, nper
+        call evaluate_queue(iper, perm(l + iper - 1), l, &
+       &                    m, nw, nh, nsym, nper, nmol, q(qcov), perm, &
+       &                    W(xcov), W(xfre), Z, xtree(1, px), &
+       &                    xtree(1, pw), xtree(2, pw))
+        pw = pw + nsym
+      end do
 !
-    neval = neval + real(nsym * nper, RK)
+      neval = neval + real(nsym * nper, RK)
+    end associate
   end subroutine evaluate_nodes
 !
 !| Evaluate nodes in tree_current_level and iper.

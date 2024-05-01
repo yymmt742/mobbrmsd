@@ -1,5 +1,4 @@
-!| mod_bb_list <br>
-!  Manage multiple bb_blocks and execute multi-component BB.
+!| Manage multiple bb_blocks and execute multi-component Branch-and-Bound.
 module mod_bb_list
   use mod_params, only: IK, RK, ONE => RONE, HALF => RHALF, ZERO => RZERO, RHUGE
   use mod_dimspec_functions, only: D, DD, compute_com
@@ -116,20 +115,24 @@ contains
   end function bb_list_memsize
 !
 !| Setup
-  pure subroutine bb_list_setup(q, s, X, Y, W)
-    integer(IK), intent(in)    :: q(*)
+  pure subroutine bb_list_setup(q, s, X, Y, W, remove_com, sort_by_g)
+    integer(IK), intent(in)       :: q(*)
     !! header
-    integer(IK), intent(inout) :: s(*)
+    integer(IK), intent(inout)    :: s(*)
     !! state
-    real(RK), intent(in)       :: X(*)
+    real(RK), intent(in)          :: X(*)
     !! reference coordinate
-    real(RK), intent(in)       :: Y(*)
+    real(RK), intent(in)          :: Y(*)
     !! target coordinate
-    real(RK), intent(inout)    :: W(*)
+    real(RK), intent(inout)       :: W(*)
     !! work array
-    real(RK)                   :: CX(D), CY(D)
+    logical, intent(in), optional :: remove_com
+    !! if true, remove centroids. default [.true.]
+    logical, intent(in), optional :: sort_by_g
+    !! if true, row is sorted respect to G of reference coordinate. default [.true.]
+    real(RK)                      :: CX(D), CY(D)
     !! centroids
-    integer(IK)                :: i, ps, pq, px, pw, n_atoms
+    integer(IK)                   :: i, ps, pq, px, pw, n_atoms
     associate ( &
        n_block => q(bb_list_NUMBER_OF_SPEACIES), &
    &   sb => s(bb_list_INDEX_TO_SPEACIES), &
@@ -149,8 +152,18 @@ contains
       pq = q_pointer(q)
 !
       n_atoms = bb_list_n_atoms(q)
-      call compute_com(D, n_atoms, X, CX)
-      call compute_com(D, n_atoms, Y, CY)
+!
+      if (PRESENT(remove_com)) then
+        if (remove_com) then
+          call compute_com(D, n_atoms, X, CX)
+          call compute_com(D, n_atoms, Y, CY)
+        else
+          CX = ZERO; CY = ZERO
+        end if
+      else
+        call compute_com(D, n_atoms, X, CX)
+        call compute_com(D, n_atoms, Y, CY)
+      end if
 !
       do concurrent(i=0:n_block - 1)
         call bb_block_setup( &
@@ -159,7 +172,9 @@ contains
        &  Y(q(px + i)), &
        &  CX, CY, &
        &  s(q(ps + i)), W(q(pw + i)), &
-       &  zfill=(i == 0))
+       &  zfill=(i == 0),&
+       &  sort_by_g=sort_by_g &
+       & )
       end do
 !
       ac = ZERO
