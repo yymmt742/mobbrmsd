@@ -35,13 +35,13 @@ contains
 !
     call group_permutation_swap(g%q, 1, 1, X)
     call group_permutation_swap(g%q, 1, 2, Y)
-    call u%assert_equal(s, NINT(X, IK),       'swap    s = X ')
+    call u%assert_equal(s, NINT(X, IK), 'swap    s = X ')
     call u%assert_equal(s, NINT(Y(1, :), IK), 'swap    s = Y1')
     call u%assert_equal(s, NINT(Y(2, :), IK), 'swap    s = Y2')
 !
     call group_permutation_inverse(g%q, 1, 1, X)
     call group_permutation_inverse(g%q, 1, 2, Y)
-    call u%assert_almost_equal(real([(i, i=1, n)], RK), X,       'inverse I = X ')
+    call u%assert_almost_equal(real([(i, i=1, n)], RK), X, 'inverse I = X ')
     call u%assert_almost_equal(real([(i, i=1, n)], RK), Y(1, :), 'inverse I = Y1')
     call u%assert_almost_equal(real([(i, i=1, n)], RK), Y(2, :), 'inverse I = Y2')
 !
@@ -72,13 +72,13 @@ contains
     do i = 1, 7
       call group_permutation_swap(g%q, i, 1, X)
       call group_permutation_swap(g%q, i, 2, Y)
-      call u%assert_equal(s(:, i), NINT(X, IK),       'swap    s = X ')
+      call u%assert_equal(s(:, i), NINT(X, IK), 'swap    s = X ')
       call u%assert_equal(s(:, i), NINT(Y(1, :), IK), 'swap    s = Y1')
       call u%assert_equal(s(:, i), NINT(Y(2, :), IK), 'swap    s = Y2')
 !
       call group_permutation_inverse(g%q, i, 1, X)
       call group_permutation_inverse(g%q, i, 2, Y)
-      call u%assert_equal(t, NINT(X, IK),       'inverse I = X ')
+      call u%assert_equal(t, NINT(X, IK), 'inverse I = X ')
       call u%assert_equal(t, NINT(Y(1, :), IK), 'inverse I = Y1')
       call u%assert_equal(t, NINT(Y(2, :), IK), 'inverse I = Y2')
     end do

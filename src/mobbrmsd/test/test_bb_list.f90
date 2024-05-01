@@ -23,7 +23,7 @@ program main
   call test1(1, 3, 1, [0])
   call u%init('test bb_list for (n,M,S)=(4,1,1)')
   call test1(4, 1, 1, [0])
-  call u%init('test bb_list for (n,M,S)=(4,3,1)')
+  call u%init('test bb_list for (n,M,S)=(4,2,1)')
   call test1(4, 2, 1, [0])
   call u%init('test bb_list for (n,M,S)=(4,3,1)')
   call test1(4, 3, 1, [0])
@@ -91,6 +91,7 @@ contains
     real(RK)              :: sd, brute
     real(RK)              :: X1(D, n1, m1), X2(D, n2, m2)
     real(RK)              :: Y1(D, n1, m1), Y2(D, n2, m2)
+    real(RK)              :: X(D, n1 * m1 + n2 * m2)
     real(RK)              :: Z(D, n1 * m1 + n2 * m2)
     integer(IK)           :: i
 !
@@ -102,6 +103,8 @@ contains
     X2 = sample(n2, m2)
     Y1 = X1
     Y2 = X2
+    X = RESHAPE([X1, X2], SHAPE(X))
+    call centering(SIZE(X, 2), X)
 !
     block
       real(RK) :: W(bb_list_memsize(b%q)), R(D, D), rxz
@@ -114,9 +117,10 @@ contains
         brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
         call u%assert_almost_equal(sd, brute, 'minrmsd value       ')
         Z = RESHAPE([Y1, Y2], SHAPE(Z))
+        call centering(SIZE(Z, 2), Z)
         call bb_list_swap_y(b%q, b%s, Z)
         call bb_list_rotation_matrix(b%q, b%s, W, R)
-        rxz = SUM(([X1, X2] - [MATMUL(TRANSPOSE(R), Z)])**2)
+        rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
         call u%assert_almost_equal(sd, rxz, 'swaped sd vs rotmat ')
         Y1 = 0.5 * Y1 + 0.5 * sample(n1, m1)
         Y2 = 0.5 * Y2 + 0.5 * sample(n2, m2)
@@ -133,6 +137,7 @@ contains
     real(RK)              :: sd, brute
     real(RK)              :: X1(D, n1, m1), X2(D, n2, m2)
     real(RK)              :: Y1(D, n1, m1), Y2(D, n2, m2)
+    real(RK)              :: X(D, n1 * m1 + n2 * m2)
     real(RK)              :: Z(D, n1 * m1 + n2 * m2)
 !
     blk(1) = bb_block(n1, m1, sym=RESHAPE(sym1, [n1, s1 - 1]))
@@ -143,6 +148,8 @@ contains
     X2 = sample(n2, m2)
     Y1 = sample(n1, m1)
     Y2 = sample(n2, m2)
+    X = RESHAPE([X1, X2], SHAPE(X))
+    call centering(SIZE(X, 2), X)
 !
     block
       real(RK) :: W(bb_list_memsize(b%q)), R(D, D), rxz
@@ -157,9 +164,10 @@ contains
       brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
       call u%assert_almost_equal(sd, brute, 'minrmsd value       ')
       Z = RESHAPE([Y1, Y2], SHAPE(Z))
+      call centering(SIZE(Z, 2), Z)
       call bb_list_swap_y(b%q, b%s, Z)
       call bb_list_rotation_matrix(b%q, b%s, W, R)
-      rxz = SUM(([X1, X2] - [MATMUL(TRANSPOSE(R), Z)])**2)
+      rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
       call u%assert_almost_equal(sd, rxz, 'swaped sd vs rotmat ')
     end block
 !

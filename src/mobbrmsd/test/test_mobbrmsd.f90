@@ -51,6 +51,9 @@ program main
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
   call test5(4, 4, 1, [0], 100)
 !
+  call u%init('test mol_sample')
+  call test6(3, 4, 1, [0], 1000)
+!
   call u%finish_and_terminate()
 !
 contains
@@ -75,7 +78,7 @@ contains
       call mobbrmsd_run(mobb%h, mobb%s, X, Y, W)
       call u%assert_almost_equal(mobb%s%squared_deviation(), &
      &                           brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
-      Y = 0.8 * Y + 0.2 * sample(n, m)
+      Y = 0.5 * Y + 0.5 * sample(n, m)
     end do
 !
     deallocate (inp)
@@ -110,8 +113,8 @@ contains
       call mobbrmsd_run(mobb%h, mobb%s, [X1, X2], Y, W)
       brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
       call u%assert_almost_equal(mobb%s%squared_deviation(), brute, 'minrmsd value')
-      Y1 = 0.8 * Y1 + 0.2 * sample(n1, m1)
-      Y2 = 0.8 * Y2 + 0.2 * sample(n2, m2)
+      Y1 = 0.5 * Y1 + 0.5 * sample(n1, m1)
+      Y2 = 0.5 * Y2 + 0.5 * sample(n2, m2)
     end do
 !
   end subroutine test2
@@ -260,6 +263,41 @@ contains
     deallocate (inp)
 !
   end subroutine test5
+!
+  subroutine test6(n_apm, n_mol, n_sym, sym, n_target)
+    integer, intent(in)    :: n_apm, n_mol, n_sym, sym(n_apm * (n_sym - 1)), n_target
+    type(mobbrmsd)         :: mobb
+    type(mol_block_input), allocatable :: inp(:)
+    real(RK)               :: XY(D, n_apm, n_mol, 2)
+    real(RK)               :: a, b, mean, var
+    real(RK), allocatable  :: W(:)
+    integer(IK)            :: i, j, k
+!
+    call mol_block_input_add(inp, n_apm, n_mol, sym=RESHAPE(sym, [n_apm, n_sym - 1]))
+    mobb = mobbrmsd(inp)
+    allocate (W(mobb%h%memsize()))
+    b = 0.0_RK
+    do k = 1, 3
+      a = 0.0_RK
+      do j = 1, 10
+        mean = ZERO
+        var = ZERO
+        do i = 1, n_target
+          XY = RESHAPE(mol_sample(n_apm, n_mol * 2, a, b), SHAPE(XY))
+          call mobbrmsd_run(mobb%h, mobb%s, XY(1, 1, 1, 1), XY(1, 1, 1, 2), W)
+          mean = mean + mobb%s%n_eval()
+          var = var + mobb%s%n_eval()**2
+        end do
+        a = a + 0.1_RK
+        print '(2f6.1, 2f16.9)', a, b, mean / n_target, SQRT(var / n_target - mean**2 / (n_target**2))
+      end do
+      print *
+      b = b + 0.5_RK
+    end do
+!
+    deallocate (inp)
+!
+  end subroutine test6
 !
 end program main
 

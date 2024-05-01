@@ -16,7 +16,8 @@ def sample_run(a, b, nhist, nsample):
     hist = np.zeros(nhist)
     for i in range(nsample):
         x, y = cog.generate_pair(n_apm, n_mol, a, b)
-        y = 0.5 * y + 0.5 * x
+        # x = np.arange(3 * n_apm * n_mol).reshape([-1, n_apm, 3])
+        # y = np.arange(3 * n_apm * n_mol).reshape([-1, n_apm, 3])
         ret = mrmsd.run(x, y)
         hist[ret.n_eval - 1] += 1.0
     hsum = np.sum(hist)
@@ -61,4 +62,3 @@ plt.plot(ax, by[1, :, 3], label="beta=1.0")
 plt.legend()
 plt.savefig(f"m{n_mol:03}n{n_apm:03}.png")
 plt.savefig(f"m{n_mol:03}n{n_apm:03}.eps")
-plt.show()

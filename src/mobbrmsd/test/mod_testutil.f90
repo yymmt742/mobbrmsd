@@ -126,11 +126,14 @@ module mod_testutil
   implicit none
   private
   public :: sample
+  public :: mol_sample
+  public :: centering
   public :: covmat
   public :: gcov
   public :: SO
   public :: eye
   public :: sd
+  public :: autovar
   public :: swp
   public :: brute_sd
   public :: brute_sd_double
@@ -139,29 +142,76 @@ module mod_testutil
     module procedure :: sample_2, sample_3
   end interface sample
 !
+  interface centering
+    module procedure :: centering_2, centering_3
+  end interface centering
+!
 contains
 !
   function sample_2(n) result(res)
     integer(IK), intent(in) :: n
-    real(RK)                :: cnt(D), res(D, n)
-    integer(IK)             :: i
+    real(RK)                :: res(D, n)
     call RANDOM_NUMBER(res)
-    cnt = SUM(res, 2) / real(n, RK)
-    do concurrent(i=1:n)
-      res(:, i) = res(:, i) - cnt
-    end do
   end function sample_2
 !
   function sample_3(m, n) result(res)
     integer(IK), intent(in) :: m, n
-    real(RK)                :: cnt(D), res(D, m, n)
-    integer(IK)             :: i, j
+    real(RK)                :: res(D, m, n)
     call RANDOM_NUMBER(res)
-    cnt = SUM(RESHAPE(res, [D, m * n]), 2) / real(m * n, RK)
-    do concurrent(i=1:m, j=1:n)
-      res(:, i, j) = res(:, i, j) - cnt
-    end do
   end function sample_3
+!
+  function mol_sample(n_apm, n_mol, a, b) result(res)
+    integer(IK), intent(in) :: n_apm, n_mol
+    real(RK), intent(in)    :: a, b
+    real(RK), parameter     :: hpi = ACOS(0.0_RK)
+    real(RK)                :: sa, ca, sb, cb
+    real(RK)                :: xvar(D, n_mol)
+    real(RK)                :: xtmp(D, n_apm)
+    real(RK)                :: xstr(D, n_apm, n_mol)
+    real(RK)                :: R(D, D)
+    real(RK)                :: res(D, n_apm, n_mol)
+    integer(IK)             :: i, j
+    sa = SIN(hpi * a)
+    ca = COS(hpi * a)
+    sb = SIN(hpi * b)
+    cb = COS(hpi * b)
+    call RANDOM_NUMBER(xvar)
+    call RANDOM_NUMBER(xtmp)
+    call RANDOM_NUMBER(xstr)
+!
+    do j = 1, n_mol
+      R = SO()
+      do i = 1, n_apm
+        res(:, i, j) = sa * xvar(:, j) + &
+                    &  ca * (&
+                    &  cb * xstr(:, i, j) + &
+                    &  sb * MATMUL(R, xtmp(:, i)) &
+                    &  )
+      end do
+    end do
+  end function mol_sample
+!
+  pure subroutine centering_2(n, X)
+    integer(IK), intent(in) :: n
+    real(RK), intent(inout) :: X(D, n)
+    real(RK)                :: C(D)
+    integer(IK)             :: i
+    C = SUM(X, 2) / real(n, RK)
+    do concurrent(i=1:n)
+      X(:, i) = X(:, i) - C
+    end do
+  end subroutine centering_2
+!
+  pure subroutine centering_3(n, m, X)
+    integer(IK), intent(in) :: n, m
+    real(RK), intent(inout) :: X(D, n, m)
+    real(RK)                :: C(D)
+    integer(IK)             :: i, j
+    C = SUM(RESHAPE(X, [D, m * n]), 2) / real(m * n, RK)
+    do concurrent(i=1:n, j=1:m)
+      X(:, i, j) = X(:, i, j) - C
+    end do
+  end subroutine centering_3
 !
   function covmat(n) result(res)
     integer(IK), intent(in) :: n
@@ -224,13 +274,30 @@ contains
     end do
   end function eye
 !
+  pure function autovar(n, X, Y) result(res)
+    integer(IK), intent(in) :: n
+    real(RK), intent(in)    :: X(D, n), Y(D, n)
+    real(RK)                :: X_(D, n), Y_(D, n)
+    real(RK)                :: res
+    X_ = X
+    call centering(n, X_)
+    Y_ = Y
+    call centering(n, Y_)
+    res = SUM(X_ * X_) + SUM(Y_ * Y_)
+  end function autovar
+!
   pure function sd(n, X, Y) result(res)
     integer(IK), intent(in) :: n
     real(RK), intent(in)    :: X(D, n), Y(D, n)
+    real(RK)                :: X_(D, n), Y_(D, n)
     real(RK)                :: G, C(D, D), res
     integer(IK)             :: nw
-    G = SUM(X * X) + SUM(Y * Y)
-    C = MATMUL(Y, TRANSPOSE(X))
+    X_ = X
+    call centering(n, X_)
+    Y_ = Y
+    call centering(n, Y_)
+    G = SUM(X_ * X_) + SUM(Y_ * Y_)
+    C = MATMUL(Y_, TRANSPOSE(X_))
     nw = sdmin_worksize()
     block
       real(rk) :: w(nw)

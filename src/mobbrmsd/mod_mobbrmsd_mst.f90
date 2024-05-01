@@ -29,6 +29,7 @@ contains
   !| nearest_neighbor calculation
   subroutine mobbrmsd_nearest_neighbor(n_target, header, state, X, Y, W, &
  &                                     cutoff, difflim, maxeval, &
+ &                                     remove_com, sort_by_g, &
  &                                     mask, nnval, nnidx)
     integer(IK), intent(in)             :: n_target
     !! number of target coordinates
@@ -48,6 +49,10 @@ contains
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
     integer(IK), intent(in), optional   :: maxeval
     !! The search ends when ncount exceeds maxiter.
+    logical, intent(in), optional       :: remove_com
+    !! if true, remove centroids. default [.true.]
+    logical, intent(in), optional       :: sort_by_g
+    !! if true, row is sorted respect to G of reference coordinate. default [.true.]
     logical, intent(in), optional       :: mask(n_target)
     !! If .false., skip the calculation.
     real(RK), intent(out), optional     :: nnval
@@ -112,11 +117,15 @@ contains
       wpnt = ldw * omp_get_thread_num() + 1
       ypnt = (itgt - 1) * ldy + 1
 !
-      call mobbrmsd_run(header, state(itgt), &
-     &                  X, Y(ypnt), W(wpnt), &
-     &                  cutoff=ub, &
-     &                  difflim=difflim, &
-     &                  maxeval=maxeval)
+      call mobbrmsd_run( &
+     &  header, state(itgt), &
+     &  X, Y(ypnt), W(wpnt), &
+     &  cutoff=ub, &
+     &  difflim=difflim, &
+     &  maxeval=maxeval, &
+     &  remove_com=remove_com, &
+     &  sort_by_g=sort_by_g  &
+     &      )
       ub = state(itgt)%rmsd()
 !
       !$omp critical
@@ -138,6 +147,7 @@ contains
 !| min_span_tree construction
   subroutine mobbrmsd_min_span_tree(n_target, header, state, X, W, &
  &                                  cutoff, difflim, maxeval, &
+ &                                  remove_com, sort_by_g, &
  &                                  edges, weights, show_progress, &
  &                                  verbose &
  )
@@ -157,6 +167,10 @@ contains
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
     integer(IK), intent(in), optional   :: maxeval
     !! The search ends when ncount exceeds maxiter.
+    logical, intent(in), optional       :: remove_com
+    !! if true, remove centroids. default [.true.]
+    logical, intent(in), optional       :: sort_by_g
+    !! if true, row is sorted respect to G of reference coordinate. default [.true.]
     integer(IK), intent(out), optional  :: edges(2, n_target - 1)
     !! minimum spanning tree edges
     real(RK), intent(out), optional     :: weights(n_target - 1)
@@ -216,6 +230,8 @@ contains
        &  cutoff=cutoff_, &
        &  difflim=difflim, &
        &  maxeval=maxeval, &
+       &  remove_com=remove_com, &
+       &  sort_by_g=sort_by_g, &
        &  mask=mask, &
        &  nnval=nnval,&
        &  nnidx=nnidx)
