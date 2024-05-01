@@ -165,47 +165,65 @@ contains
 !
 !| run mobbrmsd
   pure subroutine mobbrmsd_run( &
- &             header, state, &
+ &             header, &
+ &             state, &
  &             X, Y, W, &
- &             cutoff, difflim, maxeval)
-    type(mobbrmsd_header), intent(in)    :: header
+ &             cutoff, &
+ &             difflim, &
+ &             maxeval, &
+ &             remove_com, &
+ &             sort_by_g &
+ &             )
+    type(mobbrmsd_header), intent(in)   :: header
     !! mobbrmsd_header
-    type(mobbrmsd_state), intent(inout)  :: state
+    type(mobbrmsd_state), intent(inout) :: state
     !! mobbrmsd_state, the result is contained in this structure.
-    real(RK), intent(in)                 :: X(*)
+    real(RK), intent(in)                :: X(*)
     !! reference coordinate
-    real(RK), intent(in)                 :: Y(*)
+    real(RK), intent(in)                :: Y(*)
     !! target coordinate
-    real(RK), intent(inout), optional    :: W(*)
+    real(RK), intent(inout), optional   :: W(*)
     !! work array, must be > header%memsize()
-    real(RK), intent(in), optional       :: cutoff
+    real(RK), intent(in), optional      :: cutoff
     !! The search ends when lowerbound is determined to be greater than to cutoff.
-    real(RK), intent(in), optional       :: difflim
+    real(RK), intent(in), optional      :: difflim
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
-    integer(IK), intent(in), optional    :: maxeval
+    integer(IK), intent(in), optional   :: maxeval
     !! The search ends when ncount exceeds maxiter.
+    logical, intent(in), optional       :: remove_com
+    !! if true, remove centroids. default [.true.]
+    logical, intent(in), optional       :: sort_by_g
+    !! if true, row is sorted respect to G of reference coordinate. default [.true.]
 !
     if (PRESENT(W)) then
-      call bb_list_setup(header%q, &
-     &                   state%s,  &
-     &                   X,  &
-     &                   Y,  &
-     &                   W)
-      call mobbrmsd_restart(header, &
-     &                      state,  &
-     &                      W, &
-     &                      cutoff=cutoff, &
-     &                      difflim=difflim, &
-     &                      maxeval=maxeval)
+      call bb_list_setup(&
+     &  header%q, &
+     &  state%s,  &
+     &  X,  &
+     &  Y,  &
+     &  W, &
+     &  remove_com=remove_com, &
+     &  sort_by_g=sort_by_g &
+     &     )
+      call mobbrmsd_restart( &
+     &  header, &
+     &  state,  &
+     &  W, &
+     &  cutoff=cutoff, &
+     &  difflim=difflim, &
+     &  maxeval=maxeval)
     else
       block
         real(RK), allocatable :: T(:)
         allocate (T(header%memsize()))
-        call bb_list_setup(header%q, &
-       &                   state%s,  &
-       &                   X,  &
-       &                   Y,  &
-       &                   T)
+        call bb_list_setup(&
+       &  header%q, &
+       &  state%s,  &
+       &  X,  &
+       &  Y,  &
+       &  T, &
+       &  remove_com=remove_com &
+       &     )
         call mobbrmsd_restart(header, &
        &                      state,  &
        &                      T, &

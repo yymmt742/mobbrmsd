@@ -1,5 +1,4 @@
-!| mod_bb_list <br>
-!  Manage multiple bb_blocks and execute multi-component BB.
+!| Manage multiple bb_blocks and execute multi-component Branch-and-Bound.
 module mod_bb_list
   use mod_params, only: IK, RK, ONE => RONE, HALF => RHALF, ZERO => RZERO, RHUGE
   use mod_dimspec_functions, only: D, DD, compute_com
@@ -30,15 +29,20 @@ module mod_bb_list
   integer(IK), parameter :: bb_list_INDEX_TO_SPEACIES = 1
   integer(IK), parameter :: bb_list_INDEX_TO_BESTSTATE = 2 ! pointer to best state vector
 !
-  integer(IK), parameter :: header_memsize = 5
   integer(IK), parameter :: bb_list_INDEX_TO_AUTOCORR = 1
   integer(IK), parameter :: bb_list_INDEX_TO_UPPERBOUND = 2
   integer(IK), parameter :: bb_list_INDEX_TO_LOWERBOUND = 3
   integer(IK), parameter :: bb_list_INDEX_TO_N_EVAL = 4
   integer(IK), parameter :: bb_list_INDEX_TO_LOG_N_COMB = 5
-!
-!| bb_list<br>
-!  This is mainly used for passing during initialization.
+  integer(IK), parameter :: header_memsize = &
+                          & SIZE([ &
+                          &   bb_list_INDEX_TO_AUTOCORR, &
+                          &   bb_list_INDEX_TO_UPPERBOUND, &
+                          &   bb_list_INDEX_TO_LOWERBOUND, &
+                          &   bb_list_INDEX_TO_N_EVAL, &
+                          &   bb_list_INDEX_TO_LOG_N_COMB &
+                          & ])
+!| This derived type is mainly used for passing during initialization.
   type bb_list
     integer(IK), allocatable :: q(:)
     !! integer array
@@ -54,7 +58,6 @@ module mod_bb_list
   end interface bb_list
 !
 contains
-!
 !| Constructer
   pure function bb_list_new(blk) result(res)
     type(bb_block), intent(in) :: blk(:)
@@ -68,26 +71,23 @@ contains
    &  )
       nb = SIZE(blk)
       sb = 0
-      nstat = SUM([(bb_block_nmol(blk(i)%q), i=1, nb)]) * 2
 !
       j = header_size + 4 * nb + 1
       do i = 1, nb
         pq(i) = j
         j = j + SIZE(blk(i)%q)
       end do
-!
+      nstat = SUM([(bb_block_statesize(blk(i)%q), i=1, nb)])
       j = header_sttsize + nstat + 1
       do i = 1, nb
         ps(i) = j
         j = j + SIZE(blk(i)%s)
       end do
-!
       j = header_memsize + 1
       do i = 1, nb
         pw(i) = j
         j = j + bb_block_memsize(blk(i)%q) + bb_block_worksize(blk(i)%q)
       end do
-!
       j = 1
       do i = 1, nb
         px(i) = j
@@ -115,20 +115,24 @@ contains
   end function bb_list_memsize
 !
 !| Setup
-  pure subroutine bb_list_setup(q, s, X, Y, W)
-    integer(IK), intent(in)    :: q(*)
+  pure subroutine bb_list_setup(q, s, X, Y, W, remove_com, sort_by_g)
+    integer(IK), intent(in)       :: q(*)
     !! header
-    integer(IK), intent(inout) :: s(*)
+    integer(IK), intent(inout)    :: s(*)
     !! state
-    real(RK), intent(in)       :: X(*)
+    real(RK), intent(in)          :: X(*)
     !! reference coordinate
-    real(RK), intent(in)       :: Y(*)
+    real(RK), intent(in)          :: Y(*)
     !! target coordinate
-    real(RK), intent(inout)    :: W(*)
+    real(RK), intent(inout)       :: W(*)
     !! work array
-    real(RK)                   :: CX(D), CY(D)
+    logical, intent(in), optional :: remove_com
+    !! if true, remove centroids. default [.true.]
+    logical, intent(in), optional :: sort_by_g
+    !! if true, row is sorted respect to G of reference coordinate. default [.true.]
+    real(RK)                      :: CX(D), CY(D)
     !! centroids
-    integer(IK)                :: i, ps, pq, px, pw
+    integer(IK)                   :: i, ps, pq, px, pw, n_atoms
     associate ( &
        n_block => q(bb_list_NUMBER_OF_SPEACIES), &
    &   sb => s(bb_list_INDEX_TO_SPEACIES), &
@@ -146,13 +150,31 @@ contains
       px = x_pointer(q)
       pw = w_pointer(q)
       pq = q_pointer(q)
-      CX = ZERO
-      CY = ZERO
+!
+      n_atoms = bb_list_n_atoms(q)
+!
+      if (PRESENT(remove_com)) then
+        if (remove_com) then
+          call compute_com(D, n_atoms, X, CX)
+          call compute_com(D, n_atoms, Y, CY)
+        else
+          CX = ZERO; CY = ZERO
+        end if
+      else
+        call compute_com(D, n_atoms, X, CX)
+        call compute_com(D, n_atoms, Y, CY)
+      end if
 !
       do concurrent(i=0:n_block - 1)
-        call bb_block_setup(q(q(pq + i)), &
-       &                    X(q(px + i)), Y(q(px + i)), CX, CY, &
-       &                    s(q(ps + i)), W(q(pw + i)), zfill=(i == 0))
+        call bb_block_setup( &
+       &  q(q(pq + i)), &
+       &  X(q(px + i)), &
+       &  Y(q(px + i)), &
+       &  CX, CY, &
+       &  s(q(ps + i)), W(q(pw + i)), &
+       &  zfill=(i == 0),&
+       &  sort_by_g=sort_by_g &
+       & )
       end do
 !
       ac = ZERO
@@ -198,7 +220,6 @@ contains
    &   lb => W(bb_list_INDEX_TO_LOWERBOUND), &
    &   nv => W(bb_list_INDEX_TO_N_EVAL) &
    &  )
-!
       b = MAX(b, 1)
       pq = q_pointer(q)
       ps = s_pointer(q)
@@ -322,7 +343,7 @@ contains
       j = bb_list_INDEX_TO_BESTSTATE
       do i = 1, n
         call bb_block_save_state(q(pq(i)), s(ps(i)), s(j))
-        j = j + bb_block_nmol(q(pq(i))) * 2
+        j = j + bb_block_statesize(q(pq(i)))
       end do
     end associate
   end subroutine save_state
@@ -335,18 +356,17 @@ contains
     !! state
     real(RK), intent(inout) :: Y(*)
     !! target coordinate
-    integer(IK)             :: i, pb, pq, px
+    integer(IK)             :: i, pb, pq, ps, px
     associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
-!
       px = x_pointer(q)
+      ps = s_pointer(q)
       pq = q_pointer(q)
       pb = bb_list_INDEX_TO_BESTSTATE
 !
       do i = 0, n_block - 1
-        call bb_block_swap_y(q(q(pq + i)), s(pb), Y(q(px + i)))
-        pb = pb + bb_block_nmol(q(q(pq + i))) * 2
+        call bb_block_swap_y(q(q(pq + i)), s(q(ps + i)), s(pb), Y(q(px + i)))
+        pb = pb + bb_block_statesize(q(q(pq + i)))
       end do
-!
     end associate
   end subroutine bb_list_swap_y
 !

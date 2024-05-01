@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 1.5% of total for procedures.">32 statements</a>
+    title=" 1.7% of total for procedures.">37 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_c_matrix.f90"> Source File</a></li>
   </ul>
@@ -119,7 +119,7 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure subroutine c_matrix_eval(q, b, s, X, Y, CX, CY, C, W)</h2>
+    <h2>public pure subroutine c_matrix_eval(q, b, s, X, Y, CX, CY, C, W, sort_by_g)</h2>
     
 
     <p>Evaluation the c-matrix.<br>
@@ -132,7 +132,7 @@
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-q~27"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-q~26"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>q</strong>(*)</td><td><p>c_matrix header.</p></td>
@@ -144,7 +144,7 @@
   <td><strong>b</strong>(*)</td><td><p>mol block header.</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-s~11"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-s~10"></span>integer(kind=IK),</td>
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>s</strong>(*)</td><td><p>swap_indice</p></td>
@@ -153,13 +153,13 @@
   <td><span class="anchor" id="variable-x~5"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>X</strong>(*)</td><td><p>reference coordinate, <script type="math/tex">\mathbf{X}</script>. Arrays must be stored as X(D, n_apm, n_mol).</p></td>
+  <td><strong>X</strong>(*)</td><td><p>reference coordinate,</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-y"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>Y</strong>(*)</td><td><p>target coordinate, <script type="math/tex">\mathbf{Y}</script>. Arrays must be stored as Y(D, n_apm, n_mol).</p></td>
+  <td><strong>Y</strong>(*)</td><td><p>target coordinate,</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-cx"></span>real(kind=RK),</td>
@@ -184,6 +184,12 @@
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>W</strong>(*)</td><td><p>work memory</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" id="variable-sort_by_g"></span>logical,</td>
+<td>intent(in),</td>
+  <td>optional</td>  <td></td><td>::</td>
+  <td><strong>sort_by_g</strong></td><td><p>if true, row is sorted respect to G of reference coordinate.</p></td>
 </tr>
 </tbody>
 </table>

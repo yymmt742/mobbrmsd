@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title="12.1% of total for modules and submodules.">445 statements</a>
+    title="12.2% of total for modules and submodules.">454 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_bb_block.f90"> Source File</a></li>
   </ul>
@@ -136,6 +136,7 @@
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_nmol">bb_block_nmol</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_natm">bb_block_natm</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_molsize">bb_block_molsize</a>
+      <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_statesize">bb_block_statesize</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_is_left">bb_block_is_left</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_tree_is_empty">bb_block_tree_is_empty</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_tree_is_finished">bb_block_tree_is_finished</a>
@@ -192,14 +193,14 @@
       <ul class="list-group">
       <li class="list-group-item">
   <ul class="list-inline">
-    <li><a href='../module/mod_tree.html'>mod_tree</a></li>
-    <li><a href='../module/mod_c_matrix.html'>mod_c_matrix</a></li>
-    <li><a href='../module/mod_dimspec_functions.html'>mod_dimspec_functions</a></li>
+    <li><a href='../module/mod_rotation.html'>mod_rotation</a></li>
     <li><a href='../module/mod_f_matrix.html'>mod_f_matrix</a></li>
     <li><a href='../module/mod_mol_block.html'>mod_mol_block</a></li>
-    <li><a href='../module/mod_hungarian.html'>mod_Hungarian</a></li>
-    <li><a href='../module/mod_rotation.html'>mod_rotation</a></li>
     <li><a href='../module/mod_params.html'>mod_params</a></li>
+    <li><a href='../module/mod_c_matrix.html'>mod_c_matrix</a></li>
+    <li><a href='../module/mod_dimspec_functions.html'>mod_dimspec_functions</a></li>
+    <li><a href='../module/mod_tree.html'>mod_tree</a></li>
+    <li><a href='../module/mod_hungarian.html'>mod_Hungarian</a></li>
   </ul>
       </li>
       </ul>
@@ -236,6 +237,7 @@
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_nmol">bb_block_nmol</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_natm">bb_block_natm</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_molsize">bb_block_molsize</a>
+      <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_statesize">bb_block_statesize</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_is_left">bb_block_is_left</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_tree_is_empty">bb_block_tree_is_empty</a>
       <a class="list-group-item" href="../module/mod_bb_block.html#proc-bb_block_tree_is_finished">bb_block_tree_is_finished</a>
@@ -450,6 +452,29 @@
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>q</strong>(*)</td><td><p>bb_block header array.</p></td>
+</tr>
+</tbody>
+</table>
+
+<h4>Return Value <small>integer(kind=IK)</small></h4>  
+
+  </div>
+  </div>
+
+      <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_statesize"></span><h3>public pure function <a href='../proc/bb_block_statesize.html'>bb_block_statesize</a>(q) result(res)</h3></div>
+  <div class="panel-body">
+       
+<p>Returns size of saved state.</p>
+    
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>q</strong>(*)</td><td><p>header.</p></td>
 </tr>
 </tbody>
 </table>
@@ -790,7 +815,7 @@
     <section>
     <h2>Subroutines</h2>
       <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_setup"></span><h3>public pure subroutine <a href='../proc/bb_block_setup.html'>bb_block_setup</a>(q, X, Y, CX, CY, s, W, zfill)</h3></div>
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_setup"></span><h3>public pure subroutine <a href='../proc/bb_block_setup.html'>bb_block_setup</a>(q, X, Y, CX, CY, s, W, zfill, sort_by_g)</h3></div>
   <div class="panel-body">
        
 <p>Setup C matrix and F matrix in root node.</p>
@@ -845,6 +870,12 @@
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>zfill</strong></td><td><p>if true, the root node is filled by zero.</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>logical,</td>
+<td>intent(in),</td>
+  <td>optional</td>  <td></td><td>::</td>
+  <td><strong>sort_by_g</strong></td><td><p>if true, row is sorted respect to G of reference coordinate.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1048,7 +1079,7 @@
   </div>
 
       <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_swap_y"></span><h3>public pure subroutine <a href='../proc/bb_block_swap_y.html'>bb_block_swap_y</a>(q, z, Y)</h3></div>
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bb_block_swap_y"></span><h3>public pure subroutine <a href='../proc/bb_block_swap_y.html'>bb_block_swap_y</a>(q, s, z, Y)</h3></div>
   <div class="panel-body">
        
 <p>swap Y by saved state z.</p>
@@ -1060,7 +1091,13 @@
   <td><span class="anchor" ></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>q</strong>(*)</td><td><p>integer array</p></td>
+  <td><strong>q</strong>(*)</td><td><p>header</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>s</strong>(*)</td><td><p>state</p></td>
 </tr>
 <tr>
   <td><span class="anchor" ></span>integer(kind=IK),</td>

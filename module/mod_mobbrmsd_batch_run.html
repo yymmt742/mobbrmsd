@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 1.0% of total for modules and submodules.">36 statements</a>
+    title=" 1.0% of total for modules and submodules.">38 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd_batch_run.f90"> Source File</a></li>
   </ul>
@@ -133,12 +133,12 @@
       <ul class="list-group">
       <li class="list-group-item">
   <ul class="list-inline">
-    <li><a href='../module/mod_mobbrmsd_header.html'>mod_mobbrmsd_header</a></li>
     <li>mod_forbar_collections</li>
+    <li><a href='../module/mod_mobbrmsd.html'>mod_mobbrmsd</a></li>
     <li><a href='../module/mod_mobbrmsd_state.html'>mod_mobbrmsd_state</a></li>
     <li><a href='../module/mod_params.html'>mod_params</a></li>
+    <li><a href='../module/mod_mobbrmsd_header.html'>mod_mobbrmsd_header</a></li>
     <li>mod_forbar</li>
-    <li><a href='../module/mod_mobbrmsd.html'>mod_mobbrmsd</a></li>
   </ul>
       </li>
       </ul>
@@ -172,7 +172,7 @@
     <section>
     <h2>Subroutines</h2>
       <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-mobbrmsd_batch_run"></span><h3>public subroutine <a href='../proc/mobbrmsd_batch_run.html'>mobbrmsd_batch_run</a>(n_target, header, state, X, Y, W, cutoff, difflim, maxeval, rotate_y)</h3></div>
+  <div class="panel-heading codesum"><span class="anchor" id="proc-mobbrmsd_batch_run"></span><h3>public subroutine <a href='../proc/mobbrmsd_batch_run.html'>mobbrmsd_batch_run</a>(n_target, header, state, X, Y, W, cutoff, difflim, maxeval, remove_com, sort_by_g, rotate_y)</h3></div>
   <div class="panel-body">
        
 <p>batch parallel run</p>
@@ -233,6 +233,18 @@
 <td>intent(in),</td>
   <td>optional</td>  <td></td><td>::</td>
   <td><strong>maxeval</strong></td><td><p>The search ends when ncount exceeds maxiter.</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>logical,</td>
+<td>intent(in),</td>
+  <td>optional</td>  <td></td><td>::</td>
+  <td><strong>remove_com</strong></td><td><p>if true, remove centroids. default [.true.]</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>logical,</td>
+<td>intent(in),</td>
+  <td>optional</td>  <td></td><td>::</td>
+  <td><strong>sort_by_g</strong></td><td><p>if true, row is sorted respect to G of reference coordinate. default [.true.]</p></td>
 </tr>
 <tr>
   <td><span class="anchor" ></span>logical,</td>

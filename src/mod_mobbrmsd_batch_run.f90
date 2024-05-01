@@ -20,7 +20,9 @@ contains
   !| batch parallel run
   subroutine mobbrmsd_batch_run(n_target, header, state, &
   &                             X, Y, W, &
-  &                             cutoff, difflim, maxeval, rotate_y)
+  &                             cutoff, difflim, maxeval, &
+  &                             remove_com, sort_by_g, &
+  &                             rotate_y)
     integer(IK), intent(in)              :: n_target
     !! number of target coordinates
     type(mobbrmsd_header), intent(in)    :: header
@@ -39,6 +41,10 @@ contains
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
     integer(IK), intent(in), optional    :: maxeval
     !! The search ends when ncount exceeds maxiter.
+    logical, intent(in), optional        :: remove_com
+    !! if true, remove centroids. default [.true.]
+    logical, intent(in), optional        :: sort_by_g
+    !! if true, row is sorted respect to G of reference coordinate. default [.true.]
     logical, intent(in), optional        :: rotate_y
     !! The search ends when ncount exceeds maxiter.
     integer(kind=IK)                     :: i, itgt, ijob, ypnt, wpnt, ldy, ldw
@@ -57,7 +63,9 @@ contains
       wpnt = ldw * omp_get_thread_num() + 1
       ypnt = (itgt - 1) * ldy + 1
       call mobbrmsd_run(header, state(itgt), X, Y(ypnt), W(wpnt), &
-     &                  cutoff=cutoff, difflim=difflim, maxeval=maxeval)
+     &                  cutoff=cutoff, difflim=difflim, maxeval=maxeval, &
+     &                  remove_com=remove_com, sort_by_g=sort_by_g &
+     &      )
       if (rotate_y) call state(itgt)%rotation(header, Y(ypnt))
     end do
     !$omp end parallel

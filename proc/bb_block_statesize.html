@@ -8,7 +8,7 @@
     <meta name="author" content="yymmt742" >
     <link rel="icon" href="../favicon.png">
 
-    <title>bb_block_is_left &ndash; mobbrmsd</title>
+    <title>bb_block_statesize &ndash; mobbrmsd</title>
 
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
@@ -76,7 +76,7 @@
 
     <div class="container">
   <div class="row">
-    <h1>bb_block_is_left
+    <h1>bb_block_statesize
       <small>Function</small>
     </h1>
     <div class="row">
@@ -87,14 +87,14 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 0.6% of total for procedures.">12 statements</a>
+    title=" 0.3% of total for procedures.">7 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_bb_block.f90"> Source File</a></li>
   </ul>
   <ol class="breadcrumb in-well text-right">
      <li><a href='../sourcefile/mod_bb_block.f90.html'>mod_bb_block.f90</a></li>
      <li><a href='../module/mod_bb_block.html'>mod_bb_block</a></li>
-     <li class="active">bb_block_is_left</li>
+     <li class="active">bb_block_statesize</li>
   </ol>
 </div>
 </div>
@@ -119,43 +119,25 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure function bb_block_is_left(UB, q, s, W) result(res)</h2>
+    <h2>public pure function bb_block_statesize(q) result(res)</h2>
     
 
-    <p>Returns true when tree is empty</p>
+    <p>Returns size of saved state.</p>
 
     <h3>Arguments</h3>
       <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-ub~3"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-q~78"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>UB</strong></td><td><p>upper bound</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-q~79"></span>integer(kind=IK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>q</strong>(*)</td><td><p>integer array</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-s~46"></span>integer(kind=IK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>s</strong>(*)</td><td><p>work integer array</p></td>
-</tr>
-<tr>
-  <td><span class="anchor" id="variable-w~15"></span>real(kind=RK),</td>
-<td>intent(in)</td>
-  <td></td>  <td></td><td>::</td>
-  <td><strong>W</strong>(*)</td><td><p>main memory</p></td>
+  <td><strong>q</strong>(*)</td><td><p>header.</p></td>
 </tr>
 </tbody>
 </table>
 
-   <h3>Return Value <small><span class="anchor" id="variable-res~81"></span>logical</small></h3>
+   <h3>Return Value <small><span class="anchor" id="variable-res~80"></span>integer(kind=IK)</small></h3>
     
     <br>
 

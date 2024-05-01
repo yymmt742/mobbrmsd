@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 1.2% of total for procedures.">25 statements</a>
+    title=" 1.3% of total for procedures.">27 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd_batch_run.f90"> Source File</a></li>
   </ul>
@@ -119,7 +119,7 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public subroutine mobbrmsd_batch_run(n_target, header, state, X, Y, W, cutoff, difflim, maxeval, rotate_y)</h2>
+    <h2>public subroutine mobbrmsd_batch_run(n_target, header, state, X, Y, W, cutoff, difflim, maxeval, remove_com, sort_by_g, rotate_y)</h2>
     
 
     <p>batch parallel run</p>
@@ -181,6 +181,18 @@
 <td>intent(in),</td>
   <td>optional</td>  <td></td><td>::</td>
   <td><strong>maxeval</strong></td><td><p>The search ends when ncount exceeds maxiter.</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" id="variable-remove_com~3"></span>logical,</td>
+<td>intent(in),</td>
+  <td>optional</td>  <td></td><td>::</td>
+  <td><strong>remove_com</strong></td><td><p>if true, remove centroids. default [.true.]</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" id="variable-sort_by_g~4"></span>logical,</td>
+<td>intent(in),</td>
+  <td>optional</td>  <td></td><td>::</td>
+  <td><strong>sort_by_g</strong></td><td><p>if true, row is sorted respect to G of reference coordinate. default [.true.]</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-rotate_y"></span>logical,</td>
