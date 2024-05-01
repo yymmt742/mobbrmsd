@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 5.2% of total for modules and submodules.">187 statements</a>
+    title=" 6.3% of total for modules and submodules.">233 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_c_matrix.f90"> Source File</a></li>
   </ul>
@@ -134,6 +134,7 @@
       <a class="list-group-item" href="../module/mod_c_matrix.html#proc-c_matrix_blocksize">c_matrix_blocksize</a>
       <a class="list-group-item" href="../module/mod_c_matrix.html#proc-c_matrix_memsize">c_matrix_memsize</a>
       <a class="list-group-item" href="../module/mod_c_matrix.html#proc-c_matrix_worksize">c_matrix_worksize</a>
+      <a class="list-group-item" href="../module/mod_c_matrix.html#proc-c_matrix_swap_indices">c_matrix_swap_indices</a>
     </div>
   </div>
 </div>
@@ -175,9 +176,9 @@
       <ul class="list-group">
       <li class="list-group-item">
   <ul class="list-inline">
-    <li><a href='../module/mod_mol_block.html'>mod_mol_block</a></li>
-    <li><a href='../module/mod_params.html'>mod_params</a></li>
     <li><a href='../module/mod_dimspec_functions.html'>mod_dimspec_functions</a></li>
+    <li><a href='../module/mod_params.html'>mod_params</a></li>
+    <li><a href='../module/mod_mol_block.html'>mod_mol_block</a></li>
   </ul>
       </li>
       </ul>
@@ -212,6 +213,7 @@
       <a class="list-group-item" href="../module/mod_c_matrix.html#proc-c_matrix_blocksize">c_matrix_blocksize</a>
       <a class="list-group-item" href="../module/mod_c_matrix.html#proc-c_matrix_memsize">c_matrix_memsize</a>
       <a class="list-group-item" href="../module/mod_c_matrix.html#proc-c_matrix_worksize">c_matrix_worksize</a>
+      <a class="list-group-item" href="../module/mod_c_matrix.html#proc-c_matrix_swap_indices">c_matrix_swap_indices</a>
     </div>
   </div>
 </div>
@@ -364,13 +366,40 @@
   </div>
   </div>
 
+      <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-c_matrix_swap_indices"></span><h3>public pure function <a href='../proc/c_matrix_swap_indices.html'>c_matrix_swap_indices</a>(q, s) result(res)</h3></div>
+  <div class="panel-body">
+           
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>q</strong>(*)</td><td><p>header</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>s</strong>(*)</td><td><p>state</p></td>
+</tr>
+</tbody>
+</table>
+
+<h4>Return Value <small>integer(kind=IK)(q(nl))</small></h4>  <p>swap indice</p>
+
+  </div>
+  </div>
+
     </section>
     <br>
 
     <section>
     <h2>Subroutines</h2>
       <div class="panel panel-default">
-  <div class="panel-heading codesum"><span class="anchor" id="proc-c_matrix_eval"></span><h3>public pure subroutine <a href='../proc/c_matrix_eval.html'>c_matrix_eval</a>(q, b, X, Y, CX, CY, C, W)</h3></div>
+  <div class="panel-heading codesum"><span class="anchor" id="proc-c_matrix_eval"></span><h3>public pure subroutine <a href='../proc/c_matrix_eval.html'>c_matrix_eval</a>(q, b, s, X, Y, CX, CY, C, W)</h3></div>
   <div class="panel-body">
        
 <p>Evaluation the c-matrix.<br>
@@ -392,6 +421,12 @@
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>b</strong>(*)</td><td><p>mol block header.</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" ></span>integer(kind=IK),</td>
+<td>intent(inout)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>s</strong>(*)</td><td><p>swap_indice</p></td>
 </tr>
 <tr>
   <td><span class="anchor" ></span>real(kind=RK),</td>

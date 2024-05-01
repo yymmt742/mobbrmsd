@@ -26,6 +26,7 @@ module mod_c_matrix
   public :: c_matrix_autocorr
   public :: c_matrix_eval
   public :: c_matrix_add
+  public :: c_matrix_swap_indices
 !
   integer(IK), parameter :: header_size = 4
 !
@@ -65,6 +66,7 @@ contains
     res%q(nl) = mol_block_nmol(b)
     res%q(cl) = res%q(cb) * res%q(nl)
     res%q(nw) = MERGE(MAX((res%q(nl) + 1) * mol_block_each_size(b), 2 * res%q(nl)), 0, res%q(nl) > 0)
+    allocate (res%s(res%q(nl)))
   end function c_matrix_new
 !
 !| Inquire blocksize of c_matrix.
@@ -95,108 +97,110 @@ contains
 !  g-matrix is also calculated at the same time.<br>
 !  At the end of the calculation, save the c-matrix C(cb,M,M) to C(\*). <br>
 !  workarray W(\*) must be larger than c_matrix_worksize(q). <br>
-  pure subroutine c_matrix_eval(q, b, X, Y, CX, CY, C, W)
-    integer(IK), intent(in) :: q(*)
+  pure subroutine c_matrix_eval(q, b, s, X, Y, CX, CY, C, W)
+    integer(IK), intent(in)    :: q(*)
     !! c_matrix header.
-    integer(IK), intent(in) :: b(*)
+    integer(IK), intent(in)    :: b(*)
     !! mol block header.
-    real(RK), intent(in)    :: X(*)
+    integer(IK), intent(inout) :: s(*)
+    !! swap_indice
+    real(RK), intent(in)       :: X(*)
     !! reference coordinate, \(\mathbf{X}\). Arrays must be stored as X(D, n_apm, n_mol).
-    real(RK), intent(in)    :: Y(*)
+    real(RK), intent(in)       :: Y(*)
     !! target coordinate, \(\mathbf{Y}\). Arrays must be stored as Y(D, n_apm, n_mol).
-    real(RK), intent(in)    :: CX(*)
+    real(RK), intent(in)       :: CX(*)
     !! centroid of \(\mathbf{X}\).
-    real(RK), intent(in)    :: CY(*)
+    real(RK), intent(in)       :: CY(*)
     !! centroid of \(\mathbf{Y}\).
-    real(RK), intent(inout) :: C(*)
+    real(RK), intent(inout)    :: C(*)
     !! main memory
-    real(RK), intent(inout) :: W(*)
+    real(RK), intent(inout)    :: W(*)
     !! work memory
-    integer(IK), parameter  :: gx = 1
-    integer(IK), parameter  :: wx = 1
-    integer(IK)             :: n_sym, n_apm, gy, wy, i
-    integer(IK)             :: s(q(nl))
+    integer(IK), parameter     :: gx = 1
+    integer(IK), parameter     :: wx = 1
+    integer(IK)                :: n_sym, n_apm, gy, wy, i
     associate (n_blk => q(cb), n_mol => q(nl))
       n_apm = mol_block_napm(b)
+      do concurrent(i=1:n_mol)
+        s(i) = i
+      end do
       if (n_apm < 1) then
         call zfill(q(cl) * q(nl), C, 1)
         return
       end if
-      do concurrent(i=1:n_mol)
-        s(i) = i
-      end do
       n_sym = mol_block_nsym(b)
       gy = gx + n_mol
       wy = wx + mol_block_total_size(b)
-!
-      call eval_g_matrix(D, n_apm, n_mol, X, CX, W(gx))
-      call eval_g_matrix(D, n_apm, n_mol, Y, CY, W(gy))
+      call eval_g(D, n_apm, n_mol, X, CX, W(gx))
+      call eval_g(D, n_apm, n_mol, Y, CY, W(gy))
+      if (n_mol > 1) call qs(n_mol, s, W(gx))
       call set_g(n_mol, n_blk, W(gx), W(gy), C)
-      call eval_c_matrix(b, s, n_sym, n_apm, n_mol, n_blk, X, Y, C, W(wx), W(wy))
+      call eval_c_matrix(b, s, n_sym, n_apm, n_mol, n_blk, X, Y, CX, CY, C, W(wx), W(wy))
     end associate
-  contains
-!   trace of self correlation matrix
-    pure subroutine eval_g_matrix(D, n_apm, n_mol, X, CX, G)
-      integer(IK), intent(in)        :: D, n_apm, n_mol
-      real(RK), intent(in)           :: X(D, n_apm, n_mol), CX(D)
-      real(RK), intent(inout)        :: G(n_mol)
-      integer(IK)                    :: i, j, k
-      do concurrent(k=1:n_mol)
-        G(k) = ZERO
-        do j = 1, n_apm
-          do i = 1, D
-            G(k) = G(k) + (X(i, j, k) - CX(i))**2
-          end do
+  end subroutine c_matrix_eval
+!
+! trace of self correlation matrix
+  pure subroutine eval_g(D, n_apm, n_mol, X, CX, G)
+    integer(IK), intent(in)        :: D, n_apm, n_mol
+    real(RK), intent(in)           :: X(D, n_apm, n_mol), CX(D)
+    real(RK), intent(inout)        :: G(n_mol)
+    integer(IK)                    :: i, j, k
+    do concurrent(k=1:n_mol)
+      G(k) = ZERO
+      do j = 1, n_apm
+        do i = 1, D
+          G(k) = G(k) + (X(i, j, k) - CX(i))**2
         end do
       end do
-    end subroutine eval_g_matrix
+    end do
+  end subroutine eval_g
 !
-!   trace of self correlation matrix
-    pure subroutine set_g(n_mol, n_blk, GX, GY, C)
-      integer(IK), intent(in)        :: n_mol, n_blk
-      real(RK), intent(in)           :: GX(*), GY(*)
-      real(RK), intent(inout)        :: C(n_blk, n_mol, n_mol)
-      integer(IK)                    :: i, j
-      do concurrent(i=1:n_mol, j=1:n_mol)
-        C(1, i, j) = GX(i) + GY(j)
-      end do
-    end subroutine set_g
+! trace of self correlation matrix
+  pure subroutine set_g(n_mol, n_blk, GX, GY, C)
+    integer(IK), intent(in)        :: n_mol, n_blk
+    real(RK), intent(in)           :: GX(*), GY(*)
+    real(RK), intent(inout)        :: C(n_blk, n_mol, n_mol)
+    integer(IK)                    :: i, j
+    do concurrent(i=1:n_mol, j=1:n_mol)
+      C(1, i, j) = GX(i) + GY(j)
+    end do
+  end subroutine set_g
 !
-!   get correlation matrix \(\mathbf{C} = \mathbf{Y}^{\top}\mathbf{X}\)
-!   and optimal rotation \(\mathbf{R}^{\top}\)
-    pure subroutine eval_c_matrix(b, s, n_sym, n_apm, n_mol, n_blk, X, Y, C, WX, WY)
-      integer(IK), intent(in)     :: b(*), s(*), n_sym, n_apm, n_mol, n_blk
-      real(RK), intent(in)        :: X(D, n_apm, n_mol), Y(D, n_apm, n_mol)
-      real(RK), intent(inout)     :: C(n_blk, n_mol, n_mol), WX(D, n_apm, n_mol), WY(D, n_apm)
-      integer(IK)                 :: i
-      do concurrent(i=1:n_mol)
-        call covcopy(D, n_apm, X(1, 1, i), CX, WX(1, 1, s(i)))
-      end do
-      do i = 1, n_mol
-        call covcopy(D, n_apm, Y(1, 1, i), CY, WY)
-        call calc_covariance(b, n_sym, n_apm, n_mol, n_blk, WX, WY, C(1, 1, i))
-      end do
-    end subroutine eval_c_matrix
+! get correlation matrix \(\mathbf{C} = \mathbf{Y}^{\top}\mathbf{X}\)
+! and optimal rotation \(\mathbf{R}^{\top}\)
+  pure subroutine eval_c_matrix(b, s, n_sym, n_apm, n_mol, n_blk, X, Y, CX, CY, C, WX, WY)
+    integer(IK), intent(in)     :: b(*), s(*), n_sym, n_apm, n_mol, n_blk
+    real(RK), intent(in)        :: X(D, n_apm, n_mol), Y(D, n_apm, n_mol)
+    real(RK), intent(in)        :: CX(D), CY(D)
+    real(RK), intent(inout)     :: C(n_blk, n_mol, n_mol), WX(D, n_apm, n_mol), WY(D, n_apm)
+    integer(IK)                 :: i
+    do concurrent(i=1:n_mol)
+      call covcopy(D, n_apm, X(1, 1, s(i)), CX, WX(1, 1, i))
+    end do
+    do i = 1, n_mol
+      call covcopy(D, n_apm, Y(1, 1, i), CY, WY)
+      call calc_covariance(b, n_sym, n_apm, n_mol, n_blk, WX, WY, C(1, 1, i))
+    end do
+  end subroutine eval_c_matrix
 !
-    pure subroutine calc_covariance(b, n_sym, n_apm, n_mol, n_blk, WX, WY, C)
-      integer(IK), intent(in)     :: b(*), n_sym, n_apm, n_mol, n_blk
-      real(RK), intent(in)        :: WX(D, n_apm, n_mol)
-      real(RK), intent(inout)     :: WY(D, n_apm), C(n_blk, n_mol)
-      integer(IK)                 :: i, j, ic
-      ic = 2
+  pure subroutine calc_covariance(b, n_sym, n_apm, n_mol, n_blk, WX, WY, C)
+    integer(IK), intent(in)     :: b(*), n_sym, n_apm, n_mol, n_blk
+    real(RK), intent(in)        :: WX(D, n_apm, n_mol)
+    real(RK), intent(inout)     :: WY(D, n_apm), C(n_blk, n_mol)
+    integer(IK)                 :: i, j, ic
+    ic = 2
+    do concurrent(i=1:n_mol)
+      call compute_cov(D, n_apm, WX(1, 1, i), WY, C(ic, i))
+    end do
+    do j = 1, n_sym - 1
+      ic = ic + DD
+      call mol_block_swap(b, j, WY)
       do concurrent(i=1:n_mol)
         call compute_cov(D, n_apm, WX(1, 1, i), WY, C(ic, i))
       end do
-      do j = 1, n_sym - 1
-        ic = ic + DD
-        call mol_block_swap(b, j, WY)
-        do concurrent(i=1:n_mol)
-          call compute_cov(D, n_apm, WX(1, 1, i), WY, C(ic, i))
-        end do
-        call mol_block_inverse_swap(b, j, WY)
-      end do
-    end subroutine calc_covariance
-  end subroutine c_matrix_eval
+      call mol_block_inverse_swap(b, j, WY)
+    end do
+  end subroutine calc_covariance
 !
 !| Calc \( G:=\text{tr}[\mathbf{X}\mathbf{X}^\top]+\text{tr}[\mathbf{Y}\mathbf{Y}^\top] \). <br>
   pure subroutine c_matrix_autocorr(q, C, G)
@@ -242,6 +246,19 @@ contains
 !
   end subroutine c_matrix_add
 !
+  pure function c_matrix_swap_indices(q, s) result(res)
+    integer(IK), intent(in) :: q(*)
+    !! header
+    integer(IK), intent(in) :: s(*)
+    !! state
+    integer(IK)             :: res(q(nl))
+    !! swap indice
+    integer(IK)             :: i
+    do concurrent(i=1:q(nl))
+      res(i) = s(i)
+    end do
+  end function c_matrix_swap_indices
+!
   pure elemental subroutine c_matrix_destroy(this)
     type(c_matrix), intent(inout) :: this
     if (ALLOCATED(this%s)) deallocate (this%s)
@@ -279,6 +296,29 @@ contains
 !     Y(i) = X(i)
 !   end do
 ! end subroutine copy
+!
+!| Quick sort
+  pure recursive subroutine qs(n, s, g)
+    integer, intent(in)     :: n
+    integer, intent(inout)  :: s(*)
+    real(RK), intent(inout) :: g(*)
+    real(RK)                :: h
+    integer                 :: i, j, p, t
+    j = n; i = 1; p = j / 2
+    do
+      do while (g(i) > g(p)); i = i + 1; end do
+      do while (g(j) < g(p)); j = j - 1; end do
+      if (i >= j) exit
+      h = g(i); g(i) = g(j); g(j) = h
+      t = s(i); s(i) = s(j); s(j) = t
+      if (i == p) then; p = j
+      elseif (j == p) then; p = i
+      end if
+      i = i + 1; j = j - 1
+    end do
+    if (2 < i) call qs(i - 1, s(1), g(1))
+    if (j < n - 1) call qs(n - j, s(j + 1), g(j + 1))
+  end subroutine qs
 !
 end module mod_c_matrix
 

@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 4.0% of total for procedures.">86 statements</a>
+    title=" 1.5% of total for procedures.">32 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_c_matrix.f90"> Source File</a></li>
   </ul>
@@ -119,7 +119,7 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <h2>public pure subroutine c_matrix_eval(q, b, X, Y, CX, CY, C, W)</h2>
+    <h2>public pure subroutine c_matrix_eval(q, b, s, X, Y, CX, CY, C, W)</h2>
     
 
     <p>Evaluation the c-matrix.<br>
@@ -132,7 +132,7 @@
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-q~26"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-q~27"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>q</strong>(*)</td><td><p>c_matrix header.</p></td>
@@ -142,6 +142,12 @@
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>b</strong>(*)</td><td><p>mol block header.</p></td>
+</tr>
+<tr>
+  <td><span class="anchor" id="variable-s~11"></span>integer(kind=IK),</td>
+<td>intent(inout)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>s</strong>(*)</td><td><p>swap_indice</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-x~5"></span>real(kind=RK),</td>
