@@ -132,6 +132,7 @@ module mod_testutil
   public :: SO
   public :: eye
   public :: sd
+  public :: autovar
   public :: swp
   public :: brute_sd
   public :: brute_sd_double
@@ -158,7 +159,7 @@ contains
     call RANDOM_NUMBER(res)
   end function sample_3
 !
-  subroutine centering_2(n, X)
+  pure subroutine centering_2(n, X)
     integer(IK), intent(in) :: n
     real(RK), intent(inout) :: X(D, n)
     real(RK)                :: C(D)
@@ -169,7 +170,7 @@ contains
     end do
   end subroutine centering_2
 !
-  subroutine centering_3(n, m, X)
+  pure subroutine centering_3(n, m, X)
     integer(IK), intent(in) :: n, m
     real(RK), intent(inout) :: X(D, n, m)
     real(RK)                :: C(D)
@@ -241,13 +242,30 @@ contains
     end do
   end function eye
 !
+  pure function autovar(n, X, Y) result(res)
+    integer(IK), intent(in) :: n
+    real(RK), intent(in)    :: X(D, n), Y(D, n)
+    real(RK)                :: X_(D, n), Y_(D, n)
+    real(RK)                :: res
+    X_ = X
+    call centering(n, X_)
+    Y_ = Y
+    call centering(n, Y_)
+    res = SUM(X_ * X_) + SUM(Y_ * Y_)
+  end function autovar
+!
   pure function sd(n, X, Y) result(res)
     integer(IK), intent(in) :: n
     real(RK), intent(in)    :: X(D, n), Y(D, n)
+    real(RK)                :: X_(D, n), Y_(D, n)
     real(RK)                :: G, C(D, D), res
     integer(IK)             :: nw
-    G = SUM(X * X) + SUM(Y * Y)
-    C = MATMUL(Y, TRANSPOSE(X))
+    X_ = X
+    call centering(n, X_)
+    Y_ = Y
+    call centering(n, Y_)
+    G = SUM(X_ * X_) + SUM(Y_ * Y_)
+    C = MATMUL(Y_, TRANSPOSE(X_))
     nw = sdmin_worksize()
     block
       real(rk) :: w(nw)

@@ -40,7 +40,7 @@ contains
       CY = SUM(RESHAPE(Y, [D, m * n]), 2) / (m * n)
       call run(bm%q, bm%s, X, Y, CX, CY, W, sb)
       call u%assert_almost_equal(W(1), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
-      call u%assert_almost_equal(W(2), SUM(X * X + Y * Y), 'autocorr     ')
+      call u%assert_almost_equal(W(2), autovar(n * m, X, Y), 'auto variance')
       Z = Y
       call bb_block_swap_y(bm%q, bm%s, sb, Z)
       call u%assert_almost_equal(W(1), sd(m * n, X, Z), 'swap sd value')
@@ -55,11 +55,9 @@ contains
     real(RK), intent(inout)    :: W(*)
     integer(IK), intent(inout) :: sb(*)
     real(RK)                   :: ub, g
-!
     ub = 999.9_RK
     call bb_block_setup(q, X, Y, CX, CY, s, W, zfill=.true.)
     g = bb_block_autocorr(q, W)
-!
     do
       call bb_block_expand(ub, q, s, W)
       if (bb_block_is_bottom(q, s)) then
@@ -71,7 +69,6 @@ contains
       call bb_block_closure(ub, q, s, W)
       if (bb_block_tree_is_empty(q, s)) exit
     end do
-!
     W(1) = g + ub + ub
     W(2) = g
   end subroutine run
