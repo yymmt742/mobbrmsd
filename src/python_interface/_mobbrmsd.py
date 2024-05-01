@@ -136,6 +136,7 @@ class mobbrmsd:
 
         x_ = self.varidation_coordinates_1(x)
         y_ = self.varidation_coordinates_2(y)
+        n_target = y.shape[0]
 
         if hasattr(self, "ww"):
             if self.ww.shape[1] != self.memsize or self.ww.shape[0] != self.njob:
@@ -144,6 +145,7 @@ class mobbrmsd:
             self.ww = numpy.empty((self.njob, self.memsize)).T
 
         hret, iret, rret = self.driver.batch_run(
+            n_target,
             self.n_header,
             self.n_int,
             self.n_float,
@@ -174,6 +176,7 @@ class mobbrmsd:
     ) -> tuple:
 
         x_ = self.varidation_coordinates_2(x)
+        n_target = x.shape[0]
 
         if hasattr(self, "ww"):
             if self.ww.shape[1] != self.memsize or self.ww.shape[0] != self.njob:
@@ -182,6 +185,7 @@ class mobbrmsd:
             self.ww = numpy.empty((self.njob, self.memsize)).T
 
         edges, weights, hret, iret, rret = self.driver.min_span_tree(
+            n_target,
             self.n_header,
             self.n_int,
             self.n_float,
@@ -212,14 +216,12 @@ class mobbrmsd:
 
     def varidation_coordinates_1(self, x: numpy.ndarray) -> numpy.ndarray:
 
-        if x.ndim == 2:
-            x_ = x.transpose()
-        else:
+        if x.ndim != 2:
             raise ValueError
 
-        if x_.shape[0] != self.ndim or x_.shape[1] != self.natom:
+        if x.shape[1] != self.ndim or x.shape[0] != self.natom:
             raise ValueError
-        return x_
+        return x.flatten()
 
     def varidation_coordinates_2(self, x: numpy.ndarray) -> numpy.ndarray:
 
