@@ -228,7 +228,7 @@ contains
   end function bb_block_molsize
 !
 !| Setup C matrix and F matrix in root node.
-  subroutine bb_block_setup(q, X, Y, CX, CY, s, W, zfill)
+  pure subroutine bb_block_setup(q, X, Y, CX, CY, s, W, zfill)
     integer(IK), intent(in)    :: q(*)
     !! integer array
     real(RK), intent(in)       :: X(*)
@@ -642,7 +642,7 @@ contains
   end subroutine bb_block_save_state
 !
 !| swap Y by saved state z.
-  subroutine bb_block_swap_y(q, z, Y)
+  pure subroutine bb_block_swap_y(q, z, Y)
     integer(IK), intent(in) :: q(*)
     !! integer array
     integer(IK), intent(in) :: z(*)
