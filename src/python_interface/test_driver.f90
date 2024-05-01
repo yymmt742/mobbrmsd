@@ -66,7 +66,7 @@ contains
    &  n_dim, n_atm, n_target, n_header, &
    &  n_int, n_float, n_mem, n_job, &
    &  X, Y, W, &
-   &  999.0_RK, 0.0_RK, -1, .false., &
+   &  999.0_RK, 0.0_RK, -1, .false., .true., .true., &
    &  h, si, sr)
 !
     do i = 1, n_target
@@ -106,7 +106,7 @@ contains
     call min_span_tree( &
  &    n_dim, n_atm, n_target, &
  &    n_header, n_int, n_float, n_mem, n_job,&
- &    X, W, RHUGE, ZERO, -1, .true., &
+ &    X, W, RHUGE, ZERO, -1, .true., .true., .true., &
  &    edges, weights, header, int_states, float_states)
 !
     do i = 1, n_target - 1

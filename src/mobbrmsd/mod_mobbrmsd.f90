@@ -171,7 +171,8 @@ contains
  &             cutoff, &
  &             difflim, &
  &             maxeval, &
- &             remove_com &
+ &             remove_com, &
+ &             sort_by_g &
  &             )
     type(mobbrmsd_header), intent(in)   :: header
     !! mobbrmsd_header
@@ -191,6 +192,8 @@ contains
     !! The search ends when ncount exceeds maxiter.
     logical, intent(in), optional       :: remove_com
     !! if true, remove centroids. default [.true.]
+    logical, intent(in), optional       :: sort_by_g
+    !! if true, row is sorted respect to G of reference coordinate. default [.true.]
 !
     if (PRESENT(W)) then
       call bb_list_setup(&
@@ -199,7 +202,8 @@ contains
      &  X,  &
      &  Y,  &
      &  W, &
-     &  remove_com=remove_com &
+     &  remove_com=remove_com, &
+     &  sort_by_g=sort_by_g &
      &     )
       call mobbrmsd_restart( &
      &  header, &

@@ -230,7 +230,8 @@ contains
 
   !| single run with working memory
   subroutine run(n_dim, n_atom, n_head, n_int, n_float, n_mem, X, Y, W, &
- &               cutoff, difflim, maxeval, rotate_y, &
+ &               cutoff, difflim, maxeval, &
+ &               rotate_y, remove_com, sort_by_g, &
  &               header, int_states, float_states)
     integer(kind=IK), intent(in)  :: n_dim
     integer(kind=IK), intent(in)  :: n_atom
@@ -248,13 +249,21 @@ contains
     real(kind=RK), intent(in)     :: cutoff
     real(kind=RK), intent(in)     :: difflim
     logical, intent(in)           :: rotate_y
+    logical, intent(in)           :: remove_com
+    logical, intent(in)           :: sort_by_g
     integer(kind=IK), intent(out) :: header(n_head)
     integer(kind=IK), intent(out) :: int_states(n_int)
     real(kind=RK), intent(out)    :: float_states(n_float)
     type(mobbrmsd)                :: mob
 
     mob = mobbrmsd(blocks)
-    call mobbrmsd_run(mob%h, mob%s, X, Y, w, cutoff, difflim, maxeval)
+    call mobbrmsd_run(mob%h, mob%s, X, Y, w, &
+      &               cutoff=cutoff, &
+      &               difflim=difflim, &
+      &               maxeval=maxeval,&
+      &               remove_com=remove_com,&
+      &               sort_by_g=sort_by_g&
+      &   )
     if (rotate_y) call mob%s%rotation(mob%h, Y)
 
     header = mob%h%dump()
@@ -268,7 +277,8 @@ contains
                n_dim, n_atom, n_target, &
  &             n_head, n_int, n_float, n_mem, n_job,&
  &             X, Y, W, &
- &             cutoff, difflim, maxeval, rotate_y, &
+ &             cutoff, difflim, maxeval, &
+ &             rotate_y, remove_com, sort_by_g, &
  &             header, int_states, float_states)
     integer(kind=IK), intent(in)  :: n_dim
     integer(kind=IK), intent(in)  :: n_atom
@@ -288,6 +298,8 @@ contains
     real(kind=RK), intent(in)     :: cutoff
     real(kind=RK), intent(in)     :: difflim
     logical, intent(in)           :: rotate_y
+    logical, intent(in)           :: remove_com
+    logical, intent(in)           :: sort_by_g
     integer(kind=IK), intent(out) :: header(n_head)
     integer(kind=IK), intent(out) :: int_states(n_int, n_target)
     real(kind=RK), intent(out)    :: float_states(n_float, n_target)
@@ -302,7 +314,10 @@ contains
 
     call mobbrmsd_batch_run( &
    &  n_target, mob%h, s, X, Y, W, &
-   &  cutoff, difflim, maxeval, rotate_y &
+   &  cutoff, difflim, maxeval, &
+   &  rotate_y=rotate_y, &
+   &  remove_com=remove_com, &
+   &  sort_by_g=sort_by_g &
    &  )
 
     header = mob%h%dump()
@@ -315,8 +330,8 @@ contains
 
   subroutine min_span_tree(n_dim, n_atom, n_target, n_head, &
  &                         n_int, n_float, n_mem, n_job,&
- &                         x, w, cutoff, difflim,  &
- &                         maxeval, verbose, &
+ &                         x, w, cutoff, difflim, maxeval,  &
+ &                         remove_com, sort_by_g, verbose, &
  &                         edges, weights, header, &
  &                         int_states, float_states)
     integer(kind=IK), intent(in)      :: n_dim
@@ -334,6 +349,8 @@ contains
     real(kind=RK), intent(in)         :: cutoff
     real(kind=RK), intent(in)         :: difflim
     integer(kind=IK), intent(in)      :: maxeval
+    logical, intent(in)               :: remove_com
+    logical, intent(in)               :: sort_by_g
     logical, intent(in)               :: verbose
     integer(kind=IK), intent(out)     :: edges(2, n_target - 1)
     real(kind=RK), intent(out)        :: weights(n_target - 1)
@@ -352,9 +369,12 @@ contains
    &  cutoff=cutoff, &
    &  difflim=difflim, &
    &  maxeval=maxeval, &
+   &  remove_com=remove_com, &
+   &  sort_by_g=sort_by_g, &
    &  edges=edges, &
    &  weights=weights, &
-   &  verbose=verbose)
+   &  verbose=verbose &
+   &  )
 
     header = mob%h%dump()
     do concurrent(i=1:n_target, j=1:n_target)
