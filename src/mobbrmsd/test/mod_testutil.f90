@@ -126,6 +126,7 @@ module mod_testutil
   implicit none
   private
   public :: sample
+  public :: mol_sample
   public :: centering
   public :: covmat
   public :: gcov
@@ -158,6 +159,37 @@ contains
     real(RK)                :: res(D, m, n)
     call RANDOM_NUMBER(res)
   end function sample_3
+!
+  function mol_sample(n_apm, n_mol, a, b) result(res)
+    integer(IK), intent(in) :: n_apm, n_mol
+    real(RK), intent(in)    :: a, b
+    real(RK), parameter     :: hpi = ACOS(0.0_RK)
+    real(RK)                :: sa, ca, sb, cb
+    real(RK)                :: xvar(D, n_mol)
+    real(RK)                :: xtmp(D, n_apm)
+    real(RK)                :: xstr(D, n_apm, n_mol)
+    real(RK)                :: R(D, D)
+    real(RK)                :: res(D, n_apm, n_mol)
+    integer(IK)             :: i, j
+    sa = SIN(hpi * a)
+    ca = COS(hpi * a)
+    sb = SIN(hpi * b)
+    cb = COS(hpi * b)
+    call RANDOM_NUMBER(xvar)
+    call RANDOM_NUMBER(xtmp)
+    call RANDOM_NUMBER(xstr)
+!
+    do j = 1, n_mol
+      R = SO()
+      do i = 1, n_apm
+        res(:, i, j) = sa * xvar(:, j) + &
+                    &  ca * (&
+                    &  cb * xstr(:, i, j) + &
+                    &  sb * MATMUL(R, xtmp(:, i)) &
+                    &  )
+      end do
+    end do
+  end function mol_sample
 !
   pure subroutine centering_2(n, X)
     integer(IK), intent(in) :: n
