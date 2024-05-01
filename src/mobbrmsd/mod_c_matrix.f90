@@ -246,18 +246,21 @@ contains
 !
   end subroutine c_matrix_add
 !
-  pure function c_matrix_swap_indices(q, s) result(res)
-    integer(IK), intent(in) :: q(*)
+!| returns swap(z)
+  pure subroutine c_matrix_swap_indices(q, s, z, res)
+    integer(IK), intent(in)    :: q(*)
     !! header
-    integer(IK), intent(in) :: s(*)
+    integer(IK), intent(in)    :: s(*)
     !! state
-    integer(IK)             :: res(q(nl))
+    integer(IK), intent(in)    :: z(*)
+    !! permutation
+    integer(IK), intent(inout) :: res(*)
     !! swap indice
-    integer(IK)             :: i
+    integer(IK)                :: i
     do concurrent(i=1:q(nl))
-      res(i) = s(i)
+      res(i) = s(z(i))
     end do
-  end function c_matrix_swap_indices
+  end subroutine c_matrix_swap_indices
 !
   pure elemental subroutine c_matrix_destroy(this)
     type(c_matrix), intent(inout) :: this

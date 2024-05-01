@@ -629,37 +629,41 @@ contains
     !! memory
     integer(IK)                :: nmol
     associate ( &
-   &  qcov => q(cq), &
-   &  scov => POINTER_TO_S_COV, &
    &  stree => q(INDEX_TO_S_TREE), &
    &  qtree => q(tq), &
    &  qmol => POINTER_TO_Q_MOL &
    &  )
       nmol = mol_block_nmol(q(qmol))
       z(:nmol) = tree_current_sequence(q(qtree), s(stree))
-      z(nmol + 1:nmol + nmol) = c_matrix_swap_indices(q(qcov), s(scov))
     end associate
   end subroutine bb_block_save_state
 !
 !| swap Y by saved state z.
-  pure subroutine bb_block_swap_y(q, z, Y)
+  pure subroutine bb_block_swap_y(q, s, z, Y)
     integer(IK), intent(in) :: q(*)
-    !! integer array
+    !! header
+    integer(IK), intent(in) :: s(*)
+    !! state
     integer(IK), intent(in) :: z(*)
     !! saved state (not state vector)
     real(RK), intent(inout) :: Y(*)
     !! target coordinate
     integer(IK)             :: nmol, napm
     associate ( &
+   &  qcov => q(cq), &
+   &  scov => POINTER_TO_S_COV, &
    &  qtree => q(tq), &
-    & qmol => POINTER_TO_Q_MOL &
-    & )
+   &  qmol => POINTER_TO_Q_MOL &
+   &  )
       nmol = mol_block_nmol(q(qmol))
       napm = mol_block_napm(q(qmol))
       block
         integer(IK) :: iper(nmol), imap(nmol)
-        iper = tree_sequence_to_permutation(q(qtree), z)
-        iper = z(nmol + iper)
+        call c_matrix_swap_indices( &
+       &  q(qcov), &
+       &  s(scov), &
+       &  tree_sequence_to_permutation(q(qtree), z), &
+       &  iper)
         imap = tree_sequence_to_mapping(q(qtree), z)
         call swap_y(nmol, napm, iper, imap, q(qmol), Y)
       end block

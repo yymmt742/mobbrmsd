@@ -68,7 +68,7 @@ contains
    &  )
       nb = SIZE(blk)
       sb = 0
-      nstat = SUM([(bb_block_nmol(blk(i)%q), i=1, nb)]) * 2
+      nstat = SUM([(bb_block_nmol(blk(i)%q), i=1, nb)])
 !
       j = header_size + 4 * nb + 1
       do i = 1, nb
@@ -322,7 +322,7 @@ contains
       j = bb_list_INDEX_TO_BESTSTATE
       do i = 1, n
         call bb_block_save_state(q(pq(i)), s(ps(i)), s(j))
-        j = j + bb_block_nmol(q(pq(i))) * 2
+        j = j + bb_block_nmol(q(pq(i)))
       end do
     end associate
   end subroutine save_state
@@ -344,7 +344,7 @@ contains
 !
       do i = 0, n_block - 1
         call bb_block_swap_y(q(q(pq + i)), s(pb), Y(q(px + i)))
-        pb = pb + bb_block_nmol(q(q(pq + i))) * 2
+        pb = pb + bb_block_nmol(q(q(pq + i)))
       end do
 !
     end associate
