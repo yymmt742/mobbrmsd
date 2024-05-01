@@ -61,6 +61,8 @@ class mobbrmsd:
         cutoff: float = float("inf"),
         difflim: float = 0.0,
         maxeval: int = -1,
+        remove_com: bool = True,
+        sort_by_g: bool = True,
         rotate_y: bool = False,
     ) -> mobbrmsd_result:
 
@@ -83,6 +85,8 @@ class mobbrmsd:
             cutoff,
             difflim,
             maxeval,
+            remove_com,
+            sort_by_g,
             rotate_y,
         )
 
@@ -125,6 +129,8 @@ class mobbrmsd:
         cutoff: float = float("inf"),
         difflim: float = 0.0,
         maxeval: int = -1,
+        remove_com: bool = True,
+        sort_by_g: bool = True,
         rotate_y: bool = False,
     ) -> list:
 
@@ -147,6 +153,8 @@ class mobbrmsd:
             cutoff,
             difflim,
             maxeval,
+            remove_com,
+            sort_by_g,
             rotate_y,
         )
 
@@ -160,6 +168,8 @@ class mobbrmsd:
         cutoff: float = float("inf"),
         difflim: float = 0.0,
         maxeval: int = -1,
+        remove_com: bool = True,
+        sort_by_g: bool = True,
         verbose: bool = False,
     ) -> tuple:
 
@@ -180,6 +190,8 @@ class mobbrmsd:
             cutoff,
             difflim,
             maxeval,
+            remove_com,
+            sort_by_g,
             verbose,
         )
 

@@ -207,7 +207,7 @@ contains
 
   end subroutine restart
 
-  !| single run with working memory
+  !| compute rotration respect to state.
   subroutine rotate_y(n_dim, n_atom, n_head, n_int, n_float,&
  &                    header, int_states, float_states, Y)
     integer(kind=IK), intent(in) :: n_dim
@@ -231,7 +231,7 @@ contains
   !| single run with working memory
   subroutine run(n_dim, n_atom, n_head, n_int, n_float, n_mem, X, Y, W, &
  &               cutoff, difflim, maxeval, &
- &               rotate_y, remove_com, sort_by_g, &
+ &               remove_com, sort_by_g, rotate_y, &
  &               header, int_states, float_states)
     integer(kind=IK), intent(in)  :: n_dim
     integer(kind=IK), intent(in)  :: n_atom
@@ -248,9 +248,9 @@ contains
     integer(kind=IK), intent(in)  :: maxeval
     real(kind=RK), intent(in)     :: cutoff
     real(kind=RK), intent(in)     :: difflim
-    logical, intent(in)           :: rotate_y
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
+    logical, intent(in)           :: rotate_y
     integer(kind=IK), intent(out) :: header(n_head)
     integer(kind=IK), intent(out) :: int_states(n_int)
     real(kind=RK), intent(out)    :: float_states(n_float)
@@ -278,7 +278,7 @@ contains
  &             n_head, n_int, n_float, n_mem, n_job,&
  &             X, Y, W, &
  &             cutoff, difflim, maxeval, &
- &             rotate_y, remove_com, sort_by_g, &
+ &             remove_com, sort_by_g, rotate_y, &
  &             header, int_states, float_states)
     integer(kind=IK), intent(in)  :: n_dim
     integer(kind=IK), intent(in)  :: n_atom
@@ -297,9 +297,9 @@ contains
     integer(kind=IK), intent(in)  :: maxeval
     real(kind=RK), intent(in)     :: cutoff
     real(kind=RK), intent(in)     :: difflim
-    logical, intent(in)           :: rotate_y
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
+    logical, intent(in)           :: rotate_y
     integer(kind=IK), intent(out) :: header(n_head)
     integer(kind=IK), intent(out) :: int_states(n_int, n_target)
     real(kind=RK), intent(out)    :: float_states(n_float, n_target)
