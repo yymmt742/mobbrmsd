@@ -15,8 +15,8 @@ def percentiles(x, q):
 def sample_run(a, b, nhist, nsample):
     hist = np.zeros(nhist)
     for i in range(nsample):
-        x = cog.generate(n_apm, n_mol, a, b).reshape((n_apm * n_mol, 3))
-        y = 0.5 * x + 0.5 * cog.generate(n_apm, n_mol, a, b).reshape((n_apm * n_mol, 3))
+        x, y = cog.generate_pair(n_apm, n_mol, a, b)
+        y = 0.5 * y + 0.5 * x
         ret = mrmsd.run(x, y)
         hist[ret.n_eval - 1] += 1.0
     hsum = np.sum(hist)
@@ -38,15 +38,14 @@ nhist = int(sys.argv[4])
 mrmsd = mo.mobbrmsd()
 mrmsd.add_molecule(n_apm, n_mol)
 cog = mo.coord_generator()
-ax = np.linspace(0.025, 1.0, 40)
-by = np.empty((2, 40, 4))
+ax = np.linspace(0.0125, 1.0, 80)
+by = np.empty((2, 80, 4))
 
 for i, b in enumerate([0.0, 1.0]):
     for j, a in enumerate(ax):
         hist, p25, p50, p75, mean, std = sample_run(a, b, nhist, nsample)
-        # plt.plot(hist)
         print(
-            f"{a:8.3f} {b:8.3f} {p25:16.9f} {p50:16.9f} {p75:16.9f} {mean:16.9f} {std:16.9f}"
+            f"{a:8.5f} {b:8.3f} {p25:16.9f} {p50:16.9f} {p75:16.9f} {mean:16.9f} {std:16.9f}"
         )
         by[i, j, 0] = p25
         by[i, j, 1] = p50
@@ -55,8 +54,11 @@ for i, b in enumerate([0.0, 1.0]):
     print()
 # plt.show()
 # plt.clf()
-plt.fill_between(ax, by[0, :, 0], by[0, :, 2], alpha=0.2)
-plt.fill_between(ax, by[1, :, 0], by[1, :, 2], alpha=0.2)
-plt.plot(ax, by[0, :, 3])
-plt.plot(ax, by[1, :, 3])
+plt.fill_between(ax, by[0, :, 0], by[0, :, 2], alpha=0.3)
+plt.fill_between(ax, by[1, :, 0], by[1, :, 2], alpha=0.3)
+plt.plot(ax, by[0, :, 3], label="beta=0.0")
+plt.plot(ax, by[1, :, 3], label="beta=1.0")
+plt.legend()
+plt.savefig(f"m{n_mol:03}n{n_apm:03}.png")
+plt.savefig(f"m{n_mol:03}n{n_apm:03}.eps")
 plt.show()
