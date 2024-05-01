@@ -15,8 +15,9 @@ def percentiles(x, q):
 def sample_run(a, b, nhist, nsample):
     hist = np.zeros(nhist)
     for i in range(nsample):
-        x = cog.generate(n_apm, n_mol, a, b).reshape((n_apm * n_mol, 3))
-        y = 0.5 * x + 0.5 * cog.generate(n_apm, n_mol, a, b).reshape((n_apm * n_mol, 3))
+        # x = np.arange(3 * n_apm * n_mol).reshape([-1, n_apm, 3])
+        # y = np.arange(3 * n_apm * n_mol).reshape([-1, n_apm, 3])
+        x, y = cog.generate_pair(n_apm, n_mol, a, b)
         ret = mrmsd.run(x, y)
         hist[ret.n_eval - 1] += 1.0
     hsum = np.sum(hist)
@@ -57,6 +58,7 @@ for i, b in enumerate([0.0, 1.0]):
 # plt.clf()
 plt.fill_between(ax, by[0, :, 0], by[0, :, 2], alpha=0.2)
 plt.fill_between(ax, by[1, :, 0], by[1, :, 2], alpha=0.2)
-plt.plot(ax, by[0, :, 3])
-plt.plot(ax, by[1, :, 3])
+plt.plot(ax, by[0, :, 3], label="beta=0.0")
+plt.plot(ax, by[1, :, 3], label="beta=1.0")
+plt.legend()
 plt.show()
