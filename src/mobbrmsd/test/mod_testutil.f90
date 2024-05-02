@@ -8,8 +8,8 @@ module mod_permutation
   type :: permutation
 !
     private
-    integer(IK)                    :: n, r
-    integer(IK), allocatable        :: cy(:), ix(:), ip
+    integer(IK)                      :: n, r
+    integer(IK), allocatable         :: cy(:), ix(:), ip
     integer(IK), allocatable, public :: id(:)
 !
   contains
@@ -256,6 +256,7 @@ contains
     real(RK), intent(inout) :: res(3, *)
     real(RK)                :: a(4), c, t, s
     call RANDOM_NUMBER(a)
+    a = a + a - 1.0_RK
     a(:3) = a(:3) / SQRT(DOT_PRODUCT(a(:3), a(:3)))
     a(4) = (a(4) + a(4)) * PI
     c = COS(a(4))
