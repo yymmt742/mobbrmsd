@@ -1,11 +1,9 @@
 from typing import Any, Iterable
 import numpy
-import matplotlib.pyplot as plt
 
 
 class so_generator:
     def __init__(self, d: int = 3):
-
         self.rng = numpy.random.default_rng()
 
         def so_1():
@@ -18,8 +16,12 @@ class so_generator:
             return numpy.array([[a, -b], [b, a]])
 
         def so_3():
-            q = 2 * self.rng.random(4) - 1.0
-            q /= numpy.linalg.norm(q)
+            while True:
+                q = self.rng.standard_normal(4)
+                r = numpy.linalg.norm(q)
+                if r != 0:
+                    break
+            q /= r
             qq = numpy.power(q, 2)
             q02 = 2 * q[0] * q[2]
             q03 = 2 * q[0] * q[3]
@@ -49,12 +51,17 @@ class so_generator:
             )
 
         def so_g():
-            g = self.rng.random([d, d]) @ self.rng.random([d, d])
-            u, s, v = numpy.linalg.svd(g)
-            det = numpy.linalg.det(u @ v)
-            if det < 0.0:
-                u[-1] = -u[-1]
-            return u @ v
+            while True:
+                A = self.rng.standard_normal(size=[d, d])
+                if numpy.linalg.det(A) != 0:
+                    break
+            Q, R = numpy.linalg.qr(A)
+            if numpy.linalg.det(Q) < 0.0:
+                Q[-1] = -Q[-1]
+            if A[0, 0] > 0.0:
+                return Q
+            else:
+                return -Q
 
         if d < 2:
             self.generate = so_1
@@ -82,7 +89,7 @@ class coord_generator:
 
         Xstr = self.rng.standard_normal((n_mol, n_apm, self.d))
         temp = self.rng.standard_normal((n_apm, self.d))
-        Xtem = numpy.array([temp @ self.sog.generate() for i in range(n_mol)])
+        Xtem = numpy.array([temp @ self.sog.generate() for i in RANGE(n_mol)])
         Xvar = self.rng.standard_normal((n_mol, 1, self.d))
 
         def x_sample(
@@ -107,13 +114,13 @@ class coord_generator:
                 return x_sample(a, b, Xvar, Xtem, Xstr)
             elif isinstance(b, Iterable):
                 return numpy.array([x_sample(a, bi, Xvar, Xtem, Xstr) for bi in b])
-        elif isinstance(a, Iterable):
-            if isinstance(b, float):
-                return numpy.array([x_sample(ai, b, Xvar, Xtem, Xstr) for ai in a])
-            elif isinstance(b, Iterable):
-                return numpy.array(
-                    [[x_sample(ai, bi, Xvar, Xtem, Xstr) for bi in b] for ai in a]
-                )
+            elif isinstance(a, Iterable):
+                if isinstance(b, float):
+                    return numpy.array([x_sample(ai, b, Xvar, Xtem, Xstr) for ai in a])
+                elif isinstance(b, Iterable):
+                    return numpy.array(
+                        [[x_sample(ai, bi, Xvar, Xtem, Xstr) for bi in b] for ai in a]
+                    )
 
     def generate_pair(
         self,
@@ -143,11 +150,11 @@ class coord_generator:
         temp = self.rng.standard_normal((n_apm, self.d))
 
         Xstr = self.rng.standard_normal((n_mol, n_apm, self.d))
-        Xtem = numpy.array([temp @ self.sog.generate() for i in range(n_mol)])
+        Xtem = numpy.array([temp @ self.sog.generate() for i in RANGE(n_mol)])
         Xvar = self.rng.standard_normal((n_mol, 1, self.d))
         X = x_sample(a, b, Xvar, Xtem, Xstr)
         Xstr = self.rng.standard_normal((n_mol, n_apm, self.d))
-        Xtem = numpy.array([temp @ self.sog.generate() for i in range(n_mol)])
+        Xtem = numpy.array([temp @ self.sog.generate() for i in RANGE(n_mol)])
         Xvar = self.rng.standard_normal((n_mol, 1, self.d))
         Y = x_sample(a, b, Xvar, Xtem, Xstr)
 
