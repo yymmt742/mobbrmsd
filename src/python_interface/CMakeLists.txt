@@ -60,26 +60,21 @@ if(SKBUILD)
       -I${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd/mod_files
       ${BLAS_LIBRARIES}
       ${lomp}
-      --opt=-O2
+      --opt=-O3
       --f90flags='
       "${BLAS_LINKER_FLAGS}"
       "${OpenMP_Fortran_FLAGS}"
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-O3">
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-cpp">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-std=f2008">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fimplicit-none">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fall-intrinsics">
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-Wuninitialized">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fbounds-check">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-Wunused">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fbacktrace">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fcheck=array-temps,bounds,do,mem,pointer,recursion">>
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-O3">
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-fpp">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-stand">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"f08">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-free">
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-warn">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:" all">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-check">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"bounds">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-traceback">>
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-implicitnone">
       '
       $<$<CONFIG:Debug>:--debug>
     DEPENDS mobbrmsd
@@ -100,28 +95,22 @@ if(SKBUILD)
       "${forbar_BINARY_DIR}/src/libforbar.a"
       -I${forbar_BINARY_DIR}/src/include
       -I${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_2d/mod_files
-      ${BLAS_LIBRARIES}
       ${lomp}
-      --opt=-O2
+      --opt=-O3
       --f90flags='
       "${BLAS_LINKER_FLAGS}"
       "${OpenMP_Fortran_FLAGS}"
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-O3">
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-cpp">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-std=f2008">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fimplicit-none">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fall-intrinsics">
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-Wuninitialized">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fbounds-check">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-Wunused">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fbacktrace">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fcheck=array-temps,bounds,do,mem,pointer,recursion">>
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-O3">
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-fpp">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-stand">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"f08">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-free">
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-warn">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:" all">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-check">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"bounds">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-traceback">>
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-implicitnone">
       '
       $<$<CONFIG:Debug>:--debug>
     DEPENDS mobbrmsd_2d
@@ -142,28 +131,22 @@ if(SKBUILD)
       "${forbar_BINARY_DIR}/src/libforbar.a"
       -I${forbar_BINARY_DIR}/src/include
       -I${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_3d/mod_files
-      ${BLAS_LIBRARIES}
       ${lomp}
-      --opt=-O2
+      --opt=-O3
       --f90flags='
       "${BLAS_LINKER_FLAGS}"
       "${OpenMP_Fortran_FLAGS}"
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-O3">
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-cpp">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-std=f2008">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fimplicit-none">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fall-intrinsics">
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-Wuninitialized">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fbounds-check">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-Wunused">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fbacktrace">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fcheck=array-temps,bounds,do,mem,pointer,recursion">>
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-O3">
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-fpp">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-stand">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"f08">
       $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-free">
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-warn">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:" all">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-check">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"bounds">>
-      $<$<CONFIG:Debug>:$<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-traceback">>
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-implicitnone">
       '
       $<$<CONFIG:Debug>:--debug>
     DEPENDS mobbrmsd_3d
