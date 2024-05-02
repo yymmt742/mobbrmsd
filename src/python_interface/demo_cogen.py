@@ -68,14 +68,16 @@ def read_input() -> tuple:
 
 def main(n_apm=3, n_mol=8, alpha=0.5, beta=1.0):
     cogen = coord_generator()
-    x = cogen.generate(n_apm, n_mol, alpha, beta, n_sample=1000)
+    x = cogen.generate(n_apm, n_mol, alpha, beta, n_sample=10000)
     m = numpy.mean(x.reshape((-1, 3)), 0)
     s = numpy.std(x.reshape((-1, 3)), 0)
     cx = numpy.cov(x.reshape((-1, n_apm, 3))[:, :, 0].T)
     cy = numpy.cov(x.reshape((-1, n_apm, 3))[:, :, 1].T)
     cz = numpy.cov(x.reshape((-1, n_apm, 3))[:, :, 2].T)
+    sep = "  ------------------------------------------------------------------------------"
 
-    print(f"    Statistics with 1000 samples")
+    print(sep)
+    print(f"    Statistics with 10000 samples")
     print(
         f"        n_apm = {n_apm:4d}  n_mol = {n_mol:4d}  alpha = {alpha:6.2f}  beta = {beta:6.2f}"
     )
@@ -90,6 +92,7 @@ def main(n_apm=3, n_mol=8, alpha=0.5, beta=1.0):
                 f"                 {i+1:d}-{j+1:d}{cx[i,j]:16.9f}{cy[i,j]:16.9f}{cz[i,j]:16.9f}"
             )
         print()
+    print(sep)
 
     return {
         "cogen": cogen,
@@ -122,7 +125,7 @@ def show(ret):
     fig.canvas.mpl_connect("key_press_event", onclick)
 
     while True:
-        inp = input("  Show coordinate ? (Open matplotlib window) ['y'es, 'n'o] >> ")
+        inp = input("  Show samples ? (Open matplotlib window) ['y'es, 'n'o] >> ")
         if inp == "":
             continue
         if inp[0] == "n" or inp[0] == "N":
