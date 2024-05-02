@@ -1,4 +1,5 @@
 from . import __version__
+from . import demo_cogen
 from . import demo_bb
 from . import demo_mst
 import sys
@@ -13,10 +14,11 @@ bar2 = (
     "  =============================================================================="
 )
 bar3 = "==========================================="
-demo1 = demo_bb.title
-demo2 = demo_mst.title
+demo1 = demo_cogen.title
+demo2 = demo_bb.title
+demo3 = demo_mst.title
 exit_ = "exit"
-opts = (demo1, demo2, exit_)
+opts = (demo1, demo2, demo3, exit_)
 
 
 def run_demo(demo, read_input, after=None):
@@ -61,8 +63,10 @@ title = (
 while True:
     option, index = pick.pick(opts, title, indicator="   >")
     if option == demo1:
-        run_demo(demo_bb.main, demo_bb.read_input)
+        run_demo(demo_cogen.main, demo_cogen.read_input, after=demo_cogen.show)
     elif option == demo2:
+        run_demo(demo_bb.main, demo_bb.read_input)
+    elif option == demo3:
         run_demo(demo_mst.main, demo_mst.read_input, after=demo_mst.show_graph)
     elif option == exit_:
         break

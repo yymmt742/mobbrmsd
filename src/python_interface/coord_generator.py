@@ -85,77 +85,53 @@ class coord_generator:
         n_mol: int,
         a: float | Iterable[float],
         b: float | Iterable[float],
+        n_sample: int = 1,
+        temp: None | numpy.ndarray = None,
     ) -> numpy.ndarray:
 
-        Xstr = self.rng.standard_normal((n_mol, n_apm, self.d))
-        temp = self.rng.standard_normal((n_apm, self.d))
-        Xtem = numpy.array([temp @ self.sog.generate() for i in RANGE(n_mol)])
-        Xvar = self.rng.standard_normal((n_mol, 1, self.d))
+        if temp == None:
+            temp = self.rng.standard_normal((n_apm, self.d))
 
         def x_sample(
+            sa: float,
+            ca: float,
+            sb: float,
+            cb: float,
+            temp: numpy.ndarray,
+        ) -> numpy.ndarray:
+            Xstr = self.rng.standard_normal((n_mol, n_apm, self.d))
+            Xtem = numpy.array([temp @ self.sog.generate() for i in range(n_mol)])
+            Xvar = self.rng.standard_normal((n_mol, 1, self.d))
+            return ca * (cb * Xstr + sb * Xtem) + sa * Xvar
+
+        def x_samples(
             a: float,
             b: float,
-            Xvar: numpy.ndarray,
-            Xtem: numpy.ndarray,
-            Xstr: numpy.ndarray,
-        ):
+            n_sample: int,
+            temp: numpy.ndarray,
+        ) -> numpy.ndarray:
             a_ = 0.5 * numpy.pi * a
             b_ = 0.5 * numpy.pi * b
-
             sa = numpy.sin(a_)
             ca = numpy.cos(a_)
             sb = numpy.sin(b_)
             cb = numpy.cos(b_)
-            ret = ca * (cb * Xstr + sb * Xtem) + sa * Xvar
-            return ret - numpy.mean(ret.reshape((n_apm * n_mol, self.d)), 0)
+            if n_sample == 1:
+                return x_sample(sa, ca, sb, cb, temp)
+            else:
+                return numpy.array(
+                    [x_sample(sa, ca, sb, cb, temp) for i in range(n_sample)]
+                )
 
         if isinstance(a, float):
             if isinstance(b, float):
-                return x_sample(a, b, Xvar, Xtem, Xstr)
+                return x_samples(a, b, n_sample, temp)
             elif isinstance(b, Iterable):
-                return numpy.array([x_sample(a, bi, Xvar, Xtem, Xstr) for bi in b])
+                return numpy.array([x_samples(a, bi, n_sample, temp) for bi in b])
             elif isinstance(a, Iterable):
                 if isinstance(b, float):
-                    return numpy.array([x_sample(ai, b, Xvar, Xtem, Xstr) for ai in a])
+                    return numpy.array([x_samples(ai, b, n_sample, temp) for ai in a])
                 elif isinstance(b, Iterable):
                     return numpy.array(
-                        [[x_sample(ai, bi, Xvar, Xtem, Xstr) for bi in b] for ai in a]
+                        [[x_samples(ai, bi, n_sample, temp) for bi in b] for ai in a]
                     )
-
-    def generate_pair(
-        self,
-        n_apm: int,
-        n_mol: int,
-        a: float,
-        b: float,
-    ) -> tuple:
-
-        def x_sample(
-            a: float,
-            b: float,
-            Xvar: numpy.ndarray,
-            Xtem: numpy.ndarray,
-            Xstr: numpy.ndarray,
-        ):
-            a_ = 0.5 * numpy.pi * a
-            b_ = 0.5 * numpy.pi * b
-
-            sa = numpy.sin(a_)
-            ca = numpy.cos(a_)
-            sb = numpy.sin(b_)
-            cb = numpy.cos(b_)
-            ret = ca * (cb * Xstr + sb * Xtem) + sa * Xvar
-            return ret - numpy.mean(ret.reshape((n_apm * n_mol, self.d)), 0)
-
-        temp = self.rng.standard_normal((n_apm, self.d))
-
-        Xstr = self.rng.standard_normal((n_mol, n_apm, self.d))
-        Xtem = numpy.array([temp @ self.sog.generate() for i in RANGE(n_mol)])
-        Xvar = self.rng.standard_normal((n_mol, 1, self.d))
-        X = x_sample(a, b, Xvar, Xtem, Xstr)
-        Xstr = self.rng.standard_normal((n_mol, n_apm, self.d))
-        Xtem = numpy.array([temp @ self.sog.generate() for i in RANGE(n_mol)])
-        Xvar = self.rng.standard_normal((n_mol, 1, self.d))
-        Y = x_sample(a, b, Xvar, Xtem, Xstr)
-
-        return X, Y

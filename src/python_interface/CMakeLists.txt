@@ -1,6 +1,4 @@
 find_package(BLAS REQUIRED)
-#find_package(Threads REQUIRED)
-#set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 if(SKBUILD)
   find_package(F2PY REQUIRED)
@@ -163,6 +161,7 @@ if(SKBUILD)
     "${CMAKE_CURRENT_SOURCE_DIR}/__version__.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/_mobbrmsd.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/coord_generator.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/demo_cogen.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_bb.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_mst.py"
     DESTINATION
