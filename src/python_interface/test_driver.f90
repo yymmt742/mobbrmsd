@@ -63,8 +63,7 @@ contains
     allocate (W(n_mem, n_job))
 !
     call batch_run( &
-   &  n_dim, n_atm, n_target, n_header, &
-   &  n_int, n_float, n_mem, n_job, &
+   &  n_target, n_header, n_int, n_float, &
    &  X, Y, W, &
    &  999.0_RK, 0.0_RK, -1, .true., .true., .false., &
    &  h, si, sr)
@@ -104,8 +103,7 @@ contains
     call RANDOM_NUMBER(X)
 !
     call min_span_tree( &
- &    n_dim, n_atm, n_target, &
- &    n_header, n_int, n_float, n_mem, n_job,&
+ &    n_target, n_header, n_int, n_float,&
  &    X, W, RHUGE, ZERO, -1, .true., .true., .true., &
  &    edges, weights, header, int_states, float_states)
 !
