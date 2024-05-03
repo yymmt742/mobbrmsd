@@ -1,32 +1,40 @@
+#! /usr/bin/env python3
+import random
 import numpy as np
-import coord_generator as cg
-from symrmsd import driver as sy
+import mobbrmsd as mo
+import mdtraj as md
 import time
 import sys
+import json
 
-nblock = 1
 
-n = int(sys.argv[1])
-a = float(sys.argv[2])
-b = float(sys.argv[3])
-nrepeat = int(sys.argv[4])
-m = 50
-s = 1
-ss = np.empty(0)
+def pair_generator(length, number):
+    used_pairs = set()
+    for i in range(length):
+        while True:
+            pair = random.sample(range(number), 2)
+            pair = tuple(sorted(pair))
+            if pair not in used_pairs:
+                used_pairs.add(pair)
+                break
+        yield pair
 
-sy.add_molecule(m, n, s, ss)
-sy.setup()
 
-def time_block(r, s):
-    x = cg.gen(m, n, r, s).flatten()
-    y = np.array([cg.gen(m, n, r, s) for i in range(nblock)]).flatten()
+def run_with_time(xyz, nsample):
     start = time.perf_counter_ns()
-    for i in range(nrepeat):
-      sy.run(x, y, nblock)
+    for i, j in pair_generator(nsample, xyz.shape[0]):
+        ret = mrmsd.run(xyz[i], xyz[j])
     end = time.perf_counter_ns() - start
-    return end / (nrepeat*nblock*1000000000)
+    return end * 1.0e-9
 
-print(n, nrepeat, time_block(a, b))
 
-sy.clear()
-
+with open(sys.argv[1], "r") as f:
+    j = json.load(f)
+    dat = md.load_netcdf(j["trj"], top=j["top"])
+    mrmsd = mo.mobbrmsd()
+    mrmsd.add_molecule(j["n_apm"], dat.n_residues, swp=j["sym"])
+    xyz = np.array(dat.xyz, dtype=np.float64)
+    n_sample = j["n_sample"]
+    time = run_with_time(xyz, n_sample)
+    tps = 1.0e3 * time / n_sample
+    print(f"{time:9.3f} sec with {n_sample:d} samples {tps:16.9f} msec/sample")
