@@ -5,12 +5,13 @@ module driver
     mobbrmsd_header
   use mod_mobbrmsd_state, only: &
  &  mobbrmsd_state, &
- &  RN => mobbrmsd_state_INDEX_TO_RCP_N_ATOMS, &
- &  UB => mobbrmsd_state_INDEX_TO_UPPERBOUND, &
- &  LB => mobbrmsd_state_INDEX_TO_LOWERBOUND, &
- &  LR => mobbrmsd_state_INDEX_TO_LOG_RATIO, &
- &  NE => mobbrmsd_state_INDEX_TO_N_EVAL, &
- &  RT => mobbrmsd_state_INDEX_TO_ROTMAT
+ &   RN => mobbrmsd_state_INDEX_TO_RCP_N_ATOMS, &
+ &   AC => mobbrmsd_state_INDEX_TO_AUTOCORR, &
+ &   UB => mobbrmsd_state_INDEX_TO_UPPERBOUND, &
+ &   LB => mobbrmsd_state_INDEX_TO_LOWERBOUND, &
+ &   NE => mobbrmsd_state_INDEX_TO_N_EVAL, &
+ &   LR => mobbrmsd_state_INDEX_TO_LOG_RATIO, &
+ &   RT => mobbrmsd_state_INDEX_TO_ROTMAT
   use mod_mobbrmsd, only: &
  &  mobbrmsd, &
  &  mobbrmsd_run, &
@@ -135,7 +136,8 @@ contains
     integer(kind=IK), intent(in) :: n_float
     real(kind=RK), intent(in)    :: float_states(n_float)
     real(kind=RK), intent(out)   :: res
-    res = SQRT(float_states(RN) * MAX(float_states(UB), ZERO))
+    res = SQRT(float_states(RN) * &
+   &      MAX(ZERO, (float_states(AC) + float_states(UB) + float_states(UB)) * rn))
   end subroutine rmsd
 
   !| return bounds
