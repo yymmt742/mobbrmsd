@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title="<p>17.7% of total for derived types.</p>Including implementation: 118 statements, 39.5% of total for derived types.">19 statements</a>
+    title="<p>18.4% of total for derived types.</p>Including implementation: 126 statements, 41.0% of total for derived types.">20 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd_state.f90"> Source File</a></li>
   </ul>
@@ -147,6 +147,7 @@
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-squared_deviation">squared_deviation</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-mean_squared_deviation">mean_squared_deviation</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-rmsd">rmsd</a>
+      <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-lowerbound_as_rmsd">lowerbound_as_rmsd</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-n_eval">n_eval</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-eval_ratio">eval_ratio</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-log_eval_ratio">log_eval_ratio</a>
@@ -205,6 +206,7 @@
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-squared_deviation">squared_deviation</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-mean_squared_deviation">mean_squared_deviation</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-rmsd">rmsd</a>
+      <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-lowerbound_as_rmsd">lowerbound_as_rmsd</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-n_eval">n_eval</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-eval_ratio">eval_ratio</a>
       <a class="list-group-item" href="../type/mobbrmsd_state.html#boundprocedure-log_eval_ratio">log_eval_ratio</a>
@@ -461,6 +463,35 @@
       <li class="list-group-item">
           <h3>public pure elemental function <a href='../proc/mobbrmsd_state_rmsd.html'>mobbrmsd_state_rmsd</a>(this) result(res)</h3>
 <p>returns rmsd</p>
+    
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>class(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>this</strong></td><td><p>this</p></td>
+</tr>
+</tbody>
+</table>
+
+<h4>Return Value <small>real(kind=RK)</small></h4>  
+
+      </li>
+  </ul>
+</div>
+
+     <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="boundprocedure-lowerbound_as_rmsd"></span><h3>procedure, public :: <strong>lowerbound_as_rmsd</strong>  => <a href='../proc/mobbrmsd_state_lowerbound_as_rmsd.html'>mobbrmsd_state_lowerbound_as_rmsd</a>   </h3></div>
+  <div class="panel-body">
+    
+    <p>lowerbound_as_rmsd</p>
+  </div>
+  <ul class="list-group">
+      <li class="list-group-item">
+          <h3>public pure elemental function <a href='../proc/mobbrmsd_state_lowerbound_as_rmsd.html'>mobbrmsd_state_lowerbound_as_rmsd</a>(this) result(res)</h3>
+<p>returns lowerbound as rmsd</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>

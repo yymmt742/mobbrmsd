@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 4.5% of total for modules and submodules.">168 statements</a>
+    title=" 4.7% of total for modules and submodules.">176 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd_state.f90"> Source File</a></li>
   </ul>
@@ -152,6 +152,7 @@
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_squared_deviation">mobbrmsd_state_squared_deviation</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_mean_squared_deviation">mobbrmsd_state_mean_squared_deviation</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_rmsd">mobbrmsd_state_rmsd</a>
+      <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_lowerbound_as_rmsd">mobbrmsd_state_lowerbound_as_rmsd</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_n_eval">mobbrmsd_state_n_eval</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_eval_ratio">mobbrmsd_state_eval_ratio</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_log_eval_ratio">mobbrmsd_state_log_eval_ratio</a>
@@ -184,9 +185,9 @@
       <ul class="list-group">
       <li class="list-group-item">
   <ul class="list-inline">
+    <li><a href='../module/mod_params.html'>mod_params</a></li>
     <li><a href='../module/mod_mobbrmsd_header.html'>mod_mobbrmsd_header</a></li>
     <li><a href='../module/mod_bb_list.html'>mod_bb_list</a></li>
-    <li><a href='../module/mod_params.html'>mod_params</a></li>
   </ul>
       </li>
       </ul>
@@ -239,6 +240,7 @@
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_squared_deviation">mobbrmsd_state_squared_deviation</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_mean_squared_deviation">mobbrmsd_state_mean_squared_deviation</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_rmsd">mobbrmsd_state_rmsd</a>
+      <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_lowerbound_as_rmsd">mobbrmsd_state_lowerbound_as_rmsd</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_n_eval">mobbrmsd_state_n_eval</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_eval_ratio">mobbrmsd_state_eval_ratio</a>
       <a class="list-group-item" href="../module/mod_mobbrmsd_state.html#proc-mobbrmsd_state_log_eval_ratio">mobbrmsd_state_log_eval_ratio</a>
@@ -392,6 +394,8 @@
        <td><p>sqrared_deviation</p></td></tr>
        <tr><td>procedure, public :: <strong><a href='../type/mobbrmsd_state.html#boundprocedure-rmsd'>rmsd</a></strong>  => mobbrmsd_state_rmsd </td>
        <td><p>rmsd</p></td></tr>
+       <tr><td>procedure, public :: <strong><a href='../type/mobbrmsd_state.html#boundprocedure-lowerbound_as_rmsd'>lowerbound_as_rmsd</a></strong>  => mobbrmsd_state_lowerbound_as_rmsd </td>
+       <td><p>lowerbound_as_rmsd</p></td></tr>
        <tr><td>procedure, public :: <strong><a href='../type/mobbrmsd_state.html#boundprocedure-n_eval'>n_eval</a></strong>  => mobbrmsd_state_n_eval </td>
        <td><p>number of lowerbound evaluation</p></td></tr>
        <tr><td>procedure, public :: <strong><a href='../type/mobbrmsd_state.html#boundprocedure-eval_ratio'>eval_ratio</a></strong>  => mobbrmsd_state_eval_ratio </td>
@@ -560,6 +564,29 @@
   <div class="panel-body">
        
 <p>returns rmsd</p>
+    
+<h4>Arguments</h4>      <table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
+<tbody>
+<tr>
+  <td><span class="anchor" ></span>class(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
+<td>intent(in)</td>
+  <td></td>  <td></td><td>::</td>
+  <td><strong>this</strong></td><td><p>this</p></td>
+</tr>
+</tbody>
+</table>
+
+<h4>Return Value <small>real(kind=RK)</small></h4>  
+
+  </div>
+  </div>
+
+      <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-mobbrmsd_state_lowerbound_as_rmsd"></span><h3>public pure elemental function <a href='../proc/mobbrmsd_state_lowerbound_as_rmsd.html'>mobbrmsd_state_lowerbound_as_rmsd</a>(this) result(res)</h3></div>
+  <div class="panel-body">
+       
+<p>returns lowerbound as rmsd</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>

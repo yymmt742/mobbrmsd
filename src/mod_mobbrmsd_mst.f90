@@ -112,7 +112,7 @@ contains
       itgt = pl(itgt)%i
 !
       if (bb_list_is_finished(header%q, state(itgt)%s)) cycle
-      if (ub < state(itgt)%lowerbound()) cycle
+      if (ub < state(itgt)%lowerbound_as_rmsd()) cycle
 !
       wpnt = ldw * omp_get_thread_num() + 1
       ypnt = (itgt - 1) * ldy + 1
