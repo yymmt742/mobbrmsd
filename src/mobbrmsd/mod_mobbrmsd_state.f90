@@ -45,6 +45,8 @@ module mod_mobbrmsd_state
     !! sqrared_deviation
     procedure :: rmsd => mobbrmsd_state_rmsd
     !! rmsd
+    procedure :: lowerbound_as_rmsd => mobbrmsd_state_lowerbound_as_rmsd
+    !! lowerbound_as_rmsd
     procedure :: n_eval => mobbrmsd_state_n_eval
     !! number of lowerbound evaluation
     procedure :: eval_ratio => mobbrmsd_state_eval_ratio
@@ -171,6 +173,20 @@ contains
       res = SQRT(MAX(ZERO, (ac + ub + ub) * rn))
     end associate
   end function mobbrmsd_state_rmsd
+!
+!| returns lowerbound as rmsd
+  pure elemental function mobbrmsd_state_lowerbound_as_rmsd(this) result(res)
+    class(mobbrmsd_state), intent(in) :: this
+    !! this
+    real(RK)                          :: res
+    associate (&
+   &  rn => this%z(mobbrmsd_state_INDEX_TO_RCP_N_ATOMS), &
+   &  ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
+   &  lb => this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND) &
+   &  )
+      res = SQRT(MAX(ZERO, (ac + lb + lb) * rn))
+    end associate
+  end function mobbrmsd_state_lowerbound_as_rmsd
 !
 !| returns n_eval
   pure elemental function mobbrmsd_state_n_eval(this) result(res)
