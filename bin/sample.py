@@ -17,8 +17,7 @@ n_apm = int(sys.argv[1])
 n_mol = int(sys.argv[2])
 nsample = int(sys.argv[3])
 
-mrmsd = mo.mobbrmsd()
-mrmsd.add_molecule(n_apm, n_mol)
+mrmsd = mo.mobbrmsd(molecules={"n_apm": n_apm, "n_mol": n_mol})
 cog = mo.coord_generator()
 nalpha = 5
 nbeta = 1
