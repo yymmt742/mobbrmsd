@@ -21,7 +21,11 @@ class mobbrmsd_result:
 
 
 class mobbrmsd:
-    def __init__(self, d: int = 3):
+    def __init__(
+        self,
+        molecules: dict | list[dict] = {"n_apm": 1, "n_mol": 1, "sym": None},
+        d: int = 3,
+    ):
 
         if d == 2:
             from .mobbrmsd_2d import driver
@@ -31,28 +35,66 @@ class mobbrmsd:
             from .mobbrmsd_3d import driver
 
             self.driver = driver
-        else:
+        elif d == 1 or d > 3:
             from .mobbrmsd import driver
 
             self.driver = driver
             self.driver.setup_dimension(d)
-
-        self.ndim, self.natom = self.driver.n_atoms()
-        self.memsize, self.njob = self.driver.workmemory_lengthes()
-        self.n_header, self.n_int, self.n_float = self.driver.state_vector_lengthes()
-
-    def add_molecule(self, n_apm, n_mol=1, swp=None):
-
-        if swp is None:
-            self.driver.add_molecule(n_apm, n_mol, 1)
         else:
-            swp_ = numpy.array(swp).reshape((-1, n_apm)) + 1
-            s = swp_.shape[0] + 1
-            self.driver.add_molecule(n_apm, n_mol, s, swp_.flatten())
+            raise ValueError
 
-        self.ndim, self.natom = self.driver.n_atoms()
+        def add_molecule(self, mol: dict) -> None:
+            n_apm = int(mol.get("n_apm"))
+            n_mol = int(mol.get("n_mol"))
+            if n_apm < 1 or n_mol < 1:
+                raise ValueError
+            sym = mol.get("sym")
+            if sym is None:
+                self.molecules.append({"n_apm": n_apm, "n_mol": n_mol, "sym": sym})
+                self.driver.add_molecule(n_apm, n_mol, 1)
+            else:
+                try:
+                    sym_ = numpy.array(sym).reshape((-1, n_apm))
+                except:
+                    raise ValueError
+                try:
+                    self.driver.add_molecule(
+                        n_apm,
+                        n_mol,
+                        sym_.shape[0] + 1,
+                        sym_.flatten() + 1,
+                    )
+                except:
+                    raise ValueError
+                self.molecules.append(
+                    {"n_apm": n_apm, "n_mol": n_mol, "sym": sym_.tolist()}
+                )
+
+        self.molecules = []
+
+        if type(molecules) is list:
+            for mol in molecules:
+                add_molecule(self, mol)
+        else:
+            add_molecule(self, molecules)
+
+        self.d, self.natom = self.driver.n_atoms()
         self.memsize, self.njob = self.driver.workmemory_lengthes()
         self.n_header, self.n_int, self.n_float = self.driver.state_vector_lengthes()
+
+    def __del__(self):
+        self.clear()
+
+    def __str__(self):
+        kws = [
+            f"molecules={self.molecules}",
+            f"d={self.d}",
+        ]
+        return "{}({})".format(type(self).__name__, ", ".join(kws))
+
+    def __repr__(self):
+        kws = [f"{key}={value!r}" for key, value in self.__dict__.items()]
+        return "{}({})".format(type(self).__name__, ", ".join(kws))
 
     def run(
         self,
@@ -219,7 +261,7 @@ class mobbrmsd:
         if x.ndim != 2:
             raise ValueError
 
-        if x.shape[1] != self.ndim or x.shape[0] != self.natom:
+        if x.shape[1] != self.d or x.shape[0] != self.natom:
             raise ValueError
         return x.flatten()
 
@@ -231,12 +273,12 @@ class mobbrmsd:
             x_ = x.transpose([2, 1, 0])
         else:
             raise ValueError
-        if x_.shape[0] != self.ndim or x_.shape[1] != self.natom:
+        if x_.shape[0] != self.d or x_.shape[1] != self.natom:
             raise ValueError
         return x_
 
     def clear(self) -> None:
         self.driver.clear_molecule()
-        self.ndim, self.natom = self.driver.n_atoms()
+        self.d, self.natom = self.driver.n_atoms()
         self.memsize, self.njob = self.driver.workmemory_lengthes()
         self.n_header, self.n_int, self.n_float = self.driver.state_vector_lengthes()
