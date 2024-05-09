@@ -9,7 +9,7 @@ class mobbrmsd_result:
         header: numpy.ndarray,
         istate: numpy.ndarray,
         rstate: numpy.ndarray,
-    ):
+    ) -> None:
         self.header = header
         self.state = (istate, rstate)
         self.rmsd = driver.rmsd(rstate)
@@ -20,13 +20,17 @@ class mobbrmsd_result:
         self.eval_ratio = numpy.exp(self.log_eval_ratio)
         self.is_finished = driver.is_finished(header, istate, rstate)
 
+    def __repr__(self):
+        kws = [f"{key}={value!r}" for key, value in self.__dict__.items()]
+        return "{}({})".format(type(self).__name__, ", ".join(kws))
+
 
 class mobbrmsd:
     def __init__(
         self,
         molecules: dict | list[dict] = {"n_apm": 1, "n_mol": 1, "sym": None},
         d: int = 3,
-    ):
+    ) -> None:
 
         if d == 2:
             from .mobbrmsd_2d import driver
