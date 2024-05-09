@@ -13,6 +13,7 @@ class mobbrmsd_result:
         self.header = header
         self.state = (istate, rstate)
         self.rmsd = driver.rmsd(rstate)
+        self.autocorr = driver.autocorr(rstate)
         self.bounds = driver.bounds(rstate)
         self.n_eval = driver.n_eval(rstate)
         self.log_eval_ratio = driver.log_eval_ratio(rstate)

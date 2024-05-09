@@ -34,6 +34,7 @@ module driver
   public workmemory_lengthes
   public state_vector_lengthes
   public rmsd
+  public autocorr
   public bounds
   public n_eval
   public log_eval_ratio
@@ -139,6 +140,14 @@ contains
     res = SQRT(float_states(RN) * &
    &      MAX(ZERO, (float_states(AC) + float_states(UB) + float_states(UB)) * rn))
   end subroutine rmsd
+
+  !| return autocorr
+  subroutine autocorr(n_float, float_states, res)
+    integer(kind=IK), intent(in) :: n_float
+    real(kind=RK), intent(in)    :: float_states(n_float)
+    real(kind=RK), intent(out)   :: res
+    res = float_states(AC)
+  end subroutine autocorr
 
   !| return bounds
   subroutine bounds(n_float, float_states, res)
