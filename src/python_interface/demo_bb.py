@@ -143,8 +143,7 @@ def main(n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
             print("      ", l)
     print()
 
-    mrmsd = mobbrmsd()
-    mrmsd.add_molecule(n_apm, n_mol, sym)
+    mrmsd = mobbrmsd(molecules={"n_apm": n_apm, "n_mol": n_mol, "sym": sym})
 
     ub, lb = numpy.inf, 0.0
     ret = mrmsd.run(x, y, maxeval=0)
