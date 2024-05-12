@@ -103,7 +103,7 @@ contains
       mob = mobbrmsd(blocks)
       n_mem = mob%h%memsize()
       !$omp parallel
-      n_job = omp_get_num_threads()
+      if (omp_get_thread_num() == 0) n_job = omp_get_num_threads()
       !$omp end parallel
     else
       n_mem = 0
