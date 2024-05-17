@@ -181,8 +181,9 @@ class mobbrmsd:
         rotate_y: bool = False,
     ) -> list:
 
-        x_ = self.varidation_coordinates_1(x)
+        x_ = self.varidation_coordinates_2(x)
         y_ = self.varidation_coordinates_2(y)
+        n_reference = x.shape[0]
         n_target = y.shape[0]
 
         if hasattr(self, "ww"):
@@ -192,6 +193,7 @@ class mobbrmsd:
             self.ww = numpy.empty((self.njob, self.memsize)).T
 
         hret, iret, rret = self.driver.batch_run(
+            n_reference,
             n_target,
             self.n_header,
             self.n_int,
@@ -208,7 +210,8 @@ class mobbrmsd:
         )
 
         return [
-            mobbrmsd_result(self.driver, hret, ir, rr) for ir, rr in zip(iret.T, rret.T)
+            [mobbrmsd_result(self.driver, hret, ir, rr) for ir, rr in zip(iry, rry)]
+            for iry, rry in zip(iret.transpose([2, 1, 0]), rret.transpose([2, 1, 0]))
         ]
 
     def min_span_tree(
