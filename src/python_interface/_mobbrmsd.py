@@ -89,6 +89,7 @@ class mobbrmsd:
 
     def __del__(self):
         self.clear()
+        del self.driver
 
     def __str__(self):
         kws = [
@@ -287,6 +288,6 @@ class mobbrmsd:
 
     def clear(self) -> None:
         self.driver.clear_molecule()
-        self.d, self.natom = self.driver.n_atoms()
-        self.memsize, self.njob = self.driver.workmemory_lengthes()
-        self.n_header, self.n_int, self.n_float = self.driver.state_vector_lengthes()
+        self.d, self.natom = 0, 0
+        self.memsize, self.njob = 0, 0
+        self.n_header, self.n_int, self.n_float = 0, 0, 0

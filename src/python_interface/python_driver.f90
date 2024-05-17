@@ -102,13 +102,13 @@ contains
     if (ALLOCATED(blocks)) then
       mob = mobbrmsd(blocks)
       n_mem = mob%h%memsize()
+      !$omp parallel
+      if (omp_get_thread_num() == 0) n_job = omp_get_num_threads()
+      !$omp end parallel
     else
       n_mem = 0
+      n_job = 0
     end if
-
-    !$omp parallel
-    n_job = omp_get_num_threads()
-    !$omp end parallel
 
   end subroutine workmemory_lengthes
 
