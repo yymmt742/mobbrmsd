@@ -281,11 +281,12 @@ contains
 
   !| batch parallel run
   subroutine batch_run( &
- &             n_target, n_head, n_int, n_float, &
+ &             n_reference, n_target, n_head, n_int, n_float, &
  &             X, Y, W, &
  &             cutoff, difflim, maxeval, &
  &             remove_com, sort_by_g, rotate_y, &
  &             header, int_states, float_states)
+    integer(kind=IK), intent(in)  :: n_reference
     integer(kind=IK), intent(in)  :: n_target
     integer(kind=IK), intent(in)  :: n_head
     integer(kind=IK), intent(in)  :: n_int
@@ -303,19 +304,19 @@ contains
     logical, intent(in)           :: sort_by_g
     logical, intent(in)           :: rotate_y
     integer(kind=IK), intent(out) :: header(n_head)
-    integer(kind=IK), intent(out) :: int_states(n_int, n_target)
-    real(kind=RK), intent(out)    :: float_states(n_float, n_target)
+    integer(kind=IK), intent(out) :: int_states(n_int, n_reference, n_target)
+    real(kind=RK), intent(out)    :: float_states(n_float, n_reference, n_target)
     type(mobbrmsd)                :: mob
-    type(mobbrmsd_state)          :: s(n_target)
-    integer(kind=IK)              :: i
+    type(mobbrmsd_state)          :: s(n_reference, n_target)
+    integer(kind=IK)              :: i, j
 
     mob = mobbrmsd(blocks)
-    do concurrent(i=1:n_target)
-      s(i) = mob%s
+    do concurrent(i=1:n_reference, j=1:n_target)
+      s(i, j) = mob%s
     end do
 
     call mobbrmsd_batch_run( &
-   &       n_target, mob%h, s, X, Y, W, &
+   &       n_reference, n_target, mob%h, s, X, Y, W, &
    &       cutoff, difflim, maxeval, &
    &       rotate_y=rotate_y, &
    &       remove_com=remove_com, &
@@ -323,9 +324,9 @@ contains
    &     )
 
     header = mob%h%dump()
-    do concurrent(i=1:n_target)
-      int_states(:, i) = s(i)%dump()
-      float_states(:, i) = s(i)%dump_real()
+    do concurrent(i=1:n_reference, j=1:n_target)
+      int_states(:, i, j) = s(i, j)%dump()
+      float_states(:, i, j) = s(i, j)%dump_real()
     end do
   end subroutine batch_run
 
