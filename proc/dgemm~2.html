@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 3.2% of total for procedures.">69 statements</a>
+    title=" 2.0% of total for procedures.">44 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_dimspec_functions.f90"> Source File</a></li>
   </ul>
@@ -133,8 +133,8 @@
     </div>
 
 
-    <p>DGEMM for M=N=3. <br>
- N and M are provided for compatibility with BLAS and are not used here. <br>
+    <p>DGEMM for <script type="math/tex">M=N=2</script>. <br>
+ <script type="math/tex">N</script> and <script type="math/tex">M</script> are provided for compatibility with BLAS and are not used here. <br>
  </p><div class="alert alert-warning" role="alert"><h4>Warning</h4><p>This is not a full-featured routine for GEMM. <br>
    Do not use this routine for anything other than calculating the covariance matrix. <br>
    Calculate only operations with <script type="math/tex"> \mathbf{C} = \mathbf{A} \mathbf{B}^\top </script>.
@@ -197,7 +197,7 @@
   <td><span class="anchor" id="variable-b~3"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>B</strong>(LDB,*)</td><td><p>matrix B.</p></td>
+  <td><strong>B</strong>(LDA,*)</td><td><p>matrix B.</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-ldb~3"></span>integer,</td>
@@ -215,7 +215,7 @@
   <td><span class="anchor" id="variable-c~3"></span>real(kind=RK),</td>
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
-  <td><strong>C</strong>(LDC,*)</td><td><p>matrix C.</p></td>
+  <td><strong>C</strong>(LDA,*)</td><td><p>matrix C.</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-ldc~3"></span>integer,</td>

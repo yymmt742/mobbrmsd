@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 1.1% of total for procedures.">23 statements</a>
+    title=" 1.0% of total for procedures.">23 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd.f90"> Source File</a></li>
   </ul>
@@ -129,55 +129,55 @@
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-header~2"></span>type(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
+  <td><span class="anchor" id="variable-header~6"></span>type(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>header</strong></td><td><p>mobbrmsd_header</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-state~2"></span>type(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
+  <td><span class="anchor" id="variable-state~4"></span>type(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>state</strong></td><td><p>mobbrmsd_state, the result is contained in this structure.</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-x~7"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-x~4"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>X</strong>(*)</td><td><p>reference coordinate</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-y~4"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-y~2"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>Y</strong>(*)</td><td><p>target coordinate</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-w~10"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-w~4"></span>real(kind=RK),</td>
 <td>intent(inout),</td>
   <td>optional</td>  <td></td><td>::</td>
   <td><strong>W</strong>(*)</td><td><p>work array, must be &gt; header%memsize()</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-cutoff~2"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-cutoff~3"></span>real(kind=RK),</td>
 <td>intent(in),</td>
   <td>optional</td>  <td></td><td>::</td>
   <td><strong>cutoff</strong></td><td><p>The search ends when lowerbound is determined to be greater than to cutoff.</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-difflim~2"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-difflim~3"></span>real(kind=RK),</td>
 <td>intent(in),</td>
   <td>optional</td>  <td></td><td>::</td>
   <td><strong>difflim</strong></td><td><p>The search ends when the difference between the lower and upper bounds is less than difflim.</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-maxeval~2"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-maxeval~3"></span>integer(kind=IK),</td>
 <td>intent(in),</td>
   <td>optional</td>  <td></td><td>::</td>
   <td><strong>maxeval</strong></td><td><p>The search ends when ncount exceeds maxiter.</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-remove_com~2"></span>logical,</td>
+  <td><span class="anchor" id="variable-remove_com~3"></span>logical,</td>
 <td>intent(in),</td>
   <td>optional</td>  <td></td><td>::</td>
   <td><strong>remove_com</strong></td><td><p>if true, remove centroids. default [.true.]</p></td>

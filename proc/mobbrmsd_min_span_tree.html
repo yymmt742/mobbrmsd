@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 3.7% of total for procedures.">79 statements</a>
+    title=" 3.6% of total for procedures.">79 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_mobbrmsd_mst.f90"> Source File</a></li>
   </ul>
@@ -129,31 +129,31 @@
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
 <tbody>
 <tr>
-  <td><span class="anchor" id="variable-n_target~2"></span>integer(kind=IK),</td>
+  <td><span class="anchor" id="variable-n_target~3"></span>integer(kind=IK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>n_target</strong></td><td><p>number of coordinates</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-header~8"></span>type(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
+  <td><span class="anchor" id="variable-header~9"></span>type(<a href='../type/mobbrmsd_header.html'>mobbrmsd_header</a>),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>header</strong></td><td><p>mobbrmsd_header</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-state~5"></span>type(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
+  <td><span class="anchor" id="variable-state~6"></span>type(<a href='../type/mobbrmsd_state.html'>mobbrmsd_state</a>),</td>
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>state</strong>(n_target,n_target)</td><td><p>mobbrmsd_state, the result is contained in this structure.</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-x~10"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-x~5"></span>real(kind=RK),</td>
 <td>intent(in)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>X</strong>(*)</td><td><p>coordinate sequence</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-w~14"></span>real(kind=RK),</td>
+  <td><span class="anchor" id="variable-w~7"></span>real(kind=RK),</td>
 <td>intent(inout)</td>
   <td></td>  <td></td><td>::</td>
   <td><strong>W</strong>(*)</td><td><p>work memory, must be larger than header%memsize() * mobbrmsd_num_threads()</p></td>
@@ -183,7 +183,7 @@
   <td><strong>remove_com</strong></td><td><p>if true, remove centroids. default [.true.]</p></td>
 </tr>
 <tr>
-  <td><span class="anchor" id="variable-sort_by_g~5"></span>logical,</td>
+  <td><span class="anchor" id="variable-sort_by_g~4"></span>logical,</td>
 <td>intent(in),</td>
   <td>optional</td>  <td></td><td>::</td>
   <td><strong>sort_by_g</strong></td><td><p>if true, row is sorted respect to G of reference coordinate. default [.true.]</p></td>

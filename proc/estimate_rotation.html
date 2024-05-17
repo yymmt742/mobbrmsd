@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 1.6% of total for procedures.">35 statements</a>
+    title=" 6.1% of total for procedures.">134 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_rotation.f90"> Source File</a></li>
   </ul>
@@ -122,7 +122,8 @@
     <h2>public pure subroutine estimate_rotation(g, cov, rot, w)</h2>
     
 
-    <p>Compute the transpose rotation matrix for minimize tr[CR] from cov = YX^T and g = tr[XX^T] + tr[YY^T].</p>
+    <p>Compute the transpose rotation matrix for minimize tr[CR] from cov = YX^T and g = tr[XX^T] + tr[YY^T].
+ This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802</p>
 
     <h3>Arguments</h3>
       <table class="table table-striped varlist">

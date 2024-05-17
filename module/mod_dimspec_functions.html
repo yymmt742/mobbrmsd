@@ -87,7 +87,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
     data-placement="bottom" data-html="true"
-    title=" 2.5% of total for modules and submodules.">95 statements</a>
+    title=" 2.8% of total for modules and submodules.">105 statements</a>
      </li> 
     <li><i class="fa fa-code"></i><a href="../src/mod_dimspec_functions.f90"> Source File</a></li>
   </ul>
@@ -138,8 +138,8 @@
     </div>
     
     <div class="col-md-9" id='text'>
-    <p>Define spatial dimension, <script type="math/tex">D=2</script>,
- and provide optimized functions for dimension.</p>
+    <p>Define spatial dimension, <script type="math/tex">D=3</script>,
+ and provide an optimized blas/lapack interface.</p>
 <br>        <div class="panel panel-default">
       <div class="panel-heading">
   <h3 class="panel-title">Uses</h3>
@@ -193,12 +193,12 @@
 <tr>
   <td><span class="anchor" id="variable-d"></span>integer(kind=IK),</td>
 <td>public,</td>  <td>parameter</td><td>::</td>
-  <td><strong>D</strong></td><td> =</td><td>2</td><td><p>Spatial dimension</p></td>
+  <td><strong>D</strong></td><td> =</td><td>3</td><td><p>Spatial dimension.</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-dd"></span>integer(kind=IK),</td>
 <td>public,</td>  <td>parameter</td><td>::</td>
-  <td><strong>DD</strong></td><td> =</td><td>4</td><td><p>Square spatial dimension</p></td>
+  <td><strong>DD</strong></td><td> =</td><td>9</td><td><p>Square spatial dimension.</p></td>
 </tr>
 <tr>
   <td><span class="anchor" id="variable-nd"></span>integer(kind=IK),</td>
@@ -225,7 +225,7 @@
   <div class="panel-body">
        
 <p>Sets the dimensions of the space. <br>
- This is dummy interface.</p>
+ Caution, this routine affects global.</p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
 <thead><tr><th>Type</th><th>Intent</th><th>Optional</th><th>Attributes</th><th></th><th>Name</th><th></th></thead>
@@ -247,7 +247,7 @@
   <div class="panel-heading codesum"><span class="anchor" id="proc-compute_com"></span><h3>public pure subroutine <a href='../proc/compute_com.html'>compute_com</a>(d, n, X, C)</h3></div>
   <div class="panel-body">
        
-<p>Calculate center of mass for <script type="math/tex">D=2</script>
+<p>Calculate center of mass for <script type="math/tex">D=3</script>
 </p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
@@ -335,7 +335,7 @@
   <div class="panel-body">
        
 <p>Compute <script type="math/tex">\mathbf{Y} \gets \mathbf{X}-\bar{\mathbf{X}} </script>
- for <script type="math/tex">D=2</script>
+ for <script type="math/tex">D=3</script>
 </p>
     
 <h4>Arguments</h4>      <table class="table table-striped varlist">
