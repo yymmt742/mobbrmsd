@@ -123,7 +123,9 @@ contains
       ipnt = i
       !$omp end critical
       if (ipnt > nlim) exit
-      call cantor_pair_inv(ipnt, xpnt, ypnt)
+      ! cantor_pair inverse
+      xpnt = INT(0.5_RK * (SQRT(real(8 * ipnt - 7, RK)) - ONE), IK) + 1
+      ypnt = ipnt - xpnt * (xpnt - 1) / 2 - 1
       xpnt = xpnt * ldx + 1
       ypnt = ypnt * ldx + 1
       wpnt = ldw * omp_get_thread_num() + 1
@@ -134,15 +136,5 @@ contains
     end do
     !$omp end parallel
   end subroutine mobbrmsd_batch_tri_run
-!
-  pure elemental subroutine cantor_pair_inv(k, i, j)
-    integer(IK), intent(in)    :: k
-    integer(IK), intent(inout) :: i, j
-    i = INT(0.5_RK * (SQRT(real(8 * k - 7, RK)) - 1.0_RK), IK)
-    j = k - i * (i + 1) / 2
-    i = i - j + 2
-    j = i + j
-    i = j - i
-  end subroutine cantor_pair_inv
 end module mod_mobbrmsd_batch_run
 
