@@ -69,7 +69,7 @@ while True:
     elif option == demo2:
         run_demo(demo_bb.main, demo_bb.read_input)
     elif option == demo3:
-        run_demo(demo_batch.main, demo_batch.read_input)
+        run_demo(demo_batch.main, demo_batch.read_input, after=demo_batch.show_graph)
     elif option == demo4:
         run_demo(demo_mst.main, demo_mst.read_input, after=demo_mst.show_graph)
     elif option == exit_:

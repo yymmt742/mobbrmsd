@@ -7,10 +7,20 @@ class mobbrmsd_result:
         self,
         driver,
         header: numpy.ndarray,
-        istate: numpy.ndarray,
-        rstate: numpy.ndarray,
+        istate: None | numpy.ndarray,
+        rstate: None | numpy.ndarray,
     ) -> None:
         self.header = header
+        if (istate is None) or (rstate is None):
+            self.state = None
+            self.rmsd = 0.0
+            self.autocorr = 0.0
+            self.bounds = (0.0, 0.0)
+            self.n_eval = 0
+            self.log_eval_ratio = None
+            self.eval_ratio = 0.0
+            self.is_finished = True
+            return
         self.state = (istate, rstate)
         self.rmsd = driver.rmsd(rstate)
         self.autocorr = driver.autocorr(rstate)
@@ -214,7 +224,7 @@ class mobbrmsd:
                     k = int(j * (j - 1) / 2) + i
                     return mobbrmsd_result(self.driver, hret, iret.T[k], rret.T[k])
                 else:
-                    return None
+                    return mobbrmsd_result(self.driver, hret, None, None)
 
             return [[res(i, j) for j in range(n_target)] for i in range(n_target)]
 

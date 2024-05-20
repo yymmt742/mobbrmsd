@@ -11,9 +11,10 @@ title = "mobbrmsd batch run"
 
 
 def print_ret(i, j, ret):
-    ev, er, ub, lb, df = (
+    ev, rm, er, ub, lb, df = (
         ret.n_eval,
         ret.eval_ratio,
+        ret.rmsd,
         ret.bounds[0],
         ret.bounds[1],
         ret.bounds[0] - ret.bounds[1],
@@ -25,13 +26,13 @@ def print_ret(i, j, ret):
     if ub > 1.0e10:
         print(
             pre,
-            f" {j:4d}{i:4d}{ev:12d} {er:12.6f}          +Infty{lb:16.6f}  +Infty",
+            f" {j:4d}{i:4d}{ev:12d} {rm:12.6f}          +Infty{lb:16.6f}  +Infty",
             post,
         )
     else:
         print(
             pre,
-            f" {j:4d}{i:4d}{ev:12d} {er:12.6f}{ub:16.6f}{lb:16.6f}{df:8.3f}",
+            f" {j:4d}{i:4d}{ev:12d} {rm:12.6f}{ub:16.6f}{lb:16.6f}{df:8.3f}",
             post,
         )
 
@@ -84,6 +85,9 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
             for i in range(n_target)
         ]
     )
+    for i, xj in enumerate(x[1:]):
+        print(i)
+        xj = x[i] + 1.0
 
     sep1 = "  ------------------------------------------------------------------------------"
     sep2 = "  ---------------------------------------|--------|-------------------|---------"
@@ -112,9 +116,9 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
     print()
 
     mrmsd = mobbrmsd({"n_apm": n_apm, "n_mol": n_mol, "sym": sym})
-
     states = mrmsd.batch_run(x, verbose=True)
-    mrmsd.clear()
+    del mrmsd
+
     print(sep1)
     print("")
     print("     i   j      N_eval   Eval_ratio      Upperbound      Lowerbound    Gap")
@@ -124,10 +128,10 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
             print_ret(i, j, states[i][j])
         print()
     print(sep1)
-    return
+    return [[sij.rmsd for sij in si] for si in states]
 
 
-def show_graph(g):
+def show_graph(mat):
 
     while True:
         inp = input("  Show graph ? (Open matplotlib window) ['y'es, 'n'o, 's'ave] >> ")
@@ -140,62 +144,8 @@ def show_graph(g):
             exit()
         break
 
-    n_target = len(g.nodes())
-
-    vmax = numpy.array(
-        [v for k, v in networkx.get_edge_attributes(g, "weight").items()]
-    ).max()
-    weights = [
-        5 * (vmax - 0.95 * v) / vmax
-        for k, v in networkx.get_edge_attributes(g, "weight").items()
-    ]
-    reverse_weights = {
-        k: {"reverse_weights": 10 - 9 * v / vmax}
-        for k, v in networkx.get_edge_attributes(g, "weight").items()
-    }
-    edge_labels = {
-        k: "{:.1f}".format(v)
-        for k, v in networkx.get_edge_attributes(g, "weight").items()
-    }
-
-    networkx.set_edge_attributes(g, reverse_weights)
-
-    pos = networkx.spring_layout(g, weight="reverse_weights")
-    networkx.draw_networkx_nodes(
-        g, pos, node_size=int(5000 / n_target), node_color="white", edgecolors="red"
-    )
-    networkx.draw_networkx_labels(g, pos, font_size=int(50 / n_target) + 5)
-    networkx.draw_networkx_edges(g, pos, width=weights, edge_color="tab:red")
-
-    while True:
-
-        if inp[0] == "n" or inp[0] == "N":
-            print()
-            return
-        elif inp[0] == "q" or inp[0] == "Q":
-            exit()
-
-        if inp[0] == "y" or inp[0] == "Y":
-            plt.show()
-        elif inp[0] == "s" or inp[0] == "S":
-            while True:
-                path = input("  Enter a file name >> ")
-                if path == "":
-                    continue
-                if path[0] == "q" or path[0] == "Q":
-                    exit()
-                break
-            plt.savefig(path)
-
-        while True:
-            inp = input(
-                "  Show graph ? ['y'es  (Open matplotlib window), 'n'o, 's'ave] >> "
-            )
-            if inp == "":
-                continue
-            break
-
-    plt.clear()
+    plt.imshow(mat)
+    plt.show()
     plt.clf()
     print()
 
