@@ -21,7 +21,8 @@ module driver
  &  mol_block_input_add, &
  &  setup_dimension_ => setup_dimension
   use mod_mobbrmsd_batch_run, only: &
- &  mobbrmsd_batch_run
+ &  mobbrmsd_batch_run, &
+ &  mobbrmsd_batch_tri_run
   use mod_mobbrmsd_mst, only: &
  &  mobbrmsd_min_span_tree
 
@@ -43,6 +44,7 @@ module driver
   public restart
   public rotate_y
   public batch_run
+  public batch_run_tri
   public min_span_tree
 
   type(mol_block_input), allocatable :: blocks(:)
@@ -329,6 +331,52 @@ contains
       float_states(:, i, j) = s(i, j)%dump_real()
     end do
   end subroutine batch_run
+
+  !| batch parallel tri run
+  subroutine batch_run_tri( &
+ &             n_target, n_head, n_int, n_float, &
+ &             X, W, &
+ &             cutoff, difflim, maxeval, &
+ &             remove_com, sort_by_g, &
+ &             header, int_states, float_states)
+    integer(kind=IK), intent(in)  :: n_target
+    integer(kind=IK), intent(in)  :: n_head
+    integer(kind=IK), intent(in)  :: n_int
+    integer(kind=IK), intent(in)  :: n_float
+    real(kind=RK), intent(in)     :: X(*)
+   !! reference and target coordinate
+    real(kind=RK), intent(inout)  :: W(*)
+   !! work array
+    integer(kind=IK), intent(in)  :: maxeval
+    real(kind=RK), intent(in)     :: cutoff
+    real(kind=RK), intent(in)     :: difflim
+    logical, intent(in)           :: remove_com
+    logical, intent(in)           :: sort_by_g
+    integer(kind=IK), intent(out) :: header(n_head)
+    integer(kind=IK), intent(out) :: int_states(n_int, n_target * (n_target - 1) / 2)
+    real(kind=RK), intent(out)    :: float_states(n_float, n_target * (n_target - 1) / 2)
+    type(mobbrmsd)                :: mob
+    type(mobbrmsd_state)          :: s(n_target * (n_target - 1) / 2)
+    integer(kind=IK)              :: i
+
+    mob = mobbrmsd(blocks)
+    do concurrent(i=1:SIZE(s))
+      s(i) = mob%s
+    end do
+
+    call mobbrmsd_batch_tri_run( &
+   &       n_target, mob%h, s, X, W, &
+   &       cutoff, difflim, maxeval, &
+   &       remove_com=remove_com, &
+   &       sort_by_g=sort_by_g &
+   &     )
+
+    header = mob%h%dump()
+    do concurrent(i=1:SIZE(s))
+      int_states(:, i) = s(i)%dump()
+      float_states(:, i) = s(i)%dump_real()
+    end do
+  end subroutine batch_run_tri
 
   subroutine min_span_tree( &
  &             n_target, n_head, &
