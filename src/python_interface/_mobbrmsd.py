@@ -146,7 +146,7 @@ class mobbrmsd:
         cutoff: float = float("inf"),
         difflim: float = 0.0,
         maxeval: int = -1,
-        Y: numpy.ndarray = None,
+        Y: None | numpy.ndarray = None,
     ) -> mobbrmsd_result:
 
         if not hasattr(self, "w"):
@@ -173,19 +173,15 @@ class mobbrmsd:
     def batch_run(
         self,
         x: numpy.ndarray,
-        y: numpy.ndarray,
+        y: None | numpy.ndarray = None,
         cutoff: float = float("inf"),
         difflim: float = 0.0,
         maxeval: int = -1,
         remove_com: bool = True,
         sort_by_g: bool = True,
         rotate_y: bool = False,
+        verbose: bool = False,
     ) -> list:
-
-        x_ = self.varidation_coordinates_2(x)
-        y_ = self.varidation_coordinates_2(y)
-        n_reference = x.shape[0]
-        n_target = y.shape[0]
 
         if hasattr(self, "ww"):
             if self.ww.shape[1] != self.memsize or self.ww.shape[0] != self.njob:
@@ -193,27 +189,64 @@ class mobbrmsd:
         else:
             self.ww = numpy.empty((self.njob, self.memsize)).T
 
-        hret, iret, rret = self.driver.batch_run(
-            n_reference,
-            n_target,
-            self.n_header,
-            self.n_int,
-            self.n_float,
-            x_,
-            y_,
-            self.ww,
-            cutoff,
-            difflim,
-            maxeval,
-            remove_com,
-            sort_by_g,
-            rotate_y,
-        )
+        x_ = self.varidation_coordinates_2(x)
+        if y is None:
+            n_target = x_.shape[2]
+            hret, iret, rret = self.driver.batch_run_tri(
+                n_target,
+                self.n_header,
+                self.n_int,
+                self.n_float,
+                x_,
+                self.ww,
+                cutoff,
+                difflim,
+                maxeval,
+                remove_com,
+                sort_by_g,
+            )
 
-        return [
-            [mobbrmsd_result(self.driver, hret, ir, rr) for ir, rr in zip(iry, rry)]
-            for iry, rry in zip(iret.transpose([2, 1, 0]), rret.transpose([2, 1, 0]))
-        ]
+            def res(i, j):
+                if i > j:
+                    k = int(i * (i - 1) / 2) + j
+                    return mobbrmsd_result(self.driver, hret, iret.T[k], rret.T[k])
+                elif i < j:
+                    k = int(j * (j - 1) / 2) + i
+                    return mobbrmsd_result(self.driver, hret, iret.T[k], rret.T[k])
+                else:
+                    return None
+
+            return [[res(i, j) for j in range(n_target)] for i in range(n_target)]
+
+        else:
+            y_ = self.varidation_coordinates_2(y)
+
+            n_reference = x_.shape[2]
+            n_target = y_.shape[2]
+
+            hret, iret, rret = self.driver.batch_run(
+                n_reference,
+                n_target,
+                self.n_header,
+                self.n_int,
+                self.n_float,
+                x_,
+                y_,
+                self.ww,
+                cutoff,
+                difflim,
+                maxeval,
+                remove_com,
+                sort_by_g,
+                rotate_y,
+            )
+
+            return [
+                [mobbrmsd_result(self.driver, hret, ir, rr) for ir, rr in zip(iry, rry)]
+                for iry, rry in zip(
+                    iret.transpose([2, 1, 0]), rret.transpose([2, 1, 0])
+                )
+            ]
 
     def min_span_tree(
         self,
