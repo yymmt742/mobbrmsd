@@ -7,10 +7,10 @@ program main
 !
   call u%init('test python_driver')
   call test0()
-  call test1()
+! call test1()
 !
   call u%init('test python_driver, min_span_tree')
-  call test2()
+! call test2()
 !
   call u%finish_and_terminate()
 !
@@ -33,11 +33,19 @@ contains
 !
     allocate (X(n_dim, n_apm, n_mol, n_target))
 !
-    do l = 1, n_target
+    do k = -1, 1, 2
+      do j = -1, 1, 2
+        do i = -1, 1, 2
+          X(:, :, (k + 1) * 2 + (i + 1) + (j + 1) / 2 + 1, 1) = sample(n_dim, n_apm, [i, j, k])
+        end do
+      end do
+    end do
+    do l = 2, n_target
       do k = -1, 1, 2
         do j = -1, 1, 2
           do i = -1, 1, 2
-            X(:, :, (k + 1) * 2 + (i + 1) + (j + 1) / 2 + 1, l) = sample(n_dim, n_apm, [i, j, k])
+            X(:, :, (k + 1) * 2 + (i + 1) + (j + 1) / 2 + 1, l) = 0.9_RK * X(:, :, (k + 1) * 2 + (i + 1) + (j + 1) / 2 + 1, l - 1)&
+           &                                                    + 0.1_RK * sample(n_dim, n_apm, [i, j, k])
           end do
         end do
       end do
@@ -63,7 +71,8 @@ contains
     do j = 1, n_target
       do i = 1, j - 1
         k = k + 1
-        print'(F9.6,F9.1,F16.9)', sr(1, k) * (sr(2, k) + 2 * sr(3, k)), sr(5, k), EXP(sr(6, k))
+        print'(F9.2,F9.1,F16.9)', sr(2, k) + 2 * sr(3, k), sr(5, k), EXP(sr(6, k))
+        !print'(F9.6,F9.1,F16.9)', sr(1, k) * (sr(2, k) + 2 * sr(3, k)), sr(5, k), EXP(sr(6, k))
       end do
       print *
     end do

@@ -218,10 +218,10 @@ class mobbrmsd:
 
             def res(i, j):
                 if i > j:
-                    k = int(i * (i - 1) / 2) + j
+                    k = int((i - 1) * (i - 2) / 2) + i + j - 1
                     return mobbrmsd_result(self.driver, hret, iret.T[k], rret.T[k])
                 elif i < j:
-                    k = int(j * (j - 1) / 2) + i
+                    k = int((j - 1) * (j - 2) / 2) + j + i - 1
                     return mobbrmsd_result(self.driver, hret, iret.T[k], rret.T[k])
                 else:
                     return mobbrmsd_result(self.driver, hret, None, None)

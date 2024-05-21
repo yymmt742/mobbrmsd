@@ -85,9 +85,8 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
             for i in range(n_target)
         ]
     )
-    for i, xj in enumerate(x[1:]):
-        print(i)
-        xj = x[i] + 1.0
+    for i in range(n_target - 1):
+        x[i + 1] = 0.2 * x[i + 1] + 0.8 * x[i]
 
     sep1 = "  ------------------------------------------------------------------------------"
     sep2 = "  ---------------------------------------|--------|-------------------|---------"
@@ -120,12 +119,11 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
     del mrmsd
 
     print(sep1)
-    print("")
-    print("     i   j      N_eval   Eval_ratio      Upperbound      Lowerbound    Gap")
+    print("     i   j      N_eval         RMSD      Upperbound      Lowerbound    Gap")
     print(sep1)
-    for i in range(len(states) - 1):
-        for j in range(i + 1, len(states)):
-            print_ret(i, j, states[i][j])
+    for i, si in enumerate(states):
+        for j, sij in enumerate(si):
+            print_ret(i, j, sij)
         print()
     print(sep1)
     return [[sij.rmsd for sij in si] for si in states]
