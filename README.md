@@ -168,7 +168,7 @@ Usage
 ## Roadmap
 
 - [ ] Add Usage
-- [ ] Enable autovariance sorting
+- [x] Enable autovariance sorting
 - [ ] Compatible with compilers (intel)
 - [ ] Compatible with compilers (nv)
 - [ ] Add detail documentation

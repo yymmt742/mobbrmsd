@@ -2,16 +2,15 @@ molecular symmetry corrected RMSD by branch and bound
 
 [project page](https://github.com/yymmt742/mobbrmsd)
 
-@bug
-
-A bug may exist in the degenerate case of the mod_rotation (3d) routines.
-
-Neval curve does not reproduce even if experimented.
-There seems to be a mistake in the implementation of the algorithm.
-
-@endbug
-
 @todo
+
+- CI -> purge purelapack? <br>
+
+- Optimize mobbrmsd-state and mobbrmsd-header <br>
+
+- Testing for degenerate cases <br>
+
+- Optimize mst <br>
 
 - Add Usage <br>
 
@@ -19,7 +18,9 @@ There seems to be a mistake in the implementation of the algorithm.
 
 - Add detail documentation <br>
 
-- Add benchmarks <br>
+- Add benchmark results <br>
+
+- Separate spatial rotation routines for developer tool<br>
 
 @endtodo
 
@@ -508,7 +509,3 @@ $$
 $$
 
 と計算される。
-
-@note
-note
-@endnote
