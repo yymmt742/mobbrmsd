@@ -86,14 +86,20 @@
           <h1>mobbrmsd</h1>
           <p>molecular symmetry corrected RMSD by branch and bound</p>
 <p><a href="https://github.com/yymmt742/mobbrmsd">project page</a></p>
-<p></p><div class="alert alert-danger" role="alert"><h4>Bug</h4><p></p>
-<p>A bug may exist in the degenerate case of the mod_rotation (3d) routines.</p>
-<p>Neval curve does not reproduce even if experimented.
-There seems to be a mistake in the implementation of the algorithm.</p>
-<p></p></div>
-<p>
 <p></p><div class="alert alert-success" role="alert"><h4>Todo</h4><p></p>
 <ul>
+<li>
+<p>CI -&gt; purge purelapack? <br></p>
+</li>
+<li>
+<p>Optimize mobbrmsd-state and mobbrmsd-header <br></p>
+</li>
+<li>
+<p>Testing for degenerate cases <br></p>
+</li>
+<li>
+<p>Optimize mst <br></p>
+</li>
 <li>
 <p>Add Usage <br></p>
 </li>
@@ -104,7 +110,10 @@ There seems to be a mistake in the implementation of the algorithm.</p>
 <p>Add detail documentation <br></p>
 </li>
 <li>
-<p>Add benchmarks <br></p>
+<p>Add benchmark results <br></p>
+</li>
+<li>
+<p>Separate spatial rotation routines for developer tool<br></p>
 </li>
 </ul>
 <p></p></div>
@@ -548,9 +557,6 @@ f(P,Q_1,Q_2,\dots,Q_N,R,\lambda)\\
 </script>
 </p>
 <p>と計算される。</p>
-<p></p><div class="alert alert-info" role="alert"><h4>Note</h4><p>note
-</p></div>
-<p>
         </div>
         <div class="col-md-4">
 	  <div class="well">

@@ -84,7 +84,7 @@ contains
     end if
   end subroutine mobbrmsd_batch_run
 !
-  !| batch parallel run
+  !| batch parallel tri run
   subroutine mobbrmsd_batch_tri_run(n_target, header, state, &
   &                             X, W, &
   &                             cutoff, difflim, maxeval, &
@@ -115,7 +115,6 @@ contains
     ldw = header%memsize()
     nlim = (n_target - 1) * n_target / 2
     i = 0
-!
     !$omp parallel private(ipnt, ijob, xpnt, ypnt, wpnt)
     do
       !$omp critical
