@@ -164,20 +164,19 @@ if(SKBUILD)
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_cogen.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_bb.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_mst.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/demo_batch.py"
     DESTINATION
     "${CMAKE_INSTALL_PYTHON_LIBDIR}/mobbrmsd")
 
 endif()
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
-  find_package(unittest REQUIRED)
   add_compile_options(${BLAS_Fortran_FLAGS} ${OpenMP_Fortran_FLAGS})
   add_compile_options(${BLAS_LINKER_FLAGS})
 
   add_executable(test_driver)
   target_sources(test_driver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90
                                      ${CMAKE_CURRENT_SOURCE_DIR}/test_driver.f90)
-  target_include_directories(test_driver PRIVATE ${unittest_DIR}/mod_files)
   target_include_directories(test_driver PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_3d/mod_files)
   target_include_directories(test_driver PRIVATE ${OpenMP_Fortran_INCLUDE_DIRS} )
   target_link_libraries(test_driver PRIVATE blas )

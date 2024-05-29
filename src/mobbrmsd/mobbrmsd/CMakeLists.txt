@@ -85,7 +85,6 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
 
   find_package(purelapack REQUIRED)
-  find_package(unittest REQUIRED)
 
   add_executable(test_covdot)
   target_sources(
@@ -98,7 +97,6 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
   target_include_directories(test_covdot
                              PRIVATE ${forbar_BINARY_DIR}/src/include)
-  target_include_directories(test_covdot PRIVATE ${unittest_DIR}/mod_files)
   target_link_libraries(test_covdot PRIVATE purelapack)
   target_link_libraries(test_covdot PRIVATE unittest)
   add_test(NAME test_covdot COMMAND test_covdot)
@@ -112,7 +110,6 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_rotation.f90)
-  target_include_directories(test_rotation PRIVATE ${unittest_DIR}/mod_files)
   target_include_directories(test_rotation
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
   target_link_libraries(test_rotation PRIVATE unittest)
@@ -131,7 +128,6 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_c_matrix.f90)
-  target_include_directories(test_c_matrix PRIVATE ${unittest_DIR}/mod_files)
   target_include_directories(test_c_matrix
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
   target_link_libraries(test_c_matrix PRIVATE unittest)
@@ -152,7 +148,6 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_f_matrix.f90)
-  target_include_directories(test_f_matrix PRIVATE ${unittest_DIR}/mod_files)
   target_include_directories(test_f_matrix
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
   target_link_libraries(test_f_matrix PRIVATE unittest)
@@ -175,7 +170,6 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_bb_block.f90)
-  target_include_directories(test_bb_block PRIVATE ${unittest_DIR}/mod_files)
   target_include_directories(test_bb_block
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
   target_link_libraries(test_bb_block PRIVATE unittest)
@@ -199,7 +193,6 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_bb_list.f90)
-  target_include_directories(test_bb_list PRIVATE ${unittest_DIR}/mod_files)
   target_include_directories(test_bb_list
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
   target_link_libraries(test_bb_list PRIVATE unittest)
@@ -228,7 +221,6 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
             ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_batch_run.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_mobbrmsd.f90)
-  target_include_directories(test_mobbrmsd PRIVATE ${unittest_DIR}/mod_files)
   target_include_directories(test_mobbrmsd
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
   target_include_directories(test_mobbrmsd
