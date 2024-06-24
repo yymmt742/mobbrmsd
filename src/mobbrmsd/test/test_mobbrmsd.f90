@@ -246,8 +246,7 @@ contains
     allocate (W(mobb%h%memsize() * n_job))
 !
     call mobbrmsd_min_span_tree(n_target, mobb%h, state, X, W, &
-   &                            edges=edges, weights=weights, &
-   &                            verbose=.true.)
+   &                            edges=edges, weights=weights)
 !
     do i = 1, n_target - 1
       print'(2i4, *(f9.3))', edges(:, i), weights(i), &

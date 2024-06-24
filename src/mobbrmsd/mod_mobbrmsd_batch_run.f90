@@ -10,8 +10,6 @@ module mod_mobbrmsd_batch_run
   use mod_mobbrmsd_header
   use mod_mobbrmsd_state
   use mod_mobbrmsd
-  use mod_forbar
-  use mod_forbar_collections
   implicit none
   public :: mobbrmsd_batch_run
   public :: mobbrmsd_batch_tri_run

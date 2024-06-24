@@ -12,8 +12,6 @@ module mod_mobbrmsd_mst
   use mod_mobbrmsd_header
   use mod_mobbrmsd_state
   use mod_mobbrmsd
-  use mod_forbar
-  use mod_forbar_collections
   implicit none
   private
   public :: mobbrmsd_min_span_tree
@@ -148,8 +146,7 @@ contains
   subroutine mobbrmsd_min_span_tree(n_target, header, state, X, W, &
  &                                  cutoff, difflim, maxeval, &
  &                                  remove_com, sort_by_g, &
- &                                  edges, weights, show_progress, &
- &                                  verbose &
+ &                                  edges, weights, show_progress &
  )
     integer(IK), intent(in)             :: n_target
     !! number of coordinates
@@ -177,10 +174,6 @@ contains
     !! minimum spanning tree weights
     logical, intent(in), optional       :: show_progress
     !! if true, show progress bar
-    logical, intent(in), optional       :: verbose
-    !! show progress bar
-    type(forbar)                        :: fbar
-    logical                             :: verbose_
     logical                             :: mask(n_target)
     integer(kind=IK)                    :: list(2, n_target)
     real(RK)                            :: vval(n_target - 1), nnval, cutoff_
@@ -198,19 +191,7 @@ contains
     list(1, 1) = 0
     list(2, 1) = 1
 !
-    if (PRESENT(verbose)) then
-      verbose_ = verbose
-    else
-      verbose_ = .false.
-    end if
-!
-    if (verbose_) then
-      fbar = progress_bar(limit=n_target - 1)
-    end if
-!
     do j = 1, n_target - 1
-!
-      if (verbose_) call fbar%update_and_display()
 !
       vval(j) = RHUGE
       if (PRESENT(cutoff)) then
@@ -248,8 +229,6 @@ contains
       mask(list(2, j + 1)) = .false.
 !
     end do
-!
-    if (verbose_) call fbar%clean_up()
 !
     do j = 1, n_target
       do i = 1, j - 1

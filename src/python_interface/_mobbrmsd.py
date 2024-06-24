@@ -290,7 +290,6 @@ class mobbrmsd:
             maxeval,
             remove_com,
             sort_by_g,
-            verbose,
         )
 
         g = networkx.Graph()

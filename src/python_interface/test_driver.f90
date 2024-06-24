@@ -7,10 +7,10 @@ program main
 !
   call u%init('test python_driver')
   call test0()
-! call test1()
+  call test1()
 !
   call u%init('test python_driver, min_span_tree')
-! call test2()
+  call test2()
 !
   call u%finish_and_terminate()
 !
@@ -175,7 +175,7 @@ contains
 !
     call min_span_tree( &
  &    n_target, n_header, n_int, n_float,&
- &    X, W, RHUGE, ZERO, -1, .true., .true., .true., &
+ &    X, W, RHUGE, ZERO, -1, .true., .true., &
  &    edges, weights, header, int_states, float_states)
 !
     do i = 1, n_target - 1

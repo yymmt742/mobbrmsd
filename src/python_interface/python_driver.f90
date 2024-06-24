@@ -382,7 +382,7 @@ contains
  &             n_target, n_head, &
  &             n_int, n_float,&
  &             X, W, cutoff, difflim, maxeval,  &
- &             remove_com, sort_by_g, verbose, &
+ &             remove_com, sort_by_g, &
  &             edges, weights, header, &
  &             int_states, float_states)
     integer(kind=IK), intent(in)      :: n_target
@@ -398,7 +398,6 @@ contains
     integer(kind=IK), intent(in)      :: maxeval
     logical, intent(in)               :: remove_com
     logical, intent(in)               :: sort_by_g
-    logical, intent(in)               :: verbose
     integer(kind=IK), intent(out)     :: edges(2, n_target - 1)
     real(kind=RK), intent(out)        :: weights(n_target - 1)
     integer(kind=IK), intent(out)     :: header(n_head)
@@ -419,8 +418,7 @@ contains
    &       remove_com=remove_com, &
    &       sort_by_g=sort_by_g, &
    &       edges=edges, &
-   &       weights=weights, &
-   &       verbose=verbose &
+   &       weights=weights &
    &    )
 
     header = mob%h%dump()

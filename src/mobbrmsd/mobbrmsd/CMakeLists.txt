@@ -38,10 +38,7 @@ target_sources(
 
 target_include_directories(${TARGET_GD}
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-target_include_directories(${TARGET_GD}
-                           PRIVATE ${forbar_BINARY_DIR}/src/include)
 target_link_libraries(${TARGET_GD} PRIVATE blas)
-target_link_libraries(${TARGET_GD} PRIVATE forbar)
 target_link_libraries(${TARGET_GD} PRIVATE ${OpenMP_Fortran_LIB_NAMES})
 set_target_properties(${TARGET_GD} PROPERTIES Fortran_MODULE_DIRECTORY
                                               ${LIB_MOD_GD_DIR})
@@ -49,13 +46,11 @@ set_target_properties(${TARGET_GD} PROPERTIES Fortran_MODULE_DIRECTORY
 add_library(${TARGET_GD}_shared SHARED $<TARGET_OBJECTS:mobbrmsd>)
 set_target_properties(${TARGET_GD}_shared PROPERTIES OUTPUT_NAME ${TARGET_GD})
 target_link_libraries(${TARGET_GD}_shared PRIVATE blas)
-target_link_libraries(${TARGET_GD}_shared PRIVATE forbar)
 target_link_libraries(${TARGET_GD}_shared PRIVATE ${OpenMP_Fortran_LIB_NAMES})
 
 add_library(${TARGET_GD}_static STATIC $<TARGET_OBJECTS:mobbrmsd>)
 set_target_properties(${TARGET_GD}_static PROPERTIES OUTPUT_NAME ${TARGET_GD})
 target_link_libraries(${TARGET_GD}_static PRIVATE blas)
-target_link_libraries(${TARGET_GD}_static PRIVATE forbar)
 target_link_libraries(${TARGET_GD}_static PRIVATE ${OpenMP_Fortran_LIB_NAMES})
 
 install(
@@ -95,8 +90,6 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_covdot.f90)
   target_include_directories(test_covdot
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_include_directories(test_covdot
-                             PRIVATE ${forbar_BINARY_DIR}/src/include)
   target_link_libraries(test_covdot PRIVATE purelapack)
   target_link_libraries(test_covdot PRIVATE unittest)
   add_test(NAME test_covdot COMMAND test_covdot)
@@ -223,11 +216,8 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_mobbrmsd.f90)
   target_include_directories(test_mobbrmsd
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_include_directories(test_mobbrmsd
-                             PRIVATE ${forbar_BINARY_DIR}/src/include)
   target_link_libraries(test_mobbrmsd PRIVATE unittest)
   target_link_libraries(test_mobbrmsd PRIVATE purelapack)
-  target_link_libraries(test_mobbrmsd PRIVATE forbar)
   # target_link_libraries( test_mobbrmsd PRIVATE blas )
   target_link_libraries(test_mobbrmsd PRIVATE ${OpenMP_Fortran_LIB_NAMES})
   add_test(NAME test_mobbrmsd COMMAND test_mobbrmsd 4)

@@ -38,22 +38,17 @@ target_sources(
 
 target_include_directories(${TARGET_2D}
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-target_include_directories(${TARGET_2D}
-                           PRIVATE ${forbar_BINARY_DIR}/src/include)
 target_link_libraries(${TARGET_2D} PRIVATE ${OpenMP_Fortran_LIB_NAMES})
-target_link_libraries(${TARGET_2D} PRIVATE forbar)
 set_target_properties(${TARGET_2D} PROPERTIES Fortran_MODULE_DIRECTORY
                                               ${LIB_MOD_2D_DIR})
 
 add_library(${TARGET_2D}_shared SHARED $<TARGET_OBJECTS:mobbrmsd_2d>)
 set_target_properties(${TARGET_2D}_shared PROPERTIES OUTPUT_NAME ${TARGET_2D})
 target_link_libraries(${TARGET_2D}_shared PRIVATE ${OpenMP_Fortran_LIB_NAMES})
-target_link_libraries(${TARGET_2D}_shared PRIVATE forbar)
 
 add_library(${TARGET_2D}_static STATIC $<TARGET_OBJECTS:mobbrmsd_2d>)
 set_target_properties(${TARGET_2D}_static PROPERTIES OUTPUT_NAME ${TARGET_2D})
 target_link_libraries(${TARGET_2D}_static PRIVATE ${OpenMP_Fortran_LIB_NAMES})
-target_link_libraries(${TARGET_2D}_static PRIVATE forbar)
 
 install(
   TARGETS ${TARGET_2D}_static
@@ -224,11 +219,8 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_mobbrmsd.f90)
   target_include_directories(test_mobbrmsd_2d
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_include_directories(test_mobbrmsd_2d
-                             PRIVATE ${forbar_BINARY_DIR}/src/include)
   target_link_libraries(test_mobbrmsd_2d PRIVATE unittest)
   target_link_libraries(test_mobbrmsd_2d PRIVATE purelapack)
-  target_link_libraries(test_mobbrmsd_2d PRIVATE forbar)
   target_link_libraries(test_mobbrmsd_2d PRIVATE ${OpenMP_Fortran_LIB_NAMES})
   add_test(NAME test_mobbrmsd_2d COMMAND test_mobbrmsd_2d 0)
 endif()
