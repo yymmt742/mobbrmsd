@@ -75,7 +75,6 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include
         DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_3D}")
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
-  find_package(purelapack REQUIRED)
   add_executable(test_gemm_3d)
   target_sources(
     test_gemm_3d
@@ -112,7 +111,8 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   target_include_directories(test_rotation_3d
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
   target_link_libraries(test_rotation_3d PRIVATE unittest)
-  target_link_libraries(test_rotation_3d PRIVATE purelapack)
+  target_link_libraries(test_rotation_3d PRIVATE blas)
+  target_link_libraries(test_rotation_3d PRIVATE lapack)
   add_test(NAME test_rotation_3d COMMAND test_rotation_3d)
 
   add_executable(test_c_matrix_3d)
@@ -200,7 +200,6 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   target_include_directories(test_mobbrmsd_3d
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
   target_link_libraries(test_mobbrmsd_3d PRIVATE unittest)
-  target_link_libraries(test_mobbrmsd_3d PRIVATE purelapack)
   target_link_libraries(test_mobbrmsd_3d PRIVATE ${OpenMP_Fortran_LIB_NAMES})
   add_test(NAME test_mobbrmsd_3d COMMAND test_mobbrmsd_3d 0)
 endif()

@@ -39,6 +39,7 @@ target_sources(
 target_include_directories(${TARGET_GD}
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 target_link_libraries(${TARGET_GD} PRIVATE blas)
+target_link_libraries(${TARGET_GD} PRIVATE lapack)
 target_link_libraries(${TARGET_GD} PRIVATE ${OpenMP_Fortran_LIB_NAMES})
 set_target_properties(${TARGET_GD} PROPERTIES Fortran_MODULE_DIRECTORY
                                               ${LIB_MOD_GD_DIR})
@@ -46,11 +47,13 @@ set_target_properties(${TARGET_GD} PROPERTIES Fortran_MODULE_DIRECTORY
 add_library(${TARGET_GD}_shared SHARED $<TARGET_OBJECTS:mobbrmsd>)
 set_target_properties(${TARGET_GD}_shared PROPERTIES OUTPUT_NAME ${TARGET_GD})
 target_link_libraries(${TARGET_GD}_shared PRIVATE blas)
+target_link_libraries(${TARGET_GD}_shared PRIVATE lapack)
 target_link_libraries(${TARGET_GD}_shared PRIVATE ${OpenMP_Fortran_LIB_NAMES})
 
 add_library(${TARGET_GD}_static STATIC $<TARGET_OBJECTS:mobbrmsd>)
 set_target_properties(${TARGET_GD}_static PROPERTIES OUTPUT_NAME ${TARGET_GD})
 target_link_libraries(${TARGET_GD}_static PRIVATE blas)
+target_link_libraries(${TARGET_GD}_static PRIVATE lapack)
 target_link_libraries(${TARGET_GD}_static PRIVATE ${OpenMP_Fortran_LIB_NAMES})
 
 install(
@@ -79,7 +82,7 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
 
-  find_package(purelapack REQUIRED)
+# find_package(purelapack REQUIRED)
 
   add_executable(test_covdot)
   target_sources(
@@ -90,7 +93,9 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
             ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_covdot.f90)
   target_include_directories(test_covdot
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_link_libraries(test_covdot PRIVATE purelapack)
+# target_link_libraries(test_covdot PRIVATE purelapack)
+  target_link_libraries(test_covdot PRIVATE blas)
+  target_link_libraries(test_covdot PRIVATE lapack)
   target_link_libraries(test_covdot PRIVATE unittest)
   add_test(NAME test_covdot COMMAND test_covdot)
 
@@ -106,7 +111,9 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   target_include_directories(test_rotation
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
   target_link_libraries(test_rotation PRIVATE unittest)
-  target_link_libraries(test_rotation PRIVATE purelapack)
+# target_link_libraries(test_rotation PRIVATE purelapack)
+  target_link_libraries(test_rotation PRIVATE blas)
+  target_link_libraries(test_rotation PRIVATE lapack)
   add_test(NAME test_rotation COMMAND test_rotation)
 
   add_executable(test_c_matrix)
@@ -124,7 +131,9 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   target_include_directories(test_c_matrix
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
   target_link_libraries(test_c_matrix PRIVATE unittest)
-  target_link_libraries(test_c_matrix PRIVATE purelapack)
+# target_link_libraries(test_c_matrix PRIVATE purelapack)
+  target_link_libraries(test_c_matrix PRIVATE blas)
+  target_link_libraries(test_c_matrix PRIVATE lapack)
   add_test(NAME test_c_matrix COMMAND test_c_matrix)
 
   add_executable(test_f_matrix)
@@ -144,7 +153,9 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   target_include_directories(test_f_matrix
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
   target_link_libraries(test_f_matrix PRIVATE unittest)
-  target_link_libraries(test_f_matrix PRIVATE purelapack)
+# target_link_libraries(test_f_matrix PRIVATE purelapack)
+  target_link_libraries(test_f_matrix PRIVATE blas)
+  target_link_libraries(test_f_matrix PRIVATE lapack)
   add_test(NAME test_f_matrix COMMAND test_f_matrix)
 
   add_executable(test_bb_block)
@@ -166,7 +177,9 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   target_include_directories(test_bb_block
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
   target_link_libraries(test_bb_block PRIVATE unittest)
-  target_link_libraries(test_bb_block PRIVATE purelapack)
+# target_link_libraries(test_bb_block PRIVATE purelapack)
+  target_link_libraries(test_bb_block PRIVATE blas)
+  target_link_libraries(test_bb_block PRIVATE lapack)
   add_test(NAME test_bb_block COMMAND test_bb_block)
 
   add_executable(test_bb_list)
@@ -189,7 +202,9 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   target_include_directories(test_bb_list
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
   target_link_libraries(test_bb_list PRIVATE unittest)
-  target_link_libraries(test_bb_list PRIVATE purelapack)
+# target_link_libraries(test_bb_list PRIVATE purelapack)
+  target_link_libraries(test_bb_list PRIVATE blas)
+  target_link_libraries(test_bb_list PRIVATE lapack)
   add_test(NAME test_bb_list COMMAND test_bb_list 4)
 
   add_executable(test_mobbrmsd)
@@ -217,8 +232,9 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   target_include_directories(test_mobbrmsd
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
   target_link_libraries(test_mobbrmsd PRIVATE unittest)
-  target_link_libraries(test_mobbrmsd PRIVATE purelapack)
-  # target_link_libraries( test_mobbrmsd PRIVATE blas )
+  # target_link_libraries(test_mobbrmsd PRIVATE purelapack)
+  target_link_libraries(test_mobbrmsd PRIVATE blas)
+  target_link_libraries(test_mobbrmsd PRIVATE lapack)
   target_link_libraries(test_mobbrmsd PRIVATE ${OpenMP_Fortran_LIB_NAMES})
   add_test(NAME test_mobbrmsd COMMAND test_mobbrmsd 4)
 endif()
