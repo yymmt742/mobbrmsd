@@ -15,7 +15,6 @@ module mod_mobbrmsd_batch_run
   public :: mobbrmsd_batch_tri_run
 !
 contains
-!
   !| batch parallel run
   subroutine mobbrmsd_batch_run(n_reference, n_target, header, state, &
   &                             X, Y, W, &
@@ -83,10 +82,12 @@ contains
   end subroutine mobbrmsd_batch_run
 !
   !| batch parallel tri run
-  subroutine mobbrmsd_batch_tri_run(n_target, header, state, &
-  &                             X, W, &
-  &                             cutoff, difflim, maxeval, &
-  &                             remove_com, sort_by_g)
+  subroutine mobbrmsd_batch_tri_run( &
+  &            n_target, header, state, &
+  &            X, W, &
+  &            cutoff, difflim, maxeval, &
+  &            remove_com, sort_by_g, &
+  &            n_lower, n_upper)
     integer(IK), intent(in)              :: n_target
     !! number of target coordinates
     type(mobbrmsd_header), intent(in)    :: header
@@ -107,12 +108,18 @@ contains
     !! if true, remove centroids. default [.true.]
     logical, intent(in), optional        :: sort_by_g
     !! if true, row is sorted respect to G of reference coordinate. default [.true.]
+    integer(IK), intent(in), optional    :: n_lower
+    !! Specify the lower limit of the range to be calculated. Default [1].
+    integer(IK), intent(in), optional    :: n_upper
+    !! Specify the upper limit of the range to be calculated. Default [(n_target - 1) * n_target / 2].
     integer(kind=IK)                     :: i, ipnt, ijob, xpnt, ypnt, wpnt, ldx, ldw, nlim
     if (n_target < 2) return
     ldx = header%n_dims() * header%n_atoms()
     ldw = header%memsize()
-    nlim = (n_target - 1) * n_target / 2
     i = 0
+    if (PRESENT(n_lower)) i = MAX(i, n_lower - 1)
+    nlim = (n_target - 1) * n_target / 2
+    if (PRESENT(n_upper)) nlim = MAX(i + 1, MIN(nlim, n_upper))
     !$omp parallel private(ipnt, ijob, xpnt, ypnt, wpnt)
     do
       !$omp critical
@@ -120,8 +127,7 @@ contains
       ipnt = i
       !$omp end critical
       if (ipnt > nlim) exit
-      ! cantor_pair inverse
-      xpnt = INT(0.5_RK * (SQRT(real(8 * ipnt - 7, RK)) - ONE), IK) + 1
+      xpnt = INT(0.5_RK * (SQRT(real(8 * ipnt - 7, RK)) - ONE), IK) + 1 ! cantor_pair inverse
       ypnt = ipnt - xpnt * (xpnt - 1) / 2 - 1
       xpnt = xpnt * ldx + 1
       ypnt = ypnt * ldx + 1
