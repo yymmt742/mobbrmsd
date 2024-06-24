@@ -21,7 +21,6 @@ contains
   &            X, Y, W, &
   &            cutoff, difflim, maxeval, &
   &            remove_com, sort_by_g, &
-  &            rotate_y, &
   &            n_lower, n_upper &
   &          )
     integer(IK), intent(in)              :: n_reference
@@ -48,13 +47,11 @@ contains
     !! if true, remove centroids. default [.true.]
     logical, intent(in), optional        :: sort_by_g
     !! if true, row is sorted respect to G of reference coordinate. default [.true.]
-    logical, intent(in), optional        :: rotate_y
-    !! The search ends when ncount exceeds maxiter.
     integer(IK), intent(in), optional    :: n_lower
     !! Specify the lower limit of the range to be calculated. Default [1].
     integer(IK), intent(in), optional    :: n_upper
     !! Specify the upper limit of the range to be calculated. Default [n_reference * n_target].
-    integer(kind=IK)                     :: i, ipnt, ijob, spnt, xpnt, ypnt, wpnt, ldx, ldw, nmin, nlim
+    integer(kind=IK)                     :: i, ipnt, spnt, xpnt, ypnt, wpnt, ldx, ldw, nmin, nlim
 !
     if (n_reference < 1 .or. n_target < 1) return
     ldx = header%n_dims() * header%n_atoms()
@@ -62,9 +59,9 @@ contains
     nmin = 0
     if (PRESENT(n_lower)) nmin = MAX(nmin, n_lower - 1)
     nlim = n_reference * n_target
-    if (PRESENT(n_upper)) nlim = MIN(nlim, MAX(i + 1, n_upper))
+    if (PRESENT(n_upper)) nlim = MIN(nlim, MAX(nmin + 1, n_upper))
     i = nmin
-    !$omp parallel private(ipnt, ijob, spnt, xpnt, ypnt, wpnt)
+    !$omp parallel private(ipnt, spnt, xpnt, ypnt, wpnt)
     do
       !$omp critical
       i = i + 1
@@ -72,8 +69,8 @@ contains
       !$omp end critical
       if (ipnt > nlim) exit
       spnt = ipnt - nmin
-      xpnt = MODULO(ipnt, n_reference) * ldx + 1
-      ypnt = ipnt / n_reference * ldx + 1
+      xpnt = MODULO(ipnt - 1, n_reference) * ldx + 1
+      ypnt = (ipnt - 1) / n_reference * ldx + 1
       wpnt = ldw * omp_get_thread_num() + 1
       call mobbrmsd_run(header, state(spnt), X(xpnt), Y(ypnt), W(wpnt), &
      &                  cutoff=cutoff, difflim=difflim, maxeval=maxeval, &
@@ -81,13 +78,6 @@ contains
      &      )
     end do
     !$omp end parallel
-!
-    if (rotate_y) then
-      do concurrent(i=nmin + 1:nlim)
-        ypnt = (i + nmin) / n_reference * ldx + 1
-        call state(i)%rotation(header, Y(ypnt))
-      end do
-    end if
   end subroutine mobbrmsd_batch_run
 !
   !| batch parallel tri run
@@ -122,16 +112,16 @@ contains
     !! Specify the lower limit of the range to be calculated. Default [1].
     integer(IK), intent(in), optional    :: n_upper
     !! Specify the upper limit of the range to be calculated. Default [(n_target - 1) * n_target / 2].
-    integer(kind=IK)                     :: i, ipnt, ijob, spnt, xpnt, ypnt, wpnt, ldx, ldw, nmin, nlim
+    integer(kind=IK)                     :: i, ipnt, spnt, xpnt, ypnt, wpnt, ldx, ldw, nmin, nlim
     if (n_target < 2) return
     ldx = header%n_dims() * header%n_atoms()
     ldw = header%memsize()
     nmin = 0
     if (PRESENT(n_lower)) nmin = MAX(nmin, n_lower - 1)
     nlim = (n_target - 1) * n_target / 2
-    if (PRESENT(n_upper)) nlim = MIN(nlim, MAX(i + 1, n_upper))
+    if (PRESENT(n_upper)) nlim = MIN(nlim, MAX(nmin + 1, n_upper))
     i = nmin
-    !$omp parallel private(ipnt, ijob, spnt, xpnt, ypnt, wpnt)
+    !$omp parallel private(ipnt, spnt, xpnt, ypnt, wpnt)
     do
       !$omp critical
       i = i + 1
