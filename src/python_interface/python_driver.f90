@@ -341,7 +341,8 @@ contains
  &             X, W, &
  &             cutoff, difflim, maxeval, &
  &             remove_com, sort_by_g, &
- &             header, int_states, float_states)
+ &             header, int_states, float_states &
+ &           )
     integer(kind=IK), intent(in)  :: n_target
     integer(kind=IK), intent(in)  :: n_head
     integer(kind=IK), intent(in)  :: n_int

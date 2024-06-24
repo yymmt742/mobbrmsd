@@ -63,6 +63,7 @@ contains
 !
     call batch_run_tri( &
    &  n_target, n_header, n_int, n_float, &
+   &  n_target * (n_target - 1) / 2, 1, &
    &  X, W, &
    &  999.0_RK, 0.0_RK, -1, .true., .true., &
    &  h, si, sr)
