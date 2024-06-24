@@ -217,20 +217,14 @@ class mobbrmsd:
             n_target = x_.shape[2]
             n_tri = (n_target * (n_target - 1)) // 2
             n_chunk_ = n_tri if n_chunk < 1 else self.njob * n_chunk
-            n_lower = 1
-            hret = numpy.empty([self.n_header])
-            iret = numpy.empty([n_tri, self.n_int])
-            rret = numpy.empty([n_tri, self.n_float])
-            for i in tqdm(range((n_tri + n_chunk_ - 1) // n_chunk_)):
-                l = n_lower - 1
-                u = min([l + n_chunk_, n_tri])
-                hret, iret_, rret_ = self.driver.batch_run_tri(
+            if n_tri == n_chunk_:
+                hret, iret, rret = self.driver.batch_run_tri(
                     n_target,
                     self.n_header,
                     self.n_int,
                     self.n_float,
-                    min(n_chunk_, n_tri - n_lower + 1),
-                    n_lower,
+                    n_tri,
+                    1,
                     x_,
                     self.ww,
                     cutoff,
@@ -239,14 +233,42 @@ class mobbrmsd:
                     remove_com,
                     sort_by_g,
                 )
-                iret[l:u] = iret_.T
-                rret[l:u] = rret_.T
-                n_lower += n_chunk_
+                return [
+                    [res(i, j, hret, iret.T, rret.T) for j in range(n_target)]
+                    for i in range(n_target)
+                ]
+            else:
+                n_lower = 1
+                nrep = (n_tri + n_chunk_ - 1) // n_chunk_
+                hret = numpy.empty([self.n_header])
+                iret = numpy.empty([n_tri, self.n_int])
+                rret = numpy.empty([n_tri, self.n_float])
+                for i in tqdm(range(nrep)):
+                    l = n_lower - 1
+                    u = min([l + n_chunk_, n_tri])
+                    hret, iret_, rret_ = self.driver.batch_run_tri(
+                        n_target,
+                        self.n_header,
+                        self.n_int,
+                        self.n_float,
+                        min(n_chunk_, n_tri - n_lower + 1),
+                        n_lower,
+                        x_,
+                        self.ww,
+                        cutoff,
+                        difflim,
+                        maxeval,
+                        remove_com,
+                        sort_by_g,
+                    )
+                    iret[l:u] = iret_.T
+                    rret[l:u] = rret_.T
+                    n_lower += n_chunk_
 
-            return [
-                [res(i, j, hret, iret, rret) for j in range(n_target)]
-                for i in range(n_target)
-            ]
+                return [
+                    [res(i, j, hret, iret, rret) for j in range(n_target)]
+                    for i in range(n_target)
+                ]
 
         else:
             y_ = self.varidation_coordinates_2(y)
