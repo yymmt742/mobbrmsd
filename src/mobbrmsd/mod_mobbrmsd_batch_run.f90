@@ -112,27 +112,29 @@ contains
     !! Specify the lower limit of the range to be calculated. Default [1].
     integer(IK), intent(in), optional    :: n_upper
     !! Specify the upper limit of the range to be calculated. Default [(n_target - 1) * n_target / 2].
-    integer(kind=IK)                     :: i, ipnt, ijob, xpnt, ypnt, wpnt, ldx, ldw, nlim
+    integer(kind=IK)                     :: i, ipnt, ijob, spnt, xpnt, ypnt, wpnt, ldx, ldw, nmin, nlim
     if (n_target < 2) return
     ldx = header%n_dims() * header%n_atoms()
     ldw = header%memsize()
-    i = 0
-    if (PRESENT(n_lower)) i = MAX(i, n_lower - 1)
+    nmin = 0
+    if (PRESENT(n_lower)) nmin = MAX(nmin, n_lower - 1)
     nlim = (n_target - 1) * n_target / 2
-    if (PRESENT(n_upper)) nlim = MAX(i + 1, MIN(nlim, n_upper))
-    !$omp parallel private(ipnt, ijob, xpnt, ypnt, wpnt)
+    if (PRESENT(n_upper)) nlim = MIN(nlim, MAX(i + 1, n_upper))
+    i = nmin
+    !$omp parallel private(ipnt, ijob, spnt, xpnt, ypnt, wpnt)
     do
       !$omp critical
       i = i + 1
       ipnt = i
       !$omp end critical
       if (ipnt > nlim) exit
+      spnt = ipnt - nmin
       xpnt = INT(0.5_RK * (SQRT(real(8 * ipnt - 7, RK)) - ONE), IK) + 1 ! cantor_pair inverse
       ypnt = ipnt - xpnt * (xpnt - 1) / 2 - 1
       xpnt = xpnt * ldx + 1
       ypnt = ypnt * ldx + 1
       wpnt = ldw * omp_get_thread_num() + 1
-      call mobbrmsd_run(header, state(ipnt), X(xpnt), X(ypnt), W(wpnt), &
+      call mobbrmsd_run(header, state(spnt), X(xpnt), X(ypnt), W(wpnt), &
      &                  cutoff=cutoff, difflim=difflim, maxeval=maxeval, &
      &                  remove_com=remove_com, sort_by_g=sort_by_g &
      &      )

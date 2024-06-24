@@ -1,5 +1,6 @@
 import numpy
 import networkx
+from tqdm import tqdm
 
 
 class mobbrmsd_result:
@@ -191,6 +192,7 @@ class mobbrmsd:
         sort_by_g: bool = True,
         rotate_y: bool = False,
         verbose: bool = False,
+        n_chunk: int = 0,
     ) -> list:
 
         if hasattr(self, "ww"):
@@ -201,32 +203,50 @@ class mobbrmsd:
 
         x_ = self.varidation_coordinates_2(x)
         if y is None:
-            n_target = x_.shape[2]
-            hret, iret, rret = self.driver.batch_run_tri(
-                n_target,
-                self.n_header,
-                self.n_int,
-                self.n_float,
-                x_,
-                self.ww,
-                cutoff,
-                difflim,
-                maxeval,
-                remove_com,
-                sort_by_g,
-            )
 
-            def res(i, j):
+            def res(i, j, hret, iret, rret):
                 if i > j:
                     k = int((i - 1) * (i - 2) / 2) + i + j - 1
-                    return mobbrmsd_result(self.driver, hret, iret.T[k], rret.T[k])
+                    return mobbrmsd_result(self.driver, hret, iret[k], rret[k])
                 elif i < j:
                     k = int((j - 1) * (j - 2) / 2) + j + i - 1
-                    return mobbrmsd_result(self.driver, hret, iret.T[k], rret.T[k])
+                    return mobbrmsd_result(self.driver, hret, iret[k], rret[k])
                 else:
                     return mobbrmsd_result(self.driver, hret, None, None)
 
-            return [[res(i, j) for j in range(n_target)] for i in range(n_target)]
+            n_target = x_.shape[2]
+            n_tri = (n_target * (n_target - 1)) // 2
+            n_chunk_ = n_tri if n_chunk < 1 else self.njob * n_chunk
+            n_lower = 1
+            hret = numpy.empty([self.n_header])
+            iret = numpy.empty([n_tri, self.n_int])
+            rret = numpy.empty([n_tri, self.n_float])
+            for i in tqdm(range((n_tri + n_chunk_ - 1) // n_chunk_)):
+                l = n_lower - 1
+                u = min([l + n_chunk_, n_tri])
+                hret, iret_, rret_ = self.driver.batch_run_tri(
+                    n_target,
+                    self.n_header,
+                    self.n_int,
+                    self.n_float,
+                    min(n_chunk_, n_tri - n_lower + 1),
+                    n_lower,
+                    x_,
+                    self.ww,
+                    cutoff,
+                    difflim,
+                    maxeval,
+                    remove_com,
+                    sort_by_g,
+                )
+                iret[l:u] = iret_.T
+                rret[l:u] = rret_.T
+                n_lower += n_chunk_
+
+            return [
+                [res(i, j, hret, iret, rret) for j in range(n_target)]
+                for i in range(n_target)
+            ]
 
         else:
             y_ = self.varidation_coordinates_2(y)
