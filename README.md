@@ -2,17 +2,6 @@
 <a name="readme-top"></a>
 
 
-
-<!--
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
--->
-
-
-
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
@@ -28,8 +17,6 @@
     <a href="https://github.com/yymmt742/mobbrmsd"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/yymmt742/mobbrmsd">View Demo</a>
-    ·
     <a href="https://github.com/yymmt742/mobbrmsd/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     ·
     <a href="https://github.com/yymmt742/mobbrmsd/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
@@ -43,9 +30,6 @@
   <ol>
     <li>
       <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
     </li>
     <li>
       <a href="#getting-started">Getting Started</a>
@@ -70,23 +54,11 @@
 
 [![Product Name Screen Shot][product-screenshot]](https://github.com/yymmt742/mobbrmsd/blob/main/technical_notes.md)
 
-Calculate mobbrmsd.
+Calculate molecular-oriented RMSD with branch-and-bound.
+
+[![CI](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml/badge.svg)](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-### Built With
-
-* [![cmake][cmake]][cmake-url]
-* [![fortran][fortran-shield]][fortran-url]
-* [![python][python-shield]][python-url]
-* [![setuptools][setuptools-shield]][setuptools-url]
-* [![scikit-build][skbuild-shield]][skbuild-url]
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- GETTING STARTED -->
 ## Getting Started
@@ -239,25 +211,5 @@ The solution to the linear assignment problem for estimating the variational low
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/yymmt742/mobbrmsd.svg?style=for-the-badge
-[contributors-url]: https://github.com/yymmt742/mobbrmsd/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/yymmt742/mobbrmsd.svg?style=for-the-badge
-[forks-url]: https://github.com/yymmt742/mobbrmsd/network/members
-[stars-shield]: https://img.shields.io/github/stars/yymmt742/mobbrmsd.svg?style=for-the-badge
-[stars-url]: https://github.com/yymmt742/mobbrmsd/stargazers
-[issues-shield]: https://img.shields.io/github/issues/yymmt742/mobbrmsd.svg?style=for-the-badge
-[issues-url]: https://github.com/yymmt742/mobbrmsd/issues
-[license-shield]: https://img.shields.io/github/license/yymmt742/mobbrmsd.svg?style=for-the-badge
-[license-url]: https://github.com/yymmt742/mobbrmsd/blob/master/LICENSE.txt
 [product-screenshot]: images/screenshot.png
-[cmake]: https://img.shields.io/badge/Cmake-064F8C?style=for-the-badge&logo=cmake&logoColor=EEEEEE
-[cmake-url]: https://cmake.org/
-[fortran-shield]: https://img.shields.io/badge/Fortran-734F96?style=for-the-badge&logo=fortran&logoColor=FFFFFF
-[fortran-url]: https://fortran-lang.org/
-[python-shield]: https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=FFFFFF
-[python-url]: https://www.python.org/
-[setuptools-shield]: https://img.shields.io/badge/setuptools-3775A9?style=for-the-badge&logo=pypi&logoColor=FFFFFF
-[setuptools-url]: https://pypi.org/project/setuptools/
-[skbuild-shield]: https://img.shields.io/badge/skbuild-35495E?style=for-the-badge
-[skbuild-url]: https://scikit-build.readthedocs.io/en/latest/
 
