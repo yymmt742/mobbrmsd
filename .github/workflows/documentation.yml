@@ -1,6 +1,10 @@
 name: Build and Deploy Documentation
 
-on: [push, pull_request]
+on:
+  push:
+    tags:
+      - 'v*'
+
 
 jobs:
   documentation:
@@ -43,3 +47,11 @@ jobs:
       with:
         branch: gh-pages
         folder: doc/api-doc
+
+    - name: Deploy API Documentation
+      uses: JamesIves/github-pages-deploy-action@4.1.0
+      if: github.event_name == 'push' && github.repository == 'yymmt742/mobbrmsd' && ( startsWith( github.ref, 'refs/tags/' ) || github.ref == 'refs/heads/main' )
+      with:
+        branch: gh-pages
+        folder: doc/api-doc
+        commit_message: "From https://github.com/${{ github.repository }}/commit/${{ github.sha }} ${{ github.ref }}"
