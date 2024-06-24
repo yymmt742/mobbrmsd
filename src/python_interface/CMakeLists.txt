@@ -159,6 +159,7 @@ if(SKBUILD)
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_bb.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_mst.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_batch.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/demo_batch_tri.py"
     DESTINATION
     "${CMAKE_INSTALL_PYTHON_LIBDIR}/mobbrmsd")
 

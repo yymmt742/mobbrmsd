@@ -2,6 +2,7 @@ from . import __version__
 from . import demo_cogen
 from . import demo_bb
 from . import demo_batch
+from . import demo_batch_tri
 from . import demo_mst
 import sys
 import numpy
@@ -18,9 +19,10 @@ bar3 = "==========================================="
 demo1 = demo_cogen.title
 demo2 = demo_bb.title
 demo3 = demo_batch.title
-demo4 = demo_mst.title
+demo4 = demo_batch_tri.title
+demo5 = demo_mst.title
 exit_ = "exit"
-opts = (demo1, demo2, demo3, demo4, exit_)
+opts = (demo1, demo2, demo3, demo4, demo5, exit_)
 
 
 def run_demo(demo, read_input, after=None):
@@ -71,6 +73,12 @@ while True:
     elif option == demo3:
         run_demo(demo_batch.main, demo_batch.read_input, after=demo_batch.show_graph)
     elif option == demo4:
+        run_demo(
+            demo_batch_tri.main,
+            demo_batch_tri.read_input,
+            after=demo_batch_tri.show_graph,
+        )
+    elif option == demo5:
         run_demo(demo_mst.main, demo_mst.read_input, after=demo_mst.show_graph)
     elif option == exit_:
         break

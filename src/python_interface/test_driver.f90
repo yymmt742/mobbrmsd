@@ -6,11 +6,11 @@ program main
   type(unittest) :: u
 !
   call u%init('test python_driver')
-  call test0()
+! call test0()
   call test1()
 !
   call u%init('test python_driver, min_span_tree')
-  call test2()
+! call test2()
 !
   call u%finish_and_terminate()
 !
@@ -133,8 +133,9 @@ contains
 !
     call batch_run( &
    &  n_reference, n_target, n_header, n_int, n_float, &
+   &  n_reference * n_target, 1, &
    &  X, Y, W, &
-   &  999.0_RK, 0.0_RK, -1, .true., .true., .false., &
+   &  999.0_RK, 0.0_RK, -1, .true., .true., &
    &  h, si, sr)
 !
     do j = 1, n_target

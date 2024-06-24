@@ -7,7 +7,7 @@ import pprint
 import networkx
 import matplotlib.pyplot as plt
 
-title = "mobbrmsd batch run"
+title = "mobbrmsd triu matrix batch run"
 
 
 def print_ret(i, j, ret):
@@ -51,18 +51,7 @@ def read_input() -> tuple:
                 break
 
         while True:
-            inp = input("    input number of referece structures (default : 5) >> ")
-            if inp == "":
-                inp = "5"
-            if inp[0] == "q" or inp[0] == "Q":
-                exit()
-            elif inp.isdigit:
-                n_reference = int(inp)
-            if n_reference > 1:
-                break
-
-        while True:
-            inp = input("    input number of target structures (default : 10) >> ")
+            inp = input("    input number of structures (default : 10) >> ")
             if inp == "":
                 inp = "10"
             if inp[0] == "q" or inp[0] == "Q":
@@ -72,7 +61,7 @@ def read_input() -> tuple:
             if n_target > 1:
                 break
 
-        if n_mol > 8 or (n_target * n_reference) > 1000:
+        if n_mol > 8 or n_target > 30:
             while True:
                 inp = input(
                     "    This parameter may take time to compute. May this be run ? [Y/n] > "
@@ -85,35 +74,19 @@ def read_input() -> tuple:
         break
 
     print()
-    return {"n_mol": n_mol, "n_reference": n_reference, "n_target": n_target}
+    return {"n_mol": n_mol, "n_target": n_target}
 
 
-def main(
-    n_apm=3,
-    n_mol=6,
-    n_reference=5,
-    n_target=10,
-    sym=((1, 2, 0), (2, 0, 1)),
-    a=0.5,
-    b=1.0,
-):
+def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
     cogen = coord_generator()
     x = numpy.array(
-        [
-            cogen.generate(n_apm, n_mol, a, b).reshape([n_apm * n_mol, 3])
-            for i in range(n_reference)
-        ]
-    )
-    for i in range(n_reference - 1):
-        x[i + 1] = 0.1 * x[i + 1] + 0.9 * x[i]
-    y = numpy.array(
         [
             cogen.generate(n_apm, n_mol, a, b).reshape([n_apm * n_mol, 3])
             for i in range(n_target)
         ]
     )
     for i in range(n_target - 1):
-        y[i + 1] = 0.1 * y[i + 1] + 0.9 * y[i]
+        x[i + 1] = 0.2 * x[i + 1] + 0.8 * x[i]
 
     sep1 = "  ------------------------------------------------------------------------------"
     sep2 = "  ---------------------------------------|--------|-------------------|---------"
@@ -142,7 +115,7 @@ def main(
     print()
 
     mrmsd = mobbrmsd({"n_apm": n_apm, "n_mol": n_mol, "sym": sym})
-    states = mrmsd.batch_run(x, y)
+    states = mrmsd.batch_run(x, verbose=True)
     del mrmsd
 
     print(sep1)

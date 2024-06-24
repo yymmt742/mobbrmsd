@@ -284,15 +284,18 @@ contains
   !| batch parallel run
   subroutine batch_run( &
  &             n_reference, n_target, n_head, n_int, n_float, &
+ &             n_chunk, n_lower, &
  &             X, Y, W, &
  &             cutoff, difflim, maxeval, &
- &             remove_com, sort_by_g, rotate_y, &
+ &             remove_com, sort_by_g, &
  &             header, int_states, float_states)
     integer(kind=IK), intent(in)  :: n_reference
     integer(kind=IK), intent(in)  :: n_target
     integer(kind=IK), intent(in)  :: n_head
     integer(kind=IK), intent(in)  :: n_int
     integer(kind=IK), intent(in)  :: n_float
+    integer(kind=IK), intent(in)  :: n_chunk
+    integer(kind=IK), intent(in)  :: n_lower
     real(kind=RK), intent(in)     :: X(*)
    !! reference coordinate
     real(kind=RK), intent(inout)  :: Y(*)
@@ -304,17 +307,16 @@ contains
     real(kind=RK), intent(in)     :: difflim
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
-    logical, intent(in)           :: rotate_y
     integer(kind=IK), intent(out) :: header(n_head)
-    integer(kind=IK), intent(out) :: int_states(n_int, n_reference, n_target)
-    real(kind=RK), intent(out)    :: float_states(n_float, n_reference, n_target)
+    integer(kind=IK), intent(out) :: int_states(n_int, n_chunk)
+    real(kind=RK), intent(out)    :: float_states(n_float, n_chunk)
     type(mobbrmsd)                :: mob
-    type(mobbrmsd_state)          :: s(n_reference, n_target)
-    integer(kind=IK)              :: i, j
+    type(mobbrmsd_state)          :: s(n_chunk)
+    integer(kind=IK)              :: i
 
     mob = mobbrmsd(blocks)
-    do concurrent(i=1:n_reference, j=1:n_target)
-      s(i, j) = mob%s
+    do concurrent(i=1:n_chunk)
+      s(i) = mob%s
     end do
 
     call mobbrmsd_batch_run( &
@@ -322,15 +324,16 @@ contains
    &       cutoff=cutoff, &
    &       difflim=difflim,&
    &       maxeval=maxeval, &
-   &       rotate_y=rotate_y, &
    &       remove_com=remove_com, &
-   &       sort_by_g=sort_by_g &
+   &       sort_by_g=sort_by_g, &
+   &       n_lower=n_lower, &
+   &       n_upper=n_lower + n_chunk - 1 &
    &     )
 
     header = mob%h%dump()
-    do concurrent(i=1:n_reference, j=1:n_target)
-      int_states(:, i, j) = s(i, j)%dump()
-      float_states(:, i, j) = s(i, j)%dump_real()
+    do concurrent(i=1:n_chunk)
+      int_states(:, i) = s(i)%dump()
+      float_states(:, i) = s(i)%dump_real()
     end do
   end subroutine batch_run
 

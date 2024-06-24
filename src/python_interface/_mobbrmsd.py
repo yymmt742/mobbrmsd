@@ -190,9 +190,8 @@ class mobbrmsd:
         maxeval: int = -1,
         remove_com: bool = True,
         sort_by_g: bool = True,
-        rotate_y: bool = False,
         verbose: bool = False,
-        n_chunk: int = 0,
+        n_chunk: int = 1,
     ) -> list:
 
         if hasattr(self, "ww"):
@@ -206,10 +205,10 @@ class mobbrmsd:
 
             def res(i, j, hret, iret, rret):
                 if i > j:
-                    k = int((i - 1) * (i - 2) / 2) + i + j - 1
+                    k = (i - 1) * (i - 2) // 2 + i + j - 1
                     return mobbrmsd_result(self.driver, hret, iret[k], rret[k])
                 elif i < j:
-                    k = int((j - 1) * (j - 2) / 2) + j + i - 1
+                    k = (j - 1) * (j - 2) // 2 + j + i - 1
                     return mobbrmsd_result(self.driver, hret, iret[k], rret[k])
                 else:
                     return mobbrmsd_result(self.driver, hret, None, None)
@@ -271,34 +270,78 @@ class mobbrmsd:
                 ]
 
         else:
+
+            def res(n_reference, i, j, hret, iret, rret):
+                k = j * n_reference + i
+                return mobbrmsd_result(self.driver, hret, iret[k], rret[k])
+
             y_ = self.varidation_coordinates_2(y)
 
             n_reference = x_.shape[2]
             n_target = y_.shape[2]
-
-            hret, iret, rret = self.driver.batch_run(
-                n_reference,
-                n_target,
-                self.n_header,
-                self.n_int,
-                self.n_float,
-                x_,
-                y_,
-                self.ww,
-                cutoff,
-                difflim,
-                maxeval,
-                remove_com,
-                sort_by_g,
-                rotate_y,
-            )
-
-            return [
-                [mobbrmsd_result(self.driver, hret, ir, rr) for ir, rr in zip(iry, rry)]
-                for iry, rry in zip(
-                    iret.transpose([2, 1, 0]), rret.transpose([2, 1, 0])
+            n_tri = n_reference * n_target
+            n_chunk_ = n_tri if n_chunk < 1 else self.njob * n_chunk
+            if n_tri == n_chunk_:
+                hret, iret, rret = self.driver.batch_run(
+                    n_reference,
+                    n_target,
+                    self.n_header,
+                    self.n_int,
+                    self.n_float,
+                    n_tri,
+                    1,
+                    x_,
+                    y_,
+                    self.ww,
+                    cutoff,
+                    difflim,
+                    maxeval,
+                    remove_com,
+                    sort_by_g,
                 )
-            ]
+                print(rret)
+
+                return [
+                    [
+                        res(n_reference, i, j, hret, iret.T, rret.T)
+                        for j in range(n_target)
+                    ]
+                    for i in range(n_reference)
+                ]
+            else:
+                n_lower = 1
+                nrep = (n_tri + n_chunk_ - 1) // n_chunk_
+                hret = numpy.empty([self.n_header])
+                iret = numpy.empty([n_tri, self.n_int])
+                rret = numpy.empty([n_tri, self.n_float])
+                for i in tqdm(range(nrep)):
+                    l = n_lower - 1
+                    u = min([l + n_chunk_, n_tri])
+                    hret, iret_, rret_ = self.driver.batch_run(
+                        n_reference,
+                        n_target,
+                        self.n_header,
+                        self.n_int,
+                        self.n_float,
+                        min(n_chunk_, n_tri - n_lower + 1),
+                        n_lower,
+                        x_,
+                        y_,
+                        self.ww,
+                        cutoff,
+                        difflim,
+                        maxeval,
+                        remove_com,
+                        sort_by_g,
+                    )
+                    iret[l:u] = iret_.T
+                    rret[l:u] = rret_.T
+                    n_lower += n_chunk_
+
+                return [
+                    [res(n_reference, i, j, hret, iret, rret) for j in range(n_target)]
+                    for i in range(n_reference)
+                ]
 
     def min_span_tree(
         self,
