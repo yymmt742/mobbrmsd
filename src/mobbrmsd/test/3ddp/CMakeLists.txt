@@ -1,0 +1,1 @@
+DIMSPECTESTS(3ddp ${CMAKE_CURRENT_SOURCE_DIR}/../../mobbrmsd_3d 64 32)

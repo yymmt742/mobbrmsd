@@ -17,6 +17,8 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   endif()
 endif()
 
+set(mobbrmsd_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 function(ADDOPTS name real int blas openmp)
   target_compile_options(
     ${name} PRIVATE
@@ -59,7 +61,7 @@ if(UNIX)
 endif()
   target_compile_definitions(${name} PRIVATE -DUSE_REAL${real})
   target_compile_definitions(${name} PRIVATE -DUSE_INT${int})
-  target_include_directories(${name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+  target_include_directories(${name} PRIVATE ${mobbrmsd_INCLUDE_DIR})
   if(blas)
     target_compile_options(${name} PRIVATE ${BLAS_LINKER_FLAGS})
     target_link_libraries(${name} PRIVATE blas)
