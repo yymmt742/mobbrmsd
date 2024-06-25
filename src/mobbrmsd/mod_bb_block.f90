@@ -24,6 +24,7 @@ module mod_bb_block
   implicit none
   private
   public :: bb_block
+  public :: bb_block_init
   public :: bb_block_nmol
   public :: bb_block_natm
   public :: bb_block_molsize
@@ -49,6 +50,7 @@ module mod_bb_block
   public :: bb_block_save_state
   public :: bb_block_swap_y
   public :: bb_block_covmat_add
+  public :: bb_block_destroy
 !
   integer(IK), parameter :: mmap_L = 1
   integer(IK), parameter :: mmap_G = 2
@@ -101,12 +103,11 @@ module mod_bb_block
 !| bb_block<br>
 !  This is mainly used for passing during initialization.
   type bb_block
+    sequence
     integer(IK), allocatable :: q(:)
     !! static integer array
     integer(IK), allocatable :: s(:)
     !! work integer array
-  contains
-    final           :: bb_block_destroy
   end type bb_block
 !
   interface bb_block
@@ -123,12 +124,25 @@ contains
     !! number of atoms per molecule.
     integer(IK), intent(in), optional :: sym(:, :)
     !! symmetric codomains, [[a1,a2,...,am], [b1,b2,...,bm], ...].
-    type(mol_block)         :: b
-    type(c_matrix)          :: c
-    type(f_matrix)          :: f
-    type(tree)              :: t
     type(bb_block)          :: res
-    integer(IK)             :: q(bb_block_HEADER_FIXED_SIZE)
+    call bb_block_init(res, n_apm, n_mol, sym)
+  end function bb_block_new
+!
+!| Constructer
+  pure subroutine bb_block_init(this, n_apm, n_mol, sym)
+    type(bb_block), intent(inout)     :: this
+    !! Self.
+    integer(IK), intent(in)           :: n_apm
+    !! Number of molecules.
+    integer(IK), intent(in)           :: n_mol
+    !! Number of atoms per molecule.
+    integer(IK), intent(in), optional :: sym(:, :)
+    !! Symmetric codomains, [[a1,a2,...,am], [b1,b2,...,bm], ...].
+    type(mol_block)                   :: b
+    type(c_matrix)                    :: c
+    type(f_matrix)                    :: f
+    type(tree)                        :: t
+    integer(IK)                       :: q(bb_block_HEADER_FIXED_SIZE)
     associate ( &
    &  qmol => q_POINTER_TO_Q_MOL, &
    &  qcov => q(INDEX_TO_Q_COV), &
@@ -157,10 +171,10 @@ contains
       wfre = xfre + f_matrix_memsize(f%q)
       xtree = wfre
 !
-      allocate (res%q, source=[q, b%q, c%q, f%q, t%q])
-      allocate (res%s, source=[t%s, c%s])
+      allocate (this%q, source=[q, b%q, c%q, f%q, t%q])
+      allocate (this%s, source=[t%s, c%s])
     end associate
-  end function bb_block_new
+  end subroutine bb_block_init
 !
 !| Returns the memory size array size.
   pure function bb_block_memsize(q) result(res)

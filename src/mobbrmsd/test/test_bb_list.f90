@@ -10,6 +10,11 @@ program main
   type(unittest) :: u
   character(32)  :: carg
   integer(IK)    :: d_
+#ifdef USE_REAL32
+  integer, parameter :: place = 3
+#else
+  integer, parameter :: place = 7
+#endif
 !
   call GET_COMMAND_ARGUMENT(1, value=carg)
   read (carg, *) d_
@@ -34,7 +39,6 @@ program main
   call u%init('test bb_list for (n,M,S)=(40,6,1)')
   call test1(40, 6, 1, [0])
 !
-  stop
   call u%init('test bb_list for {(n,M,S)}={(5,1,1), (5,4,1)}')
   call test2(5, 1, 1, [0], 5, 4, 1, [0])
   call u%init('test bb_list for {(n,M,S)}={(4,2,1), (5,2,1)}')
@@ -65,8 +69,8 @@ contains
     real(RK), allocatable :: W(:)
     integer(IK)           :: i
 !
-    blk(1) = bb_block(n, m, sym=RESHAPE(sym, [n, s - 1]))
-    b = bb_list(blk)
+    call bb_block_init(blk(1), n, m, sym=RESHAPE(sym, [n, s - 1]))
+    call bb_list_init(b, SIZE(blk), blk)
 !
     X = sample(n, m)
     Y = X
@@ -78,8 +82,7 @@ contains
       call bb_list_run(b%q, b%s, w)
       sd = w(bb_list_INDEX_TO_AUTOCORR) + w(bb_list_INDEX_TO_UPPERBOUND) + w(bb_list_INDEX_TO_UPPERBOUND)
       brute = brute_sd(n, m, s, sym, X, Y)
-      print *, sd, brute
-      !call u%assert_almost_equal(sd, brute, 'minrmsd value')
+      call u%assert_almost_equal(sd, brute, 'minrmsd value', place=place)
       Y = 0.5 * Y + 0.5 * sample(n, m)
     end do
 !
@@ -97,9 +100,9 @@ contains
     real(RK)              :: Z(D, n1 * m1 + n2 * m2)
     integer(IK)           :: i
 !
-    blk(1) = bb_block(n1, m1, sym=RESHAPE(sym1, [n1, s1 - 1]))
-    blk(2) = bb_block(n2, m2, sym=RESHAPE(sym2, [n2, s2 - 1]))
-    b = bb_list(blk)
+    call bb_block_init(blk(1), n1, m1, sym=RESHAPE(sym1, [n1, s1 - 1]))
+    call bb_block_init(blk(2), n2, m2, sym=RESHAPE(sym2, [n2, s2 - 1]))
+    call bb_list_init(b, SIZE(blk), blk)
 !
     X1 = sample(n1, m1)
     X2 = sample(n2, m2)
@@ -112,18 +115,18 @@ contains
       real(RK) :: W(bb_list_memsize(b%q)), R(D, D), rxz
       do i = 1, 50
         call bb_list_setup(b%q, b%s, [X1, X2], [Y1, Y2], W)
-        call u%assert(.not. bb_list_is_finished(b%q, b%s), 'is not finished     ')
+        call u%assert(.not. bb_list_is_finished(b%q, b%s), 'is not finished')
         call bb_list_run(b%q, b%s, W)
-        call u%assert(bb_list_is_finished(b%q, b%s), 'is finished         ')
+        call u%assert(bb_list_is_finished(b%q, b%s), 'is finished')
         sd = w(bb_list_INDEX_TO_AUTOCORR) + w(bb_list_INDEX_TO_UPPERBOUND) + w(bb_list_INDEX_TO_UPPERBOUND)
         brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
-        call u%assert_almost_equal(sd, brute, 'minrmsd value       ')
+        call u%assert_almost_equal(sd, brute, 'minrmsd value', place=place)
         Z = RESHAPE([Y1, Y2], SHAPE(Z))
         call centering(SIZE(Z, 2), Z)
         call bb_list_swap_y(b%q, b%s, Z)
         call bb_list_rotation_matrix(b%q, b%s, W, R)
         rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
-        call u%assert_almost_equal(sd, rxz, 'swaped sd vs rotmat ')
+        call u%assert_almost_equal(sd, rxz, 'swaped sd vs rotmat', place=place)
         Y1 = 0.5 * Y1 + 0.5 * sample(n1, m1)
         Y2 = 0.5 * Y2 + 0.5 * sample(n2, m2)
       end do
@@ -141,18 +144,15 @@ contains
     real(RK)              :: Y1(D, n1, m1), Y2(D, n2, m2)
     real(RK)              :: X(D, n1 * m1 + n2 * m2)
     real(RK)              :: Z(D, n1 * m1 + n2 * m2)
-!
-    blk(1) = bb_block(n1, m1, sym=RESHAPE(sym1, [n1, s1 - 1]))
-    blk(2) = bb_block(n2, m2, sym=RESHAPE(sym2, [n2, s2 - 1]))
-    b = bb_list(blk)
-!
+    call bb_block_init(blk(1), n1, m1, sym=RESHAPE(sym1, [n1, s1 - 1]))
+    call bb_block_init(blk(2), n2, m2, sym=RESHAPE(sym2, [n2, s2 - 1]))
+    call bb_list_init(b, SIZE(blk), blk)
     X1 = sample(n1, m1)
     X2 = sample(n2, m2)
     Y1 = sample(n1, m1)
     Y2 = sample(n2, m2)
     X = RESHAPE([X1, X2], SHAPE(X))
     call centering(SIZE(X, 2), X)
-!
     block
       real(RK) :: W(bb_list_memsize(b%q)), R(D, D), rxz
       call bb_list_setup(b%q, b%s, [X1, X2], [Y1, Y2], W)
@@ -164,16 +164,14 @@ contains
       end do
       sd = w(bb_list_INDEX_TO_AUTOCORR) + w(bb_list_INDEX_TO_UPPERBOUND) + w(bb_list_INDEX_TO_UPPERBOUND)
       brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
-      call u%assert_almost_equal(sd, brute, 'minrmsd value       ')
+      call u%assert_almost_equal(sd, brute, 'minrmsd value', place=place)
       Z = RESHAPE([Y1, Y2], SHAPE(Z))
       call centering(SIZE(Z, 2), Z)
       call bb_list_swap_y(b%q, b%s, Z)
       call bb_list_rotation_matrix(b%q, b%s, W, R)
       rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
-      call u%assert_almost_equal(sd, rxz, 'swaped sd vs rotmat ')
+      call u%assert_almost_equal(sd, rxz, 'swaped sd vs rotmat', place=place)
     end block
-!
   end subroutine test3
-!
 end program main
 

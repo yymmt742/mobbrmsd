@@ -7,6 +7,7 @@ module mod_bb_list
   implicit none
   private
   public :: bb_list
+  public :: bb_list_init
   public :: bb_list_memsize
   public :: bb_list_n_block
   public :: bb_list_n_atoms
@@ -16,6 +17,7 @@ module mod_bb_list
   public :: bb_list_swap_y
   public :: bb_list_rotation_matrix
   public :: bb_list_is_finished
+  public :: bb_list_destroy
   public :: bb_list_INDEX_TO_AUTOCORR
   public :: bb_list_INDEX_TO_UPPERBOUND
   public :: bb_list_INDEX_TO_LOWERBOUND
@@ -34,22 +36,14 @@ module mod_bb_list
   integer(IK), parameter :: bb_list_INDEX_TO_LOWERBOUND = 3
   integer(IK), parameter :: bb_list_INDEX_TO_N_EVAL = 4
   integer(IK), parameter :: bb_list_INDEX_TO_LOG_N_COMB = 5
-  integer(IK), parameter :: header_memsize = &
-                          & SIZE([ &
-                          &   bb_list_INDEX_TO_AUTOCORR, &
-                          &   bb_list_INDEX_TO_UPPERBOUND, &
-                          &   bb_list_INDEX_TO_LOWERBOUND, &
-                          &   bb_list_INDEX_TO_N_EVAL, &
-                          &   bb_list_INDEX_TO_LOG_N_COMB &
-                          & ])
+  integer(IK), parameter :: header_memsize = 5
 !| This derived type is mainly used for passing during initialization.
   type bb_list
+    sequence
     integer(IK), allocatable :: q(:)
     !! integer array
     integer(IK), allocatable :: s(:)
     !! work integer array
-  contains
-    final           :: bb_list_destroy
   end type bb_list
 !
 !| Constructer
@@ -59,12 +53,21 @@ module mod_bb_list
 !
 contains
 !| Constructer
-  pure function bb_list_new(blk) result(res)
-    type(bb_block), intent(in) :: blk(:)
+  pure function bb_list_new(n, blk) result(res)
+    integer, intent(in)        :: n
+    type(bb_block), intent(in) :: blk(n)
     type(bb_list)              :: res
-    integer(IK)                :: q(header_size), s(header_sttsize)
-    integer(IK)                :: pq(SIZE(blk)), px(SIZE(blk)), ps(SIZE(blk)), pw(SIZE(blk))
-    integer(IK)                :: i, j, nstat
+    call bb_list_init(res, n, blk)
+  end function bb_list_new
+!
+!| Constructer
+  pure subroutine bb_list_init(this, n, blk)
+    type(bb_list), intent(inout) :: this
+    integer, intent(in)          :: n
+    type(bb_block), intent(in)   :: blk(n)
+    integer(IK)                  :: q(header_size), s(header_sttsize)
+    integer(IK)                  :: pq(n), px(n), ps(n), pw(n)
+    integer(IK)                  :: i, j, nstat
     associate ( &
    &  nb => q(bb_list_NUMBER_OF_SPEACIES), &
    &  sb => s(bb_list_INDEX_TO_SPEACIES) &
@@ -94,10 +97,10 @@ contains
         j = j + bb_block_molsize(blk(i)%q)
       end do
 !
-      allocate (res%q, source=[q, pq, ps, pw, px, [(blk(i)%q, i=1, SIZE(blk))]])
-      allocate (res%s, source=[s, [(-1, i=1, nstat)], [(blk(i)%s, i=1, SIZE(blk))]])
+      allocate (this%q, source=[q, pq, ps, pw, px, [(blk(i)%q, i=1, SIZE(blk))]])
+      allocate (this%s, source=[s, [(-1, i=1, nstat)], [(blk(i)%s, i=1, SIZE(blk))]])
     end associate
-  end function bb_list_new
+  end subroutine bb_list_init
 !
 !| Inquire worksize of f_matrix.
   pure function bb_list_memsize(q) result(res)

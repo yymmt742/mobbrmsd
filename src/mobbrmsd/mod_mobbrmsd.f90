@@ -23,15 +23,6 @@ module mod_mobbrmsd
   public :: mobbrmsd_restart
   public :: mobbrmsd_is_finished
 !
-!| mobbrmsd_input
-  type mobbrmsd_input
-    private
-    type(mol_block_input), allocatable :: blk(:)
-  contains
-    procedure :: add => mobbrmsd_input_add
-    final     :: mobbrmsd_input_destroy
-  end type mobbrmsd_input
-!
 !| mol_block_input (for python interface)
   type mol_block_input
     private
@@ -44,6 +35,15 @@ module mod_mobbrmsd
   contains
     final :: mol_block_input_destroy
   end type mol_block_input
+!
+!| mobbrmsd_input
+  type mobbrmsd_input
+    private
+    type(mol_block_input), allocatable :: blk(:)
+  contains
+    procedure :: add => mobbrmsd_input_add
+    final     :: mobbrmsd_input_destroy
+  end type mobbrmsd_input
 !
 !| mobbrmsd
   type mobbrmsd
@@ -146,21 +146,19 @@ contains
       type(bb_block) :: bbblk(nblock)
       type(bb_list)  :: bblst
       integer(IK)    :: i
-!
       do concurrent(i=1:nblock)
         if (ALLOCATED(blocks(i)%sym)) then
-          bbblk(i) = bb_block(blocks(i)%m, blocks(i)%n, sym=blocks(i)%sym)
+          call bb_block_init(bbblk(i), blocks(i)%m, blocks(i)%n, sym=blocks(i)%sym)
         else
-          bbblk(i) = bb_block(blocks(i)%m, blocks(i)%n)
+          call bb_block_init(bbblk(i), blocks(i)%m, blocks(i)%n)
         end if
       end do
-!
-      bblst = bb_list(bbblk)
+      bblst = bb_list(nblock, bbblk)
       res%h = mobbrmsd_header(bblst%q, bblst%s)
       res%s = mobbrmsd_state(res%h)
-
+      call bb_block_destroy(bbblk)
+      call bb_list_destroy(bblst)
     end block
-!
   end function mobbrmsd_new_from_block
 !
 !| run mobbrmsd
