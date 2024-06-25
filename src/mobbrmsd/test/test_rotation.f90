@@ -39,9 +39,11 @@ program main
 contains
   subroutine test1(n, n_test)
     integer, intent(in)   :: n, n_test
-    real(RK)              :: Y(D, n), X(D, n), cov(D, D), g
+    real(RK)              :: Y(D, n), X(D, n)
+    real(RK)              :: cov(D, D), g
     real(RK)              :: rot(D, D), krot(D, D), sd, kd, sm
     real(RK), allocatable :: w(:)
+    character(4)          :: ct
     integer               :: i
 !
     allocate (w(MAX(rotation_worksize(), sdmin_worksize())))
@@ -49,19 +51,20 @@ contains
     X = sample(n)
 !
     do i = 1, N_TEST
+      write (ct, '(I0)') i
       rot = SO()
       Y = MATMUL(rot, X)
       g = SUM(X * X) + SUM(Y * Y)
       cov = MATMUL(X, TRANSPOSE(Y))
 !
       call estimate_rotation(g, cov, krot, w)
-      call z%assert_is_zero([X - MATMUL(krot, Y)], 'X = YR   ', place=3)
+      call z%assert_is_zero([X - MATMUL(krot, Y)], 'X = YR '//ct, place=3)
 !
-      if (D <= n) call z%assert_is_eye(MATMUL(rot, krot), 'S@RT = I ', place=place)
-      call z%assert_is_eye(MATMUL(krot, TRANSPOSE(krot)), 'R@RT = I ', place=place)
+      if (D <= n) call z%assert_is_eye(MATMUL(rot, krot), 'S@RT = I '//ct, place=place)
+      call z%assert_is_eye(MATMUL(krot, TRANSPOSE(krot)), 'R@RT = I '//ct, place=place)
 !
       call estimate_sdmin(g, cov, w)
-      call z%assert_is_zero(w(1), 'sdmin=0  ', place=place)
+      call z%assert_is_zero(w(1), 'sdmin = 0 '//ct, place=place)
     end do
 !
     do i = 1, N_TEST

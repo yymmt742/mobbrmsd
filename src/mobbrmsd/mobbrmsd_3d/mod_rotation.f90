@@ -257,6 +257,9 @@ contains
     real(RK), intent(in)    :: cov(*)
     !! target d*n array
     real(R8), intent(inout) :: w(*)
+    integer(IK), parameter  :: c59 = 2, c86 = 3
+    integer(IK), parameter  :: c83 = 3, c29 = 4
+    integer(IK), parameter  :: c26 = 4, c53 = 5
     integer(IK), parameter  :: k1 = 2, k0 = 3, k2 = 4
     integer(IK), parameter  :: xk = 1, s = 5, xx = 6
     integer(IK), parameter  :: a = 8, f = 7, df = 8, gt = 9
@@ -271,19 +274,41 @@ contains
 !
 !   K1 = - 8 det|R|
 !&<
-    w(k1) = - cov(1) * (cov(5) * cov(9) - cov(8) * cov(6)) &
-   &        - cov(4) * (cov(8) * cov(3) - cov(2) * cov(9)) &
-   &        - cov(7) * (cov(2) * cov(6) - cov(5) * cov(3))
+    w(c59) = cov(5) * cov(9)
+    w(c86) = cov(8) * cov(6)
+    w(c59) = cov(1) * (w(c59) - w(c86))
+    w(c83) = cov(8) * cov(3)
+    w(c29) = cov(2) * cov(9)
+    w(c83) = cov(4) * (w(c83) - w(c29))
+    w(c26) = cov(2) * cov(6)
+    w(c53) = cov(5) * cov(3)
+    w(c26) = cov(7) * (w(c26) - w(c53))
+    w(k1) = -w(c59) - w(c83) - w(c26)
+!   w(k1) = - cov(1) * (cov(5) * cov(9) - cov(8) * cov(6)) &
+!  &        - cov(4) * (cov(8) * cov(3) - cov(2) * cov(9)) &
+!  &        - cov(7) * (cov(2) * cov(6) - cov(5) * cov(3))
     w(k1) = EIGHT * w(k1)
 !>&
 !   D = RR^T
 !
-    w(d11) = cov(1) * cov(1) + cov(2) * cov(2) + cov(3) * cov(3)
-    w(d22) = cov(4) * cov(4) + cov(5) * cov(5) + cov(6) * cov(6)
-    w(d33) = cov(7) * cov(7) + cov(8) * cov(8) + cov(9) * cov(9)
-    w(d21) = cov(4) * cov(1) + cov(5) * cov(2) + cov(6) * cov(3)
-    w(d31) = cov(7) * cov(1) + cov(8) * cov(2) + cov(9) * cov(3)
-    w(d32) = cov(4) * cov(7) + cov(5) * cov(8) + cov(6) * cov(9)
+    w(d11) = cov(1) * cov(1)
+    w(d11) = w(d11) + cov(2) * cov(2)
+    w(d11) = w(d11) + cov(3) * cov(3)
+    w(d22) = cov(4) * cov(4)
+    w(d22) = w(d22) + cov(5) * cov(5)
+    w(d22) = w(d22) + cov(6) * cov(6)
+    w(d33) = cov(7) * cov(7)
+    w(d33) = w(d33) + cov(8) * cov(8)
+    w(d33) = w(d33) + cov(9) * cov(9)
+    w(d21) = cov(4) * cov(1)
+    w(d21) = w(d21) + cov(5) * cov(2)
+    w(d21) = w(d21) + cov(6) * cov(3)
+    w(d31) = cov(7) * cov(1)
+    w(d31) = w(d31) + cov(8) * cov(2)
+    w(d31) = w(d31) + cov(9) * cov(3)
+    w(d32) = cov(4) * cov(7)
+    w(d32) = w(d32) + cov(5) * cov(8)
+    w(d32) = w(d32) + cov(6) * cov(9)
 !
 !   A1 = D11 * (D22+D33) + D22 * D33 - D12**2 - D13**2 - D23**2
 !   A2 = tr[D]
