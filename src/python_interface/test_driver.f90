@@ -6,11 +6,11 @@ program main
   type(unittest) :: u
 !
   call u%init('test python_driver')
-! call test0()
+  call test0()
   call test1()
 !
   call u%init('test python_driver, min_span_tree')
-! call test2()
+  call test2()
 !
   call u%finish_and_terminate()
 !
