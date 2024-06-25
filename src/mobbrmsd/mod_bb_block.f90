@@ -708,7 +708,7 @@ contains
        &  s(scov), &
        &  jper, &
        &  iper)
-        imap = tree_sequence_to_mapping(q(qtree), z)
+        call tree_sequence_to_mapping(q(qtree), z, imap)
         call swap_y(nmol, napm, iper, imap, q(qmol), Y)
       end block
     end associate
@@ -751,9 +751,9 @@ contains
       block
         integer(IK) :: i, iper(nmol), imap(nmol)
         call tree_sequence_to_permutation(q(qtree), z, iper)
-        imap = tree_sequence_to_mapping(q(qtree), z) + 1
+        call tree_sequence_to_mapping(q(qtree), z, imap)
         do i = 1, nmol
-          call c_matrix_add(q(qcov), i, iper(i), imap(i), W(xcov), G, C)
+          call c_matrix_add(q(qcov), i, iper(i), imap(i) + 1, W(xcov), G, C)
         end do
       end block
     end associate

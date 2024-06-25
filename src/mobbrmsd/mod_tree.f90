@@ -336,28 +336,32 @@ contains
   end subroutine tree_sequence_to_permutation
 !
 !| Returns current mapping indices.
-  pure function tree_current_mapping(q, s) result(res)
-    integer(IK), intent(in) :: q(*)
+  pure subroutine tree_current_mapping(q, s, res)
+    integer(IK), intent(in)    :: q(*)
 !!  header
-    integer(IK), intent(in) :: s(*)
+    integer(IK), intent(in)    :: s(*)
 !!  state
-    integer(IK)             :: i, res(q(qd))
+    integer(IK), intent(inout) :: res(*)
+!!  mapping sequence
+    integer(IK)             :: i
     do concurrent(i=1:q(qd))
       res(i) = MODULO(queue_state(s(sr), i), q(qs))
     end do
-  end function tree_current_mapping
+  end subroutine tree_current_mapping
 !
 !| Convert sequence to mapping.
-  pure function tree_sequence_to_mapping(q, z) result(res)
-    integer(IK), intent(in) :: q(*)
+  pure subroutine tree_sequence_to_mapping(q, z, res)
+    integer(IK), intent(in)    :: q(*)
 !!  header
-    integer(IK), intent(in) :: z(*)
-!!  state
-    integer(IK)             :: i, res(q(qd))
+    integer(IK), intent(in)    :: z(*)
+!!  saved state
+    integer(IK), intent(inout) :: res(*)
+!!  mapping sequence
+    integer(IK)                :: i
     do concurrent(i=1:q(qd))
       res(i) = MODULO(z(i), q(qs))
     end do
-  end function tree_sequence_to_mapping
+  end subroutine tree_sequence_to_mapping
 !
 !| Expand current node.
   pure subroutine tree_expand(q, s)
