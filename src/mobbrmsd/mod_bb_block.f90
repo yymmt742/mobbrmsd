@@ -677,7 +677,7 @@ contains
    &  qmol => q_POINTER_TO_Q_MOL &
    &  )
       nmol = mol_block_nmol(q(qmol))
-      z(:nmol) = tree_current_sequence(q(qtree), s(stree))
+      call tree_current_sequence(q(qtree), s(stree), z)
     end associate
   end subroutine bb_block_save_state
 !

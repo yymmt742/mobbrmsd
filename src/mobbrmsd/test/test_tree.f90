@@ -16,6 +16,7 @@ contains
   subroutine test1()
     type(tree)            :: t
     real(RK), allocatable :: w(:)
+    integer               :: s(4)
     integer(IK)           :: i
 !
 !   0    1  o
@@ -95,12 +96,14 @@ contains
     call u%assert_equal(tree_node_pointer(t%q, t%s, 0, 0), 19, 'tree_node_pointer   ')
     call u%assert_equal(tree_node_pointer(t%q, t%s, 0, 1), 20, 'tree_node_pointer   ')
 !
-    call u%assert_equal(tree_current_sequence(t%q, t%s), [7, 5, 3, 1], 'current_sequence    ')
+    call tree_current_sequence(t%q, t%s, s)
+    call u%assert_equal(s, [7, 5, 3, 1], 'current_sequence    ')
     call u%assert_equal(tree_current_permutation(t%q, t%s), [4, 3, 2, 1], 'current_permutation ')
     call u%assert_equal(tree_current_mapping(t%q, t%s), [1, 1, 1, 1], 'current_mapping     ')
 !
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
-    call u%assert_equal(tree_current_sequence(t%q, t%s), [7, 5, 3, 0], 'current_sequence    ')
+    call tree_current_sequence(t%q, t%s, s)
+    call u%assert_equal(s, [7, 5, 3, 0], 'current_sequence    ')
     call u%assert_equal(tree_current_permutation(t%q, t%s), [4, 3, 2, 1], 'current_permutation ')
     call u%assert_equal(tree_current_mapping(t%q, t%s), [1, 1, 1, 0], 'current_mapping     ')
 !
@@ -108,7 +111,8 @@ contains
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
     call tree_expand(t%q, t%s)
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
-    call u%assert_equal(tree_current_sequence(t%q, t%s), [7, 5, 2, 1], 'current_sequence    ')
+    call tree_current_sequence(t%q, t%s, s)
+    call u%assert_equal(s, [7, 5, 2, 1], 'current_sequence    ')
     call u%assert_equal(tree_current_permutation(t%q, t%s), [4, 3, 2, 1], 'current_permutation ')
     call u%assert_equal(tree_current_mapping(t%q, t%s), [1, 1, 0, 1], 'current_mapping     ')
 !
@@ -116,7 +120,8 @@ contains
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
     call tree_expand(t%q, t%s)
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
-    call u%assert_equal(tree_current_sequence(t%q, t%s), [7, 5, 1, 1], 'current_sequence    ')
+    call tree_current_sequence(t%q, t%s, s)
+    call u%assert_equal(s, [7, 5, 1, 1], 'current_sequence    ')
     call u%assert_equal(tree_current_permutation(t%q, t%s), [4, 3, 1, 2], 'current_permutation ')
     call u%assert_equal(tree_current_mapping(t%q, t%s), [1, 1, 1, 1], 'current_mapping     ')
 !
@@ -124,7 +129,8 @@ contains
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
     call tree_expand(t%q, t%s)
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
-    call u%assert_equal(tree_current_sequence(t%q, t%s), [7, 5, 0, 1], 'current_sequence    ')
+    call tree_current_sequence(t%q, t%s, s)
+    call u%assert_equal(s, [7, 5, 0, 1], 'current_sequence    ')
     call u%assert_equal(tree_current_permutation(t%q, t%s), [4, 3, 1, 2], 'current_permutation ')
     call u%assert_equal(tree_current_mapping(t%q, t%s), [1, 1, 0, 1], 'current_mapping     ')
 !
@@ -133,7 +139,8 @@ contains
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
     call tree_expand(t%q, t%s)
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
-    call u%assert_equal(tree_current_sequence(t%q, t%s), [7, 4, 3, 1], 'current_sequence    ')
+    call tree_current_sequence(t%q, t%s, s)
+    call u%assert_equal(s, [7, 4, 3, 1], 'current_sequence    ')
     call u%assert_equal(tree_current_permutation(t%q, t%s), [4, 3, 2, 1], 'current_permutation ')
     call u%assert_equal(tree_current_mapping(t%q, t%s), [1, 0, 1, 1], 'current_mapping     ')
 !

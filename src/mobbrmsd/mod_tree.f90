@@ -271,16 +271,18 @@ contains
   end function tree_node_pointer
 !
 !| Returns current sequence indices.
-  pure function tree_current_sequence(q, s) result(res)
-    integer(IK), intent(in) :: q(*)
+  pure subroutine tree_current_sequence(q, s, res)
+    integer(IK), intent(in)    :: q(*)
 !!  header
-    integer(IK), intent(in) :: s(*)
+    integer(IK), intent(in)    :: s(*)
 !!  state
-    integer(IK)             :: i, res(q(qd))
+    integer(IK), intent(inout) :: res(q(qd))
+!!  result
+    integer(IK)                :: i
     do concurrent(i=1:q(qd))
       res(i) = queue_state(s(sr), i)
     end do
-  end function tree_current_sequence
+  end subroutine tree_current_sequence
 !
 !| Returns current permutation indices.
   pure function tree_current_permutation(q, s) result(res)
