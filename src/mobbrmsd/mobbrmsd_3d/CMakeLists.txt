@@ -1,205 +1,117 @@
-set(LIB_MOD_3D_DIR ${CMAKE_CURRENT_BINARY_DIR}/mod_files)
-if(NOT EXISTS "${LIB_MOD_3D_DIR}")
-  make_directory("${LIB_MOD_3D_DIR}")
+set(LIB_MOD_3DDP_DIR ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_3ddp/mod_files)
+if(NOT EXISTS "${LIB_MOD_3DDP_DIR}")
+  make_directory("${LIB_MOD_3DDP_DIR}")
+endif()
+set(LIB_MOD_3DSP_DIR ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_2dsp/mod_files)
+if(NOT EXISTS "${LIB_MOD_GDSP_DIR}")
+  make_directory("${LIB_MOD_GDSP_DIR}")
 endif()
 
-set(TARGET_3D ${PROJECT_NAME}_3d)
-add_library(${TARGET_3D} OBJECT)
+list(APPEND sources
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_header.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_state.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_batch_run.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_mst.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
+  )
 
-if(REAL)
-  message(STATUS "Configuring build for ${REAL}-bit reals")
-  target_compile_definitions(${TARGET_3D} PUBLIC REAL${REAL})
-endif()
-
-if(INT)
-  message(STATUS "Configuring build for ${INT}-bit integers")
-  target_compile_definitions(${TARGET_3D} PUBLIC INT${INT})
-endif()
-
-target_sources(
-  ${TARGET_3D}
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_header.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_state.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_batch_run.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_mst.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90)
-
-target_include_directories(${TARGET_3D}
-                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-target_link_libraries(${TARGET_3D} PRIVATE ${OpenMP_Fortran_LIB_NAMES})
-set_target_properties(${TARGET_3D} PROPERTIES Fortran_MODULE_DIRECTORY
-                                              ${LIB_MOD_3D_DIR})
-
-add_library(${TARGET_3D}_shared SHARED $<TARGET_OBJECTS:mobbrmsd_3d>)
-set_target_properties(${TARGET_3D}_shared PROPERTIES OUTPUT_NAME ${TARGET_3D})
-target_link_libraries(${TARGET_3D}_shared PRIVATE ${OpenMP_Fortran_LIB_NAMES})
-
-add_library(${TARGET_3D}_static STATIC $<TARGET_OBJECTS:mobbrmsd_3d>)
-set_target_properties(${TARGET_3D}_static PROPERTIES OUTPUT_NAME ${TARGET_3D})
-target_link_libraries(${TARGET_3D}_static PRIVATE ${OpenMP_Fortran_LIB_NAMES})
-
+add_library(${PROJECT_NAME}_3ddp_shared SHARED ${sources})
+ADDOPTS(${PROJECT_NAME}_3ddp_shared 64 32 "" 1)
+add_library(${PROJECT_NAME}_3ddp_static STATIC ${sources})
+ADDOPTS(${PROJECT_NAME}_3ddp_static 64 32 "" 1)
+set_target_properties(${PROJECT_NAME}_3ddp_shared PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_3DDP_DIR})
+set_target_properties(${PROJECT_NAME}_3ddp_static PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_3DDP_DIR})
 install(
-  TARGETS ${TARGET_3D}_static
-  EXPORT ${TARGET_3D}-export
-  ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_3D}/lib"
-  LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_3D}/lib")
+  TARGETS ${PROJECT_NAME}_3ddp_shared
+  EXPORT ${PROJECT_NAME}-export
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_3ddp/lib"
+  LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_3ddp/lib"
+  )
 install(
-  TARGETS ${TARGET_3D}_shared
-  EXPORT ${TARGET_3D}-export
-  ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_3D}/lib"
-  LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_3D}/lib")
+  TARGETS ${PROJECT_NAME}_3ddp_static
+  EXPORT ${PROJECT_NAME}-export
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_3ddp/lib"
+  LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_3ddp/lib"
+  )
 install(
-  EXPORT ${TARGET_3D}-export
-  NAMESPACE ${TARGET_3D}::
-  DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_3D}")
-install(
-  EXPORT ${TARGET_3D}-export
-  FILE ${TARGET_3D}-config.cmake
-  DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_3D}")
-
-install(DIRECTORY ${LIB_MOD_DIR}
-        DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_3D}")
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include
-        DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_3D}")
+  EXPORT ${PROJECT_NAME}-export
+  NAMESPACE ${PROJECT_NAME}_3ddp::
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_3ddp")
+install(DIRECTORY ${LIB_MOD_3DDP_DIR}
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_3ddp")
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
-  add_executable(test_gemm_3d)
-  target_sources(
-    test_gemm_3d
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_gemm.f90)
-  target_include_directories(test_gemm_3d
-                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_link_libraries(test_gemm_3d PRIVATE unittest)
-  add_test(NAME test_gemm_3d COMMAND test_gemm_3d)
-
-  add_executable(test_covdot_3d)
-  target_sources(
-    test_covdot_3d
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_covdot.f90)
-  target_include_directories(test_covdot_3d
-                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_link_libraries(test_covdot_3d PRIVATE unittest)
-  add_test(NAME test_covdot_3d COMMAND test_covdot_3d)
-
-  add_executable(test_rotation_3d)
-  target_sources(
-    test_rotation_3d
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_rotation.f90)
-  target_include_directories(test_rotation_3d
-                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_link_libraries(test_rotation_3d PRIVATE unittest)
-  target_link_libraries(test_rotation_3d PRIVATE blas)
-  target_link_libraries(test_rotation_3d PRIVATE lapack)
-  add_test(NAME test_rotation_3d COMMAND test_rotation_3d)
-
-  add_executable(test_c_matrix_3d)
-  target_sources(
-    test_c_matrix_3d
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_c_matrix.f90)
-  target_include_directories(test_c_matrix_3d
-                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_link_libraries(test_c_matrix_3d PRIVATE unittest)
-  add_test(NAME test_c_matrix_3d COMMAND test_c_matrix_3d)
-
-  add_executable(test_bb_block_3d)
-  target_sources(
-    test_bb_block_3d
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_bb_block.f90)
-  target_include_directories(test_bb_block_3d
-                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_link_libraries(test_bb_block_3d PRIVATE unittest)
-  add_test(NAME test_bb_block_3d COMMAND test_bb_block_3d)
-
-  add_executable(test_bb_list_3d)
-  target_sources(
-    test_bb_list_3d
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_bb_list.f90)
-  target_link_libraries(test_bb_list_3d PRIVATE unittest)
-  target_include_directories(test_bb_list_3d
-                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  add_test(NAME test_bb_list_3d COMMAND test_bb_list_3d 0)
-
-  add_executable(test_mobbrmsd_3d)
-  target_sources(
-    test_mobbrmsd_3d
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_header.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_state.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_batch_run.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_mst.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_mobbrmsd.f90)
-  target_include_directories(test_mobbrmsd_3d
-                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_link_libraries(test_mobbrmsd_3d PRIVATE unittest)
-  target_link_libraries(test_mobbrmsd_3d PRIVATE ${OpenMP_Fortran_LIB_NAMES})
-  add_test(NAME test_mobbrmsd_3d COMMAND test_mobbrmsd_3d 0)
+  set(sources "")
+  list(APPEND sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+    )
+  ADDTEST(test_covdot_3ddp 64 32 1 "" ""
+    ${sources}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_covdot.f90
+    )
+  list(APPEND sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
+    )
+  ADDTEST(test_rotation_3ddp 64 32 1 "" ""
+    ${sources}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_rotation.f90
+    )
+  list(APPEND sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
+    )
+  ADDTEST(test_c_matrix_3ddp 64 32 1 "" ""
+    ${sources}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_c_matrix.f90
+    )
+  list(APPEND sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
+    )
+  ADDTEST(test_f_matrix_3ddp 64 32 1 "" ""
+    ${sources}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_f_matrix.f90
+    )
+  list(APPEND sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
+    )
+  ADDTEST(test_bb_block_3ddp 64 32 1 "" ""
+    ${sources}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_bb_block.f90
+    )
+  list(APPEND sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
+    )
+  ADDTEST(test_bb_list_3ddp 64 32 1 "" 4
+    ${sources}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_bb_list.f90
+    )
+  list(APPEND sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_header.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_state.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_mst.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_batch_run.f90
+    )
+  ADDTEST(test_mobbrmsd_3ddp 64 32 1 1 4
+    ${sources}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_mobbrmsd.f90
+    )
 endif()

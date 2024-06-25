@@ -178,7 +178,7 @@ contains
     integer(IK), intent(in) :: d, n
     real(RK), intent(in)    :: X(d, *), Y(d, *)
     real(RK), intent(inout) :: C(d, d)
-#ifdef REAL32
+#ifdef USE_REAL32
     call SGEMM('N', 'T', d, d, n, ONE, Y, d, X, d, ZERO, C, D)
 #else
     call DGEMM('N', 'T', d, d, n, ONE, Y, d, X, d, ZERO, C, D)

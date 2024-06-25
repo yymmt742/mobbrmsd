@@ -89,7 +89,7 @@ contains
   pure elemental function worksize_Kabsch() result(res)
     real(RK)    :: w(1)
     integer(IK) :: res, info
-#ifdef REAL32
+#ifdef USE_REAL32
     call SGESVD('A', 'A', D, D, w, D, w, w, D, w, D, w, -1, info)
 #else
     call DGESVD('A', 'A', D, D, w, D, w, w, D, w, D, w, -1, info)
@@ -112,7 +112,7 @@ contains
     vt = u + DD
     s = vt + DD
     iw = s + D
-#ifdef REAL32
+#ifdef USE_REAL32
     call SGESVD('A', 'A', D, D, w(m), D, w(s), w(u), D, w(vt), D, w(iw), -1, info)
     lw = NINT(w(iw))
 !

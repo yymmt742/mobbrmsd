@@ -439,7 +439,7 @@ contains
 !
       nsym = tree_n_sym(q(qtree))
       nper = tree_n_perm(q(qtree), s(stree))
-      perm = tree_current_permutation(q(qtree), s(stree))
+      call tree_current_permutation(q(qtree), s(stree), perm)
       pw = px + nsym
 !
       do iper = 1, nper
@@ -701,11 +701,12 @@ contains
       nmol = mol_block_nmol(q(qmol))
       napm = mol_block_napm(q(qmol))
       block
-        integer(IK) :: iper(nmol), imap(nmol)
+        integer(IK) :: jper(nmol), iper(nmol), imap(nmol)
+        call tree_sequence_to_permutation(q(qtree), z, jper)
         call c_matrix_swap_indices( &
        &  q(qcov), &
        &  s(scov), &
-       &  tree_sequence_to_permutation(q(qtree), z), &
+       &  jper, &
        &  iper)
         imap = tree_sequence_to_mapping(q(qtree), z)
         call swap_y(nmol, napm, iper, imap, q(qmol), Y)
@@ -749,7 +750,7 @@ contains
       nmol = mol_block_nmol(q(qmol))
       block
         integer(IK) :: i, iper(nmol), imap(nmol)
-        iper = tree_sequence_to_permutation(q(qtree), z)
+        call tree_sequence_to_permutation(q(qtree), z, iper)
         imap = tree_sequence_to_mapping(q(qtree), z) + 1
         do i = 1, nmol
           call c_matrix_add(q(qcov), i, iper(i), imap(i), W(xcov), G, C)

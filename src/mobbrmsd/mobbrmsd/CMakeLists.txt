@@ -1,240 +1,117 @@
-set(LIB_MOD_GD_DIR ${CMAKE_CURRENT_BINARY_DIR}/mod_files)
-if(NOT EXISTS "${LIB_MOD_GD_DIR}")
-  make_directory("${LIB_MOD_GD_DIR}")
+set(LIB_MOD_GDDP_DIR ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_gddp/mod_files)
+if(NOT EXISTS "${LIB_MOD_GDDP_DIR}")
+  make_directory("${LIB_MOD_GDDP_DIR}")
+endif()
+set(LIB_MOD_GDSP_DIR ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_gdsp/mod_files)
+if(NOT EXISTS "${LIB_MOD_GDSP_DIR}")
+  make_directory("${LIB_MOD_GDSP_DIR}")
 endif()
 
-set(TARGET_GD ${PROJECT_NAME})
-add_library(${TARGET_GD} OBJECT)
+list(APPEND sources
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_header.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_state.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_batch_run.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_mst.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
+  )
 
-if(REAL)
-  message(STATUS "Configuring build for ${REAL}-bit reals")
-  target_compile_definitions(${TARGET_GD} PUBLIC REAL${REAL})
-endif()
-
-if(INT)
-  message(STATUS "Configuring build for ${INT}-bit integers")
-  target_compile_definitions(${TARGET_GD} PUBLIC INT${INT})
-endif()
-
-target_sources(
-  ${TARGET_GD}
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_header.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_state.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_batch_run.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_mst.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-          ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90)
-
-target_include_directories(${TARGET_GD}
-                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-target_link_libraries(${TARGET_GD} PRIVATE blas)
-target_link_libraries(${TARGET_GD} PRIVATE lapack)
-target_link_libraries(${TARGET_GD} PRIVATE ${OpenMP_Fortran_LIB_NAMES})
-set_target_properties(${TARGET_GD} PROPERTIES Fortran_MODULE_DIRECTORY
-                                              ${LIB_MOD_GD_DIR})
-
-add_library(${TARGET_GD}_shared SHARED $<TARGET_OBJECTS:mobbrmsd>)
-set_target_properties(${TARGET_GD}_shared PROPERTIES OUTPUT_NAME ${TARGET_GD})
-target_link_libraries(${TARGET_GD}_shared PRIVATE blas)
-target_link_libraries(${TARGET_GD}_shared PRIVATE lapack)
-target_link_libraries(${TARGET_GD}_shared PRIVATE ${OpenMP_Fortran_LIB_NAMES})
-
-add_library(${TARGET_GD}_static STATIC $<TARGET_OBJECTS:mobbrmsd>)
-set_target_properties(${TARGET_GD}_static PROPERTIES OUTPUT_NAME ${TARGET_GD})
-target_link_libraries(${TARGET_GD}_static PRIVATE blas)
-target_link_libraries(${TARGET_GD}_static PRIVATE lapack)
-target_link_libraries(${TARGET_GD}_static PRIVATE ${OpenMP_Fortran_LIB_NAMES})
-
+add_library(${PROJECT_NAME}_gddp_shared SHARED ${sources})
+ADDOPTS(${PROJECT_NAME}_gddp_shared 64 32 1 1)
+add_library(${PROJECT_NAME}_gddp_static STATIC ${sources})
+ADDOPTS(${PROJECT_NAME}_gddp_static 64 32 1 1)
+set_target_properties(${PROJECT_NAME}_gddp_shared PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_GDDP_DIR})
+set_target_properties(${PROJECT_NAME}_gddp_static PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_GDDP_DIR})
 install(
-  TARGETS ${TARGET_GD}_static
-  EXPORT ${TARGET_GD}-export
-  ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_GD}/lib"
-  LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_GD}/lib")
+  TARGETS ${PROJECT_NAME}_gddp_shared
+  EXPORT ${PROJECT_NAME}-export
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_gddp/lib"
+  LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_gddp/lib"
+  )
 install(
-  TARGETS ${TARGET_GD}_shared
-  EXPORT ${TARGET_GD}-export
-  ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_GD}/lib"
-  LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_GD}/lib")
+  TARGETS ${PROJECT_NAME}_gddp_static
+  EXPORT ${PROJECT_NAME}-export
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_gddp/lib"
+  LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_gddp/lib"
+  )
 install(
-  EXPORT ${TARGET_GD}-export
-  NAMESPACE ${TARGET_GD}::
-  DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_GD}")
-install(
-  EXPORT ${TARGET_GD}-export
-  FILE ${TARGET_GD}-config.cmake
-  DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_GD}")
-
-install(DIRECTORY ${LIB_MOD_DIR}
-        DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_GD}")
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include
-        DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${TARGET_GD}")
+  EXPORT ${PROJECT_NAME}-export
+  NAMESPACE ${PROJECT_NAME}::
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}")
+install(DIRECTORY ${LIB_MOD_GDDP_DIR}
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}")
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
-
-# find_package(purelapack REQUIRED)
-
-  add_executable(test_covdot)
-  target_sources(
-    test_covdot
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_covdot.f90)
-  target_include_directories(test_covdot
-                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-# target_link_libraries(test_covdot PRIVATE purelapack)
-  target_link_libraries(test_covdot PRIVATE blas)
-  target_link_libraries(test_covdot PRIVATE lapack)
-  target_link_libraries(test_covdot PRIVATE unittest)
-  add_test(NAME test_covdot COMMAND test_covdot)
-
-  add_executable(test_rotation)
-  target_sources(
-    test_rotation
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_rotation.f90)
-  target_include_directories(test_rotation
-                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_link_libraries(test_rotation PRIVATE unittest)
-# target_link_libraries(test_rotation PRIVATE purelapack)
-  target_link_libraries(test_rotation PRIVATE blas)
-  target_link_libraries(test_rotation PRIVATE lapack)
-  add_test(NAME test_rotation COMMAND test_rotation)
-
-  add_executable(test_c_matrix)
-  target_sources(
-    test_c_matrix
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_c_matrix.f90)
-  target_include_directories(test_c_matrix
-                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_link_libraries(test_c_matrix PRIVATE unittest)
-# target_link_libraries(test_c_matrix PRIVATE purelapack)
-  target_link_libraries(test_c_matrix PRIVATE blas)
-  target_link_libraries(test_c_matrix PRIVATE lapack)
-  add_test(NAME test_c_matrix COMMAND test_c_matrix)
-
-  add_executable(test_f_matrix)
-  target_sources(
-    test_f_matrix
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_f_matrix.f90)
-  target_include_directories(test_f_matrix
-                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_link_libraries(test_f_matrix PRIVATE unittest)
-# target_link_libraries(test_f_matrix PRIVATE purelapack)
-  target_link_libraries(test_f_matrix PRIVATE blas)
-  target_link_libraries(test_f_matrix PRIVATE lapack)
-  add_test(NAME test_f_matrix COMMAND test_f_matrix)
-
-  add_executable(test_bb_block)
-  target_sources(
-    test_bb_block
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_bb_block.f90)
-  target_include_directories(test_bb_block
-                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_link_libraries(test_bb_block PRIVATE unittest)
-# target_link_libraries(test_bb_block PRIVATE purelapack)
-  target_link_libraries(test_bb_block PRIVATE blas)
-  target_link_libraries(test_bb_block PRIVATE lapack)
-  add_test(NAME test_bb_block COMMAND test_bb_block)
-
-  add_executable(test_bb_list)
-  target_sources(
-    test_bb_list
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_bb_list.f90)
-  target_include_directories(test_bb_list
-                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_link_libraries(test_bb_list PRIVATE unittest)
-# target_link_libraries(test_bb_list PRIVATE purelapack)
-  target_link_libraries(test_bb_list PRIVATE blas)
-  target_link_libraries(test_bb_list PRIVATE lapack)
-  add_test(NAME test_bb_list COMMAND test_bb_list 4)
-
-  add_executable(test_mobbrmsd)
-  target_sources(
-    test_mobbrmsd
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_header.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_state.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_mst.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_batch_run.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
-            ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_mobbrmsd.f90)
-  target_include_directories(test_mobbrmsd
-                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-  target_link_libraries(test_mobbrmsd PRIVATE unittest)
-  # target_link_libraries(test_mobbrmsd PRIVATE purelapack)
-  target_link_libraries(test_mobbrmsd PRIVATE blas)
-  target_link_libraries(test_mobbrmsd PRIVATE lapack)
-  target_link_libraries(test_mobbrmsd PRIVATE ${OpenMP_Fortran_LIB_NAMES})
-  add_test(NAME test_mobbrmsd COMMAND test_mobbrmsd 4)
+  set(sources "")
+  list(APPEND sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/mod_dimspec_functions.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+    )
+  ADDTEST(test_covdot_gddp 64 32 1 "" ""
+    ${sources}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_covdot.f90
+    )
+  list(APPEND sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/mod_testutil.f90
+    )
+  ADDTEST(test_rotation_gddp 64 32 1 "" ""
+    ${sources}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_rotation.f90
+    )
+  list(APPEND sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mol_block.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_c_matrix.f90
+    )
+  ADDTEST(test_c_matrix_gddp 64 32 1 "" ""
+    ${sources}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_c_matrix.f90
+    )
+  list(APPEND sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_Hungarian.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_f_matrix.f90
+    )
+  ADDTEST(test_f_matrix_gddp 64 32 1 "" ""
+    ${sources}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_f_matrix.f90
+    )
+  list(APPEND sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
+    )
+  ADDTEST(test_bb_block_gddp 64 32 1 "" ""
+    ${sources}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_bb_block.f90
+    )
+  list(APPEND sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
+    )
+  ADDTEST(test_bb_list_gddp 64 32 1 "" 4
+    ${sources}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_bb_list.f90
+    )
+  list(APPEND sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_header.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_state.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_mst.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_batch_run.f90
+    )
+  ADDTEST(test_mobbrmsd_gddp 64 32 1 1 4
+    ${sources}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test/test_mobbrmsd.f90
+    )
 endif()

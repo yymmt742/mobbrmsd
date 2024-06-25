@@ -133,7 +133,6 @@ module mod_testutil
   public :: eye
   public :: sd
   public :: autovar
-  public :: swp
   public :: brute_sd
   public :: brute_sd_double
 !
@@ -278,6 +277,7 @@ contains
   pure function brute_sd(n, m, s, sym, X, Y) result(res)
     integer(IK), intent(in) :: n, m, s, sym(n * (s - 1))
     real(RK), intent(in)    :: X(D, n, m), Y(D, n, m)
+    real(RK)                :: Z(D, n, m)
     real(RK)                :: res
     type(permutation)       :: per
     integer(IK)             :: map(m)
@@ -286,7 +286,8 @@ contains
     do while (.not. per%endl())
       map = 1
       do
-        res = MIN(res, sd(n * m, X, pws(n, m, s, per%id, map, sym, Y)))
+        call pws(n, m, s, per%id, map, sym, Y, Z)
+        res = MIN(res, sd(n * m, X, Z))
         call map_next(m, s, map)
         if (ALL(map == 1)) exit
       end do
@@ -297,8 +298,8 @@ contains
   function brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2) result(res)
     integer(IK), intent(in) :: n1, m1, s1, sym1(n1 * (s1 - 1))
     integer(IK), intent(in) :: n2, m2, s2, sym2(n2 * (s2 - 1))
-    real(RK), intent(in)    :: X1(D, n1, m1), Y1(D, n1, m1)
-    real(RK), intent(in)    :: X2(D, n2, m2), Y2(D, n2, m2)
+    real(RK), intent(in)    :: X1(D, n1, m1), X2(D, n2, m2)
+    real(RK), intent(in)    :: Y1(D, n1, m1), Y2(D, n2, m2)
     real(RK)                :: Z1(D, n1, m1), Z2(D, n2, m2)
     real(RK)                :: res
     type(permutation)       :: per1, per2
@@ -311,12 +312,12 @@ contains
     do while (.not. per2%endl())
       map2 = 1
       do
-        Z2 = pws(n2, m2, s2, per2%id, map2, sym2, Y2)
+        call pws(n2, m2, s2, per2%id, map2, sym2, Y2, Z2)
         per1 = permutation(m1, m1)
         do while (.not. per1%endl())
           map1 = 1
           do
-            Z1 = pws(n1, m1, s1, per1%id, map1, sym1, Y1)
+            call pws(n1, m1, s1, per1%id, map1, sym1, Y1, Z1)
             !print *, sd(nz, RESHAPE([X1, X2], [D, nz]), RESHAPE([Z1, Z2], [D, nz]))
             res = MIN(res, sd(nz, RESHAPE([X1, X2], [D, nz]), RESHAPE([Z1, Z2], [D, nz])))
             call map_next(m1, s1, map1)
@@ -344,27 +345,32 @@ contains
     end do
   end subroutine map_next
 !
-  pure function swp(n, m, s, per, map, sym, X) result(res)
-    integer(IK), intent(in) :: n, m, s, per(m), map(m), sym(n * (s - 1))
-    real(RK), intent(in)    :: X(D, n, m)
-    real(RK)                :: res(D, n, m)
-    integer(IK)             :: i, sym1(n, s)
-    sym1 = RESHAPE([[(i, i=1, n)], sym], SHAPE(sym1))
-    do i = 1, m
-      res(:, sym1(:, map(i)), per(i)) = X(:, :, i)
-    end do
-  end function swp
+! pure subroutine swp(n, m, s, per, map, sym, X, res)
+!   integer(IK), intent(in) :: n, m, s, per(m), map(m), sym(n * (s - 1))
+!   real(RK), intent(in)    :: X(D, n, m)
+!   real(RK), intent(inout) :: res(D, n, m)
+!   integer(IK)             :: i, j, k, sym1(n, s)
+!   sym1 = RESHAPE([[(i, i=1, n)], sym], SHAPE(sym1))
+!   do concurrent(i=1:D, j=1:n, k=1:m)
+!     res(i, sym1(j, map(k)), per(k)) = X(i, j, k)
+!   end do
+! end subroutine swp
 !
-  pure function pws(n, m, s, per, map, sym, X) result(res)
-    integer(IK), intent(in) :: n, m, s, per(m), map(m), sym(n * (s - 1))
+  pure subroutine pws(n, m, s, per, map, sym, X, res)
+    integer(IK), intent(in) :: n, m, s, per(m), map(m), sym(n, s - 1)
     real(RK), intent(in)    :: X(D, n, m)
-    real(RK)                :: res(D, n, m)
-    integer(IK)             :: i, sym1(n, s)
-    sym1 = RESHAPE([[(i, i=1, n)], sym], SHAPE(sym1))
-    do i = 1, m
-      res(:, :, i) = X(:, sym1(:, map(i)), per(i))
+    real(RK), intent(inout) :: res(D, n, m)
+    integer(IK)             :: i, j, k, sym1(n, s)
+    do concurrent(i=1:n)
+      sym1(i, 1) = i
     end do
-  end function pws
+    do concurrent(i=1:n, j=1:s - 1)
+      sym1(i, j + 1) = sym(i, j)
+    end do
+    do concurrent(i=1:D, j=1:n, k=1:m)
+      res(i, j, k) = X(i, sym1(j, map(k)), per(k))
+    end do
+  end subroutine pws
 !
 end module mod_testutil
 

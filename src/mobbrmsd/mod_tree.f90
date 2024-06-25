@@ -276,7 +276,7 @@ contains
 !!  header
     integer(IK), intent(in)    :: s(*)
 !!  state
-    integer(IK), intent(inout) :: res(q(qd))
+    integer(IK), intent(inout) :: res(*)
 !!  result
     integer(IK)                :: i
     do concurrent(i=1:q(qd))
@@ -285,13 +285,14 @@ contains
   end subroutine tree_current_sequence
 !
 !| Returns current permutation indices.
-  pure function tree_current_permutation(q, s) result(res)
-    integer(IK), intent(in) :: q(*)
+  pure subroutine tree_current_permutation(q, s, res)
+    integer(IK), intent(in)    :: q(*)
 !!  header
-    integer(IK), intent(in) :: s(*)
+    integer(IK), intent(in)    :: s(*)
 !!  state
-    integer(IK)             :: res(q(qd))
-    integer(IK)             :: i, j, p, t
+    integer(IK), intent(inout) :: res(*)
+!!  permutation sequence
+    integer(IK)                :: i, j, p, t
     do concurrent(i=1:q(qd))
       res(i) = i
     end do
@@ -307,15 +308,16 @@ contains
       end do
       res(i) = t
     end do
-  end function tree_current_permutation
+  end subroutine tree_current_permutation
 !
-!| Convert sequence to permutation.
-  pure function tree_sequence_to_permutation(q, z) result(res)
+!| Convert saved sequence to permutation.
+  pure subroutine tree_sequence_to_permutation(q, z, res)
     integer(IK), intent(in) :: q(*)
 !!  header
     integer(IK), intent(in) :: z(*)
-!!  state
-    integer(IK)             :: res(q(qd))
+!!  saved state
+    integer(IK), intent(inout) :: res(*)
+!!  permutation sequence
     integer(IK)             :: i, j, p, t
     do concurrent(i=1:q(qd))
       res(i) = i
@@ -331,7 +333,7 @@ contains
       end do
       res(i) = t
     end do
-  end function tree_sequence_to_permutation
+  end subroutine tree_sequence_to_permutation
 !
 !| Returns current mapping indices.
   pure function tree_current_mapping(q, s) result(res)

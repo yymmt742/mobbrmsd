@@ -40,7 +40,7 @@ contains
     call RANDOM_NUMBER(A)
     call RANDOM_NUMBER(B)
 !
-#ifdef REAL32
+#ifdef USE_REAL32
     call sgemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
 #else
     call dgemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
