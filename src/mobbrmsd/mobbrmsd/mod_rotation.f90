@@ -14,12 +14,15 @@ module mod_rotation
   public :: estimate_rotation
 !
   interface
-    include 'dgemm.h'
+#ifdef USE_REAL32
     include 'sgemm.h'
-    include 'dgesvd.h'
     include 'sgesvd.h'
-    include 'dgetrf.h'
     include 'sgetrf.h'
+#else
+    include 'dgemm.h'
+    include 'dgesvd.h'
+    include 'dgetrf.h'
+#endif
   end interface
 !
   real(RK), parameter    :: ZERO = 0.0_RK
@@ -41,10 +44,8 @@ contains
     !! target d*n array
     real(RK), intent(inout) :: w(*)
     !! work array, must be larger than worksize_sdmin().
-!
     call Kabsch(cov, w(2), w(DD + 2))
     w(1) = dot(DD, cov, w(2))
-!
   end subroutine estimate_rcmax
 !
 !| Compute \(\min_{\mathbf{R}}(g-2\text{tr}[\mathbf{R}\mathbf{C}])\),
@@ -158,7 +159,11 @@ contains
     else
       block
         integer(IK) :: i, j, k, ipiv(D)
+#ifdef USE_REAL32
+        call SGETRF(D, D, x, D, ipiv, j)
+#else
         call DGETRF(D, D, x, D, ipiv, j)
+#endif
         ipiv(1) = COUNT([(ipiv(i) == i, i=1, D)])
         j = 1
         k = D + 1

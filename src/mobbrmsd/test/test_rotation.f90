@@ -6,10 +6,23 @@ program main
   use mod_unittest
   implicit none
   type(unittest) :: z
+#ifdef USE_REAL32
+  integer, parameter :: place = 3
+#else
+  integer, parameter :: place = 7
+#endif
 !
   interface
+#ifdef USE_REAL32
+    include 'sgesvd.h'
+    include 'sgetrf.h'
+#elif USE_REAL64
     include 'dgesvd.h'
     include 'dgetrf.h'
+#else
+    include 'dgesvd.h'
+    include 'dgetrf.h'
+#endif
   end interface
 !
   call z%init('test rotation')
@@ -24,7 +37,6 @@ program main
   call z%finish_and_terminate()
 !
 contains
-!
   subroutine test1(n, n_test)
     integer, intent(in)   :: n, n_test
     real(RK)              :: Y(D, n), X(D, n), cov(D, D), g
@@ -43,13 +55,13 @@ contains
       cov = MATMUL(X, TRANSPOSE(Y))
 !
       call estimate_rotation(g, cov, krot, w)
-      call z%assert_almost_equal([X - MATMUL(krot, Y)], ZERO, 'X = YR   ')
+      call z%assert_is_zero([X - MATMUL(krot, Y)], 'X = YR   ', place=3)
 !
-      if (D <= n) call z%assert_almost_equal([MATMUL(rot, krot) - eye()], ZERO, 'S@RT = I ')
-      call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye()], ZERO, 'R@RT = I ')
+      if (D <= n) call z%assert_is_eye(MATMUL(rot, krot), 'S@RT = I ', place=place)
+      call z%assert_is_eye(MATMUL(krot, TRANSPOSE(krot)), 'R@RT = I ', place=place)
 !
       call estimate_sdmin(g, cov, w)
-      call z%assert_almost_equal(w(1), ZERO, 'sdmin=0  ')
+      call z%assert_is_zero(w(1), 'sdmin=0  ', place=place)
     end do
 !
     do i = 1, N_TEST
@@ -64,17 +76,16 @@ contains
       kd = SUM(cov * krot)
       kd = g - kd - kd
 !
-      call z%assert_almost_equal(sm / sd, ONE, 'vs Kabsch', place=4)
-!
+      call z%assert_almost_equal(sm, sd, 'vs Kabsch', place=3)
       call estimate_rotation(g, cov, krot, w)
       call z%assert_greater_equal(SUM(cov * krot), SUM(cov * SO()), 'CR >= CQ ')
 !
       sd = SUM((X - MATMUL(krot, Y))**2)
       kd = SUM(cov * krot)
       kd = g - kd - kd
-      call z%assert_almost_equal(sm / sd, ONE, 'sdmin-sd ', place=4)
-      call z%assert_almost_equal(sm / kd, ONE, 'sdmin-kd ', place=4)
-      call z%assert_almost_equal([MATMUL(krot, TRANSPOSE(krot)) - eye()], ZERO, 'R@RT = I ')
+      call z%assert_almost_equal(sm, sd, 'sdmin-sd ', place=3)
+      call z%assert_almost_equal(sm, kd, 'sdmin-kd ', place=3)
+      call z%assert_is_eye(MATMUL(krot, TRANSPOSE(krot)), 'R@RT = I ', place=place)
     end do
 !
   end subroutine test1
@@ -91,7 +102,13 @@ contains
     block
       real(RK) :: w(nw)
       call copy(DD, cov, M)
+#ifdef USE_REAL32
+      call SGESVD('A', 'A', D, D, M, D, S, U, D, VT, D, w, nw, info)
+#elif USE_REAL64
       call DGESVD('A', 'A', D, D, M, D, S, U, D, VT, D, w, nw, info)
+#else
+      call DGESVD('A', 'A', D, D, M, D, S, U, D, VT, D, w, nw, info)
+#endif
       UVT = MATMUL(U, VT)
       call det_sign(UVT)
       if (UVT(1, 1) < ZERO) call neg(d, U(1, D))
@@ -104,7 +121,13 @@ contains
   pure elemental function worksize_Kabsch() result(res)
     real(RK)    :: w(1)
     integer(IK) :: res, info
+#ifdef USE_REAL32
+    call SGESVD('A', 'A', D, D, w, D, w, w, D, w, D, w, -1, info)
+#elif USE_REAL64
     call DGESVD('A', 'A', D, D, w, D, w, w, D, w, D, w, -1, info)
+#else
+    call DGESVD('A', 'A', D, D, w, D, w, w, D, w, D, w, -1, info)
+#endif
     res = NINT(w(1)) + DD * 3 + D
   end function worksize_Kabsch
 !
@@ -113,7 +136,6 @@ contains
     real(RK), intent(inout) :: x(*)
      !! square matrix, on exit, x(1) is assigned the determinant sign of x, <br>
      !! and the other elements are undefined.
-!
     if (D < 1) then
       return
     elseif (D == 1) then
@@ -127,7 +149,13 @@ contains
     else
       block
         integer(IK) :: i, j, k, ipiv(D)
+#ifdef USE_REAL32
+        call SGETRF(D, D, x, D, ipiv, j)
+#elif USE_REAL64
         call DGETRF(D, D, x, D, ipiv, j)
+#else
+        call DGETRF(D, D, x, D, ipiv, j)
+#endif
         ipiv(1) = COUNT([(ipiv(i) == i, i=1, D)])
         j = 1
         k = D + 1
@@ -164,3 +192,4 @@ contains
     end do
   end subroutine copy
 end program main
+

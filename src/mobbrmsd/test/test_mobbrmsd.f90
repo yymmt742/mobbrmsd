@@ -7,6 +7,11 @@ program main
   use mod_unittest
   implicit none
   type(unittest) :: u
+#ifdef USE_REAL32
+  integer, parameter :: place = 3
+#else
+  integer, parameter :: place = 7
+#endif
 !
   call u%init('test mobbrmsd for (n,M,S)=(1,1,1)')
   call test1(1, 1, 1, [0])
@@ -74,7 +79,8 @@ contains
     do i = 1, 20
       call mobbrmsd_run(mobb%h, mobb%s, X, Y, W)
       call u%assert_almost_equal(mobb%s%squared_deviation(), &
-     &                           brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
+     &                           brute_sd(n, m, s, sym, X, Y), 'minrmsd value', &
+     &                           place=place)
       Y = 0.5 * Y + 0.5 * sample(n, m)
     end do
 !
@@ -109,7 +115,7 @@ contains
       Y = RESHAPE([Y1, Y2], SHAPE(Y))
       call mobbrmsd_run(mobb%h, mobb%s, [X1, X2], Y, W)
       brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
-      call u%assert_almost_equal(mobb%s%squared_deviation(), brute, 'minrmsd value')
+      call u%assert_almost_equal(mobb%s%squared_deviation(), brute, 'minrmsd value', place=place)
       Y1 = 0.5 * Y1 + 0.5 * sample(n1, m1)
       Y2 = 0.5 * Y2 + 0.5 * sample(n2, m2)
     end do
@@ -151,8 +157,8 @@ contains
     sd2 = mobb%s%squared_deviation()
     print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
    &                       mobb%s%upperbound(), mobb%s%lowerbound()
-    call u%assert_almost_equal(sd, brute, 'minrmsd value')
-    call u%assert_almost_equal(sd, sd2, 'vs at once   ')
+    call u%assert_almost_equal(sd, brute, 'minrmsd value', place=place)
+    call u%assert_almost_equal(sd, sd2, 'vs at once   ', place=place)
 !
     deallocate (inp)
 !

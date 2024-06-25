@@ -25,8 +25,11 @@ module mod_dimspec_functions
   real(RK), parameter :: ONE = 1.0_RK
 !
   interface
-    include 'dgemm.h'
+#ifdef USE_REAL32
     include 'sgemm.h'
+#else
+    include 'dgemm.h'
+#endif
   end interface
 !
 contains

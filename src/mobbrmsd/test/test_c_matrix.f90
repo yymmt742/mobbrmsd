@@ -8,6 +8,11 @@ program main
   use mod_unittest
   implicit none
   type(unittest) :: u
+#ifdef USE_REAL32
+  integer, parameter :: place = 3
+#else
+  integer, parameter :: place = 7
+#endif
 !
   call u%init('test c_matrix')
 !
@@ -58,7 +63,7 @@ contains
     call c_matrix_autocorr(c%q, Z, G)
     call centering(n_apm, n_mol, X)
     call centering(n_apm, n_mol, Y)
-    call u%assert_almost_equal(G, SUM(X * X) + SUM(Y * Y), 'c_matrix_autocorr')
+    call u%assert_almost_equal(G, SUM(X * X) + SUM(Y * Y), 'c_matrix_autocorr', place=place)
   end subroutine test0
 !
   subroutine test1()
@@ -129,10 +134,10 @@ contains
     do concurrent(i=1:m)
       Y_(:, i) = Y(:, i) - CY
     end do
-    call u%assert_almost_equal(C(1), SUM(X_ * X_) + SUM(Y_ * Y_), 'auto variance')
-    call u%assert_almost_equal(C(2:1 + DD), [MATMUL(Y_, TRANSPOSE(X_))], 'covariance 1 ')
+    call u%assert_almost_equal(C(1), SUM(X_ * X_) + SUM(Y_ * Y_), 'auto variance', place=place)
+    call u%assert_almost_equal(C(2:1 + DD), [MATMUL(Y_, TRANSPOSE(X_))], 'covariance 1 ', place=place)
     do i = 1, nsym - 1
-      call u%assert_almost_equal(C(2 + DD * i:1 + DD * (i + 1)), [MATMUL(Y_(:, sym(:, i)), TRANSPOSE(X_))], 'covariance i ')
+ call u%assert_almost_equal(C(2 + DD * i:1 + DD * (i + 1)), [MATMUL(Y_(:, sym(:, i)), TRANSPOSE(X_))], 'covariance i ', place=place)
     end do
   end subroutine check_gcov
 !

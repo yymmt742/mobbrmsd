@@ -3,7 +3,7 @@
 !  This code is based on the method of Coutsias et.al.
 !  doi : [10.1002/jcc.25802](https://onlinelibrary.wiley.com/doi/10.1002/jcc.25802)
 module mod_rotation
-  use mod_kinds, only: IK, RK
+  use mod_kinds, only: IK, RK, R8
   implicit none
   private
   public :: sdmin_worksize
@@ -12,14 +12,14 @@ module mod_rotation
   public :: rotation_worksize
   public :: estimate_rotation
 !
-  real(RK), parameter    :: ZERO = 0.0_RK
-  real(RK), parameter    :: HALF = 0.5_RK
-  real(RK), parameter    :: ONE = 1.0_RK
-  real(RK), parameter    :: TWO = 2.0_RK
-  real(RK), parameter    :: FOUR = 4.0_RK
-  real(RK), parameter    :: EIGHT = 8.0_RK
-  real(RK), parameter    :: THRESHOLD = 1E-14_RK
-  real(RK), parameter    :: DEGENERACY = 1E-6_RK
+  real(R8), parameter    :: ZERO = 0.0_R8
+  real(R8), parameter    :: HALF = 0.5_R8
+  real(R8), parameter    :: ONE = 1.0_R8
+  real(R8), parameter    :: TWO = 2.0_R8
+  real(R8), parameter    :: FOUR = 4.0_R8
+  real(R8), parameter    :: EIGHT = 8.0_R8
+  real(R8), parameter    :: THRESHOLD = 1E-14_R8
+  real(R8), parameter    :: DEGENERACY = 1E-6_R8
   integer(IK), parameter :: MAXITER = 100000
 !
 contains
@@ -27,7 +27,11 @@ contains
 !| Inquire function for memory size of estimate_sdmin.
   pure elemental function sdmin_worksize() result(res)
     integer(IK) :: res
-    res = 8
+#ifdef USE_REAL32
+    res = 1
+#else
+    res = 9
+#endif
   end function sdmin_worksize
 !
 !| Compute \(\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]\).
@@ -38,7 +42,13 @@ contains
     !! target d*n array
     real(RK), intent(inout) :: w(*)
     !! work array, must be larger than worksize_sdmin().
+#ifdef USE_REAL32
+    real(R8)                :: w8(9)
+    call find_lambda_max(g, cov, w8)
+    w(1) = w8(1)
+#else
     call find_lambda_max(g, cov, w)
+#endif
   end subroutine estimate_rcmax
 !
 !| Compute the least-squares sum_i^n |x_i-Ry_i|^2 from cov = YX^T and g = tr[XX^T] + tr[YY^T].
@@ -49,14 +59,24 @@ contains
     !! target d*n array
     real(RK), intent(inout) :: w(*)
     !! work array, must be larger than worksize_sdmin().
+#ifdef USE_REAL32
+    real(R8)                :: w8(9)
+    call find_lambda_max(g, cov, w8)
+    w(1) = real(real(g, R8) - (w8(1) + w8(1)), RK)
+#else
     call find_lambda_max(g, cov, w)
     w(1) = g - w(1) - w(1)
+#endif
   end subroutine estimate_sdmin
 !
 !| Inquire function for memory size of rotation.
   pure elemental function rotation_worksize() result(res)
     integer(IK) :: res
+#ifdef USE_REAL32
+    res = 1
+#else
     res = 18
+#endif
   end function rotation_worksize
 !
 !| Compute the transpose rotation matrix for minimize tr[CR] from cov = YX^T and g = tr[XX^T] + tr[YY^T].
@@ -70,6 +90,33 @@ contains
     !! rotation dxd matrix
     real(RK), intent(inout) :: w(*)
     !! work array, must be larger than worksize_rotation().
+#ifdef USE_REAL32
+    real(R8)                :: w8(18)
+#endif
+    if (g < THRESHOLD) then
+      rot(1) = ONE; rot(2) = ZERO; rot(3) = ZERO
+      rot(4) = ZERO; rot(5) = ONE; rot(6) = ZERO
+      rot(7) = ZERO; rot(8) = ZERO; rot(9) = ONE
+      return
+    end if
+#ifdef USE_REAL32
+    call find_rotmatrix(g, cov, w8, rot)
+#else
+    call find_rotmatrix(g, cov, w, rot)
+#endif
+  end subroutine estimate_rotation
+!
+!| Compute rotation matrix. <br>
+!  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
+  pure subroutine find_rotmatrix(g, cov, w, rot)
+    real(RK), intent(in)    :: g
+    !! sum of auto covariance matrix
+    real(RK), intent(in)    :: cov(*)
+    !! target d*n array
+    real(R8), intent(inout) :: w(*)
+    !! work array
+    real(RK), intent(inout) :: rot(*)
+    !! rotation matrix
     integer(IK), parameter  :: l2 = 1, l3 = 2, l4 = 3
     integer(IK), parameter  :: y2 = 4, y3 = 5, y4 = 6
     integer(IK), parameter  :: dg1 = 1, dg2 = 2, dg3 = 3, dg4 = 18
@@ -80,12 +127,6 @@ contains
     integer(IK), parameter  :: v1 = 3, v2 = 4, v3 = 5, v4 = 6
     integer(IK), parameter  :: v11 = 7, v21 = 8, v31 = 9, v41 = 10
     integer(IK), parameter  :: v22 = 11, v32 = 12, v42 = 13, v33 = 14, v43 = 15, v44 = 16
-    if (g < THRESHOLD) then
-      rot(1) = ONE; rot(2) = ZERO; rot(3) = ZERO
-      rot(4) = ZERO; rot(5) = ONE; rot(6) = ZERO
-      rot(7) = ZERO; rot(8) = ZERO; rot(9) = ONE
-      return
-    end if
 !
     call find_lambda_max(g, cov, w)
 !
@@ -206,7 +247,7 @@ contains
     rot(7) = w(l3) * (w(v42) - w(v31))
     rot(8) = w(l3) * (w(v43) + w(v21))
     rot(9) = w(l2) * (w(v11) - w(v22) - w(v33) + w(v44))
-  end subroutine estimate_rotation
+  end subroutine find_rotmatrix
 !
 !| Compute maximum eigen value of S. <br>
 !  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
@@ -215,10 +256,10 @@ contains
     !! sum of auto covariance matrix
     real(RK), intent(in)    :: cov(*)
     !! target d*n array
-    real(RK), intent(inout) :: w(*)
+    real(R8), intent(inout) :: w(*)
     integer(IK), parameter  :: k1 = 2, k0 = 3, k2 = 4
     integer(IK), parameter  :: xk = 1, s = 5, xx = 6
-    integer(IK), parameter  :: a = 8, f = 7, df = 8
+    integer(IK), parameter  :: a = 8, f = 7, df = 8, gt = 9
     integer(IK), parameter  :: d11 = 3, d22 = 4, d33 = 5, d21 = 6, d31 = 7, d32 = 8
     integer(IK), parameter  :: a1 = 6, a2 = 5
     integer(IK)             :: k
@@ -229,12 +270,12 @@ contains
     end if
 !
 !   K1 = - 8 det|R|
-!
-    w(k1) = -cov(1) * (cov(5) * cov(9) - cov(8) * cov(6)) &
+!&<
+    w(k1) = - cov(1) * (cov(5) * cov(9) - cov(8) * cov(6)) &
    &        - cov(4) * (cov(8) * cov(3) - cov(2) * cov(9)) &
    &        - cov(7) * (cov(2) * cov(6) - cov(5) * cov(3))
     w(k1) = EIGHT * w(k1)
-!
+!>&
 !   D = RR^T
 !
     w(d11) = cov(1) * cov(1) + cov(2) * cov(2) + cov(3) * cov(3)
@@ -257,7 +298,8 @@ contains
     w(k0) = w(a2) * w(a2) - w(a1)
     w(k2) = -TWO * w(a2)
 !
-    if (ABS(w(k1)) < THRESHOLD) then
+    w(gt) = ABS(g * THRESHOLD)
+    if (ABS(w(k1)) < w(gt)) then
 !
 !     find solution of x**4 + K2 * x**2 + K0 = 0
 !     that is x**2 = (K2 + sqrt{K2**2 - 4 * K0}) / 2
@@ -291,10 +333,10 @@ contains
         w(a) = w(k2) + w(xx)
         w(f) = w(a) * w(xx) + w(k1) * w(xk) + w(k0)
         w(df) = w(k1) + (w(xk) + w(xk)) * (w(a) + w(xx))
-        if (ABS(w(df)) < THRESHOLD .and. ABS(w(f)) < THRESHOLD) exit
+        if (ABS(w(df)) < w(gt) .and. ABS(w(f)) < w(gt)) exit
         w(s) = w(f) / w(df)
         w(xk) = w(xk) - w(s)
-        if (w(s) < THRESHOLD * ABS(w(xk))) exit
+        if (w(s) < w(gt) * ABS(w(xk))) exit
       end do
     end if
 !
@@ -303,7 +345,7 @@ contains
 !| Find null vector of S. <br>
 !  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
   pure subroutine find_null_vector(w)
-    real(RK), intent(inout) :: w(*)
+    real(R8), intent(inout) :: w(*)
     integer(IK), parameter  :: y2 = 4, y3 = 5, y4 = 6
     integer(IK), parameter  :: s22 = 7, s23 = 8, s24 = 9
     integer(IK), parameter  :: s33 = 10, s34 = 11, s44 = 12

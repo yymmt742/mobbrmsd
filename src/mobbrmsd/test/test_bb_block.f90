@@ -8,6 +8,11 @@ program main
   use mod_unittest
   implicit none
   type(unittest) :: u
+#ifdef USE_REAL32
+  integer, parameter :: place = 3
+#else
+  integer, parameter :: place = 7
+#endif
 !
   call u%init('test bb_block [1,1,1]')
   call test1(1, 1, 1, [0])
@@ -39,11 +44,11 @@ contains
     do i = 1, 20
       CY = SUM(RESHAPE(Y, [D, m * n]), 2) / (m * n)
       call run(bm%q, bm%s, X, Y, CX, CY, W, sb)
-      call u%assert_almost_equal(W(1), brute_sd(n, m, s, sym, X, Y), 'minrmsd value')
-      call u%assert_almost_equal(W(2), autovar(n * m, X, Y), 'auto variance')
+      call u%assert_almost_equal(W(1), brute_sd(n, m, s, sym, X, Y), 'minrmsd value', place=place)
+      call u%assert_almost_equal(W(2), autovar(n * m, X, Y), 'auto variance', place=place)
       Z = Y
       call bb_block_swap_y(bm%q, bm%s, sb, Z)
-      call u%assert_almost_equal(W(1), sd(m * n, X, Z), 'swap sd value')
+      call u%assert_almost_equal(W(1), sd(m * n, X, Z), 'swap sd value', place=place)
       Y = 0.5 * Y + sample(n, m) * 0.5
     end do
   end subroutine test1
