@@ -11,7 +11,7 @@ program main
   character(32)  :: carg
   integer(IK)    :: d_
 #ifdef USE_REAL32
-  integer, parameter :: place = 3
+  integer, parameter :: place = 1
 #else
   integer, parameter :: place = 7
 #endif
@@ -65,7 +65,7 @@ contains
     integer, intent(in)   :: n, m, s, sym(n * (s - 1))
     type(bb_block)        :: blk(1)
     type(bb_list)         :: b
-    real(RK)              :: X(D, n, m), Y(D, n, m), sd, brute
+    real(RK)              :: X(D, n, m), Y(D, n, m), sd, brute, nrm
     real(RK), allocatable :: W(:)
     integer(IK)           :: i
 !
@@ -74,6 +74,7 @@ contains
 !
     X = sample(n, m)
     Y = X
+    nrm = ONE / (n * m)
 !
     allocate (W(bb_list_memsize(b%q)))
 !
@@ -82,7 +83,7 @@ contains
       call bb_list_run(b%q, b%s, w)
       sd = w(bb_list_INDEX_TO_AUTOCORR) + w(bb_list_INDEX_TO_UPPERBOUND) + w(bb_list_INDEX_TO_UPPERBOUND)
       brute = brute_sd(n, m, s, sym, X, Y)
-      call u%assert_almost_equal(sd, brute, 'minrmsd value', place=place)
+      call u%assert_almost_equal(sd * nrm, brute * nrm, 'minrmsd value', place=place)
       Y = 0.5 * Y + 0.5 * sample(n, m)
     end do
 !
@@ -93,7 +94,7 @@ contains
     integer, intent(in)   :: n2, m2, s2, sym2(n2 * (s2 - 1))
     type(bb_block)        :: blk(2)
     type(bb_list)         :: b
-    real(RK)              :: sd, brute
+    real(RK)              :: sd, brute, nrm
     real(RK)              :: X1(D, n1, m1), X2(D, n2, m2)
     real(RK)              :: Y1(D, n1, m1), Y2(D, n2, m2)
     real(RK)              :: X(D, n1 * m1 + n2 * m2)
@@ -110,6 +111,7 @@ contains
     Y2 = X2
     X = RESHAPE([X1, X2], SHAPE(X))
     call centering(SIZE(X, 2), X)
+    nrm = ONE / (n1 * m1 + n2 * m2)
 !
     block
       real(RK) :: W(bb_list_memsize(b%q)), R(D, D), rxz
@@ -126,7 +128,7 @@ contains
         call bb_list_swap_y(b%q, b%s, Z)
         call bb_list_rotation_matrix(b%q, b%s, W, R)
         rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
-        call u%assert_almost_equal(sd, rxz, 'swaped sd vs rotmat', place=place)
+        call u%assert_almost_equal(sd * nrm, rxz * nrm, 'swaped sd vs rotmat', place=place)
         Y1 = 0.5 * Y1 + 0.5 * sample(n1, m1)
         Y2 = 0.5 * Y2 + 0.5 * sample(n2, m2)
       end do
@@ -139,7 +141,7 @@ contains
     integer, intent(in)   :: n2, m2, s2, sym2(n2 * (s2 - 1))
     type(bb_block)        :: blk(2)
     type(bb_list)         :: b
-    real(RK)              :: sd, brute
+    real(RK)              :: sd, brute, nrm
     real(RK)              :: X1(D, n1, m1), X2(D, n2, m2)
     real(RK)              :: Y1(D, n1, m1), Y2(D, n2, m2)
     real(RK)              :: X(D, n1 * m1 + n2 * m2)
@@ -153,6 +155,7 @@ contains
     Y2 = sample(n2, m2)
     X = RESHAPE([X1, X2], SHAPE(X))
     call centering(SIZE(X, 2), X)
+    nrm = ONE / (n1 * m1 + n2 * m2)
     block
       real(RK) :: W(bb_list_memsize(b%q)), R(D, D), rxz
       call bb_list_setup(b%q, b%s, [X1, X2], [Y1, Y2], W)
@@ -170,7 +173,7 @@ contains
       call bb_list_swap_y(b%q, b%s, Z)
       call bb_list_rotation_matrix(b%q, b%s, W, R)
       rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
-      call u%assert_almost_equal(sd, rxz, 'swaped sd vs rotmat', place=place)
+      call u%assert_almost_equal(nrm * sd, nrm * rxz, 'swaped sd vs rotmat', place=place)
     end block
   end subroutine test3
 end program main

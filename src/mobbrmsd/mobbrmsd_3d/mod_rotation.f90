@@ -25,7 +25,7 @@ module mod_rotation
   real(RK), parameter    :: THRESHOLD = 1E-12_RK
   real(RK), parameter    :: DEGENERACY = 1E-6_RK
 #endif
-  integer(IK), parameter :: MAXITER = 100000
+  integer(IK), parameter :: MAXITER = 1000
 !
 contains
 !
@@ -105,6 +105,7 @@ contains
     integer(IK), parameter  :: v1 = 3, v2 = 4, v3 = 5, v4 = 6
     integer(IK), parameter  :: v11 = 7, v21 = 8, v31 = 9, v41 = 10
     integer(IK), parameter  :: v22 = 11, v32 = 12, v42 = 13, v33 = 14, v43 = 15, v44 = 16
+    integer(IK), parameter  :: ths = 18
 !
     call find_lambda_max(g, cov, w)
 !
@@ -146,7 +147,8 @@ contains
         w(s24) = w(a42) - w(a21) * w(l4)
         w(s34) = w(a43) - w(a31) * w(l4)
         w(s44) = w(a44) - w(a41) * w(l4)
-        call find_null_vector(w)
+        w(ths) = DEGENERACY * g
+        call find_null_vector(w(ths), w)
         w(v1) = -w(l2) * w(y2) - w(l3) * w(Y3) - w(l4) * w(y4)
       else
         w(l4) = ONE / w(a22)
@@ -159,7 +161,8 @@ contains
         w(s24) = w(a41) - w(a21) * w(l4)
         w(s34) = w(a43) - w(a32) * w(l4)
         w(s44) = w(a44) - w(a42) * w(l4)
-        call find_null_vector(w)
+        w(ths) = DEGENERACY * g
+        call find_null_vector(w(ths), w)
         w(l2) = -w(l2) * w(y2) - w(l3) * w(Y3) - w(l4) * w(y4)
         w(v1) = w(y2)
         w(v2) = w(l2)
@@ -177,7 +180,8 @@ contains
         w(s24) = w(a41) - w(a31) * w(l4)
         w(s34) = w(a42) - w(a32) * w(l4)
         w(s44) = w(a44) - w(a43) * w(l4)
-        call find_null_vector(w)
+        w(ths) = DEGENERACY * g
+        call find_null_vector(w(ths), w)
         w(l2) = -w(l2) * w(y2) - w(l3) * w(y3) - w(l4) * w(y4)
         w(v1) = w(y2)
         w(v2) = w(y3)
@@ -193,7 +197,8 @@ contains
         w(s24) = w(a31) - w(a41) * w(l4)
         w(s34) = w(a32) - w(a42) * w(l4)
         w(s44) = w(a33) - w(a43) * w(l4)
-        call find_null_vector(w)
+        w(ths) = DEGENERACY * g
+        call find_null_vector(w(ths), w)
         w(l2) = -w(l2) * w(y2) - w(l3) * w(Y3) - w(l4) * w(y4)
         w(v1) = w(y2)
         w(v2) = w(y3)
@@ -214,7 +219,7 @@ contains
     w(v43) = w(v3) * w(v4)
 !
     w(l2) = ONE / (w(v11) + w(v22) + w(v33) + w(v44))
-    w(l3) = w(l2) + w(l2)
+    w(l3) = w(l2) * TWO
 !
     rot(1) = w(l2) * (w(v11) + w(v22) - w(v33) - w(v44))
     rot(2) = w(l3) * (w(v32) - w(v41))
@@ -249,7 +254,8 @@ contains
 !
 !   K1 = - 8 det|R|
 !&<
-    call det3(cov, g * THRESHOLD, w)
+    w(gt) = ABS(g * THRESHOLD)
+    call det3(cov, w(gt), w)
     w(k1) = EIGHT * w(1)
 !>&
 !   D = RR^T
@@ -286,7 +292,6 @@ contains
     w(k0) = w(a2) * w(a2) - w(a1)
     w(k2) = -TWO * w(a2)
 !
-    w(gt) = ABS(g * THRESHOLD)
     if (ABS(w(k1)) < w(gt)) then
 !
 !     find solution of x**4 + K2 * x**2 + K0 = 0
@@ -319,8 +324,8 @@ contains
       do k = 1, MAXITER
         w(xx) = w(xk) * w(xk)
         w(a) = w(k2) + w(xx)
-        w(f) = w(a) * w(xx) + w(k1) * w(xk) + w(k0)
-        w(df) = w(k1) + (w(xk) + w(xk)) * (w(a) + w(xx))
+        w(f) = w(a) * w(xx) - w(k1) * w(xk) + w(k0)
+        w(df) = -w(k1) + (w(xk) + w(xk)) * (w(a) + w(xx))
         if (ABS(w(df)) < w(gt) .and. ABS(w(f)) < w(gt)) exit
         w(s) = w(f) / w(df)
         w(xk) = w(xk) - w(s)
@@ -332,7 +337,8 @@ contains
 !
 !| Find null vector of S. <br>
 !  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
-  pure subroutine find_null_vector(w)
+  pure subroutine find_null_vector(deg, w)
+    real(RK), intent(in)    :: deg
     real(RK), intent(inout) :: w(*)
     integer(IK), parameter  :: y2 = 4, y3 = 5, y4 = 6
     integer(IK), parameter  :: s22 = 7, s23 = 8, s24 = 9
@@ -350,24 +356,24 @@ contains
     w(mm4) = w(m24) * w(m24)
     w(m33) = w(mm2) + w(mm3) + w(mm4)
 !
-    if (w(m33) < DEGENERACY) then
+    if (w(m33) < deg) then
       w(m44) = w(m33) - w(mm2)
       w(m33) = w(s22) * w(s44) - w(mm4)
       w(m34) = w(s22) * w(s34) - w(s23) * w(s24)
-      if (w(m44) < DEGENERACY) then
+      if (w(m44) < deg) then
         w(mm4) = w(m44) - w(mm3)
         w(m44) = w(s22) * w(s33) - w(s23) * w(s23)
-        if (w(mm4) < DEGENERACY) then
+        if (w(mm4) < deg) then
           ! double degeneracy
-          if (ABS(w(s22)) > DEGENERACY) then
+          if (ABS(w(s22)) > deg) then
             w(y2) = -w(s23)
             w(y3) = w(s22)
             w(y4) = ZERO
-          elseif (ABS(w(s33)) > DEGENERACY) then
+          elseif (ABS(w(s33)) > deg) then
             w(y2) = w(s33)
             w(y3) = -w(s23)
             w(y4) = ZERO
-          elseif (ABS(w(s44)) > DEGENERACY) then
+          elseif (ABS(w(s44)) > deg) then
             w(y2) = w(s44)
             w(y3) = ZERO
             w(y4) = -w(s24)
@@ -392,7 +398,6 @@ contains
       w(y3) = w(m23)
       w(y4) = w(m24)
     end if
-!
   end subroutine find_null_vector
 !
   pure subroutine det3(cov, thr, w)
@@ -400,9 +405,9 @@ contains
     real(RK), intent(in)    :: thr
     real(RK), intent(inout) :: w(*)
     w(1) = ABS(cov(1))
-    w(2) = ABS(ABS(cov(2)))
+    w(2) = ABS(cov(2))
     if (w(1) > w(2)) then
-      w(2) = ABS(ABS(cov(3)))
+      w(2) = ABS(cov(3))
       if (w(1) > w(2)) then
 ! |cov(1)| > |cov(2)| .and. |cov(1)| > |cov(3)|
         if (w(1) < thr) then
@@ -478,7 +483,7 @@ contains
         end if
       end if
     else
-      w(1) = ABS(ABS(cov(3)))
+      w(1) = ABS(cov(3))
       if (w(1) > w(2)) then
 ! |cov(3)| > |cov(2)| => |cov(1)|
 !   369
