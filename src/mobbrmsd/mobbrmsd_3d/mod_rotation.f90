@@ -3,7 +3,7 @@
 !  This code is based on the method of Coutsias et.al.
 !  doi : [10.1002/jcc.25802](https://onlinelibrary.wiley.com/doi/10.1002/jcc.25802)
 module mod_rotation
-  use mod_kinds, only: IK, RK, R8
+  use mod_kinds, only: IK, RK
   implicit none
   private
   public :: sdmin_worksize
@@ -12,14 +12,19 @@ module mod_rotation
   public :: rotation_worksize
   public :: estimate_rotation
 !
-  real(R8), parameter    :: ZERO = 0.0_R8
-  real(R8), parameter    :: HALF = 0.5_R8
-  real(R8), parameter    :: ONE = 1.0_R8
-  real(R8), parameter    :: TWO = 2.0_R8
-  real(R8), parameter    :: FOUR = 4.0_R8
-  real(R8), parameter    :: EIGHT = 8.0_R8
-  real(R8), parameter    :: THRESHOLD = 1E-14_R8
-  real(R8), parameter    :: DEGENERACY = 1E-6_R8
+  real(RK), parameter    :: ZERO = 0.0_RK
+  real(RK), parameter    :: HALF = 0.5_RK
+  real(RK), parameter    :: ONE = 1.0_RK
+  real(RK), parameter    :: TWO = 2.0_RK
+  real(RK), parameter    :: FOUR = 4.0_RK
+  real(RK), parameter    :: EIGHT = 8.0_RK
+#ifdef USE_REAL32
+  real(RK), parameter    :: THRESHOLD = 1E-6_RK
+  real(RK), parameter    :: DEGENERACY = 1E-4_RK
+#else
+  real(RK), parameter    :: THRESHOLD = 1E-12_RK
+  real(RK), parameter    :: DEGENERACY = 1E-6_RK
+#endif
   integer(IK), parameter :: MAXITER = 100000
 !
 contains
@@ -27,11 +32,7 @@ contains
 !| Inquire function for memory size of estimate_sdmin.
   pure elemental function sdmin_worksize() result(res)
     integer(IK) :: res
-#ifdef USE_REAL32
-    res = 1
-#else
     res = 9
-#endif
   end function sdmin_worksize
 !
 !| Compute \(\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]\).
@@ -42,13 +43,7 @@ contains
     !! target d*n array
     real(RK), intent(inout) :: w(*)
     !! work array, must be larger than worksize_sdmin().
-#ifdef USE_REAL32
-    real(R8)                :: w8(9)
-    call find_lambda_max(g, cov, w8)
-    w(1) = w8(1)
-#else
     call find_lambda_max(g, cov, w)
-#endif
   end subroutine estimate_rcmax
 !
 !| Compute the least-squares sum_i^n |x_i-Ry_i|^2 from cov = YX^T and g = tr[XX^T] + tr[YY^T].
@@ -59,24 +54,14 @@ contains
     !! target d*n array
     real(RK), intent(inout) :: w(*)
     !! work array, must be larger than worksize_sdmin().
-#ifdef USE_REAL32
-    real(R8)                :: w8(9)
-    call find_lambda_max(g, cov, w8)
-    w(1) = real(real(g, R8) - (w8(1) + w8(1)), RK)
-#else
     call find_lambda_max(g, cov, w)
     w(1) = g - w(1) - w(1)
-#endif
   end subroutine estimate_sdmin
 !
 !| Inquire function for memory size of rotation.
   pure elemental function rotation_worksize() result(res)
     integer(IK) :: res
-#ifdef USE_REAL32
-    res = 1
-#else
     res = 18
-#endif
   end function rotation_worksize
 !
 !| Compute the transpose rotation matrix for minimize tr[CR] from cov = YX^T and g = tr[XX^T] + tr[YY^T].
@@ -90,20 +75,13 @@ contains
     !! rotation dxd matrix
     real(RK), intent(inout) :: w(*)
     !! work array, must be larger than worksize_rotation().
-#ifdef USE_REAL32
-    real(R8)                :: w8(18)
-#endif
     if (g < THRESHOLD) then
       rot(1) = ONE; rot(2) = ZERO; rot(3) = ZERO
       rot(4) = ZERO; rot(5) = ONE; rot(6) = ZERO
       rot(7) = ZERO; rot(8) = ZERO; rot(9) = ONE
       return
     end if
-#ifdef USE_REAL32
-    call find_rotmatrix(g, cov, w8, rot)
-#else
     call find_rotmatrix(g, cov, w, rot)
-#endif
   end subroutine estimate_rotation
 !
 !| Compute rotation matrix. <br>
@@ -113,7 +91,7 @@ contains
     !! sum of auto covariance matrix
     real(RK), intent(in)    :: cov(*)
     !! target d*n array
-    real(R8), intent(inout) :: w(*)
+    real(RK), intent(inout) :: w(*)
     !! work array
     real(RK), intent(inout) :: rot(*)
     !! rotation matrix
@@ -256,10 +234,7 @@ contains
     !! sum of auto covariance matrix
     real(RK), intent(in)    :: cov(*)
     !! target d*n array
-    real(R8), intent(inout) :: w(*)
-    integer(IK), parameter  :: c59 = 2, c86 = 3
-    integer(IK), parameter  :: c83 = 3, c29 = 4
-    integer(IK), parameter  :: c26 = 4, c53 = 5
+    real(RK), intent(inout) :: w(*)
     integer(IK), parameter  :: k1 = 2, k0 = 3, k2 = 4
     integer(IK), parameter  :: xk = 1, s = 5, xx = 6
     integer(IK), parameter  :: a = 8, f = 7, df = 8, gt = 9
@@ -274,20 +249,8 @@ contains
 !
 !   K1 = - 8 det|R|
 !&<
-    w(c59) = cov(5) * cov(9)
-    w(c86) = cov(8) * cov(6)
-    w(c59) = cov(1) * (w(c59) - w(c86))
-    w(c83) = cov(8) * cov(3)
-    w(c29) = cov(2) * cov(9)
-    w(c83) = cov(4) * (w(c83) - w(c29))
-    w(c26) = cov(2) * cov(6)
-    w(c53) = cov(5) * cov(3)
-    w(c26) = cov(7) * (w(c26) - w(c53))
-    w(k1) = -w(c59) - w(c83) - w(c26)
-!   w(k1) = - cov(1) * (cov(5) * cov(9) - cov(8) * cov(6)) &
-!  &        - cov(4) * (cov(8) * cov(3) - cov(2) * cov(9)) &
-!  &        - cov(7) * (cov(2) * cov(6) - cov(5) * cov(3))
-    w(k1) = EIGHT * w(k1)
+    call det3(cov, g * THRESHOLD, w)
+    w(k1) = EIGHT * w(1)
 !>&
 !   D = RR^T
 !
@@ -370,7 +333,7 @@ contains
 !| Find null vector of S. <br>
 !  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
   pure subroutine find_null_vector(w)
-    real(R8), intent(inout) :: w(*)
+    real(RK), intent(inout) :: w(*)
     integer(IK), parameter  :: y2 = 4, y3 = 5, y4 = 6
     integer(IK), parameter  :: s22 = 7, s23 = 8, s24 = 9
     integer(IK), parameter  :: s33 = 10, s34 = 11, s44 = 12
@@ -432,5 +395,168 @@ contains
 !
   end subroutine find_null_vector
 !
+  pure subroutine det3(cov, thr, w)
+    real(RK), intent(in)    :: cov(*)
+    real(RK), intent(in)    :: thr
+    real(RK), intent(inout) :: w(*)
+    w(1) = ABS(cov(1))
+    w(2) = ABS(ABS(cov(2)))
+    if (w(1) > w(2)) then
+      w(2) = ABS(ABS(cov(3)))
+      if (w(1) > w(2)) then
+! |cov(1)| > |cov(2)| .and. |cov(1)| > |cov(3)|
+        if (w(1) < thr) then
+          w(1) = ZERO
+          return
+        end if
+        w(1) = ABS(cov(5))
+        w(2) = ABS(cov(6))
+        if (w(1) > w(2)) then
+!   147
+!   258
+!   369, pivot = 0
+          if (w(1) < thr) then
+            w(1) = cov(4) * (cov(2) * cov(9) - cov(8) * cov(3))
+            return
+          end if
+          w(1) = ((cov(1) * cov(5) - cov(2) * cov(4)) &
+              & * (cov(1) * cov(9) - cov(3) * cov(7)) &
+              & - (cov(1) * cov(8) - cov(2) * cov(7)) &
+              & * (cov(1) * cov(6) - cov(3) * cov(4)) &
+                 ) / cov(1)
+        else
+!   147
+!   369
+!   258, pivot = 1
+          if (w(2) < thr) then
+            w(1) = -cov(4) * (cov(3) * cov(8) - cov(9) * cov(2))
+            return
+          end if
+          w(1) = -((cov(1) * cov(6) - cov(3) * cov(4)) &
+              & * (cov(1) * cov(8) - cov(2) * cov(7)) &
+              & - (cov(1) * cov(9) - cov(3) * cov(7)) &
+              & * (cov(1) * cov(5) - cov(2) * cov(4)) &
+                 ) / cov(1)
+        end if
+      else
+! |cov(3)| > |cov(1)| > |cov(2)|
+!   369
+!   147
+!   258, pivot = 2
+        if (w(2) < thr) then
+          w(1) = ZERO
+          return
+        end if
+        w(1) = ABS(cov(4))
+        w(2) = ABS(cov(5))
+        if (w(1) > w(2)) then
+!   369
+!   147
+!   258, pivot = 2
+          if (w(1) < thr) then
+            w(1) = cov(6) * (cov(1) * cov(8) - cov(7) * cov(2))
+            return
+          end if
+          w(1) = ((cov(3) * cov(4) - cov(1) * cov(6)) &
+              & * (cov(3) * cov(8) - cov(2) * cov(9)) &
+              & - (cov(3) * cov(7) - cov(1) * cov(9)) &
+              & * (cov(3) * cov(5) - cov(2) * cov(6)) &
+                 ) / cov(3)
+        else
+!   369
+!   258
+!   147, pivot = 1
+          if (w(2) < thr) then
+            w(1) = cov(4) * (cov(2) * cov(9) - cov(8) * cov(3))
+            return
+          end if
+          w(1) = -((cov(3) * cov(5) - cov(2) * cov(6)) &
+              & * (cov(3) * cov(7) - cov(1) * cov(9)) &
+              & - (cov(3) * cov(8) - cov(2) * cov(9)) &
+              & * (cov(3) * cov(4) - cov(1) * cov(6)) &
+                  ) / cov(3)
+        end if
+      end if
+    else
+      w(1) = ABS(ABS(cov(3)))
+      if (w(1) > w(2)) then
+! |cov(3)| > |cov(2)| => |cov(1)|
+!   369
+!   147
+!   258, pivot = 2
+        if (w(1) < thr) then
+          w(1) = ZERO
+          return
+        end if
+        w(1) = ABS(cov(4))
+        w(2) = ABS(cov(5))
+        if (w(1) > w(2)) then
+!   369
+!   147
+!   258, pivot = 2
+          if (w(1) < thr) then
+            w(1) = cov(6) * (cov(1) * cov(8) - cov(7) * cov(2))
+            return
+          end if
+          w(1) = ((cov(3) * cov(4) - cov(1) * cov(6)) &
+              & * (cov(3) * cov(8) - cov(2) * cov(9)) &
+              & - (cov(3) * cov(7) - cov(1) * cov(9)) &
+              & * (cov(3) * cov(5) - cov(2) * cov(6)) &
+                 ) / cov(3)
+        else
+!   369
+!   258
+!   147, pivot = 1
+          if (w(2) < thr) then
+            w(1) = cov(4) * (cov(2) * cov(9) - cov(8) * cov(3))
+            return
+          end if
+          w(1) = -((cov(3) * cov(5) - cov(2) * cov(6)) &
+              & * (cov(3) * cov(7) - cov(1) * cov(9)) &
+              & - (cov(3) * cov(8) - cov(2) * cov(9)) &
+              & * (cov(3) * cov(4) - cov(1) * cov(6)) &
+                  ) / cov(3)
+        end if
+      else
+! |cov(2)| => |cov(1)| .and. |cov(2)| => |cov(3)|
+!   258
+!   147
+!   369, pivot = 1
+        if (w(2) < thr) then
+          w(1) = ZERO
+          return
+        end if
+        w(1) = ABS(cov(4))
+        w(2) = ABS(cov(6))
+        if (w(1) > w(2)) then
+!   258
+!   147
+!   369, pivot = 1
+          if (w(1) < thr) then
+            w(1) = - cov(5) * (cov(1) * cov(9) - cov(7) * cov(3))
+            return
+          end if
+          w(1) = -((cov(2) * cov(4) - cov(1) * cov(5)) &
+              & *  (cov(2) * cov(9) - cov(3) * cov(8)) &
+              & -  (cov(2) * cov(7) - cov(1) * cov(8)) &
+              & *  (cov(2) * cov(6) - cov(3) * cov(5)) &
+                 ) / cov(2)
+        else
+!   258
+!   369
+!   147, pivot = 2
+          if (w(2) < thr) then
+            w(1) = cov(5) * (cov(3) * cov(7) - cov(9) * cov(1))
+            return
+          end if
+          w(1) = ((cov(2) * cov(6) - cov(3) * cov(5)) &
+              & * (cov(2) * cov(7) - cov(1) * cov(8)) &
+              & - (cov(2) * cov(9) - cov(3) * cov(8)) &
+              & * (cov(2) * cov(4) - cov(1) * cov(5)) &
+                ) / cov(2)
+        end if
+      end if
+    end if
+  end subroutine det3
 end module mod_rotation
 

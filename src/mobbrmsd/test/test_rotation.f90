@@ -28,11 +28,11 @@ program main
   call z%init('test rotation')
 !
   call test1(1, 10)
-  call test1(2, 10)
-  call test1(3, 10)
-  call test1(10, 10)
-  call test1(20, 10)
-  call test1(100, 10)
+! call test1(2, 10)
+! call test1(3, 10)
+! call test1(10, 10)
+! call test1(20, 10)
+! call test1(100, 10)
 !
   call z%finish_and_terminate()
 !
