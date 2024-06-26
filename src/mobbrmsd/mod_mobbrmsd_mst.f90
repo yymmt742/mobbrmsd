@@ -183,7 +183,7 @@ contains
 !
 !   Initialize header
     do concurrent(i=1:n_target, j=1:n_target)
-      state(i, j) = mobbrmsd_state(header)
+      call mobbrmsd_state_init(state(i, j), header)
     end do
 !
     mask(:) = .true.

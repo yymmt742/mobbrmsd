@@ -5,6 +5,8 @@ module mod_mobbrmsd_state
   use mod_bb_list
   implicit none
   public :: mobbrmsd_state
+  public :: mobbrmsd_state_init
+  public :: mobbrmsd_state_copy
   public :: mobbrmsd_state_INDEX_TO_RCP_N_ATOMS
   public :: mobbrmsd_state_INDEX_TO_AUTOCORR
   public :: mobbrmsd_state_INDEX_TO_UPPERBOUND
@@ -33,6 +35,8 @@ module mod_mobbrmsd_state
     integer(IK), allocatable :: s(:)
     real(RK), allocatable    :: z(:)
   contains
+    procedure :: init => mobbrmsd_state_init
+    !! upperbound
     procedure :: upperbound => mobbrmsd_state_upperbound
     !! upperbound
     procedure :: lowerbound => mobbrmsd_state_lowerbound
@@ -71,13 +75,21 @@ module mod_mobbrmsd_state
 !
 contains
 ! ------
-!
-!| returns upperbound
+!| Constructer
   pure elemental function mobbrmsd_state_new(header) result(res)
     type(mobbrmsd_header), intent(in) :: header
     !! mobbrmsd header
     type(mobbrmsd_state)              :: res
-    real(RK)                          :: z(6 + header%n_dims()**2)
+    call mobbrmsd_state_init(res, header)
+  end function mobbrmsd_state_new
+!
+!| Init
+  pure elemental subroutine mobbrmsd_state_init(this, header)
+    class(mobbrmsd_state), intent(inout) :: this
+    !! Self
+    type(mobbrmsd_header), intent(in)    :: header
+    !! mobbrmsd header
+    real(RK)                             :: z(6 + header%n_dims()**2)
     associate ( &
    &   RN => mobbrmsd_state_INDEX_TO_RCP_N_ATOMS, &
    &   AC => mobbrmsd_state_INDEX_TO_AUTOCORR, &
@@ -94,9 +106,8 @@ contains
       z(NE) = -RHUGE
       z(LR) = ZERO
       call eye(header%n_dims(), z(RT))
-!
-      allocate (res%s, source=header%state_template())
-      allocate (res%z, source=z)
+      allocate (this%s, source=header%state_template())
+      allocate (this%z, source=z)
     end associate
   contains
     pure subroutine eye(n_dims, e)
@@ -107,7 +118,16 @@ contains
         e(i, j) = MERGE(ONE, ZERO, i == j)
       end do
     end subroutine eye
-  end function mobbrmsd_state_new
+  end subroutine mobbrmsd_state_init
+!
+!| Pure elemental copy, for NVHPC.
+  pure elemental subroutine mobbrmsd_state_copy(lhs, rhs)
+    type(mobbrmsd_state), intent(inout) :: lhs
+    !! Self
+    type(mobbrmsd_state), intent(in)    :: rhs
+    if (ALLOCATED(rhs%s)) lhs%s = rhs%s
+    if (ALLOCATED(rhs%z)) lhs%z = rhs%z
+  end subroutine mobbrmsd_state_copy
 !
 !| returns upperbound
   pure elemental function mobbrmsd_state_upperbound(this) result(res)

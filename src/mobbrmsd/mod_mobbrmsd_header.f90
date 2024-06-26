@@ -6,7 +6,7 @@ module mod_mobbrmsd_header
   use mod_bb_block
   implicit none
   public :: mobbrmsd_header
-!
+  public :: mobbrmsd_header_init
 !| mobbrmsd_header
   type mobbrmsd_header
     private
@@ -35,7 +35,6 @@ module mod_mobbrmsd_header
   end interface mobbrmsd_header
 !
 contains
-!
 !| Returns spatial dimension
   pure function mobbrmsd_header_new(q, s) result(res)
     integer(IK), intent(in) :: q(:)
@@ -43,10 +42,24 @@ contains
     integer(IK), intent(in) :: s(:)
     !! mobbrmsd_state template sequence
     type(mobbrmsd_header)   :: res
-    res%d = D
-    allocate (res%q, source=q)
-    allocate (res%s, source=s)
+    call mobbrmsd_header_init(res, SIZE(q), q, SIZE(s), s)
   end function mobbrmsd_header_new
+!
+!| Initializer, for NVHPC.
+  pure subroutine mobbrmsd_header_init(this, nq, q, ns, s)
+    type(mobbrmsd_header), intent(inout) :: this
+    integer(IK), intent(in)              :: nq
+    !! dimension of q
+    integer(IK), intent(in)              :: q(nq)
+    !! mobbrmsd_header sequence
+    integer(IK), intent(in)              :: ns
+    !! dimension of s
+    integer(IK), intent(in)              :: s(ns)
+    !! mobbrmsd_state template sequence
+    this%d = D
+    this%q = q
+    this%s = s
+  end subroutine mobbrmsd_header_init
 !
 !| Returns spatial dimension
   pure elemental function mobbrmsd_header_n_dims(this) result(res)

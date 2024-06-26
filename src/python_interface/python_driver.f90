@@ -5,6 +5,7 @@ module driver
     mobbrmsd_header
   use mod_mobbrmsd_state, only: &
  &  mobbrmsd_state, &
+ &  mobbrmsd_state_copy, &
  &   RN => mobbrmsd_state_INDEX_TO_RCP_N_ATOMS, &
  &   AC => mobbrmsd_state_INDEX_TO_AUTOCORR, &
  &   UB => mobbrmsd_state_INDEX_TO_UPPERBOUND, &
@@ -14,6 +15,7 @@ module driver
  &   RT => mobbrmsd_state_INDEX_TO_ROTMAT
   use mod_mobbrmsd, only: &
  &  mobbrmsd, &
+ &  mobbrmsd_init, &
  &  mobbrmsd_run, &
  &  mobbrmsd_restart, &
  &  mobbrmsd_is_finished, &
@@ -314,9 +316,9 @@ contains
     type(mobbrmsd_state)          :: s(n_chunk)
     integer(kind=IK)              :: i
 
-    mob = mobbrmsd(blocks)
+    call mobbrmsd_init(mob, SIZE(blocks), blocks)
     do concurrent(i=1:n_chunk)
-      s(i) = mob%s
+      call mobbrmsd_state_copy(s(i), mob%s)
     end do
 
     call mobbrmsd_batch_run( &
@@ -369,7 +371,7 @@ contains
     integer(kind=IK)              :: i
     mob = mobbrmsd(blocks)
     do concurrent(i=1:SIZE(s))
-      s(i) = mob%s
+      call mobbrmsd_state_copy(s(i), mob%s)
     end do
     call mobbrmsd_batch_tri_run( &
    &       n_target, mob%h, s, X, W, &
@@ -417,7 +419,7 @@ contains
     type(mobbrmsd_state), allocatable :: s(:, :)
     integer(kind=IK)                  :: i, j
 
-    mob = mobbrmsd(blocks)
+    call mobbrmsd_init(mob, SIZE(blocks), blocks)
     allocate (s(n_target, n_target))
 
     call mobbrmsd_min_span_tree( &
@@ -436,8 +438,6 @@ contains
       int_states(:, i, j) = s(i, j)%dump()
       float_states(:, i, j) = s(i, j)%dump_real()
     end do
-
   end subroutine min_span_tree
-
 end module driver
 

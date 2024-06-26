@@ -17,6 +17,7 @@ module mod_mobbrmsd
   public :: mol_block_input
   public :: mol_block_input_add
   public :: mobbrmsd
+  public :: mobbrmsd_init
   public :: mobbrmsd_header
   public :: mobbrmsd_state
   public :: mobbrmsd_run
@@ -128,9 +129,7 @@ contains
     type(mobbrmsd_input), intent(in) :: inp
     !! mobbrmsd_input
     type(mobbrmsd)                   :: res
-!
     res = mobbrmsd_new_from_block(inp%blk)
-!
   end function mobbrmsd_new
 !
 !| constructor, from mol_block_input. (for python interface)
@@ -138,28 +137,33 @@ contains
     type(mol_block_input), intent(in) :: blocks(:)
     !! mol_block_input array
     type(mobbrmsd)                    :: res
-    integer(IK)                       :: nblock
-!
-    nblock = SIZE(blocks)
-!
-    block
-      type(bb_block) :: bbblk(nblock)
-      type(bb_list)  :: bblst
-      integer(IK)    :: i
-      do concurrent(i=1:nblock)
-        if (ALLOCATED(blocks(i)%sym)) then
-          call bb_block_init(bbblk(i), blocks(i)%m, blocks(i)%n, sym=blocks(i)%sym)
-        else
-          call bb_block_init(bbblk(i), blocks(i)%m, blocks(i)%n)
-        end if
-      end do
-      bblst = bb_list(nblock, bbblk)
-      res%h = mobbrmsd_header(bblst%q, bblst%s)
-      res%s = mobbrmsd_state(res%h)
-      call bb_block_destroy(bbblk)
-      call bb_list_destroy(bblst)
-    end block
+    call mobbrmsd_init(res, SIZE(blocks), blocks)
   end function mobbrmsd_new_from_block
+!
+!| constructor
+  pure subroutine mobbrmsd_init(this, nblock, blocks)
+    type(mobbrmsd), intent(inout)     :: this
+    !! mobbrmsd_input
+    integer(IK), intent(in)           :: nblock
+    !! number of block
+    type(mol_block_input), intent(in) :: blocks(nblock)
+    !! blocks
+    type(bb_block)                    :: bbblk(nblock)
+    type(bb_list)                     :: bblst
+    integer(IK)                       :: i
+    do concurrent(i=1:nblock)
+      if (ALLOCATED(blocks(i)%sym)) then
+        call bb_block_init(bbblk(i), blocks(i)%m, blocks(i)%n, sym=blocks(i)%sym)
+      else
+        call bb_block_init(bbblk(i), blocks(i)%m, blocks(i)%n)
+      end if
+    end do
+    call bb_list_init(bblst, nblock, bbblk)
+    call mobbrmsd_header_init(this%h, SIZE(bblst%q), bblst%q, SIZE(bblst%s), bblst%s)
+    call mobbrmsd_state_init(this%s, this%h)
+    call bb_block_destroy(bbblk)
+    call bb_list_destroy(bblst)
+  end subroutine mobbrmsd_init
 !
 !| run mobbrmsd
   pure subroutine mobbrmsd_run( &
