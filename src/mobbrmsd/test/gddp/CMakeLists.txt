@@ -1,1 +1,1 @@
-DIMSPECTESTS(gddp ${CMAKE_CURRENT_SOURCE_DIR}/../../mobbrmsd 64 32)
+DIMSPECTESTS(gddp ${CMAKE_CURRENT_SOURCE_DIR}/../../mobbrmsd_gd 64 32)

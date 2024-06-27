@@ -1,1 +1,1 @@
-DIMSPECTESTS(gdsp ${CMAKE_CURRENT_SOURCE_DIR}/../../mobbrmsd 32 32)
+DIMSPECTESTS(gdsp ${CMAKE_CURRENT_SOURCE_DIR}/../../mobbrmsd_gd 32 32)

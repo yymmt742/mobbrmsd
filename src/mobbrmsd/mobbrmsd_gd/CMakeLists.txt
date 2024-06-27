@@ -31,23 +31,43 @@ add_library(${PROJECT_NAME}_gddp_shared SHARED ${sources})
 ADDOPTS(${PROJECT_NAME}_gddp_shared 64 32 1 1)
 add_library(${PROJECT_NAME}_gddp_static STATIC ${sources})
 ADDOPTS(${PROJECT_NAME}_gddp_static 64 32 1 1)
+add_library(${PROJECT_NAME}_gdsp_shared SHARED ${sources})
+ADDOPTS(${PROJECT_NAME}_gdsp_shared 32 32 1 1)
+add_library(${PROJECT_NAME}_gdsp_static STATIC ${sources})
+ADDOPTS(${PROJECT_NAME}_gdsp_static 32 32 1 1)
 set_target_properties(${PROJECT_NAME}_gddp_shared PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_GDDP_DIR})
 set_target_properties(${PROJECT_NAME}_gddp_static PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_GDDP_DIR})
+set_target_properties(${PROJECT_NAME}_gdsp_shared PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_GDSP_DIR})
+set_target_properties(${PROJECT_NAME}_gdsp_static PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_GDSP_DIR})
 install(
   TARGETS ${PROJECT_NAME}_gddp_shared
-  EXPORT ${PROJECT_NAME}-export
+  EXPORT ${PROJECT_NAME}_gd-export
   ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_gddp/lib"
   LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_gddp/lib"
   )
 install(
   TARGETS ${PROJECT_NAME}_gddp_static
-  EXPORT ${PROJECT_NAME}-export
+  EXPORT ${PROJECT_NAME}_gd-export
   ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_gddp/lib"
   LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_gddp/lib"
   )
 install(
-  EXPORT ${PROJECT_NAME}-export
-  NAMESPACE ${PROJECT_NAME}::
+  TARGETS ${PROJECT_NAME}_gdsp_shared
+  EXPORT ${PROJECT_NAME}_gd-export
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_gdsp/lib"
+  LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_gdsp/lib"
+  )
+install(
+  TARGETS ${PROJECT_NAME}_gdsp_static
+  EXPORT ${PROJECT_NAME}_gd-export
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_gdsp/lib"
+  LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_gdsp/lib"
+  )
+install(
+  EXPORT ${PROJECT_NAME}_gd-export
+  NAMESPACE ${PROJECT_NAME}_gd::
   DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}")
 install(DIRECTORY ${LIB_MOD_GDDP_DIR}
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}")
+install(DIRECTORY ${LIB_MOD_GDSP_DIR}
         DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}")
