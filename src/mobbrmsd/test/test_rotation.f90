@@ -76,14 +76,11 @@ contains
       g = SUM(X**2) + SUM(Y**2)
       call estimate_sdmin(g, cov, w)
       call Kabsch(cov, krot)
-!
       sm = nrm * w(1)
       sd = nrm * SUM((X - MATMUL(krot, Y))**2)
-!
       call z%assert_almost_equal(sm, sd, 'vs Kabsch', place=place)
       call estimate_rotation(g, cov, krot, w)
       call z%assert_greater_equal(SUM(cov * krot), SUM(cov * SO()), 'CR >= CQ ')
-!
       sd = nrm * SUM((X - MATMUL(krot, Y))**2)
       kd = SUM(cov * krot)
       kd = nrm * (g - kd - kd)

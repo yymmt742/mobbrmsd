@@ -44,6 +44,7 @@ contains
     real(RK), intent(inout) :: w(*)
     !! work array, must be larger than worksize_sdmin().
     call find_lambda_max(g, cov, w)
+    w(1) = HALF * g * w(1)
   end subroutine estimate_rcmax
 !
 !| Compute the least-squares sum_i^n |x_i-Ry_i|^2 from cov = YX^T and g = tr[XX^T] + tr[YY^T].
@@ -55,7 +56,7 @@ contains
     real(RK), intent(inout) :: w(*)
     !! work array, must be larger than worksize_sdmin().
     call find_lambda_max(g, cov, w)
-    w(1) = g - w(1) - w(1)
+    w(1) = g * (ONE - w(1))
   end subroutine estimate_sdmin
 !
 !| Inquire function for memory size of rotation.
@@ -75,29 +76,9 @@ contains
     !! rotation dxd matrix
     real(RK), intent(inout) :: w(*)
     !! work array, must be larger than worksize_rotation().
-    if (g < THRESHOLD) then
-      rot(1) = ONE; rot(2) = ZERO; rot(3) = ZERO
-      rot(4) = ZERO; rot(5) = ONE; rot(6) = ZERO
-      rot(7) = ZERO; rot(8) = ZERO; rot(9) = ONE
-      return
-    end if
-    call find_rotmatrix(g, cov, w, rot)
-  end subroutine estimate_rotation
-!
-!| Compute rotation matrix. <br>
-!  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
-  pure subroutine find_rotmatrix(g, cov, w, rot)
-    real(RK), intent(in)    :: g
-    !! sum of auto covariance matrix
-    real(RK), intent(in)    :: cov(*)
-    !! target d*n array
-    real(RK), intent(inout) :: w(*)
-    !! work array
-    real(RK), intent(inout) :: rot(*)
-    !! rotation matrix
     integer(IK), parameter  :: l2 = 1, l3 = 2, l4 = 3
     integer(IK), parameter  :: y2 = 4, y3 = 5, y4 = 6
-    integer(IK), parameter  :: dg1 = 1, dg2 = 2, dg3 = 3, dg4 = 18
+    integer(IK), parameter  :: dg1 = 1, dg2 = 2, dg3 = 3, dg4 = 18, nrm = 7
     integer(IK), parameter  :: aa1 = 1, aa2 = 2, aa3 = 2, aa4 = 1
     integer(IK), parameter  :: a11 = 4, a21 = 5, a31 = 6, a41 = 12
     integer(IK), parameter  :: a22 = 13, a32 = 14, a42 = 15, a33 = 16, a43 = 17, a44 = 18
@@ -105,7 +86,12 @@ contains
     integer(IK), parameter  :: v1 = 3, v2 = 4, v3 = 5, v4 = 6
     integer(IK), parameter  :: v11 = 7, v21 = 8, v31 = 9, v41 = 10
     integer(IK), parameter  :: v22 = 11, v32 = 12, v42 = 13, v33 = 14, v43 = 15, v44 = 16
-    integer(IK), parameter  :: ths = 18
+    if (g < THRESHOLD) then
+      rot(1) = ONE; rot(2) = ZERO; rot(3) = ZERO
+      rot(4) = ZERO; rot(5) = ONE; rot(6) = ZERO
+      rot(7) = ZERO; rot(8) = ZERO; rot(9) = ONE
+      return
+    end if
 !
     call find_lambda_max(g, cov, w)
 !
@@ -116,19 +102,20 @@ contains
 !       (R31-R13      R12+R21     -R11+R22-R33  R23+R32    )
 !       (R12-R21      R13+R31      R23+R32     -R11-R22+R33)
 !
-    w(dg4) = cov(9) - w(1)
-    w(dg3) = cov(9) + w(1)
-    w(dg2) = cov(1) - cov(5)
-    w(dg1) = cov(1) + cov(5)
+    w(nrm) = TWO / g
+    w(dg4) = w(nrm) * cov(9) - w(1)
+    w(dg3) = w(nrm) * cov(9) + w(1)
+    w(dg2) = w(nrm) * (cov(1) - cov(5))
+    w(dg1) = w(nrm) * (cov(1) + cov(5))
     w(a11) = w(dg1) + w(dg4)
-    w(a21) = cov(8) - cov(6)
-    w(a31) = cov(3) - cov(7)
-    w(a41) = cov(4) - cov(2)
+    w(a21) = w(nrm) * (cov(8) - cov(6))
+    w(a31) = w(nrm) * (cov(3) - cov(7))
+    w(a41) = w(nrm) * (cov(4) - cov(2))
     w(a22) = w(dg2) - w(dg3)
-    w(a32) = cov(4) + cov(2)
-    w(a42) = cov(7) + cov(3)
+    w(a32) = w(nrm) * (cov(4) + cov(2))
+    w(a42) = w(nrm) * (cov(7) + cov(3))
     w(a33) = -w(dg2) - w(dg3)
-    w(a43) = cov(8) + cov(6)
+    w(a43) = w(nrm) * (cov(8) + cov(6))
     w(a44) = -w(dg1) + w(dg4)
 !
     w(aa1) = ABS(w(a11))
@@ -147,8 +134,7 @@ contains
         w(s24) = w(a42) - w(a21) * w(l4)
         w(s34) = w(a43) - w(a31) * w(l4)
         w(s44) = w(a44) - w(a41) * w(l4)
-        w(ths) = DEGENERACY * g
-        call find_null_vector(w(ths), w)
+        call find_null_vector(w)
         w(v1) = -w(l2) * w(y2) - w(l3) * w(Y3) - w(l4) * w(y4)
       else
         w(l4) = ONE / w(a22)
@@ -161,8 +147,7 @@ contains
         w(s24) = w(a41) - w(a21) * w(l4)
         w(s34) = w(a43) - w(a32) * w(l4)
         w(s44) = w(a44) - w(a42) * w(l4)
-        w(ths) = DEGENERACY * g
-        call find_null_vector(w(ths), w)
+        call find_null_vector(w)
         w(l2) = -w(l2) * w(y2) - w(l3) * w(Y3) - w(l4) * w(y4)
         w(v1) = w(y2)
         w(v2) = w(l2)
@@ -180,8 +165,7 @@ contains
         w(s24) = w(a41) - w(a31) * w(l4)
         w(s34) = w(a42) - w(a32) * w(l4)
         w(s44) = w(a44) - w(a43) * w(l4)
-        w(ths) = DEGENERACY * g
-        call find_null_vector(w(ths), w)
+        call find_null_vector(w)
         w(l2) = -w(l2) * w(y2) - w(l3) * w(y3) - w(l4) * w(y4)
         w(v1) = w(y2)
         w(v2) = w(y3)
@@ -197,8 +181,7 @@ contains
         w(s24) = w(a31) - w(a41) * w(l4)
         w(s34) = w(a32) - w(a42) * w(l4)
         w(s44) = w(a33) - w(a43) * w(l4)
-        w(ths) = DEGENERACY * g
-        call find_null_vector(w(ths), w)
+        call find_null_vector(w)
         w(l2) = -w(l2) * w(y2) - w(l3) * w(Y3) - w(l4) * w(y4)
         w(v1) = w(y2)
         w(v2) = w(y3)
@@ -230,7 +213,7 @@ contains
     rot(7) = w(l3) * (w(v42) - w(v31))
     rot(8) = w(l3) * (w(v43) + w(v21))
     rot(9) = w(l2) * (w(v11) - w(v22) - w(v33) + w(v44))
-  end subroutine find_rotmatrix
+  end subroutine estimate_rotation
 !
 !| Compute maximum eigen value of S. <br>
 !  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
@@ -240,9 +223,9 @@ contains
     real(RK), intent(in)    :: cov(*)
     !! target d*n array
     real(RK), intent(inout) :: w(*)
-    integer(IK), parameter  :: k1 = 2, k0 = 3, k2 = 4
+    integer(IK), parameter  :: k1 = 2, k0 = 3, k2 = 4, nrm1 = 5, nrm2 = 6
     integer(IK), parameter  :: xk = 1, s = 5, xx = 6
-    integer(IK), parameter  :: a = 8, f = 7, df = 8, gt = 9
+    integer(IK), parameter  :: a = 8, f = 7, df = 8
     integer(IK), parameter  :: d11 = 3, d22 = 4, d33 = 5, d21 = 6, d31 = 7, d32 = 8
     integer(IK), parameter  :: a1 = 6, a2 = 5
     integer(IK)             :: k
@@ -253,31 +236,17 @@ contains
     end if
 !
 !   K1 = - 8 det|R|
-!&<
-    w(gt) = ABS(g * THRESHOLD)
-    call det3(cov, w(gt), w)
-    w(k1) = EIGHT * w(1)
-!>&
+    call det3(g, cov, w)
+    w(k1) = -EIGHT * w(1)
+!
 !   D = RR^T
 !
-    w(d11) = cov(1) * cov(1)
-    w(d11) = w(d11) + cov(2) * cov(2)
-    w(d11) = w(d11) + cov(3) * cov(3)
-    w(d22) = cov(4) * cov(4)
-    w(d22) = w(d22) + cov(5) * cov(5)
-    w(d22) = w(d22) + cov(6) * cov(6)
-    w(d33) = cov(7) * cov(7)
-    w(d33) = w(d33) + cov(8) * cov(8)
-    w(d33) = w(d33) + cov(9) * cov(9)
-    w(d21) = cov(4) * cov(1)
-    w(d21) = w(d21) + cov(5) * cov(2)
-    w(d21) = w(d21) + cov(6) * cov(3)
-    w(d31) = cov(7) * cov(1)
-    w(d31) = w(d31) + cov(8) * cov(2)
-    w(d31) = w(d31) + cov(9) * cov(3)
-    w(d32) = cov(4) * cov(7)
-    w(d32) = w(d32) + cov(5) * cov(8)
-    w(d32) = w(d32) + cov(6) * cov(9)
+    w(d11) = cov(1) * cov(1) + cov(2) * cov(2) + cov(3) * cov(3)
+    w(d22) = cov(4) * cov(4) + cov(5) * cov(5) + cov(6) * cov(6)
+    w(d33) = cov(7) * cov(7) + cov(8) * cov(8) + cov(9) * cov(9)
+    w(d21) = cov(4) * cov(1) + cov(5) * cov(2) + cov(6) * cov(3)
+    w(d31) = cov(7) * cov(1) + cov(8) * cov(2) + cov(9) * cov(3)
+    w(d32) = cov(4) * cov(7) + cov(5) * cov(8) + cov(6) * cov(9)
 !
 !   A1 = D11 * (D22+D33) + D22 * D33 - D12**2 - D13**2 - D23**2
 !   A2 = tr[D]
@@ -292,7 +261,14 @@ contains
     w(k0) = w(a2) * w(a2) - w(a1)
     w(k2) = -TWO * w(a2)
 !
-    if (ABS(w(k1)) < w(gt)) then
+!   normalize
+    w(nrm1) = TWO / g
+    w(nrm2) = w(nrm1) * w(nrm1)
+    w(k2) = w(k2) * w(nrm2)
+    w(k1) = w(k1) * w(nrm1) * w(nrm2)
+    w(k0) = w(k0) * w(nrm2) * w(nrm2)
+!
+    if (ABS(w(k1)) < THRESHOLD) then
 !
 !     find solution of x**4 + K2 * x**2 + K0 = 0
 !     that is x**2 = (K2 + sqrt{K2**2 - 4 * K0}) / 2
@@ -319,71 +295,64 @@ contains
 !     find solution of x**4 + K2 * x**2 + K1 * x + K0 = 0
 !
       w(s) = ONE
-      w(xk) = HALF * g
+      w(xk) = ONE
 !
       do k = 1, MAXITER
         w(xx) = w(xk) * w(xk)
         w(a) = w(k2) + w(xx)
-        w(f) = w(a) * w(xx) - w(k1) * w(xk) + w(k0)
-        w(df) = -w(k1) + (w(xk) + w(xk)) * (w(a) + w(xx))
-        if (ABS(w(df)) < w(gt) .and. ABS(w(f)) < w(gt)) exit
+        w(f) = w(a) * w(xx) + w(k1) * w(xk) + w(k0)
+        w(df) = w(k1) + (w(xk) + w(xk)) * (w(a) + w(xx))
+        if (ABS(w(df)) < THRESHOLD .and. ABS(w(f)) < THRESHOLD) exit
         w(s) = w(f) / w(df)
         w(xk) = w(xk) - w(s)
-        if (w(s) < w(gt) * ABS(w(xk))) exit
+        if (ABS(w(s)) < THRESHOLD) exit
       end do
     end if
-!
   end subroutine find_lambda_max
 !
 !| Find null vector of S. <br>
 !  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
-  pure subroutine find_null_vector(deg, w)
-    real(RK), intent(in)    :: deg
+  pure subroutine find_null_vector(w)
     real(RK), intent(inout) :: w(*)
     integer(IK), parameter  :: y2 = 4, y3 = 5, y4 = 6
     integer(IK), parameter  :: s22 = 7, s23 = 8, s24 = 9
     integer(IK), parameter  :: s33 = 10, s34 = 11, s44 = 12
     integer(IK), parameter  :: m22 = 13, m23 = 14, m24 = 15
     integer(IK), parameter  :: m33 = 16, m34 = 17, m44 = 18
-    integer(IK), parameter  :: mm2 = 4, mm3 = 5, mm4 = 6
+    integer(IK), parameter  :: mm = 4
 !
     w(m22) = w(s33) * w(s44) - w(s34) * w(s34)
     w(m23) = w(s34) * w(s24) - w(s23) * w(s44)
     w(m24) = w(s23) * w(s34) - w(s33) * w(s24)
-!
-    w(mm2) = w(m22) * w(m22)
-    w(mm3) = w(m23) * w(m23)
-    w(mm4) = w(m24) * w(m24)
-    w(m33) = w(mm2) + w(mm3) + w(mm4)
-!
-    if (w(m33) < deg) then
-      w(m44) = w(m33) - w(mm2)
-      w(m33) = w(s22) * w(s44) - w(mm4)
+    w(mm) = ABS(w(m22)) + ABS(w(m23)) + ABS(w(m24))
+    if (w(mm) < DEGENERACY) then
+      w(m33) = w(s22) * w(s44) - w(s24) * w(s24)
       w(m34) = w(s22) * w(s34) - w(s23) * w(s24)
-      if (w(m44) < deg) then
-        w(mm4) = w(m44) - w(mm3)
+      w(mm) = ABS(w(m33)) + ABS(w(m34))
+      if (w(mm) < DEGENERACY) then
         w(m44) = w(s22) * w(s33) - w(s23) * w(s23)
-        if (w(mm4) < deg) then
+        w(mm) = ABS(w(m44))
+        if (w(mm) < DEGENERACY) then
           ! double degeneracy
-          if (ABS(w(s22)) > deg) then
+          if (ABS(w(s22)) > DEGENERACY) then
             w(y2) = -w(s23)
             w(y3) = w(s22)
             w(y4) = ZERO
-          elseif (ABS(w(s33)) > deg) then
+          elseif (ABS(w(s33)) > DEGENERACY) then
             w(y2) = w(s33)
             w(y3) = -w(s23)
             w(y4) = ZERO
-          elseif (ABS(w(s44)) > deg) then
+          elseif (ABS(w(s44)) > DEGENERACY) then
             w(y2) = w(s44)
             w(y3) = ZERO
             w(y4) = -w(s24)
           else
+            ! Triple degeneracy
             w(y2) = ONE
             w(y3) = ZERO
             w(y4) = ZERO
           end if
         else
-          ! Triple degeneracy
           w(y2) = ZERO
           w(y3) = ZERO
           w(y4) = w(m44)
@@ -400,17 +369,17 @@ contains
     end if
   end subroutine find_null_vector
 !
-  pure subroutine det3(cov, thr, w)
-    real(RK), intent(in)    :: cov(*)
-    real(RK), intent(in)    :: thr
+  pure subroutine det3(g, cov, w)
+    real(RK), intent(in)    :: g, cov(*)
     real(RK), intent(inout) :: w(*)
     w(1) = ABS(cov(1))
     w(2) = ABS(cov(2))
+    w(3) = g * THRESHOLD
     if (w(1) > w(2)) then
       w(2) = ABS(cov(3))
       if (w(1) > w(2)) then
 ! |cov(1)| > |cov(2)| .and. |cov(1)| > |cov(3)|
-        if (w(1) < thr) then
+        if (w(1) < w(2)) then
           w(1) = ZERO
           return
         end if
@@ -420,35 +389,36 @@ contains
 !   147
 !   258
 !   369, pivot = 0
-          if (w(1) < thr) then
+          if (w(1) < w(3)) then
             w(1) = cov(4) * (cov(2) * cov(9) - cov(8) * cov(3))
-            return
+          else
+            w(1) = ((cov(1) * cov(5) - cov(2) * cov(4)) &
+                & * (cov(1) * cov(9) - cov(3) * cov(7)) &
+                & - (cov(1) * cov(8) - cov(2) * cov(7)) &
+                & * (cov(1) * cov(6) - cov(3) * cov(4)) &
+                   ) / cov(1)
           end if
-          w(1) = ((cov(1) * cov(5) - cov(2) * cov(4)) &
-              & * (cov(1) * cov(9) - cov(3) * cov(7)) &
-              & - (cov(1) * cov(8) - cov(2) * cov(7)) &
-              & * (cov(1) * cov(6) - cov(3) * cov(4)) &
-                 ) / cov(1)
         else
 !   147
 !   369
 !   258, pivot = 1
-          if (w(2) < thr) then
+          if (w(2) < w(3)) then
             w(1) = -cov(4) * (cov(3) * cov(8) - cov(9) * cov(2))
             return
+          else
+            w(1) = -((cov(1) * cov(6) - cov(3) * cov(4)) &
+                & * (cov(1) * cov(8) - cov(2) * cov(7)) &
+                & - (cov(1) * cov(9) - cov(3) * cov(7)) &
+                & * (cov(1) * cov(5) - cov(2) * cov(4)) &
+                   ) / cov(1)
           end if
-          w(1) = -((cov(1) * cov(6) - cov(3) * cov(4)) &
-              & * (cov(1) * cov(8) - cov(2) * cov(7)) &
-              & - (cov(1) * cov(9) - cov(3) * cov(7)) &
-              & * (cov(1) * cov(5) - cov(2) * cov(4)) &
-                 ) / cov(1)
         end if
       else
 ! |cov(3)| > |cov(1)| > |cov(2)|
 !   369
 !   147
 !   258, pivot = 2
-        if (w(2) < thr) then
+        if (w(2) < w(3)) then
           w(1) = ZERO
           return
         end if
@@ -458,28 +428,29 @@ contains
 !   369
 !   147
 !   258, pivot = 2
-          if (w(1) < thr) then
+          if (w(1) < w(3)) then
             w(1) = cov(6) * (cov(1) * cov(8) - cov(7) * cov(2))
-            return
+          else
+            !print*,3
+            w(1) = ((cov(3) * cov(4) - cov(1) * cov(6)) &
+                & * (cov(3) * cov(8) - cov(2) * cov(9)) &
+                & - (cov(3) * cov(7) - cov(1) * cov(9)) &
+                & * (cov(3) * cov(5) - cov(2) * cov(6)) &
+                   ) / cov(3)
           end if
-          w(1) = ((cov(3) * cov(4) - cov(1) * cov(6)) &
-              & * (cov(3) * cov(8) - cov(2) * cov(9)) &
-              & - (cov(3) * cov(7) - cov(1) * cov(9)) &
-              & * (cov(3) * cov(5) - cov(2) * cov(6)) &
-                 ) / cov(3)
         else
 !   369
 !   258
 !   147, pivot = 1
-          if (w(2) < thr) then
+          if (w(2) < w(3)) then
             w(1) = cov(4) * (cov(2) * cov(9) - cov(8) * cov(3))
-            return
+          else
+            w(1) = -((cov(3) * cov(5) - cov(2) * cov(6)) &
+                & * (cov(3) * cov(7) - cov(1) * cov(9)) &
+                & - (cov(3) * cov(8) - cov(2) * cov(9)) &
+                & * (cov(3) * cov(4) - cov(1) * cov(6)) &
+                    ) / cov(3)
           end if
-          w(1) = -((cov(3) * cov(5) - cov(2) * cov(6)) &
-              & * (cov(3) * cov(7) - cov(1) * cov(9)) &
-              & - (cov(3) * cov(8) - cov(2) * cov(9)) &
-              & * (cov(3) * cov(4) - cov(1) * cov(6)) &
-                  ) / cov(3)
         end if
       end if
     else
@@ -489,7 +460,7 @@ contains
 !   369
 !   147
 !   258, pivot = 2
-        if (w(1) < thr) then
+        if (w(1) < w(3)) then
           w(1) = ZERO
           return
         end if
@@ -499,35 +470,35 @@ contains
 !   369
 !   147
 !   258, pivot = 2
-          if (w(1) < thr) then
+          if (w(1) < w(3)) then
             w(1) = cov(6) * (cov(1) * cov(8) - cov(7) * cov(2))
-            return
+          else
+            w(1) = ((cov(3) * cov(4) - cov(1) * cov(6)) &
+                & * (cov(3) * cov(8) - cov(2) * cov(9)) &
+                & - (cov(3) * cov(7) - cov(1) * cov(9)) &
+                & * (cov(3) * cov(5) - cov(2) * cov(6)) &
+                   ) / cov(3)
           end if
-          w(1) = ((cov(3) * cov(4) - cov(1) * cov(6)) &
-              & * (cov(3) * cov(8) - cov(2) * cov(9)) &
-              & - (cov(3) * cov(7) - cov(1) * cov(9)) &
-              & * (cov(3) * cov(5) - cov(2) * cov(6)) &
-                 ) / cov(3)
         else
 !   369
 !   258
 !   147, pivot = 1
-          if (w(2) < thr) then
+          if (w(2) < w(3)) then
             w(1) = cov(4) * (cov(2) * cov(9) - cov(8) * cov(3))
-            return
+          else
+            w(1) = -((cov(3) * cov(5) - cov(2) * cov(6)) &
+                & * (cov(3) * cov(7) - cov(1) * cov(9)) &
+                & - (cov(3) * cov(8) - cov(2) * cov(9)) &
+                & * (cov(3) * cov(4) - cov(1) * cov(6)) &
+                    ) / cov(3)
           end if
-          w(1) = -((cov(3) * cov(5) - cov(2) * cov(6)) &
-              & * (cov(3) * cov(7) - cov(1) * cov(9)) &
-              & - (cov(3) * cov(8) - cov(2) * cov(9)) &
-              & * (cov(3) * cov(4) - cov(1) * cov(6)) &
-                  ) / cov(3)
         end if
       else
 ! |cov(2)| => |cov(1)| .and. |cov(2)| => |cov(3)|
 !   258
 !   147
 !   369, pivot = 1
-        if (w(2) < thr) then
+        if (w(2) < w(3)) then
           w(1) = ZERO
           return
         end if
@@ -537,28 +508,28 @@ contains
 !   258
 !   147
 !   369, pivot = 1
-          if (w(1) < thr) then
-            w(1) = - cov(5) * (cov(1) * cov(9) - cov(7) * cov(3))
-            return
+          if (w(1) < w(3)) then
+            w(1) = -cov(5) * (cov(1) * cov(9) - cov(7) * cov(3))
+          else
+            w(1) = -((cov(2) * cov(4) - cov(1) * cov(5)) &
+                & * (cov(2) * cov(9) - cov(3) * cov(8)) &
+                & - (cov(2) * cov(7) - cov(1) * cov(8)) &
+                & * (cov(2) * cov(6) - cov(3) * cov(5)) &
+                   ) / cov(2)
           end if
-          w(1) = -((cov(2) * cov(4) - cov(1) * cov(5)) &
-              & *  (cov(2) * cov(9) - cov(3) * cov(8)) &
-              & -  (cov(2) * cov(7) - cov(1) * cov(8)) &
-              & *  (cov(2) * cov(6) - cov(3) * cov(5)) &
-                 ) / cov(2)
         else
 !   258
 !   369
 !   147, pivot = 2
-          if (w(2) < thr) then
+          if (w(2) < w(3)) then
             w(1) = cov(5) * (cov(3) * cov(7) - cov(9) * cov(1))
-            return
+          else
+            w(1) = ((cov(2) * cov(6) - cov(3) * cov(5)) &
+                & * (cov(2) * cov(7) - cov(1) * cov(8)) &
+                & - (cov(2) * cov(9) - cov(3) * cov(8)) &
+                & * (cov(2) * cov(4) - cov(1) * cov(5)) &
+                  ) / cov(2)
           end if
-          w(1) = ((cov(2) * cov(6) - cov(3) * cov(5)) &
-              & * (cov(2) * cov(7) - cov(1) * cov(8)) &
-              & - (cov(2) * cov(9) - cov(3) * cov(8)) &
-              & * (cov(2) * cov(4) - cov(1) * cov(5)) &
-                ) / cov(2)
         end if
       end if
     end if
