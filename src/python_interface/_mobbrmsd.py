@@ -41,19 +41,42 @@ class mobbrmsd:
         self,
         molecules: dict | list[dict] = {"n_apm": 1, "n_mol": 1, "sym": None},
         d: int = 3,
+        dtype=None,
     ) -> None:
 
         if d == 2:
-            from .mobbrmsd_2d import driver
-
+            if dtype is None:
+                from .mobbrmsd_2ddp import driver
+            else:
+                if numpy.dtype(dtype) == numpy.float32:
+                    from .mobbrmsd_2dsp import driver
+                elif numpy.dtype(dtype) == numpy.float64:
+                    from .mobbrmsd_2ddp import driver
+                else:
+                    raise ValueError
             self.driver = driver
         elif d == 3:
-            from .mobbrmsd_3d import driver
+            if dtype is None:
+                from .mobbrmsd_3ddp import driver
+            else:
+                if numpy.dtype(dtype) == numpy.float32:
+                    from .mobbrmsd_3dsp import driver
+                elif numpy.dtype(dtype) == numpy.float64:
+                    from .mobbrmsd_3ddp import driver
+                else:
+                    raise ValueError
 
             self.driver = driver
         elif d == 1 or d > 3:
-            from .mobbrmsd import driver
-
+            if dtype is None:
+                from .mobbrmsd_gddp import driver
+            else:
+                if numpy.dtype(dtype) == numpy.float32:
+                    from .mobbrmsd_gdsp import driver
+                elif numpy.dtype(dtype) == numpy.float64:
+                    from .mobbrmsd_gddp import driver
+                else:
+                    raise ValueError
             self.driver = driver
             self.driver.setup_dimension(d)
         else:
