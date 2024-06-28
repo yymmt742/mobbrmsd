@@ -215,6 +215,7 @@ class mobbrmsd:
         sort_by_g: bool = True,
         verbose: bool = False,
         n_chunk: int = 1,
+        full_info: bool = False,
     ) -> list:
 
         if hasattr(self, "ww"):
@@ -229,12 +230,21 @@ class mobbrmsd:
             def res(i, j, hret, iret, rret):
                 if i > j:
                     k = (i - 1) * (i - 2) // 2 + i + j - 1
-                    return mobbrmsd_result(self.driver, hret, iret[k], rret[k])
+                    if full_info:
+                        return mobbrmsd_result(self.driver, hret, iret[k], rret[k])
+                    else:
+                        return self.driver.rmsd(rret[k])
                 elif i < j:
                     k = (j - 1) * (j - 2) // 2 + j + i - 1
-                    return mobbrmsd_result(self.driver, hret, iret[k], rret[k])
+                    if full_info:
+                        return mobbrmsd_result(self.driver, hret, iret[k], rret[k])
+                    else:
+                        return self.driver.rmsd(rret[k])
                 else:
-                    return mobbrmsd_result(self.driver, hret, None, None)
+                    if full_info:
+                        return mobbrmsd_result(self.driver, hret, None, None)
+                    else:
+                        return 0.0
 
             n_target = x_.shape[2]
             n_tri = (n_target * (n_target - 1)) // 2
@@ -296,7 +306,10 @@ class mobbrmsd:
 
             def res(n_reference, i, j, hret, iret, rret):
                 k = j * n_reference + i
-                return mobbrmsd_result(self.driver, hret, iret[k], rret[k])
+                if full_info:
+                    return mobbrmsd_result(self.driver, hret, iret[k], rret[k])
+                else:
+                    return self.driver.rmsd(rret[k])
 
             y_ = self.varidation_coordinates_2(y)
 
@@ -322,8 +335,6 @@ class mobbrmsd:
                     remove_com,
                     sort_by_g,
                 )
-                print(rret)
-
                 return [
                     [
                         res(n_reference, i, j, hret, iret.T, rret.T)
