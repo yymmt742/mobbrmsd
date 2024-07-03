@@ -43,40 +43,31 @@ class mobbrmsd:
         d: int = 3,
         dtype=None,
     ) -> None:
+        self.dtype = numpy.float64 if dtype is None else numpy.dtype(dtype)
 
         if d == 2:
-            if dtype is None:
+            if self.dtype == numpy.float32:
+                from .mobbrmsd_2dsp import driver
+            elif self.dtype == numpy.float64:
                 from .mobbrmsd_2ddp import driver
             else:
-                if numpy.dtype(dtype) == numpy.float32:
-                    from .mobbrmsd_2dsp import driver
-                elif numpy.dtype(dtype) == numpy.float64:
-                    from .mobbrmsd_2ddp import driver
-                else:
-                    raise ValueError
+                raise ValueError
             self.driver = driver
         elif d == 3:
-            if dtype is None:
+            if self.dtype == numpy.float32:
+                from .mobbrmsd_3dsp import driver
+            elif self.dtype == numpy.float64:
                 from .mobbrmsd_3ddp import driver
             else:
-                if numpy.dtype(dtype) == numpy.float32:
-                    from .mobbrmsd_3dsp import driver
-                elif numpy.dtype(dtype) == numpy.float64:
-                    from .mobbrmsd_3ddp import driver
-                else:
-                    raise ValueError
-
+                raise ValueError
             self.driver = driver
         elif d == 1 or d > 3:
-            if dtype is None:
+            if self.dtype == numpy.float32:
+                from .mobbrmsd_gdsp import driver
+            elif self.dtype == numpy.float64:
                 from .mobbrmsd_gddp import driver
             else:
-                if numpy.dtype(dtype) == numpy.float32:
-                    from .mobbrmsd_gdsp import driver
-                elif numpy.dtype(dtype) == numpy.float64:
-                    from .mobbrmsd_gddp import driver
-                else:
-                    raise ValueError
+                raise ValueError
             self.driver = driver
             self.driver.setup_dimension(d)
         else:
@@ -123,6 +114,15 @@ class mobbrmsd:
 
     def __del__(self):
         self.clear()
+        del self.dtype
+        del self.molecules
+        del self.d
+        del self.natom
+        del self.memsize
+        del self.njob
+        del self.n_header
+        del self.n_int
+        del self.n_float
         del self.driver
 
     def __str__(self):
@@ -153,9 +153,9 @@ class mobbrmsd:
 
         if hasattr(self, "w"):
             if self.w.size != self.memsize:
-                self.w = numpy.empty(self.memsize)
+                self.w = numpy.empty(self.memsize, dtype=self.dtype)
         else:
-            self.w = numpy.empty(self.memsize)
+            self.w = numpy.empty(self.memsize, dtype=self.dtype)
 
         hret, iret, rret = self.driver.run(
             self.n_header,
@@ -220,9 +220,9 @@ class mobbrmsd:
 
         if hasattr(self, "ww"):
             if self.ww.shape[1] != self.memsize or self.ww.shape[0] != self.njob:
-                self.ww = numpy.empty((self.njob, self.memsize)).T
+                self.ww = numpy.empty((self.njob, self.memsize), dtype=self.dtype).T
         else:
-            self.ww = numpy.empty((self.njob, self.memsize)).T
+            self.ww = numpy.empty((self.njob, self.memsize), dtype=self.dtype).T
 
         x_ = self.varidation_coordinates_2(x)
         if y is None:
@@ -393,9 +393,9 @@ class mobbrmsd:
 
         if hasattr(self, "ww"):
             if self.ww.shape[1] != self.memsize or self.ww.shape[0] != self.njob:
-                self.ww = numpy.empty((self.njob, self.memsize)).T
+                self.ww = numpy.empty((self.njob, self.memsize), dtype=self.dtype).T
         else:
-            self.ww = numpy.empty((self.njob, self.memsize)).T
+            self.ww = numpy.empty((self.njob, self.memsize), dtype=self.dtype).T
 
         edges, weights, hret, iret, rret = self.driver.min_span_tree(
             n_target,

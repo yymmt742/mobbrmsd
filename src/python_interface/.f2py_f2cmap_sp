@@ -1,0 +1,3 @@
+dict( integer=dict( IK='int' ),
+      real=dict( SP='float', DP='double', RK='float' ),
+      complex=dict( SP='complex_float', DP='complex_double', RK='complex_float' ) )

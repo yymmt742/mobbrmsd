@@ -27,7 +27,6 @@ if(SKBUILD)
     OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
-  set (f2cmap "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap")
   include_directories(${PYTHON_INCLUDE_DIR})
   include_directories(${NumPy_INCLUDE_DIRS})
 
@@ -44,7 +43,7 @@ if(SKBUILD)
         -m mobbrmsd_${dim}${prec}
         --no-wrap-functions
         $<$<CONFIG:Debug>:--debug-capi>
-        --f2cmap ${f2cmap}
+        --f2cmap "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap_${prec}"
         "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
         "${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_${dim}/libmobbrmsd_${dim}${prec}.a"
         -I${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_${dim}/mobbrmsd_${dim}${prec}/mod_files
@@ -71,7 +70,7 @@ if(SKBUILD)
         '
         $<$<CONFIG:Debug>:--debug>
       DEPENDS "mobbrmsd_${dim}${prec}_static"
-              "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap"
+              "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap_${prec}"
               "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
     )
     add_custom_target(mobbrmsd_${dim}${prec}_so ALL DEPENDS ${sofile})
