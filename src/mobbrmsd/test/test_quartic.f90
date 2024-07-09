@@ -1,4 +1,5 @@
 module mod_quatic
+  use mod_kinds
   use mod_params, only: RK, IK
   implicit none
   private
@@ -168,6 +169,7 @@ contains
 end module mod_quatic
 
 program main
+  use mod_kinds
   use mod_params, only: RK, IK
   use mod_quatic
   implicit none
@@ -175,15 +177,21 @@ program main
   character(2) :: Z
   integer      :: i, j
   K2 = -2.0_RK
+  print *, RK
   do j = 1, 10
   do i = -100, 100
     K1 = SIGN(1, i) * 10 * EXP(-ABS(i) * 0.5_RK)
-    X = 20 * EXP(-ABS(j) * 0.1_RK)
+    X = 5 * EXP(-ABS(j) * 0.02_RK)
     Y = X
     K0 = -X**4 - K2 * X**2 - K1 * X
     call solve_quartic(K1, K0, X, Z)
+#ifdef USE_REAL32
+    if (ABS(X**4 + k2 * X**2 + k1 * X + k0) > 1.E-4) &
+      & print '(A,2I4,*(f16.9))', Z, i, j, k2, k1, k0, Y, X, X**4 + k2 * X**2 + k1 * X + k0
+#else
     if (ABS(X**4 + k2 * X**2 + k1 * X + k0) > 1.E-6) &
       & print '(A,2I4,*(f16.9))', Z, i, j, k2, k1, k0, Y, X, X**4 + k2 * X**2 + k1 * X + k0
+#endif
   end do
   end do
 end program main
