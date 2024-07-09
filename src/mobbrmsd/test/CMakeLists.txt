@@ -16,6 +16,11 @@ ADDTEST(test_tree "" "" "" "" ""
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/test_tree.f90
   )
+ADDTEST(test_quartic_dp 64 32 "" "" ""
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_quartic.f90
+  )
 
 set(curr_dir ${CMAKE_CURRENT_SOURCE_DIR})
 
