@@ -36,6 +36,7 @@ def Puiseux_1(x):
         - 14 * np.power(x + 1, 3) / 6561
         + (2431 * np.power(x + 1, 7 / 2)) / (839808 * np.sqrt(6))
         - 40 * np.power(x + 1, 4) / 59049
+        + (1062347 * np.power(x + 1, 9 / 2)) / (1088391168 * np.sqrt(6))
     )
 
 
@@ -54,21 +55,26 @@ def expand(x):
 
 
 # newton np.cos(np.arccos(x) / 3.0)
-def newton_(x):
-    y = np.cos(np.arccos(x) / 3)
+def newton_(x, y0, k):
+    if x <= -1.0:
+        return 1 / 2
+    i = 0
+    y = y0
     s = 1
-    while s > 1.0e-16:
-        f = 4 * y**3 - 3 * y - x
-        df = 12 * y**2 - 3
+    while i < k and s > 1e-17:
+        yy = y * y
+        f = (4 * yy - 3) * y - x
+        df = np.max([12 * y**2 - 3, 1e-18])
         s = f / df
         y -= s
+        i += 1
     return y
 
 
-def spline_linear(x, f0):
+def spline_linear(x, f):
     dx = x[1:] - x[:-1]
     dm = (x[1:] + x[:-1]) / 2
-    y = f0(x)
+    y = f(x)
     dy = y[1:] - y[:-1]
     g = dy / dx
     b = (x[1:] * y[:-1] - y[1:] * x[:-1]) / dx
@@ -81,54 +87,7 @@ def spline_linear(x, f0):
                 return b[i] + g[i] * t
         return b[-1] + g[-1] * t
 
-    def corr2(t):
-        for i in range(dx.shape[0]):
-            if t < x[i + 1]:
-                diff = -4 * (f0(dm[i]) - s0(dm[i])) / dx[i] ** 2
-                return diff * (t - x[i]) * (t - x[i + 1])
-        return 0.0
-
-    def corr3(t):
-        for i in range(dx.shape[0]):
-            if t < x[i + 1]:
-                dl = dm[i] - np.sqrt(3) * dx[i] / 6
-                du = dm[i] + np.sqrt(3) * dx[i] / 6
-                diff = (
-                    (f0(dl) - s0(dl) - corr2(dl) - f0(du) + s0(du) + corr2(du))
-                    * 18
-                    / (np.sqrt(3) * dx[i] ** 3)
-                )
-                return diff * (t - x[i]) * (t - dm[i]) * (t - x[i + 1])
-        return 0.0
-
-    def corr4(t):
-        for i in range(dx.shape[0]):
-            if t < x[i + 1]:
-                dl = dm[i] - np.sqrt(2) * dx[i] / 4
-                du = dm[i] + np.sqrt(2) * dx[i] / 4
-                diff = (
-                    -32
-                    * (
-                        f0(du)
-                        - s0(du)
-                        - corr2(du)
-                        - corr3(du)
-                        + f0(dl)
-                        - s0(dl)
-                        - corr2(dl)
-                        - corr3(dl)
-                    )
-                    / dx[i] ** 4
-                )
-                return diff * (t - x[i]) * (t - x[i + 1]) * (t - dm[i]) ** 2
-        return 0.0
-
-    return (
-        np.vectorize(s0),
-        np.vectorize(corr2),
-        np.vectorize(corr3),
-        np.vectorize(corr4),
-    )
+    return np.vectorize(s0)
 
 
 def spline_cubic(x, f0):
@@ -155,21 +114,32 @@ def spline_cubic(x, f0):
             m[j + 1, j + 3] = -1.0
             m[j + 2, j + 4] = -1.0
         else:
+            # not a not
             m[j + 1, 2] = 1.0
             m[j + 1, 5] = -1.0
             m[j + 2, j - 1] = 1.0
             m[j + 2, j + 2] = -1.0
 
+            # natural
             # m[j + 1, 2] = 1.0
             # m[j + 2, j + 2] = 1.0
 
+            # cramped
             # m[j + 1, 1] = 1.0
             # m[j + 2, j + 1] = 1.0
             # p[j + 1] = f1(x[0])
             # p[j + 2] = f1(x[-1])
+
         j += 3
 
     w = np.linalg.solve(m, p).reshape([-1, 3])
+
+    z = np.zeros((w.shape[0], 5))
+    for xi, yi, zi, wi in zip(x, y, z, w):
+        zi[0] = yi - wi[0] * xi + wi[1] * xi * xi / 2 - wi[2] * xi * xi * xi / 6
+        zi[1] = wi[0] - wi[1] * xi + wi[2] * xi * xi / 2
+        zi[2] = wi[1] / 2 - wi[2] * xi / 2
+        zi[3] = wi[2] / 6
 
     def s0(t):
         if t < x[0]:
@@ -177,11 +147,19 @@ def spline_cubic(x, f0):
         for i in range(w.shape[0]):
             if t < x[i + 1]:
                 return (
+                    z[i, 0]
+                    + z[i, 1] * t
+                    + z[i, 2] * np.power(t, 2)
+                    + z[i, 3] * np.power(t, 3)
+                )
+                """
+                return (
                     y[i]
                     + w[i, 0] * (t - x[i])
                     + (w[i, 1] / 2) * np.power(t - x[i], 2)
                     + (w[i, 2] / 6) * np.power(t - x[i], 3)
                 )
+                """
 
         return (
             y[-1]
@@ -190,67 +168,242 @@ def spline_cubic(x, f0):
             + (w[-1, 2] / 6) * np.power(t - x[-1], 3)
         )
 
+    return np.vectorize(s0), z
+
+
+def corr(x, f, s):
+    dx = x[1:] - x[:-1]
+    dm = (x[1:] + x[:-1]) / 2
+    y = f(x)
+    dy = y[1:] - y[:-1]
+    v2 = np.zeros((dx.shape[0], 5))
+    v3 = np.zeros((dx.shape[0], 5))
+    v4 = np.zeros((dx.shape[0], 5))
+
+    d2 = 16 * (f(dm) - s(dm)) / np.power(dx, 4)
+
+    for i in range(dx.shape[0]):
+        v2[i, 0] = d2[i] * x[i] * x[i] * x[i + 1] * x[i + 1]
+        v2[i, 1] = -2 * d2[i] * x[i] * x[i + 1] * (x[i] + x[i + 1])
+        v2[i, 2] = d2[i] * (4 * x[i] * x[i + 1] + x[i] * x[i] + x[i + 1] * x[i + 1])
+        v2[i, 3] = -2 * d2[i] * (x[i] + x[i + 1])
+        v2[i, 4] = d2[i]
+
     def corr2(t):
-        for i in range(w.shape[0]):
+        for i in range(dx.shape[0]):
             if t < x[i + 1]:
-                diff = -4 * (f0(dm[i]) - s0(dm[i])) / dx[i] ** 2
-                return diff * (t - x[i]) * (t - x[i + 1])
+                return (
+                    v2[i, 0]
+                    + v2[i, 1] * t
+                    + v2[i, 2] * np.power(t, 2)
+                    + v2[i, 3] * np.power(t, 3)
+                    + v2[i, 4] * np.power(t, 4)
+                )
+                # return d2[i] * np.power(t - x[i], 2) * np.power(t - x[i + 1], 2)
         return 0.0
+
+    l3 = dm - np.sqrt(3) * dx / 6
+    u3 = dm + np.sqrt(3) * dx / 6
+    d3 = (
+        (
+            f(l3)
+            - s(l3)
+            - np.vectorize(corr2)(l3)
+            - f(u3)
+            + s(u3)
+            + np.vectorize(corr2)(u3)
+        )
+        * 18
+        / (np.sqrt(3) * np.power(dx, 3))
+    )
+
+    for i in range(dx.shape[0]):
+        v3[i, 0] = -d3[i] * x[i] * x[i + 1] * (x[i] + x[i + 1]) / 2
+        v3[i, 1] = d3[i] * (x[i] * x[i] + 4 * x[i] * x[i + 1] + x[i + 1] * x[i + 1]) / 2
+        v3[i, 2] = -3 * d3[i] * (x[i] + x[i + 1]) / 2
+        v3[i, 3] = d3[i]
 
     def corr3(t):
-        for i in range(w.shape[0]):
+        for i in range(dx.shape[0]):
             if t < x[i + 1]:
-                dl = dm[i] - np.sqrt(3) * dx[i] / 6
-                du = dm[i] + np.sqrt(3) * dx[i] / 6
-                diff = (
-                    (f0(dl) - s0(dl) - corr2(dl) - f0(du) + s0(du) + corr2(du))
-                    * 18
-                    / (np.sqrt(3) * dx[i] ** 3)
+                # return d3[i] * (t - x[i]) * (t - dm[i]) * (t - x[i + 1])
+                return (
+                    v3[i, 0]
+                    + v3[i, 1] * t
+                    + v3[i, 2] * np.power(t, 2)
+                    + v3[i, 3] * np.power(t, 3)
+                    + v3[i, 4] * np.power(t, 4)
                 )
-                return diff * (t - x[i]) * (t - dm[i]) * (t - x[i + 1])
         return 0.0
 
+    l4 = dm - np.sqrt(2) * dx / 4
+    u4 = dm + np.sqrt(2) * dx / 4
+    d4 = (
+        -32
+        * (
+            f(u4)
+            - s(u4)
+            - np.vectorize(corr2)(u4)
+            - np.vectorize(corr3)(u4)
+            + f(l4)
+            - s(l4)
+            - np.vectorize(corr2)(l4)
+            - np.vectorize(corr3)(l4)
+        )
+        / np.power(dx, 4)
+    )
+
+    for i in range(dx.shape[0]):
+        v4[i, 0] = d4[i] * (x[i] * x[i + 1] * dm[i] * dm[i])
+        v4[i, 1] = -d4[i] * dm[i] * (dm[i] * (x[i] + x[i + 1]) + 2 * x[i] * x[i + 1])
+        v4[i, 2] = d4[i] * (x[i] * x[i + 1] + (2 * x[i] + 2 * x[i] + dm[i]) * dm[i])
+        v4[i, 3] = -d4[i] * (x[i] + x[i + 1] + 2 * dm[i])
+        v4[i, 4] = d4[i]
+
     def corr4(t):
-        for i in range(w.shape[0]):
+        for i in range(dx.shape[0]):
             if t < x[i + 1]:
-                dl = dm[i] - np.sqrt(2) * dx[i] / 4
-                du = dm[i] + np.sqrt(2) * dx[i] / 4
-                diff = (
-                    -32
-                    * (
-                        f0(du)
-                        - s0(du)
-                        - corr2(du)
-                        - corr3(du)
-                        + f0(dl)
-                        - s0(dl)
-                        - corr2(dl)
-                        - corr3(dl)
-                    )
-                    / dx[i] ** 4
+                # return d4[i] * (t - x[i]) * (t - x[i + 1]) * (t - dm[i]) ** 2
+                return (
+                    v4[i, 0]
+                    + v4[i, 1] * t
+                    + v4[i, 2] * np.power(t, 2)
+                    + v4[i, 3] * np.power(t, 3)
+                    + v4[i, 4] * np.power(t, 4)
                 )
-                return diff * (t - x[i]) * (t - x[i + 1]) * (t - dm[i]) ** 2
         return 0.0
 
     return (
-        np.vectorize(s0),
         np.vectorize(corr2),
         np.vectorize(corr3),
         np.vectorize(corr4),
+        v2 + v3,  # + v4
     )
 
 
-f0 = np.vectorize(lambda x: (newton_(x) - expand(x) if x > -1.0 else 0.0))
+n = 16
+x0 = np.cos(np.pi * np.linspace(1, 0, n)) / 3 - 2 / 3
+x1 = np.cos(np.pi * np.linspace(1, 0, n)) / 3
+x2 = np.cos(np.pi * np.linspace(1, 0, n)) / 3 + 2 / 3
+f0 = np.vectorize(
+    lambda x: (np.cos(np.arccos(x) / 3) - Puiseux_1(x) if x > -1.0 else 0.0)
+)
+f1 = np.vectorize(lambda x: np.cos(np.arccos(x) / 3) - Taylor0(x))
+f2 = np.vectorize(lambda x: np.cos(np.arccos(x) / 3) - Taylor1(x))
 
-x = 1.0 * np.cos(np.pi * np.linspace(1, 0, 8))
-# x = 1.0 * np.cos(np.pi * np.linspace(1, 0, 128))
-l0, l2, l3, l4 = spline_linear(x, f0)
-s1, corr2, corr3, corr4 = spline_cubic(x, f0)
-f = lambda t: s1(t) + corr4(t) + corr3(t) + corr2(t) + expand(t)
-t = np.arange(-1.0, 1.0, 0.001)
-sc = 3.0
-# sc = np.pi * 0.8
-# e = lambda t: (np.exp(sc * t) - np.exp(-sc)) * f0(1.0) / (np.exp(sc) - np.exp(-sc))
+# c0 = spline_linear(x0, f0)
+# c1 = spline_linear(x1, f1)
+# c2 = spline_linear(x2, f2)
+c0, z0 = spline_cubic(x0, f0)
+c1, z1 = spline_cubic(x1, f1)
+c2, z2 = spline_cubic(x2, f2)
+r02, r03, r04, v0 = corr(x0, f0, c0)
+r12, r13, r14, v1 = corr(x1, f1, c1)
+r22, r23, r24, v2 = corr(x2, f2, c2)
+
+w0 = np.array(
+    [
+        1 / 2 - 1 / 18 - 2 / 243 - 14 / 6561 - 40 / 59049,
+        -1 / 18 - 2 * 2 / 243 - 3 * 14 / 6561 - 4 * 40 / 59049,
+        -2 / 243 - 3 * 14 / 6561 - 6 * 40 / 59049,
+        -14 / 6561 - 4 * 40 / 59049,
+        -40 / 59049,
+    ]
+)
+ww0 = np.array(
+    [
+        1 + 5 / 108 + 77 / 7776 + 2431 / 839808 + 1062347 / 1088391168,
+        5 / 108 + 2 * 77 / 7776 + 3 * 2431 / 839808 + 4 * 1062347 / 1088391168,
+        77 / 7776 + 3 * 2431 / 839808 + 6 * 1062347 / 1088391168,
+        2431 / 839808 + 4 * 1062347 / 1088391168,
+        1062347 / 1088391168,
+    ]
+) / np.sqrt(6)
+w1 = np.array(
+    [
+        np.sqrt(3) / 2,
+        1 / 6,
+        -1 / (12 * np.sqrt(3)),
+        2 / 81,
+        -35 / (1296 * np.sqrt(3)),
+    ]
+)
+w2 = np.array(
+    [
+        1 - 1 / 9 - 4 / 243 - 28 / 6561 - 80 / 59049,
+        1 / 9 + 2 * 4 / 243 + 3 * 28 / 6561 + 4 * 80 / 59049,
+        -4 / 243 - 3 * 28 / 6561 - 6 * 80 / 59049,
+        28 / 6561 + 4 * 80 / 59049,
+        -80 / 59049,
+    ]
+)
+z0 += v0
+z0 += w0
+z1 += v1
+z1 += w1
+z2 += v2
+z2 += w2
+print(x0)
+print(z0)
+print(x1)
+print(z1)
+print(x2)
+print(z2)
+
+
+def g(t):
+    return np.where(
+        t < 1 / 3,
+        np.where(t < -1 / 3, Puiseux_1(t) + c0(t), Taylor0(t) + c1(t)),
+        Taylor1(t) + c2(t),
+    )
+
+
+def r2(t):
+    return np.where(t < 1 / 3, np.where(t < -1 / 3, r02(t), r12(t)), r22(t))
+
+
+def r3(t):
+    return np.where(t < 1 / 3, np.where(t < -1 / 3, r03(t), r13(t)), r23(t))
+
+
+def r4(t):
+    return np.where(t < 1 / 3, np.where(t < -1 / 3, r04(t), r14(t)), r24(t))
+
+
+def h(t, k):
+    # return np.vectorize(lambda t: newton_(t, g(t), k))(t)
+    # return np.vectorize(lambda t: newton_(t, g(t) + r2(t), k))(t)
+    return np.vectorize(lambda t: newton_(t, g(t) + r2(t) + r3(t), k))(t)
+    # return np.vectorize(lambda t: newton_(t, g(t) + r2(t) + r3(t) + r4(t), k))(t)
+
+
+def h_(t, k):
+
+    def mul_(t):
+        if t < -1 / 3:
+            x = x0
+            z = z0 + np.sqrt(t + 1) * ww0
+        elif t < 1 / 3:
+            x = x1
+            z = z1
+        else:
+            x = x2
+            z = z2
+        for i in range(z.shape[0]):
+            if t < x[i + 1]:
+                return newton_(
+                    t,
+                    z[i, 0]
+                    + z[i, 1] * t
+                    + z[i, 2] * np.power(t, 2)
+                    + z[i, 3] * np.power(t, 3)
+                    + z[i, 4] * np.power(t, 4),
+                    k,
+                )
+        return 0.0
+
+    return np.vectorize(mul_)(t)
 
 
 """
@@ -262,10 +415,19 @@ S = interpolate.make_interp_spline(
 )
 plt.plot(t, S(t) - f0(t), label="interp1d")
 """
-plt.plot(t, t * 0, label="0")
-plt.plot(t, Puiseux_1(t) - np.cos(np.arccos(t) / 3.0), label="Puiseux_1")
-plt.plot(t, Taylor0(t) - np.cos(np.arccos(t) / 3.0), label="Taylor0")
-plt.plot(t, Taylor1(t) - np.cos(np.arccos(t) / 3.0), label="Taylor1")
+t = np.arange(-1.0, 1.0, 0.0005)
+# plt.plot(t, g(t) - np.cos(np.arccos(t) / 3), label="g")
+# plt.plot(t, r2(t), label="corr 2")# plt.plot(t, r2(t) + r3(t), label="corr 3")
+# plt.plot(t, r2(t) + r3(t) + r4(t), label="corr 4")
+# plt.plot(t, g(t) + r2(t) + r3(t) + r4(t) - np.cos(np.arccos(t) / 3), label="g+r2+r3")
+# plt.plot(t, r2(t), label="r2")
+# plt.plot(t, r3(t), label="r3")
+# plt.plot(t, r4(t), label="r4")
+plt.plot(t, h_(t, 0) - np.cos(np.arccos(t) / 3), label="h 0")
+plt.plot(t, h_(t, 1) - np.cos(np.arccos(t) / 3), label="h 1")
+plt.plot(t, h_(t, 2) - np.cos(np.arccos(t) / 3), label="h 2")
+# plt.plot(t, f1(t), label="Taylor0")
+# plt.plot(t, f2(t), label="Taylor1")
 # plt.plot(t, s0(t) - f0(t), label="S")
 # plt.plot(t, corr2(t), label="corr2")
 # plt.plot(t, s0(t) + corr2(t) - f0(t), label="S+corr2")
@@ -284,7 +446,6 @@ plt.plot(t, Taylor1(t) - np.cos(np.arccos(t) / 3.0), label="Taylor1")
 # plt.plot(t, f0(t), label="f", ls=":")
 # plt.plot(t, 4 * np.power(f(t), 3) - 3 * f(t) - t, label="4y(x)^3-3y(x)^3=x")
 # plt.ylim([-1.1, 1.1])
-# plt.ylim([-1.0e-14, 1.0e-14])
-plt.ylim([-1.0e-3, 1.0e-3])
+# plt.ylim([-1.0e-8, 1.0e-8])
 plt.legend()
 plt.show()
