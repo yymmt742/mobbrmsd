@@ -5,6 +5,40 @@ import matplotlib.pyplot as plt
 
 
 # expand np.cos(np.arccos(x) / 3.0)
+def Taylor0(x):
+    return (
+        np.sqrt(3) / 2
+        + x / 6
+        - np.power(x, 2) / (12 * np.sqrt(3))
+        + 2 * np.power(x, 3) / 81
+        - 35 * np.power(x, 4) / (1296 * np.sqrt(3))
+    )
+
+
+def Taylor1(x):
+    return (
+        1
+        + (x - 1) / 9
+        - 4 * np.power(x - 1, 2) / 243
+        + 28 * np.power(x - 1, 3) / 6561
+        - 80 * np.power(x - 1, 4) / 59049
+    )
+
+
+def Puiseux_1(x):
+    return (
+        1 / 2
+        + (np.sqrt(1 + x)) / np.sqrt(6)
+        - (x + 1) / 18
+        + (5 * np.power(x + 1, 3 / 2)) / (108 * np.sqrt(6))
+        - 2 / 243 * np.power(x + 1, 2)
+        + (77 * np.power(x + 1, 5 / 2)) / (7776 * np.sqrt(6))
+        - 14 * np.power(x + 1, 3) / 6561
+        + (2431 * np.power(x + 1, 7 / 2)) / (839808 * np.sqrt(6))
+        - 40 * np.power(x + 1, 4) / 59049
+    )
+
+
 def expand(x):
     return (
         0.5
@@ -29,6 +63,72 @@ def newton_(x):
         s = f / df
         y -= s
     return y
+
+
+def spline_linear(x, f0):
+    dx = x[1:] - x[:-1]
+    dm = (x[1:] + x[:-1]) / 2
+    y = f0(x)
+    dy = y[1:] - y[:-1]
+    g = dy / dx
+    b = (x[1:] * y[:-1] - y[1:] * x[:-1]) / dx
+
+    def s0(t):
+        if t < x[0]:
+            return 0.0
+        for i in range(dx.shape[0]):
+            if t < x[i + 1]:
+                return b[i] + g[i] * t
+        return b[-1] + g[-1] * t
+
+    def corr2(t):
+        for i in range(dx.shape[0]):
+            if t < x[i + 1]:
+                diff = -4 * (f0(dm[i]) - s0(dm[i])) / dx[i] ** 2
+                return diff * (t - x[i]) * (t - x[i + 1])
+        return 0.0
+
+    def corr3(t):
+        for i in range(dx.shape[0]):
+            if t < x[i + 1]:
+                dl = dm[i] - np.sqrt(3) * dx[i] / 6
+                du = dm[i] + np.sqrt(3) * dx[i] / 6
+                diff = (
+                    (f0(dl) - s0(dl) - corr2(dl) - f0(du) + s0(du) + corr2(du))
+                    * 18
+                    / (np.sqrt(3) * dx[i] ** 3)
+                )
+                return diff * (t - x[i]) * (t - dm[i]) * (t - x[i + 1])
+        return 0.0
+
+    def corr4(t):
+        for i in range(dx.shape[0]):
+            if t < x[i + 1]:
+                dl = dm[i] - np.sqrt(2) * dx[i] / 4
+                du = dm[i] + np.sqrt(2) * dx[i] / 4
+                diff = (
+                    -32
+                    * (
+                        f0(du)
+                        - s0(du)
+                        - corr2(du)
+                        - corr3(du)
+                        + f0(dl)
+                        - s0(dl)
+                        - corr2(dl)
+                        - corr3(dl)
+                    )
+                    / dx[i] ** 4
+                )
+                return diff * (t - x[i]) * (t - x[i + 1]) * (t - dm[i]) ** 2
+        return 0.0
+
+    return (
+        np.vectorize(s0),
+        np.vectorize(corr2),
+        np.vectorize(corr3),
+        np.vectorize(corr4),
+    )
 
 
 def spline_cubic(x, f0):
@@ -142,10 +242,15 @@ def spline_cubic(x, f0):
 
 f0 = np.vectorize(lambda x: (newton_(x) - expand(x) if x > -1.0 else 0.0))
 
-x = 1.0 * np.cos(np.pi * np.linspace(1, 0, 128))
-s0, corr2, corr3, corr4 = spline_cubic(x, f0)
-f = lambda t: s0(t) + corr4(t) + corr3(t) + corr2(t) + expand(t)
+x = 1.0 * np.cos(np.pi * np.linspace(1, 0, 8))
+# x = 1.0 * np.cos(np.pi * np.linspace(1, 0, 128))
+l0, l2, l3, l4 = spline_linear(x, f0)
+s1, corr2, corr3, corr4 = spline_cubic(x, f0)
+f = lambda t: s1(t) + corr4(t) + corr3(t) + corr2(t) + expand(t)
 t = np.arange(-1.0, 1.0, 0.001)
+sc = 3.0
+# sc = np.pi * 0.8
+# e = lambda t: (np.exp(sc * t) - np.exp(-sc)) * f0(1.0) / (np.exp(sc) - np.exp(-sc))
 
 
 """
@@ -157,20 +262,29 @@ S = interpolate.make_interp_spline(
 )
 plt.plot(t, S(t) - f0(t), label="interp1d")
 """
+plt.plot(t, t * 0, label="0")
+plt.plot(t, Puiseux_1(t) - np.cos(np.arccos(t) / 3.0), label="Puiseux_1")
+plt.plot(t, Taylor0(t) - np.cos(np.arccos(t) / 3.0), label="Taylor0")
+plt.plot(t, Taylor1(t) - np.cos(np.arccos(t) / 3.0), label="Taylor1")
 # plt.plot(t, s0(t) - f0(t), label="S")
 # plt.plot(t, corr2(t), label="corr2")
 # plt.plot(t, s0(t) + corr2(t) - f0(t), label="S+corr2")
 # plt.plot(t, corr3(t), label="corr3")
 # plt.plot(t, s0(t) + corr2(t) + corr3(t) - f0(t), label="S+corr2+corr3")
 # plt.plot(t, corr4(t), label="corr4")
-plt.plot(t, s0(t) + corr4(t) + corr3(t) + corr2(t) - f0(t), label="S+corr2+corr3+corr4")
+# plt.plot(t, l0(t) - f0(t), label="linear")
+# plt.plot(t, l0(t) + l2(t) - f0(t), label="linear+l2")
+# plt.plot(t, l0(t) + l2(t) + l3(t) - f0(t), label="linear+l2+l3")
+# plt.plot(t, l0(t) + l2(t) + l3(t) + l4(t) - f0(t), label="linear+l2+l3+l4")
+# plt.plot(t, s1(t) + corr2(t) + corr3(t) + corr4(t) - f0(t), label="S+corr2+corr3+corr4")
 # plt.stem(x, np.ones(x.size) * np.max(S(t) - f0(t)))
 # xm = (x[1:] + x[:-1]) / 2
 # plt.stem(xm, np.ones(xm.size) * np.max(S(t) - f0(t)), linefmt=":")
 # plt.plot(t, s0(t), label="S")
 # plt.plot(t, f0(t), label="f", ls=":")
+# plt.plot(t, 4 * np.power(f(t), 3) - 3 * f(t) - t, label="4y(x)^3-3y(x)^3=x")
 # plt.ylim([-1.1, 1.1])
 # plt.ylim([-1.0e-14, 1.0e-14])
-plt.plot(t, 4 * np.power(f(t), 3) - 3 * f(t) - t, label="4y(x)^3-3y(x)^3=x")
+plt.ylim([-1.0e-3, 1.0e-3])
 plt.legend()
 plt.show()
