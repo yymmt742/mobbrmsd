@@ -3,6 +3,8 @@ module mod_quatic
   use mod_params, only: RK, IK
   implicit none
   private
+  public :: cos_acos
+  public :: cosh_acosh
   public :: solve_quartic
 !
   real(RK), parameter    :: ZERO = 0.0_RK
@@ -166,6 +168,9 @@ contains
       X = X + S * SINH(ONETHIRD * LOG(H + SQRT(H * H + ONE)))
     end if
   end subroutine find_a_cubic_root
+!
+#include "cos_acos.f90"
+!
 end module mod_quatic
 
 program main
@@ -175,9 +180,18 @@ program main
   implicit none
   real(RK)     :: X, Y, K2, K1, K0
   character(2) :: Z
+  real(RK)     :: h, a, b, c
   integer      :: i, j
   K2 = -2.0_RK
   print *, RK
+  do i = 1, 1000
+    h = i * 0.001
+    a = cos_acos(h)
+    b = cos_acos(-h)
+    c = cosh_acosh(h)
+    print'(*(f9.3))', h, 1 / h, a, b, c, 4 * a**3 - 3 * a, 4 * b**3 - 3 * b, 1 / (4 * c**3 - 3 * c)
+  end do
+  stop
   do j = 1, 10
   do i = -100, 100
     K1 = SIGN(1, i) * 10 * EXP(-ABS(i) * 0.5_RK)
