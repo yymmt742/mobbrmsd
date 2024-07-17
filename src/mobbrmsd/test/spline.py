@@ -298,11 +298,11 @@ def corr(x, f, s):
     )
 
 
-n = 16
+n = 16 + 1
 x0 = np.cos(np.pi * np.linspace(1, 0, n)) / 3 - 2 / 3
 x1 = np.cos(np.pi * np.linspace(1, 0, n)) / 3
 x2 = np.cos(np.pi * np.linspace(1, 0, n)) / 3 + 2 / 3
-n = 32
+n = 32 + 1
 x3 = np.cos(np.pi * np.linspace(1, 0, n)) / 2 + 1 / 2
 
 f0 = np.vectorize(
@@ -408,6 +408,8 @@ def h(t, k):
 def hc(t, k):
 
     def mul_(t):
+        if t < 0.0:
+            return 0.0
         for i in range(z3.shape[0]):
             if t < x3[i + 1]:
                 return newton_(
@@ -420,7 +422,7 @@ def hc(t, k):
                     + z3[i, 4] * np.power(t, 4),
                     k,
                 )
-        return 0.0
+        return 1.0
 
     return np.vectorize(mul_)(t)
 
@@ -441,7 +443,12 @@ plt.plot(t, 4 * np.power(f(t), 3) - 3 * f(t) - t, label="4y(x)^3-3y(x)^3=x")
 plt.ylim([-1.1, 1.1])
 plt.ylim([-1.0e-8, 1.0e-8])
 s = np.arange(0.1, 1.0, 0.001)
-t = np.arange(1, 1000.0, 0.1)
+t = np.arange(1.0, 5.0, 0.001)
+plt.plot(
+    t,
+    hc(1 / t, 1),
+    label="hc",
+)
 nf = hc(s, 1)
 plt.plot(
     s,
@@ -459,28 +466,34 @@ plt.legend()
 plt.show()
 """
 
+xl = 0.0
+xu = 1.0
+print("#:set cos1_sqrt_part_x = [ &")
+print(f'&   "{xl:.16e}", "{xu:.16e}", &')
+print("& ]")
+print("#:set cos1_sqrt_part_w = [ &")
+print(
+    f'&   "{ww0[4]:.16e}", "{ww0[3]:.16e}", "{ww0[2]:.16e}", "{ww0[1]:.16e}", "{ww0[0]:.16e}", &'
+)
+print("& ]")
+
 for x, z, t in zip(
     [x0, x1, x2, x3],
     [z0, z1, z2, z3],
     [
-        "cos(arccos(x)/3) -1~-1/2",
-        "cos(arccos(x)/3) -1/2~1/2",
-        "cos(arccos(x)/3) 1/2~1",
-        "cosh(arccosh(1/x)/3) 0~1",
+        "cos1",
+        "cos2",
+        "cos3",
+        "cosh",
     ],
 ):
-    print(t)
-    for xl, xu, zi in zip(x[:-1], x[1:], z):
+    print("#:set " + t + "_x = [ &")
+    for xl, xu in zip(x[:-1], x[1:]):
+        print(f'&   ["{xl:.16e}", "{xu:.16e}",], &')
+    print("& ]")
+    print("#:set " + t + "_w = [ &")
+    for zi in z:
         print(
-            f" {xl:.16e} {xu:.16e} {zi[0]:.16e} {zi[1]:.16e} {zi[2]:.16e} {zi[3]:.16e} {zi[4]:.16e}"
+            f'&   ["{zi[4]:.16e}", "{zi[3]:.16e}", "{zi[2]:.16e}", "{zi[1]:.16e}", "{zi[0]:.16e}",], &'
         )
-"""
-print(x0)
-print(z0)
-print(x1)
-print(z1)
-print(x2)
-print(z2)
-print(x3)
-print(z3)
-"""
+    print("& ]")
