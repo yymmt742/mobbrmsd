@@ -40,17 +40,14 @@ def Puiseux_1(x):
     )
 
 
-def expand(x):
+# expand cosh(log(|x| + SQRT(x^2 -1))/3)
+def Taylor1_cosh(x):
     return (
-        0.5
-        + (np.sqrt(1 + x)) / np.sqrt(6)
-        - (x + 1) / 18
-        + (5 * np.power(x + 1, 3 / 2)) / (108 * np.sqrt(6))
-        - 2 / 243 * np.power(x + 1, 2)
-        + (77 * np.power(x + 1, 5 / 2)) / (7776 * np.sqrt(6))
-        - 14 * np.power(x + 1, 3) / 6561
-        + (2431 * np.power(x + 1, 7 / 2)) / (839808 * np.sqrt(6))
-        - 40 * np.power(x + 1, 4) / 59049
+        1
+        + (x - 1) / 9
+        - 4 / 243 * np.power(x - 1, 2)
+        + (28 * np.power(x - 1, 3)) / 6561
+        - (80 * np.power(x - 1, 4)) / 59049
     )
 
 
@@ -423,9 +420,9 @@ t = np.arange(-1.0, 1.0, 0.0005)
 # plt.plot(t, r2(t), label="r2")
 # plt.plot(t, r3(t), label="r3")
 # plt.plot(t, r4(t), label="r4")
-plt.plot(t, h_(t, 0) - np.cos(np.arccos(t) / 3), label="h 0")
-plt.plot(t, h_(t, 1) - np.cos(np.arccos(t) / 3), label="h 1")
-plt.plot(t, h_(t, 2) - np.cos(np.arccos(t) / 3), label="h 2")
+# plt.plot(t, h_(t, 0) - np.cos(np.arccos(t) / 3), label="h 0")
+# plt.plot(t, h_(t, 1) - np.cos(np.arccos(t) / 3), label="h 1")
+# plt.plot(t, h_(t, 2) - np.cos(np.arccos(t) / 3), label="h 2")
 # plt.plot(t, f1(t), label="Taylor0")
 # plt.plot(t, f2(t), label="Taylor1")
 # plt.plot(t, s0(t) - f0(t), label="S")
@@ -447,5 +444,7 @@ plt.plot(t, h_(t, 2) - np.cos(np.arccos(t) / 3), label="h 2")
 # plt.plot(t, 4 * np.power(f(t), 3) - 3 * f(t) - t, label="4y(x)^3-3y(x)^3=x")
 # plt.ylim([-1.1, 1.1])
 # plt.ylim([-1.0e-8, 1.0e-8])
+plt.plot(t, Taylor1(t), label="cos")
+plt.plot(t, Taylor1_cosh(t), label="cosh")
 plt.legend()
 plt.show()
