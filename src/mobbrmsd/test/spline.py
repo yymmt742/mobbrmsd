@@ -1,7 +1,37 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+"""
 # from scipy import interpolate
+S = interpolate.make_interp_spline(
+    x,
+    f0(x),
+    k=5,
+    # bc_type="clamped",
+)
+plt.plot(t, S(t) - f0(t), label="interp1d")
+"""
+
+
+# expand cosh(log(|x| + SQRT(x^2 -1))/3)
+def Taylor1_cosh(x):
+    return (
+        1
+        + (x - 1) / 9
+        - 4 / 243 * np.power(x - 1, 2)
+        + (28 * np.power(x - 1, 3)) / 6561
+        - (80 * np.power(x - 1, 4)) / 59049
+    )
+
+
+def Taylor1_rcosh(x):
+    return (
+        np.sqrt(3) / 2
+        + x / 6
+        - np.power(x, 2) / (12 * np.sqrt(3))
+        + 2 * np.power(x, 3) / 81
+        - 35 * np.power(x, 4) / (1296 * np.sqrt(3))
+    )
 
 
 # expand np.cos(np.arccos(x) / 3.0)
@@ -40,28 +70,18 @@ def Puiseux_1(x):
     )
 
 
-# expand cosh(log(|x| + SQRT(x^2 -1))/3)
-def Taylor1_cosh(x):
-    return (
-        1
-        + (x - 1) / 9
-        - 4 / 243 * np.power(x - 1, 2)
-        + (28 * np.power(x - 1, 3)) / 6561
-        - (80 * np.power(x - 1, 4)) / 59049
-    )
-
-
 # newton np.cos(np.arccos(x) / 3.0)
 def newton_(x, y0, k):
     if x <= -1.0:
         return 1 / 2
     i = 0
     y = y0
-    s = 1
-    while i < k and s > 1e-17:
+    s = 1.0
+    while i < k and np.abs(s) > 1e-17:
         yy = y * y
         f = (4 * yy - 3) * y - x
-        df = np.max([12 * y**2 - 3, 1e-18])
+        df = 12 * y**2 - 3
+        df = np.sign(df) * np.max([np.abs(df), 1e-18])
         s = f / df
         y -= s
         i += 1
@@ -282,11 +302,23 @@ n = 16
 x0 = np.cos(np.pi * np.linspace(1, 0, n)) / 3 - 2 / 3
 x1 = np.cos(np.pi * np.linspace(1, 0, n)) / 3
 x2 = np.cos(np.pi * np.linspace(1, 0, n)) / 3 + 2 / 3
+n = 32
+x3 = np.cos(np.pi * np.linspace(1, 0, n)) / 2 + 1 / 2
+
 f0 = np.vectorize(
     lambda x: (np.cos(np.arccos(x) / 3) - Puiseux_1(x) if x > -1.0 else 0.0)
 )
 f1 = np.vectorize(lambda x: np.cos(np.arccos(x) / 3) - Taylor0(x))
 f2 = np.vectorize(lambda x: np.cos(np.arccos(x) / 3) - Taylor1(x))
+
+f3 = np.vectorize(
+    lambda x: (
+        0.0
+        if x <= 0.0
+        else np.cosh(np.arccosh(1 / x) / 3)
+        - (np.power(2 / x, 1 / 3) + 1 / np.power(2 / x, 1 / 3)) / 2
+    )
+)
 
 # c0 = spline_linear(x0, f0)
 # c1 = spline_linear(x1, f1)
@@ -294,9 +326,11 @@ f2 = np.vectorize(lambda x: np.cos(np.arccos(x) / 3) - Taylor1(x))
 c0, z0 = spline_cubic(x0, f0)
 c1, z1 = spline_cubic(x1, f1)
 c2, z2 = spline_cubic(x2, f2)
+c3, z3 = spline_cubic(x3, f3)
 r02, r03, r04, v0 = corr(x0, f0, c0)
 r12, r13, r14, v1 = corr(x1, f1, c1)
 r22, r23, r24, v2 = corr(x2, f2, c2)
+r32, r33, r34, v3 = corr(x3, f3, c3)
 
 w0 = np.array(
     [
@@ -340,42 +374,10 @@ z1 += v1
 z1 += w1
 z2 += v2
 z2 += w2
-print(x0)
-print(z0)
-print(x1)
-print(z1)
-print(x2)
-print(z2)
-
-
-def g(t):
-    return np.where(
-        t < 1 / 3,
-        np.where(t < -1 / 3, Puiseux_1(t) + c0(t), Taylor0(t) + c1(t)),
-        Taylor1(t) + c2(t),
-    )
-
-
-def r2(t):
-    return np.where(t < 1 / 3, np.where(t < -1 / 3, r02(t), r12(t)), r22(t))
-
-
-def r3(t):
-    return np.where(t < 1 / 3, np.where(t < -1 / 3, r03(t), r13(t)), r23(t))
-
-
-def r4(t):
-    return np.where(t < 1 / 3, np.where(t < -1 / 3, r04(t), r14(t)), r24(t))
+z3 += v3
 
 
 def h(t, k):
-    # return np.vectorize(lambda t: newton_(t, g(t), k))(t)
-    # return np.vectorize(lambda t: newton_(t, g(t) + r2(t), k))(t)
-    return np.vectorize(lambda t: newton_(t, g(t) + r2(t) + r3(t), k))(t)
-    # return np.vectorize(lambda t: newton_(t, g(t) + r2(t) + r3(t) + r4(t), k))(t)
-
-
-def h_(t, k):
 
     def mul_(t):
         if t < -1 / 3:
@@ -403,48 +405,82 @@ def h_(t, k):
     return np.vectorize(mul_)(t)
 
 
-"""
-S = interpolate.make_interp_spline(
-    x,
-    f0(x),
-    k=5,
-    # bc_type="clamped",
-)
-plt.plot(t, S(t) - f0(t), label="interp1d")
+def hc(t, k):
+
+    def mul_(t):
+        for i in range(z3.shape[0]):
+            if t < x3[i + 1]:
+                return newton_(
+                    1 / t,
+                    (np.power(2 / t, 1 / 3) + np.power(t / 2, 1 / 3)) / 2
+                    + z3[i, 0]
+                    + z3[i, 1] * t
+                    + z3[i, 2] * np.power(t, 2)
+                    + z3[i, 3] * np.power(t, 3)
+                    + z3[i, 4] * np.power(t, 4),
+                    k,
+                )
+        return 0.0
+
+    return np.vectorize(mul_)(t)
+
+
 """
 t = np.arange(-1.0, 1.0, 0.0005)
-# plt.plot(t, g(t) - np.cos(np.arccos(t) / 3), label="g")
-# plt.plot(t, r2(t), label="corr 2")# plt.plot(t, r2(t) + r3(t), label="corr 3")
-# plt.plot(t, r2(t) + r3(t) + r4(t), label="corr 4")
-# plt.plot(t, g(t) + r2(t) + r3(t) + r4(t) - np.cos(np.arccos(t) / 3), label="g+r2+r3")
-# plt.plot(t, r2(t), label="r2")
-# plt.plot(t, r3(t), label="r3")
-# plt.plot(t, r4(t), label="r4")
-# plt.plot(t, h_(t, 0) - np.cos(np.arccos(t) / 3), label="h 0")
-# plt.plot(t, h_(t, 1) - np.cos(np.arccos(t) / 3), label="h 1")
-# plt.plot(t, h_(t, 2) - np.cos(np.arccos(t) / 3), label="h 2")
-# plt.plot(t, f1(t), label="Taylor0")
-# plt.plot(t, f2(t), label="Taylor1")
-# plt.plot(t, s0(t) - f0(t), label="S")
-# plt.plot(t, corr2(t), label="corr2")
-# plt.plot(t, s0(t) + corr2(t) - f0(t), label="S+corr2")
-# plt.plot(t, corr3(t), label="corr3")
-# plt.plot(t, s0(t) + corr2(t) + corr3(t) - f0(t), label="S+corr2+corr3")
-# plt.plot(t, corr4(t), label="corr4")
-# plt.plot(t, l0(t) - f0(t), label="linear")
-# plt.plot(t, l0(t) + l2(t) - f0(t), label="linear+l2")
-# plt.plot(t, l0(t) + l2(t) + l3(t) - f0(t), label="linear+l2+l3")
-# plt.plot(t, l0(t) + l2(t) + l3(t) + l4(t) - f0(t), label="linear+l2+l3+l4")
-# plt.plot(t, s1(t) + corr2(t) + corr3(t) + corr4(t) - f0(t), label="S+corr2+corr3+corr4")
-# plt.stem(x, np.ones(x.size) * np.max(S(t) - f0(t)))
-# xm = (x[1:] + x[:-1]) / 2
-# plt.stem(xm, np.ones(xm.size) * np.max(S(t) - f0(t)), linefmt=":")
-# plt.plot(t, s0(t), label="S")
-# plt.plot(t, f0(t), label="f", ls=":")
-# plt.plot(t, 4 * np.power(f(t), 3) - 3 * f(t) - t, label="4y(x)^3-3y(x)^3=x")
-# plt.ylim([-1.1, 1.1])
-# plt.ylim([-1.0e-8, 1.0e-8])
-plt.plot(t, Taylor1(t), label="cos")
-plt.plot(t, Taylor1_cosh(t), label="cosh")
+plt.plot(t, h(t, 0) - np.cos(np.arccos(t) / 3), label="h 0")
+plt.plot(t, h(t, 1) - np.cos(np.arccos(t) / 3), label="h 1")
+plt.plot(t, h(t, 2) - np.cos(np.arccos(t) / 3), label="h 2")
+plt.plot(t, f1(t), label="Taylor0")
+plt.plot(t, f2(t), label="Taylor1")
+plt.stem(x, np.ones(x.size) * np.max(S(t) - f0(t)))
+xm = (x[1:] + x[:-1]) / 2
+plt.stem(xm, np.ones(xm.size) * np.max(S(t) - f0(t)), linefmt=":")
+plt.plot(t, s0(t), label="S")
+plt.plot(t, f0(t), label="f", ls=":")
+plt.plot(t, 4 * np.power(f(t), 3) - 3 * f(t) - t, label="4y(x)^3-3y(x)^3=x")
+plt.ylim([-1.1, 1.1])
+plt.ylim([-1.0e-8, 1.0e-8])
+s = np.arange(0.1, 1.0, 0.001)
+t = np.arange(1, 1000.0, 0.1)
+nf = hc(s, 1)
+plt.plot(
+    s,
+    4 * np.power(nf, 3) - 3 * nf - 1 / s,
+    label="spline n1",
+)
+nf = hc(s, 2)
+plt.plot(
+    s,
+    4 * np.power(nf, 3) - 3 * nf - 1 / s,
+    label="spline n2",
+    ls=":",
+)
 plt.legend()
 plt.show()
+"""
+
+for x, z, t in zip(
+    [x0, x1, x2, x3],
+    [z0, z1, z2, z3],
+    [
+        "cos(arccos(x)/3) -1~-1/2",
+        "cos(arccos(x)/3) -1/2~1/2",
+        "cos(arccos(x)/3) 1/2~1",
+        "cosh(arccosh(1/x)/3) 0~1",
+    ],
+):
+    print(t)
+    for xl, xu, zi in zip(x[:-1], x[1:], z):
+        print(
+            f" {xl:.16e} {xu:.16e} {zi[0]:.16e} {zi[1]:.16e} {zi[2]:.16e} {zi[3]:.16e} {zi[4]:.16e}"
+        )
+"""
+print(x0)
+print(z0)
+print(x1)
+print(z1)
+print(x2)
+print(z2)
+print(x3)
+print(z3)
+"""
