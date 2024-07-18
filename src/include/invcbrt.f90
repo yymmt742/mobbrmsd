@@ -1,3 +1,4 @@
+! https://www.mdpi.com/1996-1073/14/4/1058
 pure elemental function invcbrt(x) result(res)
   use mod_kinds, only: I4, R4, I8
   implicit none
