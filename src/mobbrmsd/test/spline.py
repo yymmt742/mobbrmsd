@@ -298,11 +298,11 @@ def corr(x, f, s):
     )
 
 
-n = 16 + 1
+n = 4 + 1
 x0 = np.cos(np.pi * np.linspace(1, 0, n)) / 3 - 2 / 3
 x1 = np.cos(np.pi * np.linspace(1, 0, n)) / 3
 x2 = np.cos(np.pi * np.linspace(1, 0, n)) / 3 + 2 / 3
-n = 32 + 1
+n = 4 + 1
 x3 = np.cos(np.pi * np.linspace(1, 0, n)) / 2 + 1 / 2
 
 f0 = np.vectorize(
@@ -444,11 +444,6 @@ plt.ylim([-1.1, 1.1])
 plt.ylim([-1.0e-8, 1.0e-8])
 s = np.arange(0.1, 1.0, 0.001)
 t = np.arange(1.0, 5.0, 0.001)
-plt.plot(
-    t,
-    hc(1 / t, 1),
-    label="hc",
-)
 nf = hc(s, 1)
 plt.plot(
     s,
