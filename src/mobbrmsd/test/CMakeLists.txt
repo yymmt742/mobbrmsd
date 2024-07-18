@@ -83,6 +83,8 @@ function(DIMSPECTESTS post dimspec_dir real int)
     )
 endfunction(DIMSPECTESTS)
 
+add_subdirectory(sp)
+add_subdirectory(dp)
 add_subdirectory(2dsp)
 add_subdirectory(2ddp)
 add_subdirectory(3dsp)
