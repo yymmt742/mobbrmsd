@@ -5,6 +5,7 @@ module mod_quatic
   private
   public :: cos_acos
   public :: cosh_acosh
+  public :: sinh_asinh
   public :: solve_quartic
 !
   real(RK), parameter    :: ZERO = 0.0_RK
@@ -111,7 +112,19 @@ contains
         X = -HALF * (-S - SQRT(A + B))
       end if
     end if
-    call newton(k1, k0, X, 2)
+    !call newton(k1, k0, X, 3)
+    A = X * X
+    B = -TWO + A
+    S = A * B + k1 * X + k0
+    x = x - S / (k1 + TWO * X * (A + B))
+    A = X * X
+    B = -TWO + A
+    S = A * B + k1 * X + k0
+    x = x - S / (k1 + TWO * X * (A + B))
+    A = X * X
+    B = -TWO + A
+    S = A * B + k1 * X + k0
+    x = x - S / (k1 + TWO * X * (A + B))
   end subroutine exact
 !
   subroutine newton(k1, k0, x, maxiter)
@@ -156,16 +169,18 @@ contains
       end if
     elseif (Q > ZERO) then
       S = SQRT(Q)
-      H = MAX(R / (S * Q), -ONE)
-      if (ABS(H) <= ONE) then
-        X = X + S * COS(ONETHIRD * ACOS(H))
+      Q = S * Q
+      if (ABS(R) <= Q) then
+        H = R / Q
+        X = X + S * cos_acos(H)
       else
-        X = X + SIGN(ONE, R) * S * COSH(ONETHIRD * LOG(ABS(H) + SQRT(H * H - ONE)))
+        H = ABS(Q / R)
+        X = X + SIGN(ONE, R) * S * cosh_acosh(H)
       end if
     else
       S = SQRT(-Q)
       H = -R / (Q * S)
-      X = X + S * SINH(ONETHIRD * LOG(H + SQRT(H * H + ONE)))
+      X = X + S * sinh_asinh(H)
     end if
   end subroutine find_a_cubic_root
 !
@@ -180,18 +195,11 @@ program main
   implicit none
   real(RK)     :: X, Y, K2, K1, K0
   character(2) :: Z
-  real(RK)     :: h, a, b, c
   integer      :: i, j
+  call test2()
+  call test3()
+  call test4()
   K2 = -2.0_RK
-  print *, RK
-  do i = 1, 1000
-    h = i * 0.001
-    a = cos_acos(h)
-    b = cos_acos(-h)
-    c = cosh_acosh(h)
-    print'(*(f9.3))', h, 1 / h, a, b, c, 4 * a**3 - 3 * a, 4 * b**3 - 3 * b, 1 / (4 * c**3 - 3 * c)
-  end do
-  stop
   do j = 1, 10
   do i = -100, 100
     K1 = SIGN(1, i) * 10 * EXP(-ABS(i) * 0.5_RK)
@@ -203,10 +211,150 @@ program main
     if (ABS(X**4 + k2 * X**2 + k1 * X + k0) > 1.E-4) &
       & print '(A,2I4,*(f16.9))', Z, i, j, k2, k1, k0, Y, X, X**4 + k2 * X**2 + k1 * X + k0
 #else
-    if (ABS(X**4 + k2 * X**2 + k1 * X + k0) > 1.E-6) &
+    if (ABS(X**4 + k2 * X**2 + k1 * X + k0) > 1.E-8) &
       & print '(A,2I4,*(f16.9))', Z, i, j, k2, k1, k0, Y, X, X**4 + k2 * X**2 + k1 * X + k0
 #endif
   end do
   end do
+!
+contains
+!
+  subroutine test2()
+    integer(IK), parameter :: N = 5000000, M = 10
+    real(RK)               :: A(N), B(N), C(N)
+    real(RK)               :: time_begin_s, time_end_s, time1, time2, tot1, tot2
+    real(RK)               :: merr1, merr2, nerr1, nerr2
+    integer                :: i
+    tot1 = 0.0_RK
+    tot2 = 0.0_RK
+    merr1 = 0.0_RK
+    merr2 = 0.0_RK
+    nerr1 = 0.0_RK
+    nerr2 = 0.0_RK
+    print'(A)', " cos_acos          implement       intrinsic"
+    print'(A)', "            --------------------------------"
+    do i = 1, M
+      call RANDOM_NUMBER(A)
+      !A = (A - 0.5_RK) * 1.99_RK
+!
+      call CPU_TIME(time_begin_s)
+      B = cos_acos(A)
+      call CPU_TIME(time_end_s)
+      time1 = 1000 * (time_end_s - time_begin_s)
+      tot1 = tot1 + time1
+      merr1 = merr1 + mean_error((A - (4 * B**3 - 3 * B)) / MAX(ABS(A), 1.0E-8_RK))
+      nerr1 = nerr1 + norm_error(A - (4 * B**3 - 3 * B))
+!
+      call CPU_TIME(time_begin_s)
+      C = COS(ACOS(A) / 3.0_RK)
+      call CPU_TIME(time_end_s)
+      time2 = 1000 * (time_end_s - time_begin_s)
+      tot2 = tot2 + time2
+      merr2 = merr2 + mean_error((A - (4 * C**3 - 3 * C)) / MAX(ABS(A), 1.0E-8_RK))
+      nerr2 = nerr2 + norm_error((A - (4 * C**3 - 3 * C)))
+      print '(I12,2f16.3)', i, time1, time2
+    end do
+    print'(A)', "            --------------------------------"
+    print'(12X,2f16.3)', tot1, tot2
+    print'(A,2f16.9)', "  mean error", merr1 / M, merr2 / M
+    print'(A,2f16.9)', "  norm error", nerr1 / M, nerr2 / M
+    print *
+  end subroutine test2
+!
+  subroutine test3()
+    integer(IK), parameter :: N = 5000000, M = 10
+    real(RK)               :: A(N), B(N), C(N)
+    real(RK)               :: time_begin_s, time_end_s, time1, time2, tot1, tot2
+    real(RK)               :: merr1, merr2, nerr1, nerr2
+    integer                :: i
+    tot1 = 0.0_RK
+    tot2 = 0.0_RK
+    merr1 = 0.0_RK
+    merr2 = 0.0_RK
+    nerr1 = 0.0_RK
+    nerr2 = 0.0_RK
+    print'(A)', " cosh_acosh        implement       intrinsic"
+    print'(A)', "            --------------------------------"
+    do i = 1, M
+      call RANDOM_NUMBER(A)
+      A = (A + 0.001_RK) / 1.001_RK
+!
+      call CPU_TIME(time_begin_s)
+      B = cosh_acosh(A)
+      call CPU_TIME(time_end_s)
+      time1 = 1000 * (time_end_s - time_begin_s)
+      tot1 = tot1 + time1
+      merr1 = merr1 + mean_error((1.0_RK / A - (4 * B**3 - 3 * B)) / MAX(ABS(1.0_RK / A), 1.0E-8_RK))
+      nerr1 = nerr1 + norm_error((1.0_RK / A - (4 * B**3 - 3 * B)))
+!
+      call CPU_TIME(time_begin_s)
+      C = COSH(LOG(ABS(1.0_RK / A) + SQRT(1.0_RK / (A * A) - 1.0_RK)) / 3.0_RK)
+      call CPU_TIME(time_end_s)
+      time2 = 1000 * (time_end_s - time_begin_s)
+      tot2 = tot2 + time2
+      merr1 = merr1 + mean_error((1.0_RK / A - (4 * C**3 - 3 * C)) / MAX(ABS(1.0_RK / A), 1.0E-8_RK))
+      nerr1 = nerr1 + norm_error((1.0_RK / A - (4 * C**3 - 3 * C)))
+      print '(I12,2f16.3)', i, time1, time2
+    end do
+    print'(A)', "            --------------------------------"
+    print'(12X,2f16.3)', tot1, tot2
+    print'(A,2f16.9)', "  mean error", merr1 / M, merr2 / M
+    print'(A,2f16.9)', "  norm error", nerr1 / M, nerr2 / M
+    print *
+  end subroutine test3
+!
+  subroutine test4()
+    integer(IK), parameter :: N = 5000000, M = 10
+    real(RK)               :: A(N), B(N), C(N)
+    real(RK)               :: time_begin_s, time_end_s, time1, time2, tot1, tot2
+    real(RK)               :: merr1, merr2, nerr1, nerr2
+    integer                :: i
+    tot1 = 0.0_RK
+    tot2 = 0.0_RK
+    merr1 = 0.0_RK
+    merr2 = 0.0_RK
+    nerr1 = 0.0_RK
+    nerr2 = 0.0_RK
+    print'(A)', " sinh_asinh        implement       intrinsic"
+    print'(A)', "            --------------------------------"
+    do i = 1, M
+      call RANDOM_NUMBER(A)
+      A = SIGN(1.0_RK, A) * EXP((A - 0.5_RK) * 10._RK)
+!
+      call CPU_TIME(time_begin_s)
+      B = sinh_asinh(A)
+      call CPU_TIME(time_end_s)
+      time1 = 1000 * (time_end_s - time_begin_s)
+      tot1 = tot1 + time1
+      merr1 = merr1 + mean_error((A - (4 * B**3 + 3 * B)) / MAX(ABS(A), 1.0E-8_RK))
+      nerr1 = nerr1 + norm_error((A - (4 * B**3 + 3 * B)))
+!
+      call CPU_TIME(time_begin_s)
+      C = SIGN(1.0_RK, A) * SINH(LOG(ABS(A) + SQRT(A * A + 1.0_RK)) / 3.0_RK)
+      call CPU_TIME(time_end_s)
+      time2 = 1000 * (time_end_s - time_begin_s)
+      tot2 = tot2 + time2
+      merr2 = merr2 + mean_error((A - (4 * C**3 + 3 * C)) / MAX(ABS(A), 1.0E-8_RK))
+      nerr2 = nerr2 + norm_error((A - (4 * C**3 + 3 * C)))
+      print '(I12,2f16.3)', i, time1, time2
+    end do
+    print'(A)', "            --------------------------------"
+    print'(12X,2f16.3)', tot1, tot2
+    print'(A,2f16.9)', "  mean error", merr1 / M, merr2 / M
+    print'(A,2f16.9)', "  norm error", nerr1 / M, nerr2 / M
+    print *
+  end subroutine test4
+!
+  pure function mean_error(e) result(res)
+    real(RK), intent(in) :: e(:)
+    real(RK)             :: res
+    res = SQRT(SUM((e)**2) / SIZE(e))
+  end function mean_error
+!
+  pure function norm_error(e) result(res)
+    real(RK), intent(in) :: e(:)
+    real(RK)             :: res
+    res = MAXVAL(ABS(e))
+  end function norm_error
 end program main
 

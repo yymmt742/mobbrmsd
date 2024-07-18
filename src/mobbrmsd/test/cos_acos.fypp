@@ -53,12 +53,12 @@
 &   ["-1.3435433998222815e-01", "5.0040317286635916e-01", "-6.9989274807980062e-01", "4.0248132481808807e-01", "-9.5448197561904868e-02",], &
 & ]
 #:def p4(w, nest)
-${" "*nest}$call p4_1((${w[0]}$_RK / (${w[2]}$_RK)), &
-${" "*nest}$  &       (${w[1]}$_RK / (${w[3]}$_RK)), &
-${" "*nest}$  &       ${w[2]}$_RK, &
-${" "*nest}$  &       ${w[3]}$_RK, &
-${" "*nest}$  &       ${w[4]}$_RK, &
-${" "*nest}$  &       x, res)
+${" "*nest}$call p4(${w[0]}$_RK, &
+${" "*nest}$  &     ${w[1]}$_RK, &
+${" "*nest}$  &     ${w[2]}$_RK, &
+${" "*nest}$  &     ${w[3]}$_RK, &
+${" "*nest}$  &     ${w[4]}$_RK, &
+${" "*nest}$  &     x, res)
 #:enddef
 #:def coef(w, nest)
 ${" "*nest}$a = ${cos1_sqrt_part_w[0]}$ * e + (${w[0]}$_RK)
@@ -93,7 +93,7 @@ ${" "*nest}$endif
         real(RK) :: a, b, c, d, e
         e = sqrt(x + ONE)
 ${binary_search(cos1_x, cos1_w, coef, 8)}$
-        call p4_0(a, b, c, d, e, x, res)
+        call p4(a, b, c, d, e, x, res)
       end block
     elseif (x < 0.3333333333333333E+00) then
 ${binary_search(cos2_x, cos2_w, p4, 6)}$
@@ -138,30 +138,22 @@ ${binary_search(cosh_x, cosh_w, p4, 6)}$
     if (yy < 1.69_RK) then ! 1.3^2
       res = x * (1.0_RK / 3.0_RK) - x * yy * (4.0_RK / 81.0_RK)
     else
-      res = x * invcbrt(4.0_RK * yy) - invcbrt(16.0_RK * x)
+      yy = invcbrt(2.0_RK * x)
+      res = 0.5_RK * (1.0_RK / yy - yy)
     end if
-    yy = res * res
-    res = res - ((4.0_RK * yy + 3.0_RK) * res - x) / (12.0_RK * yy + 3.0_RK)
     yy = res * res
     res = res - ((4.0_RK * yy + 3.0_RK) * res - x) / (12.0_RK * yy + 3.0_RK)
     yy = res * res
     res = res - ((4.0_RK * yy + 3.0_RK) * res - x) / (12.0_RK * yy + 3.0_RK)
   end function sinh_asinh
 !
-  pure elemental subroutine p4_0(a, b, c, d, e, x, res)
+  pure elemental subroutine p4(a, b, c, d, e, x, res)
     real(RK), intent(in)    :: a, b, c, d, e, x
     real(RK), intent(inout) :: res
-    real(RK)                :: xx
-    xx = x * x
-    res = a * xx * xx + b * x * xx + c * xx + d * x + e
-  end subroutine p4_0
-!
-  pure elemental subroutine p4_1(a, b, c, d, e, x, res)
-    real(RK), intent(in)    :: a, b, c, d, e, x
-    real(RK), intent(inout) :: res
-    real(RK)                :: xx
-    xx = x * x
-    res = c * xx * (a * xx + ONE) + d * x * (b * xx + ONE) + e
-  end subroutine p4_1
+    res = a * x + b
+    res = res * x + c
+    res = res * x + d
+    res = res * x + e
+  end subroutine p4
 !
 #include "invcbrt.f90"
