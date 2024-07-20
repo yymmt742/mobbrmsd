@@ -1,7 +1,7 @@
 find_package(OpenMP REQUIRED)
 find_package(BLAS REQUIRED)
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
-  find_package(unittest)
+  find_package(unittest QUIET)
   if(NOT unittest_FOUND)
     include(FetchContent)
     FetchContent_Declare(

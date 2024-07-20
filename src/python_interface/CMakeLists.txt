@@ -105,7 +105,7 @@ if(SKBUILD)
 endif()
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
-  ADDTEST(test_driver 64 32 1 1 ''
+  ADDTEST(test_driver 64 32 1 1 ""
     ${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/test_driver.f90
     )
