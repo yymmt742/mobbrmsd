@@ -7,6 +7,8 @@ module mod_quatic
   public :: cosh_acosh
   public :: sinh_asinh
   public :: solve_quartic
+  public :: solve_quartic_tuned
+  public :: solve_quartic_newton
 !
   real(RK), parameter    :: ZERO = 0.0_RK
   real(RK), parameter    :: ONE = 1.0_RK
@@ -32,6 +34,75 @@ module mod_quatic
   integer(IK), parameter :: MAXITER = 1000
 !
 contains
+  pure elemental subroutine solve_quartic_tuned(k1, k0, X)
+    real(RK), intent(in)        :: k1, k0
+    real(RK), intent(inout)     :: x
+    real(RK)                    :: D, k11, k22
+    real(RK)                    :: c1, c0, minima
+    if (ABS(k1) < 1.E-1) then
+      ! quasi biquadratic equations.
+      k11 = k1 * k1
+      k22 = 4._RK
+      D = k0 - ONE
+      minima = k1 + k0 - ONE
+      if (minima >= ZERO) then
+        ! multiple root
+        x = ONE
+      elseif (minima > -1.E-4) then
+        c0 = k0 * ONEQUARTER - ONEQUARTER
+        if (ABS(c0) < 1.E-8) then
+          ! Second order Taylor expansion around the maximum local minima (x=1).
+          ! f2(x) = x**2 - (2 - 1/4*k1) * x + (k0 + 3) / 4
+          x = ONE - (k1 - SQRT(k11 - minima * 16._RK)) * ONEEIGHT
+        else
+          ! Third order Taylor expansion around the maximum local minima (x=1).
+          c1 = ONE - ONEQUARTER * k1
+          call find_a_cubic_root(c1, c0, x)
+        end if
+      else
+        x = SQRT(MAX(ONE + SQRT(MAX(ONE - k0, 0._RK)), 0._RK))
+        call newton(k1, k0, X, 5)
+      end if
+    else
+      call exact(k1, k0, X)
+    end if
+  end subroutine solve_quartic_tuned
+!
+  pure elemental subroutine solve_quartic_newton(k1, k0, X)
+    real(RK), intent(in)        :: k1, k0
+    real(RK), intent(inout)     :: x
+    real(RK)                    :: D, k11, k22
+    real(RK)                    :: c1, c0, minima
+    if (ABS(k1) < 1.E-1) then
+      ! quasi biquadratic equations.
+      k11 = k1 * k1
+      k22 = 4._RK
+      D = k0 - ONE
+      minima = k1 + k0 - ONE
+      if (minima >= ZERO) then
+        ! multiple root
+        x = ONE
+      elseif (minima > -1.E-4) then
+        c0 = k0 * ONEQUARTER - ONEQUARTER
+        if (ABS(c0) < 1.E-8) then
+          ! Second order Taylor expansion around the maximum local minima (x=1).
+          ! f2(x) = x**2 - (2 - 1/4*k1) * x + (k0 + 3) / 4
+          x = ONE - (k1 - SQRT(k11 - minima * 16._RK)) * ONEEIGHT
+        else
+          ! Third order Taylor expansion around the maximum local minima (x=1).
+          c1 = ONE - ONEQUARTER * k1
+          call find_a_cubic_root(c1, c0, x)
+        end if
+      else
+        x = SQRT(MAX(ONE + SQRT(MAX(ONE - k0, 0._RK)), 0._RK))
+        call newton(k1, k0, X, 5)
+      end if
+    else
+      x = SQRT(MAX(ONE + SQRT(MAX(ONE - k0, 0._RK)), 0._RK))
+      call newton(k1, k0, X, 50000)
+    end if
+  end subroutine solve_quartic_newton
+!
   subroutine solve_quartic(k1, k0, X, Z)
     real(RK), intent(in)        :: k1, k0
     real(RK), intent(inout)     :: x
@@ -74,7 +145,7 @@ contains
     end if
   end subroutine solve_quartic
 !
-  subroutine exact(k1, k0, X)
+  pure subroutine exact(k1, k0, X)
     real(RK), intent(in)    :: k1, k0
     real(RK), intent(inout) :: x
     real(RK)                :: c1, c0
@@ -112,22 +183,13 @@ contains
         X = -HALF * (-S - SQRT(A + B))
       end if
     end if
-    !call newton(k1, k0, X, 3)
-    A = X * X
-    B = -TWO + A
-    S = A * B + k1 * X + k0
-    x = x - S / (k1 + TWO * X * (A + B))
-    A = X * X
-    B = -TWO + A
-    S = A * B + k1 * X + k0
-    x = x - S / (k1 + TWO * X * (A + B))
     A = X * X
     B = -TWO + A
     S = A * B + k1 * X + k0
     x = x - S / (k1 + TWO * X * (A + B))
   end subroutine exact
 !
-  subroutine newton(k1, k0, x, maxiter)
+  pure subroutine newton(k1, k0, x, maxiter)
     real(RK), intent(in)    :: k1, k0
     real(RK), intent(inout) :: x
     integer, intent(in)     :: maxiter
@@ -147,7 +209,7 @@ contains
   end subroutine newton
 !
 ! find a positive root of monic cubic equation, x^3 - 2 * x^2 + k1 * x + k0 = 0
-  subroutine find_a_cubic_root(k1, k0, x)
+  pure subroutine find_a_cubic_root(k1, k0, x)
     real(RK), intent(in)    :: k1, k0
     real(RK), intent(inout) :: x
     real(RK), parameter     :: EIGHTNINE = (8.0_RK / 9.0_RK)
@@ -193,30 +255,11 @@ program main
   use mod_params, only: RK, IK
   use mod_quatic
   implicit none
-  real(RK)     :: X, Y, K2, K1, K0
-  character(2) :: Z
-  integer      :: i, j
   call test2()
   call test3()
   call test4()
-  K2 = -2.0_RK
-  do j = 1, 10
-  do i = -100, 100
-    K1 = SIGN(1, i) * 10 * EXP(-ABS(i) * 0.5_RK)
-    X = 5 * EXP(-ABS(j) * 0.02_RK)
-    Y = X
-    K0 = -X**4 - K2 * X**2 - K1 * X
-    call solve_quartic(K1, K0, X, Z)
-#ifdef USE_REAL32
-    if (ABS(X**4 + k2 * X**2 + k1 * X + k0) > 1.E-4) &
-      & print '(A,2I4,*(f16.9))', Z, i, j, k2, k1, k0, Y, X, X**4 + k2 * X**2 + k1 * X + k0
-#else
-    if (ABS(X**4 + k2 * X**2 + k1 * X + k0) > 1.E-8) &
-      & print '(A,2I4,*(f16.9))', Z, i, j, k2, k1, k0, Y, X, X**4 + k2 * X**2 + k1 * X + k0
-#endif
-  end do
-  end do
-!
+  call test5()
+  call test6()
 contains
 !
   subroutine test2()
@@ -345,6 +388,74 @@ contains
     print *
   end subroutine test4
 !
+  subroutine test5()
+    integer(IK), parameter :: N = 5000000, M = 10
+    real(RK)               :: K2, K1(N), K0(N), X(N), Y(N)
+    real(RK)               :: time_begin_s, time_end_s, time1, time2, tot1, tot2
+    real(RK)               :: merr1, merr2, nerr1, nerr2
+    integer                :: i
+    tot1 = 0.0_RK
+    tot2 = 0.0_RK
+    merr1 = 0.0_RK
+    merr2 = 0.0_RK
+    nerr1 = 0.0_RK
+    nerr2 = 0.0_RK
+    print'(A)', " solve_quartic     implement       intrinsic"
+    print'(A)', "            --------------------------------"
+    K2 = -2.0_RK
+    do i = 1, M
+      call RANDOM_NUMBER(Y)
+      call RANDOM_NUMBER(K1)
+      Y = 5 * EXP(-ABS(Y) * 0.02_RK)
+      K1 = SIGN(1.0_RK, K1 - 0.5_RK) * EXP(-ABS(K1)) * 10._RK
+      K0 = -Y**4 - K2 * Y**2 - K1 * Y
+!
+      call CPU_TIME(time_begin_s)
+      call solve_quartic_tuned(K1, K0, X)
+      call CPU_TIME(time_end_s)
+      time1 = 1000 * (time_end_s - time_begin_s)
+      tot1 = tot1 + time1
+      merr1 = merr1 + mean_error(X**4 + K2 * X**2 + K1 * X + K0)
+      nerr1 = nerr1 + norm_error(X**4 + K2 * X**2 + K1 * X + K0)
+!
+      call CPU_TIME(time_begin_s)
+      call solve_quartic_newton(K1, K0, X)
+      call CPU_TIME(time_end_s)
+      time2 = 1000 * (time_end_s - time_begin_s)
+      tot2 = tot2 + time2
+      merr2 = merr2 + mean_error(X**4 + K2 * X**2 + K1 * X + K0)
+      nerr2 = nerr2 + norm_error(X**4 + K2 * X**2 + K1 * X + K0)
+      print '(I12,2f16.3)', i, time1, time2
+    end do
+    print'(A)', "            --------------------------------"
+    print'(12X,2f16.3)', tot1, tot2
+    print'(A,2f16.9)', "  mean error", merr1 / M, merr2 / M
+    print'(A,2f16.9)', "  norm error", nerr1 / M, nerr2 / M
+    print *
+  end subroutine test5
+!
+  subroutine test6()
+    real(RK)     :: X, Y, K0, K1, K2
+    character(2) :: Z
+    integer      :: i, j
+    K2 = -2.0_RK
+    do j = 1, 10
+      do i = -100, 100
+        K1 = SIGN(1, i) * 10 * EXP(-ABS(i) * 0.5_RK)
+        X = 5 * EXP(-ABS(j) * 0.02_RK)
+        Y = X
+        K0 = -X**4 - K2 * X**2 - K1 * X
+        call solve_quartic(K1, K0, X, Z)
+#ifdef USE_REAL32
+        if (ABS(X**4 + k2 * X**2 + k1 * X + k0) > 1.E-4) &
+          & print '(A,2I4,*(f16.9))', Z, i, j, k2, k1, k0, Y, X, X**4 + k2 * X**2 + k1 * X + k0
+#else
+        if (ABS(X**4 + k2 * X**2 + k1 * X + k0) > 1.E-8) &
+          & print '(A,2I4,*(f16.9))', Z, i, j, k2, k1, k0, Y, X, X**4 + k2 * X**2 + k1 * X + k0
+#endif
+      end do
+    end do
+  end subroutine test6
   pure function mean_error(e) result(res)
     real(RK), intent(in) :: e(:)
     real(RK)             :: res
