@@ -53,19 +53,16 @@
 &   ["-1.3435433998222815e-01", "5.0040317286635916e-01", "-6.9989274807980062e-01", "4.0248132481808807e-01", "-9.5448197561904868e-02",], &
 & ]
 #:def p4(w, nest)
-${" "*nest}$call p4(${w[0]}$_RK, &
-${" "*nest}$  &     ${w[1]}$_RK, &
-${" "*nest}$  &     ${w[2]}$_RK, &
-${" "*nest}$  &     ${w[3]}$_RK, &
-${" "*nest}$  &     ${w[4]}$_RK, &
-${" "*nest}$  &     x, res)
+${" "*nest}$res = (${w[0]}$_RK) * x + (${w[1]}$_RK)
+${" "*nest}$res = res * x + (${w[2]}$_RK)
+${" "*nest}$res = res * x + (${w[3]}$_RK)
+${" "*nest}$res = res * x + (${w[4]}$_RK)
 #:enddef
 #:def coef(w, nest)
-${" "*nest}$a = ${cos1_sqrt_part_w[0]}$ * e + (${w[0]}$_RK)
-${" "*nest}$b = ${cos1_sqrt_part_w[1]}$ * e + (${w[1]}$_RK)
-${" "*nest}$c = ${cos1_sqrt_part_w[2]}$ * e + (${w[2]}$_RK)
-${" "*nest}$d = ${cos1_sqrt_part_w[3]}$ * e + (${w[3]}$_RK)
-${" "*nest}$e = ${cos1_sqrt_part_w[4]}$ * e + (${w[4]}$_RK)
+${" "*nest}$res = (${cos1_sqrt_part_w[0]}$ * yy + (${w[0]}$_RK)) * x + (${cos1_sqrt_part_w[1]}$ * yy + (${w[1]}$_RK))
+${" "*nest}$res = res * x + (${cos1_sqrt_part_w[2]}$ * yy + (${w[2]}$_RK))
+${" "*nest}$res = res * x + (${cos1_sqrt_part_w[3]}$ * yy + (${w[3]}$_RK))
+${" "*nest}$res = res * x + (${cos1_sqrt_part_w[4]}$ * yy + (${w[4]}$_RK))
 #:enddef
 #:def binary_search(x, w, f, nest)
 #:if len(x)==2
@@ -89,12 +86,8 @@ ${" "*nest}$endif
       res = 1.0000000000000000E+00_RK / 2.0000000000000000E+00_RK
       return
     elseif (x < -0.3333333333333333E+00_RK) then
-      block
-        real(RK) :: a, b, c, d, e
-        e = sqrt(x + ONE)
-${binary_search(cos1_x, cos1_w, coef, 8)}$
-        call p4(a, b, c, d, e, x, res)
-      end block
+      yy = SQRT(x + ONE)
+${binary_search(cos1_x, cos1_w, coef, 6)}$
     elseif (x < 0.3333333333333333E+00) then
 ${binary_search(cos2_x, cos2_w, p4, 6)}$
     elseif (x <= 1.0000000000000000E+00_RK) then
@@ -122,8 +115,8 @@ ${binary_search(cos3_x, cos3_w, p4, 6)}$
     else
 ${binary_search(cosh_x, cosh_w, p4, 6)}$
     end if
-    yy = 4.0_RK * x
-    res = res + invcbrt(yy) + x * invcbrt(yy * yy)
+    yy = invcbrt(0.5_RK * x)
+    res = res + 0.5_RK * (1.0_RK / yy + yy)
     yy = res * res
     df = 12.0_RK * yy - 3.0_RK
     if (ABS(df) < 1E-18_RK) return
@@ -146,14 +139,5 @@ ${binary_search(cosh_x, cosh_w, p4, 6)}$
     yy = res * res
     res = res - ((4.0_RK * yy + 3.0_RK) * res - x) / (12.0_RK * yy + 3.0_RK)
   end function sinh_asinh
-!
-  pure elemental subroutine p4(a, b, c, d, e, x, res)
-    real(RK), intent(in)    :: a, b, c, d, e, x
-    real(RK), intent(inout) :: res
-    res = a * x + b
-    res = res * x + c
-    res = res * x + d
-    res = res * x + e
-  end subroutine p4
 !
 #include "invcbrt.f90"
