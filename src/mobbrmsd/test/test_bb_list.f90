@@ -65,7 +65,7 @@ contains
     integer, intent(in)   :: n, m, s, sym(n * (s - 1))
     type(bb_block)        :: blk(1)
     type(bb_list)         :: b
-    real(RK)              :: X(D, n, m), Y(D, n, m), sd, brute, nrm
+    real(RK)              :: X(D, n, m), Y(D, n, m), Z(D, n, m), R(D, D), sd, brute, rxz, nrm
     real(RK), allocatable :: W(:)
     integer(IK)           :: i
 !
@@ -82,9 +82,14 @@ contains
     do i = 1, 20
       call bb_list_setup(b%q, b%s, X, Y, W)
       call bb_list_run(b%q, b%s, w)
+      Z = Y
+      call bb_list_swap_y(b%q, b%s, Z)
+      call bb_list_rotation_matrix(b%q, b%s, w, R)
       sd = w(bb_list_INDEX_TO_AUTOCORR) + w(bb_list_INDEX_TO_UPPERBOUND) + w(bb_list_INDEX_TO_UPPERBOUND)
       brute = brute_sd(n, m, s, sym, X, Y)
+      rxz = SUM(([X] - [MATMUL(TRANSPOSE(R), RESHAPE(Z, [D, n * m]))])**2)
       call u%assert_almost_equal(sd * nrm, brute * nrm, 'minrmsd value', place=place)
+      call u%assert_almost_equal(sd * nrm, rxz * nrm, 'sd vs rotmat', place=place)
       Y = 0.5 * Y + 0.5 * sample(n, m)
       call centering(n, m, Y)
     end do
@@ -124,13 +129,13 @@ contains
         call u%assert(bb_list_is_finished(b%q, b%s), 'is finished')
         sd = w(bb_list_INDEX_TO_AUTOCORR) + w(bb_list_INDEX_TO_UPPERBOUND) + w(bb_list_INDEX_TO_UPPERBOUND)
         brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
-        call u%assert_almost_equal(sd, brute, 'minrmsd value', place=place)
+        call u%assert_almost_equal(sd * nrm, brute * nrm, 'minrmsd value', place=place)
         Z = RESHAPE([Y1, Y2], SHAPE(Z))
         call centering(SIZE(Z, 2), Z)
         call bb_list_swap_y(b%q, b%s, Z)
         call bb_list_rotation_matrix(b%q, b%s, W, R)
         rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
-        call u%assert_almost_equal(sd * nrm, rxz * nrm, 'swaped sd vs rotmat', place=place)
+        call u%assert_almost_equal(sd * nrm, rxz * nrm, 'sd vs rotmat', place=place)
         Y1 = 0.5 * Y1 + 0.5 * sample(n1, m1)
         Y2 = 0.5 * Y2 + 0.5 * sample(n2, m2)
       end do
