@@ -122,7 +122,6 @@ module mod_testutil
   use mod_dimspec_functions, only: D, DD
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, PI => RPI, RHUGE
   use mod_permutation
-  use mod_rotation
   implicit none
   private
   public :: sample
@@ -143,6 +142,18 @@ module mod_testutil
   interface centering
     module procedure :: centering_2, centering_3
   end interface centering
+!
+  interface
+#ifdef USE_REAL32
+    include 'sgemm.h'
+    include 'sgesvd.h'
+    include 'sgetrf.h'
+#else
+    include 'dgemm.h'
+    include 'dgesvd.h'
+    include 'dgetrf.h'
+#endif
+  end interface
 !
 contains
 !
@@ -254,7 +265,7 @@ contains
     res = SUM(X_ * X_) + SUM(Y_ * Y_)
   end function autovar
 !
-  pure function sd(n, X, Y) result(res)
+  function sd(n, X, Y) result(res)
     integer(IK), intent(in) :: n
     real(RK), intent(in)    :: X(D, n), Y(D, n)
     real(RK)                :: X_(D, n), Y_(D, n)
@@ -266,15 +277,15 @@ contains
     call centering(n, Y_)
     G = SUM(X_ * X_) + SUM(Y_ * Y_)
     C = MATMUL(Y_, TRANSPOSE(X_))
-    nw = sdmin_worksize()
+    nw = worksize_Kabsch()
     block
       real(rk) :: w(nw)
-      call estimate_sdmin(G, C, w)
-      res = w(1)
+      call Kabsch(C, w)
+      res = G - 2._RK * w(1)
     end block
   end function sd
 !
-  pure function brute_sd(n, m, s, sym, X, Y) result(res)
+  function brute_sd(n, m, s, sym, X, Y) result(res)
     integer(IK), intent(in) :: n, m, s, sym(n * (s - 1))
     real(RK), intent(in)    :: X(D, n, m), Y(D, n, m)
     real(RK)                :: Z(D, n, m)
@@ -371,6 +382,125 @@ contains
       res(i, j, k) = X(i, sym1(j, map(k)), per(k))
     end do
   end subroutine pws
+!
+!| work array size for Kabsch algorithm.
+  pure elemental function worksize_Kabsch() result(res)
+    real(RK)    :: w(1)
+    integer(IK) :: res, info
+#ifdef USE_REAL32
+    call SGESVD('A', 'A', D, D, w, D, w, w, D, w, D, w, -1, info)
+#else
+    call DGESVD('A', 'A', D, D, w, D, w, w, D, w, D, w, -1, info)
+#endif
+    res = NINT(w(1)) + DD * 3 + D
+  end function worksize_Kabsch
+!
+  pure subroutine Kabsch(cov, w)
+    real(RK), intent(in)    :: cov(*)
+    !! target d*n array
+    real(RK), intent(inout) :: w(*)
+    !! work array, must be larger than Kabsch_worksize(d)
+    !! if row_major, must be larger than Kabsch_worksize(n)
+    integer(IK), parameter  :: m = 1
+    integer(IK)             :: s, u, vt, iw, lw, info
+    u = m + DD
+    vt = u + DD
+    s = vt + DD
+    iw = s + D
+#ifdef USE_REAL32
+    call SGESVD('A', 'A', D, D, w(m), D, w(s), w(u), D, w(vt), D, w(iw), -1, info)
+    lw = NINT(w(iw))
+!
+    call copy(DD, cov, w(m))
+    call SGESVD('A', 'A', D, D, w(m), D, w(s), w(u), D, w(vt), D, w(iw), lw, info)
+!
+    call SGEMM('N', 'N', D, D, D, ONE, w(u), D, w(vt), D, ZERO, w(s), D)
+    call det_sign(w(s))
+    if (w(s) < ZERO) call neg(d, w(u + DD - D))
+    call SGEMM('N', 'N', D, D, D, ONE, w(u), D, w(vt), D, ZERO, w(s), D)
+#else
+    call DGESVD('A', 'A', D, D, w(m), D, w(s), w(u), D, w(vt), D, w(iw), -1, info)
+    lw = NINT(w(iw))
+!
+    call copy(DD, cov, w(m))
+    call DGESVD('A', 'A', D, D, w(m), D, w(s), w(u), D, w(vt), D, w(iw), lw, info)
+!
+    call DGEMM('N', 'N', D, D, D, ONE, w(u), D, w(vt), D, ZERO, w(s), D)
+    call det_sign(w(s))
+    if (w(s) < ZERO) call neg(d, w(u + DD - D))
+    call DGEMM('N', 'N', D, D, D, ONE, w(u), D, w(vt), D, ZERO, w(s), D)
+#endif
+    w(1) = dot(DD, cov, w(s))
+  end subroutine Kabsch
+!
+!| calculate determinant sign of square matrix x, with leading dimension.
+  pure subroutine det_sign(x)
+    real(RK), intent(inout) :: x(*)
+     !! square matrix, on exit, x(1) is assigned the determinant sign of x, <br>
+     !! and the other elements are undefined.
+!
+    if (D < 1) then
+      return
+    elseif (D == 1) then
+      x(1) = SIGN(ONE, x(1))
+    else
+      block
+        integer(IK) :: i, j, k, ipiv(D)
+#ifdef USE_REAL32
+        call SGETRF(D, D, x, D, ipiv, j)
+#else
+        call DGETRF(D, D, x, D, ipiv, j)
+#endif
+        ipiv(1) = COUNT([(ipiv(i) == i, i=1, D)])
+        j = 1
+        k = D + 1
+        do i = 1, D
+          if (x(j) <= ZERO) ipiv(1) = ipiv(1) + 1
+          j = j + k
+        end do
+        if (MODULO(ipiv(1), 2) == 0) then
+          x(1) = ONE
+        else
+          x(1) = -ONE
+        end if
+      end block
+    end if
+!
+  end subroutine det_sign
+!
+  pure subroutine neg(N, X)
+    integer(IK), intent(in) :: N
+    real(RK), intent(inout) :: X(*)
+    integer(IK)             :: i
+    do concurrent(i=1:N)
+      X(i) = -X(i)
+    end do
+  end subroutine neg
+!
+  pure function dot(N, X, Y) result(res)
+    integer(IK), intent(in) :: N
+    real(RK), intent(in)    :: X(*), Y(*)
+    real(RK)                :: res, tmp
+    integer(IK)             :: i
+    res = ZERO
+    tmp = ZERO
+    do i = 2, N, 2
+      res = res + X(i - 1) * Y(i - 1)
+      tmp = tmp + X(i - 0) * Y(i - 0)
+    end do
+    res = res + tmp
+    if (MODULO(N, 2) == 1) res = res + X(N) * Y(N)
+  end function dot
+!
+  pure subroutine copy(N, X, Y)
+    integer(IK), intent(in) :: N
+    real(RK), intent(in)    :: X(*)
+    real(RK), intent(inout) :: Y(*)
+    integer(IK)             :: i
+    do concurrent(i=1:N)
+      Y(i) = X(i)
+    end do
+  end subroutine copy
 !
 end module mod_testutil
 
