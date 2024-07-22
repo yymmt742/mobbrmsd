@@ -164,7 +164,7 @@ contains
 #else
         call DGETRF(D, D, x, D, ipiv, j)
 #endif
-        ipiv(1) = COUNT([(ipiv(i) == i, i=1, D)])
+        ipiv(1) = COUNT([(ipiv(i) /= i, i=1, D)])
         j = 1
         k = D + 1
         do i = 1, D

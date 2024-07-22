@@ -297,20 +297,15 @@ contains
     integer(IK), intent(in) :: n
     real(RK), intent(in)    :: X(D, n), Y(D, n)
     real(RK)                :: X_(D, n), Y_(D, n)
-    real(RK)                :: G, C(D, D), res
-    integer(IK)             :: nw
+    real(RK)                :: G, C(D, D), R(D, D), res
     X_ = X
     call centering(n, X_)
     Y_ = Y
     call centering(n, Y_)
     G = SUM(X_ * X_) + SUM(Y_ * Y_)
     C = MATMUL(Y_, TRANSPOSE(X_))
-    nw = worksize_Kabsch()
-    block
-      real(rk) :: w(nw)
-      call Kabsch(C, w)
-      res = G - 2._RK * w(1)
-    end block
+    call Kabsch(C, R)
+    res = G - 2._RK * SUM(C * R)
   end function sd
 !
   function brute_sd(n, m, s, sym, X, Y) result(res)

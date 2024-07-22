@@ -73,6 +73,7 @@ contains
     call bb_list_init(b, SIZE(blk), blk)
 !
     X = sample(n, m)
+    call centering(n, m, X)
     Y = X
     nrm = ONE / (n * m)
 !
@@ -85,6 +86,7 @@ contains
       brute = brute_sd(n, m, s, sym, X, Y)
       call u%assert_almost_equal(sd * nrm, brute * nrm, 'minrmsd value', place=place)
       Y = 0.5 * Y + 0.5 * sample(n, m)
+      call centering(n, m, Y)
     end do
 !
   end subroutine test1
