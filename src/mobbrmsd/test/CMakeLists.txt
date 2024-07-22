@@ -31,8 +31,14 @@ function(DIMSPECTESTS post dimspec_dir real int)
     ${curr_dir}/test_covdot.f90
     )
   list(APPEND sources
-    ${dimspec_dir}/mod_rotation.f90
     ${curr_dir}/mod_testutil.f90
+    )
+  ADDTEST(test_testutil_${post} "${real}" "${int}" 1 "" ""
+    ${sources}
+    ${curr_dir}/test_testutil.f90
+    )
+  list(APPEND sources
+    ${dimspec_dir}/mod_rotation.f90
     )
   ADDTEST(test_rotation_${post} "${real}" "${int}" 1 "" ""
     ${sources}
