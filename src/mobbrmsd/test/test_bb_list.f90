@@ -167,7 +167,7 @@ contains
       real(RK) :: W(bb_list_memsize(b%q)), R(D, D), rxz
       call bb_list_setup(b%q, b%s, [X1, X2], [Y1, Y2], W)
       do while (.not. bb_list_is_finished(b%q, b%s))
-        print '(3f9.3)', w(bb_list_INDEX_TO_N_EVAL), &
+        print '(3f9.4)', w(bb_list_INDEX_TO_N_EVAL), &
        &                 w(bb_list_INDEX_TO_UPPERBOUND), &
        &                 w(bb_list_INDEX_TO_LOWERBOUND)
         call bb_list_run(b%q, b%s, W, maxeval=0)

@@ -1,5 +1,5 @@
 program main
-  use mod_dimspec_functions, only: D, DD, setup_dimension
+  use mod_dimspec_functions, only: D, setup_dimension
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_rotation
   use mod_testutil

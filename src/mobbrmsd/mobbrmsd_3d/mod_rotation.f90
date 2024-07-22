@@ -32,13 +32,13 @@ module mod_rotation
 #ifdef USE_REAL32
   real(RK), parameter    :: THRESHOLD = 1E-6_RK
   real(RK), parameter    :: DEGENERACY = 1E-4_RK
-  real(RK), parameter    :: DEGENERACY1 = -1E-4_RK
-  real(RK), parameter    :: DEGENERACY2 = 1E-12_RK
+  real(RK), parameter    :: DEGENERACY1 = 1E-4_RK
+  real(RK), parameter    :: DEGENERACY2 = 1E-6_RK
 #else
   real(RK), parameter    :: THRESHOLD = 1E-12_RK
-  real(RK), parameter    :: DEGENERACY = 1E-4_RK
-  real(RK), parameter    :: DEGENERACY1 = -1E-4_RK
-  real(RK), parameter    :: DEGENERACY2 = 1E-16_RK
+  real(RK), parameter    :: DEGENERACY = 1E-6_RK
+  real(RK), parameter    :: DEGENERACY1 = 1E-4_RK
+  real(RK), parameter    :: DEGENERACY2 = 1E-12_RK
 #endif
   integer(IK), parameter :: MAXITER = 1000
 !
@@ -292,20 +292,18 @@ contains
 !
 !   normalize
 !
-    w(m0) = w(k1) + w(k0) - ONE
-    if (w(m0) >= ZERO) then
-      ! multiple root
-      w(xk) = ONE
-    elseif (w(m0) > DEGENERACY1) then
-      ! quasi biquadratic equations.
-      w(k0) = w(k0) * ONEQUARTER - ONEQUARTER
-      if (ABS(w(k0)) < DEGENERACY2) then
-        ! Second order Taylor expansion around the maximum local minima (x=1).
-        ! f2(x) = x**2 - (2 - 1/4*k1) * x + (k0 + 3) / 4
-        w(xk) = ONE - (w(k1) - SQRT(w(k1) * w(k1) - w(m0) * SIXTEEN)) * ONEEIGHT
+    w(m0) = w(k1)**2
+    w(m0) = (-27._RK * w(m0) - 288._RK * w(k0) * 32._RK) * w(m0) + 256._RK * w(k0) * (w(k0) - ONE)**2
+    if (ABS(w(m0)) < DEGENERACY1) then
+      ! Third order Taylor expansion around x=1.
+      ! f3(x) / 4 = x**3 - 2 * x**2 + (1 + k1/4) * x + (k0 - 1)/4
+      if (ABS(w(k0) - ONE) < DEGENERACY2) then
+        ! Solve x**3 - 2 * x**2 + (1 + k1/4) * x = 0
+        w(xk) = ONE + HALF * SQRT(MAX(-w(k1), ZERO))
       else
-        ! Third order Taylor expansion around the maximum local minima (x=1).
-        w(k1) = ONE - ONEQUARTER * w(k1)
+        ! Solve f3(x) = 0
+        w(k1) = ONE + ONEQUARTER * w(k1)
+        w(k0) = w(k0) * ONEQUARTER - ONEQUARTER
         call find_a_cubic_root(w(k1), w(k0), w(xk), w(r), w(q), w(h), w(s))
       end if
     else
