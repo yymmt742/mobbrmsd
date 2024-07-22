@@ -150,10 +150,14 @@ module mod_testutil
     include 'sgemm.h'
     include 'sgesvd.h'
     include 'sgetrf.h'
+    include 'sgeqrf.h'
+    include 'sormqr.h'
 #else
     include 'dgemm.h'
     include 'dgesvd.h'
     include 'dgetrf.h'
+    include 'dgeqrf.h'
+    include 'dormqr.h'
 #endif
   end interface
 !
@@ -211,6 +215,7 @@ contains
 !
   function SO() result(res)
     real(RK) :: res(D, D)
+    integer  :: i, j
     select case (D)
     case (1)
       res(1, 1) = ONE
@@ -219,7 +224,28 @@ contains
     case (3)
       call SO3(res)
     case default
-      res = eye()
+      block
+        real(RK) :: X, Y, A(D, D), tau(D), w(D * 3)
+        integer  :: info
+        call RANDOM_NUMBER(X)
+        do i = 1, D
+          do j = 1, D
+            Y = X
+            call RANDOM_NUMBER(X)
+            A(i, j) = SQRT(-2._RK * LOG(X)) * COS(6.2831853070_RK * Y)
+          end do
+        end do
+        res = eye()
+#ifdef USE_REAL32
+        call SGEQRF(D, D, A, D, tau, w, SIZE(w), info)
+        call SORMQR("L", "N", D, D, D, A, D, tau, res, D, w, SIZE(w), info)
+#else
+        call DGEQRF(D, D, A, D, tau, w, SIZE(w), info)
+        call DORMQR("L", "N", D, D, D, A, D, tau, res, D, w, SIZE(w), info)
+#endif
+        if (A(1, 1) < ZERO) res = -res
+      end block
+      if (det_sign(res) < ZERO) res(:, D) = -res(:, D)
     end select
   end function SO
 !

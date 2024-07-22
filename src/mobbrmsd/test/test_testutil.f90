@@ -62,10 +62,12 @@ contains
 !     print'(*(f9.3))', GC(D * (i - 1) + 1:D * i)
 !   end do
 !
-    R = SO()
-!
-    call u%assert_is_eye(MATMUL(R, TRANSPOSE(R)), 'R@RT', place=place)
-    call u%assert_is_eye(MATMUL(TRANSPOSE(R), R), 'RT@R', place=place)
+    do i = 1, 100
+      R = SO()
+      call u%assert_is_eye(MATMUL(R, TRANSPOSE(R)), 'R@RT', place=place)
+      call u%assert_is_eye(MATMUL(TRANSPOSE(R), R), 'RT@R', place=place)
+      call u%assert_almost_equal(det_sign(R), 1._RK, 'det R = 1', place=place)
+    end do
 !
     E = eye()
     call u%assert_is_eye(E, 'Eye', place=place)
