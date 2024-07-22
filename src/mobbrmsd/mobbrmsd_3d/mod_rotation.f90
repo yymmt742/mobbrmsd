@@ -51,7 +51,7 @@ contains
   end function sdmin_worksize
 !
 !| Compute \(\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]\).
-  subroutine estimate_rcmax(g, cov, w)
+  pure subroutine estimate_rcmax(g, cov, w)
     !pure subroutine estimate_rcmax(g, cov, w)
     real(RK), intent(in)    :: g
     !! sum of auto covariance matrix
@@ -60,11 +60,10 @@ contains
     real(RK), intent(inout) :: w(*)
     !! work array, must be larger than worksize_sdmin().
     call find_lambda_max(g, cov, w)
-    !w(1) = HALF * g * w(1)
   end subroutine estimate_rcmax
 !
 !| Compute the least-squares sum_i^n |x_i-Ry_i|^2 from cov = YX^T and g = tr[XX^T] + tr[YY^T].
-  subroutine estimate_sdmin(g, cov, w)
+  pure subroutine estimate_sdmin(g, cov, w)
     !pure subroutine estimate_sdmin(g, cov, w)
     real(RK), intent(in)    :: g
     !! sum of auto covariance matrix
@@ -85,7 +84,7 @@ contains
 !
 !| Compute the transpose rotation matrix for minimize tr[CR] from cov = YX^T and g = tr[XX^T] + tr[YY^T].
 !  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
-  subroutine estimate_rotation(g, cov, rot, w)
+  pure subroutine estimate_rotation(g, cov, rot, w)
     !pure subroutine estimate_rotation(g, cov, rot, w)
     real(RK), intent(in)    :: g
     !! g = tr[XX^T] + tr[YY^T]
@@ -120,22 +119,6 @@ contains
 !       (R23-R32      R11-R22-R33  R12+R21      R13+R31    )
 !       (R31-R13      R12+R21     -R11+R22-R33  R23+R32    )
 !       (R12-R21      R13+R31      R23+R32     -R11-R22+R33)
-!
-!   w(nrm) = TWO / g
-!   w(dg4) = w(nrm) * cov(9) - w(1)
-!   w(dg3) = w(nrm) * cov(9) + w(1)
-!   w(dg2) = w(nrm) * (cov(1) - cov(5))
-!   w(dg1) = w(nrm) * (cov(1) + cov(5))
-!   w(a11) = w(dg1) + w(dg4)
-!   w(a21) = w(nrm) * (cov(8) - cov(6))
-!   w(a31) = w(nrm) * (cov(3) - cov(7))
-!   w(a41) = w(nrm) * (cov(4) - cov(2))
-!   w(a22) = w(dg2) - w(dg3)
-!   w(a32) = w(nrm) * (cov(4) + cov(2))
-!   w(a42) = w(nrm) * (cov(7) + cov(3))
-!   w(a33) = -w(dg2) - w(dg3)
-!   w(a43) = w(nrm) * (cov(8) + cov(6))
-!   w(a44) = -w(dg1) + w(dg4)
 !
     w(dg4) = cov(9) - w(1)
     w(dg3) = cov(9) + w(1)
@@ -251,20 +234,19 @@ contains
 !
 !| Compute maximum eigen value of S. <br>
 !  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
-  subroutine find_lambda_max(g, cov, w)
+  pure subroutine find_lambda_max(g, cov, w)
     !pure subroutine find_lambda_max(g, cov, w)
     real(RK), intent(in)    :: g
     !! sum of auto covariance matrix
     real(RK), intent(in)    :: cov(*)
     !! target d*n array
     real(RK), intent(inout) :: w(*)
-    integer(IK), parameter  :: xk = 1, k1 = 2, k0 = 3, nrm1 = 5, nrm2 = 6
+    integer(IK), parameter  :: xk = 1, k1 = 2, k0 = 3, sa = 4
     integer(IK), parameter  :: d11 = 3, d22 = 4, d33 = 5, d21 = 6, d31 = 7, d32 = 8
     integer(IK), parameter  :: a1 = 6, a2 = 5
+    integer(IK), parameter  :: m0 = 5
     integer(IK), parameter  :: r = 5, q = 6, h = 7, s = 8
     integer(IK), parameter  :: xx = 5, f = 6, df = 7
-    real(RK)                :: ra2, sa2, gsa2, minima, c0, c1
-    integer(IK)             :: k
 !
     if (g < THRESHOLD) then
       w(1) = ZERO
@@ -274,7 +256,6 @@ contains
 !   K1 = - 8 det|R|
     call det3(g, cov, w)
     w(k1) = -EIGHT * w(1)
-!   w(k1) = w(1)
 !
 !   D = RR^T
 !
@@ -294,45 +275,47 @@ contains
 !
     w(a2) = w(d11) + w(d22) + w(d33)
 !
-!   K0 = 16 * (A2**2 - 4*A1)
-!   K2 = -8 * A2
+!   K2 = -2 * A2
+!   K1 = -8 det|R|
+!   K0 = A2**2 - 4*A1
 !
-    sa2 = SQRT(w(a2))
-    gsa2 = g / sa2
+!   Rescale to X'  = X * SQRT(A2), 0 <= X' <= g / (2 * SQRT(A2))
+!              K2' = K2 / A2                 = -2
+!              K1' = SQRT(A2) * K1 / (A2**2) = - 8 * det|R| / (A2**(3/2))
+!              K0' = K0 / A2**2              = 1 - 4 * A1 / A2**2
 !
-    w(k1) = w(k1) / (sa2 * w(a2))
-    w(k0) = ONE - w(a1) / (w(a2) * w(a2))
+    w(sa) = SQRT(w(a2))
+    w(k0) = ONE / (w(a2) * w(a2))
+!
+    w(k1) = w(k0) * w(sa) * w(k1)
+    w(k0) = ONE - w(k0) * w(a1)
 !
 !   normalize
 !
-    minima = w(k1) + w(k0) - ONE
-    if (minima >= ZERO) then
-      print *, "minima >= ZERO"
+    w(m0) = w(k1) + w(k0) - ONE
+    if (w(m0) >= ZERO) then
       ! multiple root
       w(xk) = ONE
-    elseif (minima > DEGENERACY1) then
+    elseif (w(m0) > DEGENERACY1) then
       ! quasi biquadratic equations.
-      c0 = w(k0) * ONEQUARTER - ONEQUARTER
-      if (ABS(c0) < DEGENERACY2) then
-        print *, "ABS(c0) < 1.E-14"
+      w(k0) = w(k0) * ONEQUARTER - ONEQUARTER
+      if (ABS(w(k0)) < DEGENERACY2) then
         ! Second order Taylor expansion around the maximum local minima (x=1).
         ! f2(x) = x**2 - (2 - 1/4*k1) * x + (k0 + 3) / 4
-        w(xk) = ONE - (w(k1) - SQRT(w(k1) * w(k1) - minima * SIXTEEN)) * ONEEIGHT
+        w(xk) = ONE - (w(k1) - SQRT(w(k1) * w(k1) - w(m0) * SIXTEEN)) * ONEEIGHT
       else
         ! Third order Taylor expansion around the maximum local minima (x=1).
-        c1 = ONE - ONEQUARTER * w(k1)
-        call find_a_cubic_root(c1, c0, w(xk), w(r), w(q), w(h), w(s))
-        print *, "else ABS(c0) < 1.E-8", minima, c0, c1, w(xk)**3 - 2._RK * w(xk) + c1 * w(xk) + c0
+        w(k1) = ONE - ONEQUARTER * w(k1)
+        call find_a_cubic_root(w(k1), w(k0), w(xk), w(r), w(q), w(h), w(s))
       end if
     else
-      w(xk) = gsa2
-      call newton(w(k1), w(k0), w(xk), w(xx), w(f), w(df))
+      w(xk) = HALF * g / w(sa)
+      call newton_quartic(w(k1), w(k0), w(xk), w(xx), w(f), w(df))
     end if
-!
-    w(xk) = w(xk) * sa2
+    w(xk) = w(xk) * w(sa)
   end subroutine find_lambda_max
 !
-  pure elemental subroutine newton(k1, k0, x, xx, f, df)
+  pure elemental subroutine newton_quartic(k1, k0, x, xx, f, df)
     real(RK), intent(in)    :: k1, k0
     real(RK), intent(inout) :: x, xx, f, df
     integer                 :: i
@@ -347,7 +330,7 @@ contains
       x = x - f
       if (ABS(f) < THRESHOLD) exit
     end do
-  end subroutine newton
+  end subroutine newton_quartic
 !
 !| Find null vector of S. <br>
 !  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
@@ -470,7 +453,6 @@ contains
           if (w(1) < w(3)) then
             w(1) = cov(6) * (cov(1) * cov(8) - cov(7) * cov(2))
           else
-            !print*,3
             w(1) = ((cov(3) * cov(4) - cov(1) * cov(6)) &
                 & * (cov(3) * cov(8) - cov(2) * cov(9)) &
                 & - (cov(3) * cov(7) - cov(1) * cov(9)) &
@@ -575,220 +557,50 @@ contains
   end subroutine det3
 !
 ! find a positive root of monic cubic equation, x^3 - 2 * x^2 + k1 * x + k0 = 0
-  subroutine find_a_cubic_root(k1, k0, x, r, q, h, s)
+  pure subroutine find_a_cubic_root(k1, k0, x, r, q, h, s)
     real(RK), intent(in)    :: k1, k0
     real(RK), intent(inout) :: x, r, q, h, s
-    X = TWOTHIRD
-    R = -FOUR * (-(EIGHTNINE - k1) * TWOTHIRD + k0)
-    Q = -FOURTHIRD * (k1 - FOURTHIRD)
+    R = -FOUR * ((k1 - EIGHTNINE) * TWOTHIRD + k0)
+    Q = FOURTHIRD * (FOURTHIRD - k1)
     if (ABS(Q) < THRESHOLD) then
-      if (ABS(R) < THRESHOLD) return
-      X = X + SIGN(ONE, R) * (ONEQUARTER * R)**(-ONETHIRD)
-    elseif (ABS(R) < THRESHOLD) then
-      if (q > ZERO) then
-        X = X + HALFSQRT3 * SQRT(q)
+      if (ABS(R) < THRESHOLD) then
+        x = TWOTHIRD
       else
-        X = X - HALFSQRT3 * SQRT(-q)
+        r = ONEQUARTER * r
+        call invcbrt(r, q, s) ! q = r**(-1/3)
+        x = TWOTHIRD + q
+      end if
+      return
+    elseif (ABS(r) < THRESHOLD) then
+      if (q > ZERO) then
+        x = TWOTHIRD + HALFSQRT3 * SQRT(q)
+      else
+        x = TWOTHIRD - HALFSQRT3 * SQRT(-q)
       end if
     elseif (Q > ZERO) then
-      S = SQRT(Q)
-      Q = S * Q
+      s = SQRT(q)
+      q = s * q
       if (ABS(R) <= Q) then
-        H = R / Q
-        X = X + S * cos_acos(H)
+        h = r / q
+        call cos_acos(h, q, r, x) ! q = cos(arccos(h)/3)
+        X = TWOTHIRD + s * q
       else
-        H = ABS(Q / R)
-        X = X + SIGN(ONE, R) * S * cosh_acosh(H)
+        h = ABS(q / r)
+        s = SIGN(ONE, r) * s
+        call cosh_acosh(H, q, r, x) ! q = cosh(arccosh(1/h)/3)
+        X = TWOTHIRD + s * q
       end if
     else
-      S = SQRT(-Q)
-      H = -R / (Q * S)
-      X = X + S * sinh_asinh(H)
+      s = SQRT(-q)
+      h = -r / (q * s)
+      call sinh_asinh(h, q, r)
+      x = x + s * q
     end if
   end subroutine find_a_cubic_root
 !
-  function cos_acos(x) result(res)
-    real(RK), intent(in) :: x
-    real(RK)             :: res, yy, df
-    integer              :: i
-    if (x < -1.0000000000000000E+00_RK) then
-      res = 1.0000000000000000E+00_RK / 2.0000000000000000E+00_RK
-      return
-    elseif (x < -0.3333333333333333E+00_RK) then
-      yy = SQRT(x + ONE)
-      if (x < -6.6666666666666663E-01_RK) then
-        if (x < -9.0236892706218241E-01_RK) then
-          res = (3.9847929621330180E-04 * yy + (2.7150043732313152E-03_RK)) * x + (2.7756772944468894E-03 * yy +&
-              & (8.0584699091552827E-03_RK))
-          res = res * x + (9.9787382004175255E-03 * yy + (-3.0422013335204556E-04_RK))
-          res = res * x + (3.2124745520119027E-02 * yy + (-6.9480186781926440E-02_RK))
-          res = res * x + (4.3277149578179819E-01 * yy + (4.3616749888734951E-01_RK))
-        else
-          res = (3.9847929621330180E-04 * yy + (-8.1880793225013100E-04_RK)) * x + (2.7756772944468894E-03 * yy +&
-              & (-5.3682021468007667E-03_RK))
-          res = res * x + (9.9787382004175255E-03 * yy + (-1.9427315377984092E-02_RK))
-          res = res * x + (3.2124745520119027E-02 * yy + (-8.1580601406840383E-02_RK))
-          res = res * x + (4.3277149578179819E-01 * yy + (4.3329732093336737E-01_RK))
-        end if
-      else
-        if (x < -4.3096440627115074E-01_RK) then
-          res = (3.9847929621330180E-04 * yy + (-1.3962794333934664E-03_RK)) * x + (2.7756772944468894E-03 * yy +&
-              & (-6.7281227183138212E-03_RK))
-          res = res * x + (9.9787382004175255E-03 * yy + (-2.0640121298405912E-02_RK))
-          res = res * x + (3.2124745520119027E-02 * yy + (-8.2067600037457583E-02_RK))
-          res = res * x + (4.3277149578179819E-01 * yy + (4.3322280904921723E-01_RK))
-        else
-          res = (3.9847929621330180E-04 * yy + (1.1713621213896104E-02_RK)) * x + (2.7756772944468894E-03 * yy +&
-              & (1.3560409301341475E-02_RK))
-          res = res * x + (9.9787382004175255E-03 * yy + (-8.8387594483930760E-03_RK))
-          res = res * x + (3.2124745520119027E-02 * yy + (-7.9004467646912643E-02_RK))
-          res = res * x + (4.3277149578179819E-01 * yy + (4.3352276164963782E-01_RK))
-        end if
-      end if
-    elseif (x < 0.3333333333333333E+00) then
-      if (x < 2.0410779985789219E-17_RK) then
-        if (x < -2.3570226039551581E-01_RK) then
-          res = (6.3261501181342716E-01_RK) * x + (7.7758615573901924E-01_RK)
-          res = res * x + (2.7435256739631902E-01_RK)
-          res = res * x + (2.2752170341132330E-01_RK)
-          res = res * x + (8.7030281603695292E-01_RK)
-        else
-          res = (-5.1407513495624758E-02_RK) * x + (1.0016161738288792E-02_RK)
-          res = res * x + (-5.0149303892811525E-02_RK)
-          res = res * x + (1.6657415217801974E-01_RK)
-          res = res * x + (8.6602540378443871E-01_RK)
-        end if
-      else
-        if (x < 2.3570226039551587E-01_RK) then
-          res = (9.3008662532715076E-03_RK) * x + (1.4372359674536180E-02_RK)
-          res = res * x + (-4.6656484877630987E-02_RK)
-          res = res * x + (1.6659959026260604E-01_RK)
-          res = res * x + (8.6602540378443871E-01_RK)
-        else
-          res = (-3.4902175486090642E-01_RK) * x + (4.1033381483828746E-01_RK)
-          res = res * x + (-2.1260486589396638E-01_RK)
-          res = res * x + (1.9761921280113542E-01_RK)
-          res = res * x + (8.6385435215153961E-01_RK)
-        end if
-      end if
-    elseif (x <= 1.0000000000000000E+00_RK) then
-      if (x < 6.6666666666666663E-01_RK) then
-        if (x < 4.3096440627115085E-01_RK) then
-          res = (9.2989836420019442E-02_RK) * x + (-1.3124380721245635E-01_RK)
-          res = res * x + (3.9551533881730334E-02_RK)
-          res = res * x + (1.4461452858482687E-01_RK)
-          res = res * x + (8.6810669969142074E-01_RK)
-        else
-          res = (-6.7055964504391377E-03_RK) * x + (2.2911999129408750E-02_RK)
-          res = res * x + (-5.0039084385563551E-02_RK)
-          res = res * x + (1.6784857275128981E-01_RK)
-          res = res * x + (8.6583329929197761E-01_RK)
-        end if
-      else
-        if (x < 9.0236892706218252E-01_RK) then
-          res = (-1.0881827591406440E-03_RK) * x + (9.1295179354582787E-03_RK)
-          res = res * x + (-3.7133080284270058E-02_RK)
-          res = res * x + (1.6236757221824985E-01_RK)
-          res = res * x + (8.6672538337508409E-01_RK)
-        else
-          res = (4.6017500027684044E-03_RK) * x + (-1.2962733889034270E-02_RK)
-          res = res * x + (-5.1111183599694618E-03_RK)
-          res = res * x + (1.4181596019335754E-01_RK)
-          res = res * x + (8.7165614205287767E-01_RK)
-        end if
-      end if
-    else
-      res = cosh_acosh(ONE / x)
-      return
-    end if
-    do i = 1, MAXITER
-      yy = res * res
-      df = 12.0_RK * yy - 3.0_RK
-      print *, i, res, df
-      if (ABS(df) < 1E-18_RK) return
-      df = ((4.0_RK * yy - 3.0_RK) * res - x) / df
-      res = res - df
-      if (ABS(df) < THRESHOLD) return
-    end do
-  end function cos_acos
-!
-  function cosh_acosh(x) result(res)
-    real(RK), intent(in) :: x
-    real(RK)             :: res, yy, df
-    if (x < ZERO) then
-      res = ONE
-      return
-    elseif (x > ONE) then
-      res = cos_acos(ONE / x)
-      return
-    else
-      if (x < 5.0000000000000000E-01_RK) then
-        if (x < 1.4644660940672627E-01_RK) then
-          res = (2.9546700898745084E+00_RK) * x + (-6.8732996465706475E-01_RK)
-          res = res * x + (-1.3519484012953734E-02_RK)
-          res = res * x + (-4.6741735498024902E-03_RK)
-          res = res * x + (0.0000000000000000E+00_RK)
-        else
-          res = (-1.0623675833993933E-01_RK) * x + (1.5654255346132895E-01_RK)
-          res = res * x + (-9.6794886272540959E-02_RK)
-          res = res * x + (1.8177193622178180E-03_RK)
-          res = res * x + (-4.0727563438808847E-04_RK)
-        end if
-      else
-        if (x < 8.5355339059327373E-01_RK) then
-          res = (2.3919197448076808E-02_RK) * x + (-5.9903084576736369E-02_RK)
-          res = res * x + (5.0794386881566130E-02_RK)
-          res = res * x + (-4.7880140922667278E-02_RK)
-          res = res * x + (6.4652937375348487E-03_RK)
-        else
-          res = (-1.3435433998222815E-01_RK) * x + (5.0040317286635916E-01_RK)
-          res = res * x + (-6.9989274807980062E-01_RK)
-          res = res * x + (4.0248132481808807E-01_RK)
-          res = res * x + (-9.5448197561904868E-02_RK)
-        end if
-      end if
-    end if
-    !yy = invcbrt(0.5_RK * x)
-    call invcbrt(0.5_RK * x, yy, res)
-    res = res + 0.5_RK * (1.0_RK / yy + yy)
-    yy = res * res
-    df = 12.0_RK * yy - 3.0_RK
-    if (ABS(df) < 1E-18_RK) return
-    df = ((4.0_RK * yy - 3.0_RK) * res - ONE / x) / df
-    res = res - df
-  end function cosh_acosh
-!
-  pure elemental function sinh_asinh(x) result(res)
-    real(RK), intent(in) :: x
-    real(RK)             :: res, yy
-    yy = x * x
-    if (yy < 1.69_RK) then ! 1.3^2
-      res = x * (1.0_RK / 3.0_RK) - x * yy * (4.0_RK / 81.0_RK)
-    else
-      !yy = invcbrt(2.0_RK * x)
-      call invcbrt(2.0_RK * x, yy, res)
-      res = 0.5_RK * (1.0_RK / yy - yy)
-    end if
-    yy = res * res
-    res = res - ((4.0_RK * yy + 3.0_RK) * res - x) / (12.0_RK * yy + 3.0_RK)
-    yy = res * res
-    res = res - ((4.0_RK * yy + 3.0_RK) * res - x) / (12.0_RK * yy + 3.0_RK)
-  end function sinh_asinh
-!
-! https://www.mdpi.com/1996-1073/14/4/1058
-! pure elemental function invcbrt(x) result(res)
-!   use mod_kinds, only: I4, R4, I8
-!   implicit none
-!   real(RK), intent(in) :: x
-!   real(RK)             :: res, c
-!   real(R4)             :: y
-!   y = ABS(x)
-!   res = SIGN(1.0_RK, x) * TRANSFER(INT(z"548C2B4B", I4) - TRANSFER(y, 0_I4) / 3, y)
-!   c = res * res * res * x
-!   res = res * (1.752319676_RK - c * (1.2509524245_RK - 0.5093818292_RK * c))
-!   c = 1.0_RK - res * res * res * x
-!   res = res * (1.0_RK + 0.333333333333333_RK * c)
-! end function invcbrt
+#include "cos_acos.f90"
+#include "cosh_acosh.f90"
+#include "sinh_asinh.f90"
 !
 ! https://www.mdpi.com/1996-1073/14/4/1058
   pure elemental subroutine invcbrt(x, res, c)
