@@ -68,7 +68,7 @@ contains
     real(RK), allocatable  :: W(:)
     integer(IK)            :: i
 !
-    call mol_block_input_add(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
+    call mol_block_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
 !
     X = sample(n, m)
@@ -100,8 +100,8 @@ contains
     real(RK), allocatable :: W(:)
     integer(IK)           :: i
 !
-    call mol_block_input_add(inp, n1, m1, sym=RESHAPE(sym1, [n1, s1 - 1]))
-    call mol_block_input_add(inp, n2, m2, sym=RESHAPE(sym2, [n2, s2 - 1]))
+    call mol_block_input_add_molecule(inp, n1, m1, sym=RESHAPE(sym1, [n1, s1 - 1]))
+    call mol_block_input_add_molecule(inp, n2, m2, sym=RESHAPE(sym2, [n2, s2 - 1]))
     mobb = mobbrmsd(inp)
 !
     X1 = sample(n1, m1)
@@ -131,7 +131,7 @@ contains
     real(RK)               :: sd, brute, sd2
     integer(IK)            :: i
 !
-    call mol_block_input_add(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
+    call mol_block_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
 !
     X = sample(n, m)
@@ -171,7 +171,7 @@ contains
     real(RK)               :: X(D, n, m), Y(D, n, m)
     real(RK), allocatable  :: W(:)
 !
-    call mol_block_input_add(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
+    call mol_block_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
 !
     X = sample(n, m)
@@ -227,7 +227,7 @@ contains
     real(RK)               :: weights(n_target - 1)
     integer(IK)            :: i, n_job
 !
-    call mol_block_input_add(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
+    call mol_block_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
 !
     X(:, :, :, 1) = sample(n, m)

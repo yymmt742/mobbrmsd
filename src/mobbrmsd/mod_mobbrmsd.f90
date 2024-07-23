@@ -13,9 +13,11 @@ module mod_mobbrmsd
   use mod_mobbrmsd_state
   implicit none
   public :: setup_dimension
+  public :: mobbrmsd_input_init
   public :: mobbrmsd_input
+  public :: mobbrmsd_input_add_molecule
   public :: mol_block_input
-  public :: mol_block_input_add
+  public :: mol_block_input_add_molecule
   public :: mobbrmsd
   public :: mobbrmsd_init
   public :: mobbrmsd_header
@@ -42,7 +44,8 @@ module mod_mobbrmsd
     private
     type(mol_block_input), allocatable :: blk(:)
   contains
-    procedure :: add => mobbrmsd_input_add
+    procedure :: init => mobbrmsd_input_init
+    procedure :: add_molecule => mobbrmsd_input_add_molecule
     final     :: mobbrmsd_input_destroy
   end type mobbrmsd_input
 !
@@ -56,24 +59,35 @@ module mod_mobbrmsd
     final     :: mobbrmsd_destroy
   end type mobbrmsd
 !
+  interface mobbrmsd_init
+    module procedure mobbrmsd_init_mobb, mobbrmsd_init_block
+  end interface mobbrmsd_init
+!
   interface mobbrmsd
     module procedure mobbrmsd_new, mobbrmsd_new_from_block
   end interface mobbrmsd
 !
 contains
 !
-!| add molecule
-  pure subroutine mobbrmsd_input_add(this, m, n, sym)
+!| init
+  pure subroutine mobbrmsd_input_init(this)
     class(mobbrmsd_input), intent(inout) :: this
-    !! mol_block_input array
+    !! self
+    if (ALLOCATED(this%blk)) deallocate (this%blk)
+  end subroutine mobbrmsd_input_init
+!
+!| add molecule
+  pure subroutine mobbrmsd_input_add_molecule(this, m, n, sym)
+    class(mobbrmsd_input), intent(inout) :: this
+    !! self
     integer(IK), intent(in)              :: m
     !! number of atoms per molecule
     integer(IK), intent(in)              :: n
     !! number of molecule
     integer(IK), intent(in), optional    :: sym(:, :)
     !! molecular symmetry, sym(m, s-1)
-    call mol_block_input_add(this%blk, m, n, sym)
-  end subroutine mobbrmsd_input_add
+    call mol_block_input_add_molecule(this%blk, m, n, sym)
+  end subroutine mobbrmsd_input_add_molecule
 !
 !| destractor
   pure elemental subroutine mobbrmsd_input_destroy(this)
@@ -84,7 +98,7 @@ contains
 ! ------
 !
 !| add molecule
-  pure subroutine mol_block_input_add(this, m, n, sym)
+  pure subroutine mol_block_input_add_molecule(this, m, n, sym)
     type(mol_block_input), allocatable, intent(inout) :: this(:)
     !! mol_block_input array
     integer(IK), intent(in)            :: m
@@ -114,7 +128,7 @@ contains
 !
     call MOVE_ALLOC(from=blocks, to=this)
 !
-  end subroutine mol_block_input_add
+  end subroutine mol_block_input_add_molecule
 !
 !| destractor
   pure elemental subroutine mol_block_input_destroy(this)
@@ -141,14 +155,25 @@ contains
   end function mobbrmsd_new_from_block
 !
 !| constructor
-  pure subroutine mobbrmsd_init(this, nblock, blocks)
-    type(mobbrmsd), intent(inout)     :: this
+  pure subroutine mobbrmsd_init_mobb(this, inp)
+    type(mobbrmsd), intent(inout)    :: this
+    !! self
+    type(mobbrmsd_input), intent(in) :: inp
     !! mobbrmsd_input
+    if (.not. ALLOCATED(inp%blk)) return
+    call mobbrmsd_init_block(this, SIZE(inp%blk), inp%blk)
+  end subroutine mobbrmsd_init_mobb
+!
+!| constructor
+  pure subroutine mobbrmsd_init_block(this, nblock, blocks)
+    type(mobbrmsd), intent(inout)     :: this
+    !! self
     integer(IK), intent(in)           :: nblock
-    !! number of block
+    !! mobbrmsd_input
     type(mol_block_input), intent(in) :: blocks(nblock)
-    !! blocks
+    !! number of block
     type(bb_block)                    :: bbblk(nblock)
+    !! blocks
     type(bb_list)                     :: bblst
     integer(IK)                       :: i
     do concurrent(i=1:nblock)
@@ -163,7 +188,7 @@ contains
     call mobbrmsd_state_init(this%s, this%h)
     call bb_block_destroy(bbblk)
     call bb_list_destroy(bblst)
-  end subroutine mobbrmsd_init
+  end subroutine mobbrmsd_init_block
 !
 !| run mobbrmsd
   pure subroutine mobbrmsd_run( &
