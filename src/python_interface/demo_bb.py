@@ -1,6 +1,6 @@
 from . import __version__
-from . import coord_generator
-from . import mobbrmsd
+from .coord_generator import coord_generator
+from ._mobbrmsd import *
 import sys
 import pprint
 import numpy
@@ -12,8 +12,8 @@ def print_ret(ret, post="", end="\n", to_console: bool = False):
     ev, er, ub, lb, sd = (
         ret.n_eval,
         ret.eval_ratio,
-        ret.bounds[0],
-        ret.bounds[1],
+        2 * ret.bounds[0] + ret.autocorr,
+        2 * ret.bounds[1] + ret.autocorr,
         ret.rmsd,
     )
     if sys.stdout.isatty():
@@ -143,11 +143,11 @@ def main(n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
             print("      ", l)
     print()
 
-    mrmsd = mobbrmsd(molecules={"n_apm": n_apm, "n_mol": n_mol, "sym": sym})
+    molecules = DataclassMolecule(n_apm=n_apm, n_mol=n_mol, sym=sym)
+    mrmsd = mobbrmsd(molecules=molecules)
 
-    ub, lb = numpy.inf, 0.0
+    ub, lb = numpy.inf, -numpy.inf
     ret = mrmsd.run(x, y, maxeval=0)
-    mrmsd.clear()
 
     print("        N_eval   Eval_ratio      Upperbound      Lowerbound      RMSD")
     print(sep1)
@@ -159,11 +159,11 @@ def main(n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
         if ub > ret.bounds[0] or lb < ret.bounds[1]:
             print_ret(ret, post=erace)
         ub, lb = ret.bounds[0], ret.bounds[1]
-        ret = mrmsd.restart(ret, maxeval=0)
+        ret.restart(maxeval=0)
         i += 1
 
     print_ret(ret, post=erace)
-    ret = mrmsd.restart(ret, maxeval=0, Y=y)
+    y = ret.rotate_y(y)
     print(sep1)
     print("      -- Final results --")
     print("        N_eval   Eval_ratio      Upperbound      Lowerbound      RMSD")

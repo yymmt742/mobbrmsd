@@ -104,9 +104,9 @@ contains
   end subroutine decode_attributes
 
   pure subroutine decode_header(l, seq, n_header, header)
-    integer(kind=IK), intent(in)  :: n_header
     integer(kind=IK), intent(in)  :: l
     integer(kind=IK), intent(in)  :: seq(l)
+    integer(kind=IK), intent(in)  :: n_header
     integer(kind=IK), intent(out) :: header(n_header)
     type(mobbrmsd)                :: mobb
 
