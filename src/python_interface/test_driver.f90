@@ -20,6 +20,7 @@ contains
     integer(IK), parameter   :: s = 2
     integer(IK), parameter   :: n_target = 20
     integer(IK), parameter   :: n_apm = 8, n_mol = 8
+    integer(IK), parameter   :: seq(3 + n_apm) = [n_apm, n_mol, s, 5, 6, 7, 8, 1, 2, 3, 4]
     integer(IK)              :: n_atm
     integer(IK)              :: n_dim
     real(RK), allocatable    :: X(:, :, :, :)
@@ -28,9 +29,14 @@ contains
     real(RK), allocatable    :: sr(:, :), W(:, :)
     integer(IK)              :: i, j, k, l
 !
-    call add_molecule(n_apm, n_mol, 2, [5, 6, 7, 8, 1, 2, 3, 4])
-    call n_atoms(n_dim, n_atm)
-!
+    call decode_attributes(SIZE(seq), seq, n_dim, n_atm, n_mem, n_job, n_header, n_int, n_float)
+    print *, n_dim, n_atm
+    print *, n_mem, n_job, n_header, n_int, n_float
+
+    allocate (h(n_header))
+    allocate (si(n_int, (n_target - 1) * n_target / 2))
+    allocate (sr(n_float, (n_target - 1) * n_target / 2))
+    allocate (W(n_mem, n_job))
     allocate (X(n_dim, n_apm, n_mol, n_target))
 !
     do k = -1, 1, 2
@@ -51,22 +57,13 @@ contains
       end do
     end do
 !
-    call workmemory_lengthes(n_mem, n_job)
-    call state_vector_lengthes(n_header, n_int, n_float)
-    print *, n_dim, n_atm
-    print *, n_mem, n_job, n_header, n_int, n_float
-!
-    allocate (h(n_header))
-    allocate (si(n_int, (n_target - 1) * n_target / 2))
-    allocate (sr(n_float, (n_target - 1) * n_target / 2))
-    allocate (W(n_mem, n_job))
-!
+    call decode_header(SIZE(seq), seq, n_header, h)
     call batch_run_tri( &
    &  n_target, n_header, n_int, n_float, &
-   &  n_target * (n_target - 1) / 2, 1, &
+   &  n_target * (n_target - 1) / 2, 1, h, &
    &  X, W, &
    &  999.0_RK, 0.0_RK, -1, .true., .true., &
-   &  h, si, sr)
+   &  si, sr)
 !
     k = 0
     do j = 1, n_target
@@ -77,7 +74,6 @@ contains
       end do
       print *
     end do
-    call clear_molecule()
 !
   end subroutine test0
 !
@@ -86,6 +82,7 @@ contains
     integer(IK), parameter   :: n_reference = 2
     integer(IK), parameter   :: n_target = 1000
     integer(IK), parameter   :: n_apm = 8, n_mol = 8
+    integer(IK), parameter   :: seq(3 + n_apm) = [n_apm, n_mol, s, 5, 6, 7, 8, 1, 2, 3, 4]
     integer(IK)              :: n_atm
     integer(IK)              :: n_dim
     real(RK), allocatable    :: X(:, :, :, :), Y(:, :, :, :)
@@ -94,9 +91,14 @@ contains
     real(RK), allocatable    :: sr(:, :, :), W(:, :)
     integer(IK)              :: i, j, k, l
 !
-    call add_molecule(n_apm, n_mol, 2, [5, 6, 7, 8, 1, 2, 3, 4])
-    call n_atoms(n_dim, n_atm)
-!
+    call decode_attributes(SIZE(seq), seq, n_dim, n_atm, n_mem, n_job, n_header, n_int, n_float)
+    print *, n_dim, n_atm
+    print *, n_mem, n_job, n_header, n_int, n_float
+
+    allocate (h(n_header))
+    allocate (si(n_int, n_reference, n_target))
+    allocate (sr(n_float, n_reference, n_target))
+    allocate (W(n_mem, n_job))
     allocate (X(n_dim, n_apm, n_mol, n_reference))
     allocate (Y(n_dim, n_apm, n_mol, n_target))
 !
@@ -121,22 +123,14 @@ contains
       Y(:, :, :, l) = 0.2 * X(:, :, :, 1) + 0.8 * Y(:, :, :, l)
     end do
 !
-    call workmemory_lengthes(n_mem, n_job)
-    call state_vector_lengthes(n_header, n_int, n_float)
-    print *, n_dim, n_atm
-    print *, n_mem, n_job, n_header, n_int, n_float
-!
-    allocate (h(n_header))
-    allocate (si(n_int, n_reference, n_target))
-    allocate (sr(n_float, n_reference, n_target))
-    allocate (W(n_mem, n_job))
+    call decode_header(SIZE(seq), seq, n_header, h)
 !
     call batch_run( &
    &  n_reference, n_target, n_header, n_int, n_float, &
-   &  n_reference * n_target, 1, &
+   &  n_reference * n_target, 1, h, &
    &  X, Y, W, &
    &  999.0_RK, 0.0_RK, -1, .true., .true., &
-   &  h, si, sr)
+   &  si, sr)
 !
     do j = 1, n_target
       do i = 1, n_reference
@@ -144,12 +138,12 @@ contains
       end do
       print *
     end do
-    call clear_molecule()
 !
   end subroutine test1
 !
   subroutine test2()
-    integer(IK), parameter   :: n_apm = 8, n_mol = 5, n_target = 50
+    integer(IK), parameter   :: n_apm = 8, n_mol = 5, n_sym = 2, n_target = 50
+    integer(IK), parameter   :: seq(3 + n_apm) = [n_apm, n_mol, n_sym, 5, 6, 7, 8, 1, 2, 3, 4]
     real(RK), allocatable    :: X(:, :, :, :)
     integer(IK)              :: n_dim, n_atm
     integer(IK)              :: n_header, n_int, n_float, n_job, n_mem
@@ -160,13 +154,10 @@ contains
     real(RK), allocatable    :: float_states(:, :, :)
     integer(IK)              :: i
 !
-    call add_molecule(n_apm, n_mol, 2, [5, 6, 7, 8, 1, 2, 3, 4])
-    call n_atoms(n_dim, n_atm)
-    call workmemory_lengthes(n_mem, n_job)
-    call state_vector_lengthes(n_header, n_int, n_float)
+    call decode_attributes(SIZE(seq), seq, n_dim, n_atm, n_mem, n_job, n_header, n_int, n_float)
 !
     print'(*(I4))', n_dim, n_atm, n_header, n_int, n_float, n_job, n_mem
-!
+
     allocate (X(n_dim, n_apm, n_mol, n_target))
     allocate (w(n_job * n_mem))
     allocate (header(n_header))
@@ -175,10 +166,12 @@ contains
 !
     call RANDOM_NUMBER(X)
 !
+    call decode_header(SIZE(seq), seq, n_header, header)
+!
     call min_span_tree( &
- &    n_target, n_header, n_int, n_float,&
+ &    n_target, n_header, n_int, n_float, header, &
  &    X, W, RHUGE, ZERO, -1, .true., .true., &
- &    edges, weights, header, int_states, float_states)
+ &    edges, weights, int_states, float_states)
 !
     do i = 1, n_target - 1
       print *, edges(:, i), weights(i)
@@ -200,3 +193,4 @@ contains
   end function sample
 !
 end program main
+

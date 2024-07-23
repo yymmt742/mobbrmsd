@@ -19,8 +19,10 @@ module driver
  &  mobbrmsd_run, &
  &  mobbrmsd_restart, &
  &  mobbrmsd_is_finished, &
+ &  mobbrmsd_input, &
+ &  mobbrmsd_input_add_molecule, &
  &  mol_block_input, &
- &  mol_block_input_add, &
+ &  mol_block_input_add_molecule, &
  &  setup_dimension_ => setup_dimension
   use mod_mobbrmsd_batch_run, only: &
  &  mobbrmsd_batch_run, &
@@ -30,6 +32,8 @@ module driver
 
   implicit none
   private
+  public decode_attributes
+  public decode_header
   public setup_dimension
   public add_molecule
   public clear_molecule
@@ -53,6 +57,64 @@ module driver
 
 contains
 
+  pure subroutine decode_input(l, seq, mobb)
+    integer(kind=IK), intent(in)  :: l
+    integer(kind=IK), intent(in)  :: seq(l)
+    type(mobbrmsd), intent(inout) :: mobb
+    type(mobbrmsd_input)          :: inp
+    integer                       :: i, n, m, s, ns
+    i = 1
+    do while (i < l)
+      n = MAX(seq(i), 1)
+      m = MAX(seq(i + 1), 1)
+      s = MAX(seq(i + 2), 1)
+      ns = n * (s - 1)
+      call mobbrmsd_input_add_molecule(inp, n, m, RESHAPE(seq(i + 3:i + 2 + ns), [n, s - 1]))
+      i = i + 3 + ns
+    end do
+    call mobbrmsd_init(mobb, inp)
+  end subroutine decode_input
+
+  subroutine decode_attributes(l, seq, &
+ &                  n_dim, n_atom, &
+ &                  n_mem, n_job, &
+ &                  n_header, n_int, n_float)
+    integer(kind=IK), intent(in)  :: l
+    integer(kind=IK), intent(in)  :: seq(l)
+    integer(kind=IK), intent(out) :: n_dim
+    integer(kind=IK), intent(out) :: n_atom
+    integer(kind=IK), intent(out) :: n_mem
+    integer(kind=IK), intent(out) :: n_job
+    integer(kind=IK), intent(out) :: n_header
+    integer(kind=IK), intent(out) :: n_int
+    integer(kind=IK), intent(out) :: n_float
+    type(mobbrmsd)                :: mobb
+
+    call decode_input(l, seq, mobb)
+    n_dim = mobb%h%n_dims()
+    n_atom = mobb%h%n_atoms()
+    n_mem = mobb%h%memsize()
+    !$omp parallel
+    if (omp_get_thread_num() == 0) n_job = omp_get_num_threads()
+    !$omp end parallel
+    n_header = SIZE(mobb%h%dump())
+    n_int = SIZE(mobb%s%dump())
+    n_float = SIZE(mobb%s%dump_real())
+
+  end subroutine decode_attributes
+
+  pure subroutine decode_header(l, seq, n_header, header)
+    integer(kind=IK), intent(in)  :: n_header
+    integer(kind=IK), intent(in)  :: l
+    integer(kind=IK), intent(in)  :: seq(l)
+    integer(kind=IK), intent(out) :: header(n_header)
+    type(mobbrmsd)                :: mobb
+
+    call decode_input(l, seq, mobb)
+    header = mobb%h%dump()
+
+  end subroutine decode_header
+
   !| setup dimension
   subroutine setup_dimension(d)
     integer(kind=IK), intent(in) :: d
@@ -69,7 +131,7 @@ contains
     integer(kind=IK), intent(in), optional :: sym(n * (s - 1))
 
     if (.not. ALLOCATED(blocks)) allocate (blocks(0))
-    call mol_block_input_add(blocks, n, M, RESHAPE(sym, [n, s - 1]))
+    call mol_block_input_add_molecule(blocks, n, M, RESHAPE(sym, [n, s - 1]))
 
   end subroutine add_molecule
 
@@ -137,7 +199,7 @@ contains
   end subroutine state_vector_lengthes
 
   !| return rmsd
-  subroutine rmsd(n_float, float_states, res)
+  pure subroutine rmsd(n_float, float_states, res)
     integer(kind=IK), intent(in) :: n_float
     real(kind=RK), intent(in)    :: float_states(n_float)
     real(kind=RK), intent(out)   :: res
@@ -146,7 +208,7 @@ contains
   end subroutine rmsd
 
   !| return autocorr
-  subroutine autocorr(n_float, float_states, res)
+  pure subroutine autocorr(n_float, float_states, res)
     integer(kind=IK), intent(in) :: n_float
     real(kind=RK), intent(in)    :: float_states(n_float)
     real(kind=RK), intent(out)   :: res
@@ -154,7 +216,7 @@ contains
   end subroutine autocorr
 
   !| return bounds
-  subroutine bounds(n_float, float_states, res)
+  pure subroutine bounds(n_float, float_states, res)
     integer(kind=IK), intent(in) :: n_float
     real(kind=RK), intent(in)    :: float_states(n_float)
     real(kind=RK), intent(out)   :: res(2)
@@ -163,7 +225,7 @@ contains
   end subroutine bounds
 
   !| return n_eval
-  subroutine n_eval(n_float, float_states, res)
+  pure subroutine n_eval(n_float, float_states, res)
     integer(kind=IK), intent(in)  :: n_float
     real(kind=RK), intent(in)     :: float_states(n_float)
     integer(kind=IK), intent(out) :: res
@@ -171,7 +233,7 @@ contains
   end subroutine n_eval
 
   !| return log_eval_ratio
-  subroutine log_eval_ratio(n_float, float_states, res)
+  pure subroutine log_eval_ratio(n_float, float_states, res)
     integer(kind=IK), intent(in) :: n_float
     real(kind=RK), intent(in)    :: float_states(n_float)
     real(kind=RK), intent(out)   :: res
@@ -179,7 +241,7 @@ contains
   end subroutine log_eval_ratio
 
   !| inquire bb is finished
-  subroutine is_finished(n_head, n_int, n_float, header, int_states, float_states, res)
+  pure subroutine is_finished(n_head, n_int, n_float, header, int_states, float_states, res)
     integer(kind=IK), intent(in)  :: n_head, n_int, n_float
     integer(kind=IK), intent(in)  :: header(n_head)
     integer(kind=IK), intent(in)  :: int_states(n_int)
@@ -194,18 +256,68 @@ contains
 
   end subroutine is_finished
 
+  !| single run with working memory
+  subroutine run( &
+ &    n_header, n_int, n_float, header, &
+ &    X, Y, W, &
+ &    cutoff, difflim, maxeval, &
+ &    remove_com, sort_by_g, rotate_y, &
+ &    int_states, float_states)
+    integer(kind=IK), intent(in)  :: n_header
+    !! header length
+    integer(kind=IK), intent(in)  :: n_int
+    integer(kind=IK), intent(in)  :: n_float
+    integer(kind=IK), intent(in)  :: header(n_header)
+    real(kind=RK), intent(in)     :: X(*)
+    !! reference coordinate
+    real(kind=RK), intent(inout)  :: Y(*)
+    !! target coordinate
+    real(kind=RK), intent(inout)  :: W(*)
+    !! work memory
+    integer(kind=IK), intent(in)  :: maxeval
+    real(kind=RK), intent(in)     :: cutoff
+    real(kind=RK), intent(in)     :: difflim
+    logical, intent(in)           :: remove_com
+    logical, intent(in)           :: sort_by_g
+    logical, intent(in)           :: rotate_y
+    integer(kind=IK), intent(out) :: int_states(n_int)
+    real(kind=RK), intent(out)    :: float_states(n_float)
+    type(mobbrmsd_header)         :: h
+    type(mobbrmsd_state)          :: s
+
+    call h%load(header)
+    call s%init(h)
+    call mobbrmsd_run(h, s, X, Y, w, &
+      &               cutoff=cutoff, &
+      &               difflim=difflim, &
+      &               maxeval=maxeval,&
+      &               remove_com=remove_com,&
+      &               sort_by_g=sort_by_g&
+      &   )
+    if (rotate_y) call s%rotation(h, Y)
+
+    int_states = s%dump()
+    float_states = s%dump_real()
+
+  end subroutine run
+
   !| restart with working memory
-  subroutine restart(n_head, n_int, n_float, &
- &                   header, int_states, float_states, w, &
- &                   cutoff, difflim, maxeval)
-    integer(kind=IK), intent(in)    :: n_head
+  pure subroutine restart( &
+ &    n_header, n_int, n_float, &
+ &    header, &
+ &    int_states, float_states, &
+ &    W, &
+ &    cutoff, difflim, maxeval &
+ &  )
+    integer(kind=IK), intent(in)    :: n_header
     integer(kind=IK), intent(in)    :: n_int
     integer(kind=IK), intent(in)    :: n_float
-    integer(kind=IK), intent(in)    :: header(n_head)
+    integer(kind=IK), intent(in)    :: header(n_header)
     integer(kind=IK), intent(inout) :: int_states(n_int)
     real(kind=RK), intent(inout)    :: float_states(n_float)
+    !! work memory
     real(kind=RK), intent(inout)    :: W(*)
-   !! work memory
+    !! work memory
     integer(kind=IK), intent(in)    :: maxeval
     real(kind=RK), intent(in)       :: cutoff
     real(kind=RK), intent(in)       :: difflim
@@ -223,12 +335,13 @@ contains
 
   !| compute rotration respect to state.
   subroutine rotate_y( &
- &    n_head, n_int, n_float, &
- &    header, int_states, float_states, Y)
-    integer(kind=IK), intent(in) :: n_head
+ &    n_header, n_int, n_float, &
+ &    header, int_states, float_states, Y &
+ &  )
+    integer(kind=IK), intent(in) :: n_header
     integer(kind=IK), intent(in) :: n_int
     integer(kind=IK), intent(in) :: n_float
-    integer(kind=IK), intent(in) :: header(n_head)
+    integer(kind=IK), intent(in) :: header(n_header)
     integer(kind=IK), intent(in) :: int_states(n_int)
     real(kind=RK), intent(in)    :: float_states(n_float)
     real(kind=RK), intent(inout) :: Y(*)
@@ -241,63 +354,22 @@ contains
 
   end subroutine rotate_y
 
-  !| single run with working memory
-  subroutine run( &
- &    n_head, n_int, n_float, X, Y, W, &
- &    cutoff, difflim, maxeval, &
- &    remove_com, sort_by_g, rotate_y, &
- &    header, int_states, float_states)
-    integer(kind=IK), intent(in)  :: n_head
-    integer(kind=IK), intent(in)  :: n_int
-    integer(kind=IK), intent(in)  :: n_float
-    real(kind=RK), intent(in)     :: X(*)
-   !! reference coordinate
-    real(kind=RK), intent(inout)  :: Y(*)
-   !! target coordinate
-    real(kind=RK), intent(inout)  :: W(*)
-   !! work memory
-    integer(kind=IK), intent(in)  :: maxeval
-    real(kind=RK), intent(in)     :: cutoff
-    real(kind=RK), intent(in)     :: difflim
-    logical, intent(in)           :: remove_com
-    logical, intent(in)           :: sort_by_g
-    logical, intent(in)           :: rotate_y
-    integer(kind=IK), intent(out) :: header(n_head)
-    integer(kind=IK), intent(out) :: int_states(n_int)
-    real(kind=RK), intent(out)    :: float_states(n_float)
-    type(mobbrmsd)                :: mob
-
-    mob = mobbrmsd(blocks)
-    call mobbrmsd_run(mob%h, mob%s, X, Y, w, &
-      &               cutoff=cutoff, &
-      &               difflim=difflim, &
-      &               maxeval=maxeval,&
-      &               remove_com=remove_com,&
-      &               sort_by_g=sort_by_g&
-      &   )
-    if (rotate_y) call mob%s%rotation(mob%h, Y)
-
-    header = mob%h%dump()
-    int_states = mob%s%dump()
-    float_states = mob%s%dump_real()
-
-  end subroutine run
-
   !| batch parallel run
   subroutine batch_run( &
- &             n_reference, n_target, n_head, n_int, n_float, &
- &             n_chunk, n_lower, &
+ &             n_reference, n_target, n_header, n_int, n_float, &
+ &             n_chunk, n_lower, header, &
  &             X, Y, W, &
  &             cutoff, difflim, maxeval, &
  &             remove_com, sort_by_g, &
- &             header, int_states, float_states)
+ &             int_states, float_states)
     integer(kind=IK), intent(in)  :: n_reference
     integer(kind=IK), intent(in)  :: n_target
-    integer(kind=IK), intent(in)  :: n_head
+    integer(kind=IK), intent(in)  :: n_header
     integer(kind=IK), intent(in)  :: n_int
     integer(kind=IK), intent(in)  :: n_float
     integer(kind=IK), intent(in)  :: n_chunk
     integer(kind=IK), intent(in)  :: n_lower
+    integer(kind=IK), intent(in)  :: header(n_header)
     real(kind=RK), intent(in)     :: X(*)
    !! reference coordinate
     real(kind=RK), intent(inout)  :: Y(*)
@@ -309,20 +381,18 @@ contains
     real(kind=RK), intent(in)     :: difflim
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
-    integer(kind=IK), intent(out) :: header(n_head)
     integer(kind=IK), intent(out) :: int_states(n_int, n_chunk)
     real(kind=RK), intent(out)    :: float_states(n_float, n_chunk)
-    type(mobbrmsd)                :: mob
+    type(mobbrmsd_header)         :: h
     type(mobbrmsd_state)          :: s(n_chunk)
     integer(kind=IK)              :: i
-
-    call mobbrmsd_init(mob, SIZE(blocks), blocks)
+    call h%load(header)
     do concurrent(i=1:n_chunk)
-      call mobbrmsd_state_copy(s(i), mob%s)
+      call s(i)%init(h)
     end do
 
     call mobbrmsd_batch_run( &
-   &       n_reference, n_target, mob%h, s, X, Y, W, &
+   &       n_reference, n_target, h, s, X, Y, W, &
    &       cutoff=cutoff, &
    &       difflim=difflim,&
    &       maxeval=maxeval, &
@@ -332,7 +402,6 @@ contains
    &       n_upper=n_lower + n_chunk - 1 &
    &     )
 
-    header = mob%h%dump()
     do concurrent(i=1:n_chunk)
       int_states(:, i) = s(i)%dump()
       float_states(:, i) = s(i)%dump_real()
@@ -341,19 +410,20 @@ contains
 
   !| batch parallel tri run
   subroutine batch_run_tri( &
- &             n_target, n_head, n_int, n_float, &
- &             n_chunk, n_lower, &
+ &             n_target, n_header, n_int, n_float, &
+ &             n_chunk, n_lower, header, &
  &             X, W, &
  &             cutoff, difflim, maxeval, &
  &             remove_com, sort_by_g, &
- &             header, int_states, float_states &
+ &             int_states, float_states &
  &           )
     integer(kind=IK), intent(in)  :: n_target
-    integer(kind=IK), intent(in)  :: n_head
+    integer(kind=IK), intent(in)  :: n_header
     integer(kind=IK), intent(in)  :: n_int
     integer(kind=IK), intent(in)  :: n_float
     integer(kind=IK), intent(in)  :: n_chunk
     integer(kind=IK), intent(in)  :: n_lower
+    integer(kind=IK), intent(in)  :: header(n_header)
     real(kind=RK), intent(in)     :: X(*)
    !! reference and target coordinate
     real(kind=RK), intent(inout)  :: W(*)
@@ -363,18 +433,17 @@ contains
     real(kind=RK), intent(in)     :: difflim
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
-    integer(kind=IK), intent(out) :: header(n_head)
     integer(kind=IK), intent(out) :: int_states(n_int, n_chunk)
     real(kind=RK), intent(out)    :: float_states(n_float, n_chunk)
-    type(mobbrmsd)                :: mob
+    type(mobbrmsd_header)         :: h
     type(mobbrmsd_state)          :: s(n_chunk)
     integer(kind=IK)              :: i
-    mob = mobbrmsd(blocks)
+    call h%load(header)
     do concurrent(i=1:SIZE(s))
-      call mobbrmsd_state_copy(s(i), mob%s)
+      call s(i)%init(h)
     end do
     call mobbrmsd_batch_tri_run( &
-   &       n_target, mob%h, s, X, W, &
+   &       n_target, h, s, X, W, &
    &       cutoff=cutoff, &
    &       difflim=difflim, &
    &       maxeval=maxeval, &
@@ -383,7 +452,6 @@ contains
    &       n_lower=n_lower, &
    &       n_upper=n_lower + n_chunk - 1 &
    &     )
-    header = mob%h%dump()
     do concurrent(i=1:SIZE(s))
       int_states(:, i) = s(i)%dump()
       float_states(:, i) = s(i)%dump_real()
@@ -391,16 +459,18 @@ contains
   end subroutine batch_run_tri
 
   subroutine min_span_tree( &
- &             n_target, n_head, &
- &             n_int, n_float,&
+ &             n_target, n_header, &
+ &             n_int, n_float, &
+ &             header, &
  &             X, W, cutoff, difflim, maxeval,  &
  &             remove_com, sort_by_g, &
- &             edges, weights, header, &
+ &             edges, weights, &
  &             int_states, float_states)
     integer(kind=IK), intent(in)      :: n_target
-    integer(kind=IK), intent(in)      :: n_head
+    integer(kind=IK), intent(in)      :: n_header
     integer(kind=IK), intent(in)      :: n_int
     integer(kind=IK), intent(in)      :: n_float
+    integer(kind=IK), intent(in)      :: header(n_header)
     real(kind=RK), intent(in)         :: X(*)
    !! reference coordinate
     real(kind=RK), intent(inout)      :: W(*)
@@ -412,18 +482,17 @@ contains
     logical, intent(in)               :: sort_by_g
     integer(kind=IK), intent(out)     :: edges(2, n_target - 1)
     real(kind=RK), intent(out)        :: weights(n_target - 1)
-    integer(kind=IK), intent(out)     :: header(n_head)
     integer(kind=IK), intent(out)     :: int_states(n_int, n_target, n_target)
     real(kind=RK), intent(out)        :: float_states(n_float, n_target, n_target)
-    type(mobbrmsd)                    :: mob
+    type(mobbrmsd_header)             :: h
     type(mobbrmsd_state), allocatable :: s(:, :)
     integer(kind=IK)                  :: i, j
 
-    call mobbrmsd_init(mob, SIZE(blocks), blocks)
+    call h%load(header)
     allocate (s(n_target, n_target))
 
     call mobbrmsd_min_span_tree( &
-   &       n_target, mob%h, s, X, W, &
+   &       n_target, h, s, X, W, &
    &       cutoff=cutoff, &
    &       difflim=difflim, &
    &       maxeval=maxeval, &
@@ -433,7 +502,6 @@ contains
    &       weights=weights &
    &    )
 
-    header = mob%h%dump()
     do concurrent(i=1:n_target, j=1:n_target)
       int_states(:, i, j) = s(i, j)%dump()
       float_states(:, i, j) = s(i, j)%dump_real()
