@@ -175,24 +175,25 @@ def varidation_coordinates_1(x: npt.NDArray, d, natom, dtype=None) -> npt.NDArra
         return numpy.astype(x, dtype=dtype).flatten()
 
 
-def varidation_coordinates_2(x: npt.NDArray) -> npt.NDArray:
+def varidation_coordinates_2(x: npt.NDArray, d, natom, dtype=None) -> npt.NDArray:
 
     if x.ndim == 2:
-        x_ = x.transpose().reshape((x.shape[1], x.shape[0], 1))
+        pass
+        # x_ = x.transpose().reshape((x.shape[1], x.shape[0], 1))
     elif x.ndim == 3:
-        x_ = x.transpose([2, 1, 0])
+        pass
+        # x_ = x.transpose([2, 1, 0])
     else:
         raise ValueError
-    if x_.shape[0] != d or x_.shape[1] != natom:
+    if x.shape[-1] != d or x.shape[-2] != natom:
         raise ValueError
 
     if dtype is None:
-        return x_.flatten()
+        return x.flatten()
     elif x.dtype == dtype:
-        return x_.flatten()
+        return x.flatten()
     else:
-        return numpy.astype(x_, dtype=dtype).flatten()
-    return x_
+        return numpy.astype(x, dtype=dtype).flatten()
 
 
 ##
@@ -311,13 +312,10 @@ class mobbrmsd:
         del driver
         return ret
 
-    """
-
-
     def batch_run(
         self,
-        x: numpy.ndarray,
-        y: None | numpy.ndarray = None,
+        x: npt.NDArray,
+        y: None | npt.NDArray = None,
         cutoff: float = float("inf"),
         difflim: float = 0.0,
         maxeval: int = -1,
@@ -326,166 +324,114 @@ class mobbrmsd:
         verbose: bool = False,
         n_chunk: int = 1,
         full_info: bool = False,
-    ) -> list:
+    ) -> npt.NDArray:
 
-        if hasattr(self, "ww"):
-            if self.ww.shape[1] != self.memsize or self.ww.shape[0] != self.njob:
-                self.ww = numpy.empty((self.njob, self.memsize), dtype=self.dtype).T
-        else:
-            self.ww = numpy.empty((self.njob, self.memsize), dtype=self.dtype).T
-
-        x_ = self.varidation_coordinates_2(x)
         if y is None:
-
-            def res(i, j, hret, iret, rret):
-                if i > j:
-                    k = (i - 1) * (i - 2) // 2 + i + j - 1
-                    if full_info:
-                        return mobbrmsd_result(self.driver, hret, iret[k], rret[k])
-                    else:
-                        return self.driver.rmsd(rret[k])
-                elif i < j:
-                    k = (j - 1) * (j - 2) // 2 + j + i - 1
-                    if full_info:
-                        return mobbrmsd_result(self.driver, hret, iret[k], rret[k])
-                    else:
-                        return self.driver.rmsd(rret[k])
-                else:
-                    if full_info:
-                        return mobbrmsd_result(self.driver, hret, None, None)
-                    else:
-                        return 0.0
-
-            n_target = x_.shape[2]
+            dt = x.dtype
+            x_ = varidation_coordinates_2(x, self.d, self.natom)
+            driver = select_driver(self.d, dtype=dt)
+            n_target = 1 if x.ndim == 2 else x.shape[0]
             n_tri = (n_target * (n_target - 1)) // 2
             n_chunk_ = n_tri if n_chunk < 1 else self.njob * n_chunk
+            ww = numpy.empty((self.njob * self.memsize), dtype=dt)
+
             if n_tri == n_chunk_:
-                hret, iret, rret = self.driver.batch_run_tri(
+                r_tri = driver.batch_run_tri(
                     n_target,
-                    self.n_header,
-                    self.n_int,
-                    self.n_float,
                     n_tri,
                     1,
+                    self.header,
                     x_,
-                    self.ww,
+                    ww,
                     cutoff,
                     difflim,
                     maxeval,
                     remove_com,
                     sort_by_g,
                 )
-                return [
-                    [res(i, j, hret, iret.T, rret.T) for j in range(n_target)]
-                    for i in range(n_target)
-                ]
             else:
                 n_lower = 1
                 nrep = (n_tri + n_chunk_ - 1) // n_chunk_
-                hret = numpy.empty([self.n_header])
-                iret = numpy.empty([n_tri, self.n_int])
-                rret = numpy.empty([n_tri, self.n_float])
+                r_tri = numpy.empty(n_tri, dtype=dt)
                 for i in tqdm(range(nrep)):
                     l = n_lower - 1
                     u = min([l + n_chunk_, n_tri])
-                    hret, iret_, rret_ = self.driver.batch_run_tri(
+                    r_tri[l:u] = driver.batch_run_tri(
                         n_target,
-                        self.n_header,
-                        self.n_int,
-                        self.n_float,
                         min(n_chunk_, n_tri - n_lower + 1),
                         n_lower,
+                        self.header,
                         x_,
-                        self.ww,
+                        ww,
                         cutoff,
                         difflim,
                         maxeval,
                         remove_com,
                         sort_by_g,
                     )
-                    iret[l:u] = iret_.T
-                    rret[l:u] = rret_.T
                     n_lower += n_chunk_
-
-                return [
-                    [res(i, j, hret, iret, rret) for j in range(n_target)]
-                    for i in range(n_target)
-                ]
-
+            ret = numpy.zeros([n_target, n_target], dtype=dt)
+            k = 0
+            for i in range(n_target):
+                for j in range(i, n_target):
+                    k += 1
+                    ret[i, j] = r_ret[k]
+            ret += ret.T
         else:
-
-            def res(n_reference, i, j, hret, iret, rret):
-                k = j * n_reference + i
-                if full_info:
-                    return mobbrmsd_result(self.driver, hret, iret[k], rret[k])
-                else:
-                    return self.driver.rmsd(rret[k])
-
-            y_ = self.varidation_coordinates_2(y)
-
-            n_reference = x_.shape[2]
-            n_target = y_.shape[2]
+            dt = select_dtype(x, y)
+            x_ = varidation_coordinates_2(x, self.d, self.natom, dtype=dt)
+            y_ = varidation_coordinates_2(y, self.d, self.natom, dtype=dt)
+            driver = select_driver(self.d, dtype=dt)
+            n_reference = 1 if x.ndim == 2 else x.shape[0]
+            n_target = 1 if y.ndim == 2 else y.shape[0]
             n_tri = n_reference * n_target
             n_chunk_ = n_tri if n_chunk < 1 else self.njob * n_chunk
+            ww = numpy.empty((self.njob * self.memsize), dtype=dt)
+
             if n_tri == n_chunk_:
-                hret, iret, rret = self.driver.batch_run(
+                ret = driver.batch_run(
                     n_reference,
                     n_target,
-                    self.n_header,
-                    self.n_int,
-                    self.n_float,
                     n_tri,
                     1,
+                    self.header,
                     x_,
                     y_,
-                    self.ww,
+                    ww,
                     cutoff,
                     difflim,
                     maxeval,
                     remove_com,
                     sort_by_g,
                 )
-                return [
-                    [
-                        res(n_reference, i, j, hret, iret.T, rret.T)
-                        for j in range(n_target)
-                    ]
-                    for i in range(n_reference)
-                ]
             else:
                 n_lower = 1
                 nrep = (n_tri + n_chunk_ - 1) // n_chunk_
-                hret = numpy.empty([self.n_header])
-                iret = numpy.empty([n_tri, self.n_int])
-                rret = numpy.empty([n_tri, self.n_float])
+                ret = numpy.empty(n_tri, dtype=dt)
                 for i in tqdm(range(nrep)):
                     l = n_lower - 1
                     u = min([l + n_chunk_, n_tri])
-                    hret, iret_, rret_ = self.driver.batch_run(
+                    ret[l:u] = driver.batch_run(
                         n_reference,
                         n_target,
-                        self.n_header,
-                        self.n_int,
-                        self.n_float,
                         min(n_chunk_, n_tri - n_lower + 1),
                         n_lower,
+                        self.header,
                         x_,
                         y_,
-                        self.ww,
+                        ww,
                         cutoff,
                         difflim,
                         maxeval,
                         remove_com,
                         sort_by_g,
                     )
-                    iret[l:u] = iret_.T
-                    rret[l:u] = rret_.T
                     n_lower += n_chunk_
+            ret = ret.reshape([n_target, n_reference])
+        del driver
+        return ret
 
-                return [
-                    [res(n_reference, i, j, hret, iret, rret) for j in range(n_target)]
-                    for i in range(n_reference)
-                ]
+    """
 
     def min_span_tree(
         self,

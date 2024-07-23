@@ -1,6 +1,8 @@
 from . import __version__
 from . import coord_generator
 from . import mobbrmsd
+from .coord_generator import coord_generator
+from ._mobbrmsd import *
 import sys
 import numpy
 import pprint
@@ -8,33 +10,6 @@ import networkx
 import matplotlib.pyplot as plt
 
 title = "mobbrmsd batch run"
-
-
-def print_ret(i, j, ret):
-    ev, rm, er, ub, lb, df = (
-        ret.n_eval,
-        ret.eval_ratio,
-        ret.rmsd,
-        ret.bounds[0],
-        ret.bounds[1],
-        ret.bounds[0] - ret.bounds[1],
-    )
-
-    pre = ""
-    post = ""
-
-    if ub > 1.0e10:
-        print(
-            pre,
-            f" {j:4d}{i:4d}{ev:12d} {rm:12.6f}          +Infty{lb:16.6f}  +Infty",
-            post,
-        )
-    else:
-        print(
-            pre,
-            f" {j:4d}{i:4d}{ev:12d} {rm:12.6f}{ub:16.6f}{lb:16.6f}{df:8.3f}",
-            post,
-        )
 
 
 def read_input() -> tuple:
@@ -105,7 +80,7 @@ def main(
         ]
     )
     for i in range(n_reference - 1):
-        x[i + 1] = 0.1 * x[i + 1] + 0.9 * x[i]
+        x[i + 1] = 0.01 * x[i + 1] + 0.99 * x[i]
     y = numpy.array(
         [
             cogen.generate(n_apm, n_mol, a, b).reshape([n_apm * n_mol, 3])
@@ -113,7 +88,7 @@ def main(
         ]
     )
     for i in range(n_target - 1):
-        y[i + 1] = 0.1 * y[i + 1] + 0.9 * y[i]
+        y[i + 1] = 0.01 * y[i + 1] + 0.99 * y[i]
 
     sep1 = "  ------------------------------------------------------------------------------"
     sep2 = "  ---------------------------------------|--------|-------------------|---------"
@@ -141,19 +116,20 @@ def main(
             print("                               ", l)
     print()
 
-    mrmsd = mobbrmsd({"n_apm": n_apm, "n_mol": n_mol, "sym": sym})
-    states = mrmsd.batch_run(x, y)
+    molecules = DataclassMolecule(n_apm=n_apm, n_mol=n_mol, sym=sym)
+    mrmsd = mobbrmsd(molecules=molecules)
+    rmsds = mrmsd.batch_run(x, y)
     del mrmsd
 
     print(sep1)
-    print("     i   j      N_eval         RMSD      Upperbound      Lowerbound    Gap")
+    print("     i   j         RMSD")
     print(sep1)
-    for i, si in enumerate(states):
-        for j, sij in enumerate(si):
-            print_ret(i, j, sij)
+    for i, ri in enumerate(rmsds):
+        for j, rij in enumerate(ri):
+            print(f"    {i:8d}{i:8d}{rij:16.9f}")
         print()
     print(sep1)
-    return [[sij.rmsd for sij in si] for si in states]
+    return rmsds
 
 
 def show_graph(mat):

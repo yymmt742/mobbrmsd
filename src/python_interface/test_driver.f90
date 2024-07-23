@@ -25,8 +25,8 @@ contains
     integer(IK)              :: n_dim
     real(RK), allocatable    :: X(:, :, :, :)
     integer(IK)              :: n_header, n_int, n_float, n_job, n_mem
-    integer(IK), allocatable :: h(:), si(:, :)
-    real(RK), allocatable    :: sr(:, :), W(:, :)
+    integer(IK), allocatable :: h(:)
+    real(RK), allocatable    :: rmsd(:), W(:, :)
     integer(IK)              :: i, j, k, l
 !
     call decode_attributes(SIZE(seq), seq, n_dim, n_atm, n_mem, n_job, n_header, n_int, n_float)
@@ -34,8 +34,7 @@ contains
     print *, n_mem, n_job, n_header, n_int, n_float
 
     allocate (h(n_header))
-    allocate (si(n_int, (n_target - 1) * n_target / 2))
-    allocate (sr(n_float, (n_target - 1) * n_target / 2))
+    allocate (rmsd((n_target - 1) * n_target / 2))
     allocate (W(n_mem, n_job))
     allocate (X(n_dim, n_apm, n_mol, n_target))
 !
@@ -59,17 +58,17 @@ contains
 !
     call decode_header(SIZE(seq), seq, n_header, h)
     call batch_run_tri( &
-   &  n_target, n_header, n_int, n_float, &
-   &  n_target * (n_target - 1) / 2, 1, h, &
+   &  n_target, n_target * (n_target - 1) / 2, 1, &
+   &  n_header, h, &
    &  X, W, &
    &  999.0_RK, 0.0_RK, -1, .true., .true., &
-   &  si, sr)
+   &  rmsd)
 !
     k = 0
     do j = 1, n_target
       do i = 1, j - 1
         k = k + 1
-        print'(F9.2,F9.1,F16.9)', sr(2, k) + 2 * sr(3, k), sr(5, k), EXP(sr(6, k))
+        print'(2I4,F16.9)', i, j, rmsd(k)
         !print'(F9.6,F9.1,F16.9)', sr(1, k) * (sr(2, k) + 2 * sr(3, k)), sr(5, k), EXP(sr(6, k))
       end do
       print *
@@ -87,8 +86,8 @@ contains
     integer(IK)              :: n_dim
     real(RK), allocatable    :: X(:, :, :, :), Y(:, :, :, :)
     integer(IK)              :: n_header, n_int, n_float, n_job, n_mem
-    integer(IK), allocatable :: h(:), si(:, :, :)
-    real(RK), allocatable    :: sr(:, :, :), W(:, :)
+    integer(IK), allocatable :: h(:)
+    real(RK), allocatable    :: W(:, :), rmsd(:, :)
     integer(IK)              :: i, j, k, l
 !
     call decode_attributes(SIZE(seq), seq, n_dim, n_atm, n_mem, n_job, n_header, n_int, n_float)
@@ -96,8 +95,7 @@ contains
     print *, n_mem, n_job, n_header, n_int, n_float
 
     allocate (h(n_header))
-    allocate (si(n_int, n_reference, n_target))
-    allocate (sr(n_float, n_reference, n_target))
+    allocate (rmsd(n_reference, n_target))
     allocate (W(n_mem, n_job))
     allocate (X(n_dim, n_apm, n_mol, n_reference))
     allocate (Y(n_dim, n_apm, n_mol, n_target))
@@ -126,15 +124,16 @@ contains
     call decode_header(SIZE(seq), seq, n_header, h)
 !
     call batch_run( &
-   &  n_reference, n_target, n_header, n_int, n_float, &
-   &  n_reference * n_target, 1, h, &
+   &  n_reference, n_target, &
+   &  n_reference * n_target, &
+   &  1, n_header, h, &
    &  X, Y, W, &
    &  999.0_RK, 0.0_RK, -1, .true., .true., &
-   &  si, sr)
+   &  rmsd)
 !
     do j = 1, n_target
       do i = 1, n_reference
-        print'(F9.6,4(F9.1),F16.9)', sr(:5, i, j), EXP(sr(6, i, j))
+        print'(2I4,F16.9)', i, j, rmsd(i, j)
       end do
       print *
     end do

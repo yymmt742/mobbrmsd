@@ -257,7 +257,7 @@ contains
   end subroutine is_finished
 
   !| single run with working memory
-  subroutine run( &
+  pure subroutine run( &
  &    n_header, n_int, n_float, header, &
  &    X, Y, W, &
  &    cutoff, difflim, maxeval, &
@@ -334,7 +334,7 @@ contains
   end subroutine restart
 
   !| compute rotration respect to state.
-  subroutine rotate_y( &
+  pure subroutine rotate_y( &
  &    n_header, n_int, n_float, &
  &    header, int_states, float_states, Y &
  &  )
@@ -356,19 +356,19 @@ contains
 
   !| batch parallel run
   subroutine batch_run( &
- &             n_reference, n_target, n_header, n_int, n_float, &
- &             n_chunk, n_lower, header, &
- &             X, Y, W, &
- &             cutoff, difflim, maxeval, &
- &             remove_com, sort_by_g, &
- &             int_states, float_states)
+ &    n_reference, n_target, &
+ &    n_chunk, n_lower, &
+ &    n_header, header, &
+ &    X, Y, W, &
+ &    cutoff, difflim, maxeval, &
+ &    remove_com, sort_by_g, &
+ &    rmsd &
+ &  )
     integer(kind=IK), intent(in)  :: n_reference
     integer(kind=IK), intent(in)  :: n_target
-    integer(kind=IK), intent(in)  :: n_header
-    integer(kind=IK), intent(in)  :: n_int
-    integer(kind=IK), intent(in)  :: n_float
     integer(kind=IK), intent(in)  :: n_chunk
     integer(kind=IK), intent(in)  :: n_lower
+    integer(kind=IK), intent(in)  :: n_header
     integer(kind=IK), intent(in)  :: header(n_header)
     real(kind=RK), intent(in)     :: X(*)
    !! reference coordinate
@@ -381,8 +381,7 @@ contains
     real(kind=RK), intent(in)     :: difflim
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
-    integer(kind=IK), intent(out) :: int_states(n_int, n_chunk)
-    real(kind=RK), intent(out)    :: float_states(n_float, n_chunk)
+    real(kind=RK), intent(out)    :: rmsd(n_chunk)
     type(mobbrmsd_header)         :: h
     type(mobbrmsd_state)          :: s(n_chunk)
     integer(kind=IK)              :: i
@@ -392,7 +391,8 @@ contains
     end do
 
     call mobbrmsd_batch_run( &
-   &       n_reference, n_target, h, s, X, Y, W, &
+   &       n_reference, n_target, h, s, &
+   &       X, Y, W, &
    &       cutoff=cutoff, &
    &       difflim=difflim,&
    &       maxeval=maxeval, &
@@ -403,26 +403,23 @@ contains
    &     )
 
     do concurrent(i=1:n_chunk)
-      int_states(:, i) = s(i)%dump()
-      float_states(:, i) = s(i)%dump_real()
+      rmsd(i) = s(i)%rmsd()
     end do
   end subroutine batch_run
 
   !| batch parallel tri run
   subroutine batch_run_tri( &
- &             n_target, n_header, n_int, n_float, &
- &             n_chunk, n_lower, header, &
- &             X, W, &
- &             cutoff, difflim, maxeval, &
- &             remove_com, sort_by_g, &
- &             int_states, float_states &
- &           )
+ &    n_target, n_chunk, n_lower, &
+ &    n_header, header, &
+ &    X, W, &
+ &    cutoff, difflim, maxeval, &
+ &    remove_com, sort_by_g, &
+ &    rmsd &
+ &  )
     integer(kind=IK), intent(in)  :: n_target
-    integer(kind=IK), intent(in)  :: n_header
-    integer(kind=IK), intent(in)  :: n_int
-    integer(kind=IK), intent(in)  :: n_float
     integer(kind=IK), intent(in)  :: n_chunk
     integer(kind=IK), intent(in)  :: n_lower
+    integer(kind=IK), intent(in)  :: n_header
     integer(kind=IK), intent(in)  :: header(n_header)
     real(kind=RK), intent(in)     :: X(*)
    !! reference and target coordinate
@@ -433,8 +430,7 @@ contains
     real(kind=RK), intent(in)     :: difflim
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
-    integer(kind=IK), intent(out) :: int_states(n_int, n_chunk)
-    real(kind=RK), intent(out)    :: float_states(n_float, n_chunk)
+    real(kind=RK), intent(out)    :: rmsd(n_chunk)
     type(mobbrmsd_header)         :: h
     type(mobbrmsd_state)          :: s(n_chunk)
     integer(kind=IK)              :: i
@@ -453,19 +449,19 @@ contains
    &       n_upper=n_lower + n_chunk - 1 &
    &     )
     do concurrent(i=1:SIZE(s))
-      int_states(:, i) = s(i)%dump()
-      float_states(:, i) = s(i)%dump_real()
+      rmsd(i) = s(i)%rmsd()
     end do
   end subroutine batch_run_tri
 
   subroutine min_span_tree( &
- &             n_target, n_header, &
- &             n_int, n_float, &
- &             header, &
- &             X, W, cutoff, difflim, maxeval,  &
- &             remove_com, sort_by_g, &
- &             edges, weights, &
- &             int_states, float_states)
+ &    n_target, n_header, &
+ &    n_int, n_float, &
+ &    header, &
+ &    X, W, cutoff, difflim, maxeval,  &
+ &    remove_com, sort_by_g, &
+ &    edges, weights, &
+ &    int_states, float_states &
+ &  )
     integer(kind=IK), intent(in)      :: n_target
     integer(kind=IK), intent(in)      :: n_header
     integer(kind=IK), intent(in)      :: n_int
