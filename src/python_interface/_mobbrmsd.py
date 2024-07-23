@@ -322,7 +322,7 @@ class mobbrmsd:
         remove_com: bool = True,
         sort_by_g: bool = True,
         verbose: bool = False,
-        n_chunk: int = 1,
+        n_chunk: int = 0,
         full_info: bool = False,
     ) -> npt.NDArray:
 
@@ -372,10 +372,10 @@ class mobbrmsd:
                     n_lower += n_chunk_
             ret = numpy.zeros([n_target, n_target], dtype=dt)
             k = 0
-            for i in range(n_target):
-                for j in range(i, n_target):
+            for j in range(n_target):
+                for i in range(j):
+                    ret[i, j] = r_tri[k]
                     k += 1
-                    ret[i, j] = r_ret[k]
             ret += ret.T
         else:
             dt = select_dtype(x, y)

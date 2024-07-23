@@ -1,6 +1,7 @@
 from . import __version__
 from . import coord_generator
 from . import mobbrmsd
+from ._mobbrmsd import *
 import sys
 import numpy
 import pprint
@@ -86,7 +87,8 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
         ]
     )
     for i in range(n_target - 1):
-        x[i + 1] = 0.2 * x[i + 1] + 0.8 * x[i]
+        # x[i + 1] = i / n_target * x[-1] + (n_target - i) / n_target * x[0]
+        x[i + 1] = 0.001 * x[i + 1] + 0.999 * x[i]
 
     sep1 = "  ------------------------------------------------------------------------------"
     sep2 = "  ---------------------------------------|--------|-------------------|---------"
@@ -114,19 +116,20 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
             print("                               ", l)
     print()
 
-    mrmsd = mobbrmsd({"n_apm": n_apm, "n_mol": n_mol, "sym": sym})
-    states = mrmsd.batch_run(x, verbose=True)
+    molecules = DataclassMolecule(n_apm=n_apm, n_mol=n_mol, sym=sym)
+    mrmsd = mobbrmsd(molecules=molecules)
+    rmsds = mrmsd.batch_run(x)
     del mrmsd
 
     print(sep1)
-    print("     i   j      N_eval         RMSD      Upperbound      Lowerbound    Gap")
+    print("     i   j         RMSD")
     print(sep1)
-    for i, si in enumerate(states):
-        for j, sij in enumerate(si):
-            print_ret(i, j, sij)
+    for i, ri in enumerate(rmsds):
+        for j, rij in enumerate(ri):
+            print(f"    {i:8d}{j:8d}{rij:16.9f}")
         print()
     print(sep1)
-    return [[sij.rmsd for sij in si] for si in states]
+    return rmsds
 
 
 def show_graph(mat):
