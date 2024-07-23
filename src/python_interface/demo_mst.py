@@ -1,6 +1,7 @@
 from . import __version__
 from . import coord_generator
 from . import mobbrmsd
+from ._mobbrmsd import *
 import sys
 import numpy
 import pprint
@@ -120,19 +121,10 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
             print("                               ", l)
     print()
 
-    mrmsd = mobbrmsd({"n_apm": n_apm, "n_mol": n_mol, "sym": sym})
-
-    g, states = mrmsd.min_span_tree(x, verbose=True)
-    mrmsd.clear()
-    print(sep1)
-    print("")
-    print("     i   j      N_eval   Eval_ratio      Upperbound      Lowerbound    Gap")
-    print(sep1)
-    for i in range(len(states) - 1):
-        for j in range(i + 1, len(states)):
-            print_ret(i, j, states[i][j], g)
-        print()
-    print(sep1)
+    molecules = DataclassMolecule(n_apm=n_apm, n_mol=n_mol, sym=sym)
+    mrmsd = mobbrmsd(molecules=molecules)
+    g = mrmsd.min_span_tree(x, verbose=True)
+    del mrmsd
     return g
 
 

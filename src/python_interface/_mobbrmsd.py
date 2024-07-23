@@ -1,7 +1,7 @@
 import numpy
 import numpy.typing as npt
 import networkx
-from tqdm import tqdm
+from tqdm import trange
 import dataclasses
 
 
@@ -260,8 +260,7 @@ class mobbrmsd:
     ##
     # @brief general runner
     # @details mobbRMSD を計算する。
-    #   RMSD値の他に自己相関部分、BBの上下限、分子の置換インデックス、回転行列などを含む。
-    #   所与の終了条件により計算が中断された場合、インスタンスは計算再開用のメモリを保持する。
+    #   RMSD の他に自己相関、BBの上下限、分子の置換インデックス、回転行列、再計算用情報を返す。
     # @param
     #   x (numpy.ndarray): 参照構造
     #   y (numpy.ndarray): 対照構造
@@ -275,6 +274,7 @@ class mobbrmsd:
     #   sort_by_g (bool): 参照構造を自己分散の大きい順に並び替えて計算を実行する。 default True
     #   rotate_y (bool): 対象構造に対して置換と回転を実行する。 default False
     # @return mobbrmsd_result
+    #   所与の終了条件により計算が中断された場合、mobbrmsd_result はインスタンスは計算再開用のデータを保持する。
     def run(
         self,
         x: npt.NDArray,
@@ -285,6 +285,8 @@ class mobbrmsd:
         remove_com: bool = True,
         sort_by_g: bool = True,
         rotate_y: bool = False,
+        *args,
+        **kwargs,
     ) -> mobbrmsd_result:
 
         dt = select_dtype(x, y)
@@ -312,6 +314,26 @@ class mobbrmsd:
         del driver
         return ret
 
+    ##
+    # @brief batch runner
+    # @details 一連の座標について mobbRMSD を計算する。
+    #   構造 x のみが与えられたとき、x-x の間の RMSD 対称行列を返す。
+    #   構造 x, y が与えられたとき、x-y の間の RMSD 行列を返す。
+    # @param
+    #   x (numpy.ndarray): 構造
+    #   y (numpy.ndarray): 対照構造, optional
+    #   cutoff (float): BBの上限がcutoff以下になったとき、計算を終了する。 default float(inf)
+    #   difflim (float): BBの上限と下限の差がdifflim以下になったとき、計算を終了する。 default 0
+    #   maxeval (int): BBのノード評価数がmaxevalを超えたとき、計算を終了する。
+    #                  ただし、最低でも expand と closure の1サイクルは実行される。
+    #                  maxeval < 0 のとき、無制限。
+    #                  default -1
+    #   remove_com (bool): 参照構造と対照構造から重心を除去する。 default True
+    #   sort_by_g (bool): 参照構造を自己分散の大きい順に並び替えて計算を実行する。 default True
+    #   verbose (bool): 進捗を表示する。 default True
+    #   n_chunk (int): 一度に計算される回数。 <1 の場合一括計算。 default 1000
+    # @return npt.NDArray
+    #   RMSD 行列
     def batch_run(
         self,
         x: npt.NDArray,
@@ -321,9 +343,10 @@ class mobbrmsd:
         maxeval: int = -1,
         remove_com: bool = True,
         sort_by_g: bool = True,
-        verbose: bool = False,
+        verbose: bool = True,
         n_chunk: int = 0,
-        full_info: bool = False,
+        *args,
+        **kwargs,
     ) -> npt.NDArray:
 
         if y is None:
@@ -335,7 +358,7 @@ class mobbrmsd:
             n_chunk_ = n_tri if n_chunk < 1 else self.njob * n_chunk
             ww = numpy.empty((self.njob * self.memsize), dtype=dt)
 
-            if n_tri == n_chunk_:
+            if n_tri == n_chunk_ or not verbose:
                 r_tri = driver.batch_run_tri(
                     n_target,
                     n_tri,
@@ -353,7 +376,7 @@ class mobbrmsd:
                 n_lower = 1
                 nrep = (n_tri + n_chunk_ - 1) // n_chunk_
                 r_tri = numpy.empty(n_tri, dtype=dt)
-                for i in tqdm(range(nrep)):
+                for i in trange(nrep, *args, **kwargs):
                     l = n_lower - 1
                     u = min([l + n_chunk_, n_tri])
                     r_tri[l:u] = driver.batch_run_tri(
@@ -388,7 +411,7 @@ class mobbrmsd:
             n_chunk_ = n_tri if n_chunk < 1 else self.njob * n_chunk
             ww = numpy.empty((self.njob * self.memsize), dtype=dt)
 
-            if n_tri == n_chunk_:
+            if n_tri == n_chunk_ or not verbose:
                 ret = driver.batch_run(
                     n_reference,
                     n_target,
@@ -408,7 +431,7 @@ class mobbrmsd:
                 n_lower = 1
                 nrep = (n_tri + n_chunk_ - 1) // n_chunk_
                 ret = numpy.empty(n_tri, dtype=dt)
-                for i in tqdm(range(nrep)):
+                for i in trange(nrep, *args, **kwargs):
                     l = n_lower - 1
                     u = min([l + n_chunk_, n_tri])
                     ret[l:u] = driver.batch_run(
@@ -431,8 +454,22 @@ class mobbrmsd:
         del driver
         return ret
 
-    """
-
+    ##
+    # @brief min_span_tree runner
+    # @details 一連の座標について mobbRMSD の最小全域木を計算する。
+    # @param
+    #   x (numpy.ndarray): 参照構造
+    #   cutoff (float): BBの上限がcutoff以下になったとき、計算を終了する。 default float(inf)
+    #   difflim (float): BBの上限と下限の差がdifflim以下になったとき、計算を終了する。 default 0
+    #   maxeval (int): BBのノード評価数がmaxevalを超えたとき、計算を終了する。
+    #                  ただし、最低でも expand と closure の1サイクルは実行される。
+    #                  maxeval < 0 のとき、無制限。
+    #                  default -1
+    #   remove_com (bool): 参照構造と対照構造から重心を除去する。 default True
+    #   sort_by_g (bool): 参照構造を自己分散の大きい順に並び替えて計算を実行する。 default True
+    #   verbose (bool): 進捗を表示する。 default True
+    #   n_chunk (int): 一度に計算される回数。 <1 の場合一括計算。 default 1000
+    # @return networkx.Graph
     def min_span_tree(
         self,
         x: numpy.ndarray,
@@ -442,52 +479,37 @@ class mobbrmsd:
         remove_com: bool = True,
         sort_by_g: bool = True,
         verbose: bool = False,
-    ) -> tuple:
+        n_chunk: int = 0,
+        *args,
+        **kwargs,
+    ) -> networkx.Graph:
 
-        x_ = self.varidation_coordinates_2(x)
-        n_target = x.shape[0]
+        dt = x.dtype
+        x_ = varidation_coordinates_2(x, self.d, self.natom)
+        n_target = 1 if x.ndim == 2 else x.shape[0]
+        ww = numpy.empty((self.njob * self.memsize), dtype=dt)
 
-        if hasattr(self, "ww"):
-            if self.ww.shape[1] != self.memsize or self.ww.shape[0] != self.njob:
-                self.ww = numpy.empty((self.njob, self.memsize), dtype=self.dtype).T
-        else:
-            self.ww = numpy.empty((self.njob, self.memsize), dtype=self.dtype).T
-
-        edges, weights, hret, iret, rret = self.driver.min_span_tree(
+        driver = select_driver(self.d, dtype=dt)
+        edges, weights, iret, rret = driver.min_span_tree(
             n_target,
-            self.n_header,
             self.n_int,
             self.n_float,
+            self.header,
             x_,
-            self.ww,
+            ww,
             cutoff,
             difflim,
             maxeval,
             remove_com,
             sort_by_g,
         )
+        del driver
 
         g = networkx.Graph()
         for e, w in zip(edges.T, weights):
             g.add_edge(e[0] - 1, e[1] - 1, weight=w)
 
-        return (
-            g,
-            [
-                [
-                    mobbrmsd_result(self.driver, hret, irij, rrij)
-                    for irij, rrij in zip(iri, rri)
-                ]
-                for iri, rri in zip(iret.T, rret.T)
-            ],
-        )
-
-
-    def clear(self) -> None:
-        self.d, self.natom = 0, 0
-        self.memsize, self.njob = 0, 0
-        self.n_header, self.n_int, self.n_float = 0, 0, 0
-    """
+        return g
 
     def __del__(self):
         del self.molecules
