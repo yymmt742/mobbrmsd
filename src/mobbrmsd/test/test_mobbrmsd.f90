@@ -2,6 +2,7 @@ program main
   use mod_dimspec_functions, only: D
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mobbrmsd
+  use mod_mobbrmsd_state
   use mod_mobbrmsd_mst
   use mod_testutil
   use mod_unittest
@@ -63,6 +64,7 @@ contains
   subroutine test1(n, m, s, sym)
     integer, intent(in)    :: n, m, s, sym(n * (s - 1))
     type(mobbrmsd)         :: mobb
+    type(mobbrmsd_state)   :: stat
     type(mol_block_input), allocatable :: inp(:)
     real(RK)               :: X(D, n, m), Y(D, n, m), Z(D, n, m)
     real(RK)               :: sd
@@ -75,27 +77,25 @@ contains
     X = sample(n, m)
     Y = X
 !
-    allocate (W(mobb%h%memsize()))
+    allocate (W(mobbrmsd_memsize(mobb)))
 !
     do i = 1, 20
-      call mobbrmsd_run(mobb%h, mobb%s, X, Y, W)
+      call mobbrmsd_run(mobb, stat, X, Y, W)
       call u%assert_almost_equal( &
-     &       mobbrmsd_state_squared_deviation(mobb%s), &
+     &       mobbrmsd_state_squared_deviation(stat), &
      &       brute_sd(n, m, s, sym, X, Y), &
      &       'minrmsd value', &
      &       place=place &
      &      )
       Z = Y
-      print'(3f9.3)', mobbrmsd_state_squared_deviation(mobb%s), brute_sd(n, m, s, sym, X, Y)
-      print'(3i9)', mobb%s%s
-      print'(3f9.3)', mobb%s%z
-      call mobbrmsd_state_swap_and_rotation(mobb%s, mobb%h, Z)
+      print'(3f9.3)', mobbrmsd_state_squared_deviation(stat), brute_sd(n, m, s, sym, X, Y)
+      call mobbrmsd_swap_and_rotation(mobb, stat, Z)
       print *, 'Y'
       print'(3f9.3)', Y
       print *, 'Z'
       print'(3f9.3)', Z
       sd = SUM((X - Z)**2)
-      call u%assert_almost_equal(mobbrmsd_state_squared_deviation(mobb%s), &
+      call u%assert_almost_equal(mobbrmsd_state_squared_deviation(stat), &
      &                           sd, 'rotation', &
      &                           place=place)
       Y = 0.9 * Y + 0.1 * sample(n, m)
@@ -110,6 +110,7 @@ contains
     integer, intent(in)   :: n2, m2, s2, sym2(n2 * (s2 - 1))
     type(mol_block_input), allocatable :: inp(:)
     type(mobbrmsd)        :: mobb
+    type(mobbrmsd_state)  :: stat
     real(RK)              :: brute
     real(RK)              :: X1(D, n1, m1), X2(D, n2, m2)
     real(RK)              :: Y1(D, n1, m1), Y2(D, n2, m2)
@@ -126,13 +127,13 @@ contains
     Y1 = X1
     Y2 = X2
 !
-    allocate (W(mobb%h%memsize()))
+    allocate (W(mobbrmsd_memsize(mobb)))
 !
     do i = 1, 10
       Y = RESHAPE([Y1, Y2], SHAPE(Y))
-      call mobbrmsd_run(mobb%h, mobb%s, [X1, X2], Y, W)
+      call mobbrmsd_run(mobb, stat, [X1, X2], Y, W)
       brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
-      call u%assert_almost_equal(mobbrmsd_state_squared_deviation(mobb%s), brute, 'minrmsd value', place=place)
+      call u%assert_almost_equal(mobbrmsd_state_squared_deviation(stat), brute, 'minrmsd value', place=place)
       Y1 = 0.5 * Y1 + 0.5 * sample(n1, m1)
       Y2 = 0.5 * Y2 + 0.5 * sample(n2, m2)
     end do
@@ -142,6 +143,7 @@ contains
   subroutine test3(n, m, s, sym)
     integer, intent(in)    :: n, m, s, sym(n * (s - 1))
     type(mobbrmsd)         :: mobb
+    type(mobbrmsd_state)   :: stat
     type(mol_block_input), allocatable :: inp(:)
     real(RK)               :: X(D, n, m), Y(D, n, m)
     real(RK), allocatable  :: W(:)
@@ -154,32 +156,32 @@ contains
     X = sample(n, m)
     Y = sample(n, m)
 !
-    allocate (W(mobb%h%memsize()))
+    allocate (W(mobbrmsd_memsize(mobb)))
 !
-    call mobbrmsd_run(mobb%h, mobb%s, X, Y, W, maxeval=0)
+    call mobbrmsd_run(mobb, stat, X, Y, W, maxeval=0)
 !
     do i = 1, 10
-      call mobbrmsd_restart(mobb%h, mobb%s, W, maxeval=0)
-      print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
-     &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
-     &                       mobbrmsd_state_upperbound(mobb%s), &
-     &                       mobbrmsd_state_lowerbound(mobb%s)
+      call mobbrmsd_restart(mobb, stat, W, maxeval=0)
+      print'(I8, *(f16.9))', mobbrmsd_state_n_eval(stat), &
+     &                       EXP(mobbrmsd_state_log_eval_ratio(stat)), &
+     &                       mobbrmsd_state_upperbound(stat), &
+     &                       mobbrmsd_state_lowerbound(stat)
     end do
 !
-    call mobbrmsd_restart(mobb%h, mobb%s, W)
-    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
-   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
-   &                       mobbrmsd_state_upperbound(mobb%s), &
-   &                       mobbrmsd_state_lowerbound(mobb%s)
-    sd = mobbrmsd_state_squared_deviation(mobb%s)
+    call mobbrmsd_restart(mobb, stat, W)
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(stat), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(stat)), &
+   &                       mobbrmsd_state_upperbound(stat), &
+   &                       mobbrmsd_state_lowerbound(stat)
+    sd = mobbrmsd_state_squared_deviation(stat)
     brute = brute_sd(n, m, s, sym, X, Y)
 !
-    call mobbrmsd_run(mobb%h, mobb%s, X, Y)
-    sd2 = mobbrmsd_state_squared_deviation(mobb%s)
-    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
-   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
-   &                       mobbrmsd_state_upperbound(mobb%s), &
-   &                       mobbrmsd_state_lowerbound(mobb%s)
+    call mobbrmsd_run(mobb, stat, X, Y)
+    sd2 = mobbrmsd_state_squared_deviation(stat)
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(stat), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(stat)), &
+   &                       mobbrmsd_state_upperbound(stat), &
+   &                       mobbrmsd_state_lowerbound(stat)
     call u%assert_almost_equal(sd, brute, 'minrmsd value', place=place)
     call u%assert_almost_equal(sd, sd2, 'vs at once   ', place=place)
 !
@@ -190,6 +192,7 @@ contains
   subroutine test4(n, m, s, sym)
     integer, intent(in)    :: n, m, s, sym(n * (s - 1))
     type(mobbrmsd)         :: mobb
+    type(mobbrmsd_state)   :: stat
     type(mol_block_input), allocatable :: inp(:)
     real(RK)               :: X(D, n, m), Y(D, n, m)
     real(RK), allocatable  :: W(:)
@@ -200,51 +203,51 @@ contains
     X = sample(n, m)
     Y = sample(n, m)
 !
-    allocate (W(mobb%h%memsize()))
+    allocate (W(mobbrmsd_memsize(mobb)))
 !
-    call mobbrmsd_run(mobb%h, mobb%s, X, Y, W, maxeval=0)
-    call mobbrmsd_restart(mobb%h, mobb%s, W, cutoff=0.0_RK)
-    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
-   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
-   &                       mobbrmsd_state_upperbound(mobb%s), &
-   &                       mobbrmsd_state_lowerbound(mobb%s), &
-   &                       SQRT((mobbrmsd_state_autovariance(mobb%s) + 2 * mobbrmsd_state_lowerbound(mobb%s)) / (n * m)), &
-   &                       mobbrmsd_state_rmsd(mobb%s)
-    call mobbrmsd_restart(mobb%h, mobb%s, W, cutoff=0.1_RK)
-    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
-   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
-   &                       mobbrmsd_state_upperbound(mobb%s), &
-   &                       mobbrmsd_state_lowerbound(mobb%s), &
-   &                       SQRT((mobbrmsd_state_autovariance(mobb%s) + 2 * mobbrmsd_state_lowerbound(mobb%s)) / (n * m)), &
-   &                       mobbrmsd_state_rmsd(mobb%s)
-    call mobbrmsd_restart(mobb%h, mobb%s, W, cutoff=0.2_RK)
-    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
-   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
-   &                       mobbrmsd_state_upperbound(mobb%s), &
-   &                       mobbrmsd_state_lowerbound(mobb%s), &
-   &                       SQRT((mobbrmsd_state_autovariance(mobb%s) + 2 * mobbrmsd_state_lowerbound(mobb%s)) / (n * m)), &
-   &                       mobbrmsd_state_rmsd(mobb%s)
-    call mobbrmsd_restart(mobb%h, mobb%s, W, cutoff=0.3_RK)
-    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
-   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
-   &                       mobbrmsd_state_upperbound(mobb%s), &
-   &                       mobbrmsd_state_lowerbound(mobb%s), &
-   &                       SQRT((mobbrmsd_state_autovariance(mobb%s) + 2 * mobbrmsd_state_lowerbound(mobb%s)) / (n * m)), &
-   &                       mobbrmsd_state_rmsd(mobb%s)
-    call mobbrmsd_run(mobb%h, mobb%s, X, Y, W, cutoff=0.4_RK)
-    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
-   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
-   &                       mobbrmsd_state_upperbound(mobb%s), &
-   &                       mobbrmsd_state_lowerbound(mobb%s), &
-   &                       SQRT((mobbrmsd_state_autovariance(mobb%s) + 2 * mobbrmsd_state_lowerbound(mobb%s)) / (n * m)), &
-   &                       mobbrmsd_state_rmsd(mobb%s)
-    call mobbrmsd_restart(mobb%h, mobb%s, W)
-    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
-   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
-   &                       mobbrmsd_state_upperbound(mobb%s), &
-   &                       mobbrmsd_state_lowerbound(mobb%s), &
-   &                       SQRT((mobbrmsd_state_autovariance(mobb%s) + 2 * mobbrmsd_state_lowerbound(mobb%s)) / (n * m)), &
-   &                       mobbrmsd_state_rmsd(mobb%s)
+    call mobbrmsd_run(mobb, stat, X, Y, W, maxeval=0)
+    call mobbrmsd_restart(mobb, stat, W, cutoff=0.0_RK)
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(stat), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(stat)), &
+   &                       mobbrmsd_state_upperbound(stat), &
+   &                       mobbrmsd_state_lowerbound(stat), &
+   &                       SQRT((mobbrmsd_state_autovariance(stat) + 2 * mobbrmsd_state_lowerbound(stat)) / (n * m)), &
+   &                       mobbrmsd_state_rmsd(stat)
+    call mobbrmsd_restart(mobb, stat, W, cutoff=0.1_RK)
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(stat), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(stat)), &
+   &                       mobbrmsd_state_upperbound(stat), &
+   &                       mobbrmsd_state_lowerbound(stat), &
+   &                       SQRT((mobbrmsd_state_autovariance(stat) + 2 * mobbrmsd_state_lowerbound(stat)) / (n * m)), &
+   &                       mobbrmsd_state_rmsd(stat)
+    call mobbrmsd_restart(mobb, stat, W, cutoff=0.2_RK)
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(stat), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(stat)), &
+   &                       mobbrmsd_state_upperbound(stat), &
+   &                       mobbrmsd_state_lowerbound(stat), &
+   &                       SQRT((mobbrmsd_state_autovariance(stat) + 2 * mobbrmsd_state_lowerbound(stat)) / (n * m)), &
+   &                       mobbrmsd_state_rmsd(stat)
+    call mobbrmsd_restart(mobb, stat, W, cutoff=0.3_RK)
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(stat), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(stat)), &
+   &                       mobbrmsd_state_upperbound(stat), &
+   &                       mobbrmsd_state_lowerbound(stat), &
+   &                       SQRT((mobbrmsd_state_autovariance(stat) + 2 * mobbrmsd_state_lowerbound(stat)) / (n * m)), &
+   &                       mobbrmsd_state_rmsd(stat)
+    call mobbrmsd_run(mobb, stat, X, Y, W, cutoff=0.4_RK)
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(stat), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(stat)), &
+   &                       mobbrmsd_state_upperbound(stat), &
+   &                       mobbrmsd_state_lowerbound(stat), &
+   &                       SQRT((mobbrmsd_state_autovariance(stat) + 2 * mobbrmsd_state_lowerbound(stat)) / (n * m)), &
+   &                       mobbrmsd_state_rmsd(stat)
+    call mobbrmsd_restart(mobb, stat, W)
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(stat), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(stat)), &
+   &                       mobbrmsd_state_upperbound(stat), &
+   &                       mobbrmsd_state_lowerbound(stat), &
+   &                       SQRT((mobbrmsd_state_autovariance(stat) + 2 * mobbrmsd_state_lowerbound(stat)) / (n * m)), &
+   &                       mobbrmsd_state_rmsd(stat)
 !
     deallocate (inp)
 !
@@ -255,14 +258,14 @@ contains
     integer, intent(in)    :: n, m, s, sym(n * (s - 1)), n_target
     type(mobbrmsd)         :: mobb
     type(mobbrmsd_state)   :: state(n_target, n_target)
-    type(mol_block_input), allocatable :: inp(:)
+    type(mobbrmsd_input)   :: inp
     real(RK)               :: X(D, n, m, n_target)
     real(RK), allocatable  :: W(:)
     integer(IK)            :: edges(2, n_target - 1)
     real(RK)               :: weights(n_target - 1)
     integer(IK)            :: i, n_job
 !
-    call mol_block_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
+    call mobbrmsd_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
 !
     X(:, :, :, 1) = sample(n, m)
@@ -284,9 +287,9 @@ contains
     n_job = omp_get_num_threads()
     !$omp end parallel
 !
-    allocate (W(mobb%h%memsize() * n_job))
+    allocate (W(mobbrmsd_memsize(mobb) * n_job))
 !
-    call mobbrmsd_min_span_tree(n_target, mobb%h, state, X, W, &
+    call mobbrmsd_min_span_tree(n_target, mobb, state, X, W, &
    &                            edges=edges, weights=weights)
 !
     do i = 1, n_target - 1
@@ -296,8 +299,6 @@ contains
      &                        mobbrmsd_state_upperbound(state(edges(1, i), edges(2, i)))  &
      &                      - mobbrmsd_state_lowerbound(state(edges(1, i), edges(2, i)))
     end do
-!
-    deallocate (inp)
 !
   end subroutine test5
 !

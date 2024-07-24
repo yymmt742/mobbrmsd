@@ -6,10 +6,11 @@ module mod_mobbrmsd
  &      RK, &
  &      ONE => RONE, &
  &      ZERO => RZERO, &
+ &      TEN => RTEN, &
+ &      LN_TO_L10, &
  &      RHUGE
   use mod_bb_list
   use mod_bb_block
-  use mod_mobbrmsd_header
   use mod_mobbrmsd_state
   implicit none
   public :: setup_dimension
@@ -17,16 +18,22 @@ module mod_mobbrmsd
   public :: mobbrmsd_input
   public :: mobbrmsd_input_add_molecule
   public :: mobbrmsd_input_destroy
-  public :: mol_block_input
-  public :: mol_block_input_add_molecule
-  public :: mol_block_input_destroy
+  public :: mobbrmsd_state
   public :: mobbrmsd
   public :: mobbrmsd_init
-  public :: mobbrmsd_header
-  public :: mobbrmsd_state
   public :: mobbrmsd_run
   public :: mobbrmsd_restart
   public :: mobbrmsd_is_finished
+  public :: mobbrmsd_n_dims
+  public :: mobbrmsd_n_block
+  public :: mobbrmsd_n_atoms
+  public :: mobbrmsd_log_n_nodes
+  public :: mobbrmsd_frac_n_nodes
+  public :: mobbrmsd_exp_n_nodes
+  public :: mobbrmsd_memsize
+  public :: mobbrmsd_swap_and_rotation
+  public :: mobbrmsd_dump
+  public :: mobbrmsd_load
 !
 !| mol_block_input (for python interface)
   type mol_block_input
@@ -49,10 +56,13 @@ module mod_mobbrmsd
 !
 !| mobbrmsd
   type mobbrmsd
-    type(mobbrmsd_header) :: h
-    !! mobbrmsd_header
-    type(mobbrmsd_state)  :: s
-    !! mobbrmsd_state
+    private
+    integer(IK)              :: d
+    !! spatial dimension
+    integer(IK), allocatable :: q(:)
+    !! header array
+    integer(IK), allocatable :: s(:)
+    !! state template
   contains
     final     :: mobbrmsd_destroy
   end type mobbrmsd
@@ -182,25 +192,28 @@ contains
       end if
     end do
     call bb_list_init(bblst, nblock, bbblk)
-    call mobbrmsd_header_init(this%h, SIZE(bblst%q), bblst%q, SIZE(bblst%s), bblst%s)
-    call mobbrmsd_state_init(this%s, this%h)
+    this%d = D
+    this%q = bblst%q
+    this%s = bblst%s
+    !call mobbrmsd_init(this%h, SIZE(bblst%q), bblst%q, SIZE(bblst%s), bblst%s)
+    !call mobbrmsd_state_init(this%s, this%h)
     call bb_block_destroy(bbblk)
     call bb_list_destroy(bblst)
   end subroutine mobbrmsd_init_block
 !
 !| run mobbrmsd
   pure subroutine mobbrmsd_run( &
- &             header, &
- &             state, &
- &             X, Y, W, &
- &             cutoff, &
- &             difflim, &
- &             maxeval, &
- &             remove_com, &
- &             sort_by_g &
- &             )
-    type(mobbrmsd_header), intent(in)   :: header
-    !! mobbrmsd_header
+ &                  this, &
+ &                  state, &
+ &                  X, Y, W, &
+ &                  cutoff, &
+ &                  difflim, &
+ &                  maxeval, &
+ &                  remove_com, &
+ &                  sort_by_g &
+ &                 )
+    type(mobbrmsd), intent(in)          :: this
+    !! mobbrmsd
     type(mobbrmsd_state), intent(inout) :: state
     !! mobbrmsd_state, the result is contained in this structure.
     real(RK), intent(in)                :: X(*)
@@ -220,9 +233,11 @@ contains
     logical, intent(in), optional       :: sort_by_g
     !! if true, row is sorted respect to G of reference coordinate. default [.true.]
 !
+    call mobbrmsd_state_init(state, this%d, mobbrmsd_n_atoms(this), this%s)
+!
     if (PRESENT(W)) then
       call bb_list_setup(&
-     &       header%q, &
+     &       this%q, &
      &       state%s,  &
      &       X,  &
      &       Y,  &
@@ -231,7 +246,7 @@ contains
      &       sort_by_g=sort_by_g &
      &      )
       call mobbrmsd_restart( &
-     &       header, &
+     &       this, &
      &       state,  &
      &       W, &
      &       cutoff=cutoff, &
@@ -241,9 +256,9 @@ contains
     else
       block
         real(RK), allocatable :: T(:)
-        allocate (T(header%memsize()))
+        allocate (T(mobbrmsd_memsize(this)))
         call bb_list_setup(&
-       &       header%q, &
+       &       this%q, &
        &       state%s,  &
        &       X,  &
        &       Y,  &
@@ -251,7 +266,7 @@ contains
        &       remove_com=remove_com &
        &      )
         call mobbrmsd_restart( &
-       &       header, &
+       &       this, &
        &       state,  &
        &       T, &
        &       cutoff=cutoff, &
@@ -264,15 +279,15 @@ contains
 !
 !| run mobbrmsd
   pure subroutine mobbrmsd_restart( &
- &                  header, &
+ &                  this, &
  &                  state, &
  &                  W, &
  &                  cutoff, &
  &                  difflim, &
  &                  maxeval &
  &                 )
-    type(mobbrmsd_header), intent(in)    :: header
-    !! mobbrmsd_header
+    type(mobbrmsd), intent(in)           :: this
+    !! mobbrmsd
     type(mobbrmsd_state), intent(inout)  :: state
     !! mobbrmsd_state, the result is contained in this structure.
     real(RK), intent(inout)              :: W(*)
@@ -284,28 +299,155 @@ contains
     integer(IK), intent(in), optional    :: maxeval
     !! The search ends when ncount exceeds maxiter.
     call bb_list_run( &
-      &    header%q, &
+      &    this%q, &
       &    state%s, &
       &    W, &
       &    cutoff=cutoff, &
       &    difflim=difflim, &
       &    maxeval=maxeval &
       &   )
-    call mobbrmsd_state_update(state, header, W)
+    associate ( &
+   &   ac => state%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
+   &   ub => state%z(mobbrmsd_state_INDEX_TO_UPPERBOUND), &
+   &   lb => state%z(mobbrmsd_state_INDEX_TO_LOWERBOUND), &
+   &   ne => state%z(mobbrmsd_state_INDEX_TO_N_EVAL), &
+   &   lr => state%z(mobbrmsd_state_INDEX_TO_LOG_RATIO), &
+   &   rt => mobbrmsd_state_INDEX_TO_ROTMAT, &
+   &   bbac => W(bb_list_INDEX_TO_AUTOCORR), &
+   &   bbub => W(bb_list_INDEX_TO_UPPERBOUND), &
+   &   bblb => W(bb_list_INDEX_TO_LOWERBOUND), &
+   &   bbne => W(bb_list_INDEX_TO_N_EVAL), &
+   &   bbln => W(bb_list_INDEX_TO_LOG_N_COMB) &
+    )
+      ac = bbac
+      ub = bbub
+      lb = bblb
+      ne = bbne
+      lr = LOG(bbne) - bbln
+      call bb_list_rotation_matrix(this%q, state%s, W, state%z(rt))
+    end associate
   end subroutine mobbrmsd_restart
 !
 !| Returns bb process is finished.
-  pure function mobbrmsd_is_finished(header, state) result(res)
-    type(mobbrmsd_header), intent(in) :: header
-    !! mobbrmsd_header
+  pure function mobbrmsd_is_finished(this, state) result(res)
+    type(mobbrmsd), intent(in)        :: this
+    !! mobbrmsd
     type(mobbrmsd_state), intent(in)  :: state
     !! mobbrmsd_state
     logical                           :: res
-    res = bb_list_is_finished(header%q, state%s)
+    res = bb_list_is_finished(this%q, state%s)
   end function mobbrmsd_is_finished
 !
   pure elemental subroutine mobbrmsd_destroy(this)
     type(mobbrmsd), intent(inout) :: this
   end subroutine mobbrmsd_destroy
+!
+!| Returns spatial dimension
+  pure elemental function mobbrmsd_n_dims(this) result(res)
+    type(mobbrmsd), intent(in) :: this
+    !! this
+    integer(IK)                :: res
+    res = this%d
+  end function mobbrmsd_n_dims
+!
+!| Returns number of molecular blocks
+  pure elemental function mobbrmsd_n_block(this) result(res)
+    type(mobbrmsd), intent(in) :: this
+    !! this
+    integer(IK)                :: res
+    res = bb_list_n_block(this%q)
+  end function mobbrmsd_n_block
+!
+!| Returns header_memsize
+  pure elemental function mobbrmsd_memsize(this) result(res)
+    type(mobbrmsd), intent(in) :: this
+    !! this
+    integer(IK)                :: res
+    res = bb_list_memsize(this%q)
+  end function mobbrmsd_memsize
+!
+!| Returns n_atoms
+  pure elemental function mobbrmsd_n_atoms(this) result(res)
+    type(mobbrmsd), intent(in) :: this
+    !! this
+    integer(IK)                :: res
+    res = bb_list_n_atoms(this%q)
+  end function mobbrmsd_n_atoms
+!
+!| Returns log_n_nodes
+  pure elemental function mobbrmsd_log_n_nodes(this) result(res)
+    type(mobbrmsd), intent(in) :: this
+    !! this
+    real(RK)                   :: res
+    res = bb_list_log_n_nodes(this%q)
+  end function mobbrmsd_log_n_nodes
+!
+!| returns number of nodes in fraction.
+  pure function mobbrmsd_frac_n_nodes(this) result(res)
+    type(mobbrmsd), intent(in) :: this
+    !! this
+    real(RK)                   :: tmp, res
+    tmp = LN_TO_L10 * bb_list_log_n_nodes(this%q)
+    res = TEN**(tmp - real(INT(tmp), RK))
+  end function mobbrmsd_frac_n_nodes
+!
+!| returns number of nodes in exp.
+  pure function mobbrmsd_exp_n_nodes(this) result(res)
+    type(mobbrmsd), intent(in) :: this
+    !! this
+    integer(IK)                :: res
+    res = INT(LN_TO_L10 * bb_list_log_n_nodes(this%q), IK)
+  end function mobbrmsd_exp_n_nodes
+!
+!| swap and rotation y
+  pure subroutine mobbrmsd_swap_and_rotation(this, state, X)
+    type(mobbrmsd), intent(in)       :: this
+    !! mobbrmsd header
+    type(mobbrmsd_state), intent(in) :: state
+    !! this
+    real(RK), intent(inout)           :: X(*)
+    !! coordinate
+    associate (rt => mobbrmsd_state_INDEX_TO_ROTMAT)
+      call bb_list_swap_y(this%q, state%s, X)
+      call rotate(this%d, mobbrmsd_n_atoms(this), state%z(rt), X)
+    end associate
+  contains
+    pure subroutine rotate(n_dims, n_atoms, R, X)
+      integer(IK), intent(in) :: n_dims, n_atoms
+      real(RK), intent(in)    :: R(n_dims, n_dims)
+      real(RK), intent(inout) :: X(n_dims, n_atoms)
+      real(RK)                :: T(n_dims, n_atoms)
+      T = MATMUL(TRANSPOSE(R), X)
+      X = T
+    end subroutine rotate
+  end subroutine mobbrmsd_swap_and_rotation
+!
+!| dump header as integer array
+  pure function mobbrmsd_dump(this) result(res)
+    type(mobbrmsd), intent(in) :: this
+    !! this
+    integer(IK), allocatable    :: res(:)
+    allocate (res, source=[this%d, SIZE(this%q), this%q, this%s])
+  end function mobbrmsd_dump
+!
+!| load integer array as header
+  pure subroutine mobbrmsd_load(this, q)
+    type(mobbrmsd), intent(inout) :: this
+    !! this
+    integer(IK), intent(in)       :: q(:)
+    !! header array
+    integer(IK)                   :: sq, i
+    this%d = q(1)
+    sq = q(2)
+    if (sq < 1) then
+      this%q = [(0, i=1, 0)]
+      this%s = [(0, i=1, 0)]
+      return
+    else
+      this%q = q(3:2 + sq)
+      this%s = q(3 + sq:)
+    end if
+  end subroutine mobbrmsd_load
+!
 end module mod_mobbrmsd
 

@@ -9,7 +9,6 @@ module mod_mobbrmsd_mst
  &      ONE => RONE, &
  &      ZERO => RZERO, &
  &      RHUGE
-  use mod_mobbrmsd_header
   use mod_mobbrmsd_state
   use mod_mobbrmsd
   implicit none
@@ -34,7 +33,7 @@ contains
  &            )
     integer(IK), intent(in)             :: n_target
     !! number of target coordinates
-    type(mobbrmsd_header), intent(in)   :: header
+    type(mobbrmsd), intent(in)          :: header
     !! mobbrmsd_header
     type(mobbrmsd_state), intent(inout) :: state(n_target)
     !! mobbrmsd_state, the result is contained in this structure.
@@ -64,8 +63,8 @@ contains
     real(kind=RK)                       :: cutoff_global, ub
     integer(kind=IK)                    :: i, j, itgt, ntgt, ypnt, wpnt, ldy, ldw
 !
-    ldy = header%n_dims() * header%n_atoms()
-    ldw = header%memsize()
+    ldy = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
+    ldw = mobbrmsd_memsize(header)
 !
     if (PRESENT(cutoff)) then
       cutoff_global = MERGE(RHUGE, cutoff, cutoff < ZERO)
@@ -112,7 +111,7 @@ contains
 !
       itgt = pl(itgt)%i
 !
-      if (bb_list_is_finished(header%q, state(itgt)%s)) cycle
+      if (mobbrmsd_is_finished(header, state(itgt))) cycle
       if (ub < mobbrmsd_state_lowerbound_as_rmsd(state(itgt))) cycle
 !
       wpnt = ldw * omp_get_thread_num() + 1
@@ -153,7 +152,7 @@ contains
  )
     integer(IK), intent(in)             :: n_target
     !! number of coordinates
-    type(mobbrmsd_header), intent(in)   :: header
+    type(mobbrmsd), intent(in)          :: header
     !! mobbrmsd_header
     type(mobbrmsd_state), intent(inout) :: state(n_target, n_target)
     !! mobbrmsd_state, the result is contained in this structure.
@@ -182,12 +181,7 @@ contains
     real(RK)                            :: vval(n_target - 1), nnval, cutoff_
     integer(kind=IK)                    :: i, j, xpnt, ldx, nnidx
 !
-    ldx = header%n_dims() * header%n_atoms()
-!
-!   Initialize header
-    do concurrent(i=1:n_target, j=1:n_target)
-      call mobbrmsd_state_init(state(i, j), header)
-    end do
+    ldx = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
 !
     mask(:) = .true.
     mask(1) = .false.

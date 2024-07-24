@@ -18,7 +18,6 @@ list(APPEND sources
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_tree.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_block.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_bb_list.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_header.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_state.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd.f90
   ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_batch_run.f90

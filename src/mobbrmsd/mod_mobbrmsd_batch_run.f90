@@ -27,7 +27,7 @@ contains
     !! number of reference coordinates
     integer(IK), intent(in)              :: n_target
     !! number of target coordinates
-    type(mobbrmsd_header), intent(in)    :: header
+    type(mobbrmsd), intent(in)           :: header
     !! mobbrmsd_header
     type(mobbrmsd_state), intent(inout)  :: state(*)
     !! mobbrmsd_state, the result is contained in this structure.
@@ -54,8 +54,8 @@ contains
     integer(kind=IK)                     :: i, ipnt, spnt, xpnt, ypnt, wpnt, ldx, ldw, nmin, nlim
 !
     if (n_reference < 1 .or. n_target < 1) return
-    ldx = header%n_dims() * header%n_atoms()
-    ldw = header%memsize()
+    ldx = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
+    ldw = mobbrmsd_memsize(header)
     nmin = 0
     if (PRESENT(n_lower)) nmin = MAX(nmin, n_lower - 1)
     nlim = n_reference * n_target
@@ -90,7 +90,7 @@ contains
   &          )
     integer(IK), intent(in)              :: n_target
     !! number of target coordinates
-    type(mobbrmsd_header), intent(in)    :: header
+    type(mobbrmsd), intent(in)           :: header
     !! mobbrmsd_header
     type(mobbrmsd_state), intent(inout)  :: state(*)
     !! mobbrmsd_state, the result is contained in this structure.
@@ -114,8 +114,8 @@ contains
     !! Specify the upper limit of the range to be calculated. Default [(n_target - 1) * n_target / 2].
     integer(kind=IK)                     :: i, ipnt, spnt, xpnt, ypnt, wpnt, ldx, ldw, nmin, nlim
     if (n_target < 2) return
-    ldx = header%n_dims() * header%n_atoms()
-    ldw = header%memsize()
+    ldx = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
+    ldw = mobbrmsd_memsize(header)
     nmin = 0
     if (PRESENT(n_lower)) nmin = MAX(nmin, n_lower - 1)
     nlim = (n_target - 1) * n_target / 2

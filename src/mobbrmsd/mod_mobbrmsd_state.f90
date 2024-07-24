@@ -7,7 +7,6 @@ module mod_mobbrmsd_state
   private
   public :: mobbrmsd_state
   public :: mobbrmsd_state_init
-  public :: mobbrmsd_state_update
   public :: mobbrmsd_state_copy
   public :: mobbrmsd_state_upperbound
   public :: mobbrmsd_state_lowerbound
@@ -20,17 +19,16 @@ module mod_mobbrmsd_state
   public :: mobbrmsd_state_eval_ratio
   public :: mobbrmsd_state_log_eval_ratio
   public :: mobbrmsd_state_rotation_matrix
-  public :: mobbrmsd_state_swap_and_rotation
   public :: mobbrmsd_state_dump
   public :: mobbrmsd_state_dump_real
   public :: mobbrmsd_state_load
   public :: mobbrmsd_state_destroy
-! public :: mobbrmsd_state_INDEX_TO_AUTOCORR
-! public :: mobbrmsd_state_INDEX_TO_UPPERBOUND
-! public :: mobbrmsd_state_INDEX_TO_LOWERBOUND
-! public :: mobbrmsd_state_INDEX_TO_N_EVAL
-! public :: mobbrmsd_state_INDEX_TO_LOG_RATIO
-! public :: mobbrmsd_state_INDEX_TO_ROTMAT
+  public :: mobbrmsd_state_INDEX_TO_AUTOCORR
+  public :: mobbrmsd_state_INDEX_TO_UPPERBOUND
+  public :: mobbrmsd_state_INDEX_TO_LOWERBOUND
+  public :: mobbrmsd_state_INDEX_TO_N_EVAL
+  public :: mobbrmsd_state_INDEX_TO_LOG_RATIO
+  public :: mobbrmsd_state_INDEX_TO_ROTMAT
 !&<
   integer(IK), parameter :: mobbrmsd_state_INDEX_TO_AUTOCORR    = 1
   !! Index to auto correlation
@@ -53,26 +51,15 @@ module mod_mobbrmsd_state
     real(RK), allocatable    :: z(:)
   end type mobbrmsd_state
 !
-  interface mobbrmsd_state
-    module procedure mobbrmsd_state_new
-  end interface mobbrmsd_state
-!
 contains
-! ------
-!| Constructer
-  pure elemental function mobbrmsd_state_new(header) result(res)
-    type(mobbrmsd_header), intent(in) :: header
-    !! mobbrmsd header
-    type(mobbrmsd_state)              :: res
-    call mobbrmsd_state_init(res, header)
-  end function mobbrmsd_state_new
 !
 !| Init
-  pure elemental subroutine mobbrmsd_state_init(this, header)
+  pure subroutine mobbrmsd_state_init(this, d, n, s)
     type(mobbrmsd_state), intent(inout) :: this
     !! Self
-    type(mobbrmsd_header), intent(in)   :: header
-    !! mobbrmsd header
+    integer(IK), intent(in)             :: d
+    integer(IK), intent(in)             :: n
+    integer(IK), intent(in)             :: s(:)
     real(RK), allocatable               :: z(:)
     associate ( &
    &   AC => mobbrmsd_state_INDEX_TO_AUTOCORR, &
@@ -82,9 +69,9 @@ contains
    &   LR => mobbrmsd_state_INDEX_TO_LOG_RATIO, &
    &   RT => mobbrmsd_state_INDEX_TO_ROTMAT &
     )
-      this%d = header%n_dims()
-      this%n = header%n_atoms()
-      this%s = header%state_template()
+      this%d = d
+      this%n = n
+      this%s = s
       allocate (z(5 + this%d**2))
       z(AC) = ZERO
       z(UB) = RHUGE
@@ -104,36 +91,6 @@ contains
       end do
     end subroutine eye
   end subroutine mobbrmsd_state_init
-!
-!| update mobbrmsd_state
-  pure subroutine mobbrmsd_state_update(this, header, W)
-    type(mobbrmsd_state), intent(inout) :: this
-    !! self
-    type(mobbrmsd_header), intent(in)    :: header
-    !! mobbrmsd header
-    real(RK), intent(in)                 :: W(*)
-    !! mobbrmsd workarray
-    associate ( &
-   &   ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
-   &   ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND), &
-   &   lb => this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND), &
-   &   ne => this%z(mobbrmsd_state_INDEX_TO_N_EVAL), &
-   &   lr => this%z(mobbrmsd_state_INDEX_TO_LOG_RATIO), &
-   &   rt => mobbrmsd_state_INDEX_TO_ROTMAT, &
-   &   bbac => W(bb_list_INDEX_TO_AUTOCORR), &
-   &   bbub => W(bb_list_INDEX_TO_UPPERBOUND), &
-   &   bblb => W(bb_list_INDEX_TO_LOWERBOUND), &
-   &   bbne => W(bb_list_INDEX_TO_N_EVAL), &
-   &   bbln => W(bb_list_INDEX_TO_LOG_N_COMB) &
-    )
-      ac = bbac
-      ub = bbub
-      lb = bblb
-      ne = bbne
-      lr = LOG(bbne) - bbln
-      call bb_list_rotation_matrix(header%q, this%s, W, this%z(rt))
-    end associate
-  end subroutine mobbrmsd_state_update
 !
 !| Pure elemental copy, for NVHPC.
   pure elemental subroutine mobbrmsd_state_copy(lhs, rhs)
@@ -255,29 +212,6 @@ contains
       R(:n) = this%z(rt:)
     end associate
   end subroutine mobbrmsd_state_rotation_matrix
-!
-!| swap and rotation y
-  pure subroutine mobbrmsd_state_swap_and_rotation(this, header, X)
-    type(mobbrmsd_state), intent(in) :: this
-    !! this
-    type(mobbrmsd_header), intent(in) :: header
-    !! mobbrmsd header
-    real(RK), intent(inout)           :: X(*)
-    !! coordinate
-    associate (rt => mobbrmsd_state_INDEX_TO_ROTMAT)
-      call bb_list_swap_y(header%q, this%s, X)
-      call rotate(header%n_dims(), header%n_atoms(), this%z(rt), X)
-    end associate
-  contains
-    pure subroutine rotate(n_dims, n_atoms, R, X)
-      integer(IK), intent(in) :: n_dims, n_atoms
-      real(RK), intent(in)    :: R(n_dims, n_dims)
-      real(RK), intent(inout) :: X(n_dims, n_atoms)
-      real(RK)                :: T(n_dims, n_atoms)
-      T = MATMUL(TRANSPOSE(R), X)
-      X = T
-    end subroutine rotate
-  end subroutine mobbrmsd_state_swap_and_rotation
 !
 !| returns log_eval_ratio
   pure elemental function mobbrmsd_state_log_eval_ratio(this) result(res)
