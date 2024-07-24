@@ -227,7 +227,7 @@ class mobbrmsd:
             else:
                 sym = numpy.array(mol.sym, dtype=numpy.int32) + 1
                 if sym.ndim == 1:
-                    if sym.shape[0] != mol.n_apm:
+                    if sym.shape[0] != 0 and sym.shape[0] != mol.n_apm:
                         raise ValueError
                 elif sym.ndim == 2:
                     if sym.shape[1] != mol.n_apm:
@@ -521,8 +521,6 @@ class mobbrmsd:
         del self.n_int
         del self.n_float
         del self.header
-        if hasattr(self, "ww"):
-            del self.ww
 
     def __str__(self):
         kws = [

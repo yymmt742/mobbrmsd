@@ -173,6 +173,7 @@ def main(n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
     print(
         "       Reference     | Target (original) |  disp. |  Target (rotate)  |  disp."
     )
+    d1, d2 = 0.0, 0.0
     for xi, yi, zi in zip(
         x.reshape([n_mol, n_apm, 3]),
         y.reshape([n_mol, n_apm, 3]),
@@ -180,15 +181,18 @@ def main(n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
     ):
         print(sep2)
         for xij, yij, zij in zip(xi, yi, zi):
-            d1 = numpy.sum(numpy.power(xij - zij, 2))
-            d2 = numpy.sum(numpy.power(xij - yij, 2))
+            d1_ = numpy.sum(numpy.power(xij - zij, 2))
+            d2_ = numpy.sum(numpy.power(xij - yij, 2))
+            d1 += d1_
+            d2 += d2_
             print(
                 f"  {xij[0]:6.2f}{xij[1]:6.2f}{xij[2]:6.2f}",
-                f"|{yij[0]:6.2f}{yij[1]:6.2f}{yij[2]:6.2f} |{d1:7.2f}",
-                f"|{zij[0]:6.2f}{zij[1]:6.2f}{zij[2]:6.2f} |{d2:7.2f}",
+                f"|{yij[0]:6.2f}{yij[1]:6.2f}{yij[2]:6.2f} |{d1_:7.2f}",
+                f"|{zij[0]:6.2f}{zij[1]:6.2f}{zij[2]:6.2f} |{d2_:7.2f}",
             )
     print(sep2)
-    d1, d2 = numpy.mean(numpy.power(x - z, 2)), numpy.mean(numpy.power(x - y, 2))
+    d1 *= 1.0 / (n_mol * n_apm)
+    d2 *= 1.0 / (n_mol * n_apm)
     print(
         f"          mean squared deviation         |{d1:7.2f} |                   |{d2:7.2f}"
     )
