@@ -177,8 +177,6 @@ contains
     end do
     print *
 !
-    call clear_molecule()
-!
   end subroutine test2
 !
   function sample(d, n, com) result(res)

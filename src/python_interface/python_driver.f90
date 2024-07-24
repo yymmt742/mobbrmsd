@@ -35,11 +35,6 @@ module driver
   public decode_attributes
   public decode_header
   public setup_dimension
-  public add_molecule
-  public clear_molecule
-  public n_atoms
-  public workmemory_lengthes
-  public state_vector_lengthes
   public rmsd
   public autocorr
   public bounds
@@ -52,8 +47,6 @@ module driver
   public batch_run
   public batch_run_tri
   public min_span_tree
-
-  type(mol_block_input), allocatable :: blocks(:)
 
 contains
 
@@ -122,81 +115,6 @@ contains
     call setup_dimension_(d)
 
   end subroutine setup_dimension
-
-  !| add molecule
-  subroutine add_molecule(n, M, s, sym)
-    integer(kind=IK), intent(in) :: n
-    integer(kind=IK), intent(in) :: M
-    integer(kind=IK), intent(in) :: s
-    integer(kind=IK), intent(in), optional :: sym(n * (s - 1))
-
-    if (.not. ALLOCATED(blocks)) allocate (blocks(0))
-    call mol_block_input_add_molecule(blocks, n, M, RESHAPE(sym, [n, s - 1]))
-
-  end subroutine add_molecule
-
-  !| clear molecule
-  subroutine clear_molecule()
-
-    if (ALLOCATED(blocks)) deallocate (blocks)
-
-  end subroutine clear_molecule
-
-  !| Returns spatial dimension and total number of atoms
-  pure subroutine n_atoms(n_dim, n_atom)
-    integer(kind=IK), intent(out) :: n_dim
-    integer(kind=IK), intent(out) :: n_atom
-    type(mobbrmsd)                :: mob
-
-    if (ALLOCATED(blocks)) then
-      mob = mobbrmsd(blocks)
-      n_dim = mob%h%n_dims()
-      n_atom = mob%h%n_atoms()
-    else
-      n_dim = 0
-      n_atom = 0
-    end if
-
-  end subroutine n_atoms
-
-  !| Returns total number of atoms
-  subroutine workmemory_lengthes(n_mem, n_job)
-    integer(kind=IK), intent(out) :: n_mem
-    integer(kind=IK), intent(out) :: n_job
-    type(mobbrmsd)                :: mob
-
-    if (ALLOCATED(blocks)) then
-      mob = mobbrmsd(blocks)
-      n_mem = mob%h%memsize()
-      !$omp parallel
-      if (omp_get_thread_num() == 0) n_job = omp_get_num_threads()
-      !$omp end parallel
-    else
-      n_mem = 0
-      n_job = 0
-    end if
-
-  end subroutine workmemory_lengthes
-
-  !| return header and state vector lengthes
-  pure subroutine state_vector_lengthes(n_head, n_int, n_float)
-    integer(kind=IK), intent(out) :: n_head
-    integer(kind=IK), intent(out) :: n_int
-    integer(kind=IK), intent(out) :: n_float
-    type(mobbrmsd)                :: mob
-
-    if (ALLOCATED(blocks)) then
-      mob = mobbrmsd(blocks)
-      n_head = SIZE(mob%h%dump())
-      n_int = SIZE(mob%s%dump())
-      n_float = SIZE(mob%s%dump_real())
-    else
-      n_head = 0
-      n_int = 0
-      n_float = 0
-    end if
-
-  end subroutine state_vector_lengthes
 
   !| return rmsd
   pure subroutine rmsd(n_float, float_states, res)
