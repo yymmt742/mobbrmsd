@@ -16,8 +16,10 @@ module mod_mobbrmsd
   public :: mobbrmsd_input_init
   public :: mobbrmsd_input
   public :: mobbrmsd_input_add_molecule
+  public :: mobbrmsd_input_destroy
   public :: mol_block_input
   public :: mol_block_input_add_molecule
+  public :: mol_block_input_destroy
   public :: mobbrmsd
   public :: mobbrmsd_init
   public :: mobbrmsd_header
@@ -28,6 +30,7 @@ module mod_mobbrmsd
 !
 !| mol_block_input (for python interface)
   type mol_block_input
+    sequence
     private
     integer(IK) :: m
     !! number of atoms per molecule
@@ -35,18 +38,13 @@ module mod_mobbrmsd
     !! number of molecule
     integer(IK), allocatable :: sym(:, :)
     !! molecular symmetry
-  contains
-    final :: mol_block_input_destroy
   end type mol_block_input
 !
 !| mobbrmsd_input
   type mobbrmsd_input
+    sequence
     private
     type(mol_block_input), allocatable :: blk(:)
-  contains
-    procedure :: init => mobbrmsd_input_init
-    procedure :: add_molecule => mobbrmsd_input_add_molecule
-    final     :: mobbrmsd_input_destroy
   end type mobbrmsd_input
 !
 !| mobbrmsd
@@ -71,20 +69,20 @@ contains
 !
 !| init
   pure subroutine mobbrmsd_input_init(this)
-    class(mobbrmsd_input), intent(inout) :: this
+    type(mobbrmsd_input), intent(inout) :: this
     !! self
     if (ALLOCATED(this%blk)) deallocate (this%blk)
   end subroutine mobbrmsd_input_init
 !
 !| add molecule
   pure subroutine mobbrmsd_input_add_molecule(this, m, n, sym)
-    class(mobbrmsd_input), intent(inout) :: this
+    type(mobbrmsd_input), intent(inout) :: this
     !! self
-    integer(IK), intent(in)              :: m
+    integer(IK), intent(in)             :: m
     !! number of atoms per molecule
-    integer(IK), intent(in)              :: n
+    integer(IK), intent(in)             :: n
     !! number of molecule
-    integer(IK), intent(in), optional    :: sym(:, :)
+    integer(IK), intent(in), optional   :: sym(:, :)
     !! molecular symmetry, sym(m, s-1)
     call mol_block_input_add_molecule(this%blk, m, n, sym)
   end subroutine mobbrmsd_input_add_molecule
@@ -224,46 +222,55 @@ contains
 !
     if (PRESENT(W)) then
       call bb_list_setup(&
-     &  header%q, &
-     &  state%s,  &
-     &  X,  &
-     &  Y,  &
-     &  W, &
-     &  remove_com=remove_com, &
-     &  sort_by_g=sort_by_g &
-     &     )
+     &       header%q, &
+     &       state%s,  &
+     &       X,  &
+     &       Y,  &
+     &       W, &
+     &       remove_com=remove_com, &
+     &       sort_by_g=sort_by_g &
+     &      )
       call mobbrmsd_restart( &
-     &  header, &
-     &  state,  &
-     &  W, &
-     &  cutoff=cutoff, &
-     &  difflim=difflim, &
-     &  maxeval=maxeval)
+     &       header, &
+     &       state,  &
+     &       W, &
+     &       cutoff=cutoff, &
+     &       difflim=difflim, &
+     &       maxeval=maxeval &
+     &      )
     else
       block
         real(RK), allocatable :: T(:)
         allocate (T(header%memsize()))
         call bb_list_setup(&
-       &  header%q, &
-       &  state%s,  &
-       &  X,  &
-       &  Y,  &
-       &  T, &
-       &  remove_com=remove_com &
-       &     )
-        call mobbrmsd_restart(header, &
-       &                      state,  &
-       &                      T, &
-       &                      cutoff=cutoff, &
-       &                      difflim=difflim, &
-       &                      maxeval=maxeval)
+       &       header%q, &
+       &       state%s,  &
+       &       X,  &
+       &       Y,  &
+       &       T, &
+       &       remove_com=remove_com &
+       &      )
+        call mobbrmsd_restart( &
+       &       header, &
+       &       state,  &
+       &       T, &
+       &       cutoff=cutoff, &
+       &       difflim=difflim, &
+       &       maxeval=maxeval &
+       &      )
       end block
     end if
   end subroutine mobbrmsd_run
 !
 !| run mobbrmsd
-  pure subroutine mobbrmsd_restart(header, state, W, &
-&                            cutoff, difflim, maxeval)
+  pure subroutine mobbrmsd_restart( &
+ &                  header, &
+ &                  state, &
+ &                  W, &
+ &                  cutoff, &
+ &                  difflim, &
+ &                  maxeval &
+ &                 )
     type(mobbrmsd_header), intent(in)    :: header
     !! mobbrmsd_header
     type(mobbrmsd_state), intent(inout)  :: state
@@ -276,47 +283,24 @@ contains
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
     integer(IK), intent(in), optional    :: maxeval
     !! The search ends when ncount exceeds maxiter.
-    call bb_list_run(header%q, state%s, W, cutoff=cutoff, difflim=difflim, maxeval=maxeval)
+    call bb_list_run( &
+      &    header%q, &
+      &    state%s, &
+      &    W, &
+      &    cutoff=cutoff, &
+      &    difflim=difflim, &
+      &    maxeval=maxeval &
+      &   )
     call mobbrmsd_state_update(state, header, W)
   end subroutine mobbrmsd_restart
 !
-!| update mobbrmsd_state
-  pure subroutine mobbrmsd_state_update(this, header, W)
-    type(mobbrmsd_state), intent(inout) :: this
-    !! mobbrmsd header
-    type(mobbrmsd_header), intent(in)   :: header
-    !! mobbrmsd header
-    real(RK), intent(in)                :: W(*)
-    !! mobbrmsd workarray
-    associate ( &
-   &   ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
-   &   ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND), &
-   &   lb => this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND), &
-   &   ne => this%z(mobbrmsd_state_INDEX_TO_N_EVAL), &
-   &   lr => this%z(mobbrmsd_state_INDEX_TO_LOG_RATIO), &
-   &   rt => mobbrmsd_state_INDEX_TO_ROTMAT, &
-   &   bbac => W(bb_list_INDEX_TO_AUTOCORR), &
-   &   bbub => W(bb_list_INDEX_TO_UPPERBOUND), &
-   &   bblb => W(bb_list_INDEX_TO_LOWERBOUND), &
-   &   bbne => W(bb_list_INDEX_TO_N_EVAL), &
-   &   bbln => W(bb_list_INDEX_TO_LOG_N_COMB) &
-    )
-      ac = bbac
-      ub = bbub
-      lb = bblb
-      ne = bbne
-      lr = LOG(bbne) - bbln
-      call bb_list_rotation_matrix(header%q, this%s, W, this%z(rt))
-    end associate
-  end subroutine mobbrmsd_state_update
-!
 !| Returns bb process is finished.
   pure function mobbrmsd_is_finished(header, state) result(res)
-    class(mobbrmsd_header), intent(in) :: header
+    type(mobbrmsd_header), intent(in) :: header
     !! mobbrmsd_header
-    class(mobbrmsd_state), intent(in)  :: state
+    type(mobbrmsd_state), intent(in)  :: state
     !! mobbrmsd_state
-    logical                            :: res
+    logical                           :: res
     res = bb_list_is_finished(header%q, state%s)
   end function mobbrmsd_is_finished
 !

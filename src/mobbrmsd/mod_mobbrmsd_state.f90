@@ -1,72 +1,56 @@
 !| molecular orientation corrected RMSD with branch-and-bound.
 module mod_mobbrmsd_state
-  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, TEN => RTEN, LN_TO_L10, RHUGE
+  use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, TWO => RTWO, TEN => RTEN, LN_TO_L10, RHUGE
   use mod_mobbrmsd_header
   use mod_bb_list
   implicit none
+  private
   public :: mobbrmsd_state
   public :: mobbrmsd_state_init
+  public :: mobbrmsd_state_update
   public :: mobbrmsd_state_copy
-  public :: mobbrmsd_state_INDEX_TO_RCP_N_ATOMS
-  public :: mobbrmsd_state_INDEX_TO_AUTOCORR
-  public :: mobbrmsd_state_INDEX_TO_UPPERBOUND
-  public :: mobbrmsd_state_INDEX_TO_LOWERBOUND
-  public :: mobbrmsd_state_INDEX_TO_N_EVAL
-  public :: mobbrmsd_state_INDEX_TO_LOG_RATIO
-  public :: mobbrmsd_state_INDEX_TO_ROTMAT
+  public :: mobbrmsd_state_upperbound
+  public :: mobbrmsd_state_lowerbound
+  public :: mobbrmsd_state_autovariance
+  public :: mobbrmsd_state_squared_deviation
+  public :: mobbrmsd_state_mean_squared_deviation
+  public :: mobbrmsd_state_rmsd
+  public :: mobbrmsd_state_lowerbound_as_rmsd
+  public :: mobbrmsd_state_n_eval
+  public :: mobbrmsd_state_eval_ratio
+  public :: mobbrmsd_state_log_eval_ratio
+  public :: mobbrmsd_state_rotation_matrix
+  public :: mobbrmsd_state_swap_and_rotation
+  public :: mobbrmsd_state_dump
+  public :: mobbrmsd_state_dump_real
+  public :: mobbrmsd_state_load
+  public :: mobbrmsd_state_destroy
+! public :: mobbrmsd_state_INDEX_TO_AUTOCORR
+! public :: mobbrmsd_state_INDEX_TO_UPPERBOUND
+! public :: mobbrmsd_state_INDEX_TO_LOWERBOUND
+! public :: mobbrmsd_state_INDEX_TO_N_EVAL
+! public :: mobbrmsd_state_INDEX_TO_LOG_RATIO
+! public :: mobbrmsd_state_INDEX_TO_ROTMAT
 !&<
-  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_RCP_N_ATOMS = 1
-  !! Index of reciprocal natom of dumped state
-  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_AUTOCORR    = 2
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_AUTOCORR    = 1
   !! Index to auto correlation
-  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_UPPERBOUND  = 3
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_UPPERBOUND  = 2
   !! Index of upperbound of dumped state
-  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_LOWERBOUND  = 4
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_LOWERBOUND  = 3
   !! Index of lowerbound of dumped state
-  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_N_EVAL      = 5
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_N_EVAL      = 4
   !! Index of n_eval of dumped state
-  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_LOG_RATIO   = 6
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_LOG_RATIO   = 5
   !! Index of log_ratio of dumped state
-  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_ROTMAT      = 7
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_ROTMAT      = 6
   !! Index to rotmatrix of dumped state
 !&>
 !| mobbrmsd_state
   type mobbrmsd_state
+    sequence
+    integer(IK)              :: d, n
     integer(IK), allocatable :: s(:)
     real(RK), allocatable    :: z(:)
-  contains
-    procedure :: init => mobbrmsd_state_init
-    !! upperbound
-    procedure :: upperbound => mobbrmsd_state_upperbound
-    !! upperbound
-    procedure :: lowerbound => mobbrmsd_state_lowerbound
-    !! lowerbound
-    procedure :: autovariance => mobbrmsd_state_autovariance
-    !! lowerbound
-    procedure :: squared_deviation => mobbrmsd_state_squared_deviation
-    !! sqrared_deviation
-    procedure :: mean_squared_deviation => mobbrmsd_state_mean_squared_deviation
-    !! sqrared_deviation
-    procedure :: rmsd => mobbrmsd_state_rmsd
-    !! rmsd
-    procedure :: lowerbound_as_rmsd => mobbrmsd_state_lowerbound_as_rmsd
-    !! lowerbound_as_rmsd
-    procedure :: n_eval => mobbrmsd_state_n_eval
-    !! number of lowerbound evaluation
-    procedure :: eval_ratio => mobbrmsd_state_eval_ratio
-    !! ratio of evaluated node
-    procedure :: log_eval_ratio => mobbrmsd_state_log_eval_ratio
-    !! log ratio of evaluated node
-    procedure :: rotation => mobbrmsd_state_rotation
-    !! rotate given coordinate
-    procedure :: dump => mobbrmsd_state_dump
-    !! dump current state
-    procedure :: dump_real => mobbrmsd_state_dump_real
-    !! dump real part of current state
-    procedure :: load => mobbrmsd_state_load
-    !! load state
-    final     :: mobbrmsd_state_destroy
-    !! destracter
   end type mobbrmsd_state
 !
   interface mobbrmsd_state
@@ -85,13 +69,12 @@ contains
 !
 !| Init
   pure elemental subroutine mobbrmsd_state_init(this, header)
-    class(mobbrmsd_state), intent(inout) :: this
+    type(mobbrmsd_state), intent(inout) :: this
     !! Self
-    type(mobbrmsd_header), intent(in)    :: header
+    type(mobbrmsd_header), intent(in)   :: header
     !! mobbrmsd header
-    real(RK)                             :: z(6 + header%n_dims()**2)
+    real(RK), allocatable               :: z(:)
     associate ( &
-   &   RN => mobbrmsd_state_INDEX_TO_RCP_N_ATOMS, &
    &   AC => mobbrmsd_state_INDEX_TO_AUTOCORR, &
    &   UB => mobbrmsd_state_INDEX_TO_UPPERBOUND, &
    &   LB => mobbrmsd_state_INDEX_TO_LOWERBOUND, &
@@ -99,15 +82,17 @@ contains
    &   LR => mobbrmsd_state_INDEX_TO_LOG_RATIO, &
    &   RT => mobbrmsd_state_INDEX_TO_ROTMAT &
     )
-      z(RN) = ONE / real(header%n_atoms(), RK)
+      this%d = header%n_dims()
+      this%n = header%n_atoms()
+      this%s = header%state_template()
+      allocate (z(5 + this%d**2))
       z(AC) = ZERO
       z(UB) = RHUGE
       z(LB) = -RHUGE
       z(NE) = -RHUGE
       z(LR) = ZERO
-      call eye(header%n_dims(), z(RT))
-      allocate (this%s, source=header%state_template())
-      allocate (this%z, source=z)
+      call eye(this%d, z(RT))
+      call MOVE_ALLOC(from=z, to=this%z)
     end associate
   contains
     pure subroutine eye(n_dims, e)
@@ -120,6 +105,36 @@ contains
     end subroutine eye
   end subroutine mobbrmsd_state_init
 !
+!| update mobbrmsd_state
+  pure subroutine mobbrmsd_state_update(this, header, W)
+    type(mobbrmsd_state), intent(inout) :: this
+    !! self
+    type(mobbrmsd_header), intent(in)    :: header
+    !! mobbrmsd header
+    real(RK), intent(in)                 :: W(*)
+    !! mobbrmsd workarray
+    associate ( &
+   &   ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
+   &   ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND), &
+   &   lb => this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND), &
+   &   ne => this%z(mobbrmsd_state_INDEX_TO_N_EVAL), &
+   &   lr => this%z(mobbrmsd_state_INDEX_TO_LOG_RATIO), &
+   &   rt => mobbrmsd_state_INDEX_TO_ROTMAT, &
+   &   bbac => W(bb_list_INDEX_TO_AUTOCORR), &
+   &   bbub => W(bb_list_INDEX_TO_UPPERBOUND), &
+   &   bblb => W(bb_list_INDEX_TO_LOWERBOUND), &
+   &   bbne => W(bb_list_INDEX_TO_N_EVAL), &
+   &   bbln => W(bb_list_INDEX_TO_LOG_N_COMB) &
+    )
+      ac = bbac
+      ub = bbub
+      lb = bblb
+      ne = bbne
+      lr = LOG(bbne) - bbln
+      call bb_list_rotation_matrix(header%q, this%s, W, this%z(rt))
+    end associate
+  end subroutine mobbrmsd_state_update
+!
 !| Pure elemental copy, for NVHPC.
   pure elemental subroutine mobbrmsd_state_copy(lhs, rhs)
     type(mobbrmsd_state), intent(inout) :: lhs
@@ -131,7 +146,7 @@ contains
 !
 !| returns upperbound
   pure elemental function mobbrmsd_state_upperbound(this) result(res)
-    class(mobbrmsd_state), intent(in) :: this
+    type(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
     res = this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND)
@@ -139,7 +154,7 @@ contains
 !
 !| returns lowerbound
   pure elemental function mobbrmsd_state_lowerbound(this) result(res)
-    class(mobbrmsd_state), intent(in) :: this
+    type(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
     res = this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND)
@@ -147,7 +162,7 @@ contains
 !
 !| returns autovariance
   pure elemental function mobbrmsd_state_autovariance(this) result(res)
-    class(mobbrmsd_state), intent(in) :: this
+    type(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
     res = this%z(mobbrmsd_state_INDEX_TO_AUTOCORR)
@@ -155,62 +170,62 @@ contains
 !
 !| returns squared deviation
   pure elemental function mobbrmsd_state_squared_deviation(this) result(res)
-    class(mobbrmsd_state), intent(in) :: this
+    type(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
     associate (&
    &  ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
    &  ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND) &
    &  )
-      res = MAX(ZERO, ac + ub + ub)
+      res = MAX(ZERO, ac + TWO * ub)
     end associate
   end function mobbrmsd_state_squared_deviation
 !
 !| returns squared deviation
   pure elemental function mobbrmsd_state_mean_squared_deviation(this) result(res)
-    class(mobbrmsd_state), intent(in) :: this
+    type(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
     associate (&
-   &  rn => this%z(mobbrmsd_state_INDEX_TO_RCP_N_ATOMS), &
    &  ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
    &  ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND) &
    &  )
-      res = MAX(ZERO, (ac + ub + ub) * rn)
+      res = ONE / real(bb_list_n_atoms(this%s), RK)
+      res = MAX(ZERO, (ac + TWO * ub) * res)
     end associate
   end function mobbrmsd_state_mean_squared_deviation
 !
 !| returns rmsd
   pure elemental function mobbrmsd_state_rmsd(this) result(res)
-    class(mobbrmsd_state), intent(in) :: this
+    type(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
     associate (&
-   &  rn => this%z(mobbrmsd_state_INDEX_TO_RCP_N_ATOMS), &
    &  ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
    &  ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND) &
    &  )
-      res = SQRT(MAX(ZERO, (ac + ub + ub) * rn))
+      res = ONE / real(bb_list_n_atoms(this%s), RK)
+      res = SQRT(MAX(ZERO, (ac + TWO * ub) * res))
     end associate
   end function mobbrmsd_state_rmsd
 !
 !| returns lowerbound as rmsd
   pure elemental function mobbrmsd_state_lowerbound_as_rmsd(this) result(res)
-    class(mobbrmsd_state), intent(in) :: this
+    type(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
     associate (&
-   &  rn => this%z(mobbrmsd_state_INDEX_TO_RCP_N_ATOMS), &
    &  ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
    &  lb => this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND) &
    &  )
-      res = SQRT(MAX(ZERO, (ac + lb + lb) * rn))
+      res = ONE / real(bb_list_n_atoms(this%s), RK)
+      res = SQRT(MAX(ZERO, (ac + TWO * lb) * res))
     end associate
   end function mobbrmsd_state_lowerbound_as_rmsd
 !
 !| returns n_eval
   pure elemental function mobbrmsd_state_n_eval(this) result(res)
-    class(mobbrmsd_state), intent(in) :: this
+    type(mobbrmsd_state), intent(in) :: this
     !! this
     integer(IK)                       :: res
     associate (ne => this%z(mobbrmsd_state_INDEX_TO_N_EVAL))
@@ -220,7 +235,7 @@ contains
 !
 !| returns eval_ratio
   pure elemental function mobbrmsd_state_eval_ratio(this) result(res)
-    class(mobbrmsd_state), intent(in) :: this
+    type(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
     associate (LR => mobbrmsd_state_INDEX_TO_LOG_RATIO)
@@ -228,9 +243,22 @@ contains
     end associate
   end function mobbrmsd_state_eval_ratio
 !
-!| returns eval_ratio
-  pure subroutine mobbrmsd_state_rotation(this, header, X)
-    class(mobbrmsd_state), intent(in) :: this
+!| rotation matrix
+  pure subroutine mobbrmsd_state_rotation_matrix(this, R)
+    type(mobbrmsd_state), intent(in) :: this
+    !! this
+    real(RK), intent(inout)           :: R(*)
+    !! coordinate
+    integer                           :: n
+    associate (rt => mobbrmsd_state_INDEX_TO_ROTMAT)
+      n = SIZE(this%z(rt:))
+      R(:n) = this%z(rt:)
+    end associate
+  end subroutine mobbrmsd_state_rotation_matrix
+!
+!| swap and rotation y
+  pure subroutine mobbrmsd_state_swap_and_rotation(this, header, X)
+    type(mobbrmsd_state), intent(in) :: this
     !! this
     type(mobbrmsd_header), intent(in) :: header
     !! mobbrmsd header
@@ -249,18 +277,18 @@ contains
       T = MATMUL(TRANSPOSE(R), X)
       X = T
     end subroutine rotate
-  end subroutine mobbrmsd_state_rotation
+  end subroutine mobbrmsd_state_swap_and_rotation
 !
 !| returns log_eval_ratio
   pure elemental function mobbrmsd_state_log_eval_ratio(this) result(res)
-    class(mobbrmsd_state), intent(in) :: this
+    type(mobbrmsd_state), intent(in) :: this
     real(RK)                          :: res
     res = this%z(mobbrmsd_state_INDEX_TO_LOG_RATIO)
   end function mobbrmsd_state_log_eval_ratio
 !
 !| dump header as integer array (for python interface api)
   pure function mobbrmsd_state_dump(this) result(res)
-    class(mobbrmsd_state), intent(in) :: this
+    type(mobbrmsd_state), intent(in) :: this
     !! mobbrmsd_header
     integer(IK), allocatable          :: res(:)
     allocate (res, source=this%s)
@@ -268,7 +296,7 @@ contains
 !
 !| dump header as integer array (for python interface api)
   pure function mobbrmsd_state_dump_real(this) result(res)
-    class(mobbrmsd_state), intent(in) :: this
+    type(mobbrmsd_state), intent(in) :: this
     !! mobbrmsd_header
     real(RK), allocatable             :: res(:)
     allocate (res, source=this%z)
@@ -276,7 +304,7 @@ contains
 !
 !| load integer array as header (for python interface api)
   pure subroutine mobbrmsd_state_load(this, s, z)
-    class(mobbrmsd_state), intent(inout) :: this
+    type(mobbrmsd_state), intent(inout) :: this
     !! mobbrmsd_header
     integer(IK), intent(in)              :: s(:)
     !! state integer array

@@ -25,10 +25,13 @@ module mod_mobbrmsd_mst
 contains
 !
   !| nearest_neighbor calculation
-  subroutine mobbrmsd_nearest_neighbor(n_target, header, state, X, Y, W, &
- &                                     cutoff, difflim, maxeval, &
- &                                     remove_com, sort_by_g, &
- &                                     mask, nnval, nnidx)
+  subroutine mobbrmsd_nearest_neighbor( &
+ &             n_target, header, state, &
+ &             X, Y, W, &
+ &             cutoff, difflim, maxeval, &
+ &             remove_com, sort_by_g, &
+ &             mask, nnval, nnidx &
+ &            )
     integer(IK), intent(in)             :: n_target
     !! number of target coordinates
     type(mobbrmsd_header), intent(in)   :: header
@@ -71,10 +74,10 @@ contains
     end if
 !
     if (PRESENT(mask)) then
-      cutoff_global = MIN(MINVAL(state%rmsd(), mask), cutoff_global)
+      cutoff_global = MIN(MINVAL(mobbrmsd_state_rmsd(state), mask), cutoff_global)
       ntgt = COUNT(mask)
     else
-      cutoff_global = MIN(MINVAL(state%rmsd()), cutoff_global)
+      cutoff_global = MIN(MINVAL(mobbrmsd_state_rmsd(state)), cutoff_global)
       ntgt = n_target
     end if
 !
@@ -85,11 +88,11 @@ contains
       do i = 1, n_target
         if (.not. mask(i)) cycle
         j = j + 1
-        pl(j) = priority_list(i, state(i)%upperbound())
+        pl(j) = priority_list(i, mobbrmsd_state_upperbound(state(i)))
       end do
     else
       do concurrent(i=1:ntgt)
-        pl(i) = priority_list(i, state(i)%upperbound())
+        pl(i) = priority_list(i, mobbrmsd_state_upperbound(state(i)))
       end do
     end if
 !
@@ -110,7 +113,7 @@ contains
       itgt = pl(itgt)%i
 !
       if (bb_list_is_finished(header%q, state(itgt)%s)) cycle
-      if (ub < state(itgt)%lowerbound_as_rmsd()) cycle
+      if (ub < mobbrmsd_state_lowerbound_as_rmsd(state(itgt))) cycle
 !
       wpnt = ldw * omp_get_thread_num() + 1
       ypnt = (itgt - 1) * ldy + 1
@@ -124,7 +127,7 @@ contains
      &  remove_com=remove_com, &
      &  sort_by_g=sort_by_g  &
      &      )
-      ub = state(itgt)%rmsd()
+      ub = mobbrmsd_state_rmsd(state(itgt))
 !
       !$omp critical
       cutoff_global = MIN(ub, cutoff_global)
@@ -133,11 +136,11 @@ contains
     !$omp end parallel
 !
     if (PRESENT(mask)) then
-      if (PRESENT(nnval)) nnval = MINVAL(state%rmsd(), mask)
-      if (PRESENT(nnidx)) nnidx = MINLOC(state%rmsd(), 1, mask)
+      if (PRESENT(nnval)) nnval = MINVAL(mobbrmsd_state_rmsd(state), mask)
+      if (PRESENT(nnidx)) nnidx = MINLOC(mobbrmsd_state_rmsd(state), 1, mask)
     else
-      if (PRESENT(nnval)) nnval = MINVAL(state%rmsd())
-      if (PRESENT(nnidx)) nnidx = MINLOC(state%rmsd(), 1)
+      if (PRESENT(nnval)) nnval = MINVAL(mobbrmsd_state_rmsd(state))
+      if (PRESENT(nnidx)) nnidx = MINLOC(mobbrmsd_state_rmsd(state), 1)
     end if
 !
   end subroutine mobbrmsd_nearest_neighbor
@@ -232,7 +235,7 @@ contains
 !
     do j = 1, n_target
       do i = 1, j - 1
-        if (state(i, j)%upperbound() < state(j, i)%upperbound()) then
+        if (mobbrmsd_state_upperbound(state(i, j)) < mobbrmsd_state_upperbound(state(j, i))) then
           state(j, i) = state(i, j)
         else
           state(i, j) = state(j, i)

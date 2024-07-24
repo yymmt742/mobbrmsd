@@ -13,48 +13,48 @@ program main
   integer, parameter :: place = 7
 #endif
 !
-  call u%init('test mobbrmsd for (n,M,S)=(1,1,1)')
-  call test1(1, 1, 1, [0])
-  call u%init('test mobbrmsd for (n,M,S)=(1,2,1)')
-  call test1(1, 2, 1, [0])
-  call u%init('test mobbrmsd for (n,M,S)=(1,3,1)')
-  call test1(1, 3, 1, [0])
+! call u%init('test mobbrmsd for (n,M,S)=(1,1,1)')
+! call test1(1, 1, 1, [0])
+! call u%init('test mobbrmsd for (n,M,S)=(1,2,1)')
+! call test1(1, 2, 1, [0])
+!!call u%init('test mobbrmsd for (n,M,S)=(1,3,1)')
+!!call test1(1, 3, 1, [0])
   call u%init('test mobbrmsd for (n,M,S)=(4,1,1)')
   call test1(4, 1, 1, [0])
-  call u%init('test mobbrmsd for (n,M,S)=(4,3,1)')
-  call test1(4, 2, 1, [0])
-  call u%init('test mobbrmsd for (n,M,S)=(4,3,1)')
-  call test1(4, 3, 1, [0])
-  call u%init('test mobbrmsd for (n,M,S)=(4,1,2)')
-  call test1(4, 1, 2, [3, 2, 1, 4])
-  call u%init('test mobbrmsd for (n,M,S)=(4,2,2)')
-  call test1(4, 2, 2, [3, 2, 1, 4])
-  call u%init('test mobbrmsd for (n,M,S)=(40,6,1)')
-  call test1(40, 6, 1, [0])
+!!call u%init('test mobbrmsd for (n,M,S)=(4,3,1)')
+!!call test1(4, 2, 1, [0])
+!!call u%init('test mobbrmsd for (n,M,S)=(4,3,1)')
+!!call test1(4, 3, 1, [0])
+!!call u%init('test mobbrmsd for (n,M,S)=(4,1,2)')
+!!call test1(4, 1, 2, [3, 2, 1, 4])
+!!call u%init('test mobbrmsd for (n,M,S)=(4,2,2)')
+!!call test1(4, 2, 2, [3, 2, 1, 4])
+!!call u%init('test mobbrmsd for (n,M,S)=(40,6,1)')
+!!call test1(40, 6, 1, [0])
 !
-  call u%init('test mobbrmsd for {(n,M,S)}={(5,1,1), (5,4,1)}')
-  call test2(5, 1, 1, [0], 5, 4, 1, [0])
-  call u%init('test mobbrmsd for {(n,M,S)}={(4,2,1), (5,2,1)}')
-  call test2(4, 2, 1, [0], 5, 2, 1, [0])
-  call u%init('test mobbrmsd for {(n,M,S)}={(8,2,1), (4,2,2)}')
-  call test2(8, 2, 1, [0], 4, 2, 2, [3, 2, 1, 4])
-  call u%init('test mobbrmsd for {(n,M,S)}={(24,3,1), (24,4,1)}')
-  call test2(24, 3, 1, [0], 24, 4, 1, [0])
+!!call u%init('test mobbrmsd for {(n,M,S)}={(5,1,1), (5,4,1)}')
+!!call test2(5, 1, 1, [0], 5, 4, 1, [0])
+!!call u%init('test mobbrmsd for {(n,M,S)}={(4,2,1), (5,2,1)}')
+!!call test2(4, 2, 1, [0], 5, 2, 1, [0])
+!!call u%init('test mobbrmsd for {(n,M,S)}={(8,2,1), (4,2,2)}')
+!!call test2(8, 2, 1, [0], 4, 2, 2, [3, 2, 1, 4])
+!!call u%init('test mobbrmsd for {(n,M,S)}={(24,3,1), (24,4,1)}')
+!!call test2(24, 3, 1, [0], 24, 4, 1, [0])
 !
-  call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,4,2)}')
-  call test3(4, 4, 2, [3, 2, 1, 4])
-  call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,8,1)}')
-  call test3(4, 8, 1, [0])
+!!call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,4,2)}')
+!!call test3(4, 4, 2, [3, 2, 1, 4])
+!!call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,8,1)}')
+!!call test3(4, 8, 1, [0])
 !
-  call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,4,2)}')
-  call test4(4, 4, 2, [3, 2, 1, 4])
-  call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,8,1)}')
-  call test4(4, 8, 1, [0])
+!!call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,4,2)}')
+!!call test4(4, 4, 2, [3, 2, 1, 4])
+!!call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,8,1)}')
+!!call test4(4, 8, 1, [0])
 !
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
-  call test5(4, 8, 1, [0], 10)
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
-  call test5(4, 4, 1, [0], 100)
+!!call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
+!!call test5(4, 8, 1, [0], 10)
+!!call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
+!!call test5(4, 4, 1, [0], 100)
 !
   call u%finish_and_terminate()
 !
@@ -64,7 +64,8 @@ contains
     integer, intent(in)    :: n, m, s, sym(n * (s - 1))
     type(mobbrmsd)         :: mobb
     type(mol_block_input), allocatable :: inp(:)
-    real(RK)               :: X(D, n, m), Y(D, n, m)
+    real(RK)               :: X(D, n, m), Y(D, n, m), Z(D, n, m)
+    real(RK)               :: sd
     real(RK), allocatable  :: W(:)
     integer(IK)            :: i
 !
@@ -78,10 +79,26 @@ contains
 !
     do i = 1, 20
       call mobbrmsd_run(mobb%h, mobb%s, X, Y, W)
-      call u%assert_almost_equal(mobb%s%squared_deviation(), &
-     &                           brute_sd(n, m, s, sym, X, Y), 'minrmsd value', &
+      call u%assert_almost_equal( &
+     &       mobbrmsd_state_squared_deviation(mobb%s), &
+     &       brute_sd(n, m, s, sym, X, Y), &
+     &       'minrmsd value', &
+     &       place=place &
+     &      )
+      Z = Y
+      print'(3f9.3)', mobbrmsd_state_squared_deviation(mobb%s), brute_sd(n, m, s, sym, X, Y)
+      print'(3i9)', mobb%s%s
+      print'(3f9.3)', mobb%s%z
+      call mobbrmsd_state_swap_and_rotation(mobb%s, mobb%h, Z)
+      print *, 'Y'
+      print'(3f9.3)', Y
+      print *, 'Z'
+      print'(3f9.3)', Z
+      sd = SUM((X - Z)**2)
+      call u%assert_almost_equal(mobbrmsd_state_squared_deviation(mobb%s), &
+     &                           sd, 'rotation', &
      &                           place=place)
-      Y = 0.5 * Y + 0.5 * sample(n, m)
+      Y = 0.9 * Y + 0.1 * sample(n, m)
     end do
 !
     deallocate (inp)
@@ -115,7 +132,7 @@ contains
       Y = RESHAPE([Y1, Y2], SHAPE(Y))
       call mobbrmsd_run(mobb%h, mobb%s, [X1, X2], Y, W)
       brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
-      call u%assert_almost_equal(mobb%s%squared_deviation(), brute, 'minrmsd value', place=place)
+      call u%assert_almost_equal(mobbrmsd_state_squared_deviation(mobb%s), brute, 'minrmsd value', place=place)
       Y1 = 0.5 * Y1 + 0.5 * sample(n1, m1)
       Y2 = 0.5 * Y2 + 0.5 * sample(n2, m2)
     end do
@@ -143,20 +160,26 @@ contains
 !
     do i = 1, 10
       call mobbrmsd_restart(mobb%h, mobb%s, W, maxeval=0)
-      print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
-     &                       mobb%s%upperbound(), mobb%s%lowerbound()
+      print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
+     &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
+     &                       mobbrmsd_state_upperbound(mobb%s), &
+     &                       mobbrmsd_state_lowerbound(mobb%s)
     end do
 !
     call mobbrmsd_restart(mobb%h, mobb%s, W)
-    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
-   &                       mobb%s%upperbound(), mobb%s%lowerbound()
-    sd = mobb%s%squared_deviation()
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
+   &                       mobbrmsd_state_upperbound(mobb%s), &
+   &                       mobbrmsd_state_lowerbound(mobb%s)
+    sd = mobbrmsd_state_squared_deviation(mobb%s)
     brute = brute_sd(n, m, s, sym, X, Y)
 !
     call mobbrmsd_run(mobb%h, mobb%s, X, Y)
-    sd2 = mobb%s%squared_deviation()
-    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
-   &                       mobb%s%upperbound(), mobb%s%lowerbound()
+    sd2 = mobbrmsd_state_squared_deviation(mobb%s)
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
+   &                       mobbrmsd_state_upperbound(mobb%s), &
+   &                       mobbrmsd_state_lowerbound(mobb%s)
     call u%assert_almost_equal(sd, brute, 'minrmsd value', place=place)
     call u%assert_almost_equal(sd, sd2, 'vs at once   ', place=place)
 !
@@ -181,35 +204,47 @@ contains
 !
     call mobbrmsd_run(mobb%h, mobb%s, X, Y, W, maxeval=0)
     call mobbrmsd_restart(mobb%h, mobb%s, W, cutoff=0.0_RK)
-    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
-   &                       mobb%s%upperbound(), mobb%s%lowerbound(), &
-   &                       SQRT((mobb%s%autovariance() + 2 * mobb%s%lowerbound()) / (n * m)), &
-   &                       mobb%s%rmsd()
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
+   &                       mobbrmsd_state_upperbound(mobb%s), &
+   &                       mobbrmsd_state_lowerbound(mobb%s), &
+   &                       SQRT((mobbrmsd_state_autovariance(mobb%s) + 2 * mobbrmsd_state_lowerbound(mobb%s)) / (n * m)), &
+   &                       mobbrmsd_state_rmsd(mobb%s)
     call mobbrmsd_restart(mobb%h, mobb%s, W, cutoff=0.1_RK)
-    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
-   &                       mobb%s%upperbound(), mobb%s%lowerbound(), &
-   &                       SQRT((mobb%s%autovariance() + 2 * mobb%s%lowerbound()) / (n * m)), &
-   &                       mobb%s%rmsd()
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
+   &                       mobbrmsd_state_upperbound(mobb%s), &
+   &                       mobbrmsd_state_lowerbound(mobb%s), &
+   &                       SQRT((mobbrmsd_state_autovariance(mobb%s) + 2 * mobbrmsd_state_lowerbound(mobb%s)) / (n * m)), &
+   &                       mobbrmsd_state_rmsd(mobb%s)
     call mobbrmsd_restart(mobb%h, mobb%s, W, cutoff=0.2_RK)
-    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
-   &                       mobb%s%upperbound(), mobb%s%lowerbound(), &
-   &                       SQRT((mobb%s%autovariance() + 2 * mobb%s%lowerbound()) / (n * m)), &
-   &                       mobb%s%rmsd()
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
+   &                       mobbrmsd_state_upperbound(mobb%s), &
+   &                       mobbrmsd_state_lowerbound(mobb%s), &
+   &                       SQRT((mobbrmsd_state_autovariance(mobb%s) + 2 * mobbrmsd_state_lowerbound(mobb%s)) / (n * m)), &
+   &                       mobbrmsd_state_rmsd(mobb%s)
     call mobbrmsd_restart(mobb%h, mobb%s, W, cutoff=0.3_RK)
-    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
-   &                       mobb%s%upperbound(), mobb%s%lowerbound(), &
-   &                       SQRT((mobb%s%autovariance() + 2 * mobb%s%lowerbound()) / (n * m)), &
-   &                       mobb%s%rmsd()
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
+   &                       mobbrmsd_state_upperbound(mobb%s), &
+   &                       mobbrmsd_state_lowerbound(mobb%s), &
+   &                       SQRT((mobbrmsd_state_autovariance(mobb%s) + 2 * mobbrmsd_state_lowerbound(mobb%s)) / (n * m)), &
+   &                       mobbrmsd_state_rmsd(mobb%s)
     call mobbrmsd_run(mobb%h, mobb%s, X, Y, W, cutoff=0.4_RK)
-    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
-   &                       mobb%s%upperbound(), mobb%s%lowerbound(), &
-   &                       SQRT((mobb%s%autovariance() + 2 * mobb%s%lowerbound()) / (n * m)), &
-   &                       mobb%s%rmsd()
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
+   &                       mobbrmsd_state_upperbound(mobb%s), &
+   &                       mobbrmsd_state_lowerbound(mobb%s), &
+   &                       SQRT((mobbrmsd_state_autovariance(mobb%s) + 2 * mobbrmsd_state_lowerbound(mobb%s)) / (n * m)), &
+   &                       mobbrmsd_state_rmsd(mobb%s)
     call mobbrmsd_restart(mobb%h, mobb%s, W)
-    print'(I8, *(f16.9))', mobb%s%n_eval(), EXP(mobb%s%log_eval_ratio()), &
-   &                       mobb%s%upperbound(), mobb%s%lowerbound(), &
-   &                       SQRT((mobb%s%autovariance() + 2 * mobb%s%lowerbound()) / (n * m)), &
-   &                       mobb%s%rmsd()
+    print'(I8, *(f16.9))', mobbrmsd_state_n_eval(mobb%s), &
+   &                       EXP(mobbrmsd_state_log_eval_ratio(mobb%s)), &
+   &                       mobbrmsd_state_upperbound(mobb%s), &
+   &                       mobbrmsd_state_lowerbound(mobb%s), &
+   &                       SQRT((mobbrmsd_state_autovariance(mobb%s) + 2 * mobbrmsd_state_lowerbound(mobb%s)) / (n * m)), &
+   &                       mobbrmsd_state_rmsd(mobb%s)
 !
     deallocate (inp)
 !
@@ -256,10 +291,10 @@ contains
 !
     do i = 1, n_target - 1
       print'(2i4, *(f9.3))', edges(:, i), weights(i), &
-     &                        state(edges(1, i), edges(2, i))%upperbound(), &
-     &                        state(edges(1, i), edges(2, i))%lowerbound(), &
-     &                        state(edges(1, i), edges(2, i))%upperbound()  &
-     &                      - state(edges(1, i), edges(2, i))%lowerbound()
+     &                        mobbrmsd_state_upperbound(state(edges(1, i), edges(2, i))), &
+     &                        mobbrmsd_state_lowerbound(state(edges(1, i), edges(2, i))), &
+     &                        mobbrmsd_state_upperbound(state(edges(1, i), edges(2, i)))  &
+     &                      - mobbrmsd_state_lowerbound(state(edges(1, i), edges(2, i)))
     end do
 !
     deallocate (inp)

@@ -10,7 +10,7 @@ module mod_mobbrmsd_header
 !| mobbrmsd_header
   type mobbrmsd_header
     private
-    integer(IK)              :: d
+    integer(IK)                      :: d
     !! spatial dimension
     integer(IK), allocatable, public :: q(:)
     !! header array

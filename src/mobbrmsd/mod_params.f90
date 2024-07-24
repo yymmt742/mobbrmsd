@@ -8,13 +8,15 @@ module mod_params
   public  :: I1, I2, I4, I8
   public  :: R4, R8
   public  :: RK, IK
-  public  :: RZERO, RONE, RHALF, RFOUR, RTEN
+  public  :: RZERO, RONE, RTWO, RHALF, RFOUR, RTEN
   public  :: RPI, RNAPIER, RHUGE, LN_TO_L10
 !&<
   real(RK), parameter :: RZERO = 0.0_RK
   !! Real zero.
   real(RK), parameter :: RONE  = 1.0_RK
   !! Real one.
+  real(RK), parameter :: RTWO  = 2.0_RK
+  !! Real two.
   real(RK), parameter :: RHALF = 0.5_RK
   !! Real 1/2.
   real(RK), parameter :: RFOUR = 4.0_RK

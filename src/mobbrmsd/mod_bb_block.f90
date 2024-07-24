@@ -684,13 +684,10 @@ contains
     !! state vector
     integer(IK), intent(inout) :: z(*)
     !! memory
-    integer(IK)                :: nmol
     associate ( &
    &  stree => s_POINTER_TO_S_TREE, &
-   &  qtree => q(INDEX_TO_Q_TREE), &
-   &  qmol => q_POINTER_TO_Q_MOL &
+   &  qtree => q(INDEX_TO_Q_TREE) &
    &  )
-      nmol = mol_block_nmol(q(qmol))
       call tree_current_sequence(q(qtree), s(stree), z)
     end associate
   end subroutine bb_block_save_state

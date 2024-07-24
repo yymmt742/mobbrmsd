@@ -85,7 +85,7 @@ contains
       Z = Y
       call bb_list_swap_y(b%q, b%s, Z)
       call bb_list_rotation_matrix(b%q, b%s, w, R)
-      sd = w(bb_list_INDEX_TO_AUTOCORR) + w(bb_list_INDEX_TO_UPPERBOUND) + w(bb_list_INDEX_TO_UPPERBOUND)
+      sd = w(bb_list_INDEX_TO_AUTOCORR) + w(bb_list_INDEX_TO_UPPERBOUND) * 2._RK
       brute = brute_sd(n, m, s, sym, X, Y)
       rxz = SUM(([X] - [MATMUL(TRANSPOSE(R), RESHAPE(Z, [D, n * m]))])**2)
       call u%assert_almost_equal(sd * nrm, brute * nrm, 'minrmsd value', place=place)
