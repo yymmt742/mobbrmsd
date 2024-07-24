@@ -1,7 +1,6 @@
 !| molecular orientation corrected RMSD with branch-and-bound.
 module mod_mobbrmsd_state
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, TWO => RTWO, TEN => RTEN, LN_TO_L10, RHUGE
-  use mod_mobbrmsd_header
   use mod_bb_list
   implicit none
   private

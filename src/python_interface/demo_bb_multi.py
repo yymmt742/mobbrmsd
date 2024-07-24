@@ -74,7 +74,7 @@ def read_input() -> tuple:
                     exit()
                 elif inp.isdigit():
                     n_apm = int(inp)
-                    if n_apm > 1:
+                    if n_apm > 0:
                         break
 
             while True:
