@@ -14,48 +14,48 @@ program main
   integer, parameter :: place = 7
 #endif
 !
-! call u%init('test mobbrmsd for (n,M,S)=(1,1,1)')
-! call test1(1, 1, 1, [0])
-! call u%init('test mobbrmsd for (n,M,S)=(1,2,1)')
-! call test1(1, 2, 1, [0])
-!!call u%init('test mobbrmsd for (n,M,S)=(1,3,1)')
-!!call test1(1, 3, 1, [0])
+  call u%init('test mobbrmsd for (n,M,S)=(1,1,1)')
+  call test1(1, 1, 1, [0])
+  call u%init('test mobbrmsd for (n,M,S)=(1,2,1)')
+  call test1(1, 2, 1, [0])
+  call u%init('test mobbrmsd for (n,M,S)=(1,3,1)')
+  call test1(1, 3, 1, [0])
   call u%init('test mobbrmsd for (n,M,S)=(4,1,1)')
   call test1(4, 1, 1, [0])
-!!call u%init('test mobbrmsd for (n,M,S)=(4,3,1)')
-!!call test1(4, 2, 1, [0])
-!!call u%init('test mobbrmsd for (n,M,S)=(4,3,1)')
-!!call test1(4, 3, 1, [0])
-!!call u%init('test mobbrmsd for (n,M,S)=(4,1,2)')
-!!call test1(4, 1, 2, [3, 2, 1, 4])
-!!call u%init('test mobbrmsd for (n,M,S)=(4,2,2)')
-!!call test1(4, 2, 2, [3, 2, 1, 4])
-!!call u%init('test mobbrmsd for (n,M,S)=(40,6,1)')
-!!call test1(40, 6, 1, [0])
+  call u%init('test mobbrmsd for (n,M,S)=(4,3,1)')
+  call test1(4, 2, 1, [0])
+  call u%init('test mobbrmsd for (n,M,S)=(4,3,1)')
+  call test1(4, 3, 1, [0])
+  call u%init('test mobbrmsd for (n,M,S)=(4,1,2)')
+  call test1(4, 1, 2, [3, 2, 1, 4])
+  call u%init('test mobbrmsd for (n,M,S)=(4,2,2)')
+  call test1(4, 2, 2, [3, 2, 1, 4])
+  call u%init('test mobbrmsd for (n,M,S)=(40,6,1)')
+  call test1(40, 6, 1, [0])
 !
-!!call u%init('test mobbrmsd for {(n,M,S)}={(5,1,1), (5,4,1)}')
-!!call test2(5, 1, 1, [0], 5, 4, 1, [0])
-!!call u%init('test mobbrmsd for {(n,M,S)}={(4,2,1), (5,2,1)}')
-!!call test2(4, 2, 1, [0], 5, 2, 1, [0])
-!!call u%init('test mobbrmsd for {(n,M,S)}={(8,2,1), (4,2,2)}')
-!!call test2(8, 2, 1, [0], 4, 2, 2, [3, 2, 1, 4])
-!!call u%init('test mobbrmsd for {(n,M,S)}={(24,3,1), (24,4,1)}')
-!!call test2(24, 3, 1, [0], 24, 4, 1, [0])
+  call u%init('test mobbrmsd for {(n,M,S)}={(5,1,1), (5,4,1)}')
+  call test2(5, 1, 1, [0], 5, 4, 1, [0])
+  call u%init('test mobbrmsd for {(n,M,S)}={(4,2,1), (5,2,1)}')
+  call test2(4, 2, 1, [0], 5, 2, 1, [0])
+  call u%init('test mobbrmsd for {(n,M,S)}={(8,2,1), (4,2,2)}')
+  call test2(8, 2, 1, [0], 4, 2, 2, [3, 2, 1, 4])
+  call u%init('test mobbrmsd for {(n,M,S)}={(24,3,1), (24,4,1)}')
+  call test2(24, 3, 1, [0], 24, 4, 1, [0])
 !
-!!call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,4,2)}')
-!!call test3(4, 4, 2, [3, 2, 1, 4])
-!!call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,8,1)}')
-!!call test3(4, 8, 1, [0])
+  call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,4,2)}')
+  call test3(4, 4, 2, [3, 2, 1, 4])
+  call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,8,1)}')
+  call test3(4, 8, 1, [0])
 !
-!!call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,4,2)}')
-!!call test4(4, 4, 2, [3, 2, 1, 4])
-!!call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,8,1)}')
-!!call test4(4, 8, 1, [0])
+  call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,4,2)}')
+  call test4(4, 4, 2, [3, 2, 1, 4])
+  call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,8,1)}')
+  call test4(4, 8, 1, [0])
 !
-!!call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
-!!call test5(4, 8, 1, [0], 10)
-!!call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
-!!call test5(4, 4, 1, [0], 100)
+  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
+  call test5(4, 8, 1, [0], 10)
+  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
+  call test5(4, 4, 1, [0], 100)
 !
   call u%finish_and_terminate()
 !
@@ -67,6 +67,7 @@ contains
     type(mobbrmsd_state)   :: stat
     type(mol_block_input), allocatable :: inp(:)
     real(RK)               :: X(D, n, m), Y(D, n, m), Z(D, n, m)
+    real(RK)               :: R(D, D)
     real(RK)               :: sd
     real(RK), allocatable  :: W(:)
     integer(IK)            :: i
@@ -75,6 +76,7 @@ contains
     mobb = mobbrmsd(inp)
 !
     X = sample(n, m)
+    call centering(n, m, X)
     Y = X
 !
     allocate (W(mobbrmsd_memsize(mobb)))
@@ -88,17 +90,15 @@ contains
      &       place=place &
      &      )
       Z = Y
-      print'(3f9.3)', mobbrmsd_state_squared_deviation(stat), brute_sd(n, m, s, sym, X, Y)
+      call mobbrmsd_state_rotation_matrix(stat, R)
       call mobbrmsd_swap_and_rotation(mobb, stat, Z)
-      print *, 'Y'
-      print'(3f9.3)', Y
-      print *, 'Z'
-      print'(3f9.3)', Z
       sd = SUM((X - Z)**2)
+      call u%assert_is_eye(MATMUL(R, TRANSPOSE(R)), "RRT = I", place=place)
       call u%assert_almost_equal(mobbrmsd_state_squared_deviation(stat), &
      &                           sd, 'rotation', &
      &                           place=place)
       Y = 0.9 * Y + 0.1 * sample(n, m)
+      call centering(n, m, Y)
     end do
 !
     deallocate (inp)
@@ -114,8 +114,11 @@ contains
     real(RK)              :: brute
     real(RK)              :: X1(D, n1, m1), X2(D, n2, m2)
     real(RK)              :: Y1(D, n1, m1), Y2(D, n2, m2)
+    real(RK)              :: X(D, m1 * n1 + m2 * n2)
     real(RK)              :: Y(D, m1 * n1 + m2 * n2)
+    real(RK)              :: Z(D, m1 * n1 + m2 * n2)
     real(RK), allocatable :: W(:)
+    real(RK)              :: R(D, D), sd
     integer(IK)           :: i
 !
     call mol_block_input_add_molecule(inp, n1, m1, sym=RESHAPE(sym1, [n1, s1 - 1]))
@@ -124,6 +127,8 @@ contains
 !
     X1 = sample(n1, m1)
     X2 = sample(n2, m2)
+    X = RESHAPE([X1, X2], SHAPE(X))
+    call centering(SIZE(X, 2), X)
     Y1 = X1
     Y2 = X2
 !
@@ -131,9 +136,18 @@ contains
 !
     do i = 1, 10
       Y = RESHAPE([Y1, Y2], SHAPE(Y))
-      call mobbrmsd_run(mobb, stat, [X1, X2], Y, W)
+      call centering(SIZE(Y, 2), Y)
+      call mobbrmsd_run(mobb, stat, X, Y, W)
       brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
       call u%assert_almost_equal(mobbrmsd_state_squared_deviation(stat), brute, 'minrmsd value', place=place)
+      Z = Y
+      call mobbrmsd_state_rotation_matrix(stat, R)
+      call mobbrmsd_swap_and_rotation(mobb, stat, Z)
+      sd = SUM((X - Z)**2)
+      call u%assert_is_eye(MATMUL(R, TRANSPOSE(R)), "RRT = I", place=place)
+      call u%assert_almost_equal(sd, &
+     &                           brute, 'rotation', &
+     &                           place=place)
       Y1 = 0.5 * Y1 + 0.5 * sample(n1, m1)
       Y2 = 0.5 * Y2 + 0.5 * sample(n2, m2)
     end do
@@ -144,13 +158,13 @@ contains
     integer, intent(in)    :: n, m, s, sym(n * (s - 1))
     type(mobbrmsd)         :: mobb
     type(mobbrmsd_state)   :: stat
-    type(mol_block_input), allocatable :: inp(:)
+    type(mobbrmsd_input)   :: inp
     real(RK)               :: X(D, n, m), Y(D, n, m)
     real(RK), allocatable  :: W(:)
     real(RK)               :: sd, brute, sd2
     integer(IK)            :: i
 !
-    call mol_block_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
+    call mobbrmsd_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
 !
     X = sample(n, m)
@@ -185,19 +199,17 @@ contains
     call u%assert_almost_equal(sd, brute, 'minrmsd value', place=place)
     call u%assert_almost_equal(sd, sd2, 'vs at once   ', place=place)
 !
-    deallocate (inp)
-!
   end subroutine test3
 !
   subroutine test4(n, m, s, sym)
-    integer, intent(in)    :: n, m, s, sym(n * (s - 1))
-    type(mobbrmsd)         :: mobb
-    type(mobbrmsd_state)   :: stat
-    type(mol_block_input), allocatable :: inp(:)
-    real(RK)               :: X(D, n, m), Y(D, n, m)
-    real(RK), allocatable  :: W(:)
+    integer, intent(in)   :: n, m, s, sym(n * (s - 1))
+    type(mobbrmsd)        :: mobb
+    type(mobbrmsd_state)  :: stat
+    type(mobbrmsd_input)  :: inp
+    real(RK)              :: X(D, n, m), Y(D, n, m)
+    real(RK), allocatable :: W(:)
 !
-    call mol_block_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
+    call mobbrmsd_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
 !
     X = sample(n, m)
@@ -249,8 +261,6 @@ contains
    &                       SQRT((mobbrmsd_state_autovariance(stat) + 2 * mobbrmsd_state_lowerbound(stat)) / (n * m)), &
    &                       mobbrmsd_state_rmsd(stat)
 !
-    deallocate (inp)
-!
   end subroutine test4
 !
   subroutine test5(n, m, s, sym, n_target)
@@ -294,10 +304,10 @@ contains
 !
     do i = 1, n_target - 1
       print'(2i4, *(f9.3))', edges(:, i), weights(i), &
-     &                        mobbrmsd_state_upperbound(state(edges(1, i), edges(2, i))), &
-     &                        mobbrmsd_state_lowerbound(state(edges(1, i), edges(2, i))), &
-     &                        mobbrmsd_state_upperbound(state(edges(1, i), edges(2, i)))  &
-     &                      - mobbrmsd_state_lowerbound(state(edges(1, i), edges(2, i)))
+     &                       mobbrmsd_state_upperbound(state(edges(1, i), edges(2, i))), &
+     &                       mobbrmsd_state_lowerbound(state(edges(1, i), edges(2, i))), &
+     &                       mobbrmsd_state_upperbound(state(edges(1, i), edges(2, i)))  &
+     &                     - mobbrmsd_state_lowerbound(state(edges(1, i), edges(2, i)))
     end do
 !
   end subroutine test5

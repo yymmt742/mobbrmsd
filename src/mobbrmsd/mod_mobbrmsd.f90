@@ -34,6 +34,7 @@ module mod_mobbrmsd
   public :: mobbrmsd_swap_and_rotation
   public :: mobbrmsd_dump
   public :: mobbrmsd_load
+  public :: mobbrmsd_destroy
 !
 !| mol_block_input (for python interface)
   type mol_block_input
@@ -57,14 +58,13 @@ module mod_mobbrmsd
 !| mobbrmsd
   type mobbrmsd
     private
+    sequence
     integer(IK)              :: d
     !! spatial dimension
     integer(IK), allocatable :: q(:)
     !! header array
     integer(IK), allocatable :: s(:)
     !! state template
-  contains
-    final     :: mobbrmsd_destroy
   end type mobbrmsd
 !
   interface mobbrmsd_init
@@ -195,8 +195,6 @@ contains
     this%d = D
     this%q = bblst%q
     this%s = bblst%s
-    !call mobbrmsd_init(this%h, SIZE(bblst%q), bblst%q, SIZE(bblst%s), bblst%s)
-    !call mobbrmsd_state_init(this%s, this%h)
     call bb_block_destroy(bbblk)
     call bb_list_destroy(bblst)
   end subroutine mobbrmsd_init_block
@@ -338,10 +336,6 @@ contains
     res = bb_list_is_finished(this%q, state%s)
   end function mobbrmsd_is_finished
 !
-  pure elemental subroutine mobbrmsd_destroy(this)
-    type(mobbrmsd), intent(inout) :: this
-  end subroutine mobbrmsd_destroy
-!
 !| Returns spatial dimension
   pure elemental function mobbrmsd_n_dims(this) result(res)
     type(mobbrmsd), intent(in) :: this
@@ -448,6 +442,12 @@ contains
       this%s = q(3 + sq:)
     end if
   end subroutine mobbrmsd_load
+!
+  pure elemental subroutine mobbrmsd_destroy(this)
+    type(mobbrmsd), intent(inout) :: this
+    if (ALLOCATED(this%q)) deallocate (this%q)
+    if (ALLOCATED(this%s)) deallocate (this%s)
+  end subroutine mobbrmsd_destroy
 !
 end module mod_mobbrmsd
 

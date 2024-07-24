@@ -80,9 +80,9 @@ contains
     allocate (W(bb_list_memsize(b%q)))
 !
     do i = 1, 20
+      Z = Y
       call bb_list_setup(b%q, b%s, X, Y, W)
       call bb_list_run(b%q, b%s, w)
-      Z = Y
       call bb_list_swap_y(b%q, b%s, Z)
       call bb_list_rotation_matrix(b%q, b%s, w, R)
       sd = w(bb_list_INDEX_TO_AUTOCORR) + w(bb_list_INDEX_TO_UPPERBOUND) * 2._RK
