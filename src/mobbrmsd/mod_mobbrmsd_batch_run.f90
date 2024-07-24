@@ -7,7 +7,6 @@ module mod_mobbrmsd_batch_run
  &      ONE => RONE, &
  &      ZERO => RZERO, &
  &      RHUGE
-  use mod_mobbrmsd_header
   use mod_mobbrmsd_state
   use mod_mobbrmsd
   implicit none
@@ -17,11 +16,20 @@ module mod_mobbrmsd_batch_run
 contains
   !| batch parallel run
   subroutine mobbrmsd_batch_run( &
-  &            n_reference, n_target, header, state, &
-  &            X, Y, W, &
-  &            cutoff, difflim, maxeval, &
-  &            remove_com, sort_by_g, &
-  &            n_lower, n_upper &
+  &            n_reference, &
+  &            n_target, &
+  &            header, &
+  &            state, &
+  &            X, &
+  &            Y, &
+  &            W, &
+  &            cutoff, &
+  &            difflim, &
+  &            maxeval, &
+  &            remove_com, &
+  &            sort_by_g, &
+  &            n_lower, &
+  &            n_upper &
   &          )
     integer(IK), intent(in)              :: n_reference
     !! number of reference coordinates
