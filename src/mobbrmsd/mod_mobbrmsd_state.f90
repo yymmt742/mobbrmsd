@@ -146,7 +146,7 @@ contains
    &  ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
    &  ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND) &
    &  )
-      res = ONE / real(bb_list_n_atoms(this%s), RK)
+      res = ONE / real(this%n, RK)
       res = MAX(ZERO, (ac + TWO * ub) * res)
     end associate
   end function mobbrmsd_state_mean_squared_deviation
@@ -160,7 +160,7 @@ contains
    &  ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
    &  ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND) &
    &  )
-      res = ONE / real(bb_list_n_atoms(this%s), RK)
+      res = ONE / real(this%n, RK)
       res = SQRT(MAX(ZERO, (ac + TWO * ub) * res))
     end associate
   end function mobbrmsd_state_rmsd
@@ -174,7 +174,7 @@ contains
    &  ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
    &  lb => this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND) &
    &  )
-      res = ONE / real(bb_list_n_atoms(this%s), RK)
+      res = ONE / real(this%n, RK)
       res = SQRT(MAX(ZERO, (ac + TWO * lb) * res))
     end associate
   end function mobbrmsd_state_lowerbound_as_rmsd

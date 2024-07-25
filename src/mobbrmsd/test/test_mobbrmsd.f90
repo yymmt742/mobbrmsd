@@ -47,15 +47,15 @@ program main
   call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,8,1)}')
   call test3(4, 8, 1, [0])
 !
-! call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,4,2)}')
-! call test4(4, 4, 2, [3, 2, 1, 4])
-! call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,8,1)}')
-! call test4(4, 8, 1, [0])
+  call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,4,2)}')
+  call test4(4, 4, 2, [3, 2, 1, 4])
+  call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,8,1)}')
+  call test4(4, 8, 1, [0])
 !
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
   call test5(4, 8, 1, [0], 10)
-! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
-! call test5(4, 4, 1, [0], 100)
+  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
+  call test5(4, 4, 1, [0], 100)
 !
   call u%finish_and_terminate()
 !
@@ -279,7 +279,7 @@ contains
     real(RK), allocatable  :: W(:)
     integer(IK)            :: edges(2, n_target - 1)
     real(RK)               :: weights(n_target - 1)
-    integer(IK)            :: i
+    integer(IK)            :: i, j
 !
     call mobbrmsd_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
@@ -304,13 +304,18 @@ contains
     call mobbrmsd_min_span_tree(n_target, mobb, state, X, W, &
    &                            edges=edges, weights=weights)
 !
-!   do i = 1, n_target - 1
-!     print'(2i4, *(f9.3))', edges(:, i), weights(i), &
-!    &                       mobbrmsd_state_upperbound(state(edges(1, i), edges(2, i))), &
-!    &                       mobbrmsd_state_lowerbound(state(edges(1, i), edges(2, i))), &
-!    &                       mobbrmsd_state_upperbound(state(edges(1, i), edges(2, i)))  &
-!    &                     - mobbrmsd_state_lowerbound(state(edges(1, i), edges(2, i)))
-!   end do
+    do i = 1, n_target - 1
+      if (edges(1, i) > edges(2, i)) then
+        j = (edges(1, i) - 2) * (edges(1, i) - 1) / 2 + edges(2, i)
+      else
+        j = (edges(2, i) - 2) * (edges(2, i) - 1) / 2 + edges(1, i)
+      end if
+      print'(2i4, *(f9.3))', edges(:, i), weights(i), &
+     &                       mobbrmsd_state_upperbound(state(j)), &
+     &                       mobbrmsd_state_lowerbound(state(j)), &
+     &                       mobbrmsd_state_upperbound(state(j))  &
+     &                     - mobbrmsd_state_lowerbound(state(j))
+    end do
 !
   end subroutine test5
 !
