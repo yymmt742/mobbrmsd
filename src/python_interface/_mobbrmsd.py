@@ -132,7 +132,7 @@ def select_driver(d: int, dtype=None):
         else:
             raise ValueError
 
-        driver.setup_dimension(d)
+        driver.setup_dimension_(d)
     else:
         raise ValueError
     return driver

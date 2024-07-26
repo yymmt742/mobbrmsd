@@ -1,8 +1,8 @@
 module driver
 !$ use omp_lib
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
-  use mod_mobbrmsd_state
   use mod_mobbrmsd
+  use mod_mobbrmsd_state
   use mod_mobbrmsd_batch_run
   use mod_mobbrmsd_mst
 
@@ -10,7 +10,7 @@ module driver
   private
   public decode_attributes
   public decode_header
-  public setup_dimension
+  public setup_dimension_
   public rmsd
   public autocorr
   public bounds
@@ -85,13 +85,13 @@ contains
 
   end subroutine decode_header
 
-! !| setup dimension
-! subroutine setup_dimension(d)
-!   integer(kind=IK), intent(in) :: d
+  !| setup dimension
+  subroutine setup_dimension_(d)
+    integer(kind=IK), intent(in) :: d
 
-!   call setup_dimension_(d)
+    call setup_dimension(d)
 
-! end subroutine setup_dimension
+  end subroutine setup_dimension_
 
   !| return rmsd
   pure subroutine rmsd(n_float, float_states, res)
