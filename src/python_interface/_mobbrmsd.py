@@ -487,10 +487,10 @@ class mobbrmsd:
         dt = x.dtype
         x_ = varidation_coordinates_2(x, self.d, self.natom)
         n_target = 1 if x.ndim == 2 else x.shape[0]
-        ww = numpy.empty((self.njob * self.memsize), dtype=dt)
+        ww = numpy.empty((n_target * (n_target - 1) // 2 * self.memsize), dtype=dt)
 
         driver = select_driver(self.d, dtype=dt)
-        edges, weights, iret, rret = driver.min_span_tree(
+        edges, weights = driver.min_span_tree(
             n_target,
             self.n_int,
             self.n_float,
