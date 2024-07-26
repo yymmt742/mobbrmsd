@@ -258,6 +258,43 @@ class mobbrmsd:
         del driver
 
     ##
+    # @brief mobbRMSD
+    # @details mobbRMSD を計算する。
+    # @param
+    #   x (numpy.ndarray): 参照構造
+    #   y (numpy.ndarray): 対照構造
+    # @return float
+    def mobbrmsd(
+        self,
+        x: npt.NDArray,
+        y: npt.NDArray,
+    ) -> float:
+        dt = select_dtype(x, y)
+        x_ = varidation_coordinates_1(x, self.d, self.natom, dtype=dt)
+        y_ = varidation_coordinates_1(y, self.d, self.natom, dtype=dt)
+        driver = select_driver(self.d, dtype=dt)
+        w = numpy.empty(self.memsize, dtype=dt)
+
+        iret, rret = driver.run(
+            self.n_int,
+            self.n_float,
+            self.header,
+            x_,
+            y_,
+            w,
+            cutoff,
+            difflim,
+            maxeval,
+            remove_com,
+            sort_by_g,
+            rotate_y,
+        )
+
+        ret = driver.rmsd(rret)
+        del driver
+        return ret
+
+    ##
     # @brief general runner
     # @details mobbRMSD を計算する。
     #   RMSD の他に自己相関、BBの上下限、分子の置換インデックス、回転行列、再計算用情報を返す。
