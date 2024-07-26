@@ -22,6 +22,8 @@ module mod_mobbrmsd_state
   public :: mobbrmsd_state_dump_real
   public :: mobbrmsd_state_load
   public :: mobbrmsd_state_destroy
+  public :: mobbrmsd_state_attributes
+  public :: mobbrmsd_state_RECIPROCAL_OF_N
   public :: mobbrmsd_state_INDEX_TO_AUTOCORR
   public :: mobbrmsd_state_INDEX_TO_UPPERBOUND
   public :: mobbrmsd_state_INDEX_TO_LOWERBOUND
@@ -29,23 +31,24 @@ module mod_mobbrmsd_state
   public :: mobbrmsd_state_INDEX_TO_LOG_RATIO
   public :: mobbrmsd_state_INDEX_TO_ROTMAT
 !&<
-  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_AUTOCORR    = 1
+  integer(IK), parameter :: mobbrmsd_state_RECIPROCAL_OF_N      = 1
   !! Index to auto correlation
-  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_UPPERBOUND  = 2
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_AUTOCORR    = 2
+  !! Index to auto correlation
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_UPPERBOUND  = 3
   !! Index of upperbound of dumped state
-  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_LOWERBOUND  = 3
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_LOWERBOUND  = 4
   !! Index of lowerbound of dumped state
-  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_N_EVAL      = 4
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_N_EVAL      = 5
   !! Index of n_eval of dumped state
-  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_LOG_RATIO   = 5
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_LOG_RATIO   = 6
   !! Index of log_ratio of dumped state
-  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_ROTMAT      = 6
+  integer(IK), parameter :: mobbrmsd_state_INDEX_TO_ROTMAT      = 7
   !! Index to rotmatrix of dumped state
 !&>
 !| mobbrmsd_state
   type mobbrmsd_state
     sequence
-    integer(IK)              :: d, n
     integer(IK), allocatable :: s(:)
     real(RK), allocatable    :: z(:)
   end type mobbrmsd_state
@@ -61,6 +64,7 @@ contains
     integer(IK), intent(in)             :: s(:)
     real(RK), allocatable               :: z(:)
     associate ( &
+   &   RN => mobbrmsd_state_RECIPROCAL_OF_N, &
    &   AC => mobbrmsd_state_INDEX_TO_AUTOCORR, &
    &   UB => mobbrmsd_state_INDEX_TO_UPPERBOUND, &
    &   LB => mobbrmsd_state_INDEX_TO_LOWERBOUND, &
@@ -68,16 +72,15 @@ contains
    &   LR => mobbrmsd_state_INDEX_TO_LOG_RATIO, &
    &   RT => mobbrmsd_state_INDEX_TO_ROTMAT &
     )
-      this%d = d
-      this%n = n
       this%s = s
-      allocate (z(5 + this%d**2))
+      allocate (z(5 + d**2))
+      z(RN) = ONE / n
       z(AC) = ZERO
       z(UB) = RHUGE
       z(LB) = -RHUGE
       z(NE) = -RHUGE
       z(LR) = ZERO
-      call eye(this%d, z(RT))
+      call eye(d, z(RT))
       call MOVE_ALLOC(from=z, to=this%z)
     end associate
   contains
@@ -143,11 +146,11 @@ contains
     !! this
     real(RK)                          :: res
     associate (&
+   &  rn => this%z(mobbrmsd_state_RECIPROCAL_OF_N), &
    &  ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
    &  ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND) &
    &  )
-      res = ONE / real(this%n, RK)
-      res = MAX(ZERO, (ac + TWO * ub) * res)
+      res = MAX(ZERO, rn * (ac + TWO * ub))
     end associate
   end function mobbrmsd_state_mean_squared_deviation
 !
@@ -157,11 +160,11 @@ contains
     !! this
     real(RK)                          :: res
     associate (&
+   &  rn => this%z(mobbrmsd_state_RECIPROCAL_OF_N), &
    &  ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
    &  ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND) &
    &  )
-      res = ONE / real(this%n, RK)
-      res = SQRT(MAX(ZERO, (ac + TWO * ub) * res))
+      res = SQRT(MAX(ZERO, rn * (ac + TWO * ub)))
     end associate
   end function mobbrmsd_state_rmsd
 !
@@ -171,11 +174,11 @@ contains
     !! this
     real(RK)                          :: res
     associate (&
+   &  rn => this%z(mobbrmsd_state_RECIPROCAL_OF_N), &
    &  ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
    &  lb => this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND) &
    &  )
-      res = ONE / real(this%n, RK)
-      res = SQRT(MAX(ZERO, (ac + TWO * lb) * res))
+      res = SQRT(MAX(ZERO, rn * (ac + TWO * lb)))
     end associate
   end function mobbrmsd_state_lowerbound_as_rmsd
 !
@@ -193,7 +196,7 @@ contains
   pure elemental function mobbrmsd_state_eval_ratio(this) result(res)
     type(mobbrmsd_state), intent(in) :: this
     !! this
-    real(RK)                          :: res
+    real(RK)                         :: res
     associate (LR => mobbrmsd_state_INDEX_TO_LOG_RATIO)
       res = EXP(this%z(LR))
     end associate
@@ -203,9 +206,9 @@ contains
   pure subroutine mobbrmsd_state_rotation_matrix(this, R)
     type(mobbrmsd_state), intent(in) :: this
     !! this
-    real(RK), intent(inout)           :: R(*)
+    real(RK), intent(inout)          :: R(*)
     !! coordinate
-    integer                           :: n
+    integer                          :: n
     associate (rt => mobbrmsd_state_INDEX_TO_ROTMAT)
       n = SIZE(this%z(rt:))
       R(:n) = this%z(rt:)
@@ -215,7 +218,7 @@ contains
 !| returns log_eval_ratio
   pure elemental function mobbrmsd_state_log_eval_ratio(this) result(res)
     type(mobbrmsd_state), intent(in) :: this
-    real(RK)                          :: res
+    real(RK)                         :: res
     res = this%z(mobbrmsd_state_INDEX_TO_LOG_RATIO)
   end function mobbrmsd_state_log_eval_ratio
 !
@@ -223,7 +226,7 @@ contains
   pure function mobbrmsd_state_dump(this) result(res)
     type(mobbrmsd_state), intent(in) :: this
     !! mobbrmsd_header
-    integer(IK), allocatable          :: res(:)
+    integer(IK), allocatable         :: res(:)
     allocate (res, source=this%s)
   end function mobbrmsd_state_dump
 !
@@ -231,7 +234,7 @@ contains
   pure function mobbrmsd_state_dump_real(this) result(res)
     type(mobbrmsd_state), intent(in) :: this
     !! mobbrmsd_header
-    real(RK), allocatable             :: res(:)
+    real(RK), allocatable            :: res(:)
     allocate (res, source=this%z)
   end function mobbrmsd_state_dump_real
 !
@@ -239,17 +242,28 @@ contains
   pure subroutine mobbrmsd_state_load(this, s, z)
     type(mobbrmsd_state), intent(inout) :: this
     !! mobbrmsd_header
-    integer(IK), intent(in)              :: s(:)
+    integer(IK), intent(in)             :: s(:)
     !! state integer array
-    real(RK), intent(in)                 :: z(:)
+    real(RK), intent(in)                :: z(:)
     !! state real array
-    integer(IK), allocatable             :: s_(:)
-    real(RK), allocatable                :: z_(:)
+    integer(IK), allocatable            :: s_(:)
+    real(RK), allocatable               :: z_(:)
     allocate (s_, source=s)
     allocate (z_, source=z)
     call MOVE_ALLOC(from=s_, to=this%s)
     call MOVE_ALLOC(from=z_, to=this%z)
   end subroutine mobbrmsd_state_load
+!
+!| attributes
+  pure subroutine mobbrmsd_state_attributes(d, s, n_int, n_float)
+    integer(IK), intent(in)            :: d, s(:)
+    integer(IK), intent(out), optional :: n_int
+    !! length of state array s
+    integer(IK), intent(out), optional :: n_float
+    !! length of state array z
+    if (PRESENT(n_int)) n_int = SIZE(s)
+    if (PRESENT(n_float)) n_float = mobbrmsd_state_INDEX_TO_ROTMAT + d * d - 1
+  end subroutine mobbrmsd_state_attributes
 !
   pure elemental subroutine mobbrmsd_state_destroy(this)
     type(mobbrmsd_state), intent(inout) :: this

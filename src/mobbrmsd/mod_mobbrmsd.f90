@@ -30,6 +30,7 @@ module mod_mobbrmsd
   public :: mobbrmsd_log_n_nodes
   public :: mobbrmsd_frac_n_nodes
   public :: mobbrmsd_exp_n_nodes
+  public :: mobbrmsd_attributes
   public :: mobbrmsd_memsize
   public :: mobbrmsd_swap_and_rotation
   public :: mobbrmsd_dump
@@ -416,12 +417,35 @@ contains
     end subroutine rotate
   end subroutine mobbrmsd_swap_and_rotation
 !
+!| attributes
+  pure subroutine mobbrmsd_attributes(this, n_dim, n_atom, n_mem, n_header, n_int, n_float)
+    type(mobbrmsd), intent(in)         :: this
+    !! this
+    integer(IK), intent(out), optional :: n_dim
+    !! n_dim
+    integer(IK), intent(out), optional :: n_atom
+    !! length of memory
+    integer(IK), intent(out), optional :: n_mem
+    !! length of memory
+    integer(IK), intent(out), optional :: n_header
+    !! length of header array q
+    integer(IK), intent(out), optional :: n_int
+    !! length of state array s
+    integer(IK), intent(out), optional :: n_float
+    !! length of state array z
+    if (PRESENT(n_dim)) n_dim = this%d
+    if (PRESENT(n_atom)) n_atom = mobbrmsd_n_atoms(this)
+    if (PRESENT(n_mem)) n_mem = mobbrmsd_memsize(this)
+    if (PRESENT(n_header)) n_header = 3 + SIZE(this%q) + SIZE(this%s)
+    call mobbrmsd_state_attributes(this%d, this%s, n_int, n_float)
+  end subroutine mobbrmsd_attributes
+!
 !| dump header as integer array
   pure function mobbrmsd_dump(this) result(res)
     type(mobbrmsd), intent(in) :: this
     !! this
-    integer(IK), allocatable    :: res(:)
-    allocate (res, source=[this%d, SIZE(this%q), this%q, this%s])
+    integer(IK), allocatable   :: res(:)
+    allocate (res, source=[this%d, SIZE(this%q), this%q, SIZE(this%s), this%s])
   end function mobbrmsd_dump
 !
 !| load integer array as header
@@ -430,16 +454,19 @@ contains
     !! this
     integer(IK), intent(in)       :: q(:)
     !! header array
-    integer(IK)                   :: sq, i
+    integer(IK)                   :: sq, ss, i
     this%d = q(1)
     sq = q(2)
     if (sq < 1) then
       this%q = [(0, i=1, 0)]
-      this%s = [(0, i=1, 0)]
-      return
     else
       this%q = q(3:2 + sq)
-      this%s = q(3 + sq:)
+    end if
+    ss = q(3 + sq)
+    if (ss < 1) then
+      this%s = [(0, i=1, 0)]
+    else
+      this%s = q(3 + sq:2 + sq + ss)
     end if
   end subroutine mobbrmsd_load
 !

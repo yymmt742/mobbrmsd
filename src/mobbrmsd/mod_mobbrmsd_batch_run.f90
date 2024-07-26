@@ -60,7 +60,6 @@ contains
     integer(IK), intent(in), optional    :: n_upper
     !! Specify the upper limit of the range to be calculated. Default [n_reference * n_target].
     integer(kind=IK)                     :: i, ipnt, spnt, xpnt, ypnt, wpnt, ldx, ldw, nmin, nlim
-!
     if (n_reference < 1 .or. n_target < 1) return
     ldx = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
     ldw = mobbrmsd_memsize(header)

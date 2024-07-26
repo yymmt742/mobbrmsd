@@ -158,7 +158,7 @@ contains
     print'(*(I4))', n_dim, n_atm, n_header, n_int, n_float, n_job, n_mem
 
     allocate (X(n_dim, n_apm, n_mol, n_target))
-    allocate (w(n_job * n_mem))
+    allocate (w(n_mem * (n_mem - 1) / 2))
     allocate (header(n_header))
     allocate (int_states(n_int, n_target, n_target))
     allocate (float_states(n_float, n_target, n_target))
@@ -170,12 +170,11 @@ contains
     call min_span_tree( &
  &    n_target, n_header, n_int, n_float, header, &
  &    X, W, RHUGE, ZERO, -1, .true., .true., &
- &    edges, weights, int_states, float_states)
+ &    edges, weights)
 !
     do i = 1, n_target - 1
-      print *, edges(:, i), weights(i)
+      print *, "# ", edges(:, i), weights(i)
     end do
-    print *
 !
   end subroutine test2
 !
