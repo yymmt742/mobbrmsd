@@ -4,6 +4,7 @@ program main
   use mod_mobbrmsd
   use mod_mobbrmsd_state
   use mod_mobbrmsd_mst
+  use mod_mobbrmsd_batch_run
   use mod_testutil
   use mod_unittest
   implicit none
@@ -11,7 +12,7 @@ program main
 #ifdef USE_REAL32
   integer, parameter :: place = 3
 #else
-  integer, parameter :: place = 7
+  integer, parameter :: place = 6
 #endif
 !
   call u%init('test mobbrmsd for (n,M,S)=(1,1,1)')
@@ -52,6 +53,8 @@ program main
   call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,8,1)}')
   call test4(4, 8, 1, [0])
 !
+  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=4')
+  call test5(4, 10, 1, [0], 4)
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
   call test5(4, 8, 1, [0], 10)
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
@@ -273,13 +276,18 @@ contains
 !$  use omp_lib
     integer, intent(in)    :: n, m, s, sym(n * (s - 1)), n_target
     type(mobbrmsd)         :: mobb
-    type(mobbrmsd_state)   :: state(n_target * (n_target - 1) / 2)
+    type(mobbrmsd_state)   :: state1(n_target * (n_target - 1) / 2)
+    type(mobbrmsd_state)   :: state2(n_target * (n_target - 1) / 2)
     type(mobbrmsd_input)   :: inp
     real(RK)               :: X(D, n, m, n_target)
     real(RK), allocatable  :: W(:)
     integer(IK)            :: edges(2, n_target - 1)
+    integer(IK)            :: redges(2, n_target - 1)
     real(RK)               :: weights(n_target - 1)
-    integer(IK)            :: i, j
+    real(RK)               :: upper(n_target, n_target)
+    real(RK)               :: lower(n_target, n_target)
+    real(RK)               :: refer(n_target, n_target)
+    integer(IK)            :: i, j, k
 !
     call mobbrmsd_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
@@ -299,11 +307,41 @@ contains
       X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
     end do
 !
-    allocate (W(mobbrmsd_memsize(mobb) * n_target * (n_target - 1) / 2))
+    !$omp parallel
+    if (omp_get_thread_num() == 0) k = MAX(n_target * (n_target - 1) / 2, omp_get_num_threads())
+    !$omp end parallel
+    allocate (W(mobbrmsd_memsize(mobb) * k))
 !
-    call mobbrmsd_min_span_tree(n_target, mobb, state, X, W, &
+    call mobbrmsd_min_span_tree(n_target, mobb, state1, X, W, &
    &                            edges=edges, weights=weights)
 !
+    call mobbrmsd_batch_tri_run(n_target, mobb, state2, X, W)
+!
+    k = 0
+    do j = 1, n_target
+      do i = 1, j - 1
+        k = k + 1
+        upper(i, j) = mobbrmsd_state_rmsd(state1(k))
+        upper(j, i) = upper(i, j)
+        lower(i, j) = mobbrmsd_state_lowerbound_as_rmsd(state1(k))
+        lower(j, i) = lower(i, j)
+        refer(i, j) = mobbrmsd_state_rmsd(state2(k))
+        refer(j, i) = refer(i, j)
+      end do
+      upper(j, j) = 0.0_RK
+      lower(j, j) = 0.0_RK
+      refer(j, j) = 0.0_RK
+    end do
+!
+    call min_span_tree(n_target, refer, redges)
+    call u%assert(is_same_graph(n_target, edges, redges), 'is_same_graph')
+    if (.not. is_same_graph(n_target, edges, redges)) then
+      do i = 1, n_target - 1
+        print *, edges(:, i), redges(:, i)
+      end do
+    end if
+!
+    return
     do i = 1, n_target - 1
       if (edges(1, i) > edges(2, i)) then
         j = (edges(1, i) - 2) * (edges(1, i) - 1) / 2 + edges(2, i)
@@ -311,13 +349,73 @@ contains
         j = (edges(2, i) - 2) * (edges(2, i) - 1) / 2 + edges(1, i)
       end if
       print'(2i4, *(f9.3))', edges(:, i), weights(i), &
-     &                       mobbrmsd_state_upperbound(state(j)), &
-     &                       mobbrmsd_state_lowerbound(state(j)), &
-     &                       mobbrmsd_state_upperbound(state(j))  &
-     &                     - mobbrmsd_state_lowerbound(state(j))
+     &                       mobbrmsd_state_rmsd(state1(j)), &
+     &                       mobbrmsd_state_lowerbound_as_rmsd(state1(j)), &
+     &                       mobbrmsd_state_rmsd(state1(j))  &
+     &                     - mobbrmsd_state_lowerbound_as_rmsd(state1(j))
     end do
 !
   end subroutine test5
+!
+  pure subroutine min_span_tree(n, r, e)
+    integer(IK), intent(in)    :: n
+    real(RK), intent(in)       :: r(n, n)
+    integer(IK), intent(inout) :: e(2, n - 1)
+    real(RK)                   :: c
+    integer(IK)                :: f(n)
+    integer(IK)                :: i, j, k, pi, pj
+    do concurrent(i=1:n)
+      f(i) = i
+    end do
+    pi = 0
+    pj = 0
+    do k = 1, n - 1
+      c = 999._RK
+      do j = 1, k
+        do i = k + 1, n
+          if (c > r(f(i), f(j))) then
+            c = r(f(i), f(j))
+            pi = i
+            pj = j
+          end if
+        end do
+      end do
+      if (f(pi) < f(pj)) then
+        e(:, k) = [f(pi), f(pj)]
+      else
+        e(:, k) = [f(pj), f(pi)]
+      end if
+      j = f(k + 1)
+      f(k + 1) = f(pi)
+      f(pi) = j
+    end do
+  end subroutine min_span_tree
+!
+  pure function is_same_graph(n, e1, e2) result(res)
+    integer(IK), intent(in) :: n, e1(2, n - 1), e2(2, n - 1)
+    logical                 :: res, t
+    integer(IK)             :: i, j
+    res = .false.
+    do i = 1, n - 2
+      do j = i + 1, n - 1
+        if (ALL(e1(:, i) == e1(:, j))) return
+      end do
+    end do
+    do i = 1, n - 2
+      do j = i + 1, n - 1
+        if (ALL(e2(:, i) == e2(:, j))) return
+      end do
+    end do
+    do i = 1, n - 1
+      do j = 1, n - 1
+        t = ALL(e1(:, i) == e2(:, j))
+        if (t) exit
+      end do
+      if (t) cycle
+      return
+    end do
+    res = .true.
+  end function is_same_graph
 !
 end program main
 
