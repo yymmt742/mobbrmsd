@@ -222,7 +222,7 @@ class mobbrmsd:
 
         def add_molecule(mol: DataclassMolecule):
             ret = [mol.n_apm, mol.n_mol]
-            if type(mol.sym) is None:
+            if mol.sym is None:
                 ret += [1]
             else:
                 sym = numpy.array(mol.sym, dtype=numpy.int32) + 1
