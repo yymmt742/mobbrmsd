@@ -73,7 +73,7 @@ contains
    &   RT => mobbrmsd_state_INDEX_TO_ROTMAT &
     )
       this%s = s
-      allocate (z(5 + d**2))
+      allocate (z(RT + d**2 - 1))
       z(RN) = ONE / n
       z(AC) = ZERO
       z(UB) = RHUGE

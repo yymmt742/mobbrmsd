@@ -1,5 +1,5 @@
 program main
-  use mod_dimspec_functions, only: D
+  use mod_dimspec_functions, only: D, setup_dimension
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mobbrmsd
   use mod_mobbrmsd_state
@@ -15,6 +15,7 @@ program main
   integer, parameter :: place = 6
 #endif
 !
+  call setup_dimension(4)
   call u%init('test mobbrmsd for (n,M,S)=(1,1,1)')
   call test1(1, 1, 1, [0])
   call u%init('test mobbrmsd for (n,M,S)=(1,2,1)')
