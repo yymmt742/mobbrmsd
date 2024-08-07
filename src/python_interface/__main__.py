@@ -1,6 +1,7 @@
 from . import __version__
 from . import demo_cogen
 from . import demo_bb
+from . import demo_bb_sp
 from . import demo_bb_multi
 from . import demo_batch
 from . import demo_batch_tri
@@ -19,12 +20,13 @@ bar2 = (
 bar3 = "==========================================="
 demo1 = demo_cogen.title
 demo2 = demo_bb.title
-demo3 = demo_bb_multi.title
-demo4 = demo_batch.title
-demo5 = demo_batch_tri.title
-demo6 = demo_mst.title
+demo3 = demo_bb_sp.title
+demo4 = demo_bb_multi.title
+demo5 = demo_batch.title
+demo6 = demo_batch_tri.title
+demo7 = demo_mst.title
 exit_ = "exit"
-opts = (demo1, demo2, demo3, demo4, demo5, demo6, exit_)
+opts = (demo1, demo2, demo3, demo4, demo5, demo6, demo7, exit_)
 
 
 def run_demo(demo, read_input, after=None):
@@ -73,16 +75,18 @@ while True:
     elif option == demo2:
         run_demo(demo_bb.main, demo_bb.read_input)
     elif option == demo3:
-        run_demo(demo_bb_multi.main, demo_bb_multi.read_input)
+        run_demo(demo_bb_sp.main, demo_bb_sp.read_input)
     elif option == demo4:
-        run_demo(demo_batch.main, demo_batch.read_input, after=demo_batch.show_graph)
+        run_demo(demo_bb_multi.main, demo_bb_multi.read_input)
     elif option == demo5:
+        run_demo(demo_batch.main, demo_batch.read_input, after=demo_batch.show_graph)
+    elif option == demo6:
         run_demo(
             demo_batch_tri.main,
             demo_batch_tri.read_input,
             after=demo_batch_tri.show_graph,
         )
-    elif option == demo6:
+    elif option == demo7:
         run_demo(demo_mst.main, demo_mst.read_input, after=demo_mst.show_graph)
     elif option == exit_:
         break
