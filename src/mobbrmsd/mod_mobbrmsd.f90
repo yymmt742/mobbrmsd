@@ -209,7 +209,8 @@ contains
  &                  difflim, &
  &                  maxeval, &
  &                  remove_com, &
- &                  sort_by_g &
+ &                  sort_by_g, &
+ &                  get_rotation &
  &                 )
     type(mobbrmsd), intent(in)          :: this
     !! mobbrmsd
@@ -231,8 +232,16 @@ contains
     !! if true, remove centroids. default [.true.]
     logical, intent(in), optional       :: sort_by_g
     !! if true, row is sorted respect to G of reference coordinate. default [.true.]
+    logical, intent(in), optional       :: get_rotation
+    !! if true, calculate rotation matrix. default [.false.]
+    integer(IK)                         :: d_
 !
-    call mobbrmsd_state_init(state, this%d, mobbrmsd_n_atoms(this), this%s)
+    if (PRESENT(get_rotation)) then
+      d_ = MERGE(this%d, 0, get_rotation)
+    else
+      d_ = 0
+    end if
+    call mobbrmsd_state_init(state, d_, mobbrmsd_n_atoms(this), this%s) ! if d_<1, omit rotation matrix calculation.
 !
     if (PRESENT(W)) then
       call bb_list_setup(&
@@ -323,7 +332,7 @@ contains
       lb = bblb
       ne = bbne
       lr = LOG(bbne) - bbln
-      call bb_list_rotation_matrix(this%q, state%s, W, state%z(rt))
+      if (mobbrmsd_state_has_rotation_matrix(state)) call bb_list_rotation_matrix(this%q, state%s, W, state%z(rt))
     end associate
   end subroutine mobbrmsd_restart
 !
@@ -404,7 +413,7 @@ contains
     !! coordinate
     associate (rt => mobbrmsd_state_INDEX_TO_ROTMAT)
       call bb_list_swap_y(this%q, state%s, X)
-      call rotate(this%d, mobbrmsd_n_atoms(this), state%z(rt), X)
+      if (mobbrmsd_state_has_rotation_matrix(state)) call rotate(this%d, mobbrmsd_n_atoms(this), state%z(rt), X)
     end associate
   contains
     pure subroutine rotate(n_dims, n_atoms, R, X)

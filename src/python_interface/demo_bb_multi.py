@@ -185,6 +185,7 @@ def main(molecules=[], a=0.5, b=1.0):
         ub, lb = ret.bounds[0], ret.bounds[1]
         ret.restart(maxeval=0)
         i += 1
+    ret.restart(maxeval=0, get_rotation=True)  # get rotation matrix
 
     print_ret(ret, post=erace)
     z = ret.rotate_y(y)

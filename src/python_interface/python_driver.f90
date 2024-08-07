@@ -47,7 +47,7 @@ contains
   subroutine decode_attributes(l, seq, &
  &                  n_dim, n_atom, &
  &                  n_mem, n_job, &
- &                  n_header, n_int, n_float)
+ &                  n_header, n_int, n_float, n_rot)
     integer(kind=IK), intent(in)  :: l
     integer(kind=IK), intent(in)  :: seq(l)
     integer(kind=IK), intent(out) :: n_dim
@@ -57,6 +57,7 @@ contains
     integer(kind=IK), intent(out) :: n_header
     integer(kind=IK), intent(out) :: n_int
     integer(kind=IK), intent(out) :: n_float
+    integer(kind=IK), intent(out) :: n_rot
     type(mobbrmsd)                :: mobb
     call decode_input(l, seq, mobb)
     call mobbrmsd_attributes( &
@@ -68,6 +69,8 @@ contains
    &       n_int=n_int, &
    &       n_float=n_float &
    &      )
+    n_rot = n_dim * n_dim
+    n_job = 1
     !$omp parallel
     if (omp_get_thread_num() == 0) n_job = omp_get_num_threads()
     !$omp end parallel
@@ -156,6 +159,7 @@ contains
  &                  n_header, &
  &                  n_int, &
  &                  n_float, &
+ &                  n_rot, &
  &                  header, &
  &                  X, &
  &                  Y, &
@@ -166,13 +170,16 @@ contains
  &                  remove_com, &
  &                  sort_by_g, &
  &                  rotate_y, &
+ &                  get_rotation, &
  &                  int_states, &
- &                  float_states &
+ &                  float_states, &
+ &                  rotation &
  &                 )
     integer(kind=IK), intent(in)  :: n_header
     !! header length
     integer(kind=IK), intent(in)  :: n_int
     integer(kind=IK), intent(in)  :: n_float
+    integer(kind=IK), intent(in)  :: n_rot
     integer(kind=IK), intent(in)  :: header(n_header)
     real(kind=RK), intent(in)     :: X(*)
     !! reference coordinate
@@ -186,8 +193,10 @@ contains
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
     logical, intent(in)           :: rotate_y
+    logical, intent(in)           :: get_rotation
     integer(kind=IK), intent(out) :: int_states(n_int)
     real(kind=RK), intent(out)    :: float_states(n_float)
+    real(kind=RK), intent(out)    :: rotation(n_rot)
     type(mobbrmsd)                :: h
     type(mobbrmsd_state)          :: s
 
@@ -197,64 +206,79 @@ contains
       &               difflim=difflim, &
       &               maxeval=maxeval,&
       &               remove_com=remove_com,&
-      &               sort_by_g=sort_by_g&
+      &               sort_by_g=sort_by_g,&
+      &               get_rotation=(get_rotation .or. rotate_y)&
       &   )
     if (rotate_y) call mobbrmsd_swap_and_rotation(h, s, Y)
 
     int_states = mobbrmsd_state_dump(s)
     float_states = mobbrmsd_state_dump_real(s)
-
+    if (get_rotation) then
+      rotation = mobbrmsd_state_dump_rotation(s)
+    else
+      rotation = ZERO
+    end if
   end subroutine run
 
   !| restart with working memory
   pure subroutine restart( &
- &    n_header, n_int, n_float, &
+ &    n_header, n_int, n_float, n_rot, &
  &    header, &
  &    int_states, float_states, &
- &    W, &
- &    cutoff, difflim, maxeval &
+ &    W, rotation, &
+ &    cutoff, difflim, maxeval, get_rotation &
  &  )
     integer(kind=IK), intent(in)    :: n_header
     integer(kind=IK), intent(in)    :: n_int
     integer(kind=IK), intent(in)    :: n_float
+    integer(kind=IK), intent(in)    :: n_rot
     integer(kind=IK), intent(in)    :: header(n_header)
     integer(kind=IK), intent(inout) :: int_states(n_int)
     real(kind=RK), intent(inout)    :: float_states(n_float)
     !! work memory
+    real(kind=RK), intent(inout)    :: rotation(n_rot)
+    !! rotation matrix
     real(kind=RK), intent(inout)    :: W(*)
     !! work memory
     integer(kind=IK), intent(in)    :: maxeval
     real(kind=RK), intent(in)       :: cutoff
     real(kind=RK), intent(in)       :: difflim
+    logical, intent(in)             :: get_rotation
     type(mobbrmsd)                  :: h
     type(mobbrmsd_state)            :: s
 
     call mobbrmsd_load(h, header)
-    call mobbrmsd_state_load(s, int_states, float_states)
+    if (get_rotation) then
+      call mobbrmsd_state_load(s, int_states, float_states, rotation)
+    else
+      call mobbrmsd_state_load(s, int_states, float_states)
+    end if
     call mobbrmsd_restart(h, s, W, cutoff, difflim, maxeval)
 
     int_states = mobbrmsd_state_dump(s)
     float_states = mobbrmsd_state_dump_real(s)
-
+    if (get_rotation) rotation = mobbrmsd_state_dump_rotation(s)
   end subroutine restart
 
   !| compute rotration respect to state.
   pure subroutine rotate_y( &
- &    n_header, n_int, n_float, &
- &    header, int_states, float_states, Y &
+ &    n_header, n_int, n_float, n_rot, &
+ &    header, int_states, float_states, rotation, Y &
  &  )
     integer(kind=IK), intent(in) :: n_header
     integer(kind=IK), intent(in) :: n_int
     integer(kind=IK), intent(in) :: n_float
+    integer(kind=IK), intent(in) :: n_rot
     integer(kind=IK), intent(in) :: header(n_header)
     integer(kind=IK), intent(in) :: int_states(n_int)
     real(kind=RK), intent(in)    :: float_states(n_float)
+    real(kind=RK), intent(in)    :: rotation(n_rot)
     real(kind=RK), intent(inout) :: Y(*)
     type(mobbrmsd)               :: h
     type(mobbrmsd_state)         :: s
 
     call mobbrmsd_load(h, header)
-    call mobbrmsd_state_load(s, int_states, float_states)
+    call mobbrmsd_state_load(s, int_states, float_states, rotation)
     call mobbrmsd_swap_and_rotation(h, s, Y)
 
   end subroutine rotate_y

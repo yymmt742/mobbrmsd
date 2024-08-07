@@ -21,6 +21,7 @@ class mobbrmsd_result:
         header: npt.NDArray,
         istate: None | npt.NDArray,
         rstate: None | npt.NDArray,
+        rot: None | npt.NDArray,
         w: None | npt.NDArray = None,
     ) -> None:
         self.header = header.copy()
@@ -44,6 +45,10 @@ class mobbrmsd_result:
         self.log_eval_ratio = driver.log_eval_ratio(rstate)
         self.eval_ratio = numpy.exp(self.log_eval_ratio)
         self.is_finished = driver.is_finished(header, istate, rstate)
+        if rot is None:
+            self.rot = numpy.zeros([self.d * self.d])
+        else:
+            self.rot = rot.copy()
         if w is not None:
             self.w = w.copy()
 
@@ -71,6 +76,7 @@ class mobbrmsd_result:
         cutoff: float = float("inf"),
         difflim: float = 0.0,
         maxeval: int = -1,
+        get_rotation: bool = False,
     ) -> None:
 
         if not hasattr(self, "w"):
@@ -82,9 +88,11 @@ class mobbrmsd_result:
             self.istate,
             self.rstate,
             self.w,
+            self.rot,
             cutoff,
             difflim,
             maxeval,
+            get_rotation,
         )
 
         self.rmsd = driver.rmsd(self.rstate)
@@ -103,7 +111,7 @@ class mobbrmsd_result:
     ) -> None:
         y_ = y.flatten()
         driver = select_driver(self.d, dtype=y.dtype)
-        driver.rotate_y(self.header, self.istate, self.rstate, y_)
+        driver.rotate_y(self.header, self.istate, self.rstate, self.rot, y_)
         del driver
         return y_.reshape(y.shape)
 
@@ -253,6 +261,7 @@ class mobbrmsd:
             self.n_header,
             self.n_int,
             self.n_float,
+            self.n_rot,
         ) = driver.decode_attributes(molecular_sequence)
         self.header = driver.decode_header(molecular_sequence, self.n_header)
         del driver
@@ -275,23 +284,26 @@ class mobbrmsd:
         driver = select_driver(self.d, dtype=dt)
         w = numpy.empty(self.memsize, dtype=dt)
 
-        iret, rret = driver.run(
+        _, rret, _ = driver.run(
             self.n_int,
             self.n_float,
+            self.n_rot,
             self.header,
             x_,
             y_,
             w,
-            cutoff,
-            difflim,
-            maxeval,
-            remove_com,
-            sort_by_g,
-            rotate_y,
+            float("inf"),
+            0.0,
+            -1,
+            True,
+            True,
+            False,
+            False,
         )
 
         ret = driver.rmsd(rret)
         del driver
+        del w
         return ret
 
     ##
@@ -310,6 +322,7 @@ class mobbrmsd:
     #   remove_com (bool): 参照構造と対照構造から重心を除去する。 default True
     #   sort_by_g (bool): 参照構造を自己分散の大きい順に並び替えて計算を実行する。 default True
     #   rotate_y (bool): 対象構造に対して置換と回転を実行する。 default False
+    #   rotate_y (bool): 対象構造に対して置換と回転を実行する。 default False
     # @return mobbrmsd_result
     #   所与の終了条件により計算が中断された場合、mobbrmsd_result はインスタンスは計算再開用のデータを保持する。
     def run(
@@ -322,6 +335,7 @@ class mobbrmsd:
         remove_com: bool = True,
         sort_by_g: bool = True,
         rotate_y: bool = False,
+        get_rotation: bool = False,
         *args,
         **kwargs,
     ) -> mobbrmsd_result:
@@ -332,9 +346,10 @@ class mobbrmsd:
         driver = select_driver(self.d, dtype=dt)
         w = numpy.empty(self.memsize, dtype=dt)
 
-        iret, rret = driver.run(
+        iret, rret, rot = driver.run(
             self.n_int,
             self.n_float,
+            self.n_rot,
             self.header,
             x_,
             y_,
@@ -345,10 +360,12 @@ class mobbrmsd:
             remove_com,
             sort_by_g,
             rotate_y,
+            get_rotation,
         )
 
-        ret = mobbrmsd_result(driver, self.d, self.header, iret, rret, w=w)
+        ret = mobbrmsd_result(driver, self.d, self.header, iret, rret, rot, w=w)
         del driver
+        del w
         return ret
 
     ##

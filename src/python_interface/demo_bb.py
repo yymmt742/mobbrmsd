@@ -147,7 +147,7 @@ def main(n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
     mrmsd = mobbrmsd(molecules=molecules)
 
     ub, lb = numpy.inf, -numpy.inf
-    ret = mrmsd.run(x, y, maxeval=0)
+    ret = mrmsd.run(x, y, maxeval=0, get_rotation=True)
 
     print("        N_eval   Eval_ratio      Upperbound      Lowerbound      RMSD")
     print(sep1)
@@ -159,7 +159,7 @@ def main(n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
         if ub > ret.bounds[0] or lb < ret.bounds[1]:
             print_ret(ret, post=erace)
         ub, lb = ret.bounds[0], ret.bounds[1]
-        ret.restart(maxeval=0)
+        ret.restart(maxeval=0, get_rotation=True)
         i += 1
 
     print_ret(ret, post=erace)

@@ -17,9 +17,11 @@ module mod_mobbrmsd_state
   public :: mobbrmsd_state_n_eval
   public :: mobbrmsd_state_eval_ratio
   public :: mobbrmsd_state_log_eval_ratio
+  public :: mobbrmsd_state_has_rotation_matrix
   public :: mobbrmsd_state_rotation_matrix
   public :: mobbrmsd_state_dump
   public :: mobbrmsd_state_dump_real
+  public :: mobbrmsd_state_dump_rotation
   public :: mobbrmsd_state_load
   public :: mobbrmsd_state_destroy
   public :: mobbrmsd_state_attributes
@@ -73,14 +75,14 @@ contains
    &   RT => mobbrmsd_state_INDEX_TO_ROTMAT &
     )
       this%s = s
-      allocate (z(RT + d**2 - 1))
+      allocate (z(RT + MAX(d, 0)**2 - 1))
       z(RN) = ONE / n
       z(AC) = ZERO
       z(UB) = RHUGE
       z(LB) = -RHUGE
       z(NE) = -RHUGE
       z(LR) = ZERO
-      call eye(d, z(RT))
+      if (d > 0) call eye(d, z(RT))
       call MOVE_ALLOC(from=z, to=this%z)
     end associate
   contains
@@ -108,7 +110,11 @@ contains
     type(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
-    res = this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND)
+    if (SIZE(this%z) >= mobbrmsd_state_INDEX_TO_UPPERBOUND) then
+      res = this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND)
+    else
+      res = RHUGE
+    end if
   end function mobbrmsd_state_upperbound
 !
 !| returns lowerbound
@@ -116,15 +122,23 @@ contains
     type(mobbrmsd_state), intent(in) :: this
     !! this
     real(RK)                          :: res
-    res = this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND)
+    if (SIZE(this%z) >= mobbrmsd_state_INDEX_TO_LOWERBOUND) then
+      res = this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND)
+    else
+      res = -RHUGE
+    end if
   end function mobbrmsd_state_lowerbound
 !
 !| returns autovariance
   pure elemental function mobbrmsd_state_autovariance(this) result(res)
     type(mobbrmsd_state), intent(in) :: this
     !! this
-    real(RK)                          :: res
-    res = this%z(mobbrmsd_state_INDEX_TO_AUTOCORR)
+    real(RK)                         :: res
+    if (SIZE(this%z) >= mobbrmsd_state_INDEX_TO_AUTOCORR) then
+      res = this%z(mobbrmsd_state_INDEX_TO_AUTOCORR)
+    else
+      res = ZERO
+    end if
   end function mobbrmsd_state_autovariance
 !
 !| returns squared deviation
@@ -133,10 +147,14 @@ contains
     !! this
     real(RK)                          :: res
     associate (&
-   &  ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
-   &  ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND) &
+   &  ac => mobbrmsd_state_INDEX_TO_AUTOCORR, &
+   &  ub => mobbrmsd_state_INDEX_TO_UPPERBOUND &
    &  )
-      res = MAX(ZERO, ac + TWO * ub)
+    if (SIZE(this%z) >= UB) then
+      res = MAX(ZERO, this%z(AC) + TWO * this%z(UB))
+    else
+      res = RHUGE
+    end if
     end associate
   end function mobbrmsd_state_squared_deviation
 !
@@ -146,11 +164,15 @@ contains
     !! this
     real(RK)                          :: res
     associate (&
-   &  rn => this%z(mobbrmsd_state_RECIPROCAL_OF_N), &
-   &  ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
-   &  ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND) &
+   &  rn => mobbrmsd_state_RECIPROCAL_OF_N, &
+   &  ac => mobbrmsd_state_INDEX_TO_AUTOCORR, &
+   &  ub => mobbrmsd_state_INDEX_TO_UPPERBOUND &
    &  )
-      res = MAX(ZERO, rn * (ac + TWO * ub))
+    if (SIZE(this%z) >= UB) then
+      res = MAX(ZERO, this%z(RN) * (this%z(AC) + TWO * this%z(UB)))
+    else
+      res = RHUGE
+    end if
     end associate
   end function mobbrmsd_state_mean_squared_deviation
 !
@@ -160,11 +182,15 @@ contains
     !! this
     real(RK)                          :: res
     associate (&
-   &  rn => this%z(mobbrmsd_state_RECIPROCAL_OF_N), &
-   &  ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
-   &  ub => this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND) &
+   &  rn => mobbrmsd_state_RECIPROCAL_OF_N, &
+   &  ac => mobbrmsd_state_INDEX_TO_AUTOCORR, &
+   &  ub => mobbrmsd_state_INDEX_TO_UPPERBOUND &
    &  )
-      res = SQRT(MAX(ZERO, rn * (ac + TWO * ub)))
+    if (SIZE(this%z) >= UB) then
+      res = SQRT(MAX(ZERO, this%z(RN) * (this%z(AC) + TWO * this%z(UB))))
+    else
+      res = RHUGE
+    end if
     end associate
   end function mobbrmsd_state_rmsd
 !
@@ -174,11 +200,15 @@ contains
     !! this
     real(RK)                          :: res
     associate (&
-   &  rn => this%z(mobbrmsd_state_RECIPROCAL_OF_N), &
-   &  ac => this%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
-   &  lb => this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND) &
+   &  rn => mobbrmsd_state_RECIPROCAL_OF_N, &
+   &  ac => mobbrmsd_state_INDEX_TO_AUTOCORR, &
+   &  lb => mobbrmsd_state_INDEX_TO_LOWERBOUND &
    &  )
-      res = SQRT(MAX(ZERO, rn * (ac + TWO * lb)))
+    if (SIZE(this%z) >= LB) then
+      res = SQRT(MAX(ZERO, this%z(RN) * (this%z(AC) + TWO * this%z(LB))))
+    else
+      res = ZERO
+    end if
     end associate
   end function mobbrmsd_state_lowerbound_as_rmsd
 !
@@ -187,8 +217,12 @@ contains
     type(mobbrmsd_state), intent(in) :: this
     !! this
     integer(IK)                       :: res
-    associate (ne => this%z(mobbrmsd_state_INDEX_TO_N_EVAL))
-      res = NINT(ne, IK)
+    associate (NE => mobbrmsd_state_INDEX_TO_N_EVAL)
+    if (SIZE(this%z) >= NE) then
+      res = NINT(this%z(NE), IK)
+    else
+      res = 0_IK
+    end if
     end associate
   end function mobbrmsd_state_n_eval
 !
@@ -198,9 +232,23 @@ contains
     !! this
     real(RK)                         :: res
     associate (LR => mobbrmsd_state_INDEX_TO_LOG_RATIO)
+    if (SIZE(this%z) >= LR) then
       res = EXP(this%z(LR))
+    else
+      res = ZERO
+    end if
     end associate
   end function mobbrmsd_state_eval_ratio
+!
+!| rotation matrix
+  pure elemental function mobbrmsd_state_has_rotation_matrix(this) result(res)
+    type(mobbrmsd_state), intent(in) :: this
+    !! this
+    logical                          :: res
+    associate (rt => mobbrmsd_state_INDEX_TO_ROTMAT)
+      res = SIZE(this%z) >= rt
+    end associate
+  end function mobbrmsd_state_has_rotation_matrix
 !
 !| rotation matrix
   pure subroutine mobbrmsd_state_rotation_matrix(this, R)
@@ -209,6 +257,7 @@ contains
     real(RK), intent(inout)          :: R(*)
     !! coordinate
     integer                          :: n
+    if (.not. mobbrmsd_state_has_rotation_matrix(this)) return
     associate (rt => mobbrmsd_state_INDEX_TO_ROTMAT)
       n = SIZE(this%z(rt:))
       R(:n) = this%z(rt:)
@@ -219,7 +268,11 @@ contains
   pure elemental function mobbrmsd_state_log_eval_ratio(this) result(res)
     type(mobbrmsd_state), intent(in) :: this
     real(RK)                         :: res
-    res = this%z(mobbrmsd_state_INDEX_TO_LOG_RATIO)
+    if (SIZE(this%z) >= mobbrmsd_state_INDEX_TO_LOG_RATIO) then
+      res = this%z(mobbrmsd_state_INDEX_TO_LOG_RATIO)
+    else
+      res = -RHUGE
+    end if
   end function mobbrmsd_state_log_eval_ratio
 !
 !| dump header as integer array (for python interface api)
@@ -235,22 +288,64 @@ contains
     type(mobbrmsd_state), intent(in) :: this
     !! mobbrmsd_header
     real(RK), allocatable            :: res(:)
-    allocate (res, source=this%z)
+    associate ( &
+   &   RN => mobbrmsd_state_RECIPROCAL_OF_N, &
+   &   AC => mobbrmsd_state_INDEX_TO_AUTOCORR, &
+   &   UB => mobbrmsd_state_INDEX_TO_UPPERBOUND, &
+   &   LB => mobbrmsd_state_INDEX_TO_LOWERBOUND, &
+   &   NE => mobbrmsd_state_INDEX_TO_N_EVAL, &
+   &   LR => mobbrmsd_state_INDEX_TO_LOG_RATIO &
+    )
+    if (SIZE(this%z) >= LR) then
+      allocate (res, source=this%z(:LR))
+    else
+      allocate (res(LR))
+      res(RN) = ONE
+      res(AC) = ZERO
+      res(UB) = RHUGE
+      res(LB) = -RHUGE
+      res(NE) = -RHUGE
+      res(LR) = ZERO
+    end if
+    end associate
   end function mobbrmsd_state_dump_real
 !
+!| dump header as integer array (for python interface api)
+  pure function mobbrmsd_state_dump_rotation(this) result(res)
+    type(mobbrmsd_state), intent(in) :: this
+    !! mobbrmsd_header
+    real(RK), allocatable            :: res(:)
+    associate ( &
+   &   RT => mobbrmsd_state_INDEX_TO_ROTMAT &
+    )
+    if (mobbrmsd_state_has_rotation_matrix(this)) then
+      allocate (res, source=this%z(RT:))
+    else
+      allocate (res(0))
+    end if
+    end associate
+  end function mobbrmsd_state_dump_rotation
+!
 !| load integer array as header (for python interface api)
-  pure subroutine mobbrmsd_state_load(this, s, z)
+  pure subroutine mobbrmsd_state_load(this, s, z, r)
     type(mobbrmsd_state), intent(inout) :: this
     !! mobbrmsd_header
     integer(IK), intent(in)             :: s(:)
     !! state integer array
-    real(RK), intent(in)                :: z(:)
+    real(RK), intent(in), optional      :: z(:)
     !! state real array
+    real(RK), intent(in), optional      :: r(:)
+    !! rotation
     integer(IK), allocatable            :: s_(:)
     real(RK), allocatable               :: z_(:)
     allocate (s_, source=s)
-    allocate (z_, source=z)
     call MOVE_ALLOC(from=s_, to=this%s)
+    if (PRESENT(z)) then
+      allocate (z_, source=z)
+      if (PRESENT(r)) z_ = [z_, r]
+    else
+      allocate (z_(0))
+    end if
     call MOVE_ALLOC(from=z_, to=this%z)
   end subroutine mobbrmsd_state_load
 !
@@ -262,7 +357,7 @@ contains
     integer(IK), intent(out), optional :: n_float
     !! length of state array z
     if (PRESENT(n_int)) n_int = SIZE(s)
-    if (PRESENT(n_float)) n_float = mobbrmsd_state_INDEX_TO_ROTMAT + d * d - 1
+    if (PRESENT(n_float)) n_float = mobbrmsd_state_INDEX_TO_ROTMAT - 1
   end subroutine mobbrmsd_state_attributes
 !
   pure elemental subroutine mobbrmsd_state_destroy(this)

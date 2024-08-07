@@ -86,7 +86,7 @@ contains
     allocate (W(mobbrmsd_memsize(mobb)))
 !
     do i = 1, 20
-      call mobbrmsd_run(mobb, stat, X, Y, W)
+      call mobbrmsd_run(mobb, stat, X, Y, W, get_rotation=.true.)
       call u%assert_almost_equal( &
      &       mobbrmsd_state_squared_deviation(stat), &
      &       brute_sd(n, m, s, sym, X, Y), &
@@ -141,7 +141,7 @@ contains
     do i = 1, 10
       Y = RESHAPE([Y1, Y2], SHAPE(Y))
       call centering(SIZE(Y, 2), Y)
-      call mobbrmsd_run(mobb, stat, X, Y, W)
+      call mobbrmsd_run(mobb, stat, X, Y, W, get_rotation=.true.)
       brute = brute_sd_double(n1, m1, s1, sym1, n2, m2, s2, sym2, X1, Y1, X2, Y2)
       call u%assert_almost_equal(mobbrmsd_state_squared_deviation(stat), brute, 'minrmsd value', place=place)
       Z = Y

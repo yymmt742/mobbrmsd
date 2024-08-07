@@ -24,14 +24,14 @@ contains
     integer(IK)              :: n_atm
     integer(IK)              :: n_dim
     real(RK), allocatable    :: X(:, :, :, :)
-    integer(IK)              :: n_header, n_int, n_float, n_job, n_mem
+    integer(IK)              :: n_header, n_int, n_float, n_job, n_mem, n_rot
     integer(IK), allocatable :: h(:)
     real(RK), allocatable    :: rmsd(:), W(:, :)
     integer(IK)              :: i, j, k, l
 !
-    call decode_attributes(SIZE(seq), seq, n_dim, n_atm, n_mem, n_job, n_header, n_int, n_float)
+    call decode_attributes(SIZE(seq), seq, n_dim, n_atm, n_mem, n_job, n_header, n_int, n_float, n_rot)
     print *, n_dim, n_atm
-    print *, n_mem, n_job, n_header, n_int, n_float
+    print *, n_mem, n_job, n_header, n_int, n_float, n_rot
 
     allocate (h(n_header))
     allocate (rmsd((n_target - 1) * n_target / 2))
@@ -85,12 +85,12 @@ contains
     integer(IK)              :: n_atm
     integer(IK)              :: n_dim
     real(RK), allocatable    :: X(:, :, :, :), Y(:, :, :, :)
-    integer(IK)              :: n_header, n_int, n_float, n_job, n_mem
+    integer(IK)              :: n_header, n_int, n_float, n_job, n_mem, n_rot
     integer(IK), allocatable :: h(:)
     real(RK), allocatable    :: W(:, :), rmsd(:, :)
     integer(IK)              :: i, j, k, l
 !
-    call decode_attributes(SIZE(seq), seq, n_dim, n_atm, n_mem, n_job, n_header, n_int, n_float)
+    call decode_attributes(SIZE(seq), seq, n_dim, n_atm, n_mem, n_job, n_header, n_int, n_float, n_rot)
     print *, n_dim, n_atm
     print *, n_mem, n_job, n_header, n_int, n_float
 
@@ -145,7 +145,7 @@ contains
     integer(IK), parameter   :: seq(3 + n_apm) = [n_apm, n_mol, n_sym, 5, 6, 7, 8, 1, 2, 3, 4]
     real(RK), allocatable    :: X(:, :, :, :)
     integer(IK)              :: n_dim, n_atm
-    integer(IK)              :: n_header, n_int, n_float, n_job, n_mem
+    integer(IK)              :: n_header, n_int, n_float, n_job, n_mem, n_rot
     integer(IK)              :: edges(2, n_target - 1)
     real(RK)                 :: weights(n_target - 1)
     real(RK), allocatable    :: W(:)
@@ -153,9 +153,9 @@ contains
     real(RK), allocatable    :: float_states(:, :, :)
     integer(IK)              :: i
 !
-    call decode_attributes(SIZE(seq), seq, n_dim, n_atm, n_mem, n_job, n_header, n_int, n_float)
+    call decode_attributes(SIZE(seq), seq, n_dim, n_atm, n_mem, n_job, n_header, n_int, n_float, n_rot)
 !
-    print'(*(I4))', n_dim, n_atm, n_header, n_int, n_float, n_job, n_mem
+    print'(*(I4))', n_dim, n_atm, n_header, n_int, n_float, n_job, n_mem, n_rot
 
     allocate (X(n_dim, n_apm, n_mol, n_target))
     allocate (w(n_mem * (n_mem - 1) / 2))
