@@ -44,35 +44,34 @@ contains
     call mobbrmsd_init(mobb, inp)
   end subroutine decode_input
 
-  subroutine decode_attributes(l, seq, &
- &                  n_dim, n_atom, &
- &                  n_mem, n_job, &
- &                  n_header, n_int, n_float, n_rot)
+!|  return attributes
+!   1 : n_dim
+!   2 : n_atom
+!   3 : n_header
+!   4 : n_int
+!   5 : n_float
+!   6 : n_rot
+!   7 : n_mem
+!   8 : n_job
+  subroutine decode_attributes(l, seq, att)
     integer(kind=IK), intent(in)  :: l
     integer(kind=IK), intent(in)  :: seq(l)
-    integer(kind=IK), intent(out) :: n_dim
-    integer(kind=IK), intent(out) :: n_atom
-    integer(kind=IK), intent(out) :: n_mem
-    integer(kind=IK), intent(out) :: n_job
-    integer(kind=IK), intent(out) :: n_header
-    integer(kind=IK), intent(out) :: n_int
-    integer(kind=IK), intent(out) :: n_float
-    integer(kind=IK), intent(out) :: n_rot
+    integer(kind=IK), intent(out) :: att(8)
     type(mobbrmsd)                :: mobb
     call decode_input(l, seq, mobb)
     call mobbrmsd_attributes( &
    &       mobb, &
-   &       n_dim=n_dim, &
-   &       n_atom=n_atom, &
-   &       n_mem=n_mem, &
-   &       n_header=n_header, &
-   &       n_int=n_int, &
-   &       n_float=n_float &
+   &       n_dim=att(1), &
+   &       n_atom=att(2), &
+   &       n_mem=att(7), &
+   &       n_header=att(3), &
+   &       n_int=att(4), &
+   &       n_float=att(5) &
    &      )
-    n_rot = n_dim * n_dim
-    n_job = 1
+    att(6) = att(1) * att(1)
+    att(8) = 1
     !$omp parallel
-    if (omp_get_thread_num() == 0) n_job = omp_get_num_threads()
+    if (omp_get_thread_num() == 0) att(8) = omp_get_num_threads()
     !$omp end parallel
   end subroutine decode_attributes
 
@@ -164,9 +163,8 @@ contains
  &                  X, &
  &                  Y, &
  &                  W, &
- &                  cutoff, &
- &                  difflim, &
- &                  maxeval, &
+ &                  ropts, &
+ &                  iopts, &
  &                  remove_com, &
  &                  sort_by_g, &
  &                  rotate_y, &
@@ -187,9 +185,8 @@ contains
     !! target coordinate
     real(kind=RK), intent(inout)  :: W(*)
     !! work memory
-    integer(kind=IK), intent(in)  :: maxeval
-    real(kind=RK), intent(in)     :: cutoff
-    real(kind=RK), intent(in)     :: difflim
+    real(kind=RK), intent(in)     :: ropts(*) ! 1 cutoff 2 difflim
+    integer(kind=IK), intent(in)  :: iopts(*) ! 1 maxeval
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
     logical, intent(in)           :: rotate_y
@@ -202,9 +199,9 @@ contains
 
     call mobbrmsd_load(h, header)
     call mobbrmsd_run(h, s, X, Y, w, &
-      &               cutoff=cutoff, &
-      &               difflim=difflim, &
-      &               maxeval=maxeval,&
+      &               cutoff=ropts(1), &
+      &               difflim=ropts(2), &
+      &               maxeval=iopts(1),&
       &               remove_com=remove_com,&
       &               sort_by_g=sort_by_g,&
       &               get_rotation=(get_rotation .or. rotate_y)&
@@ -221,12 +218,14 @@ contains
   end subroutine run
 
   !| restart with working memory
-  pure subroutine restart( &
+  !pure subroutine restart( &
+  subroutine restart( &
  &    n_header, n_int, n_float, n_rot, &
  &    header, &
  &    int_states, float_states, &
  &    W, rotation, &
- &    cutoff, difflim, maxeval, get_rotation &
+ &    ropts, iopts, &
+ &    get_rotation &
  &  )
     integer(kind=IK), intent(in)    :: n_header
     integer(kind=IK), intent(in)    :: n_int
@@ -236,25 +235,22 @@ contains
     integer(kind=IK), intent(inout) :: int_states(n_int)
     real(kind=RK), intent(inout)    :: float_states(n_float)
     !! work memory
-    real(kind=RK), intent(inout)    :: rotation(n_rot)
-    !! rotation matrix
     real(kind=RK), intent(inout)    :: W(*)
     !! work memory
-    integer(kind=IK), intent(in)    :: maxeval
-    real(kind=RK), intent(in)       :: cutoff
-    real(kind=RK), intent(in)       :: difflim
+    real(kind=RK), intent(inout)    :: rotation(n_rot)
+    !! rotation matrix
+    real(kind=RK), intent(in)       :: ropts(*) ! 1 cutoff 2 difflim
+    integer(kind=IK), intent(in)    :: iopts(*) ! 1 maxeval
     logical, intent(in)             :: get_rotation
     type(mobbrmsd)                  :: h
     type(mobbrmsd_state)            :: s
-
     call mobbrmsd_load(h, header)
     if (get_rotation) then
       call mobbrmsd_state_load(s, int_states, float_states, rotation)
     else
       call mobbrmsd_state_load(s, int_states, float_states)
     end if
-    call mobbrmsd_restart(h, s, W, cutoff, difflim, maxeval)
-
+    call mobbrmsd_restart(h, s, W, ropts(1), ropts(2), iopts(1))
     int_states = mobbrmsd_state_dump(s)
     float_states = mobbrmsd_state_dump_real(s)
     if (get_rotation) rotation = mobbrmsd_state_dump_rotation(s)
@@ -289,7 +285,7 @@ contains
  &    n_chunk, n_lower, &
  &    n_header, header, &
  &    X, Y, W, &
- &    cutoff, difflim, maxeval, &
+ &    ropts, iopts, &
  &    remove_com, sort_by_g, &
  &    rmsd &
  &  )
@@ -305,9 +301,8 @@ contains
    !! target coordinate
     real(kind=RK), intent(inout)  :: W(*)
    !! work array
-    integer(kind=IK), intent(in)  :: maxeval
-    real(kind=RK), intent(in)     :: cutoff
-    real(kind=RK), intent(in)     :: difflim
+    real(kind=RK), intent(in)     :: ropts(*) ! 1 cutoff 2 difflim
+    integer(kind=IK), intent(in)  :: iopts(*) ! 1 maxeval
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
     real(kind=RK), intent(out)    :: rmsd(n_chunk)
@@ -318,9 +313,9 @@ contains
     call mobbrmsd_batch_run( &
    &       n_reference, n_target, h, s, &
    &       X, Y, W, &
-   &       cutoff=cutoff, &
-   &       difflim=difflim,&
-   &       maxeval=maxeval, &
+   &       cutoff=ropts(1), &
+   &       difflim=ropts(2),&
+   &       maxeval=iopts(1), &
    &       remove_com=remove_com, &
    &       sort_by_g=sort_by_g, &
    &       n_lower=n_lower, &
@@ -337,7 +332,7 @@ contains
  &    n_target, n_chunk, n_lower, &
  &    n_header, header, &
  &    X, W, &
- &    cutoff, difflim, maxeval, &
+ &    ropts, iopts, &
  &    remove_com, sort_by_g, &
  &    rmsd &
  &  )
@@ -350,9 +345,8 @@ contains
    !! reference and target coordinate
     real(kind=RK), intent(inout)  :: W(*)
    !! work array
-    integer(kind=IK), intent(in)  :: maxeval
-    real(kind=RK), intent(in)     :: cutoff
-    real(kind=RK), intent(in)     :: difflim
+    real(kind=RK), intent(in)     :: ropts(*) ! 1 cutoff 2 difflim
+    integer(kind=IK), intent(in)  :: iopts(*) ! 1 maxeval
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
     real(kind=RK), intent(out)    :: rmsd(n_chunk)
@@ -362,9 +356,9 @@ contains
     call mobbrmsd_load(h, header)
     call mobbrmsd_batch_tri_run( &
    &       n_target, h, s, X, W, &
-   &       cutoff=cutoff, &
-   &       difflim=difflim, &
-   &       maxeval=maxeval, &
+   &       cutoff=ropts(1), &
+   &       difflim=ropts(2), &
+   &       maxeval=iopts(1), &
    &       remove_com=remove_com, &
    &       sort_by_g=sort_by_g, &
    &       n_lower=n_lower, &
@@ -379,7 +373,8 @@ contains
  &    n_target, n_header, &
  &    n_int, n_float, &
  &    header, &
- &    X, W, cutoff, difflim, maxeval,  &
+ &    X, W, &
+ &    ropts, iopts, &
  &    remove_com, sort_by_g, &
  &    edges, weights &
  &  )
@@ -392,9 +387,8 @@ contains
    !! reference coordinate
     real(kind=RK), intent(inout)      :: W(*)
    !! work memory
-    real(kind=RK), intent(in)         :: cutoff
-    real(kind=RK), intent(in)         :: difflim
-    integer(kind=IK), intent(in)      :: maxeval
+    real(kind=RK), intent(in)         :: ropts(*) ! 1 cutoff 2 difflim
+    integer(kind=IK), intent(in)      :: iopts(*) ! 1 maxeval
     logical, intent(in)               :: remove_com
     logical, intent(in)               :: sort_by_g
     integer(kind=IK), intent(out)     :: edges(2, n_target - 1)
@@ -407,9 +401,9 @@ contains
 
     call mobbrmsd_min_span_tree( &
    &       n_target, h, s, X, W, &
-   &       cutoff=cutoff, &
-   &       difflim=difflim, &
-   &       maxeval=maxeval, &
+   &       cutoff=ropts(1), &
+   &       difflim=ropts(2), &
+   &       maxeval=iopts(1), &
    &       remove_com=remove_com, &
    &       sort_by_g=sort_by_g, &
    &       edges=edges, &

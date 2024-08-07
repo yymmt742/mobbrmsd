@@ -21,17 +21,23 @@ contains
     integer(IK), parameter   :: n_target = 20
     integer(IK), parameter   :: n_apm = 8, n_mol = 8
     integer(IK), parameter   :: seq(3 + n_apm) = [n_apm, n_mol, s, 5, 6, 7, 8, 1, 2, 3, 4]
-    integer(IK)              :: n_atm
-    integer(IK)              :: n_dim
     real(RK), allocatable    :: X(:, :, :, :)
-    integer(IK)              :: n_header, n_int, n_float, n_job, n_mem, n_rot
+    integer(IK)              :: att(8)
+    integer(IK)              :: n_dim, n_atm, n_header, n_int, n_float, n_rot, n_mem, n_job
     integer(IK), allocatable :: h(:)
     real(RK), allocatable    :: rmsd(:), W(:, :)
     integer(IK)              :: i, j, k, l
 !
-    call decode_attributes(SIZE(seq), seq, n_dim, n_atm, n_mem, n_job, n_header, n_int, n_float, n_rot)
-    print *, n_dim, n_atm
-    print *, n_mem, n_job, n_header, n_int, n_float, n_rot
+    call decode_attributes(SIZE(seq), seq, att)
+    print *, att
+    n_dim = att(1)
+    n_atm = att(2)
+    n_header = att(3)
+    n_int = att(4)
+    n_float = att(5)
+    n_rot = att(6)
+    n_mem = att(7)
+    n_job = att(8)
 
     allocate (h(n_header))
     allocate (rmsd((n_target - 1) * n_target / 2))
@@ -61,7 +67,7 @@ contains
    &  n_target, n_target * (n_target - 1) / 2, 1, &
    &  n_header, h, &
    &  X, W, &
-   &  999.0_RK, 0.0_RK, -1, .true., .true., &
+   &  [999.0_RK, 0.0_RK], [-1], .true., .true., &
    &  rmsd)
 !
     k = 0
@@ -82,17 +88,23 @@ contains
     integer(IK), parameter   :: n_target = 1000
     integer(IK), parameter   :: n_apm = 8, n_mol = 8
     integer(IK), parameter   :: seq(3 + n_apm) = [n_apm, n_mol, s, 5, 6, 7, 8, 1, 2, 3, 4]
-    integer(IK)              :: n_atm
-    integer(IK)              :: n_dim
+    integer(IK)              :: att(8)
+    integer(IK)              :: n_dim, n_atm, n_header, n_int, n_float, n_rot, n_mem, n_job
     real(RK), allocatable    :: X(:, :, :, :), Y(:, :, :, :)
-    integer(IK)              :: n_header, n_int, n_float, n_job, n_mem, n_rot
     integer(IK), allocatable :: h(:)
     real(RK), allocatable    :: W(:, :), rmsd(:, :)
     integer(IK)              :: i, j, k, l
 !
-    call decode_attributes(SIZE(seq), seq, n_dim, n_atm, n_mem, n_job, n_header, n_int, n_float, n_rot)
-    print *, n_dim, n_atm
-    print *, n_mem, n_job, n_header, n_int, n_float
+    call decode_attributes(SIZE(seq), seq, att)
+    print *, att
+    n_dim = att(1)
+    n_atm = att(2)
+    n_header = att(3)
+    n_int = att(4)
+    n_float = att(5)
+    n_rot = att(6)
+    n_mem = att(7)
+    n_job = att(8)
 
     allocate (h(n_header))
     allocate (rmsd(n_reference, n_target))
@@ -128,7 +140,7 @@ contains
    &  n_reference * n_target, &
    &  1, n_header, h, &
    &  X, Y, W, &
-   &  999.0_RK, 0.0_RK, -1, .true., .true., &
+   &  [999.0_RK, 0.0_RK], [-1], .true., .true., &
    &  rmsd)
 !
     do j = 1, n_target
@@ -144,8 +156,8 @@ contains
     integer(IK), parameter   :: n_apm = 8, n_mol = 5, n_sym = 2, n_target = 50
     integer(IK), parameter   :: seq(3 + n_apm) = [n_apm, n_mol, n_sym, 5, 6, 7, 8, 1, 2, 3, 4]
     real(RK), allocatable    :: X(:, :, :, :)
-    integer(IK)              :: n_dim, n_atm
-    integer(IK)              :: n_header, n_int, n_float, n_job, n_mem, n_rot
+    integer(IK)              :: att(8)
+    integer(IK)              :: n_dim, n_atm, n_header, n_int, n_float, n_rot, n_mem, n_job
     integer(IK)              :: edges(2, n_target - 1)
     real(RK)                 :: weights(n_target - 1)
     real(RK), allocatable    :: W(:)
@@ -153,7 +165,16 @@ contains
     real(RK), allocatable    :: float_states(:, :, :)
     integer(IK)              :: i
 !
-    call decode_attributes(SIZE(seq), seq, n_dim, n_atm, n_mem, n_job, n_header, n_int, n_float, n_rot)
+    call decode_attributes(SIZE(seq), seq, att)
+    print *, att
+    n_dim = att(1)
+    n_atm = att(2)
+    n_header = att(3)
+    n_int = att(4)
+    n_float = att(5)
+    n_rot = att(6)
+    n_mem = att(7)
+    n_job = att(8)
 !
     print'(*(I4))', n_dim, n_atm, n_header, n_int, n_float, n_job, n_mem, n_rot
 
@@ -169,7 +190,7 @@ contains
 !
     call min_span_tree( &
  &    n_target, n_header, n_int, n_float, header, &
- &    X, W, RHUGE, ZERO, -1, .true., .true., &
+ &    X, W, [RHUGE, ZERO], [-1], .true., .true., &
  &    edges, weights)
 !
     do i = 1, n_target - 1

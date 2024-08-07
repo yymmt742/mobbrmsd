@@ -25,8 +25,10 @@ class mobbrmsd_result:
         w: None | npt.NDArray = None,
     ) -> None:
         self.header = header.copy()
+        self.d = d
         if (istate is None) or (rstate is None):
-            self.state = None
+            self.istate = None
+            self.rstate = None
             self.rmsd = 0.0
             self.autocorr = 0.0
             self.bounds = (0.0, 0.0)
@@ -35,7 +37,6 @@ class mobbrmsd_result:
             self.eval_ratio = 0.0
             self.is_finished = True
             return
-        self.d = d
         self.istate = istate.copy()
         self.rstate = rstate.copy()
         self.rmsd = driver.rmsd(rstate)
@@ -83,15 +84,16 @@ class mobbrmsd_result:
             return
 
         driver = select_driver(self.d, dtype=self.w.dtype)
+        ropts = numpy.array([cutoff, difflim], dtype=self.w.dtype)
+        iopts = numpy.array([maxeval], dtype=self.header.dtype)
         driver.restart(
             self.header,
             self.istate,
             self.rstate,
             self.w,
             self.rot,
-            cutoff,
-            difflim,
-            maxeval,
+            ropts,
+            iopts,
             get_rotation,
         )
 
@@ -253,16 +255,15 @@ class mobbrmsd:
 
         driver = select_driver(d, dtype=None)
 
-        (
-            self.d,
-            self.natom,
-            self.memsize,
-            self.njob,
-            self.n_header,
-            self.n_int,
-            self.n_float,
-            self.n_rot,
-        ) = driver.decode_attributes(molecular_sequence)
+        att = driver.decode_attributes(molecular_sequence)
+        self.d = att[0]
+        self.natom = att[1]
+        self.n_header = att[2]
+        self.n_int = att[3]
+        self.n_float = att[4]
+        self.n_rot = att[5]
+        self.memsize = att[6]
+        self.njob = att[7]
         self.header = driver.decode_header(molecular_sequence, self.n_header)
         del driver
 
@@ -283,6 +284,8 @@ class mobbrmsd:
         y_ = varidation_coordinates_1(y, self.d, self.natom, dtype=dt)
         driver = select_driver(self.d, dtype=dt)
         w = numpy.empty(self.memsize, dtype=dt)
+        ropts = numpy.array([float("inf"), 0.0], dtype=dt)
+        iopts = numpy.array([-1], dtype=numpy.int32)
 
         _, rret, _ = driver.run(
             self.n_int,
@@ -292,9 +295,8 @@ class mobbrmsd:
             x_,
             y_,
             w,
-            float("inf"),
-            0.0,
-            -1,
+            ropts,
+            iopts,
             True,
             True,
             False,
@@ -302,8 +304,7 @@ class mobbrmsd:
         )
 
         ret = driver.rmsd(rret)
-        del driver
-        del w
+        del driver, w, ropts, iopts
         return ret
 
     ##
@@ -345,6 +346,8 @@ class mobbrmsd:
         y_ = varidation_coordinates_1(y, self.d, self.natom, dtype=dt)
         driver = select_driver(self.d, dtype=dt)
         w = numpy.empty(self.memsize, dtype=dt)
+        ropts = numpy.array([cutoff, difflim], dtype=dt)
+        iopts = numpy.array([maxeval], dtype=numpy.int32)
 
         iret, rret, rot = driver.run(
             self.n_int,
@@ -354,9 +357,8 @@ class mobbrmsd:
             x_,
             y_,
             w,
-            cutoff,
-            difflim,
-            maxeval,
+            ropts,
+            iopts,
             remove_com,
             sort_by_g,
             rotate_y,
@@ -364,8 +366,7 @@ class mobbrmsd:
         )
 
         ret = mobbrmsd_result(driver, self.d, self.header, iret, rret, rot, w=w)
-        del driver
-        del w
+        del driver, w, ropts, iopts
         return ret
 
     ##
@@ -412,6 +413,9 @@ class mobbrmsd:
             n_chunk_ = n_tri if n_chunk < 1 else self.njob * n_chunk
             ww = numpy.empty((self.njob * self.memsize), dtype=dt)
 
+            ropts = numpy.array([cutoff, difflim], dtype=dt)
+            iopts = numpy.array([maxeval], dtype=numpy.int32)
+
             if n_tri == n_chunk_ or not verbose:
                 r_tri = driver.batch_run_tri(
                     n_target,
@@ -420,9 +424,8 @@ class mobbrmsd:
                     self.header,
                     x_,
                     ww,
-                    cutoff,
-                    difflim,
-                    maxeval,
+                    ropts,
+                    iopts,
                     remove_com,
                     sort_by_g,
                 )
@@ -440,9 +443,8 @@ class mobbrmsd:
                         self.header,
                         x_,
                         ww,
-                        cutoff,
-                        difflim,
-                        maxeval,
+                        ropts,
+                        iopts,
                         remove_com,
                         sort_by_g,
                     )
@@ -465,6 +467,9 @@ class mobbrmsd:
             n_chunk_ = n_tri if n_chunk < 1 else self.njob * n_chunk
             ww = numpy.empty((self.njob * self.memsize), dtype=dt)
 
+            ropts = numpy.array([cutoff, difflim], dtype=dt)
+            iopts = numpy.array([maxeval], dtype=numpy.int32)
+
             if n_tri == n_chunk_ or not verbose:
                 ret = driver.batch_run(
                     n_reference,
@@ -475,9 +480,8 @@ class mobbrmsd:
                     x_,
                     y_,
                     ww,
-                    cutoff,
-                    difflim,
-                    maxeval,
+                    ropts,
+                    iopts,
                     remove_com,
                     sort_by_g,
                 )
@@ -497,9 +501,8 @@ class mobbrmsd:
                         x_,
                         y_,
                         ww,
-                        cutoff,
-                        difflim,
-                        maxeval,
+                        ropts,
+                        iopts,
                         remove_com,
                         sort_by_g,
                     )
@@ -544,6 +547,9 @@ class mobbrmsd:
         ww = numpy.empty((n_target * (n_target - 1) // 2 * self.memsize), dtype=dt)
 
         driver = select_driver(self.d, dtype=dt)
+        ropts = numpy.array([cutoff, difflim], dtype=dt)
+        iopts = numpy.array([maxeval], dtype=numpy.int32)
+
         edges, weights = driver.min_span_tree(
             n_target,
             self.n_int,
@@ -551,9 +557,8 @@ class mobbrmsd:
             self.header,
             x_,
             ww,
-            cutoff,
-            difflim,
-            maxeval,
+            ropts,
+            iopts,
             remove_com,
             sort_by_g,
         )
@@ -566,15 +571,10 @@ class mobbrmsd:
         return g
 
     def __del__(self):
-        del self.molecules
-        del self.d
-        del self.natom
-        del self.memsize
-        del self.njob
-        del self.n_header
-        del self.n_int
-        del self.n_float
-        del self.header
+        if hasattr(self, "molecules"):
+            del self.molecules
+        if hasattr(self, "att"):
+            del self.att
 
     def __str__(self):
         kws = [
