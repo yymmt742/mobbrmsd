@@ -177,12 +177,7 @@ def varidation_coordinates_1(x: npt.NDArray, d, natom, dtype=None) -> npt.NDArra
     if x.shape[1] != d or x.shape[0] != natom:
         raise ValueError
 
-    if dtype is None:
-        return x.flatten()
-    elif x.dtype == dtype:
-        return x.flatten()
-    else:
-        return numpy.astype(x, dtype=dtype).flatten()
+    return numpy.asfortranarray(x, dtype=dtype).flatten()
 
 
 def varidation_coordinates_2(x: npt.NDArray, d, natom, dtype=None) -> npt.NDArray:
@@ -198,12 +193,7 @@ def varidation_coordinates_2(x: npt.NDArray, d, natom, dtype=None) -> npt.NDArra
     if x.shape[-1] != d or x.shape[-2] != natom:
         raise ValueError
 
-    if dtype is None:
-        return x.flatten()
-    elif x.dtype == dtype:
-        return x.flatten()
-    else:
-        return numpy.astype(x, dtype=dtype).flatten()
+    return numpy.asfortranarray(x, dtype=dtype).flatten()
 
 
 ##
@@ -323,7 +313,7 @@ class mobbrmsd:
     #   remove_com (bool): 参照構造と対照構造から重心を除去する。 default True
     #   sort_by_g (bool): 参照構造を自己分散の大きい順に並び替えて計算を実行する。 default True
     #   rotate_y (bool): 対象構造に対して置換と回転を実行する。 default False
-    #   rotate_y (bool): 対象構造に対して置換と回転を実行する。 default False
+    #   get_rotation (bool): 回転行列を計算する。 default False
     # @return mobbrmsd_result
     #   所与の終了条件により計算が中断された場合、mobbrmsd_result はインスタンスは計算再開用のデータを保持する。
     def run(
@@ -367,6 +357,10 @@ class mobbrmsd:
 
         ret = mobbrmsd_result(driver, self.d, self.header, iret, rret, rot, w=w)
         del driver, w, ropts, iopts
+        if rotate_y:
+            if not numpy.may_share_memory(y, y_):
+                y[...] = y_.reshape(y.shape)
+
         return ret
 
     ##
