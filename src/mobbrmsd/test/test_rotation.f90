@@ -25,7 +25,7 @@ program main
 #endif
   end interface
 !
-  call setup_dimension(4) ! for gd
+  call setup_dimension(4) ! for xd
   call z%init('test rotation')
 !
   call test1(1, 10)

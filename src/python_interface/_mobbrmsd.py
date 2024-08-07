@@ -126,9 +126,9 @@ def select_driver(d: int, dtype=None):
             raise ValueError
     elif d == 1 or d > 3:
         if dt == numpy.float64:
-            from .mobbrmsd_gddp import driver
+            from .mobbrmsd_xddp import driver
         elif dt == numpy.float32:
-            from .mobbrmsd_gdsp import driver
+            from .mobbrmsd_xdsp import driver
         else:
             raise ValueError
 
