@@ -212,8 +212,8 @@ contains
     !  to be greater than to cutoff (in RMSD).
     real(RK), intent(in), optional    :: difflim
     !! The search ends when the difference
-    !  between the lower and upper gap is less than g * difflim.
-    !  default = 0.
+    !  between the lower and upper gap is less than (G / 2) * difflim.
+    !  default = 0.0.
     integer(IK), intent(in), optional :: maxeval
     !! The search ends when ncount exceeds maxiter.
     !  If maxeval=0, run only once, and early return.
@@ -245,10 +245,10 @@ contains
           if (difflim_absolute) then
             diff = MAX(ZERO, difflim) ! use absolute delta.
           else
-            diff = MAX(ZERO, ac * difflim) ! use relative delta.
+            diff = MAX(ZERO, HALF * ac * difflim) ! use relative delta.
           end if
         else
-          diff = MAX(ZERO, ac * difflim) ! use relative delta.
+          diff = MAX(ZERO, HALF * ac * difflim) ! use relative delta.
         end if
       else
         diff = ZERO
