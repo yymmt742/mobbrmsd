@@ -212,13 +212,17 @@ contains
     !  to be greater than to cutoff (in RMSD).
     real(RK), intent(in), optional    :: difflim
     !! The search ends when the difference
-    !  between the lower and upper gap is less than (G / 2) * difflim.
+    !  between the lower and upper gap is less than
+    !  \(\text{threshold} = (G / 2) * \text{difflim}^2\).
     !  default = 0.0.
     integer(IK), intent(in), optional :: maxeval
     !! The search ends when ncount exceeds maxiter.
     !  If maxeval=0, run only once, and early return.
     logical, intent(in), optional     :: difflim_absolute
-    !! If True, use difflim for diff limit.
+    !! If True, use absolute difflim value for diff threshold.
+    !  Since the gap between the upperbound and lowerbound corresponds to SD,
+    !  difflim is converted to the RMSD scale, such that
+    !  \(\text{threshold} = \text{difflim}^2 * n_atoms\).
     !  default False.
     real(RK)                          :: coff, diff, nlim
     integer(IK)                       :: pq, ps, pw
@@ -243,7 +247,7 @@ contains
       if (PRESENT(difflim)) then
         if (PRESENT(difflim_absolute)) then
           if (difflim_absolute) then
-            diff = MAX(ZERO, difflim) ! use absolute delta.
+            diff = MAX(ZERO, difflim**2 * bb_list_n_atoms(q)) ! use absolute delta (as RMSD).
           else
             diff = MAX(ZERO, HALF * ac * difflim) ! use relative delta.
           end if
