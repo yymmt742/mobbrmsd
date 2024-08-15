@@ -1,4 +1,5 @@
 from . import __version__
+from . import _demo
 from . import coord_generator
 import sys
 import numpy
@@ -19,48 +20,26 @@ def read_input() -> tuple:
             return False
 
     while True:
-        while True:
-            inp = input("    input number of molecules (default : 6)          >> ")
-            if inp == "":
-                n_mol = 6
-                break
-            if inp[0] == "q" or inp[0] == "Q":
-                exit()
-            elif inp.isdigit():
-                n_mol = int(inp)
-                if n_mol > 0:
-                    break
-        while True:
-            inp = input("    input number of atoms per molecule (default : 3) >> ")
-            if inp == "":
-                n_apm = 3
-                break
-            if inp[0] == "q" or inp[0] == "Q":
-                exit()
-            elif inp.isdigit():
-                n_apm = int(inp)
-                if n_apm > 1:
-                    break
-        while True:
-            inp = input("    input alpha (default : 0.8) >> ")
-            if inp == "":
-                alpha = 0.8
-                break
-            if inp[0] == "q" or inp[0] == "Q":
-                exit()
-            elif isfloat(inp):
-                alpha = float(inp)
-                break
-        while True:
-            inp = input("    input beta (default : 1.0) >> ")
-            if inp == "":
-                beta = 1.0
-                break
-            if inp[0] == "q" or inp[0] == "Q":
-                exit()
-            elif isfloat(inp):
-                beta = float(inp)
-                break
+        n_mol = _demo.readinp(
+            f"input number of molecules",
+            6,
+            check=lambda n_mol: (n_mol > 0) if isinstance(n_mol, int) else False,
+        )
+        n_apm = _demo.readinp(
+            f"input number of atoms per molecule",
+            3,
+            check=lambda n_apm: ((n_apm > 0) if isinstance(n_apm, int) else False),
+        )
+        alpha = _demo.readinp(
+            f"input alpha",
+            0.8,
+            check=lambda alpha: isinstance(alpha, float),
+        )
+        beta = _demo.readinp(
+            f"input beta",
+            1.0,
+            check=lambda beta: isinstance(beta, float),
+        )
         break
 
     return {"n_apm": n_apm, "n_mol": n_mol, "alpha": alpha, "beta": beta}
@@ -120,30 +99,29 @@ def show(ret):
         pass
 
     inp = ""
+
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
     fig.canvas.mpl_connect("key_press_event", onclick)
-
     while True:
         inp = input("  Show samples ? (Open matplotlib window) ['y'es, 'n'o] >> ")
         if inp == "":
             continue
-        if inp[0] == "n" or inp[0] == "N":
-            break
-        elif inp[0] == "q" or inp[0] == "Q":
-            exit()
-        elif inp[0] == "y" or inp[0] == "Y":
-            x = ret["cogen"].generate(
-                ret["n_apm"], ret["n_mol"], ret["alpha"], ret["beta"]
-            )
-            for xi in x:
-                ax.plot(xi[:, 0], xi[:, 1], xi[:, 2])
-                ax.scatter(xi[:, 0], xi[:, 1], xi[:, 2])
-            ax.set_xlim([-2.5, 2.5])
-            ax.set_ylim([-2.5, 2.5])
-            ax.set_zlim([-2.5, 2.5])
-            ax.set_box_aspect([1, 1, 1])
-            plt.show()
+        break
+    if inp[0] == "q" or inp[0] == "Q":
+        exit()
+    elif inp[0] == "y" or inp[0] == "Y":
+        x = ret["cogen"].generate(ret["n_apm"], ret["n_mol"], ret["alpha"], ret["beta"])
+        for xi in x:
+            ax.plot(xi[:, 0], xi[:, 1], xi[:, 2])
+            ax.scatter(xi[:, 0], xi[:, 1], xi[:, 2])
+        ax.set_xlim([-2.5, 2.5])
+        ax.set_ylim([-2.5, 2.5])
+        ax.set_zlim([-2.5, 2.5])
+        ax.set_box_aspect([1, 1, 1])
+        plt.show()
+        plt.clf()
+        plt.close()
     print()
 
 

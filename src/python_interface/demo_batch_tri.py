@@ -1,6 +1,7 @@
 from . import __version__
 from . import coord_generator
 from . import mobbrmsd
+from . import _demo
 from ._mobbrmsd import *
 import sys
 import numpy
@@ -40,36 +41,24 @@ def print_ret(i, j, ret):
 
 def read_input() -> tuple:
     while True:
-        while True:
-            inp = input("    input number of molecules (default : 6)   >> ")
-            if inp == "":
-                inp = "6"
-            if inp[0] == "q" or inp[0] == "Q":
-                exit()
-            elif inp.isdigit:
-                n_mol = int(inp)
-            if n_mol > 0:
-                break
+        n_mol = _demo.readinp(
+            "input number of molecules",
+            6,
+            check=lambda n_mol: (n_mol > 0) if isinstance(n_mol, int) else False,
+        )
 
-        while True:
-            inp = input("    input number of structures (default : 10) >> ")
-            if inp == "":
-                inp = "10"
-            if inp[0] == "q" or inp[0] == "Q":
-                exit()
-            elif inp.isdigit:
-                n_target = int(inp)
-            if n_target > 1:
-                break
+        n_target = _demo.readinp(
+            "input number of target structures",
+            10,
+            check=lambda n_target: (
+                (n_target > 0) if isinstance(n_target, int) else False
+            ),
+        )
 
         if n_mol > 8 or n_target > 30:
-            while True:
-                inp = input(
-                    "    This parameter may take time to compute. May this be run ? [Y/n] > "
-                )
-                if inp == "y" or inp == "Y" or inp == "n" or inp == "N":
-                    break
-            if inp == "n" or inp == "N":
+            if not _demo.yes_or_no(
+                "This parameter may take time to compute. May this be run ?"
+            ):
                 continue
 
         break
@@ -121,13 +110,12 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
     rmsds = mrmsd.batch_run(x)
     del mrmsd
 
-    print(sep1)
-    print("     i   j         RMSD")
-    print(sep1)
     for i, ri in enumerate(rmsds):
+        print(sep1)
+        print("       i   j         RMSD")
+        print(sep1)
         for j, rij in enumerate(ri):
-            print(f"    {i:8d}{j:8d}{rij:16.9f}")
-        print()
+            print(f"    {i+1:4d}{j+1:4d}{rij:16.9f}")
     print(sep1)
     return rmsds
 

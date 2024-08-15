@@ -3,6 +3,7 @@ from . import coord_generator
 from . import mobbrmsd
 from .coord_generator import coord_generator
 from ._mobbrmsd import *
+from . import _demo
 import sys
 import numpy
 import pprint
@@ -14,51 +15,35 @@ title = "mobbrmsd batch run"
 
 def read_input() -> tuple:
     while True:
-        while True:
-            inp = input("    input number of molecules (default : 6)   >> ")
-            if inp == "":
-                inp = "6"
-            if inp[0] == "q" or inp[0] == "Q":
-                exit()
-            elif inp.isdigit:
-                n_mol = int(inp)
-            if n_mol > 0:
-                break
+        n_mol = _demo.readinp(
+            "input number of molecules",
+            6,
+            check=lambda n_mol: (n_mol > 0) if isinstance(n_mol, int) else False,
+        )
 
-        while True:
-            inp = input("    input number of referece structures (default : 5) >> ")
-            if inp == "":
-                inp = "5"
-            if inp[0] == "q" or inp[0] == "Q":
-                exit()
-            elif inp.isdigit:
-                n_reference = int(inp)
-            if n_reference > 1:
-                break
+        n_reference = _demo.readinp(
+            "input number of referece structures",
+            5,
+            check=lambda n_reference: (
+                (n_reference > 0) if isinstance(n_reference, int) else False
+            ),
+        )
 
-        while True:
-            inp = input("    input number of target structures (default : 10) >> ")
-            if inp == "":
-                inp = "10"
-            if inp[0] == "q" or inp[0] == "Q":
-                exit()
-            elif inp.isdigit:
-                n_target = int(inp)
-            if n_target > 1:
-                break
+        n_target = _demo.readinp(
+            "input number of target structures",
+            10,
+            check=lambda n_target: (
+                (n_target > 0) if isinstance(n_target, int) else False
+            ),
+        )
 
         if n_mol > 8 or (n_target * n_reference) > 1000:
-            while True:
-                inp = input(
-                    "    This parameter may take time to compute. May this be run ? [Y/n] > "
-                )
-                if inp == "y" or inp == "Y" or inp == "n" or inp == "N":
-                    break
-            if inp == "n" or inp == "N":
+            if not _demo.yes_or_no(
+                "This parameter may take time to compute. May this be run ?"
+            ):
                 continue
 
         break
-
     print()
     return {"n_mol": n_mol, "n_reference": n_reference, "n_target": n_target}
 

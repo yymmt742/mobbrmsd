@@ -1,6 +1,7 @@
 from . import __version__
 from . import coord_generator
 from . import mobbrmsd
+from . import _demo
 from ._mobbrmsd import *
 import sys
 import numpy
@@ -46,40 +47,40 @@ def print_ret(i, j, ret, g):
         )
 
 
+class _demo_mst(_demo._demo):
+    def __init__(self, **kwarg):
+        super().__init__(**kwarg)
+
+    def read_input(self):
+        return read_input()
+
+    def main(self, **kwarg):
+        return main(**kwarg)
+
+    def after(self, **kwarg):
+        return show_graph(**kwarg)
+
+
 def read_input() -> tuple:
     while True:
-        while True:
-            inp = input("    input number of molecules (default : 6)   >> ")
-            if inp == "":
-                inp = "6"
-            if inp[0] == "q" or inp[0] == "Q":
-                exit()
-            elif inp.isdigit:
-                n_mol = int(inp)
-            if n_mol > 0:
-                break
-
-        while True:
-            inp = input("    input number of structures (default : 10) >> ")
-            if inp == "":
-                inp = "10"
-            if inp[0] == "q" or inp[0] == "Q":
-                exit()
-            elif inp.isdigit:
-                n_target = int(inp)
-            if n_target > 1:
-                break
+        n_mol = _demo.readinp(
+            "input number of molecules",
+            6,
+            check=lambda n_mol: (n_mol > 0) if isinstance(n_mol, int) else False,
+        )
+        n_target = _demo.readinp(
+            "input number of structures",
+            10,
+            check=lambda n_target: (
+                (n_target > 0) if isinstance(n_target, int) else False
+            ),
+        )
 
         if n_mol > 8 or n_target > 30:
-            while True:
-                inp = input(
-                    "    This parameter may take time to compute. May this be run ? [Y/n] > "
-                )
-                if inp == "y" or inp == "Y" or inp == "n" or inp == "N":
-                    break
-            if inp == "n" or inp == "N":
+            if not _demo.yes_or_no(
+                "This parameter may take time to compute. May this be run ?"
+            ):
                 continue
-
         break
 
     print()
@@ -90,7 +91,9 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
     cogen = coord_generator()
     x = numpy.array(
         [
-            cogen.generate(n_apm, n_mol, a, b).reshape([n_apm * n_mol, 3])
+            cogen.generate(n_apm, n_mol, a, b, dtype=numpy.float32).reshape(
+                [n_apm * n_mol, 3]
+            )
             for i in range(n_target)
         ]
     )

@@ -1,4 +1,5 @@
 from . import __version__
+from . import _demo
 from .coord_generator import coord_generator
 from ._mobbrmsd import *
 import sys
@@ -33,82 +34,53 @@ def read_input() -> tuple:
     import math
 
     while True:
-        while True:
-            inp = input("    input number of molecules (default : 6)          >> ")
-            if inp == "":
-                n_mol = 6
-                break
-            if inp[0] == "q" or inp[0] == "Q":
-                exit()
-            elif inp.isdigit():
-                n_mol = int(inp)
-                if n_mol > 0:
-                    break
-
+        n_mol = _demo.readinp(
+            "input number of molecules",
+            6,
+            check=lambda n_mol: (n_mol > 0) if isinstance(n_mol, int) else False,
+        )
         if n_mol > 8:
-            while True:
-                inp = input(
-                    "    This parameter may take time to compute. May this be run ? [Y/n] > "
-                )
-                if inp == "":
-                    continue
-                if inp[0] == "q" or inp[0] == "Q":
-                    exit()
-                elif inp == "y" or inp == "Y" or inp == "n" or inp == "N":
-                    break
-            if inp == "n" or inp == "N":
+            if not _demo.yes_or_no(
+                "This parameter may take time to compute. May this be run ?"
+            ):
                 continue
 
-        while True:
-            inp = input("    input number of atoms per molecule (default : 3) >> ")
-            if inp == "":
-                n_apm = 3
-                break
-            if inp[0] == "q" or inp[0] == "Q":
-                exit()
-            elif inp.isdigit():
-                n_apm = int(inp)
-                if n_apm > 0:
-                    break
+        n_apm = _demo.readinp(
+            "input number of atoms per molecule",
+            3,
+            check=lambda n_apm: ((n_apm > 0) if isinstance(n_apm, int) else False),
+        )
 
-        while True:
-            inp = input("    input number of molecular symmetry (default : 3) >> ")
-            if inp == "":
-                n_sym = 3
-                break
-            if inp[0] == "q" or inp[0] == "Q":
-                exit()
-            elif inp.isdigit():
-                n_sym = int(inp)
-                if n_sym > 0:
-                    break
+        def msg():
+            print(
+                "    number of molecular symmetry must be less than factrial to atoms per molecule."
+            )
+            return False
 
-            if n_sym > math.factorial(n_apm):
-                print(
-                    "    number of molecular symmetry must be less than factrial to atoms per molecule."
-                )
-                continue
+        n_sym = _demo.readinp(
+            "input number of molecular symmetry",
+            n_apm,
+            check=lambda n_sym: (
+                (n_sym > 0) & (True if n_sym <= math.factorial(n_apm) else msg())
+                if isinstance(n_sym, int)
+                else False
+            ),
+        )
 
         cost = math.factorial(n_mol) * n_sym**n_mol
         if cost > 10000000:
-            while True:
-                inp = input(
-                    f"    This parameter may take time to compute. ({cost:10d}) May this be run ? [Y/n] > "
-                )
-                if inp == "":
-                    continue
-                if inp[0] == "q" or inp[0] == "Q":
-                    exit()
-                elif inp == "y" or inp == "Y" or inp == "n" or inp == "N":
-                    break
-            if inp == "n" or inp == "N":
+            if not _demo.yes_or_no(
+                "This parameter may take time to compute (cost is {cost:d}). May this be run ?"
+            ):
                 continue
 
-        per = itertools.permutations(range(n_apm))
-        next(per)
-        sym = [next(per) for i in range(n_sym - 1)]
-
         break
+
+    print()
+
+    per = itertools.permutations(range(n_apm))
+    next(per)
+    sym = [next(per) for i in range(n_sym - 1)]
 
     return {"n_apm": n_apm, "n_mol": n_mol, "sym": sym}
 
