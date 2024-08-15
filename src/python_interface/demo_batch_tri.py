@@ -67,6 +67,11 @@ def read_input() -> tuple:
     return {"n_mol": n_mol, "n_target": n_target}
 
 
+class _demo_batch_tri(_demo._demo):
+    def __init__(self, **kwarg):
+        super().__init__(title="mobbrmsd triu matrix batch run", **kwarg)
+
+
 def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
     cogen = coord_generator()
     x = numpy.array(

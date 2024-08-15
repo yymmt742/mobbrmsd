@@ -18,6 +18,11 @@ bar2 = (
     "  =============================================================================="
 )
 bar3 = "==========================================="
+
+demo_list = [
+    demo_bb._demo_bb(),
+    demo_cogen._demo_cogen(),
+]
 demo1 = demo_cogen.title
 demo2 = demo_bb.title
 demo3 = demo_bb_sp.title
@@ -26,7 +31,8 @@ demo5 = demo_batch.title
 demo6 = demo_batch_tri.title
 demo7 = demo_mst.title
 exit_ = "exit"
-opts = (demo1, demo2, demo3, demo4, demo5, demo6, demo7, exit_)
+# opts = (demo1, demo2, demo3, demo4, demo5, demo6, demo7, exit_)
+opts = [l.title for l in demo_list] + ["exit"]
 
 
 def run_demo(demo, read_input, after=None):
@@ -70,26 +76,12 @@ title = (
 
 while True:
     option, index = pick.pick(opts, title, indicator="   >")
-    if option == demo1:
-        run_demo(demo_cogen.main, demo_cogen.read_input, after=demo_cogen.show)
-    elif option == demo2:
-        run_demo(demo_bb.main, demo_bb.read_input)
-    elif option == demo3:
-        run_demo(demo_bb_sp.main, demo_bb_sp.read_input)
-    elif option == demo4:
-        run_demo(demo_bb_multi.main, demo_bb_multi.read_input)
-    elif option == demo5:
-        run_demo(demo_batch.main, demo_batch.read_input, after=demo_batch.show_graph)
-    elif option == demo6:
-        run_demo(
-            demo_batch_tri.main,
-            demo_batch_tri.read_input,
-            after=demo_batch_tri.show_graph,
-        )
-    elif option == demo7:
-        run_demo(demo_mst.main, demo_mst.read_input, after=demo_mst.show_graph)
-    elif option == exit_:
+    if option == "exit":
         break
+    for l in demo_list:
+        if option == l.title:
+            l.run_demo()
+            break
     inp = input('  press any key to continue ("q" to exit) >> ')
     print(inp)
     if inp == "":

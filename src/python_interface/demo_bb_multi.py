@@ -76,6 +76,20 @@ def read_input() -> tuple:
     return {"molecules": ret}
 
 
+class _demo_bb_multi(_demo._demo):
+    def __init__(self, **kwarg):
+        super().__init__(title="mobbRMSD with multi component system", **kwarg)
+
+    def read_input(self):
+        return read_input()
+
+    def main(self, **kwarg):
+        return main(**kwarg)
+
+    def after(self, **kwarg):
+        return show_graph(**kwarg)
+
+
 def main(molecules=[], a=0.5, b=1.0):
     cogen = coord_generator()
     x = numpy.vstack(

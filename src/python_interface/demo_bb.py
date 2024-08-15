@@ -85,6 +85,20 @@ def read_input() -> tuple:
     return {"n_apm": n_apm, "n_mol": n_mol, "sym": sym}
 
 
+class _demo_bb(_demo._demo):
+    def __init__(self, **kwarg):
+        super().__init__(title="mobbRMSD with random coordinate", **kwarg)
+
+    def read_input(self):
+        return read_input()
+
+    def demo(self, **kwarg):
+        return main(**kwarg)
+
+    def after(self, **kwarg):
+        return show_graph(**kwarg)
+
+
 def main(n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
     cogen = coord_generator()
     x = cogen.generate(n_apm, n_mol, a, b).reshape([n_apm * n_mol, 3])

@@ -48,6 +48,20 @@ def read_input() -> tuple:
     return {"n_mol": n_mol, "n_reference": n_reference, "n_target": n_target}
 
 
+class _demo_batch(_demo._demo):
+    def __init__(self, **kwarg):
+        super().__init__(title="mobbrmsd batch run", **kwarg)
+
+    def read_input(self):
+        return read_input()
+
+    def main(self, **kwarg):
+        return main(**kwarg)
+
+    def after(self, **kwarg):
+        return show_graph(**kwarg)
+
+
 def main(
     n_apm=3,
     n_mol=6,

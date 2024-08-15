@@ -2,24 +2,70 @@ from . import __version__
 import time
 import numpy
 
+bar1 = (
+    "  ------------------------------------------------------------------------------"
+)
+bar2 = (
+    "  =============================================================================="
+)
+bar3 = "==========================================="
+
+
+def readinp(msg, default, check=None):
+    inp = input(f"    {msg} (default : {default})   >> ")
+
+    def isfloat(string):
+        try:
+            float(string)
+            return True
+        except ValueError:
+            return False
+
+    while True:
+        if inp == "":
+            return default
+        if inp[0] == "q" or inp[0] == "Q":
+            exit()
+        elif inp.isdigit():
+            ret = int(inp)
+        elif isfloat(inp):
+            ret = float(inp)
+        else:
+            ret = inp
+
+        if check is not None:
+            if check(ret):
+                return ret
+        else:
+            return ret
+        inp = input(f"    !!! Invalid input !!! (default : {default})   >> ")
+
+
+def yes_or_no(msg):
+    while True:
+        inp = input(f"    {msg} [Y/n] > ")
+        if inp == "":
+            continue
+        if inp[0] == "q" or inp[0] == "Q":
+            exit()
+        if inp[0] == "y" or inp[0] == "Y" or inp[0] == "n" or inp[0] == "N":
+            return inp[0] == "y" or inp[0] == "Y"
+
 
 class _demo:
-    bar1 = "  ------------------------------------------------------------------------------"
-    bar2 = "  =============================================================================="
-    bar3 = "==========================================="
 
-    def __init__(self, prec=numpy.float64):
-        self.title = "mobbrmsd demo"
+    def __init__(self, title="mobbrmsd demo", prec=numpy.float64):
+        self.title = title
         self.prec = prec
 
     def read_input(self):
-        return None
+        return
 
-    def demo(self):
-        return None
+    def demo(self, **kwarg):
+        return
 
-    def after(self):
-        return None
+    def after(self, **kwarg):
+        return
 
     def run_demo(self):
         print(bar2)
@@ -28,7 +74,7 @@ class _demo:
         start_wallclock_time = time.time()
         start_cpu_time = time.process_time()
 
-        ret = demo(**prms)
+        ret = self.demo(**prms)
 
         end_wallclock_time = time.time()
         end_cpu_time = time.process_time()
@@ -43,5 +89,5 @@ class _demo:
         print(bar2, "\n")
 
         if ret is not None:
-            self.after(ret)
+            self.after(**ret)
             print(bar2, "\n")

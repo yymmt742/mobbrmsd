@@ -45,6 +45,20 @@ def read_input() -> tuple:
     return {"n_apm": n_apm, "n_mol": n_mol, "alpha": alpha, "beta": beta}
 
 
+class _demo_cogen(_demo._demo):
+    def __init__(self, **kwarg):
+        super().__init__(title="coord_generator demo", **kwarg)
+
+    def read_input(self):
+        return read_input()
+
+    def demo(self, **kwarg):
+        return main(**kwarg)
+
+    def after(self, **kwarg):
+        return show(**kwarg)
+
+
 def main(n_apm=3, n_mol=8, alpha=0.5, beta=1.0):
     cogen = coord_generator()
     x = cogen.generate(n_apm, n_mol, alpha, beta, n_sample=10000)
@@ -82,12 +96,12 @@ def main(n_apm=3, n_mol=8, alpha=0.5, beta=1.0):
     }
 
 
-def show(ret):
+def show(cogen, n_apm, n_mol, alpha, beta):
     import matplotlib.pyplot as plt
 
     def onclick(event):
         ax.cla()
-        x = ret["cogen"].generate(ret["n_apm"], ret["n_mol"], ret["alpha"], ret["beta"])
+        x = cogen.generate(n_apm, n_mol, alpha, beta)
         for xi in x:
             ax.plot(xi[:, 0], xi[:, 1], xi[:, 2])
             ax.scatter(xi[:, 0], xi[:, 1], xi[:, 2])
@@ -98,20 +112,11 @@ def show(ret):
         plt.draw()
         pass
 
-    inp = ""
-
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
     fig.canvas.mpl_connect("key_press_event", onclick)
-    while True:
-        inp = input("  Show samples ? (Open matplotlib window) ['y'es, 'n'o] >> ")
-        if inp == "":
-            continue
-        break
-    if inp[0] == "q" or inp[0] == "Q":
-        exit()
-    elif inp[0] == "y" or inp[0] == "Y":
-        x = ret["cogen"].generate(ret["n_apm"], ret["n_mol"], ret["alpha"], ret["beta"])
+    if _demo.yes_or_no("Show samples ? (Open matplotlib window)"):
+        x = cogen.generate(n_apm, n_mol, alpha, beta)
         for xi in x:
             ax.plot(xi[:, 0], xi[:, 1], xi[:, 2])
             ax.scatter(xi[:, 0], xi[:, 1], xi[:, 2])
