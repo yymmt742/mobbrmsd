@@ -233,15 +233,22 @@ contains
       pq = q_pointer(q)
       ps = s_pointer(q)
       pw = w_pointer(q)
+!
       if (PRESENT(cutoff)) then
         coff = MIN(ZERO, HALF * (cutoff**2 * bb_list_n_atoms(q) - ac))
       else
         coff = RHUGE
       end if
+!
       if (PRESENT(difflim)) then
-        diff = MAX(ZERO, ac * difflim)
         if (PRESENT(difflim_absolute)) then
-          if (difflim_absolute) diff = MAX(ZERO, difflim)
+          if (difflim_absolute) then
+            diff = MAX(ZERO, difflim) ! use absolute delta.
+          else
+            diff = MAX(ZERO, ac * difflim) ! use relative delta.
+          end if
+        else
+          diff = MAX(ZERO, ac * difflim) ! use relative delta.
         end if
       else
         diff = ZERO
