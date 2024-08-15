@@ -71,12 +71,14 @@ class mobbrmsd_result:
     #                  ただし、最低でも expand と closure の1サイクルは実行される。
     #                  maxeval < 0 のとき、無制限。
     #                  default -1
+    #   difflim_absolute (bool): True なら difflim を RMSD 換算の絶対値で用いる。 default False
     # @return mobbrmsd_result
     def restart(
         self,
         cutoff: float = float("inf"),
         difflim: float = 0.0,
         maxeval: int = -1,
+        difflim_absolute: bool = False,
         get_rotation: bool = False,
     ) -> None:
 
@@ -94,6 +96,7 @@ class mobbrmsd_result:
             self.rot,
             ropts,
             iopts,
+            difflim_absolute,
             get_rotation,
         )
 
@@ -278,20 +281,21 @@ class mobbrmsd:
         iopts = numpy.array([-1], dtype=numpy.int32)
 
         _, rret, _ = driver.run(
-            self.n_int,
-            self.n_float,
-            self.n_rot,
-            self.header,
-            x_,
-            y_,
-            w,
-            ropts,
-            iopts,
-            True,
-            True,
-            False,
-            False,
-        )
+            self.n_int,  # n_int
+            self.n_float,  # n_float
+            self.n_rot,  # n_rot
+            self.header,  # header
+            x_,  # X
+            y_,  # Y
+            w,  # W
+            ropts,  # ropts
+            iopts,  # iopts
+            True,  # remove_com
+            True,  # sort_by_g
+            False,  # difflim_absolute
+            False,  # rotate_y
+            False,  # get_rotation
+        )  # returns (int_states, float_states, rotation)
 
         ret = driver.rmsd(rret)
         del driver, w, ropts, iopts
@@ -325,6 +329,7 @@ class mobbrmsd:
         maxeval: int = -1,
         remove_com: bool = True,
         sort_by_g: bool = True,
+        difflim_absolute: bool = False,
         rotate_y: bool = False,
         get_rotation: bool = False,
         *args,
@@ -351,6 +356,7 @@ class mobbrmsd:
             iopts,
             remove_com,
             sort_by_g,
+            difflim_absolute,
             rotate_y,
             get_rotation,
         )
@@ -372,13 +378,14 @@ class mobbrmsd:
     #   x (numpy.ndarray): 構造
     #   y (numpy.ndarray): 対照構造, optional
     #   cutoff (float): BBの上限がcutoff以下になったとき、計算を終了する。 default float(inf)
-    #   difflim (float): BBの上限と下限の差がdifflim以下になったとき、計算を終了する。 default 0
+    #   difflim (float): BBの上限と下限の差が (G/2) * difflim 以下になったとき、計算を終了する。 default 0.0
     #   maxeval (int): BBのノード評価数がmaxevalを超えたとき、計算を終了する。
     #                  ただし、最低でも expand と closure の1サイクルは実行される。
     #                  maxeval < 0 のとき、無制限。
     #                  default -1
     #   remove_com (bool): 参照構造と対照構造から重心を除去する。 default True
     #   sort_by_g (bool): 参照構造を自己分散の大きい順に並び替えて計算を実行する。 default True
+    #   difflim_absolute (bool): True なら difflim を RMSD 換算の絶対値で用いる。 default False
     #   verbose (bool): 進捗を表示する。 default True
     #   n_chunk (int): 一度に計算される回数。 <1 の場合一括計算。 default 1000
     # @return npt.NDArray
@@ -392,6 +399,7 @@ class mobbrmsd:
         maxeval: int = -1,
         remove_com: bool = True,
         sort_by_g: bool = True,
+        difflim_absolute: bool = False,
         verbose: bool = True,
         n_chunk: int = 0,
         *args,
@@ -422,6 +430,7 @@ class mobbrmsd:
                     iopts,
                     remove_com,
                     sort_by_g,
+                    difflim_absolute,
                 )
             else:
                 n_lower = 1
@@ -441,6 +450,7 @@ class mobbrmsd:
                         iopts,
                         remove_com,
                         sort_by_g,
+                        difflim_absolute,
                     )
                     n_lower += n_chunk_
             ret = numpy.zeros([n_target, n_target], dtype=dt)
@@ -478,6 +488,7 @@ class mobbrmsd:
                     iopts,
                     remove_com,
                     sort_by_g,
+                    difflim_absolute,
                 )
             else:
                 n_lower = 1
@@ -499,6 +510,7 @@ class mobbrmsd:
                         iopts,
                         remove_com,
                         sort_by_g,
+                        difflim_absolute,
                     )
                     n_lower += n_chunk_
             ret = ret.reshape([n_target, n_reference])
@@ -511,13 +523,14 @@ class mobbrmsd:
     # @param
     #   x (numpy.ndarray): 参照構造
     #   cutoff (float): BBの上限がcutoff以下になったとき、計算を終了する。 default float(inf)
-    #   difflim (float): BBの上限と下限の差がdifflim以下になったとき、計算を終了する。 default 0
+    #   difflim (float): BBの上限と下限の差が difflim 以下になったとき、計算を終了する。 default 0
     #   maxeval (int): BBのノード評価数がmaxevalを超えたとき、計算を終了する。
     #                  ただし、最低でも expand と closure の1サイクルは実行される。
     #                  maxeval < 0 のとき、無制限。
     #                  default -1
     #   remove_com (bool): 参照構造と対照構造から重心を除去する。 default True
     #   sort_by_g (bool): 参照構造を自己分散の大きい順に並び替えて計算を実行する。 default True
+    #   difflim_absolute (bool): True なら difflim を RMSD 換算の絶対値で用いる。 default False
     #   verbose (bool): 進捗を表示する。 default True
     #   n_chunk (int): 一度に計算される回数。 <1 の場合一括計算。 default 1000
     # @return networkx.Graph
@@ -529,6 +542,7 @@ class mobbrmsd:
         maxeval: int = -1,
         remove_com: bool = True,
         sort_by_g: bool = True,
+        difflim_absolute: bool = False,
         verbose: bool = False,
         n_chunk: int = 0,
         *args,
@@ -555,6 +569,7 @@ class mobbrmsd:
             iopts,
             remove_com,
             sort_by_g,
+            difflim_absolute,
         )
         del driver
 
