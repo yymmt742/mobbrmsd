@@ -210,7 +210,8 @@ contains
  &                  maxeval, &
  &                  remove_com, &
  &                  sort_by_g, &
- &                  get_rotation &
+ &                  get_rotation, &
+ &                  difflim_absolute &
  &                 )
     type(mobbrmsd), intent(in)          :: this
     !! mobbrmsd
@@ -234,6 +235,8 @@ contains
     !! if true, row is sorted respect to G of reference coordinate. default [.true.]
     logical, intent(in), optional       :: get_rotation
     !! if true, calculate rotation matrix. default [.false.]
+    logical, intent(in), optional       :: difflim_absolute
+    !! if true, use absolute difflim. default [.false.]
     integer(IK)                         :: d_
 !
     if (PRESENT(get_rotation)) then
@@ -259,7 +262,8 @@ contains
      &       W, &
      &       cutoff=cutoff, &
      &       difflim=difflim, &
-     &       maxeval=maxeval &
+     &       maxeval=maxeval, &
+     &       difflim_absolute=difflim_absolute &
      &      )
     else
       block
@@ -279,7 +283,8 @@ contains
        &       T, &
        &       cutoff=cutoff, &
        &       difflim=difflim, &
-       &       maxeval=maxeval &
+       &       maxeval=maxeval, &
+       &       difflim_absolute=difflim_absolute &
        &      )
       end block
     end if
@@ -292,7 +297,8 @@ contains
  &                  W, &
  &                  cutoff, &
  &                  difflim, &
- &                  maxeval &
+ &                  maxeval, &
+ &                  difflim_absolute &
  &                 )
     type(mobbrmsd), intent(in)           :: this
     !! mobbrmsd
@@ -306,13 +312,16 @@ contains
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
     integer(IK), intent(in), optional    :: maxeval
     !! The search ends when ncount exceeds maxiter.
+    logical, intent(in), optional        :: difflim_absolute
+    !! if true, use absolute difflim. default [.false.]
     call bb_list_run( &
       &    this%q, &
       &    state%s, &
       &    W, &
       &    cutoff=cutoff, &
       &    difflim=difflim, &
-      &    maxeval=maxeval &
+      &    maxeval=maxeval, &
+      &    difflim_absolute=difflim_absolute &
       &   )
     associate ( &
    &   ac => state%z(mobbrmsd_state_INDEX_TO_AUTOCORR), &
