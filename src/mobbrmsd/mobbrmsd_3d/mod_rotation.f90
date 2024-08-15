@@ -32,7 +32,7 @@ module mod_rotation
 #ifdef USE_REAL32
   real(RK), parameter    :: THRESHOLD = 1E-6_RK
   real(RK), parameter    :: DEGENERACY = 1E-4_RK
-  real(RK), parameter    :: DEGENERACY1 = 1E-4_RK
+  real(RK), parameter    :: DEGENERACY1 = 1E-3_RK
   real(RK), parameter    :: DEGENERACY2 = 1E-6_RK
 #else
   real(RK), parameter    :: THRESHOLD = 1E-12_RK
