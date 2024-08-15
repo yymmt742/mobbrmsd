@@ -9,6 +9,7 @@ module mod_mobbrmsd_state
   public :: mobbrmsd_state_copy
   public :: mobbrmsd_state_upperbound
   public :: mobbrmsd_state_lowerbound
+  public :: mobbrmsd_state_bbgap
   public :: mobbrmsd_state_autovariance
   public :: mobbrmsd_state_squared_deviation
   public :: mobbrmsd_state_mean_squared_deviation
@@ -128,6 +129,19 @@ contains
       res = -RHUGE
     end if
   end function mobbrmsd_state_lowerbound
+!
+!| returns upperbound - lowerbound
+  pure elemental function mobbrmsd_state_bbgap(this) result(res)
+    type(mobbrmsd_state), intent(in) :: this
+    !! this
+    real(RK)                          :: res
+    if (SIZE(this%z) >= mobbrmsd_state_INDEX_TO_LOWERBOUND) then
+      res = this%z(mobbrmsd_state_INDEX_TO_UPPERBOUND) &
+     &    - this%z(mobbrmsd_state_INDEX_TO_LOWERBOUND)
+    else
+      res = -RHUGE
+    end if
+  end function mobbrmsd_state_bbgap
 !
 !| returns autovariance
   pure elemental function mobbrmsd_state_autovariance(this) result(res)
