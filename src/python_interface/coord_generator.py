@@ -87,6 +87,7 @@ class coord_generator:
         b: float | Iterable[float],
         n_sample: int = 1,
         temp: None | numpy.ndarray = None,
+        dtype=numpy.float64,
     ) -> numpy.ndarray:
 
         if temp == None:
@@ -125,13 +126,17 @@ class coord_generator:
 
         if isinstance(a, float):
             if isinstance(b, float):
-                return x_samples(a, b, n_sample, temp)
+                return x_samples(a, b, n_sample, temp).astype(dtype=dtype)
             elif isinstance(b, Iterable):
-                return numpy.array([x_samples(a, bi, n_sample, temp) for bi in b])
+                return numpy.array(
+                    [x_samples(a, bi, n_sample, temp) for bi in b]
+                ).astype(dtype=dtype)
             elif isinstance(a, Iterable):
                 if isinstance(b, float):
-                    return numpy.array([x_samples(ai, b, n_sample, temp) for ai in a])
+                    return numpy.array(
+                        [x_samples(ai, b, n_sample, temp) for ai in a]
+                    ).astype(dtype=dtype)
                 elif isinstance(b, Iterable):
                     return numpy.array(
                         [[x_samples(ai, bi, n_sample, temp) for bi in b] for ai in a]
-                    )
+                    ).astype(dtype=dtype)
