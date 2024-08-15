@@ -130,9 +130,11 @@ contains
     real(RK), intent(inout)       :: W(*)
     !! work array
     logical, intent(in), optional :: remove_com
-    !! if true, remove centroids. default [.true.]
+    !! if true, remove centroids.
+    !  default [.true.]
     logical, intent(in), optional :: sort_by_g
-    !! if true, row is sorted respect to G of reference coordinate. default [.true.]
+    !! if true, row is sorted respect to G of reference coordinate.
+    !  default [.true.]
     real(RK)                      :: CX(D), CY(D)
     !! centroids
     integer(IK)                   :: i, ps, pq, px, pw, n_atoms
@@ -198,7 +200,7 @@ contains
   end subroutine bb_list_setup
 !
 !| run branch and bound
-  pure subroutine bb_list_run(q, s, W, cutoff, difflim, maxeval)
+  pure subroutine bb_list_run(q, s, W, cutoff, difflim, maxeval, difflim_absolute)
     integer(IK), intent(in)           :: q(*)
     !! header
     integer(IK), intent(inout)        :: s(*)
@@ -210,15 +212,19 @@ contains
     !  to be greater than to cutoff (in RMSD).
     real(RK), intent(in), optional    :: difflim
     !! The search ends when the difference
-    !  between the lower and upper bounds is less than difflim.
+    !  between the lower and upper gap is less than g * difflim.
+    !  default = 0.
     integer(IK), intent(in), optional :: maxeval
     !! The search ends when ncount exceeds maxiter.
     !  If maxeval=0, run only once, and early return.
+    logical, intent(in), optional     :: difflim_absolute
+    !! If True, use difflim for diff limit.
+    !  default False.
     real(RK)                          :: coff, diff, nlim
     integer(IK)                       :: pq, ps, pw
     associate ( &
    &   b => s(bb_list_INDEX_TO_SPEACIES), &
-   &   au => W(bb_list_INDEX_TO_AUTOCORR), &
+   &   ac => W(bb_list_INDEX_TO_AUTOCORR), &
    &   ub => W(bb_list_INDEX_TO_UPPERBOUND), &
    &   lb => W(bb_list_INDEX_TO_LOWERBOUND), &
    &   nv => W(bb_list_INDEX_TO_N_EVAL) &
@@ -228,12 +234,15 @@ contains
       ps = s_pointer(q)
       pw = w_pointer(q)
       if (PRESENT(cutoff)) then
-        coff = MIN(ZERO, HALF * (cutoff**2 * bb_list_n_atoms(q) - au))
+        coff = MIN(ZERO, HALF * (cutoff**2 * bb_list_n_atoms(q) - ac))
       else
         coff = RHUGE
       end if
       if (PRESENT(difflim)) then
-        diff = MAX(ZERO, difflim)
+        diff = MAX(ZERO, ac * difflim)
+        if (PRESENT(difflim_absolute)) then
+          if (difflim_absolute) diff = MAX(ZERO, difflim)
+        end if
       else
         diff = ZERO
       end if
@@ -252,9 +261,9 @@ contains
       end if
 !
       call update_lowerbound(b, q(pq), q(ps), q(pw), q, s, W)
+      if (lb >= coff) return
 !
       do while (nv < nlim &
-     &    .and. lb < coff &
      &    .and. lb + diff <= ub)
         call run_bb(q(pq), q(ps), q(pw), q, s, W)
         if (bb_list_is_finished(q, s)) exit
