@@ -28,6 +28,7 @@ contains
  &             maxeval, &
  &             remove_com, &
  &             sort_by_g, &
+ &             difflim_absolute, &
  &             edges, &
  &             weights &
  &            )
@@ -51,6 +52,8 @@ contains
     !! if true, remove centroids. default [.true.]
     logical, intent(in), optional       :: sort_by_g
     !! if true, row is sorted respect to G of reference coordinate. default [.true.]
+    logical, intent(in), optional       :: difflim_absolute
+    !! if true, use absolute difflim. default [.false.]
     integer(IK), intent(out), optional  :: edges(2, n_target - 1)
     !! minimum spanning tree edges
     real(RK), intent(out), optional     :: weights(n_target - 1)
@@ -80,7 +83,8 @@ contains
        &       difflim=difflim, &
        &       maxeval=1, &
        &       remove_com=remove_com, &
-       &       sort_by_g=sort_by_g  &
+       &       sort_by_g=sort_by_g, &
+       &       difflim_absolute=difflim_absolute  &
        &      )
       end do
     end do
