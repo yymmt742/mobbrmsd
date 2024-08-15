@@ -167,6 +167,7 @@ contains
  &                  iopts, &
  &                  remove_com, &
  &                  sort_by_g, &
+ &                  difflim_absolute, &
  &                  rotate_y, &
  &                  get_rotation, &
  &                  int_states, &
@@ -189,6 +190,7 @@ contains
     integer(kind=IK), intent(in)  :: iopts(*) ! 1 maxeval
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
+    logical, intent(in)           :: difflim_absolute
     logical, intent(in)           :: rotate_y
     logical, intent(in)           :: get_rotation
     integer(kind=IK), intent(out) :: int_states(n_int)
@@ -196,15 +198,20 @@ contains
     real(kind=RK), intent(out)    :: rotation(n_rot)
     type(mobbrmsd)                :: h
     type(mobbrmsd_state)          :: s
-
     call mobbrmsd_load(h, header)
-    call mobbrmsd_run(h, s, X, Y, w, &
-      &               cutoff=ropts(1), &
-      &               difflim=ropts(2), &
-      &               maxeval=iopts(1),&
-      &               remove_com=remove_com,&
-      &               sort_by_g=sort_by_g,&
-      &               get_rotation=(get_rotation .or. rotate_y)&
+    call mobbrmsd_run( &
+      &    h, &
+      &    s, &
+      &    X, &
+      &    Y, &
+      &    w, &
+      &    cutoff=ropts(1), &
+      &    difflim=ropts(2), &
+      &    maxeval=iopts(1),&
+      &    remove_com=remove_com,&
+      &    sort_by_g=sort_by_g,&
+      &    difflim_absolute=difflim_absolute, &
+      &    get_rotation=(get_rotation .or. rotate_y) &
       &   )
     if (rotate_y) call mobbrmsd_swap_and_rotation(h, s, Y)
 
@@ -220,13 +227,20 @@ contains
   !| restart with working memory
   !pure subroutine restart( &
   subroutine restart( &
- &    n_header, n_int, n_float, n_rot, &
- &    header, &
- &    int_states, float_states, &
- &    W, rotation, &
- &    ropts, iopts, &
- &    get_rotation &
- &  )
+ &             n_header, &
+ &             n_int, &
+ &             n_float, &
+ &             n_rot, &
+ &             header, &
+ &             int_states, &
+ &             float_states, &
+ &             W, &
+ &             rotation, &
+ &             ropts, &
+ &             iopts, &
+ &             difflim_absolute, &
+ &             get_rotation &
+ &           )
     integer(kind=IK), intent(in)    :: n_header
     integer(kind=IK), intent(in)    :: n_int
     integer(kind=IK), intent(in)    :: n_float
@@ -241,6 +255,7 @@ contains
     !! rotation matrix
     real(kind=RK), intent(in)       :: ropts(*) ! 1 cutoff 2 difflim
     integer(kind=IK), intent(in)    :: iopts(*) ! 1 maxeval
+    logical, intent(in)             :: difflim_absolute
     logical, intent(in)             :: get_rotation
     type(mobbrmsd)                  :: h
     type(mobbrmsd_state)            :: s
@@ -250,7 +265,15 @@ contains
     else
       call mobbrmsd_state_load(s, int_states, float_states)
     end if
-    call mobbrmsd_restart(h, s, W, ropts(1), ropts(2), iopts(1))
+    call mobbrmsd_restart( &
+      &    h, &
+      &    s, &
+      &    W, &
+      &    cutoff=ropts(1), &
+      &    difflim=ropts(2), &
+      &    maxeval=iopts(1), &
+      &    difflim_absolute=difflim_absolute &
+          )
     int_states = mobbrmsd_state_dump(s)
     float_states = mobbrmsd_state_dump_real(s)
     if (get_rotation) rotation = mobbrmsd_state_dump_rotation(s)
@@ -258,9 +281,16 @@ contains
 
   !| compute rotration respect to state.
   pure subroutine rotate_y( &
- &    n_header, n_int, n_float, n_rot, &
- &    header, int_states, float_states, rotation, Y &
- &  )
+ &                  n_header, &
+ &                  n_int, &
+ &                  n_float, &
+ &                  n_rot, &
+ &                  header, &
+ &                  int_states, &
+ &                  float_states, &
+ &                  rotation, &
+ &                  Y &
+ &                )
     integer(kind=IK), intent(in) :: n_header
     integer(kind=IK), intent(in) :: n_int
     integer(kind=IK), intent(in) :: n_float
@@ -281,14 +311,22 @@ contains
 
   !| batch parallel run
   subroutine batch_run( &
- &    n_reference, n_target, &
- &    n_chunk, n_lower, &
- &    n_header, header, &
- &    X, Y, W, &
- &    ropts, iopts, &
- &    remove_com, sort_by_g, &
- &    rmsd &
- &  )
+ &             n_reference, &
+ &             n_target, &
+ &             n_chunk, &
+ &             n_lower, &
+ &             n_header, &
+ &             header, &
+ &             X, &
+ &             Y, &
+ &             W, &
+ &             ropts, &
+ &             iopts, &
+ &             remove_com, &
+ &             sort_by_g, &
+ &             difflim_absolute, &
+ &             rmsd &
+ &           )
     integer(kind=IK), intent(in)  :: n_reference
     integer(kind=IK), intent(in)  :: n_target
     integer(kind=IK), intent(in)  :: n_chunk
@@ -305,6 +343,7 @@ contains
     integer(kind=IK), intent(in)  :: iopts(*) ! 1 maxeval
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
+    logical, intent(in)           :: difflim_absolute
     real(kind=RK), intent(out)    :: rmsd(n_chunk)
     type(mobbrmsd)                :: h
     type(mobbrmsd_state)          :: s(n_chunk)
@@ -318,6 +357,7 @@ contains
    &       maxeval=iopts(1), &
    &       remove_com=remove_com, &
    &       sort_by_g=sort_by_g, &
+   &       difflim_absolute=difflim_absolute, &
    &       n_lower=n_lower, &
    &       n_upper=n_lower + n_chunk - 1 &
    &     )
@@ -329,11 +369,18 @@ contains
 
   !| batch parallel tri run
   subroutine batch_run_tri( &
- &    n_target, n_chunk, n_lower, &
- &    n_header, header, &
- &    X, W, &
- &    ropts, iopts, &
- &    remove_com, sort_by_g, &
+ &    n_target, &
+ &    n_chunk, &
+ &    n_lower, &
+ &    n_header, &
+ &    header, &
+ &    X, &
+ &    W, &
+ &    ropts, &
+ &    iopts, &
+ &    remove_com, &
+ &    sort_by_g, &
+ &    difflim_absolute, &
  &    rmsd &
  &  )
     integer(kind=IK), intent(in)  :: n_target
@@ -349,6 +396,7 @@ contains
     integer(kind=IK), intent(in)  :: iopts(*) ! 1 maxeval
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
+    logical, intent(in)           :: difflim_absolute
     real(kind=RK), intent(out)    :: rmsd(n_chunk)
     type(mobbrmsd)                :: h
     type(mobbrmsd_state)          :: s(n_chunk)
@@ -361,6 +409,7 @@ contains
    &       maxeval=iopts(1), &
    &       remove_com=remove_com, &
    &       sort_by_g=sort_by_g, &
+   &       difflim_absolute=difflim_absolute, &
    &       n_lower=n_lower, &
    &       n_upper=n_lower + n_chunk - 1 &
    &     )
@@ -370,13 +419,20 @@ contains
   end subroutine batch_run_tri
 
   subroutine min_span_tree( &
- &    n_target, n_header, &
- &    n_int, n_float, &
+ &    n_target, &
+ &    n_header, &
+ &    n_int, &
+ &    n_float, &
  &    header, &
- &    X, W, &
- &    ropts, iopts, &
- &    remove_com, sort_by_g, &
- &    edges, weights &
+ &    X, &
+ &    W, &
+ &    ropts, &
+ &    iopts, &
+ &    remove_com, &
+ &    sort_by_g, &
+ &    difflim_absolute, &
+ &    edges, &
+ &    weights &
  &  )
     integer(kind=IK), intent(in)      :: n_target
     integer(kind=IK), intent(in)      :: n_header
@@ -391,6 +447,7 @@ contains
     integer(kind=IK), intent(in)      :: iopts(*) ! 1 maxeval
     logical, intent(in)               :: remove_com
     logical, intent(in)               :: sort_by_g
+    logical, intent(in)               :: difflim_absolute
     integer(kind=IK), intent(out)     :: edges(2, n_target - 1)
     real(kind=RK), intent(out)        :: weights(n_target - 1)
     type(mobbrmsd)                    :: h
@@ -406,6 +463,7 @@ contains
    &       maxeval=iopts(1), &
    &       remove_com=remove_com, &
    &       sort_by_g=sort_by_g, &
+   &       difflim_absolute=difflim_absolute, &
    &       edges=edges, &
    &       weights=weights &
    &    )
