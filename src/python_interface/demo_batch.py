@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 class _demo_batch(_demo._demo):
     def __init__(self, **kwarg):
-        super().__init__(title="mobbrmsd batch run", **kwarg)
+        super().__init__(title="batch run", **kwarg)
 
     def read_input(self):
         while True:

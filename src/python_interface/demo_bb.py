@@ -8,7 +8,7 @@ import numpy
 
 class _demo_bb(_demo._demo):
     def __init__(self, **kwarg):
-        super().__init__(title="mobbRMSD with random coordinate", **kwarg)
+        super().__init__(title="mobbRMSD", **kwarg)
 
     def read_input(self):
         import itertools

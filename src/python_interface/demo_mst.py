@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 class _demo_mst(_demo._demo):
     def __init__(self, **kwarg):
-        super().__init__(title="Minimum spanning tree with mobbrmsd", **kwarg)
+        super().__init__(title="Minimum spanning tree", **kwarg)
 
     def read_input(self):
         while True:

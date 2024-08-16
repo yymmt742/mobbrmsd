@@ -8,7 +8,7 @@ import numpy
 
 class _demo_bb_multi(_demo._demo):
     def __init__(self, **kwarg):
-        super().__init__(title="mobbRMSD with multi component system", **kwarg)
+        super().__init__(title="Multi component system", **kwarg)
 
     def read_input(self):
         import itertools

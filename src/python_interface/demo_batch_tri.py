@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 class _demo_batch_tri(_demo._demo):
     def __init__(self, **kwarg):
-        super().__init__(title="mobbrmsd triu matrix batch run", **kwarg)
+        super().__init__(title="mobbrmsd triu matrix", **kwarg)
 
     def read_input(self):
         while True:

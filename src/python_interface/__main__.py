@@ -6,9 +6,7 @@ from . import demo_bb_multi
 from . import demo_batch
 from . import demo_batch_tri
 from . import demo_mst
-import sys
 import numpy
-import time
 import pick
 
 
