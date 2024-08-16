@@ -81,13 +81,17 @@ class _demo_bb_multi(_demo._demo):
         cogen = coord_generator()
         x = numpy.vstack(
             [
-                cogen.generate(mol.n_apm, mol.n_mol, a, b, self.prec).reshape([-1, 3])
+                cogen.generate(mol.n_apm, mol.n_mol, a, b, dtype=self.prec).reshape(
+                    [-1, 3]
+                )
                 for mol in molecules
             ]
         )
         y = numpy.vstack(
             [
-                cogen.generate(mol.n_apm, mol.n_mol, a, b, self.prec).reshape([-1, 3])
+                cogen.generate(mol.n_apm, mol.n_mol, a, b, dtype=self.prec).reshape(
+                    [-1, 3]
+                )
                 for mol in molecules
             ]
         )

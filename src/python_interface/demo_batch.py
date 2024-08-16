@@ -62,7 +62,7 @@ class _demo_batch(_demo._demo):
         cogen = coord_generator()
         x = numpy.array(
             [
-                cogen.generate(n_apm, n_mol, a, b, self.prec).reshape(
+                cogen.generate(n_apm, n_mol, a, b, dtype=self.prec).reshape(
                     [n_apm * n_mol, 3]
                 )
                 for i in range(n_reference)
@@ -72,7 +72,7 @@ class _demo_batch(_demo._demo):
             x[i + 1] = 0.01 * x[i + 1] + 0.99 * x[i]
         y = numpy.array(
             [
-                cogen.generate(n_apm, n_mol, a, b, self.prec).reshape(
+                cogen.generate(n_apm, n_mol, a, b, dtype=self.prec).reshape(
                     [n_apm * n_mol, 3]
                 )
                 for i in range(n_target)
