@@ -21,7 +21,11 @@ bar3 = "==========================================="
 
 demo_list = [
     demo_bb._demo_bb(),
+    demo_bb_multi._demo_bb_multi(),
     demo_cogen._demo_cogen(),
+    demo_batch._demo_batch(),
+    demo_batch_tri._demo_batch_tri(),
+    demo_mst._demo_mst(),
 ]
 demo1 = demo_cogen.title
 demo2 = demo_bb.title

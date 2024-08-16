@@ -71,6 +71,15 @@ class _demo_batch_tri(_demo._demo):
     def __init__(self, **kwarg):
         super().__init__(title="mobbrmsd triu matrix batch run", **kwarg)
 
+    def read_input(self):
+        return read_input()
+
+    def demo(self, **kwarg):
+        return main(**kwarg)
+
+    def after(self, **kwarg):
+        return show_graph(**kwarg)
+
 
 def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
     cogen = coord_generator()
@@ -122,25 +131,15 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
         for j, rij in enumerate(ri):
             print(f"    {i+1:4d}{j+1:4d}{rij:16.9f}")
     print(sep1)
-    return rmsds
+    return {"mat": rmsds}
 
 
 def show_graph(mat):
 
-    while True:
-        inp = input("  Show graph ? (Open matplotlib window) ['y'es, 'n'o, 's'ave] >> ")
-        if inp == "":
-            continue
-        if inp[0] == "n" or inp[0] == "N":
-            print()
-            return
-        elif inp[0] == "q" or inp[0] == "Q":
-            exit()
-        break
-
-    plt.imshow(mat)
-    plt.show()
-    plt.clf()
+    if _demo.yes_or_no("Show graph ? (Open matplotlib window)"):
+        plt.imshow(mat)
+        plt.show()
+        plt.clf()
     print()
 
 

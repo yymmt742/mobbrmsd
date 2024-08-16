@@ -55,7 +55,7 @@ class _demo_batch(_demo._demo):
     def read_input(self):
         return read_input()
 
-    def main(self, **kwarg):
+    def demo(self, **kwarg):
         return main(**kwarg)
 
     def after(self, **kwarg):
@@ -125,28 +125,18 @@ def main(
     print(sep1)
     for i, ri in enumerate(rmsds):
         for j, rij in enumerate(ri):
-            print(f"    {i:8d}{i:8d}{rij:16.9f}")
+            print(f"    {i+1:8d}{j+1:8d}{rij:16.9f}")
         print()
     print(sep1)
-    return rmsds
+    return {"mat": rmsds}
 
 
 def show_graph(mat):
 
-    while True:
-        inp = input("  Show graph ? (Open matplotlib window) ['y'es, 'n'o, 's'ave] >> ")
-        if inp == "":
-            continue
-        if inp[0] == "n" or inp[0] == "N":
-            print()
-            return
-        elif inp[0] == "q" or inp[0] == "Q":
-            exit()
-        break
-
-    plt.imshow(mat)
-    plt.show()
-    plt.clf()
+    if _demo.yes_or_no("Show graph ? (Open matplotlib window)"):
+        plt.imshow(mat)
+        plt.show()
+        plt.clf()
     print()
 
 

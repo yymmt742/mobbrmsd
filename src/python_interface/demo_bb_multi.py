@@ -83,7 +83,7 @@ class _demo_bb_multi(_demo._demo):
     def read_input(self):
         return read_input()
 
-    def main(self, **kwarg):
+    def demo(self, **kwarg):
         return main(**kwarg)
 
     def after(self, **kwarg):

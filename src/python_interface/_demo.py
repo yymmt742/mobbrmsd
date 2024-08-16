@@ -23,8 +23,10 @@ def readinp(msg, default, check=None):
 
     while True:
         if inp == "":
+            print(f"\033[1A    {msg} (default : {default})   >> {default}")
             return default
         if inp[0] == "q" or inp[0] == "Q":
+            print(bar2)
             exit()
         elif inp.isdigit():
             ret = int(inp)
@@ -38,7 +40,9 @@ def readinp(msg, default, check=None):
                 return ret
         else:
             return ret
-        inp = input(f"    !!! Invalid input !!! (default : {default})   >> ")
+        inp = input(
+            f"    | [{ret}] is invalid. \033[1F\033[0K    {msg} (default : {default})   >> "
+        )
 
 
 def yes_or_no(msg):
@@ -47,6 +51,7 @@ def yes_or_no(msg):
         if inp == "":
             continue
         if inp[0] == "q" or inp[0] == "Q":
+            print(bar2)
             exit()
         if inp[0] == "y" or inp[0] == "Y" or inp[0] == "n" or inp[0] == "N":
             return inp[0] == "y" or inp[0] == "Y"

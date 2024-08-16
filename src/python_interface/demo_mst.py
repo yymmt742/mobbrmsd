@@ -49,12 +49,12 @@ def print_ret(i, j, ret, g):
 
 class _demo_mst(_demo._demo):
     def __init__(self, **kwarg):
-        super().__init__(**kwarg)
+        super().__init__(title="Minimum spanning tree with mobbrmsd", **kwarg)
 
     def read_input(self):
         return read_input()
 
-    def main(self, **kwarg):
+    def demo(self, **kwarg):
         return main(**kwarg)
 
     def after(self, **kwarg):
@@ -128,80 +128,51 @@ def main(n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
     mrmsd = mobbrmsd(molecules=molecules)
     g = mrmsd.min_span_tree(x, verbose=True)
     del mrmsd
-    return g
+    return {"g": g}
 
 
 def show_graph(g):
 
-    while True:
-        inp = input("  Show graph ? (Open matplotlib window) ['y'es, 'n'o, 's'ave] >> ")
-        if inp == "":
-            continue
-        if inp[0] == "n" or inp[0] == "N":
-            print()
-            return
-        elif inp[0] == "q" or inp[0] == "Q":
-            exit()
-        break
+    if _demo.yes_or_no("Show graph ? (Open matplotlib window)"):
+        n_target = len(g.nodes())
 
-    n_target = len(g.nodes())
+        vmax = numpy.array(
+            [v for k, v in networkx.get_edge_attributes(g, "weight").items()]
+        ).max()
+        weights = [
+            5 * (vmax - 0.95 * v) / vmax
+            for k, v in networkx.get_edge_attributes(g, "weight").items()
+        ]
+        reverse_weights = {
+            k: {"reverse_weights": 10 - 9 * v / vmax}
+            for k, v in networkx.get_edge_attributes(g, "weight").items()
+        }
+        edge_labels = {
+            k: "{:.1f}".format(v)
+            for k, v in networkx.get_edge_attributes(g, "weight").items()
+        }
 
-    vmax = numpy.array(
-        [v for k, v in networkx.get_edge_attributes(g, "weight").items()]
-    ).max()
-    weights = [
-        5 * (vmax - 0.95 * v) / vmax
-        for k, v in networkx.get_edge_attributes(g, "weight").items()
-    ]
-    reverse_weights = {
-        k: {"reverse_weights": 10 - 9 * v / vmax}
-        for k, v in networkx.get_edge_attributes(g, "weight").items()
-    }
-    edge_labels = {
-        k: "{:.1f}".format(v)
-        for k, v in networkx.get_edge_attributes(g, "weight").items()
-    }
+        networkx.set_edge_attributes(g, reverse_weights)
 
-    networkx.set_edge_attributes(g, reverse_weights)
+        pos = networkx.spring_layout(g, weight="reverse_weights")
+        networkx.draw_networkx_nodes(
+            g, pos, node_size=int(5000 / n_target), node_color="white", edgecolors="red"
+        )
+        networkx.draw_networkx_labels(g, pos, font_size=int(50 / n_target) + 5)
+        networkx.draw_networkx_edges(g, pos, width=weights, edge_color="tab:red")
 
-    pos = networkx.spring_layout(g, weight="reverse_weights")
-    networkx.draw_networkx_nodes(
-        g, pos, node_size=int(5000 / n_target), node_color="white", edgecolors="red"
-    )
-    networkx.draw_networkx_labels(g, pos, font_size=int(50 / n_target) + 5)
-    networkx.draw_networkx_edges(g, pos, width=weights, edge_color="tab:red")
-
-    while True:
-
-        if inp[0] == "n" or inp[0] == "N":
-            print()
-            return
-        elif inp[0] == "q" or inp[0] == "Q":
-            exit()
-
-        if inp[0] == "y" or inp[0] == "Y":
-            plt.show()
-        elif inp[0] == "s" or inp[0] == "S":
-            while True:
-                path = input("  Enter a file name >> ")
-                if path == "":
-                    continue
-                if path[0] == "q" or path[0] == "Q":
-                    exit()
-                break
+        plt.show()
+        if _demo.yes_or_no("Save graph ?"):
+            path = _demo.readinp(
+                "Enter a file name",
+                "",
+                check=lambda path: ((path != "") if isinstance(path, str) else False),
+            )
             plt.savefig(path)
 
-        while True:
-            inp = input(
-                "  Show graph ? ['y'es  (Open matplotlib window), 'n'o, 's'ave] >> "
-            )
-            if inp == "":
-                continue
-            break
-
-    plt.clear()
-    plt.clf()
-    print()
+        plt.clf()
+        plt.close()
+        print()
 
 
 if __name__ == "__main__":
