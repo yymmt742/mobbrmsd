@@ -8,7 +8,7 @@ import numpy
 
 class _demo_bb(_demo._demo):
     def __init__(self, **kwarg):
-        super().__init__(title="mobbRMSD", **kwarg)
+        super().__init__(title="mobbRMSD basic", **kwarg)
 
     def read_input(self):
         import itertools

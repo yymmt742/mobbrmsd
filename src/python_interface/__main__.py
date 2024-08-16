@@ -1,7 +1,6 @@
 from . import __version__
 from . import demo_cogen
 from . import demo_bb
-from . import demo_bb_sp
 from . import demo_bb_multi
 from . import demo_batch
 from . import demo_batch_tri

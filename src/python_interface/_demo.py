@@ -62,8 +62,13 @@ def yes_or_no(msg):
 class _demo:
 
     def __init__(self, title="mobbrmsd demo", prec=numpy.float64):
-        self.title = title
-        self.prec = prec
+        self.prec = numpy.dtype(prec)
+        if self.prec == numpy.float64:
+            self.title = title + " (double)"
+        elif self.prec == numpy.float32:
+            self.title = title + " (single)"
+        else:
+            raise ValueError
 
     def read_input(self):
         return
