@@ -76,15 +76,14 @@ class _demo_mst(_demo._demo):
                     f" {j:4d}{i:4d}{ev:12d} {er:12.6f}{ub:16.6f}{lb:16.6f}{df:8.3f}",
                     post,
                 )
-                cogen = coord_generator()
-                x = numpy.array(
-                    [
-                        cogen.generate(n_apm, n_mol, a, b, dtype=self.prec).reshape(
-                            [-1, 3]
-                        )
-                        for i in range(n_target)
-                    ]
-                )
+
+        cogen = coord_generator()
+        x = numpy.array(
+            [
+                cogen.generate(n_apm, n_mol, a, b, dtype=self.prec).reshape([-1, 3])
+                for i in range(n_target)
+            ]
+        )
 
         sep1 = "  ------------------------------------------------------------------------------"
         sep2 = "  ---------------------------------------|--------|-------------------|---------"

@@ -14,12 +14,18 @@ import pick
 
 def main():
     demo_list = [
-        demo_bb._demo_bb(),
-        demo_bb_multi._demo_bb_multi(),
         demo_cogen._demo_cogen(),
+        demo_cogen._demo_cogen(prec=numpy.float32),
+        demo_bb._demo_bb(),
+        demo_bb._demo_bb(prec=numpy.float32),
+        demo_bb_multi._demo_bb_multi(),
+        demo_bb_multi._demo_bb_multi(prec=numpy.float32),
         demo_batch._demo_batch(),
+        demo_batch._demo_batch(prec=numpy.float32),
         demo_batch_tri._demo_batch_tri(),
+        demo_batch_tri._demo_batch_tri(prec=numpy.float32),
         demo_mst._demo_mst(),
+        demo_mst._demo_mst(prec=numpy.float32),
     ]
     opts = [l.title for l in demo_list] + ["exit"]
 
