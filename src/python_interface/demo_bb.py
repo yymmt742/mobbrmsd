@@ -13,26 +13,6 @@ class _demo_bb(_demo._demo):
     def read_input(self):
         import itertools
         import math
-        import pprint
-
-        def print_ret(ret, post="", end="\n", to_console: bool = False):
-            ev, er, ub, lb, sd = (
-                ret.n_eval,
-                ret.eval_ratio,
-                2 * ret.bounds[0] + ret.autocorr,
-                2 * ret.bounds[1] + ret.autocorr,
-                ret.rmsd,
-            )
-            if sys.stdout.isatty():
-                print(
-                    f"\r  {ev:12d} {er:12.8f}{ub:16.6f}{lb:16.6f}{sd:12.6f}  ",
-                    post,
-                    end=end,
-                )
-            else:
-                if to_console:
-                    return
-                print(f"  {ev:12d} {er:12.8f}{ub:16.6f}{lb:16.6f}{sd:12.6f}")
 
         while True:
             n_mol = _demo.readinp(
@@ -86,10 +66,30 @@ class _demo_bb(_demo._demo):
         return {"n_apm": n_apm, "n_mol": n_mol, "sym": sym}
 
     def demo(self, n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
+        import pprint
+
+        def print_ret(ret, post="", end="\n", to_console: bool = False):
+            ev, er, ub, lb, sd = (
+                ret.n_eval,
+                ret.eval_ratio,
+                2 * ret.bounds[0] + ret.autocorr,
+                2 * ret.bounds[1] + ret.autocorr,
+                ret.rmsd,
+            )
+            if sys.stdout.isatty():
+                print(
+                    f"\r  {ev:12d} {er:12.8f}{ub:16.6f}{lb:16.6f}{sd:12.6f}  ",
+                    post,
+                    end=end,
+                )
+            else:
+                if to_console:
+                    return
+                print(f"  {ev:12d} {er:12.8f}{ub:16.6f}{lb:16.6f}{sd:12.6f}")
 
         cogen = coord_generator()
-        x = cogen.generate(n_apm, n_mol, a, b, self.prec).reshape([-1, 3])
-        y = cogen.generate(n_apm, n_mol, a, b, self.prec).reshape([-1, 3])
+        x = cogen.generate(n_apm, n_mol, a, b, dtype=self.prec).reshape([-1, 3])
+        y = cogen.generate(n_apm, n_mol, a, b, dtype=self.prec).reshape([-1, 3])
         x -= numpy.mean(x, 0)
         y -= numpy.mean(y, 0)
         z = y.copy()
