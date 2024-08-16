@@ -12,7 +12,8 @@ bar3 = "==========================================="
 
 
 def readinp(msg, default, check=None):
-    inp = input(f"    {msg} (default : {default})   >> ")
+    print()
+    inp = input(f"\033[1A    {msg} (default : {default})   >> ")
 
     def isfloat(string):
         try:
@@ -46,8 +47,9 @@ def readinp(msg, default, check=None):
 
 
 def yes_or_no(msg):
+    print()
     while True:
-        inp = input(f"    {msg} [Y/n] > ")
+        inp = input(f"\033[1A\033[0K    {msg} [Y/n] > ")
         if inp == "":
             continue
         if inp[0] == "q" or inp[0] == "Q":
