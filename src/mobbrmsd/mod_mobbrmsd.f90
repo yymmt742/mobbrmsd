@@ -206,6 +206,7 @@ contains
  &                  state, &
  &                  X, Y, W, &
  &                  cutoff, &
+ &                  ub_cutoff, &
  &                  difflim, &
  &                  maxeval, &
  &                  remove_com, &
@@ -225,6 +226,8 @@ contains
     !! work array, must be > header%memsize()
     real(RK), intent(in), optional      :: cutoff
     !! The search ends when lowerbound is determined to be greater than to cutoff.
+    real(RK), intent(in), optional      :: ub_cutoff
+    !! The search ends when upperbound is determined to be greater than to ub_cutoff.
     real(RK), intent(in), optional      :: difflim
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
     integer(IK), intent(in), optional   :: maxeval
@@ -261,6 +264,7 @@ contains
      &       state,  &
      &       W, &
      &       cutoff=cutoff, &
+     &       ub_cutoff=ub_cutoff, &
      &       difflim=difflim, &
      &       maxeval=maxeval, &
      &       difflim_absolute=difflim_absolute &
@@ -282,6 +286,7 @@ contains
        &       state,  &
        &       T, &
        &       cutoff=cutoff, &
+       &       ub_cutoff=ub_cutoff, &
        &       difflim=difflim, &
        &       maxeval=maxeval, &
        &       difflim_absolute=difflim_absolute &
@@ -296,6 +301,7 @@ contains
  &                  state, &
  &                  W, &
  &                  cutoff, &
+ &                  ub_cutoff, &
  &                  difflim, &
  &                  maxeval, &
  &                  difflim_absolute &
@@ -308,6 +314,8 @@ contains
     !! work array, must be > header%memsize()
     real(RK), intent(in), optional       :: cutoff
     !! The search ends when lowerbound is determined to be greater than to cutoff.
+    real(RK), intent(in), optional       :: ub_cutoff
+    !! The search ends when lowerbound is determined to be greater than to ub_cutoff.
     real(RK), intent(in), optional       :: difflim
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
     integer(IK), intent(in), optional    :: maxeval
@@ -319,6 +327,7 @@ contains
       &    state%s, &
       &    W, &
       &    cutoff=cutoff, &
+      &    ub_cutoff=ub_cutoff, &
       &    difflim=difflim, &
       &    maxeval=maxeval, &
       &    difflim_absolute=difflim_absolute &

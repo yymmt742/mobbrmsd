@@ -67,7 +67,7 @@ contains
    &  n_target, n_target * (n_target - 1) / 2, 1, &
    &  n_header, h, &
    &  X, W, &
-   &  [999.0_RK, 0.0_RK], [-1], .true., .true., .false., &
+   &  [999.0_RK, 999.0_RK, 0.0_RK], [-1], .true., .true., .false., &
    &  rmsd)
 !
     k = 0
@@ -140,7 +140,7 @@ contains
    &  n_reference * n_target, &
    &  1, n_header, h, &
    &  X, Y, W, &
-   &  [999.0_RK, 0.0_RK], [-1], .true., .true., .false., &
+   &  [999.0_RK, 999.0_RK, 0.0_RK], [-1], .true., .true., .false., &
    &  rmsd)
 !
     do j = 1, n_target
@@ -190,7 +190,7 @@ contains
 !
     call min_span_tree( &
  &    n_target, n_header, n_int, n_float, header, &
- &    X, W, [RHUGE, ZERO], [-1], .true., .true., .false., &
+ &    X, W, [RHUGE, RHUGE, ZERO], [-1], .true., .true., .false., &
  &    edges, weights)
 !
     do i = 1, n_target - 1

@@ -186,7 +186,7 @@ contains
     !! target coordinate
     real(kind=RK), intent(inout)  :: W(*)
     !! work memory
-    real(kind=RK), intent(in)     :: ropts(*) ! 1 cutoff 2 difflim
+    real(kind=RK), intent(in)     :: ropts(*) ! 1 cutoff 2 ub_cutoff 3 difflim
     integer(kind=IK), intent(in)  :: iopts(*) ! 1 maxeval
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
@@ -206,7 +206,8 @@ contains
       &    Y, &
       &    w, &
       &    cutoff=ropts(1), &
-      &    difflim=ropts(2), &
+      &    ub_cutoff=ropts(2), &
+      &    difflim=ropts(3), &
       &    maxeval=iopts(1),&
       &    remove_com=remove_com,&
       &    sort_by_g=sort_by_g,&
@@ -253,7 +254,7 @@ contains
     !! work memory
     real(kind=RK), intent(inout)    :: rotation(n_rot)
     !! rotation matrix
-    real(kind=RK), intent(in)       :: ropts(*) ! 1 cutoff 2 difflim
+    real(kind=RK), intent(in)       :: ropts(*) ! 1 cutoff 2 ub_cutoff 3 difflim
     integer(kind=IK), intent(in)    :: iopts(*) ! 1 maxeval
     logical, intent(in)             :: difflim_absolute
     logical, intent(in)             :: get_rotation
@@ -270,7 +271,8 @@ contains
       &    s, &
       &    W, &
       &    cutoff=ropts(1), &
-      &    difflim=ropts(2), &
+      &    ub_cutoff=ropts(2), &
+      &    difflim=ropts(3), &
       &    maxeval=iopts(1), &
       &    difflim_absolute=difflim_absolute &
           )
@@ -339,7 +341,7 @@ contains
    !! target coordinate
     real(kind=RK), intent(inout)  :: W(*)
    !! work array
-    real(kind=RK), intent(in)     :: ropts(*) ! 1 cutoff 2 difflim
+    real(kind=RK), intent(in)     :: ropts(*) ! 1 cutoff 2 ub_cutoff 3 difflim
     integer(kind=IK), intent(in)  :: iopts(*) ! 1 maxeval
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
@@ -353,7 +355,8 @@ contains
    &       n_reference, n_target, h, s, &
    &       X, Y, W, &
    &       cutoff=ropts(1), &
-   &       difflim=ropts(2),&
+   &       ub_cutoff=ropts(2), &
+   &       difflim=ropts(3),&
    &       maxeval=iopts(1), &
    &       remove_com=remove_com, &
    &       sort_by_g=sort_by_g, &
@@ -392,7 +395,7 @@ contains
    !! reference and target coordinate
     real(kind=RK), intent(inout)  :: W(*)
    !! work array
-    real(kind=RK), intent(in)     :: ropts(*) ! 1 cutoff 2 difflim
+    real(kind=RK), intent(in)     :: ropts(*) ! 1 cutoff 2 ub_cutoff 3 difflim
     integer(kind=IK), intent(in)  :: iopts(*) ! 1 maxeval
     logical, intent(in)           :: remove_com
     logical, intent(in)           :: sort_by_g
@@ -405,7 +408,8 @@ contains
     call mobbrmsd_batch_tri_run( &
    &       n_target, h, s, X, W, &
    &       cutoff=ropts(1), &
-   &       difflim=ropts(2), &
+   &       ub_cutoff=ropts(2), &
+   &       difflim=ropts(3), &
    &       maxeval=iopts(1), &
    &       remove_com=remove_com, &
    &       sort_by_g=sort_by_g, &
@@ -443,7 +447,7 @@ contains
    !! reference coordinate
     real(kind=RK), intent(inout)      :: W(*)
    !! work memory
-    real(kind=RK), intent(in)         :: ropts(*) ! 1 cutoff 2 difflim
+    real(kind=RK), intent(in)         :: ropts(*) ! 1 cutoff 2 ub_cutoff 2 difflim
     integer(kind=IK), intent(in)      :: iopts(*) ! 1 maxeval
     logical, intent(in)               :: remove_com
     logical, intent(in)               :: sort_by_g
@@ -459,7 +463,8 @@ contains
     call mobbrmsd_min_span_tree( &
    &       n_target, h, s, X, W, &
    &       cutoff=ropts(1), &
-   &       difflim=ropts(2), &
+   &       ub_cutoff=ropts(2), &
+   &       difflim=ropts(3), &
    &       maxeval=iopts(1), &
    &       remove_com=remove_com, &
    &       sort_by_g=sort_by_g, &

@@ -148,7 +148,7 @@ contains
    &   cm => W(bb_list_INDEX_TO_LOG_N_COMB) &
    &  )
       sb = 0
-      ub = RHUGE
+      ub = ZERO
       lb = -RHUGE
       nv = ZERO
       ps = s_pointer(q)
@@ -200,7 +200,7 @@ contains
   end subroutine bb_list_setup
 !
 !| run branch and bound
-  pure subroutine bb_list_run(q, s, W, cutoff, difflim, maxeval, difflim_absolute)
+  pure subroutine bb_list_run(q, s, W, cutoff, ub_cutoff, difflim, maxeval, difflim_absolute)
     integer(IK), intent(in)           :: q(*)
     !! header
     integer(IK), intent(inout)        :: s(*)
@@ -208,6 +208,9 @@ contains
     real(RK), intent(inout)           :: W(*)
     !! work array
     real(RK), intent(in), optional    :: cutoff
+    !! The search ends when lowerbound is determined
+    !  to be greater than to cutoff (in RMSD).
+    real(RK), intent(in), optional    :: ub_cutoff
     !! The search ends when lowerbound is determined
     !  to be greater than to cutoff (in RMSD).
     real(RK), intent(in), optional    :: difflim
@@ -224,7 +227,7 @@ contains
     !  difflim is converted to the RMSD scale, such that
     !  \(\text{threshold} = \text{difflim}^2 * n_atoms\).
     !  default False.
-    real(RK)                          :: coff, diff, nlim
+    real(RK)                          :: coff, ucut, diff, nlim
     integer(IK)                       :: pq, ps, pw
     associate ( &
    &   b => s(bb_list_INDEX_TO_SPEACIES), &
@@ -239,9 +242,15 @@ contains
       pw = w_pointer(q)
 !
       if (PRESENT(cutoff)) then
-        coff = MIN(ZERO, HALF * (cutoff**2 * bb_list_n_atoms(q) - ac))
+        coff = HALF * (cutoff**2 * bb_list_n_atoms(q) - ac)
       else
         coff = RHUGE
+      end if
+!
+      if (PRESENT(ub_cutoff)) then
+        ucut = HALF * (ub_cutoff**2 * bb_list_n_atoms(q) - ac)
+      else
+        ucut = RHUGE
       end if
 !
       if (PRESENT(difflim)) then
@@ -274,8 +283,9 @@ contains
       call update_lowerbound(b, q(pq), q(ps), q(pw), q, s, W)
 !
       do while (nv < nlim &
-     &    .and. lb < coff &
-     &    .and. lb + diff < ub)
+          .and. lb < coff &
+          .and. ub < ucut &
+     &    .and. lb + diff <= ub)
         call run_bb(q(pq), q(ps), q(pw), q, s, W)
         if (bb_list_is_finished(q, s)) exit
       end do

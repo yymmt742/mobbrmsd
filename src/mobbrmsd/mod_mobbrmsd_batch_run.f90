@@ -24,6 +24,7 @@ contains
   &            Y, &
   &            W, &
   &            cutoff, &
+  &            ub_cutoff, &
   &            difflim, &
   &            maxeval, &
   &            remove_com, &
@@ -48,6 +49,8 @@ contains
    !! work memory, must be larger than header%memsize() * mobbrmsd_num_threads()
     real(RK), intent(in), optional       :: cutoff
     !! The search ends when lowerbound is determined to be greater than to cutoff.
+    real(RK), intent(in), optional       :: ub_cutoff
+    !! The search ends when upperbound is determined to be greater than to ub_cutoff.
     real(RK), intent(in), optional       :: difflim
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
     integer(IK), intent(in), optional    :: maxeval
@@ -89,6 +92,7 @@ contains
      &       Y(ypnt), &
      &       W(wpnt), &
      &       cutoff=cutoff, &
+     &       ub_cutoff=ub_cutoff, &
      &       difflim=difflim, &
      &       maxeval=maxeval, &
      &       remove_com=remove_com, &
@@ -107,6 +111,7 @@ contains
   &            X, &
   &            W, &
   &            cutoff, &
+  &            ub_cutoff, &
   &            difflim, &
   &            maxeval, &
   &            remove_com, &
@@ -127,6 +132,8 @@ contains
    !! work memory, must be larger than header%memsize() * mobbrmsd_num_threads()
     real(RK), intent(in), optional       :: cutoff
     !! The search ends when lowerbound is determined to be greater than to cutoff.
+    real(RK), intent(in), optional       :: ub_cutoff
+    !! The search ends when upperbound is determined to be greater than to ub_cutoff.
     real(RK), intent(in), optional       :: difflim
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
     integer(IK), intent(in), optional    :: maxeval
@@ -164,7 +171,7 @@ contains
       ypnt = ypnt * ldx + 1
       wpnt = ldw * omp_get_thread_num() + 1
       call mobbrmsd_run(header, state(spnt), X(xpnt), X(ypnt), W(wpnt), &
-     &                  cutoff=cutoff, difflim=difflim, maxeval=maxeval, &
+     &                  cutoff=cutoff, ub_cutoff=ub_cutoff, difflim=difflim, maxeval=maxeval, &
      &                  remove_com=remove_com, sort_by_g=sort_by_g &
      &      )
     end do

@@ -24,6 +24,7 @@ contains
  &             X, &
  &             W, &
  &             cutoff, &
+ &             ub_cutoff, &
  &             difflim, &
  &             maxeval, &
  &             remove_com, &
@@ -44,6 +45,8 @@ contains
 !   !! work memory, must be larger than header%memsize() * n_target * (n_target-1) / 2
     real(RK), intent(in), optional      :: cutoff
     !! The search ends when lowerbound is determined to be greater than to cutoff.
+    real(RK), intent(in), optional      :: ub_cutoff
+    !! The search ends when upperbound is determined to be greater than to ub_cutoff.
     real(RK), intent(in), optional      :: difflim
     !! The search ends when the difference between the lower and upper bounds is less than difflim.
     integer(IK), intent(in), optional   :: maxeval
@@ -80,6 +83,7 @@ contains
        &       X(ypnt), &
        &       W(wpnt), &
        &       cutoff=cutoff, &
+       &       ub_cutoff=ub_cutoff, &
        &       difflim=difflim, &
        &       maxeval=1, &
        &       remove_com=remove_com, &
@@ -133,6 +137,7 @@ contains
          &       state(spnt), &
          &       W(wpnt), &
          &       cutoff=ub, &
+         &       ub_cutoff=ub_cutoff, &
          &       difflim=difflim, &
          &       maxeval=maxeval &
          &      )
