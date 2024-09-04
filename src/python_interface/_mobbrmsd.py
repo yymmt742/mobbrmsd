@@ -65,7 +65,8 @@ class mobbrmsd_result:
     # @param
     #   x (numpy.ndarray): 参照構造
     #   y (numpy.ndarray): 対照構造
-    #   cutoff (float): BBの上限がcutoff以下になったとき、計算を終了する。 default float(inf)
+    #   cutoff (float): BBの下限がcutoff以上になったとき、計算を終了する。 default float(inf)
+    #   ub_cutoff (float): BBの上限がcutoff以上になったとき、計算を終了する。 default float(inf)
     #   difflim (float): BBの上限と下限の差がdifflim以下になったとき、計算を終了する。 default 0
     #   maxeval (int): BBのノード評価数がmaxevalを超えたとき、計算を終了する。
     #                  ただし、最低でも expand と closure の1サイクルは実行される。
@@ -76,6 +77,7 @@ class mobbrmsd_result:
     def restart(
         self,
         cutoff: float = float("inf"),
+        ub_cutoff: float = float("inf"),
         difflim: float = 0.0,
         maxeval: int = -1,
         difflim_absolute: bool = False,
@@ -86,7 +88,7 @@ class mobbrmsd_result:
             return
 
         driver = select_driver(self.d, dtype=self.w.dtype)
-        ropts = numpy.array([cutoff, difflim], dtype=self.w.dtype)
+        ropts = numpy.array([cutoff, ub_cutoff, difflim], dtype=self.w.dtype)
         iopts = numpy.array([maxeval], dtype=self.header.dtype)
         driver.restart(
             self.header,
@@ -308,7 +310,8 @@ class mobbrmsd:
     # @param
     #   x (numpy.ndarray): 参照構造
     #   y (numpy.ndarray): 対照構造
-    #   cutoff (float): BBの上限がcutoff以下になったとき、計算を終了する。 default float(inf)
+    #   cutoff (float): BBの下限がcutoff以上になったとき、計算を終了する。 default float(inf)
+    #   ub_cutoff (float): BBの上限がcutoff以上になったとき、計算を終了する。 default float(inf)
     #   difflim (float): BBの上限と下限の差がdifflim以下になったとき、計算を終了する。 default 0
     #   maxeval (int): BBのノード評価数がmaxevalを超えたとき、計算を終了する。
     #                  ただし、最低でも expand と closure の1サイクルは実行される。
@@ -325,6 +328,7 @@ class mobbrmsd:
         x: npt.NDArray,
         y: npt.NDArray,
         cutoff: float = float("inf"),
+        ub_cutoff: float = float("inf"),
         difflim: float = 0.0,
         maxeval: int = -1,
         remove_com: bool = True,
@@ -341,7 +345,7 @@ class mobbrmsd:
         y_ = varidation_coordinates_1(y, self.d, self.natom, dtype=dt)
         driver = select_driver(self.d, dtype=dt)
         w = numpy.empty(self.memsize, dtype=dt)
-        ropts = numpy.array([cutoff, difflim], dtype=dt)
+        ropts = numpy.array([cutoff, ub_cutoff, difflim], dtype=dt)
         iopts = numpy.array([maxeval], dtype=numpy.int32)
 
         iret, rret, rot = driver.run(
@@ -377,7 +381,8 @@ class mobbrmsd:
     # @param
     #   x (numpy.ndarray): 構造
     #   y (numpy.ndarray): 対照構造, optional
-    #   cutoff (float): BBの上限がcutoff以下になったとき、計算を終了する。 default float(inf)
+    #   cutoff (float): BBの下限がcutoff以上になったとき、計算を終了する。 default float(inf)
+    #   ub_cutoff (float): BBの上限がcutoff以上になったとき、計算を終了する。 default float(inf)
     #   difflim (float): BBの上限と下限の差が (G/2) * difflim 以下になったとき、計算を終了する。 default 0.0
     #   maxeval (int): BBのノード評価数がmaxevalを超えたとき、計算を終了する。
     #                  ただし、最低でも expand と closure の1サイクルは実行される。
@@ -395,6 +400,7 @@ class mobbrmsd:
         x: npt.NDArray,
         y: None | npt.NDArray = None,
         cutoff: float = float("inf"),
+        ub_cutoff: float = float("inf"),
         difflim: float = 0.0,
         maxeval: int = -1,
         remove_com: bool = True,
@@ -415,7 +421,7 @@ class mobbrmsd:
             n_chunk_ = n_tri if n_chunk < 1 else self.njob * n_chunk
             ww = numpy.empty((self.njob * self.memsize), dtype=dt)
 
-            ropts = numpy.array([cutoff, difflim], dtype=dt)
+            ropts = numpy.array([cutoff, ub_cutoff, difflim], dtype=dt)
             iopts = numpy.array([maxeval], dtype=numpy.int32)
 
             if n_tri == n_chunk_ or not verbose:
@@ -471,7 +477,7 @@ class mobbrmsd:
             n_chunk_ = n_tri if n_chunk < 1 else self.njob * n_chunk
             ww = numpy.empty((self.njob * self.memsize), dtype=dt)
 
-            ropts = numpy.array([cutoff, difflim], dtype=dt)
+            ropts = numpy.array([cutoff, ub_cutoff, difflim], dtype=dt)
             iopts = numpy.array([maxeval], dtype=numpy.int32)
 
             if n_tri == n_chunk_ or not verbose:
@@ -522,7 +528,8 @@ class mobbrmsd:
     # @details 一連の座標について mobbRMSD の最小全域木を計算する。
     # @param
     #   x (numpy.ndarray): 参照構造
-    #   cutoff (float): BBの上限がcutoff以下になったとき、計算を終了する。 default float(inf)
+    #   cutoff (float): BBの下限がcutoff以上になったとき、計算を終了する。 default float(inf)
+    #   ub_cutoff (float): BBの上限がcutoff以上になったとき、計算を終了する。 default float(inf)
     #   difflim (float): BBの上限と下限の差が difflim 以下になったとき、計算を終了する。 default 0
     #   maxeval (int): BBのノード評価数がmaxevalを超えたとき、計算を終了する。
     #                  ただし、最低でも expand と closure の1サイクルは実行される。
@@ -538,6 +545,7 @@ class mobbrmsd:
         self,
         x: numpy.ndarray,
         cutoff: float = float("inf"),
+        ub_cutoff: float = float("inf"),
         difflim: float = 0.0,
         maxeval: int = -1,
         remove_com: bool = True,
@@ -555,7 +563,7 @@ class mobbrmsd:
         ww = numpy.empty((n_target * (n_target - 1) // 2 * self.memsize), dtype=dt)
 
         driver = select_driver(self.d, dtype=dt)
-        ropts = numpy.array([cutoff, difflim], dtype=dt)
+        ropts = numpy.array([cutoff, ub_cutoff, difflim], dtype=dt)
         iopts = numpy.array([maxeval], dtype=numpy.int32)
 
         edges, weights = driver.min_span_tree(
