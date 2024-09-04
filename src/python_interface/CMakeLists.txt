@@ -1,4 +1,4 @@
-#if(SKBUILD)
+if(SKBUILD)
   find_package(Python 3.8 REQUIRED COMPONENTS NumPy)
   find_package(F2PY REQUIRED)
 
@@ -104,7 +104,7 @@
     DESTINATION
     "${CMAKE_INSTALL_PYTHON_LIBDIR}/mobbrmsd"
     )
-#endif()
+endif()
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   ADDTEST(test_driver 3 64 32 1 1 ""
