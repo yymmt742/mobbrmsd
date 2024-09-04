@@ -272,10 +272,10 @@ contains
       end if
 !
       call update_lowerbound(b, q(pq), q(ps), q(pw), q, s, W)
-      if (lb >= coff) return
 !
       do while (nv < nlim &
-     &    .and. lb + diff <= ub)
+     &    .and. lb < coff &
+     &    .and. lb + diff < ub)
         call run_bb(q(pq), q(ps), q(pw), q, s, W)
         if (bb_list_is_finished(q, s)) exit
       end do
