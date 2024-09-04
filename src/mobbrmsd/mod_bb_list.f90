@@ -1,6 +1,6 @@
 !| Manage multiple bb_blocks and execute multi-component Branch-and-Bound.
 module mod_bb_list
-  use mod_params, only: IK, RK, ONE => RONE, HALF => RHALF, ZERO => RZERO, RHUGE
+  use mod_params, only: IK, RK, ONE => RONE, TWO => RTWO, HALF => RHALF, ZERO => RZERO, RHUGE
   use mod_dimspec_functions, only: D, DD, compute_com
   use mod_bb_block
   use mod_rotation
@@ -149,7 +149,7 @@ contains
    &  )
       sb = 0
       ub = ZERO
-      lb = -RHUGE
+      !lb = -RHUGE
       nv = ZERO
       ps = s_pointer(q)
       px = x_pointer(q)
@@ -191,6 +191,9 @@ contains
       do i = 0, n_block - 1
         ac = ac + bb_block_autocorr(q(q(pq + i)), W(q(pw + i)))
       end do
+!
+      lb = -TWO * ac
+!
       cm = ZERO
       do i = 0, n_block - 1
         cm = cm + bb_block_log_ncomb(q(q(pq + i)))
