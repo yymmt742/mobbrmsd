@@ -287,10 +287,9 @@ contains
 !
       do while (nv < nlim &
           .and. lb < coff &
-          .and. ub < ucut &
      &    .and. lb + diff <= ub)
         call run_bb(q(pq), q(ps), q(pw), q, s, W)
-        if (bb_list_is_finished(q, s)) exit
+        if (bb_list_is_finished(q, s) .or. ub >= ucut) exit
       end do
     end associate
   end subroutine bb_list_run
