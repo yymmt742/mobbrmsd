@@ -43,7 +43,6 @@ program main
   call test2(8, 2, 1, [0], 4, 2, 2, [3, 2, 1, 4])
   call u%init('test mobbrmsd for {(n,M,S)}={(24,3,1), (24,4,1)}')
   call test2(24, 3, 1, [0], 24, 4, 1, [0])
-  stop
 !
   call u%init('test mobbrmsd repeat for {(n,M,S)}={(4,4,2)}')
   call test3(4, 4, 2, [3, 2, 1, 4])
