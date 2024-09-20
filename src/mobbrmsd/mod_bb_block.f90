@@ -33,8 +33,8 @@ module mod_bb_block
   public :: bb_block_worksize
   public :: bb_block_setup
   public :: bb_block_inheritance
-  public :: bb_block_expand
-  public :: bb_block_closure
+  public :: bb_block_descend
+  public :: bb_block_ascend
   public :: bb_block_is_left
   public :: bb_block_tree_is_empty
   public :: bb_block_tree_is_finished
@@ -331,7 +331,7 @@ contains
     end associate
   end subroutine bb_block_setup
 !
-!| Expands the latest node of the parent block to the top-level queue of the child block.
+!| descends the latest node of the parent block to the top-level queue of the child block.
   pure subroutine bb_block_inheritance(q, s, W, p, r, Z)
     integer(IK), intent(in)    :: q(*)
     !! work integer array
@@ -367,8 +367,8 @@ contains
     end associate
   end subroutine bb_block_inheritance
 !
-!| Expand top node in queue.
-  pure subroutine bb_block_expand(UB, q, s, W)
+!| descend top node in queue.
+  pure subroutine bb_block_descend(UB, q, s, W)
     real(RK), intent(in)       :: UB
     !! upper bound
     integer(IK), intent(in)    :: q(*)
@@ -399,15 +399,15 @@ contains
           if (tree_queue_is_bottom(q(qtree), s(stree)) &
        & .or. tree_queue_is_empty(q(qtree), s(stree))) exit
           pp = xtree + (tree_current_pointer(q(qtree), s(stree)) - 1) * ND
-          call tree_expand(q(qtree), s(stree))
+          call tree_descend(q(qtree), s(stree))
           call evaluate_nodes(nmol, q, s, W(pp), W, W(xtree), neval)
         end do
       end block
     end associate
-  end subroutine bb_block_expand
+  end subroutine bb_block_descend
 !
-!| closure current node.
-  pure subroutine bb_block_closure(UB, q, s, W)
+!| ascend current node.
+  pure subroutine bb_block_ascend(UB, q, s, W)
     real(RK), intent(in)       :: UB
     !! upper bound
     integer(IK), intent(in)    :: q(*)
@@ -427,10 +427,10 @@ contains
       do
         if (tree_queue_is_left(q(qtree), s(stree), ND, ubval, W(xtree)) &
      & .or. tree_queue_is_root(q(qtree), s(stree))) exit
-        call tree_leave(q(qtree), s(stree))
+        call tree_ascend(q(qtree), s(stree))
       end do
     end associate
-  end subroutine bb_block_closure
+  end subroutine bb_block_ascend
 !
 !| Evaluate nodes in tree_current_level.
   pure subroutine evaluate_nodes(nmol, q, s, Z, W, xtree, neval)

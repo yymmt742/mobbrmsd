@@ -309,7 +309,7 @@ contains
 !     Expansion process
 !
       do
-        call bb_block_expand(ub, q(pq(b)), s(ps(b)), W(pw(b)))
+        call bb_block_descend(ub, q(pq(b)), s(ps(b)), W(pw(b)))
         if (b == n .or. bb_block_tree_is_empty(q(pq(b)), s(ps(b)))) exit
         b = b + 1
         call bb_block_inheritance(q(pq(b)), s(ps(b)), W(pw(b)), &
@@ -333,10 +333,10 @@ contains
 !
       call update_lowerbound(b, pq, ps, pw, q, s, W)
 !
-!     Closure process
+!     ascend process
 !
       do
-        call bb_block_closure(ub, q(pq(b)), s(ps(b)), W(pw(b)))
+        call bb_block_ascend(ub, q(pq(b)), s(ps(b)), W(pw(b)))
         if (b == 1 .or. bb_block_is_left(ub, q(pq(b)), s(ps(b)), W(pw(b)))) exit
         b = b - 1
       end do

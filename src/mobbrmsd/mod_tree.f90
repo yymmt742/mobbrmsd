@@ -58,8 +58,8 @@ module mod_tree
   public :: tree_sequence_to_permutation
   public :: tree_current_mapping
   public :: tree_sequence_to_mapping
-  public :: tree_expand
-  public :: tree_leave
+  public :: tree_descend
+  public :: tree_ascend
   public :: tree_select_top_node
   public :: tree_lowest_value
   public :: tree_reset
@@ -363,8 +363,8 @@ contains
     end do
   end subroutine tree_sequence_to_mapping
 !
-!| Expand current node.
-  pure subroutine tree_expand(q, s)
+!| descend current node.
+  pure subroutine tree_descend(q, s)
     integer(IK), intent(in)    :: q(*)
 !!  header
     integer(IK), intent(inout) :: s(*)
@@ -372,16 +372,16 @@ contains
     if (tree_queue_is_bottom(q, s)) return
     s(sl) = s(sl) + 1
     call set_state(s, is_unexplored)
-  end subroutine tree_expand
+  end subroutine tree_descend
 !
-!| Leave current node.
-  pure subroutine tree_leave(q, s)
+!| ascend current node.
+  pure subroutine tree_ascend(q, s)
     integer(IK), intent(in)    :: q(*)
 !!  header
     integer(IK), intent(inout) :: s(*)
 !!  state
     if (s(sl) > 1) s(sl) = s(sl) - 1
-  end subroutine tree_leave
+  end subroutine tree_ascend
 !
 !| Select top node, using W(1, \*).
   pure subroutine tree_select_top_node(q, s, ld, UB, W)
