@@ -279,10 +279,10 @@ contains
 !   K1 = -8 det|R|
 !   K0 = A2**2 - 4*A1
 !
-!   Rescale to X'  = X * SQRT(A2), 0 <= X' <= g / (2 * SQRT(A2))
-!              K2' = K2 / A2                 = -2
-!              K1' = SQRT(A2) * K1 / (A2**2) = - 8 * det|R| / (A2**(3/2))
-!              K0' = K0 / A2**2              = 1 - 4 * A1 / A2**2
+!   Rescale to X_  = X * SQRT(A2), 0 <= X_ <= g / (2 * SQRT(A2))
+!              K2_ = K2 / A2                 = -2
+!              K1_ = SQRT(A2) * K1 / (A2**2) = - 8 * det|R| / (A2**(3/2))
+!              K0_ = K0 / A2**2              = 1 - 4 * A1 / A2**2
 !
     w(sa) = SQRT(w(a2))
     w(k0) = ONE / (w(a2) * w(a2))

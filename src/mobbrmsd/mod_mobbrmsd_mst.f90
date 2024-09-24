@@ -1,5 +1,5 @@
 !| Configure a minimum global tree with mobbrmsd. <br>
-!  MST construction is based on the Prim's algorithm,
+!  MST construction is based on the Prims algorithm,
 !  but the useless calculations are reduced using the cutoff possibilities of mobbrmsd.
 module mod_mobbrmsd_mst
 !$ use omp_lib
