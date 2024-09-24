@@ -79,9 +79,38 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Create a GitHub release
-      uses: ncipollo/release-action@v1
+      uses: actions/upload-artifact@v4
       with:
-        tag: ${{ steps.tag_version.outputs.new_tag }}
-        name: ${{ steps.tag_version.outputs.new_tag }}
-        body: ${{ github.event.pull_request.body }}
+        name: python-package-distributions
+        path: dist/
+
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+
+    - name: Sign the dists with Sigstore
+      uses: sigstore/gh-action-sigstore-python@v2.1.1
+      with:
+        inputs: >-
+          ./dist/*.tar.gz
+          ./dist/*.whl
+
+    - name: Create GitHub Release
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: >-
+        gh release create
+        '${{ github.ref_name }}'
+        --repo '${{ github.repository }}'
+        --notes ""
+
+    - name: Upload artifact signatures to GitHub Release
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: >-
+        gh release upload
+        '${{ github.ref_name }}' dist/**
+        --repo '${{ github.repository }}'
 
