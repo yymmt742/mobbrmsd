@@ -1,0 +1,47 @@
+name: Create Tag and Release
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  create:
+    # releaseブランチをマージされたときのみ実行
+    if: startsWith(github.head_ref, 'release/') && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Create a tag string
+        id: extract_tag
+        #  Pull Requstのタイトルからバージョンを抽出する
+        run: echo "::set-output name=custom_tag::$(echo '${{ github.event.pull_request.head.ref }}' | sed 's/release\///')"
+        shell: bash
+
+      - name: Update pyproject.toml
+        run: sed -i "/version =/c version = ${{ steps.extract_tag.outputs }}" pyproject.toml
+
+      - name: Commit pyproject.toml
+        uses: EndBug/add-and-commit@v7.1.0
+        with:
+          author_name: "yymmt742"
+          author_email: "yymmt@kuchem.kyoto-u.ac.jp"
+          message: "[update] pyproject.toml, version"
+          add: pyproject.toml
+
+      - name: Create a tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          custom_tag: ${{ steps.extract_tag.outputs.custom_tag }}
+          tag_prefix:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create a GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ github.event.pull_request.body }}
+
