@@ -37,6 +37,10 @@ jobs:
       with:
         compiler: gcc
         version: 12
+
+    - name: Create and push release branch # releaseブランチを作成
+      run:
+        git checkout -b ${{ env.RELEASE_BRANCH_NAME }}
         
     - name: Update pyproject.toml
       shell: bash
