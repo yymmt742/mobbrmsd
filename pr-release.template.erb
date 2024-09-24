@@ -1,0 +1,4 @@
+Release: <%= release_pull_request[:head][:ref].match(/release\/(.+)/)[1] %>
+<% pull_requests.each do |pr| -%>
+  <%= pr.to_checklist_item %>
+<% end -%>
