@@ -64,14 +64,14 @@ contains
     call bb_block_setup(q, X, Y, CX, CY, s, W, zfill=.true.)
     g = bb_block_autocorr(q, W)
     do
-      call bb_block_expand(ub, q, s, W)
+      call bb_block_descend(ub, q, s, W)
       if (bb_block_is_bottom(q, s)) then
         if (bb_block_current_value(q, s, w) < ub) then
           ub = bb_block_current_value(q, s, w)
           call bb_block_save_state(q, s, sb)
         end if
       end if
-      call bb_block_closure(ub, q, s, W)
+      call bb_block_ascend(ub, q, s, W)
       if (bb_block_tree_is_empty(q, s)) exit
     end do
     W(1) = g + ub + ub

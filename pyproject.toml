@@ -1,3 +1,14 @@
 [build-system]
-requires = ["setuptools==59.8", "scikit-build", "networkx", "tqdm", "fypp", "cmake>=3.18", "numpy<=2.1.1"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core", "numpy", "networkx", "matplotlib", "pick", "tqdm"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "mobbrmsd"
+dependencies = ["numpy"]
+version = "0.0.22"
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+
+[tool.scikit-build]
+ninja.version = ">=1.10"
+cmake.version = ">=3.18"

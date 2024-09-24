@@ -66,7 +66,7 @@ contains
     call u%assert_equal(tree_node_pointer(t%q, t%s, 3, 0), 7, 'tree_node_pointer   ')
     call u%assert_equal(tree_node_pointer(t%q, t%s, 3, 1), 8, 'tree_node_pointer   ')
 !
-    call tree_expand(t%q, t%s)
+    call tree_descend(t%q, t%s)
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
 !
     call u%assert_equal(tree_queue_pointer(t%q, t%s), 9, 'tree_queue_pointer  ')
@@ -78,7 +78,7 @@ contains
     call u%assert_equal(tree_node_pointer(t%q, t%s, 2, 0), 13, 'tree_node_pointer   ')
     call u%assert_equal(tree_node_pointer(t%q, t%s, 2, 1), 14, 'tree_node_pointer   ')
 !
-    call tree_expand(t%q, t%s)
+    call tree_descend(t%q, t%s)
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
 !
     call u%assert_equal(tree_queue_pointer(t%q, t%s), 15, 'tree_queue_pointer  ')
@@ -88,7 +88,7 @@ contains
     call u%assert_equal(tree_node_pointer(t%q, t%s, 1, 0), 17, 'tree_node_pointer   ')
     call u%assert_equal(tree_node_pointer(t%q, t%s, 1, 1), 18, 'tree_node_pointer   ')
 !
-    call tree_expand(t%q, t%s)
+    call tree_descend(t%q, t%s)
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
 !
     call u%assert_equal(tree_queue_pointer(t%q, t%s), 19, 'tree_queue_pointer  ')
@@ -111,9 +111,9 @@ contains
     call tree_current_mapping(t%q, t%s, s)
     call u%assert_equal(s, [1, 1, 1, 0], 'current_mapping     ')
 !
-    call tree_leave(t%q, t%s)
+    call tree_ascend(t%q, t%s)
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
-    call tree_expand(t%q, t%s)
+    call tree_descend(t%q, t%s)
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
     call tree_current_sequence(t%q, t%s, s)
     call u%assert_equal(s, [7, 5, 2, 1], 'current_sequence    ')
@@ -122,9 +122,9 @@ contains
     call tree_current_mapping(t%q, t%s, s)
     call u%assert_equal(s, [1, 1, 0, 1], 'current_mapping     ')
 !
-    call tree_leave(t%q, t%s)
+    call tree_ascend(t%q, t%s)
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
-    call tree_expand(t%q, t%s)
+    call tree_descend(t%q, t%s)
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
     call tree_current_sequence(t%q, t%s, s)
     call u%assert_equal(s, [7, 5, 1, 1], 'current_sequence    ')
@@ -133,9 +133,9 @@ contains
     call tree_current_mapping(t%q, t%s, s)
     call u%assert_equal(s, [1, 1, 1, 1], 'current_mapping     ')
 !
-    call tree_leave(t%q, t%s)
+    call tree_ascend(t%q, t%s)
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
-    call tree_expand(t%q, t%s)
+    call tree_descend(t%q, t%s)
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
     call tree_current_sequence(t%q, t%s, s)
     call u%assert_equal(s, [7, 5, 0, 1], 'current_sequence    ')
@@ -144,10 +144,10 @@ contains
     call tree_current_mapping(t%q, t%s, s)
     call u%assert_equal(s, [1, 1, 0, 1], 'current_mapping     ')
 !
-    call tree_leave(t%q, t%s)
-    call tree_leave(t%q, t%s)
+    call tree_ascend(t%q, t%s)
+    call tree_ascend(t%q, t%s)
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
-    call tree_expand(t%q, t%s)
+    call tree_descend(t%q, t%s)
     call tree_select_top_node(t%q, t%s, 2, 999._RK, w)
     call tree_current_sequence(t%q, t%s, s)
     call u%assert_equal(s, [7, 4, 3, 1], 'current_sequence    ')
@@ -176,7 +176,7 @@ contains
         call tree_select_top_node(t%q, t%s, 1, ub, w)
         if (tree_queue_is_bottom(t%q, t%s) .or. tree_queue_is_empty(t%q, t%s)) exit
         r = tree_current_pointer(t%q, t%s)
-        call tree_expand(t%q, t%s)
+        call tree_descend(t%q, t%s)
         p = p + 1
         q = tree_queue_pointer(t%q, t%s)
         call RANDOM_NUMBER(w(q:q + 4 - p))
@@ -191,7 +191,7 @@ contains
       end if
       do
         if (tree_queue_is_left(t%q, t%s, 1, ub, W) .or. tree_queue_is_root(t%q, t%s)) exit
-        call tree_leave(t%q, t%s)
+        call tree_ascend(t%q, t%s)
         p = p - 1
       end do
       if (tree_queue_is_empty(t%q, t%s) .and. tree_queue_is_root(t%q, t%s)) exit
