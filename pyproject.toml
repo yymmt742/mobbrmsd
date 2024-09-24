@@ -1,3 +1,9 @@
 [build-system]
-requires = ["setuptools==59.8", "scikit-build", "networkx", "tqdm", "fypp", "cmake>=3.18", "numpy<=2.1.1"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core", "networkx", "tqdm", "fypp", "cmake>=3.18", "numpy<=2.1.1"]
+build-backend = "scikit_build_core.build"
+#requires = ["setuptools==59.8", "scikit-build", "networkx", "tqdm", "fypp", "cmake>=3.18", "numpy<=2.1.1"]
+#build-backend = "setuptools.build_meta"
+
+[project]
+name = "mobbrmsd"
+version = "0.0.1"
