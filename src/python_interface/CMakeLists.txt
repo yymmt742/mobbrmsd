@@ -66,7 +66,7 @@ if(SKBUILD)
     add_custom_target(mobbrmsd_${dim}${prec}_so ALL DEPENDS ${sofile})
     install(FILES
       ${sofile}
-      DESTINATION ${Python_SITELIB}/mobbrmsd
+      DESTINATION ${SKBUILD_PLATLIB_DIR}/mobbrmsd
     )
   endfunction(F2PY_BUILD)
 
@@ -80,7 +80,6 @@ if(SKBUILD)
   install(FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/__main__.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/__version__.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/_demo.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/_mobbrmsd.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/coord_generator.py"
@@ -90,7 +89,7 @@ if(SKBUILD)
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_mst.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_batch.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_batch_tri.py"
-    DESTINATION ${Python_SITELIB}/mobbrmsd
+    DESTINATION ${SKBUILD_PLATLIB_DIR}/mobbrmsd
     )
 endif()
 

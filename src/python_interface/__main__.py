@@ -1,4 +1,3 @@
-from . import __version__
 from . import demo_cogen
 from . import demo_bb
 from . import demo_bb_multi
@@ -7,6 +6,9 @@ from . import demo_batch_tri
 from . import demo_mst
 import numpy
 import pick
+from importlib.metadata import version
+
+__version__ = version(__package__)
 
 
 def main():
@@ -26,7 +28,11 @@ def main():
     ]
     opts = [l.title for l in demo_list] + ["exit"]
 
-    ver = "--- demonstration of mobbrmsd ver." + __version__.__version__ + " ---"
+    ver = (
+        "--- demonstration of mobbrmsd v."
+        + ".".join(__version__.split(".")[:3])
+        + " ---"
+    )
     bar = "=" * len(ver)
     title = bar + "\n" + ver + "\n" + bar + "\n" + " - Select demo code :"
 
