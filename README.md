@@ -14,8 +14,10 @@
   <p align="center">
     molecular-oriented branch-and-bound for RMSD.
     <br />
+<!--
     <a href="https://github.com/yymmt742/mobbrmsd"><strong>Explore the docs »</strong></a>
     <br />
+-->
     <br />
     <a href="https://github.com/yymmt742/mobbrmsd/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     ·
@@ -52,11 +54,11 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://github.com/yymmt742/mobbrmsd/blob/main/technical_notes.md)
-
 Calculate molecular-oriented RMSD with branch-and-bound.
 
+<!--
 [![CI](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml/badge.svg)](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml)
+-->
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -68,7 +70,7 @@ Calculate molecular-oriented RMSD with branch-and-bound.
    pip install git+ssh://git@github.com/yymmt742/mobbrmsd.git
    ```
 
-   test run
+   Running demonstrations via
    ```sh
    python -m mobbrmsd
    ```
@@ -76,63 +78,17 @@ Calculate molecular-oriented RMSD with branch-and-bound.
 ### Prerequisites
 
 * gfortran >= 9.4.0
-* cmake >= 3.9
 * openmp
-* blas/lapack
+* blas/lapack (not MKL)
 
 To use the Python interface, you additionally need the following:
 * python >= 3.8
 * pip
 
-### Installation
-
-1. Clone the repo
-   ```sh
-   git clone https://github.com/yymmt742/mobbrmsd
-   ```
-#### Fortran library
-
-1. Build fortran library
-   ```sh
-   mkdir build && cd build
-   cmake ..
-   make install
-   ```
-   use -DCMAKE_BUILD_TYPE=[Release, Debug] -DCMAKE_PREFIX_PATH=your_local_cmake_path
-
-#### python interface
-
-1. Package build
-   ```sh
-   python -m pip install .
-   ```
-   or
-   ```sh
-   python -m build
-   ```
-
-   Python interface doesn't work with MKL. Please use
-   ```sh
-     python -m build --config-setting DBLA_VENDOR=[OpenBLAS, ATLAS, ...]
-   ```
-   instead.
-
-   you can use package build via
-   ```sh
-   pip install git+ssh://git@github.com/yymmt742/mobbrmsd.git
-   ```
-
-   test
-   ```sh
-   python -m mobbrmsd
-   ```
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- USAGE EXAMPLES -->
 ## Usage
-
-Usage
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -150,8 +106,6 @@ See the [open issues](https://github.com/yymmt742/mobbrmsd/issues) for a full li
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- CONTRIBUTING -->
 ## Contributing
 
@@ -168,16 +122,12 @@ Don't forget to give the project a star! Thanks again!
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- LICENSE -->
 ## License
 
 Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- CONTACT -->
 ## Contact
@@ -187,8 +137,6 @@ YYMMT742 - yymmt@kuchem.kyoto-u.ac.jp
 Project Link: [https://github.com/yymmt742/mobbrmsd](https://github.com/yymmt742/mobbrmsd)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- Reference -->
 ## Reference
@@ -207,9 +155,6 @@ The solution to the linear assignment problem for estimating the variational low
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[product-screenshot]: images/screenshot.png
 
