@@ -1,0 +1,36 @@
+name: Create Release Branch and PR
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '作成するバージョンを入力してください'
+        required: true
+
+jobs:
+  create_pr:
+    runs-on: ubuntu-latest
+    env:
+      # githubのコンソールから入力したリリース名を環境変数へ保存
+      RELEASE_BRANCH_NAME: release/${{ github.event.inputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - uses: actions/setup-ruby@v1
+        with:
+          ruby-version: 3.1
+      # releaseブランチを作成
+      - name: Create and push release branch
+        run: |
+          git checkout -b ${{ env.RELEASE_BRANCH_NAME }}
+          git push origin ${{ env.RELEASE_BRANCH_NAME }}
+      - run: gem install --no-document git-pr-release
+      # release -> mainへPull Requestを作成
+      - name: Create PR for release
+        run: git-pr-release --squash
+        env:
+          GIT_PR_RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_PR_RELEASE_BRANCH_PRODUCTION: main
+          GIT_PR_RELEASE_BRANCH_STAGING: ${{ env.RELEASE_BRANCH_NAME }}
+          GIT_PR_RELEASE_TEMPLATE: pr-release.template.erb
+          GIT_PR_RELEASE_LABELS: release
+          TZ: Asia/Tokyo
