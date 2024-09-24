@@ -1,3 +1,4 @@
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 if(SKBUILD)
   find_package(Python 3.8 REQUIRED COMPONENTS NumPy)
   find_package(F2PY REQUIRED)

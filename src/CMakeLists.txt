@@ -13,6 +13,8 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
     FetchContent_MakeAvailable(unittest)
     set(unittest_INCLUDE_DIRS ${unittest_BINARY_DIR}/src/mod_files)
   else()
+    enable_testing()
+    include( CTest )
     set(unittest_INCLUDE_DIRS ${unittest_DIR}/mod_files)
   endif()
 endif()
@@ -42,23 +44,33 @@ function(ADDOPTS name dim real int blas openmp)
     $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,NVHPC>:-Mchkptr>>
     $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,NVHPC>:-Mchkstk>>
   )
-if(UNIX)
-  target_compile_options(
-    ${name} PRIVATE
-    $<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:-fast>
-    $<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:-free>
-    $<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:-fpp>
-    $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:-g>>
-    $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:-traceback>>
-    $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:-debug>>
-    $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-fast>
-    $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-free>
-    $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-fpp>
-    $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-g>>
-    $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-traceback>>
-    $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-debug>>
-  )
-endif()
+  if(UNIX)
+    target_compile_options(
+      ${name} PRIVATE
+      $<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:-fast>
+      $<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:-free>
+      $<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:-fpp>
+      $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:-g>>
+      $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:-traceback>>
+      $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:-debug>>
+      $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-fast>
+      $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-free>
+      $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-fpp>
+      $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-g>>
+      $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-traceback>>
+      $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,Intel>:-debug>>
+    )
+  elseif(WIN32)
+    target_compile_options(
+      ${name} PRIVATE
+      $<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:/free>
+      $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:/traceback>>
+      $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:/debug:full>>
+      $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:/free>
+      $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,Intel>:/traceback>>
+      $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,Intel>:/debug:full>>
+      )
+  endif()
   target_compile_definitions(${name} PRIVATE -DDIM${dim})
   target_compile_definitions(${name} PRIVATE -DUSE_REAL${real})
   target_compile_definitions(${name} PRIVATE -DUSE_INT${int})
@@ -84,5 +96,3 @@ endfunction(ADDTEST)
 add_subdirectory( mobbrmsd )
 add_subdirectory( python_interface )
 
-#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include
-#        DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}")
