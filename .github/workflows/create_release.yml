@@ -28,6 +28,18 @@ jobs:
       with:
         fetch-depth: 2
 
+    - name: Set up Python
+      uses: actions/setup-python@v5 # Python環境のセットアップ
+      with:
+        python-version: "3.*"
+
+    - name: Setup Fortran
+      uses: fortran-lang/setup-fortran@v1
+      id: setup-fortran
+      with:
+        compiler: gcc
+        version: 12
+
     - name: Create and push release branch # releaseブランチを作成
       run:
         git checkout -b ${{ env.RELEASE_BRANCH_NAME }}
@@ -51,18 +63,6 @@ jobs:
         custom_tag: ${{ env.VERSION_STRING }}
         tag_prefix: v
         github_token: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Set up Python
-      uses: actions/setup-python@v5 # Python環境のセットアップ
-      with:
-        python-version: "3.*"
-
-    - name: Setup Fortran
-      uses: fortran-lang/setup-fortran@v1
-      id: setup-fortran
-      with:
-        compiler: gcc
-        version: 12
 
     - name: Install build tools # ビルドツールをインストール
       run: >-
