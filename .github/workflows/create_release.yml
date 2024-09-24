@@ -1,5 +1,4 @@
-name: Create Release Branch and PR
-
+name: Create Release Branch
 
 on:
   workflow_dispatch:
@@ -8,19 +7,28 @@ on:
         description: '作成するバージョンを入力してください'
         required: true
 
+permissions:
+  contents: write
 
 jobs:
-  create_pr:
+  add_tag:
     runs-on: ubuntu-latest
+
     env:
       # githubのコンソールから入力したリリース名を環境変数へ保存
       VERSION_STRING: ${{ github.event.inputs.version }}
       RELEASE_BRANCH_NAME: release/${{ github.event.inputs.version }}
+
+
     steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
       # releaseブランチを作成
       - name: Create and push release branch
-        uses: actions/checkout@v3
-        run: |
+        run:
           git checkout -b ${{ env.RELEASE_BRANCH_NAME }}
           git push origin ${{ env.RELEASE_BRANCH_NAME }}
 
