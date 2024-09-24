@@ -1,10 +1,13 @@
 name: Create Release Branch and PR
+
+
 on:
   workflow_dispatch:
     inputs:
       version:
         description: '作成するバージョンを入力してください'
         required: true
+
 
 jobs:
   create_pr:
