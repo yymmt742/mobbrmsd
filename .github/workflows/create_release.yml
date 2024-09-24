@@ -11,7 +11,45 @@ permissions:
   contents: write
 
 jobs:
+
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4 # コードを取得
+
+    - name: Set up Python
+      uses: actions/setup-python@v5 # Python環境のセットアップ
+      with:
+        python-version: "3.x"
+
+    - name: Setup Fortran
+      uses: fortran-lang/setup-fortran@v1
+      id: setup-fortran
+      with:
+        compiler: gcc
+        version: 12      
+      
+    - name: Install pypa/build # ビルドツールをインストール
+      run: >-
+        python3 -m
+        pip install
+        build
+        --user
+        
+    - name: Build a binary wheel and a source tarball
+      run: python3 -m build # パッケージをビルド
+      
+    - name: Store the distribution packages # ビルド成果物をpython-package-distributionsという名前でdistディレクトリに一時的に保存
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+
   add_tag:
+    name: Add Tag
     runs-on: ubuntu-latest
 
     env:
@@ -43,18 +81,18 @@ jobs:
           message: "[update] pyproject.toml, version"
           add: pyproject.toml
 
-      - name: Create a tag
-        id: tag_version
-        uses: mathieudutour/github-tag-action@v6.1
-        with:
-          custom_tag: ${{ env.VERSION_STRING }}
-          tag_prefix: v
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Create a tag
+#        id: tag_version
+#        uses: mathieudutour/github-tag-action@v6.1
+#        with:
+#          custom_tag: ${{ env.VERSION_STRING }}
+#          tag_prefix: v
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create a GitHub release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ steps.tag_version.outputs.new_tag }}
-          name: ${{ steps.tag_version.outputs.new_tag }}
-          body: ${{ github.event.pull_request.body }}
+#      - name: Create a GitHub release
+#        uses: ncipollo/release-action@v1
+#        with:
+#          tag: ${{ steps.tag_version.outputs.new_tag }}
+#          name: ${{ steps.tag_version.outputs.new_tag }}
+#          body: ${{ github.event.pull_request.body }}
 
