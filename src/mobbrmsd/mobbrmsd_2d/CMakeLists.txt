@@ -26,22 +26,20 @@ list(APPEND sources
   ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
   )
 
-add_library(${PROJECT_NAME}_2ddp_shared SHARED ${sources})
-add_library(${PROJECT_NAME}_2ddp_static STATIC ${sources})
-add_library(${PROJECT_NAME}_2dsp_shared SHARED ${sources})
-add_library(${PROJECT_NAME}_2dsp_static STATIC ${sources})
-ADDOPTS(${PROJECT_NAME}_2ddp_shared 2 64 32 "" 1)
-ADDOPTS(${PROJECT_NAME}_2ddp_static 2 64 32 "" 1)
-ADDOPTS(${PROJECT_NAME}_2dsp_shared 2 32 32 "" 1)
-ADDOPTS(${PROJECT_NAME}_2dsp_static 2 32 32 "" 1)
+add_library(${PROJECT_NAME}_2dsp OBJECT ${sources})
+add_library(${PROJECT_NAME}_2ddp OBJECT ${sources})
+set_target_properties(${PROJECT_NAME}_2dsp PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_2DSP_DIR})
+set_target_properties(${PROJECT_NAME}_2ddp PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_2DDP_DIR})
+ADDOPTS(${PROJECT_NAME}_2dsp 2 32 32 "" 1)
+ADDOPTS(${PROJECT_NAME}_2ddp 2 64 32 "" 1)
+add_library(${PROJECT_NAME}_2dsp_static STATIC $<TARGET_OBJECTS:${PROJECT_NAME}_2dsp>)
+add_library(${PROJECT_NAME}_2dsp_shared SHARED $<TARGET_OBJECTS:${PROJECT_NAME}_2dsp>)
+add_library(${PROJECT_NAME}_2ddp_static STATIC $<TARGET_OBJECTS:${PROJECT_NAME}_2ddp>)
+add_library(${PROJECT_NAME}_2ddp_shared SHARED $<TARGET_OBJECTS:${PROJECT_NAME}_2ddp>)
 set_target_properties(${PROJECT_NAME}_2ddp_shared PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_2ddp)
 set_target_properties(${PROJECT_NAME}_2ddp_static PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_2ddp)
 set_target_properties(${PROJECT_NAME}_2dsp_shared PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_2dsp)
 set_target_properties(${PROJECT_NAME}_2dsp_static PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_2dsp)
-set_target_properties(${PROJECT_NAME}_2ddp_shared PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_2DDP_DIR})
-set_target_properties(${PROJECT_NAME}_2ddp_static PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_2DDP_DIR})
-set_target_properties(${PROJECT_NAME}_2dsp_shared PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_2DSP_DIR})
-set_target_properties(${PROJECT_NAME}_2dsp_static PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_2DSP_DIR})
 install(
   TARGETS ${PROJECT_NAME}_2ddp_shared
   EXPORT ${PROJECT_NAME}-export

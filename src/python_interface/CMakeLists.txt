@@ -1,45 +1,37 @@
-find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 if(SKBUILD)
-  find_package(Python 3.8 REQUIRED COMPONENTS NumPy)
-  find_package(F2PY REQUIRED)
+  find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development.Module NumPy)
 
-  if (NOT CMAKE_INSTALL_PYTHON_LIBDIR)
-    execute_process(
-     COMMAND "${PYTHON_EXECUTABLE}" -c "if True:
-               from distutils import sysconfig as sc
-               print(sc.get_python_lib(prefix='', plat_specific=True))"
-     OUTPUT_VARIABLE CMAKE_INSTALL_PYTHON_LIBDIR
-     OUTPUT_STRIP_TRAILING_WHITESPACE)
-   endif ()
-
-# Grab the variables from a local Python installation
-# NumPy headers
+  # Grab the variables from a local Python installation
+  # F2PY headers
   execute_process(
-    COMMAND "${PYTHON_EXECUTABLE}"
-      -c "import numpy; print(numpy.get_include())"
-    OUTPUT_VARIABLE NumPy_INCLUDE_DIRS
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-# F2PY headers
-  execute_process(
-    COMMAND "${PYTHON_EXECUTABLE}"
+    COMMAND "${Python_EXECUTABLE}"
     -c "import numpy.f2py; print(numpy.f2py.get_include())"
     OUTPUT_VARIABLE F2PY_INCLUDE_DIR
     OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
-  include_directories(${PYTHON_INCLUDE_DIR})
-  include_directories(${NumPy_INCLUDE_DIRS})
+  if (NOT CMAKE_INSTALL_PYTHON_LIBDIR)
+    execute_process(
+      COMMAND "${PYTHON_EXECUTABLE}" -c "if True:
+             from distutils import sysconfig as sc
+             print(sc.get_python_lib(prefix='', plat_specific=True))"
+      OUTPUT_VARIABLE CMAKE_INSTALL_PYTHON_LIBDIR
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+  endif ()
 
   foreach(var IN ITEMS ${OpenMP_Fortran_LIB_NAMES})
     list( APPEND lomp "-l${var} " )
   endforeach()
 
   function(FYPP_BUILD dim prec)
-    set (sofile "${CMAKE_CURRENT_BINARY_DIR}/mobbrmsd_${dim}${prec}.${Python_SOABI}.so")
+    if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+      set (sofile "${CMAKE_CURRENT_BINARY_DIR}/mobbrmsd_${dim}${prec}.${SKBUILD_SOABI}.so")
+    else()
+      set (sofile "${CMAKE_CURRENT_BINARY_DIR}/mobbrmsd_${dim}${prec}.${SKBUILD_SOABI}${CMAKE_SHARED_MODULE_SUFFIX}")
+    endif()
     add_custom_command(
       OUTPUT ${sofile}
-      COMMAND ${F2PY_EXECUTABLE}
+      COMMAND ${Python_EXECUTABLE} -m "numpy.f2py"
         -c
         -m mobbrmsd_${dim}${prec}
         --no-wrap-functions
@@ -62,18 +54,24 @@ if(SKBUILD)
         $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","NVHPC">:"-fast">
         $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","NVHPC">:"-cpp">
         $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","NVHPC">:"-Mnobackslash">
-        $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">:"-fast">
-        $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">:"-free">
-        $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">:"-fpp">
-        $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-fast">
-        $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-free">
-        $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">:"-fpp">
+        $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:"-fast">
+        $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:"-free">
+        $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:"-fpp">
+        $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:"-fast">
+        $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:"-free">
+        $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:"-fpp">
+        $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:"/fast">
+        $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:"/free">
+        $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:"/fpp">
+        $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:"/fast">
+        $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:"/free">
+        $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:"/fpp">
         '
         $<$<CONFIG:Debug>:--debug>
       DEPENDS "mobbrmsd_${dim}${prec}_static"
               "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap_${prec}"
               "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
-    )
+      )
     add_custom_target(mobbrmsd_${dim}${prec}_so ALL DEPENDS ${sofile})
     install(FILES
       ${sofile}

@@ -63,10 +63,14 @@ function(ADDOPTS name dim real int blas openmp)
   elseif(WIN32)
     target_compile_options(
       ${name} PRIVATE
+      $<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:/fast>
       $<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:/free>
+      $<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:/fpp>
       $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:/traceback>>
       $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,IntelLLVM>:/debug:full>>
+      $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:/fast>
       $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:/free>
+      $<$<COMPILE_LANG_AND_ID:Fortran,Intel>:/fpp>
       $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,Intel>:/traceback>>
       $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,Intel>:/debug:full>>
       )

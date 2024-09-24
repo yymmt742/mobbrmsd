@@ -26,22 +26,20 @@ list(APPEND sources
   ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
   )
 
-add_library(${PROJECT_NAME}_3ddp_shared SHARED ${sources})
-add_library(${PROJECT_NAME}_3ddp_static STATIC ${sources})
-add_library(${PROJECT_NAME}_3dsp_shared SHARED ${sources})
-add_library(${PROJECT_NAME}_3dsp_static STATIC ${sources})
-ADDOPTS(${PROJECT_NAME}_3ddp_shared 3 64 32 "" 1)
-ADDOPTS(${PROJECT_NAME}_3ddp_static 3 64 32 "" 1)
-ADDOPTS(${PROJECT_NAME}_3dsp_shared 3 32 32 "" 1)
-ADDOPTS(${PROJECT_NAME}_3dsp_static 3 32 32 "" 1)
+add_library(${PROJECT_NAME}_3dsp OBJECT ${sources})
+add_library(${PROJECT_NAME}_3ddp OBJECT ${sources})
+set_target_properties(${PROJECT_NAME}_3dsp PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_3DSP_DIR})
+set_target_properties(${PROJECT_NAME}_3ddp PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_3DDP_DIR})
+ADDOPTS(${PROJECT_NAME}_3dsp 2 32 32 "" 1)
+ADDOPTS(${PROJECT_NAME}_3ddp 2 64 32 "" 1)
+add_library(${PROJECT_NAME}_3dsp_static STATIC $<TARGET_OBJECTS:${PROJECT_NAME}_3dsp>)
+add_library(${PROJECT_NAME}_3dsp_shared SHARED $<TARGET_OBJECTS:${PROJECT_NAME}_3dsp>)
+add_library(${PROJECT_NAME}_3ddp_static STATIC $<TARGET_OBJECTS:${PROJECT_NAME}_3ddp>)
+add_library(${PROJECT_NAME}_3ddp_shared SHARED $<TARGET_OBJECTS:${PROJECT_NAME}_3ddp>)
 set_target_properties(${PROJECT_NAME}_3ddp_shared PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_3ddp)
 set_target_properties(${PROJECT_NAME}_3ddp_static PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_3ddp)
 set_target_properties(${PROJECT_NAME}_3dsp_shared PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_3dsp)
 set_target_properties(${PROJECT_NAME}_3dsp_static PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_3dsp)
-set_target_properties(${PROJECT_NAME}_3ddp_shared PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_3DDP_DIR})
-set_target_properties(${PROJECT_NAME}_3ddp_static PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_3DDP_DIR})
-set_target_properties(${PROJECT_NAME}_3dsp_shared PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_3DSP_DIR})
-set_target_properties(${PROJECT_NAME}_3dsp_static PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_3DSP_DIR})
 install(
   TARGETS ${PROJECT_NAME}_3ddp_shared
   EXPORT ${PROJECT_NAME}-export

@@ -26,22 +26,20 @@ list(APPEND sources
   ${CMAKE_CURRENT_SOURCE_DIR}/mod_rotation.f90
   )
 
-add_library(${PROJECT_NAME}_xddp_shared SHARED ${sources})
-add_library(${PROJECT_NAME}_xddp_static STATIC ${sources})
-add_library(${PROJECT_NAME}_xdsp_shared SHARED ${sources})
-add_library(${PROJECT_NAME}_xdsp_static STATIC ${sources})
-ADDOPTS(${PROJECT_NAME}_xddp_shared X 64 32 1 1)
-ADDOPTS(${PROJECT_NAME}_xddp_static X 64 32 1 1)
-ADDOPTS(${PROJECT_NAME}_xdsp_shared X 32 32 1 1)
-ADDOPTS(${PROJECT_NAME}_xdsp_static X 32 32 1 1)
+add_library(${PROJECT_NAME}_xdsp OBJECT ${sources})
+add_library(${PROJECT_NAME}_xddp OBJECT ${sources})
+set_target_properties(${PROJECT_NAME}_xdsp PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_XDSP_DIR})
+set_target_properties(${PROJECT_NAME}_xddp PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_XDDP_DIR})
+ADDOPTS(${PROJECT_NAME}_xdsp 2 32 32 "" 1)
+ADDOPTS(${PROJECT_NAME}_xddp 2 64 32 "" 1)
+add_library(${PROJECT_NAME}_xdsp_static STATIC $<TARGET_OBJECTS:${PROJECT_NAME}_xdsp>)
+add_library(${PROJECT_NAME}_xdsp_shared SHARED $<TARGET_OBJECTS:${PROJECT_NAME}_xdsp>)
+add_library(${PROJECT_NAME}_xddp_static STATIC $<TARGET_OBJECTS:${PROJECT_NAME}_xddp>)
+add_library(${PROJECT_NAME}_xddp_shared SHARED $<TARGET_OBJECTS:${PROJECT_NAME}_xddp>)
 set_target_properties(${PROJECT_NAME}_xddp_shared PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_xddp)
 set_target_properties(${PROJECT_NAME}_xddp_static PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_xddp)
 set_target_properties(${PROJECT_NAME}_xdsp_shared PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_xdsp)
 set_target_properties(${PROJECT_NAME}_xdsp_static PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_xdsp)
-set_target_properties(${PROJECT_NAME}_xddp_shared PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_XDDP_DIR})
-set_target_properties(${PROJECT_NAME}_xddp_static PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_XDDP_DIR})
-set_target_properties(${PROJECT_NAME}_xdsp_shared PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_XDSP_DIR})
-set_target_properties(${PROJECT_NAME}_xdsp_static PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_XDSP_DIR})
 install(
   TARGETS ${PROJECT_NAME}_xddp_shared
   EXPORT ${PROJECT_NAME}_xd-export
