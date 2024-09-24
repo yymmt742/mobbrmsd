@@ -11,26 +11,39 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # githubのコンソールから入力したリリース名を環境変数へ保存
+      VERSION_STRING: ${{ github.event.inputs.version }}
       RELEASE_BRANCH_NAME: release/${{ github.event.inputs.version }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - uses: actions/setup-ruby@v1
-        with:
-          ruby-version: 3.1
       # releaseブランチを作成
       - name: Create and push release branch
+        uses: actions/checkout@v3
         run: |
           git checkout -b ${{ env.RELEASE_BRANCH_NAME }}
           git push origin ${{ env.RELEASE_BRANCH_NAME }}
-      - run: gem install --no-document git-pr-release
-      # release -> mainへPull Requestを作成
-      - name: Create PR for release
-        run: git-pr-release --squash
-        env:
-          GIT_PR_RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_PR_RELEASE_BRANCH_PRODUCTION: main
-          GIT_PR_RELEASE_BRANCH_STAGING: ${{ env.RELEASE_BRANCH_NAME }}
-          GIT_PR_RELEASE_TEMPLATE: pr-release.template.erb
-          GIT_PR_RELEASE_LABELS: release
-          TZ: Asia/Tokyo
+
+      - name: Update pyproject.toml
+        run: sed -i "/version =/c version = ${{ env.VERSION_STRING }}" pyproject.toml
+
+      - name: Commit pyproject.toml
+        uses: EndBug/add-and-commit@v7.1.0
+        with:
+          author_name: "yymmt742"
+          author_email: "yymmt@kuchem.kyoto-u.ac.jp"
+          message: "[update] pyproject.toml, version"
+          add: pyproject.toml
+
+      - name: Create a tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          custom_tag: ${{ env.VERSION_STRING }}
+          tag_prefix: v
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create a GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ github.event.pull_request.body }}
+
