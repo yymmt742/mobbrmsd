@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
 
@@ -77,12 +78,6 @@ jobs:
         custom_tag: ${{ env.VERSION_STRING }}
         tag_prefix: v
         github_token: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Create a GitHub release
-      uses: actions/upload-artifact@v4
-      with:
-        name: python-package-distributions
-        path: dist/
 
     - name: Download all the dists
       uses: actions/download-artifact@v4
