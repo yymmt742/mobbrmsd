@@ -5,10 +5,10 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "mobbrmsd"
 dependencies = ["numpy"]
-version = "0.0.22"
+version = 0.0.22.8
 readme = "README.md"
 license = {file = "LICENSE.txt"}
 
 [tool.scikit-build]
-ninja.version = ">=1.10"
-cmake.version = ">=3.18"
+version = 0.0.22.8
+version = 0.0.22.8
