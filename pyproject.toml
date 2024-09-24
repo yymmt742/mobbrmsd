@@ -5,7 +5,7 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "mobbrmsd"
 dependencies = ["numpy"]
-version = "0.0.22.8"
+version = "0.0.23"
 readme = "README.md"
 license = {file = "LICENSE.txt"}
 
