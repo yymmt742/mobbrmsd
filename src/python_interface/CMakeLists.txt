@@ -10,20 +10,11 @@ if(SKBUILD)
     OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
-  if (NOT CMAKE_INSTALL_PYTHON_LIBDIR)
-    execute_process(
-      COMMAND "${PYTHON_EXECUTABLE}" -c "if True:
-             from distutils import sysconfig as sc
-             print(sc.get_python_lib(prefix='', plat_specific=True))"
-      OUTPUT_VARIABLE CMAKE_INSTALL_PYTHON_LIBDIR
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
-  endif ()
-
   foreach(var IN ITEMS ${OpenMP_Fortran_LIB_NAMES})
     list( APPEND lomp "-l${var} " )
   endforeach()
 
-  function(FYPP_BUILD dim prec)
+  function(F2PY_BUILD dim prec)
     if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
       set (sofile "${CMAKE_CURRENT_BINARY_DIR}/mobbrmsd_${dim}${prec}.${SKBUILD_SOABI}.so")
     else()
@@ -75,17 +66,16 @@ if(SKBUILD)
     add_custom_target(mobbrmsd_${dim}${prec}_so ALL DEPENDS ${sofile})
     install(FILES
       ${sofile}
-      DESTINATION
-      "${CMAKE_INSTALL_PYTHON_LIBDIR}/mobbrmsd"
+      DESTINATION ${Python_SITELIB}/mobbrmsd
     )
-  endfunction(FYPP_BUILD)
+  endfunction(F2PY_BUILD)
 
-  FYPP_BUILD(xd dp)
-  FYPP_BUILD(xd sp)
-  FYPP_BUILD(2d dp)
-  FYPP_BUILD(2d sp)
-  FYPP_BUILD(3d dp)
-  FYPP_BUILD(3d sp)
+  F2PY_BUILD(xd dp)
+  F2PY_BUILD(xd sp)
+  F2PY_BUILD(2d dp)
+  F2PY_BUILD(2d sp)
+  F2PY_BUILD(3d dp)
+  F2PY_BUILD(3d sp)
 
   install(FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py"
@@ -100,8 +90,7 @@ if(SKBUILD)
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_mst.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_batch.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_batch_tri.py"
-    DESTINATION
-    "${CMAKE_INSTALL_PYTHON_LIBDIR}/mobbrmsd"
+    DESTINATION ${Python_SITELIB}/mobbrmsd
     )
 endif()
 
