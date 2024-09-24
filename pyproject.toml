@@ -10,5 +10,5 @@ readme = "README.md"
 license = {file = "LICENSE.txt"}
 
 [tool.scikit-build]
-version = 0.0.22.8
-version = 0.0.22.8
+ninja.version = ">=1.10"
+cmake.version = ">=3.18"

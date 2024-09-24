@@ -32,7 +32,7 @@ jobs:
           git checkout -b ${{ env.RELEASE_BRANCH_NAME }}
 
       - name: Update pyproject.toml
-        run: sed -i "/version =/c version = ${{ env.VERSION_STRING }}" pyproject.toml
+        run: sed -i "/^version =/c version = ${{ env.VERSION_STRING }}" pyproject.toml
 
       - name: Commit pyproject.toml
         uses: EndBug/add-and-commit@v7.1.0
