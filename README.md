@@ -78,8 +78,8 @@ Calculate molecular-oriented RMSD with branch-and-bound.
 ### Prerequisites
 
 * gfortran >= 9.4.0
-* openmp
-* blas/lapack (not MKL)
+* blas/lapack
+* OpenMP (optional)
 
 To use the Python interface, you additionally need the following:
 * python >= 3.8
@@ -101,6 +101,7 @@ To use the Python interface, you additionally need the following:
 - [ ] Compatible with compilers (nv)
 - [ ] Add detail documentation
 - [ ] Add benchmarks
+- [ ] Make dimensions selectable in build options
 
 See the [open issues](https://github.com/yymmt742/mobbrmsd/issues) for a full list of proposed features (and known issues).
 
