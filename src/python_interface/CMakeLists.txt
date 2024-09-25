@@ -1,8 +1,7 @@
 if(SKBUILD)
   find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development.Module NumPy)
 
-  # Grab the variables from a local Python installation
-  # F2PY headers
+  # Grab the variables from a local Python installation F2PY headers
   execute_process(
     COMMAND "${Python_EXECUTABLE}"
     -c "import numpy.f2py; print(numpy.f2py.get_include())"
@@ -17,23 +16,24 @@ if(SKBUILD)
     endforeach()
   endif()
 
-  function(F2PY_BUILD dim prec)
+  function(F2PY_BUILD dims prec)
     if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-      set (sofile "${CMAKE_CURRENT_BINARY_DIR}/mobbrmsd_${dim}${prec}.${SKBUILD_SOABI}.so")
+      set (sofile "${CMAKE_CURRENT_BINARY_DIR}/mobbrmsd_${dims}${prec}.${SKBUILD_SOABI}${CMAKE_SHARED_MODULE_SUFFIX}")
     else()
-      set (sofile "${CMAKE_CURRENT_BINARY_DIR}/mobbrmsd_${dim}${prec}.${SKBUILD_SOABI}${CMAKE_SHARED_MODULE_SUFFIX}")
+      set (sofile "${CMAKE_CURRENT_BINARY_DIR}/mobbrmsd_${dims}${prec}.${SKBUILD_SOABI}.so")
     endif()
+    message(STATUS ${dims} ${prec} ${sofile})
     add_custom_command(
       OUTPUT ${sofile}
       COMMAND ${Python_EXECUTABLE} -m "numpy.f2py"
         -c
-        -m mobbrmsd_${dim}${prec}
+        -m mobbrmsd_${dims}${prec}
         --no-wrap-functions
         $<$<CONFIG:Debug>:--debug-capi>
         --f2cmap "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap_${prec}"
         "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
-        "${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_${dim}/libmobbrmsd_${dim}${prec}.a"
-        -I${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_${dim}/mobbrmsd_${dim}${prec}/mod_files
+        "${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_${dims}/libmobbrmsd_${dims}${prec}.a"
+        -I${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_${dims}/mobbrmsd_${dims}${prec}/mod_files
         ${BLAS_LIBRARIES}
         ${lomp}
         --opt=-O3
@@ -62,23 +62,22 @@ if(SKBUILD)
         $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:"/fpp">
         '
         $<$<CONFIG:Debug>:--debug>
-      DEPENDS "mobbrmsd_${dim}${prec}_static"
+      DEPENDS "mobbrmsd_${dims}${prec}_static"
               "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap_${prec}"
               "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
       )
-    add_custom_target(mobbrmsd_${dim}${prec}_so ALL DEPENDS ${sofile})
+    add_custom_target(mobbrmsd_${dims}${prec}_so ALL DEPENDS ${sofile})
     install(FILES
       ${sofile}
       DESTINATION ${SKBUILD_PLATLIB_DIR}/mobbrmsd
     )
   endfunction(F2PY_BUILD)
 
-  F2PY_BUILD(xd dp)
-  F2PY_BUILD(xd sp)
-  F2PY_BUILD(2d dp)
-  F2PY_BUILD(2d sp)
-  F2PY_BUILD(3d dp)
-  F2PY_BUILD(3d sp)
+  foreach(dims IN ITEMS ${mobbrmsd_DIMENTIONS})
+    foreach(prec IN ITEMS ${mobbrmsd_PRECISIONS})
+      F2PY_BUILD(${dims} ${prec})
+    endforeach()
+  endforeach()
 
   install(FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py"

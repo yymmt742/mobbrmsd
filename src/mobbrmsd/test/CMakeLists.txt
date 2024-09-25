@@ -19,28 +19,28 @@ ADDTEST(test_tree g "" "" "" "" ""
 
 set(curr_dir ${CMAKE_CURRENT_SOURCE_DIR})
 
-function(DIMSPECTESTS post dimspec_dir dim real int)
+function(DIMSPECTESTS post dimspec_dir dims real int)
   set(sources "")
   list(APPEND sources
     ${dimspec_dir}/mod_dimspec_functions.f90
     ${curr_dir}/../mod_kinds.f90
     ${curr_dir}/../mod_params.f90
     )
-  ADDTEST(test_covdot_${post} "${dim}" "${real}" "${int}" 1 "" ""
+  ADDTEST(test_covdot_${post} "${dims}" "${real}" "${int}" 1 "" ""
     ${sources}
     ${curr_dir}/test_covdot.f90
     )
   list(APPEND sources
     ${curr_dir}/mod_testutil.f90
     )
-  ADDTEST(test_testutil_${post} "${dim}" "${real}" "${int}" 1 "" ""
+  ADDTEST(test_testutil_${post} "${dims}" "${real}" "${int}" 1 "" ""
     ${sources}
     ${curr_dir}/test_testutil.f90
     )
   list(APPEND sources
     ${dimspec_dir}/mod_rotation.f90
     )
-  ADDTEST(test_rotation_${post} "${dim}" "${real}" "${int}" 1 "" ""
+  ADDTEST(test_rotation_${post} "${dims}" "${real}" "${int}" 1 "" ""
     ${sources}
     ${curr_dir}/test_rotation.f90
     )
@@ -49,7 +49,7 @@ function(DIMSPECTESTS post dimspec_dir dim real int)
     ${curr_dir}/../mod_mol_block.f90
     ${curr_dir}/../mod_c_matrix.f90
     )
-  ADDTEST(test_c_matrix_${post} "${dim}" "${real}" "${int}" 1 "" ""
+  ADDTEST(test_c_matrix_${post} "${dims}" "${real}" "${int}" 1 "" ""
     ${sources}
     ${curr_dir}/test_c_matrix.f90
     )
@@ -57,7 +57,7 @@ function(DIMSPECTESTS post dimspec_dir dim real int)
     ${curr_dir}/../mod_Hungarian.f90
     ${curr_dir}/../mod_f_matrix.f90
     )
-  ADDTEST(test_f_matrix_${post} "${dim}" "${real}" "${int}" 1 "" ""
+  ADDTEST(test_f_matrix_${post} "${dims}" "${real}" "${int}" 1 "" ""
     ${sources}
     ${curr_dir}/test_f_matrix.f90
     )
@@ -65,14 +65,14 @@ function(DIMSPECTESTS post dimspec_dir dim real int)
     ${curr_dir}/../mod_tree.f90
     ${curr_dir}/../mod_bb_block.f90
     )
-  ADDTEST(test_bb_block_${post} "${dim}" "${real}" "${int}" 1 "" ""
+  ADDTEST(test_bb_block_${post} "${dims}" "${real}" "${int}" 1 "" ""
     ${sources}
     ${curr_dir}/test_bb_block.f90
     )
   list(APPEND sources
     ${curr_dir}/../mod_bb_list.f90
     )
-  ADDTEST(test_bb_list_${post} "${dim}" "${real}" "${int}" 1 "" 4
+  ADDTEST(test_bb_list_${post} "${dims}" "${real}" "${int}" 1 "" 4
     ${sources}
     ${curr_dir}/test_bb_list.f90
     )
@@ -83,17 +83,17 @@ function(DIMSPECTESTS post dimspec_dir dim real int)
     ${curr_dir}/../mod_mobbrmsd_mst.f90
     ${curr_dir}/../mod_mobbrmsd_batch_run.f90
     )
-  ADDTEST(test_mobbrmsd_${post} "${dim}" "${real}" "${int}" 1 1 4
+  ADDTEST(test_mobbrmsd_${post} "${dims}" "${real}" "${int}" 1 1 4
     ${sources}
     ${curr_dir}/test_mobbrmsd.f90
     )
 endfunction(DIMSPECTESTS)
 
-add_subdirectory(sp)
-add_subdirectory(dp)
-add_subdirectory(2dsp)
-add_subdirectory(2ddp)
-add_subdirectory(3dsp)
-add_subdirectory(3ddp)
-add_subdirectory(xdsp)
-add_subdirectory(xddp)
+foreach(prec IN ITEMS ${mobbrmsd_PRECISIONS})
+  add_subdirectory(${prec})
+endforeach()
+foreach(dims IN ITEMS ${mobbrmsd_DIMENTIONS})
+foreach(prec IN ITEMS ${mobbrmsd_PRECISIONS})
+  add_subdirectory(${dims}${prec})
+endforeach()
+endforeach()
