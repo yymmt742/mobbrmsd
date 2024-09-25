@@ -35,4 +35,4 @@ classifiers = [
 
 [tool.scikit-build]
 ninja.version = ">=1.10"
-cmake.version = ">=3.18"
+cmake.version = ">=3.14"
