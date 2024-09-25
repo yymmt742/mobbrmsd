@@ -189,7 +189,7 @@ contains
     call decode_header(SIZE(seq), seq, n_header, header)
 !
     call min_span_tree( &
- &    n_target, n_header, n_int, n_float, header, &
+ &    n_target, n_header, header, &
  &    X, W, [RHUGE, RHUGE, ZERO], [-1], .true., .true., .false., &
  &    edges, weights)
 !
