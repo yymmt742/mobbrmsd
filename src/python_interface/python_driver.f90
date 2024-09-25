@@ -425,8 +425,6 @@ contains
   subroutine min_span_tree( &
  &    n_target, &
  &    n_header, &
- &    n_int, &
- &    n_float, &
  &    header, &
  &    X, &
  &    W, &
@@ -440,8 +438,6 @@ contains
  &  )
     integer(kind=ik), intent(in)      :: n_target
     integer(kind=ik), intent(in)      :: n_header
-    integer(kind=ik), intent(in)      :: n_int
-    integer(kind=ik), intent(in)      :: n_float
     integer(kind=ik), intent(in)      :: header(n_header)
     real(kind=rk), intent(in)         :: X(*)
    !! reference coordinate
