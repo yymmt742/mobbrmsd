@@ -1,29 +1,6 @@
-set(BLA_STATIC ON)
-find_package(OpenMP REQUIRED QUIET)
-find_package(BLAS REQUIRED)
-
-if(CMAKE_BUILD_TYPE MATCHES "Debug")
-  find_package(unittest QUIET)
-  if(NOT unittest_FOUND)
-    include(FetchContent)
-    FetchContent_Declare(
-      unittest
-      GIT_REPOSITORY https://github.com/yymmt742/unittest
-      GIT_TAG origin/main
-      GIT_PROGRESS TRUE
-      )
-    FetchContent_MakeAvailable(unittest)
-    set(unittest_INCLUDE_DIRS ${unittest_BINARY_DIR}/src/mod_files)
-  else()
-    enable_testing()
-    include( CTest )
-    set(unittest_INCLUDE_DIRS ${unittest_DIR}/mod_files)
-  endif()
-endif()
-
 set(mobbrmsd_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-function(ADDOPTS name dim real int blas openmp)
+function(ADDOPTS name dims real int blas openmp)
   target_compile_options(
     ${name} PRIVATE
     $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-O3>
@@ -77,7 +54,7 @@ function(ADDOPTS name dim real int blas openmp)
       $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,Intel>:/debug:full>>
       )
   endif()
-  target_compile_definitions(${name} PRIVATE -DDIM${dim})
+  target_compile_definitions(${name} PRIVATE -DDIM${dims})
   target_compile_definitions(${name} PRIVATE -DUSE_REAL${real})
   target_compile_definitions(${name} PRIVATE -DUSE_INT${int})
   target_include_directories(${name} PRIVATE ${mobbrmsd_INCLUDE_DIR})
@@ -91,9 +68,9 @@ function(ADDOPTS name dim real int blas openmp)
   endif()
 endfunction(ADDOPTS)
 
-function(ADDTEST name dim real int blas openmp testarg)
+function(ADDTEST name dims real int blas openmp testarg)
   add_executable(${name} ${ARGN})
-  ADDOPTS("${name}" "${dim}" "${real}" "${int}" "${blas}" "${openmp}")
+  ADDOPTS("${name}" "${dims}" "${real}" "${int}" "${blas}" "${openmp}")
   target_link_libraries(${name} PRIVATE unittest)
   target_include_directories(${name} PRIVATE ${unittest_INCLUDE_DIRS})
   add_test(NAME ${name} COMMAND ${name} ${testarg})
