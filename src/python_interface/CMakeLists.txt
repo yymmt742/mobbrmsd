@@ -10,9 +10,12 @@ if(SKBUILD)
     OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
-  foreach(var IN ITEMS ${OpenMP_Fortran_LIB_NAMES})
-    list( APPEND lomp "-l${var} " )
-  endforeach()
+  set(lomp)
+  if(OpenMP_FOUND)
+    foreach(var IN ITEMS ${OpenMP_Fortran_LIB_NAMES})
+      list( APPEND lomp "-l${var} " )
+    endforeach()
+  endif()
 
   function(F2PY_BUILD dim prec)
     if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
