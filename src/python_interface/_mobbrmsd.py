@@ -125,31 +125,44 @@ class mobbrmsd_result:
 
 def select_driver(d: int, dtype=None):
     dt = numpy.float64 if dtype is None else numpy.dtype(dtype)
+    errmsg = lambda d, dt: f"Dimension {d} with {dt} is not supported."
+    error = not ((dt == numpy.float64) or (dt == numpy.float32)) or (d < 1)
     if d == 2:
         if dt == numpy.float64:
-            from .mobbrmsd_2ddp import driver
+            try:
+                from .mobbrmsd_2ddp import driver
+            except ModuleNotFoundError:
+                error = True
         elif dt == numpy.float32:
-            from .mobbrmsd_2dsp import driver
-        else:
-            raise ValueError
+            try:
+                from .mobbrmsd_2dsp import driver
+            except ModuleNotFoundError:
+                error = True
     elif d == 3:
         if dt == numpy.float64:
-            from .mobbrmsd_3ddp import driver
+            try:
+                from .mobbrmsd_3ddp import driver
+            except ModuleNotFoundError:
+                error = True
         elif dt == numpy.float32:
-            from .mobbrmsd_3dsp import driver
-        else:
-            raise ValueError
+            try:
+                from .mobbrmsd_3dsp import driver
+            except ModuleNotFoundError:
+                error = True
     elif d == 1 or d > 3:
         if dt == numpy.float64:
-            from .mobbrmsd_xddp import driver
+            try:
+                from .mobbrmsd_xddp import driver
+            except ModuleNotFoundError:
+                error = True
         elif dt == numpy.float32:
-            from .mobbrmsd_xdsp import driver
-        else:
-            raise ValueError
-
+            try:
+                from .mobbrmsd_xdsp import driver
+            except ModuleNotFoundError:
+                error = True
         driver.setup_dimension_(d)
-    else:
-        raise ValueError
+    if error:
+        raise ValueError(errmsg(d, dt))
     return driver
 
 
@@ -568,8 +581,6 @@ class mobbrmsd:
 
         edges, weights = driver.min_span_tree(
             n_target,
-            self.n_int,
-            self.n_float,
             self.header,
             x_,
             ww,
