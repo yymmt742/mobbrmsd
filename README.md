@@ -78,7 +78,7 @@ Calculate molecular-oriented RMSD with branch-and-bound.
 ### Prerequisites
 
 * gfortran >= 9.4.0
-* blas/lapack
+* OpenBLAS (optional)
 * OpenMP (optional)
 
 To use the Python interface, you additionally need the following:
