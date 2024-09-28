@@ -96,12 +96,12 @@ if(SKBUILD)
 endif()
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
-  ADDTEST(test_driver 3 64 32 1 1 ""
+  ADDTEST(test_driver 3d dp 32 1 1 ${CMAKE_CURRENT_BINARY_DIR} ""
     ${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/test_driver.f90
     )
   target_include_directories(test_driver PRIVATE
-    ${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_3d/mobbrmsd_3ddp/mod_files
+    ${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/3ddp/mod_files
     )
   target_link_libraries(test_driver PRIVATE
     mobbrmsd_3ddp_static
