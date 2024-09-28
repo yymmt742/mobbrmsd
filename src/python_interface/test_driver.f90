@@ -29,7 +29,7 @@ contains
     integer(IK)              :: i, j, k, l
 !
     call decode_attributes(SIZE(seq), seq, att)
-    print *, att
+    print'(*(I6))', att
     n_dim = att(1)
     n_atm = att(2)
     n_header = att(3)
@@ -96,7 +96,7 @@ contains
     integer(IK)              :: i, j, k, l
 !
     call decode_attributes(SIZE(seq), seq, att)
-    print *, att
+    print'(*(I6))', att
     n_dim = att(1)
     n_atm = att(2)
     n_header = att(3)
@@ -166,7 +166,6 @@ contains
     integer(IK)              :: i
 !
     call decode_attributes(SIZE(seq), seq, att)
-    print *, att
     n_dim = att(1)
     n_atm = att(2)
     n_header = att(3)
@@ -176,7 +175,7 @@ contains
     n_mem = att(7)
     n_job = att(8)
 !
-    print'(*(I4))', n_dim, n_atm, n_header, n_int, n_float, n_job, n_mem, n_rot
+    print'(*(I6))', n_dim, n_atm, n_header, n_int, n_float, n_rot, n_mem, n_job
 
     allocate (X(n_dim, n_apm, n_mol, n_target))
     allocate (w(n_mem * (n_mem - 1) / 2))
@@ -185,7 +184,6 @@ contains
     allocate (float_states(n_float, n_target, n_target))
 !
     call RANDOM_NUMBER(X)
-!
     call decode_header(SIZE(seq), seq, n_header, header)
 !
     call min_span_tree( &
