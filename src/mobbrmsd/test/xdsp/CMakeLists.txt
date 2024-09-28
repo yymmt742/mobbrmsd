@@ -1,1 +1,0 @@
-DIMSPECTESTS(xdsp ${CMAKE_CURRENT_SOURCE_DIR}/../../mobbrmsd_xd X 32 32)
