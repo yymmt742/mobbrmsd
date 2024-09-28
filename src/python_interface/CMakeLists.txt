@@ -10,10 +10,16 @@ if(SKBUILD)
     )
 
   set(lomp)
+  set(lflag)
+  if(BLAS_FOUND AND LAPACK_FOUND)
+    list( APPEND lomp ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} )
+    list( APPEND lflag ${BLAS_LINKER_FLAGS} ${LAPACK_LINKER_FLAGS} )
+  endif()
   if(OpenMP_FOUND)
     foreach(var IN ITEMS ${OpenMP_Fortran_LIB_NAMES})
       list( APPEND lomp "-l${var} " )
     endforeach()
+    list( APPEND lflag ${OpenMP_Fortran_FLAGS} )
   endif()
 
   function(F2PY_BUILD dims prec)
@@ -32,14 +38,12 @@ if(SKBUILD)
         $<$<CONFIG:Debug>:--debug-capi>
         --f2cmap "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap_${prec}"
         "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
-        "${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_${dims}/libmobbrmsd_${dims}${prec}.a"
-        -I${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/mobbrmsd_${dims}/mobbrmsd_${dims}${prec}/mod_files
-        ${BLAS_LIBRARIES}
+        "${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/libmobbrmsd_${dims}${prec}.a"
+        -I${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/${dims}${prec}/mod_files
         ${lomp}
         --opt=-O3
         --f90flags='
-        "${BLAS_LINKER_FLAGS}"
-        "${OpenMP_Fortran_FLAGS}"
+        "${lflag}"
         $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-O3">
         $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-cpp">
         $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-std=f2008">
@@ -75,7 +79,7 @@ if(SKBUILD)
 
   foreach(dims IN ITEMS ${mobbrmsd_DIMENTIONS})
     foreach(prec IN ITEMS ${mobbrmsd_PRECISIONS})
-      F2PY_BUILD(${dims} ${prec})
+      F2PY_BUILD( ${dims} ${prec} )
     endforeach()
   endforeach()
 
