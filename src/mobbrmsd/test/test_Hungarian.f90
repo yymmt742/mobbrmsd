@@ -6,6 +6,11 @@ program main
   type(unittest) :: u
   integer(IK), parameter :: NTEST = 25
   integer(IK)            :: itest
+#ifdef USE_REAL32
+  integer(IK), parameter :: place = 3
+#else
+  integer(IK), parameter :: place = 7
+#endif
 !
   call u%init('test Hungarian square')
   do itest = 1, NTEST
@@ -44,7 +49,7 @@ contains
     block
       real(RK) :: W(NINT(dum(1)))
       call Hungarian(n, n, C, W)
-      call u%assert_almost_equal(W(1), minsp, 'W1 = HV   ')
+      call u%assert_almost_equal(W(1), minsp, 'W1 = HV   ', place=place)
     end block
 !
   end subroutine test1
@@ -129,7 +134,7 @@ contains
     block
       real(RK) :: W(NINT(dum(1)))
       call Hungarian(m, n, C, W)
-      call u%assert_almost_equal(W(1), minsp, 'W1 = HV   ')
+      call u%assert_almost_equal(W(1), minsp, 'W1 = HV   ', place=place)
     end block
 !
 !
@@ -215,7 +220,7 @@ contains
     block
       real(RK) :: W(NINT(dum(1)))
       call Hungarian(m, n, C, W)
-      call u%assert_almost_equal(W(1), minsp, 'W1 = HV   ')
+      call u%assert_almost_equal(W(1), minsp, 'W1 = HV   ', place=place)
     end block
 !
   end subroutine test3
