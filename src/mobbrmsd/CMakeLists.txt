@@ -1,9 +1,15 @@
-function(BUILD_LIB dims prec)
-  set(LIB_MOD_DIR ${CMAKE_CURRENT_BINARY_DIR}/mobbrmsd_${dims}/${PROJECT_NAME}_${dims}${prec}/mod_files)
-  if(NOT EXISTS "${LIB_MOD_DIR}")
-    make_directory("${LIB_MOD_DIR}")
+function( BUILD_LIB dims prec )
+  set( LIB_MOD_DIR ${CMAKE_CURRENT_BINARY_DIR}/${dims}${prec}/mod_files )
+  set( target ${PROJECT_NAME}_${dims}${prec} )
+  if( NOT EXISTS "${LIB_MOD_DIR}" )
+    make_directory( "${LIB_MOD_DIR}" )
   endif()
-  add_library(${PROJECT_NAME}_${dims}${prec}
+  if( dims STREQUAL "xd" )
+    set( blas 1 )
+  else()
+    set( blas 0 )
+  endif()
+  add_library(${target}
     OBJECT
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_kinds.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_params.f90
@@ -22,55 +28,44 @@ function(BUILD_LIB dims prec)
     ${CMAKE_CURRENT_SOURCE_DIR}/mobbrmsd_${dims}/mod_dimspec_functions.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mobbrmsd_${dims}/mod_rotation.f90
   )
-  set_target_properties(${PROJECT_NAME}_${dims}${prec}
+  set_target_properties(${target}
                         PROPERTIES Fortran_MODULE_DIRECTORY ${LIB_MOD_DIR})
-  if(prec STREQUAL "sp")
-    if(dims STREQUAL "xd")
-      ADDOPTS(${PROJECT_NAME}_${dims}${prec} 2 32 32 1 1)
-    else()
-      ADDOPTS(${PROJECT_NAME}_${dims}${prec} 2 32 32 "" 1)
-    endif()
-  elseif(prec STREQUAL "dp")
-    if(dims STREQUAL "xd")
-      ADDOPTS(${PROJECT_NAME}_${dims}${prec} 2 64 32 1 1)
-    else()
-      ADDOPTS(${PROJECT_NAME}_${dims}${prec} 2 64 32 "" 1)
-    endif()
-  endif()
-  add_library(${PROJECT_NAME}_${dims}${prec}_static STATIC $<TARGET_OBJECTS:${PROJECT_NAME}_${dims}${prec}>)
-  add_library(${PROJECT_NAME}_${dims}${prec}_shared SHARED $<TARGET_OBJECTS:${PROJECT_NAME}_${dims}${prec}>)
-  set_target_properties(${PROJECT_NAME}_${dims}${prec}_shared PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_${dims}${prec})
-  set_target_properties(${PROJECT_NAME}_${dims}${prec}_static PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_${dims}${prec})
+
+  ADDOPTS( ${target} ${dims} ${prec} 32 ${blas} 1 )
+
+  add_library(${target}_static STATIC $<TARGET_OBJECTS:${target}>)
+  add_library(${target}_shared SHARED $<TARGET_OBJECTS:${target}>)
+  set_target_properties(${target}_shared PROPERTIES OUTPUT_NAME ${target})
+  set_target_properties(${target}_static PROPERTIES OUTPUT_NAME ${target})
   install(
-      TARGETS ${PROJECT_NAME}_${dims}${prec}_shared
-    EXPORT ${PROJECT_NAME}-export
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_${dims}${prec}/lib"
-    LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_${dims}${prec}/lib"
+      TARGETS ${target}_shared
+    EXPORT ${target}-export
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${target}/lib"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${target}/lib"
     )
   install(
-    TARGETS ${PROJECT_NAME}_${dims}${prec}_static
-    EXPORT ${PROJECT_NAME}-export
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_${dims}${prec}/lib"
-    LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_${dims}${prec}/lib"
+    TARGETS ${target}_static
+    EXPORT ${target}-export
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${target}/lib"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${target}/lib"
     )
   install(
-    EXPORT ${PROJECT_NAME}-export
-    NAMESPACE ${PROJECT_NAME}_${dims}${prec}::
-    DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_${dims}${prec}"
+    EXPORT ${target}-export
+    NAMESPACE ${target}::
+    DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${target}"
     )
   install(
     DIRECTORY ${LIB_MOD_DIR}
-    DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}_${dims}${prec}"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${target}"
     )
 endfunction(BUILD_LIB)
-
 
 foreach(prec IN ITEMS ${mobbrmsd_PRECISIONS})
   foreach(dims IN ITEMS ${mobbrmsd_DIMENTIONS})
     BUILD_LIB( ${dims} ${prec} )
-    #add_subdirectory(mobbrmsd_${dims})
   endforeach()
 endforeach()
+
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
   add_subdirectory(test)
 endif()

@@ -1,6 +1,6 @@
 set(mobbrmsd_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-function(ADDOPTS name dims real int blas openmp)
+function(ADDOPTS name dims prec int blas openmp)
   target_compile_options(
     ${name} PRIVATE
     $<$<COMPILE_LANG_AND_ID:Fortran,GNU>:-O3>
@@ -54,9 +54,12 @@ function(ADDOPTS name dims real int blas openmp)
       $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:Fortran,Intel>:/debug:full>>
       )
   endif()
-  target_compile_definitions(${name} PRIVATE -DDIM${dims})
-  target_compile_definitions(${name} PRIVATE -DUSE_REAL${real})
-  target_compile_definitions(${name} PRIVATE -DUSE_INT${int})
+  if(prec STREQUAL "sp")
+    target_compile_definitions(${name} PRIVATE -DUSE_REAL32)
+  elseif(prec STREQUAL "dp")
+    target_compile_definitions(${name} PRIVATE -DUSE_REAL64)
+  endif()
+  target_compile_definitions(${name} PRIVATE -DUSE_INT32)
   target_include_directories(${name} PRIVATE ${mobbrmsd_INCLUDE_DIR})
   if(blas)
     target_compile_options(${name} PRIVATE ${BLAS_LINKER_FLAGS} ${LAPACK_LINKER_FLAGS})
@@ -68,9 +71,9 @@ function(ADDOPTS name dims real int blas openmp)
   endif()
 endfunction(ADDOPTS)
 
-function(ADDTEST name dims real int blas openmp testarg)
+function(ADDTEST name dims prec int blas openmp testarg)
   add_executable(${name} ${ARGN})
-  ADDOPTS("${name}" "${dims}" "${real}" "${int}" "${blas}" "${openmp}")
+  ADDOPTS("${name}" "${dims}" "${prec}" "${int}" "${blas}" "${openmp}")
   target_link_libraries(${name} PRIVATE unittest)
   target_include_directories(${name} PRIVATE ${unittest_INCLUDE_DIRS})
   add_test(NAME ${name} COMMAND ${name} ${testarg})
