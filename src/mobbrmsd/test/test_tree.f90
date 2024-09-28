@@ -4,6 +4,11 @@ program main
   use mod_tree
   implicit none
   type(unittest) :: u
+#ifdef USE_REAL32
+  integer(IK), parameter :: place = 3
+#else
+  integer(IK), parameter :: place = 7
+#endif
 !
   call u%init('test tree')
   call test1()
@@ -44,7 +49,7 @@ contains
     call u%assert_equal(tree_n_depth(t%q), 4, 'n_depth    [4,3,2,1]')
     call u%assert_equal(tree_nnodes(t%q), 20, 'nnodes     [4,3,2,1]')
     call u%assert_equal(NINT(EXP(tree_log_ncomb(t%q))), 632, 'log_ncomb  [4,3,2,1]')
-    call u%assert_almost_equal(tree_ncomb_frac(t%q), 6.32_RK, 'ncomb_frac [4,3,2,1]')
+    call u%assert_almost_equal(tree_ncomb_frac(t%q), 6.32_RK, 'ncomb_frac [4,3,2,1]', place=place)
     call u%assert_equal(tree_ncomb_exp(t%q), 2, 'ncomb_exp  [4,3,2,1]')
 !
     allocate (W(2 * tree_nnodes(t%q)))
