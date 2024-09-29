@@ -72,7 +72,7 @@ Calculate molecular-oriented RMSD with branch-and-bound.
 
    Running demonstrations via
    ```sh
-   python -m mobbrmsd
+   python -m mobbrmsd demo
    ```
 
 ### Prerequisites
@@ -100,6 +100,7 @@ To use the Python interface, you additionally need the following:
 - [ ] Compatible with compilers (intel)
 - [ ] Compatible with compilers (nv)
 - [ ] Add detail documentation
+- [ ] Add detail documentation (Python interface)
 - [ ] Add benchmarks
 - [ ] Make dimensions selectable in build options
 - [ ] Internalize lapack
