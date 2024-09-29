@@ -51,7 +51,7 @@ class _demo_bb(_demo._demo):
             cost = math.factorial(n_mol) * n_sym**n_mol
             if cost > 10000000:
                 if not _demo.yes_or_no(
-                    "This parameter may take time to compute (cost is {cost:d}). May this be run ?"
+                    f"This parameter may take time to compute (cost is {cost}). May this be run ?"
                 ):
                     continue
 
@@ -65,7 +65,7 @@ class _demo_bb(_demo._demo):
 
         return {"n_apm": n_apm, "n_mol": n_mol, "sym": sym}
 
-    def demo(self, n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
+    def demo(self, n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.8, b=1.0):
         import pprint
 
         def print_ret(ret, post="", end="\n", to_console: bool = False):
@@ -174,3 +174,68 @@ class _demo_bb(_demo._demo):
             f"        root mean squared deviation      |{d1:7.2f} |                   |{d2:7.2f}"
         )
         print(sep1)
+
+        return {
+            "x": x.reshape([n_mol, n_apm, 3]),
+            "y": y.reshape([n_mol, n_apm, 3]),
+            "z": z.reshape([n_mol, n_apm, 3]),
+        }
+
+    def after(self, x, y, z):
+        ang = 0
+
+        if _demo.yes_or_no("Show samples ? (Open matplotlib window)"):
+            import matplotlib.pyplot as plt
+            import matplotlib.animation as animation
+
+            cmap = plt.get_cmap("tab20")
+            fig = plt.figure(figsize=(8, 8 / 1.618))
+            axes = [
+                fig.add_subplot(1, 2, 1, projection="3d"),
+                fig.add_subplot(1, 2, 2, projection="3d"),
+            ]
+            for ax, ref, tgt in zip(axes, [x, x], [z, y]):
+                for i, xy in enumerate(zip(ref, tgt)):
+                    for xi, yi in zip(xy[0], xy[1]):
+                        ax.plot(
+                            [xi[0], yi[0]],
+                            [xi[1], yi[1]],
+                            [xi[2], yi[2]],
+                            color=cmap(2 * i),
+                            ls=":",
+                            lw=1.0,
+                        )
+                for crd, fillstyle, ms, j in zip(
+                    [ref, tgt], ["none", "full"], [6, 6], [1, 0]
+                ):
+                    for i, xi in enumerate(crd):
+                        ax.plot(
+                            xi[:, 0],
+                            xi[:, 1],
+                            xi[:, 2],
+                            color=cmap(2 * i + j),
+                            marker="o",
+                            fillstyle=fillstyle,
+                            ms=ms,
+                        )
+                ax.set_xlabel("X")
+                ax.set_ylabel("Y")
+                ax.set_zlabel("Z")
+                ax.set_xlim([-2.5, 2.5])
+                ax.set_ylim([-2.5, 2.5])
+                ax.set_zlim([-2.5, 2.5])
+                ax.view_init(azim=0)
+                ax.set_box_aspect([1, 1, 1])
+            plt.tight_layout()
+
+            def rot(frame):
+                axes[0].view_init(azim=frame)
+                axes[1].view_init(azim=frame)
+
+            ani = animation.FuncAnimation(
+                fig, rot, frames=numpy.arange(0, 359, 2), interval=1
+            )
+            plt.show()
+            plt.clf()
+            plt.close()
+        print()
