@@ -1,5 +1,6 @@
 from . import demo_cogen
 from . import demo_bb
+from . import demo_bb_2d
 from . import demo_bb_multi
 from . import demo_batch
 from . import demo_batch_tri
@@ -17,6 +18,8 @@ def main():
         demo_cogen._demo_cogen(prec=numpy.float32),
         demo_bb._demo_bb(),
         demo_bb._demo_bb(prec=numpy.float32),
+        demo_bb._demo_bb_2d(),
+        demo_bb._demo_bb_2d(prec=numpy.float32),
         demo_bb_multi._demo_bb_multi(),
         demo_bb_multi._demo_bb_multi(prec=numpy.float32),
         demo_batch._demo_batch(),

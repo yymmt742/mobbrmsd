@@ -103,6 +103,7 @@ if(SKBUILD)
     "${CMAKE_CURRENT_SOURCE_DIR}/coord_generator.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_cogen.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_bb.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/demo_bb_2d.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_bb_multi.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_mst.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_batch.py"
