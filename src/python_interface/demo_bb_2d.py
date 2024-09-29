@@ -17,18 +17,18 @@ class _demo_bb(_demo._demo):
         while True:
             n_mol = _demo.readinp(
                 "input number of molecules",
-                6,
+                10,
                 check=lambda n_mol: (n_mol > 0) if isinstance(n_mol, int) else False,
             )
-            if n_mol > 8:
+            if n_mol > 12:
                 if not _demo.yes_or_no(
-                    "This parameter may take time to compute. May this be run ?"
+                    f"n_mol > {n_mol} may take time to compute. May this be run ?"
                 ):
                     continue
 
             n_apm = _demo.readinp(
                 "input number of atoms per molecule",
-                3,
+                1,
                 check=lambda n_apm: ((n_apm > 0) if isinstance(n_apm, int) else False),
             )
 
@@ -40,7 +40,7 @@ class _demo_bb(_demo._demo):
 
             n_sym = _demo.readinp(
                 "input number of molecular symmetry",
-                n_apm,
+                1,
                 check=lambda n_sym: (
                     (n_sym > 0) & (True if n_sym <= math.factorial(n_apm) else msg())
                     if isinstance(n_sym, int)
@@ -49,9 +49,9 @@ class _demo_bb(_demo._demo):
             )
 
             cost = math.factorial(n_mol) * n_sym**n_mol
-            if cost > 10000000:
+            if cost > 50000000:
                 if not _demo.yes_or_no(
-                    "This parameter may take time to compute (cost is {cost:d}). May this be run ?"
+                    f"This parameter may take time to compute (cost is {cost}). May this be run ?"
                 ):
                     continue
 
@@ -65,7 +65,7 @@ class _demo_bb(_demo._demo):
 
         return {"n_apm": n_apm, "n_mol": n_mol, "sym": sym}
 
-    def demo(self, n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0):
+    def demo(self, n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.9, b=1.0):
         import pprint
 
         def print_ret(ret, post="", end="\n", to_console: bool = False):
@@ -174,3 +174,49 @@ class _demo_bb(_demo._demo):
             f"        root mean squared deviation      |{d1:7.2f} |                   |{d2:7.2f}"
         )
         print(sep1)
+
+        return {
+            "x": x.reshape([n_mol, n_apm, 2]),
+            "y": y.reshape([n_mol, n_apm, 2]),
+            "z": z.reshape([n_mol, n_apm, 2]),
+        }
+
+    def after(self, x, y, z):
+
+        if _demo.yes_or_no("Show samples ? (Open matplotlib window)"):
+            import matplotlib.pyplot as plt
+
+            cmap = plt.get_cmap("tab20")
+            fig, axes = plt.subplots(ncols=2, figsize=(8, 8 / 1.618))
+            for ax, ref, tgt in zip(axes, [x, x], [z, y]):
+                for i, xy in enumerate(zip(ref, tgt)):
+                    for xi, yi in zip(xy[0], xy[1]):
+                        ax.plot(
+                            [xi[0], yi[0]],
+                            [xi[1], yi[1]],
+                            color=cmap(2 * i),
+                            ls=":",
+                            lw=1.0,
+                        )
+                for crd, fillstyle, ms, j in zip(
+                    [ref, tgt], ["none", "full"], [8, 8], [1, 0]
+                ):
+                    for i, xi in enumerate(crd):
+                        ax.plot(
+                            xi[:, 0],
+                            xi[:, 1],
+                            color=cmap(2 * i + j),
+                            marker="o",
+                            fillstyle=fillstyle,
+                            ms=ms,
+                        )
+                ax.set_xlabel("X")
+                ax.set_ylabel("Y")
+                ax.set_xlim([-3, 3])
+                ax.set_ylim([-3, 3])
+                ax.set_box_aspect(1)
+            plt.tight_layout()
+            plt.show()
+            plt.clf()
+            plt.close()
+        print()
