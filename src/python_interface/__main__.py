@@ -23,7 +23,7 @@ def command_demo(args):
         demo_cogen._demo_cogen(cli=cli, prec=prec),
         demo_bb._demo_bb(cli=cli, prec=prec),
         demo_bb_2d._demo_bb(cli=cli, prec=prec),
-        demo_bb_multi._demo_bb_multi(cli=cli, prec=prec),
+        demo_bb_multi.__demo__(cli=cli, prec=prec),
         demo_batch._demo_batch(cli=cli, prec=prec),
         demo_batch_tri._demo_batch_tri(cli=cli, prec=prec),
         demo_mst._demo_mst(cli=cli, prec=prec),

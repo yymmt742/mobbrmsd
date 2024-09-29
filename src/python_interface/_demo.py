@@ -1,6 +1,7 @@
 from . import __version__
 import time
 import numpy
+import pprint
 
 bar1 = (
     "  ------------------------------------------------------------------------------"
@@ -25,6 +26,26 @@ def generate_sym_indices(n_apm: int, n_sym: int = 1):
             break
         sym += [iper]
     return sym
+
+
+def print_system(n_apm, n_mol, sym):
+
+    print(
+        f"    Atoms per molecule :{n_apm:6d}",
+    )
+    print(f"    Number of molecule :{n_mol:6d}")
+    pp = pprint.pformat(tuple([i for i in range(n_apm)]), width=48, compact=True).split(
+        "\n"
+    )
+    print("    Molecular symmetry :     0", pp[0])
+    for l in pp[1:]:
+        print("                              ", l)
+    for i, s in enumerate(sym):
+        pp = pprint.pformat(s, width=48, compact=True).split("\n")
+        print(f"                        {i+1:6d}", pp[0])
+        for l in pp[1:]:
+            print("                              ", l)
+    print()
 
 
 def readinp(msg, default, check=None):

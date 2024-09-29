@@ -6,7 +6,7 @@ import sys
 import numpy
 
 
-class _demo_bb_multi(_demo._demo):
+class __demo__(_demo._demo):
     def __init__(self, **kwarg):
         super().__init__(title="Multi component system", **kwarg)
 
@@ -20,7 +20,9 @@ class _demo_bb_multi(_demo._demo):
             )
             return False
 
-        ret = []
+        n_mols = []
+        n_apms = []
+        n_syms = []
         for i in range(2):
             n_mol = _demo.readinp(
                 f"input number of molecules [{i}]",
@@ -28,8 +30,8 @@ class _demo_bb_multi(_demo._demo):
                 check=lambda n_mol: (n_mol > 0) if isinstance(n_mol, int) else False,
             )
             if n_mol > 8:
-                if not _demo.yes_or_no(
-                    "This parameter may take time to compute. May this be run ?"
+                if not self.yes_or_no(
+                    "This parameter may take time to compute. May this be run?"
                 ):
                     continue
 
@@ -49,15 +51,14 @@ class _demo_bb_multi(_demo._demo):
                 ),
             )
 
-            per = itertools.permutations(range(n_apm))
-            next(per)
-            sym = [next(per) for i in range(n_sym - 1)]
-            ret += [DataclassMolecule(n_apm=n_apm, n_mol=n_mol, sym=sym)]
+            sym = _demo.generate_sym_indices(n_apm_, int(n_sym))
+            n_mols += [n_mol]
+            n_apms += [n_mol]
+            n_syms += [n_mol]
 
-        return {"molecules": ret}
+        return {"n_mols": n_mols, "n_apms": n_apms, "n_syms": n_syms}
 
-    def demo(self, molecules=[], a=0.5, b=1.0):
-        import pprint
+    def demo(self, n_mols=[2, 4], n_apms=[8, 3], n_syms=[1, 2], a=0.5, b=1.0, **kwargs):
 
         def print_ret(ret, post="", end="\n", to_console: bool = False):
             ev, er, ub, lb, sd = (
@@ -78,10 +79,24 @@ class _demo_bb_multi(_demo._demo):
                     return
                 print(f"  {ev:12d} {er:12.8f}{ub:16.6f}{lb:16.6f}{sd:12.6f}")
 
+        molecules = []
+        n_mols_ = n_mols.split(",") if isinstance(n_mols, str) else n_mols
+        n_apms_ = n_apms.split(",") if isinstance(n_apms, str) else n_apms
+        n_syms_ = n_syms.split(",") if isinstance(n_syms, str) else n_syms
+        for n_mol, n_apm, n_sym in zip(n_mols_, n_apms_, n_syms_):
+            n_mol_ = int(n_mol)
+            n_apm_ = int(n_apm)
+            n_sym_ = int(n_sym)
+            print(n_mol, n_apm, n_sym)
+            sym = _demo.generate_sym_indices(n_apm_, n_sym_)
+            molecules += [DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)]
+        a_ = float(a)
+        b_ = float(b)
+
         cogen = coord_generator()
         x = numpy.vstack(
             [
-                cogen.generate(mol.n_apm, mol.n_mol, a, b, dtype=self.prec).reshape(
+                cogen.generate(mol.n_apm, mol.n_mol, a_, b_, dtype=self.prec).reshape(
                     [-1, 3]
                 )
                 for mol in molecules
@@ -89,7 +104,7 @@ class _demo_bb_multi(_demo._demo):
         )
         y = numpy.vstack(
             [
-                cogen.generate(mol.n_apm, mol.n_mol, a, b, dtype=self.prec).reshape(
+                cogen.generate(mol.n_apm, mol.n_mol, a_, b_, dtype=self.prec).reshape(
                     [-1, 3]
                 )
                 for mol in molecules
@@ -97,6 +112,7 @@ class _demo_bb_multi(_demo._demo):
         )
         x -= numpy.mean(x, 0)
         y -= numpy.mean(y, 0)
+        z = y.copy()
 
         sep1 = "  ------------------------------------------------------------------------------"
         sep2 = "  ---------------------------------------|--------|-------------------|---------"
@@ -106,22 +122,8 @@ class _demo_bb_multi(_demo._demo):
         print(sep1)
         print("      --System settings--")
         for k, mol in enumerate(molecules):
-            print(
-                f"    Atoms per molecule [{k}] :{mol.n_apm:6d}",
-            )
-            print(f"    Number of molecule     :{mol.n_mol:6d}")
-            print("    Molecular symmetry     :     0 ")
-            pp = pprint.pformat(
-                tuple([i for i in range(mol.n_apm)]), width=74, compact=True
-            )
-            for l in pp.split("\n"):
-                print("      ", l)
-            for i, s in enumerate(mol.sym):
-                print(f"                            {i+1:6d}")
-                pp = pprint.pformat(s, width=74, compact=True)
-                for l in pp.split("\n"):
-                    print("      ", l)
-        print()
+            print(f"    [Speacies {k}]")
+            _demo.print_system(mol.n_apm, mol.n_mol, mol.sym)
 
         mrmsd = mobbrmsd(molecules=molecules)
 
@@ -141,8 +143,8 @@ class _demo_bb_multi(_demo._demo):
             ret.restart(maxeval=0)
             i += 1
         ret.restart(maxeval=0, get_rotation=True)  # get rotation matrix
+        print()
 
-        print_ret(ret, post=erace)
         z = ret.rotate_y(y)
         print(sep1)
         print("      -- Final results --")

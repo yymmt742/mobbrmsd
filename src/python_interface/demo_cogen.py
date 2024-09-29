@@ -104,7 +104,7 @@ class _demo_cogen(_demo._demo):
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
         fig.canvas.mpl_connect("key_press_event", onclick)
-        if _demo.yes_or_no("Show samples ? (Open matplotlib window)"):
+        if self.yes_or_no("Show samples ? (Open matplotlib window)"):
             x = cogen.generate(n_apm, n_mol, alpha, beta)
             for xi in x:
                 ax.plot(xi[:, 0], xi[:, 1], xi[:, 2])

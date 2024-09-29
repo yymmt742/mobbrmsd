@@ -21,7 +21,7 @@ class _demo_bb(_demo._demo):
                 check=lambda n_mol: (n_mol > 0) if isinstance(n_mol, int) else False,
             )
             if n_mol > 8:
-                if not _demo.yes_or_no(
+                if not self.yes_or_no(
                     "This parameter may take time to compute. May this be run?"
                 ):
                     continue
@@ -50,7 +50,7 @@ class _demo_bb(_demo._demo):
 
             cost = math.factorial(n_mol) * n_sym**n_mol
             if cost > 10000000:
-                if not _demo.yes_or_no(
+                if not self.yes_or_no(
                     f"This parameter may take time to compute (cost is {cost}). May this be run ?"
                 ):
                     continue
@@ -103,22 +103,7 @@ class _demo_bb(_demo._demo):
         print("              Demonstration of mobbRMSD with random coordinates (2D)")
         print(sep1)
         print("      --System settings--")
-        print(
-            f"    Atoms per molecule :{n_apm_:6d}",
-        )
-        print(f"    Number of molecule :{n_mol_:6d}")
-        pp = pprint.pformat(
-            tuple([i for i in range(n_apm_)]), width=64, compact=True
-        ).split("\n")
-        print("    Molecular symmetry :     0", pp[0])
-        for l in pp[1:]:
-            print("                              ", l)
-        for i, s in enumerate(sym):
-            pp = pprint.pformat(s, width=64, compact=True).split("\n")
-            print(f"                        {i+1:6d}", pp[0])
-            for l in pp[1:]:
-                print("                              ", l)
-        print()
+        _demo.print_system(n_apm_, n_mol_, sym)
 
         molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
         mrmsd = mobbrmsd(d=2, molecules=molecules)

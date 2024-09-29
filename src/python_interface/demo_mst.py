@@ -29,7 +29,7 @@ class _demo_mst(_demo._demo):
             )
 
             if n_mol > 8 or n_target > 30:
-                if not _demo.yes_or_no(
+                if not self.yes_or_no(
                     "This parameter may take time to compute. May this be run ?"
                 ):
                     continue
@@ -121,7 +121,7 @@ class _demo_mst(_demo._demo):
 
     def after(self, g):
 
-        if _demo.yes_or_no("Show graph ? (Open matplotlib window)"):
+        if self.yes_or_no("Show graph ? (Open matplotlib window)"):
             n_target = len(g.nodes())
 
             vmax = numpy.array(
@@ -154,7 +154,7 @@ class _demo_mst(_demo._demo):
             networkx.draw_networkx_edges(g, pos, width=weights, edge_color="tab:red")
 
             plt.show()
-            if _demo.yes_or_no("Save graph ?"):
+            if self.yes_or_no("Save graph ?"):
                 path = _demo.readinp(
                     "Enter a file name",
                     "",

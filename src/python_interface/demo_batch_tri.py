@@ -31,7 +31,7 @@ class _demo_batch_tri(_demo._demo):
             )
 
             if n_mol > 8 or n_target > 30:
-                if not _demo.yes_or_no(
+                if not self.yes_or_no(
                     "This parameter may take time to compute. May this be run ?"
                 ):
                     continue
