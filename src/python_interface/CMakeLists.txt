@@ -9,25 +9,34 @@ if(SKBUILD)
     OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
-  set(lomp)
-  set(lflag)
-  if(BLAS_FOUND AND LAPACK_FOUND)
-    list( APPEND lomp ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} )
-    list( APPEND lflag ${BLAS_LINKER_FLAGS} ${LAPACK_LINKER_FLAGS} )
-  endif()
-  if(OpenMP_FOUND)
-    foreach(var IN ITEMS ${OpenMP_Fortran_LIB_NAMES})
-      list( APPEND lomp "-l${var} " )
-    endforeach()
-    list( APPEND lflag ${OpenMP_Fortran_FLAGS} )
-  endif()
-
   function(F2PY_BUILD dims prec)
+
+    set( target ${PROJECT_NAME}_${dims}${prec}_f2py )
+
     if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
       set (sofile "${CMAKE_CURRENT_BINARY_DIR}/mobbrmsd_${dims}${prec}.${SKBUILD_SOABI}${CMAKE_SHARED_MODULE_SUFFIX}")
     else()
       set (sofile "${CMAKE_CURRENT_BINARY_DIR}/mobbrmsd_${dims}${prec}.${SKBUILD_SOABI}.so")
     endif()
+
+    set(lomp)
+    set(lflag)
+
+    if( dims STREQUAL "xd" )
+      set( blas 1 )
+      if(BLAS_FOUND AND LAPACK_FOUND)
+        list( APPEND lomp ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} )
+        list( APPEND lflag ${BLAS_LINKER_FLAGS} ${LAPACK_LINKER_FLAGS} )
+      endif()
+    endif()
+
+    if(OpenMP_FOUND)
+      foreach(var IN ITEMS ${OpenMP_Fortran_LIB_NAMES})
+        list( APPEND lomp "-l${var} " )
+      endforeach()
+      list( APPEND lflag ${OpenMP_Fortran_FLAGS} )
+    endif()
+
     message(STATUS ${dims} ${prec} ${sofile})
     add_custom_command(
       OUTPUT ${sofile}
@@ -38,10 +47,10 @@ if(SKBUILD)
         $<$<CONFIG:Debug>:--debug-capi>
         --f2cmap "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap_${prec}"
         "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
-        "${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/libmobbrmsd_${dims}${prec}.a"
         -I${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/${dims}${prec}/mod_files
+        -L${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd/static
+        -lmobbrmsd_${dims}${prec}
         ${lomp}
-        --opt=-O3
         --f90flags='
         "${lflag}"
         $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-O3">
@@ -70,11 +79,14 @@ if(SKBUILD)
               "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap_${prec}"
               "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
       )
-    add_custom_target(mobbrmsd_${dims}${prec}_so ALL DEPENDS ${sofile})
+
+    add_custom_target(${target} ALL DEPENDS ${sofile})
+
     install(FILES
       ${sofile}
       DESTINATION ${SKBUILD_PLATLIB_DIR}/mobbrmsd
     )
+
   endfunction(F2PY_BUILD)
 
   foreach(dims IN ITEMS ${mobbrmsd_DIMENTIONS})

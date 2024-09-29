@@ -33,22 +33,6 @@ function( BUILD_LIB dims prec )
 
   ADDOPTS( ${target} ${dims} ${prec} 32 ${blas} 1 )
 
-  add_library(${target}_static STATIC $<TARGET_OBJECTS:${target}>)
-  add_library(${target}_shared SHARED $<TARGET_OBJECTS:${target}>)
-  set_target_properties(${target}_shared PROPERTIES OUTPUT_NAME ${target})
-  set_target_properties(${target}_static PROPERTIES OUTPUT_NAME ${target})
-  install(
-      TARGETS ${target}_shared
-    EXPORT ${target}-export
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${target}/lib"
-    LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${target}/lib"
-    )
-  install(
-    TARGETS ${target}_static
-    EXPORT ${target}-export
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${target}/lib"
-    LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake/${target}/lib"
-    )
   install(
     EXPORT ${target}-export
     NAMESPACE ${target}::
@@ -65,6 +49,9 @@ foreach(prec IN ITEMS ${mobbrmsd_PRECISIONS})
     BUILD_LIB( ${dims} ${prec} )
   endforeach()
 endforeach()
+
+add_subdirectory(static)
+add_subdirectory(shared)
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
   add_subdirectory(test)
