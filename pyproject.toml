@@ -5,7 +5,7 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "mobbrmsd"
 dependencies = ["numpy", "matplotlib", "networkx", "tqdm", "pick"]
-version = "0.0.23"
+version = "0.0.24"
 description = "Molecular-Oriented RMSD with Branch-and-Bound"
 readme = "README.md"
 license = {file = "LICENSE.txt"}
