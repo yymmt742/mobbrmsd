@@ -20,7 +20,7 @@ def command_demo(args):
     cli = args.cli
 
     demo_list = [
-        demo_cogen._demo_cogen(cli=cli, prec=prec),
+        demo_cogen.__demo__(cli=cli, prec=prec),
         demo_bb._demo_bb(cli=cli, prec=prec),
         demo_bb_2d._demo_bb(cli=cli, prec=prec),
         demo_bb_multi.__demo__(cli=cli, prec=prec),
