@@ -93,7 +93,6 @@ class _demo:
 
         if ret is not None:
             self.after(**ret)
-            print(bar2, "\n")
 
     def yes_or_no(self, msg):
         if not self.cli:

@@ -55,17 +55,33 @@ class _demo_batch(_demo._demo):
         n_mol=6,
         n_reference=5,
         n_target=10,
-        sym=((1, 2, 0), (2, 0, 1)),
+        n_sym=2,
         a=0.5,
         b=1.0,
+        r=0.9,
     ):
         n_mol_ = int(n_mol)
         n_apm_ = int(n_apm)
+        n_sym_ = int(n_sym)
         n_reference_ = int(n_reference)
         n_target_ = int(n_target)
         a_ = float(a)
         b_ = float(b)
+        r_ = float(r)
         cogen = coord_generator()
+
+        import itertools
+
+        per = itertools.permutations(range(n_apm))
+        next(per)
+        sym = []
+        i = 0
+        for iper in per:
+            i += 1
+            if i > n_sym_:
+                break
+            sym += [iper]
+
         x = numpy.array(
             [
                 cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape(
@@ -75,7 +91,7 @@ class _demo_batch(_demo._demo):
             ]
         )
         for i in range(n_reference_ - 1):
-            x[i + 1] = 0.01 * x[i + 1] + 0.99 * x[i]
+            x[i + 1] = (1.0 - r_) * x[i + 1] + r_ * x[i]
         y = numpy.array(
             [
                 cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape(
@@ -85,7 +101,7 @@ class _demo_batch(_demo._demo):
             ]
         )
         for i in range(n_target_ - 1):
-            y[i + 1] = 0.01 * y[i + 1] + 0.99 * y[i]
+            y[i + 1] = (1.0 - r_) * y[i + 1] + r_ * y[i]
 
         sep1 = "  ------------------------------------------------------------------------------"
         sep2 = "  ---------------------------------------|--------|-------------------|---------"
@@ -98,7 +114,8 @@ class _demo_batch(_demo._demo):
             f"    Atoms per molecule  :{n_apm_:6d}",
         )
         print(f"    Number of molecule  :{n_mol_:6d}")
-        print(f"    Number of structure :{n_target_:6d}")
+        print(f"    Number of target    :{n_target_:6d}")
+        print(f"    Number of reference :{n_reference_:6d}")
 
         pp = pprint.pformat(
             tuple([i for i in range(n_apm_)]), width=50, compact=True
@@ -132,6 +149,8 @@ class _demo_batch(_demo._demo):
 
         if self.yes_or_no("Show graph ? (Open matplotlib window)"):
             plt.imshow(mat)
+            plt.colorbar()
+            plt.xlabel("target")
+            plt.ylabel("reference")
             plt.show()
             plt.clf()
-        print()
