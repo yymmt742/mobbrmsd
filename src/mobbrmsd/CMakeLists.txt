@@ -50,8 +50,13 @@ foreach(prec IN ITEMS ${mobbrmsd_PRECISIONS})
   endforeach()
 endforeach()
 
-add_subdirectory(static)
-add_subdirectory(shared)
+option( mobbrmsd_BUILD_SHARED_LIBS "build mylib as a shared library" ${BUILD_SHARED_LIBS})
+
+if( mobbrmsd_BUILD_SHARED_LIBS )
+  add_subdirectory(shared)
+elseif( NOT mobbrmsd_BUILD_SHARED_LIBS OR SKBUILD )
+  add_subdirectory(static)
+endif()
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
   add_subdirectory(test)
