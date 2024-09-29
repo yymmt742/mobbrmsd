@@ -22,7 +22,7 @@ class _demo_bb(_demo._demo):
             )
             if n_mol > 8:
                 if not _demo.yes_or_no(
-                    "This parameter may take time to compute. May this be run ?"
+                    "This parameter may take time to compute. May this be run?"
                 ):
                     continue
 
@@ -59,13 +59,9 @@ class _demo_bb(_demo._demo):
 
         print()
 
-        per = itertools.permutations(range(n_apm))
-        next(per)
-        sym = [next(per) for i in range(n_sym - 1)]
+        return {"n_apm": n_apm, "n_mol": n_mol, "n_sym": n_sym}
 
-        return {"n_apm": n_apm, "n_mol": n_mol, "sym": sym}
-
-    def demo(self, n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.8, b=1.0):
+    def demo(self, n_apm=3, n_mol=8, n_sym=2, a=0.8, b=1.0, **kwarg):
         import pprint
 
         def print_ret(ret, post="", end="\n", to_console: bool = False):
@@ -87,9 +83,15 @@ class _demo_bb(_demo._demo):
                     return
                 print(f"  {ev:12d} {er:12.8f}{ub:16.6f}{lb:16.6f}{sd:12.6f}")
 
+        n_mol_ = int(n_mol)
+        n_apm_ = int(n_apm)
+        sym = _demo.generate_sym_indices(n_apm_, int(n_sym))
+        a_ = float(a)
+        b_ = float(b)
+
         cogen = coord_generator()
-        x = cogen.generate(n_apm, n_mol, a, b, dtype=self.prec).reshape([-1, 3])
-        y = cogen.generate(n_apm, n_mol, a, b, dtype=self.prec).reshape([-1, 3])
+        x = cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape([-1, 3])
+        y = cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape([-1, 3])
         x -= numpy.mean(x, 0)
         y -= numpy.mean(y, 0)
         z = y.copy()
@@ -102,21 +104,23 @@ class _demo_bb(_demo._demo):
         print(sep1)
         print("      --System settings--")
         print(
-            f"    Atoms per molecule :{n_apm:6d}",
+            f"    Atoms per molecule :{n_apm_:6d}",
         )
-        print(f"    Number of molecule :{n_mol:6d}")
-        print("    Molecular symmetry :     0 ")
-        pp = pprint.pformat(tuple([i for i in range(n_apm)]), width=74, compact=True)
-        for l in pp.split("\n"):
-            print("      ", l)
+        print(f"    Number of molecule :{n_mol_:6d}")
+        pp = pprint.pformat(
+            tuple([i for i in range(n_apm_)]), width=64, compact=True
+        ).split("\n")
+        print("    Molecular symmetry :     0", pp[0])
+        for l in pp[1:]:
+            print("                              ", l)
         for i, s in enumerate(sym):
-            print(f"                        {i+1:6d}")
-            pp = pprint.pformat(s, width=74, compact=True)
-            for l in pp.split("\n"):
+            pp = pprint.pformat(s, width=64, compact=True).split("\n")
+            print(f"                        {i+1:6d}", pp[0])
+            for l in pp[1:]:
                 print("      ", l)
         print()
 
-        molecules = DataclassMolecule(n_apm=n_apm, n_mol=n_mol, sym=sym)
+        molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
         mrmsd = mobbrmsd(molecules=molecules)
 
         ub, lb = numpy.inf, -numpy.inf
@@ -148,9 +152,9 @@ class _demo_bb(_demo._demo):
         )
         d1, d2 = 0.0, 0.0
         for xi, yi, zi in zip(
-            x.reshape([n_mol, n_apm, 3]),
-            y.reshape([n_mol, n_apm, 3]),
-            z.reshape([n_mol, n_apm, 3]),
+            x.reshape([n_mol_, n_apm_, 3]),
+            y.reshape([n_mol_, n_apm_, 3]),
+            z.reshape([n_mol_, n_apm_, 3]),
         ):
             print(sep2)
             for xij, yij, zij in zip(xi, yi, zi):
@@ -164,8 +168,8 @@ class _demo_bb(_demo._demo):
                     f"|{zij[0]:6.2f}{zij[1]:6.2f}{zij[2]:6.2f} |{d2_:7.2f}",
                 )
         print(sep2)
-        d1 *= 1.0 / (n_mol * n_apm)
-        d2 *= 1.0 / (n_mol * n_apm)
+        d1 *= 1.0 / (n_mol_ * n_apm_)
+        d2 *= 1.0 / (n_mol_ * n_apm_)
         print(
             f"          mean squared deviation         |{d1:7.2f} |                   |{d2:7.2f}"
         )
@@ -176,15 +180,15 @@ class _demo_bb(_demo._demo):
         print(sep1)
 
         return {
-            "x": x.reshape([n_mol, n_apm, 3]),
-            "y": y.reshape([n_mol, n_apm, 3]),
-            "z": z.reshape([n_mol, n_apm, 3]),
+            "x": x.reshape([n_mol_, n_apm_, 3]),
+            "y": y.reshape([n_mol_, n_apm_, 3]),
+            "z": z.reshape([n_mol_, n_apm_, 3]),
         }
 
-    def after(self, x, y, z):
+    def after(self, x, y, z, **kwarg):
         ang = 0
 
-        if _demo.yes_or_no("Show samples ? (Open matplotlib window)"):
+        if self.yes_or_no("Show samples ? (Open matplotlib window)"):
             import matplotlib.pyplot as plt
             import matplotlib.animation as animation
 

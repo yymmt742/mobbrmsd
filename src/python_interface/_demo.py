@@ -1,7 +1,6 @@
 from . import __version__
 import time
 import numpy
-import itertools
 
 bar1 = (
     "  ------------------------------------------------------------------------------"
@@ -13,6 +12,8 @@ bar3 = "==========================================="
 
 
 def generate_sym_indices(n_apm: int, n_sym: int = 1):
+
+    import itertools
 
     per = itertools.permutations(range(n_apm))
     next(per)
