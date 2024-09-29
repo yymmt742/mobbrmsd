@@ -46,23 +46,11 @@ def readinp(msg, default, check=None):
         )
 
 
-def yes_or_no(msg):
-    print()
-    while True:
-        inp = input(f"\033[1A\033[0K    {msg} [Y/n] > ")
-        if inp == "":
-            continue
-        if inp[0] == "q" or inp[0] == "Q":
-            print(bar2)
-            exit()
-        if inp[0] == "y" or inp[0] == "Y" or inp[0] == "n" or inp[0] == "N":
-            return inp[0] == "y" or inp[0] == "Y"
-
-
 class _demo:
 
-    def __init__(self, title="mobbrmsd demo", prec=numpy.float64):
+    def __init__(self, title="mobbrmsd demo", prec=numpy.float64, cli=False):
         self.prec = numpy.dtype(prec)
+        self.cli = cli
         if self.prec == numpy.float64:
             self.title = title + " (double)"
         elif self.prec == numpy.float32:
@@ -79,9 +67,12 @@ class _demo:
     def after(self, **kwarg):
         return
 
-    def run_demo(self):
+    def run_demo(self, **kwarg):
         print(bar2)
-        prms = self.read_input()
+        if self.cli:
+            prms = {**self.read_input(), **kwarg}
+        else:
+            prms = kwarg
 
         start_wallclock_time = time.time()
         start_cpu_time = time.process_time()
@@ -103,3 +94,17 @@ class _demo:
         if ret is not None:
             self.after(**ret)
             print(bar2, "\n")
+
+    def yes_or_no(self, msg):
+        if not self.cli:
+            return True
+        print()
+        while True:
+            inp = input(f"\033[1A\033[0K    {msg} [Y/n] > ")
+            if inp == "":
+                continue
+            if inp[0] == "q" or inp[0] == "Q":
+                print(bar2)
+                exit()
+            if inp[0] == "y" or inp[0] == "Y" or inp[0] == "n" or inp[0] == "N":
+                return inp[0] == "y" or inp[0] == "Y"

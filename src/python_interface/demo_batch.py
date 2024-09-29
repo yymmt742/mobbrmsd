@@ -59,26 +59,32 @@ class _demo_batch(_demo._demo):
         a=0.5,
         b=1.0,
     ):
+        n_mol_ = int(n_mol)
+        n_apm_ = int(n_apm)
+        n_reference_ = int(n_reference)
+        n_target_ = int(n_target)
+        a_ = float(a)
+        b_ = float(b)
         cogen = coord_generator()
         x = numpy.array(
             [
-                cogen.generate(n_apm, n_mol, a, b, dtype=self.prec).reshape(
-                    [n_apm * n_mol, 3]
+                cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape(
+                    [n_apm_ * n_mol_, 3]
                 )
-                for i in range(n_reference)
+                for i in range(n_reference_)
             ]
         )
-        for i in range(n_reference - 1):
+        for i in range(n_reference_ - 1):
             x[i + 1] = 0.01 * x[i + 1] + 0.99 * x[i]
         y = numpy.array(
             [
-                cogen.generate(n_apm, n_mol, a, b, dtype=self.prec).reshape(
-                    [n_apm * n_mol, 3]
+                cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape(
+                    [n_apm_ * n_mol_, 3]
                 )
-                for i in range(n_target)
+                for i in range(n_target_)
             ]
         )
-        for i in range(n_target - 1):
+        for i in range(n_target_ - 1):
             y[i + 1] = 0.01 * y[i + 1] + 0.99 * y[i]
 
         sep1 = "  ------------------------------------------------------------------------------"
@@ -89,13 +95,13 @@ class _demo_batch(_demo._demo):
         print(sep1)
         print("      --System settings--")
         print(
-            f"    Atoms per molecule  :{n_apm:6d}",
+            f"    Atoms per molecule  :{n_apm_:6d}",
         )
-        print(f"    Number of molecule  :{n_mol:6d}")
-        print(f"    Number of structure :{n_target:6d}")
+        print(f"    Number of molecule  :{n_mol_:6d}")
+        print(f"    Number of structure :{n_target_:6d}")
 
         pp = pprint.pformat(
-            tuple([i for i in range(n_apm)]), width=50, compact=True
+            tuple([i for i in range(n_apm_)]), width=50, compact=True
         ).split("\n")
         print("    Molecular symmetry  :     1", pp[0])
         for i, l in enumerate(pp[1:]):
@@ -107,7 +113,7 @@ class _demo_batch(_demo._demo):
                 print("                               ", l)
         print()
 
-        molecules = DataclassMolecule(n_apm=n_apm, n_mol=n_mol, sym=sym)
+        molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
         mrmsd = mobbrmsd(molecules=molecules)
         rmsds = mrmsd.batch_run(x, y)
         del mrmsd
@@ -124,7 +130,7 @@ class _demo_batch(_demo._demo):
 
     def after(self, mat):
 
-        if _demo.yes_or_no("Show graph ? (Open matplotlib window)"):
+        if self.yes_or_no("Show graph ? (Open matplotlib window)"):
             plt.imshow(mat)
             plt.show()
             plt.clf()
