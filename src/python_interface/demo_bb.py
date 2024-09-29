@@ -117,7 +117,7 @@ class _demo_bb(_demo._demo):
             pp = pprint.pformat(s, width=64, compact=True).split("\n")
             print(f"                        {i+1:6d}", pp[0])
             for l in pp[1:]:
-                print("      ", l)
+                print("                              ", l)
         print()
 
         molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)

@@ -8,7 +8,7 @@ import numpy
 
 class _demo_bb(_demo._demo):
     def __init__(self, **kwarg):
-        super().__init__(title="mobbRMSD basic 2d", **kwarg)
+        super().__init__(title="mobbRMSD basic (2D)", **kwarg)
 
     def read_input(self):
         import itertools
@@ -17,18 +17,18 @@ class _demo_bb(_demo._demo):
         while True:
             n_mol = _demo.readinp(
                 "input number of molecules",
-                10,
+                6,
                 check=lambda n_mol: (n_mol > 0) if isinstance(n_mol, int) else False,
             )
-            if n_mol > 12:
+            if n_mol > 8:
                 if not _demo.yes_or_no(
-                    f"n_mol > {n_mol} may take time to compute. May this be run ?"
+                    "This parameter may take time to compute. May this be run?"
                 ):
                     continue
 
             n_apm = _demo.readinp(
                 "input number of atoms per molecule",
-                1,
+                3,
                 check=lambda n_apm: ((n_apm > 0) if isinstance(n_apm, int) else False),
             )
 
@@ -40,7 +40,7 @@ class _demo_bb(_demo._demo):
 
             n_sym = _demo.readinp(
                 "input number of molecular symmetry",
-                1,
+                n_apm,
                 check=lambda n_sym: (
                     (n_sym > 0) & (True if n_sym <= math.factorial(n_apm) else msg())
                     if isinstance(n_sym, int)
@@ -49,7 +49,7 @@ class _demo_bb(_demo._demo):
             )
 
             cost = math.factorial(n_mol) * n_sym**n_mol
-            if cost > 50000000:
+            if cost > 10000000:
                 if not _demo.yes_or_no(
                     f"This parameter may take time to compute (cost is {cost}). May this be run ?"
                 ):
@@ -59,13 +59,9 @@ class _demo_bb(_demo._demo):
 
         print()
 
-        per = itertools.permutations(range(n_apm))
-        next(per)
-        sym = [next(per) for i in range(n_sym - 1)]
+        return {"n_apm": n_apm, "n_mol": n_mol, "n_sym": n_sym}
 
-        return {"n_apm": n_apm, "n_mol": n_mol, "sym": sym}
-
-    def demo(self, n_apm=3, n_mol=8, sym=((1, 2, 0), (2, 0, 1)), a=0.9, b=1.0):
+    def demo(self, n_apm=3, n_mol=8, n_sym=2, a=0.9, b=1.0, **kwargs):
         import pprint
 
         def print_ret(ret, post="", end="\n", to_console: bool = False):
@@ -87,9 +83,15 @@ class _demo_bb(_demo._demo):
                     return
                 print(f"  {ev:12d} {er:12.8f}{ub:16.6f}{lb:16.6f}{sd:12.6f}")
 
+        n_mol_ = int(n_mol)
+        n_apm_ = int(n_apm)
+        sym = _demo.generate_sym_indices(n_apm_, int(n_sym))
+        a_ = float(a)
+        b_ = float(b)
+
         cogen = coord_generator(d=2)
-        x = cogen.generate(n_apm, n_mol, a, b, dtype=self.prec).reshape([-1, 2])
-        y = cogen.generate(n_apm, n_mol, a, b, dtype=self.prec).reshape([-1, 2])
+        x = cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape([-1, 2])
+        y = cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape([-1, 2])
         x -= numpy.mean(x, 0)
         y -= numpy.mean(y, 0)
         z = y.copy()
@@ -98,25 +100,27 @@ class _demo_bb(_demo._demo):
         sep2 = "  ---------------------------------------|--------|-------------------|---------"
 
         print(sep1)
-        print("            Demonstration of mobbRMSD with random coordinates (2d)")
+        print("              Demonstration of mobbRMSD with random coordinates (2D)")
         print(sep1)
         print("      --System settings--")
         print(
-            f"    Atoms per molecule :{n_apm:6d}",
+            f"    Atoms per molecule :{n_apm_:6d}",
         )
-        print(f"    Number of molecule :{n_mol:6d}")
-        print("    Molecular symmetry :     0 ")
-        pp = pprint.pformat(tuple([i for i in range(n_apm)]), width=74, compact=True)
-        for l in pp.split("\n"):
-            print("      ", l)
+        print(f"    Number of molecule :{n_mol_:6d}")
+        pp = pprint.pformat(
+            tuple([i for i in range(n_apm_)]), width=64, compact=True
+        ).split("\n")
+        print("    Molecular symmetry :     0", pp[0])
+        for l in pp[1:]:
+            print("                              ", l)
         for i, s in enumerate(sym):
-            print(f"                        {i+1:6d}")
-            pp = pprint.pformat(s, width=74, compact=True)
-            for l in pp.split("\n"):
-                print("      ", l)
+            pp = pprint.pformat(s, width=64, compact=True).split("\n")
+            print(f"                        {i+1:6d}", pp[0])
+            for l in pp[1:]:
+                print("                              ", l)
         print()
 
-        molecules = DataclassMolecule(n_apm=n_apm, n_mol=n_mol, sym=sym)
+        molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
         mrmsd = mobbrmsd(d=2, molecules=molecules)
 
         ub, lb = numpy.inf, -numpy.inf
@@ -148,9 +152,9 @@ class _demo_bb(_demo._demo):
         )
         d1, d2 = 0.0, 0.0
         for xi, yi, zi in zip(
-            x.reshape([n_mol, n_apm, 2]),
-            y.reshape([n_mol, n_apm, 2]),
-            z.reshape([n_mol, n_apm, 2]),
+            x.reshape([n_mol_, n_apm_, 2]),
+            y.reshape([n_mol_, n_apm_, 2]),
+            z.reshape([n_mol_, n_apm_, 2]),
         ):
             print(sep2)
             for xij, yij, zij in zip(xi, yi, zi):
@@ -164,8 +168,8 @@ class _demo_bb(_demo._demo):
                     f"|{zij[0]:9.2f}{zij[1]:9.2f} |{d2_:7.2f}",
                 )
         print(sep2)
-        d1 *= 1.0 / (n_mol * n_apm)
-        d2 *= 1.0 / (n_mol * n_apm)
+        d1 *= 1.0 / (n_mol_ * n_apm_)
+        d2 *= 1.0 / (n_mol_ * n_apm_)
         print(
             f"          mean squared deviation         |{d1:7.2f} |                   |{d2:7.2f}"
         )
@@ -176,14 +180,14 @@ class _demo_bb(_demo._demo):
         print(sep1)
 
         return {
-            "x": x.reshape([n_mol, n_apm, 2]),
-            "y": y.reshape([n_mol, n_apm, 2]),
-            "z": z.reshape([n_mol, n_apm, 2]),
+            "x": x.reshape([n_mol_, n_apm_, 2]),
+            "y": y.reshape([n_mol_, n_apm_, 2]),
+            "z": z.reshape([n_mol_, n_apm_, 2]),
         }
 
-    def after(self, x, y, z):
+    def after(self, x, y, z, *kwargs):
 
-        if _demo.yes_or_no("Show samples ? (Open matplotlib window)"):
+        if self.yes_or_no("Show samples? (Open matplotlib window)"):
             import matplotlib.pyplot as plt
 
             cmap = plt.get_cmap("tab20")
