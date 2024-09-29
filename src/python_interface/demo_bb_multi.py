@@ -114,21 +114,17 @@ class __demo__(_demo._demo):
         y -= numpy.mean(y, 0)
         z = y.copy()
 
-        sep1 = "  ------------------------------------------------------------------------------"
-        sep2 = "  ---------------------------------------|--------|-------------------|---------"
-
-        print(sep1)
-        print("            Demonstration of mobbRMSD with multi component system")
-        print(sep1)
-        print("      --System settings--")
-        for k, mol in enumerate(molecules):
-            print(f"    [Speacies {k}]")
-            _demo.print_system(mol.n_apm, mol.n_mol, mol.sym)
-
+        _demo.print_system(
+            molecules,
+            title="Demonstration of mobbRMSD with multi component system",
+        )
         mrmsd = mobbrmsd(molecules=molecules)
 
         ub, lb = numpy.inf, -numpy.inf
         ret = mrmsd.run(x, y, maxeval=0)
+
+        sep1 = "  ------------------------------------------------------------------------------"
+        sep2 = "  ---------------------------------------|--------|-------------------|---------"
 
         print("        N_eval   Eval_ratio      Upperbound      Lowerbound      RMSD")
         print(sep1)

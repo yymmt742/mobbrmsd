@@ -21,11 +21,11 @@ def command_demo(args):
 
     demo_list = [
         demo_cogen.__demo__(cli=cli, prec=prec),
-        demo_bb._demo_bb(cli=cli, prec=prec),
-        demo_bb_2d._demo_bb(cli=cli, prec=prec),
+        demo_bb.__demo__(cli=cli, prec=prec),
+        demo_bb_2d.__demo__(cli=cli, prec=prec),
         demo_bb_multi.__demo__(cli=cli, prec=prec),
-        demo_batch._demo_batch(cli=cli, prec=prec),
-        demo_batch_tri._demo_batch_tri(cli=cli, prec=prec),
+        demo_batch.__demo__(cli=cli, prec=prec),
+        demo_batch_tri.__demo__(cli=cli, prec=prec),
         demo_mst.__demo__(cli=cli, prec=prec),
     ]
 
@@ -73,14 +73,19 @@ def main():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers()
     parser_demo = sub.add_parser("demo", help="run demo codes")
-    parser_demo.add_argument("--no", type=int, help="demo id.")
+    parser_demo.add_argument("--no", type=int, help="demo id [1-7]")
     parser_demo.add_argument(
         "-c", "--cli", action="store_true", help="CLI interaction mode."
     )
     parser_demo.add_argument(
-        "-s", "--single", action="store_true", help="Use single precision."
+        "-s", "--single", action="store_true", help="Use single precision"
     )
-    parser_demo.add_argument("argv", nargs="*", action=ParamProc)
+    parser_demo.add_argument(
+        "argv",
+        nargs="*",
+        action=ParamProc,
+        help="demo-specific keyword arguments. Example: hoge=1 fuga=a,b,c",
+    )
     parser_demo.set_defaults(handler=command_demo)
     args = parser.parse_args()
     if hasattr(args, "handler"):

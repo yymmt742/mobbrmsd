@@ -6,7 +6,7 @@ import sys
 import numpy
 
 
-class _demo_bb(_demo._demo):
+class __demo__(_demo._demo):
     def __init__(self, **kwarg):
         super().__init__(title="mobbRMSD basic", **kwarg)
 
@@ -96,20 +96,17 @@ class _demo_bb(_demo._demo):
         y -= numpy.mean(y, 0)
         z = y.copy()
 
-        sep1 = "  ------------------------------------------------------------------------------"
-        sep2 = "  ---------------------------------------|--------|-------------------|---------"
-
-        print(sep1)
-        print("                Demonstration of mobbRMSD with random coordinates")
-        print(sep1)
-        print("      --System settings--")
-        _demo.print_system(n_apm_, n_mol_, sym)
-
         molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
+        _demo.print_system(
+            [molecules], title="Demonstration of mobbRMSD with random coordinates"
+        )
         mrmsd = mobbrmsd(molecules=molecules)
 
         ub, lb = numpy.inf, -numpy.inf
         ret = mrmsd.run(x, y, maxeval=0, get_rotation=True)
+
+        sep1 = "  ------------------------------------------------------------------------------"
+        sep2 = "  ---------------------------------------|--------|-------------------|---------"
 
         print("        N_eval   Eval_ratio      Upperbound      Lowerbound      RMSD")
         print(sep1)

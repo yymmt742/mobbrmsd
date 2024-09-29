@@ -11,7 +11,7 @@ import networkx
 import matplotlib.pyplot as plt
 
 
-class _demo_batch(_demo._demo):
+class __demo__(_demo._demo):
     def __init__(self, **kwarg):
         super().__init__(title="batch run", **kwarg)
 
@@ -92,38 +92,16 @@ class _demo_batch(_demo._demo):
         for i in range(n_target_ - 1):
             y[i + 1] = (1.0 - r_) * y[i + 1] + r_ * y[i]
 
-        sep1 = "  ------------------------------------------------------------------------------"
-        sep2 = "  ---------------------------------------|--------|-------------------|---------"
-
-        print(sep1)
-        print("        Demonstration of batch mobbrmsd run")
-        print(sep1)
-        print("      --System settings--")
-        print(
-            f"    Atoms per molecule  :{n_apm_:6d}",
-        )
-        print(f"    Number of molecule  :{n_mol_:6d}")
-        print(f"    Number of target    :{n_target_:6d}")
-        print(f"    Number of reference :{n_reference_:6d}")
-
-        pp = pprint.pformat(
-            tuple([i for i in range(n_apm_)]), width=50, compact=True
-        ).split("\n")
-        print("    Molecular symmetry  :     1", pp[0])
-        for i, l in enumerate(pp[1:]):
-            print("                               ", l)
-        for i, s in enumerate(sym):
-            pp = pprint.pformat(s, width=50, compact=True).split("\n")
-            print(f"                        :{i+2:6d}", pp[0])
-            for l in pp[1:]:
-                print("                               ", l)
-        print()
-
         molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
+        _demo.print_system(
+            [molecules], title="Demonstration of batch mobbrmsd run (with OpenMP)"
+        )
+
         mrmsd = mobbrmsd(molecules=molecules)
         rmsds = mrmsd.batch_run(x, y)
         del mrmsd
 
+        sep1 = "  ------------------------------------------------------------------------------"
         print(sep1)
         print("       i   j         RMSD")
         print(sep1)

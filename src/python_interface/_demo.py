@@ -28,24 +28,30 @@ def generate_sym_indices(n_apm: int, n_sym: int = 1):
     return sym
 
 
-def print_system(n_apm, n_mol, sym):
+def print_system(molecules, title):
 
-    print(
-        f"    Atoms per molecule :{n_apm:6d}",
-    )
-    print(f"    Number of molecule :{n_mol:6d}")
-    pp = pprint.pformat(tuple([i for i in range(n_apm)]), width=48, compact=True).split(
-        "\n"
-    )
-    print("    Molecular symmetry :     0", pp[0])
-    for l in pp[1:]:
-        print("                              ", l)
-    for i, s in enumerate(sym):
-        pp = pprint.pformat(s, width=48, compact=True).split("\n")
-        print(f"                        {i+1:6d}", pp[0])
+    print(bar1)
+    print(" " * ((len(bar1) - len(title)) // 2) + title)
+    print(bar1)
+    print("      --System settings--")
+    for mol in molecules:
+
+        print(
+            f"    Atoms per molecule :{mol.n_apm:6d}",
+        )
+        print(f"    Number of molecule :{mol.n_mol:6d}")
+        pp = pprint.pformat(
+            tuple([i for i in range(mol.n_apm)]), width=48, compact=True
+        ).split("\n")
+        print("    Molecular symmetry :     0", pp[0])
         for l in pp[1:]:
             print("                              ", l)
-    print()
+        for i, s in enumerate(mol.sym):
+            pp = pprint.pformat(s, width=48, compact=True).split("\n")
+            print(f"                        {i+1:6d}", pp[0])
+            for l in pp[1:]:
+                print("                              ", l)
+        print()
 
 
 def readinp(msg, default, check=None):
@@ -89,9 +95,9 @@ class _demo:
         self.prec = numpy.dtype(prec)
         self.cli = cli
         if self.prec == numpy.float64:
-            self.title = title + " (double)"
+            self.title = title + " (double precision)"
         elif self.prec == numpy.float32:
-            self.title = title + " (single)"
+            self.title = title + " (single precision)"
         else:
             raise ValueError
 

@@ -99,18 +99,11 @@ class __demo__(_demo._demo):
             ]
         )
 
-        sep1 = "  ------------------------------------------------------------------------------"
-        sep2 = "  ---------------------------------------|--------|-------------------|---------"
-
-        print(sep1)
-        print(
-            "        Demonstration of minimum spanning tree construction with mobbrmsd"
-        )
-        print(sep1)
-        print("      --System settings--")
-        _demo.print_system(n_apm_, n_mol_, sym)
-
         molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
+        _demo.print_system(
+            [molecules],
+            "Demonstration of minimum spanning tree construction with mobbrmsd",
+        )
         mrmsd = mobbrmsd(molecules=molecules)
         g = mrmsd.min_span_tree(x, verbose=True)
         del mrmsd
