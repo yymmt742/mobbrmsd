@@ -26,7 +26,7 @@ def command_demo(args):
         demo_bb_multi.__demo__(cli=cli, prec=prec),
         demo_batch._demo_batch(cli=cli, prec=prec),
         demo_batch_tri._demo_batch_tri(cli=cli, prec=prec),
-        demo_mst._demo_mst(cli=cli, prec=prec),
+        demo_mst.__demo__(cli=cli, prec=prec),
     ]
 
     if (no < 0) or len(demo_list) <= no:

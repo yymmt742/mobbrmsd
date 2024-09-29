@@ -9,7 +9,7 @@ import networkx
 import matplotlib.pyplot as plt
 
 
-class _demo_mst(_demo._demo):
+class __demo__(_demo._demo):
     def __init__(self, **kwarg):
         super().__init__(title="Minimum spanning tree", **kwarg)
 
@@ -39,7 +39,14 @@ class _demo_mst(_demo._demo):
         return {"n_mol": n_mol, "n_target": n_target}
 
     def demo(
-        self, n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
+        self,
+        n_apm=3,
+        n_mol=6,
+        n_sym=2,
+        n_target=10,
+        a=0.5,
+        b=1.0,
+        **kwargs,
     ):
         import pprint
 
@@ -77,11 +84,18 @@ class _demo_mst(_demo._demo):
                     post,
                 )
 
+        n_mol_ = int(n_mol)
+        n_apm_ = int(n_apm)
+        sym = _demo.generate_sym_indices(n_apm_, int(n_sym))
+        n_target_ = int(n_target)
+        a_ = float(a)
+        b_ = float(b)
+
         cogen = coord_generator()
         x = numpy.array(
             [
-                cogen.generate(n_apm, n_mol, a, b, dtype=self.prec).reshape([-1, 3])
-                for i in range(n_target)
+                cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape([-1, 3])
+                for i in range(n_target_)
             ]
         )
 
@@ -94,34 +108,17 @@ class _demo_mst(_demo._demo):
         )
         print(sep1)
         print("      --System settings--")
-        print(
-            f"    Atoms per molecule  :{n_apm:6d}",
-        )
-        print(f"    Number of molecule  :{n_mol:6d}")
-        print(f"    Number of structure :{n_target:6d}")
+        _demo.print_system(n_apm_, n_mol_, sym)
 
-        pp = pprint.pformat(
-            tuple([i for i in range(n_apm)]), width=50, compact=True
-        ).split("\n")
-        print("    Molecular symmetry  :     1", pp[0])
-        for i, l in enumerate(pp[1:]):
-            print("                               ", l)
-        for i, s in enumerate(sym):
-            pp = pprint.pformat(s, width=50, compact=True).split("\n")
-            print(f"                        :{i+2:6d}", pp[0])
-            for l in pp[1:]:
-                print("                               ", l)
-        print()
-
-        molecules = DataclassMolecule(n_apm=n_apm, n_mol=n_mol, sym=sym)
+        molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
         mrmsd = mobbrmsd(molecules=molecules)
         g = mrmsd.min_span_tree(x, verbose=True)
         del mrmsd
         return {"g": g}
 
-    def after(self, g):
+    def after(self, g, path=None, **kwargs):
 
-        if self.yes_or_no("Show graph ? (Open matplotlib window)"):
+        if self.yes_or_no("Show graph? (Open matplotlib window)"):
             n_target = len(g.nodes())
 
             vmax = numpy.array(
@@ -154,16 +151,17 @@ class _demo_mst(_demo._demo):
             networkx.draw_networkx_edges(g, pos, width=weights, edge_color="tab:red")
 
             plt.show()
-            if self.yes_or_no("Save graph ?"):
-                path = _demo.readinp(
-                    "Enter a file name",
-                    "",
-                    check=lambda path: (
-                        (path != "") if isinstance(path, str) else False
-                    ),
-                )
+
+            if path is not None:
+                if path == "":
+                    path = _demo.readinp(
+                        "Enter a file name",
+                        "",
+                        check=lambda path: (
+                            (path != "") if isinstance(path, str) else False
+                        ),
+                    )
                 plt.savefig(path)
 
             plt.clf()
             plt.close()
-            print()
