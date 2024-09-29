@@ -1,6 +1,7 @@
 from . import __version__
 import time
 import numpy
+import itertools
 
 bar1 = (
     "  ------------------------------------------------------------------------------"
@@ -9,6 +10,20 @@ bar2 = (
     "  =============================================================================="
 )
 bar3 = "==========================================="
+
+
+def generate_sym_indices(n_apm: int, n_sym: int = 1):
+
+    per = itertools.permutations(range(n_apm))
+    next(per)
+    sym = []
+    i = 0
+    for iper in per:
+        i += 1
+        if i > n_sym:
+            break
+        sym += [iper]
+    return sym
 
 
 def readinp(msg, default, check=None):

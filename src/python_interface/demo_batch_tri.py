@@ -42,7 +42,15 @@ class _demo_batch_tri(_demo._demo):
         return {"n_mol": n_mol, "n_target": n_target}
 
     def demo(
-        self, n_apm=3, n_mol=6, n_target=10, sym=((1, 2, 0), (2, 0, 1)), a=0.5, b=1.0
+        self,
+        n_apm=3,
+        n_mol=6,
+        n_sym=2,
+        n_target=10,
+        a=0.5,
+        b=1.0,
+        r=0.9,
+        **kwarg,
     ):
         def print_ret(i, j, ret):
             ev, rm, er, ub, lb, df = (
@@ -70,18 +78,25 @@ class _demo_batch_tri(_demo._demo):
                     post,
                 )
 
+        n_mol_ = int(n_mol)
+        n_apm_ = int(n_apm)
+        sym = _demo.generate_sym_indices(n_apm_, int(n_sym))
+        n_target_ = int(n_target)
+        a_ = float(a)
+        b_ = float(b)
+        r_ = float(r)
+
         cogen = coord_generator()
         x = numpy.array(
             [
-                cogen.generate(n_apm, n_mol, a, b, dtype=self.prec).reshape(
-                    [n_apm * n_mol, 3]
+                cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape(
+                    [n_apm_ * n_mol_, 3]
                 )
-                for i in range(n_target)
+                for i in range(n_target_)
             ]
         )
-        for i in range(n_target - 1):
-            # x[i + 1] = i / n_target * x[-1] + (n_target - i) / n_target * x[0]
-            x[i + 1] = 0.01 * x[i + 1] + 0.99 * x[i]
+        for i in range(n_target_ - 1):
+            x[i + 1] = (1.0 - r_) * x[i + 1] + r_ * x[i]
 
         sep1 = "  ------------------------------------------------------------------------------"
         sep2 = "  ---------------------------------------|--------|-------------------|---------"
@@ -91,13 +106,13 @@ class _demo_batch_tri(_demo._demo):
         print(sep1)
         print("      --System settings--")
         print(
-            f"    Atoms per molecule  :{n_apm:6d}",
+            f"    Atoms per molecule  :{n_apm_:6d}",
         )
-        print(f"    Number of molecule  :{n_mol:6d}")
-        print(f"    Number of structure :{n_target:6d}")
+        print(f"    Number of molecule  :{n_mol_:6d}")
+        print(f"    Number of structure :{n_target_:6d}")
 
         pp = pprint.pformat(
-            tuple([i for i in range(n_apm)]), width=50, compact=True
+            tuple([i for i in range(n_apm_)]), width=50, compact=True
         ).split("\n")
         print("    Molecular symmetry  :     1", pp[0])
         for i, l in enumerate(pp[1:]):
@@ -109,7 +124,7 @@ class _demo_batch_tri(_demo._demo):
                 print("                               ", l)
         print()
 
-        molecules = DataclassMolecule(n_apm=n_apm, n_mol=n_mol, sym=sym)
+        molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
         mrmsd = mobbrmsd(molecules=molecules)
         rmsds = mrmsd.batch_run(x)
         del mrmsd
@@ -124,8 +139,10 @@ class _demo_batch_tri(_demo._demo):
         return {"mat": rmsds}
 
     def after(self, mat):
-        if _demo.yes_or_no("Show graph ? (Open matplotlib window)"):
+        if self.yes_or_no("Show graph ? (Open matplotlib window)"):
             plt.imshow(mat)
+            plt.colorbar()
+            plt.xlabel("target")
+            plt.ylabel("reference")
             plt.show()
             plt.clf()
-        print()

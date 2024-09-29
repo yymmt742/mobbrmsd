@@ -59,28 +59,17 @@ class _demo_batch(_demo._demo):
         a=0.5,
         b=1.0,
         r=0.9,
+        **kwarg,
     ):
         n_mol_ = int(n_mol)
         n_apm_ = int(n_apm)
-        n_sym_ = int(n_sym)
+        sym = _demo.generate_sym_indices(n_apm_, int(n_sym))
         n_reference_ = int(n_reference)
         n_target_ = int(n_target)
         a_ = float(a)
         b_ = float(b)
         r_ = float(r)
         cogen = coord_generator()
-
-        import itertools
-
-        per = itertools.permutations(range(n_apm))
-        next(per)
-        sym = []
-        i = 0
-        for iper in per:
-            i += 1
-            if i > n_sym_:
-                break
-            sym += [iper]
 
         x = numpy.array(
             [
