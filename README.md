@@ -59,6 +59,7 @@ Calculate molecular-oriented RMSD with branch-and-bound.
 <!--
 [![CI](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml/badge.svg)](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml)
 -->
+[![Create Release Branch](https://github.com/yymmt742/mobbrmsd/actions/workflows/create_release.yml/badge.svg)](https://github.com/yymmt742/mobbrmsd/actions/workflows/create_release.yml)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
