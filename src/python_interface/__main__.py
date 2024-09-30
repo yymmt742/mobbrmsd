@@ -4,6 +4,63 @@ from importlib.metadata import version
 __version__ = version(__package__)
 
 
+def command_run(args):
+    import numpy
+    import json
+    import mdtraj
+    from ._mobbrmsd import DataclassMolecule, mobbrmsd
+
+    prms = {**args.params}
+    try:
+        with open(args.inp[0], "r") as f:
+            try:
+                prms = {**json.load(f), **prms}
+            except:
+                print(f"Warning : load json [{args.inp[0]}] is failed.")
+                pass
+    except:
+        print(f"Warning : open json [{args.inp[0]}] is failed.")
+        pass
+
+    molecules = (
+        [DataclassMolecule(**mol) for mol in prms["molecules"]]
+        if ("molecules" in prms)
+        else [DataclassMolecule(n_mol=1, n_apm=-1)]
+    )
+
+    if "coordinates" in prms:
+        if "top" in prms:
+            ref = mdtraj.load(prms["coordinates"], topology=prms["top"]).xyz * 10.0
+        else:
+            ref = mdtraj.load(prms["coordinates"]).xyz * 10.0
+    else:
+        raise IOError
+
+    if "target" in prms:
+        if "top" in prms:
+            trg = mdtraj.load(prms["target"], topology=prms["top"]).xyz * 10.0
+        else:
+            trg = mdtraj.load(prms["target"]).xyz * 10.0
+    else:
+        trg = None
+
+    if prms["precision"] == "double" if "precision" in prms else False:
+        ref = numpy.array(ref, dtype=numpy.float64)
+        if trg is not None:
+            trg = numpy.array(trg, dtype=numpy.float64)
+
+    mrmsd = mobbrmsd(molecules=molecules)
+    if trg is None:
+        ret = mrmsd.batch_run(ref, **prms)
+    else:
+        ret = mrmsd.batch_run(
+            ref,
+            trg,
+            **prms,
+        )
+    print(ret)
+
+
 def command_demo(args):
     from . import demo_cogen
     from . import demo_bb
@@ -72,8 +129,25 @@ def main():
 
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers()
-    parser_demo = sub.add_parser("demo", help="run demo codes")
-    parser_demo.add_argument("--no", type=int, help="demo id [1-7]")
+
+    parser_run = sub.add_parser("run", help="run mobbrmsd")
+    parser_run.add_argument(
+        "inp",
+        nargs=1,
+        help="Input file (json)",
+    )
+    parser_run.add_argument(
+        "params",
+        nargs="*",
+        action=ParamProc,
+        help="Keyword arguments.",
+    )
+    parser_run.set_defaults(handler=command_run)
+
+    parser_demo = sub.add_parser("demo", help="compute demo codes")
+    parser_demo.add_argument(
+        "--no", type=int, help="demo id", choices=[1, 2, 3, 4, 5, 6, 7]
+    )
     parser_demo.add_argument(
         "-c", "--cli", action="store_true", help="CLI interaction mode."
     )
@@ -87,6 +161,7 @@ def main():
         help="demo-specific keyword arguments. Example: hoge=1 fuga=a,b,c",
     )
     parser_demo.set_defaults(handler=command_demo)
+
     args = parser.parse_args()
     if hasattr(args, "handler"):
         args.handler(args)

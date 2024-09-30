@@ -224,4 +224,3 @@ class __demo__(_demo._demo):
             plt.show()
             plt.clf()
             plt.close()
-        print()

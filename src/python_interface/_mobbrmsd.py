@@ -9,7 +9,7 @@ import dataclasses
 class DataclassMolecule:
     n_apm: int
     n_mol: int
-    sym: any = None
+    sym: None | list = None
     name: str = ""
 
 
