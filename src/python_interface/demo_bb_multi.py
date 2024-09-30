@@ -87,7 +87,6 @@ class __demo__(_demo._demo):
             n_mol_ = int(n_mol)
             n_apm_ = int(n_apm)
             n_sym_ = int(n_sym)
-            print(n_mol, n_apm, n_sym)
             sym = _demo.generate_sym_indices(n_apm_, n_sym_)
             molecules += [DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)]
         a_ = float(a)

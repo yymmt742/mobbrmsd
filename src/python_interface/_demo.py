@@ -19,7 +19,7 @@ def generate_sym_indices(n_apm: int, n_sym: int = 1):
     per = itertools.permutations(range(n_apm))
     next(per)
     sym = []
-    i = 0
+    i = 1
     for iper in per:
         i += 1
         if i > n_sym:
