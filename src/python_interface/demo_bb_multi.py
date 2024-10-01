@@ -110,7 +110,7 @@ class __demo__(_demo._demo):
         erace = "     "
         i = 0
         _demo.print_ret(ret, end="", header=True)
-        while not ret.is_finished:
+        while not ret.is_finished():
             _demo.print_ret(ret, post=xtra[int(i / 5000) % 6], end="", to_console=True)
             if ub > ret.upperbound() or lb < ret.lowerbound():
                 _demo.print_ret(ret, post=erace)
