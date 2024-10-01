@@ -13,7 +13,14 @@ class DataclassMolecule:
     name: str = ""
 
 
+##
+# @class mobbrmsd_result
+# @brief mobbrmsd の状態と結果を管理するクラス
+# @details X.
+
+
 class mobbrmsd_result:
+
     def __init__(
         self,
         driver,
@@ -24,38 +31,86 @@ class mobbrmsd_result:
         rot: None | npt.NDArray,
         w: None | npt.NDArray = None,
     ) -> None:
+
         self.header = header.copy()
         self.d = d
+
         if (istate is None) or (rstate is None):
-            self.istate = None
-            self.rstate = None
-            self.rmsd = 0.0
-            self.autocorr = 0.0
-            self.bounds = (0.0, 0.0)
-            self.n_eval = 0
-            self.log_eval_ratio = None
-            self.eval_ratio = 0.0
-            self.is_finished = True
-            return
-        self.istate = istate.copy()
-        self.rstate = rstate.copy()
-        self.rmsd = driver.rmsd(rstate)
-        self.autocorr = driver.autocorr(rstate)
-        self.bounds = driver.bounds(rstate)
-        self.n_eval = driver.n_eval(rstate)
-        self.log_eval_ratio = driver.log_eval_ratio(rstate)
-        self.eval_ratio = numpy.exp(self.log_eval_ratio)
-        self.is_finished = driver.is_finished(header, istate, rstate)
+            self.istate = numpy.array(["""DEFAULT_ISTATE"""])
+            self.rstate = numpy.array(["""DEFAULT_RSTATE"""])
+        else:
+            self.istate = istate.copy()
+            self.rstate = rstate.copy()
+
         if rot is None:
             self.rot = numpy.zeros([self.d * self.d])
         else:
             self.rot = rot.copy()
+
         if w is not None:
             self.w = w.copy()
+
+        self.is_finished = driver.is_finished(header, istate, rstate)
+
+    def autocorr(self) -> float:
+        return float(self.rstate["""INDEX_TO_AUTOCORR"""])
+
+    def lowerbound(self) -> float:
+        return float(self.rstate["""INDEX_TO_LOWERBOUND"""])
+
+    def upperbound(self) -> float:
+        return float(self.rstate["""INDEX_TO_UPPERBOUND"""])
+
+    def lowerbound_as_rmsd(self) -> float:
+        rn = self.rstate["""RECIPROCAL_OF_N"""]
+        return float(rn * (2 * self.lowerbound() + self.autocorr()))
+
+    def upperbound_as_rmsd(self) -> float:
+        rn = self.rstate["""RECIPROCAL_OF_N"""]
+        return float(rn * (2 * self.upperbound() + self.autocorr()))
+
+    def sd(self) -> float:
+        return float(2 * self.upperbound() + self.autocorr())
+
+    def msd(self) -> float:
+        rn = self.rstate["""RECIPROCAL_OF_N"""]
+        return float(rn * self.sd())
+
+    def rmsd(self) -> float:
+        return float(numpy.sqrt(self.msd()))
+
+    def bounds(self) -> npt.NDArray:
+        return numpy.array([self.lowerbound(), self.upperbound()])
+
+    def bounds_as_rmsd(self) -> npt.NDArray:
+        rn = self.rstate["""RECIPROCAL_OF_N"""]
+        return rn * (2 * self.bounds() + self.autocorr())
+
+    def n_eval(self) -> int:
+        return int(self.rstate["""INDEX_TO_N_EVAL"""])
+
+    def log_eval_ratio(self) -> float:
+        return self.rstate["""INDEX_TO_LOG_RATIO"""]
+
+    def eval_ratio(self) -> float:
+        return numpy.exp(self.log_eval_ratio())
+
+    def is_finished(self) -> bool:
+        return numpy.exp(self.log_eval_ratio())
 
     def __repr__(self):
         kws = [f"{key}={value!r}" for key, value in self.__dict__.items()]
         return "{}({})".format(type(self).__name__, ", ".join(kws))
+
+    def __str__(self):
+        ev = self.n_eval()
+        er = self.eval_ratio()
+        sb = self.bounds()
+        rb = self.bounds_as_rmsd()
+
+        return (
+            f"{ev:12d} {er:12.8f}{sb[0]:16.6f}{sb[1]:16.6f}{rb[0]:12.6f}{rb[1]:12.6f}"
+        )
 
     ##
     # @brief restart mobbrmsd
@@ -101,14 +156,6 @@ class mobbrmsd_result:
             difflim_absolute,
             get_rotation,
         )
-
-        self.rmsd = driver.rmsd(self.rstate)
-        self.autocorr = driver.autocorr(self.rstate)
-        self.bounds = driver.bounds(self.rstate)
-        self.n_eval = driver.n_eval(self.rstate)
-        self.log_eval_ratio = driver.log_eval_ratio(self.rstate)
-        self.eval_ratio = numpy.exp(self.log_eval_ratio)
-        self.is_finished = driver.is_finished(self.header, self.istate, self.rstate)
 
         del driver
 
