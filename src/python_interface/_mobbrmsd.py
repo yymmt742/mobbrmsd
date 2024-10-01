@@ -59,8 +59,6 @@ class mobbrmsd_result:
         if w is not None:
             self.w = w.copy()
 
-        self.is_finished = driver.is_finished(header, istate, rstate)
-
     def autocorr(self) -> float:
         return float(self.rstate["""INDEX_TO_AUTOCORR"""])
 
@@ -105,7 +103,7 @@ class mobbrmsd_result:
         return numpy.exp(self.log_eval_ratio())
 
     def is_finished(self) -> bool:
-        return numpy.exp(self.log_eval_ratio())
+        return self.istate[-1] == ("""IS_FINISHED_FLAG""")
 
     def __repr__(self):
         kws = [f"{key}={value!r}" for key, value in self.__dict__.items()]
@@ -165,7 +163,6 @@ class mobbrmsd_result:
             difflim_absolute,
             get_rotation,
         )
-        self.is_finished = driver.is_finished(self.header, self.istate, self.rstate)
 
         del driver
 

@@ -10,6 +10,9 @@ macros = (
     ('"""INDEX_TO_N_EVAL"""', "4"),
     ('"""INDEX_TO_LOG_RATIO"""', "5"),
     ('"""INDEX_TO_ROTMAT"""', "6"),
+    ('"""NOT_YET_RUN_FLAG"""', "-1"),
+    ('"""IS_FINISHED_FLAG"""', "0"),
+    ('"""ISNOT_FINISHED_FLAG"""', "1"),
 )
 
 

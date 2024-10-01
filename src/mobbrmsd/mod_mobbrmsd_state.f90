@@ -19,6 +19,7 @@ module mod_mobbrmsd_state
   public :: mobbrmsd_state_eval_ratio
   public :: mobbrmsd_state_log_eval_ratio
   public :: mobbrmsd_state_has_rotation_matrix
+  public :: mobbrmsd_state_is_finished
   public :: mobbrmsd_state_rotation_matrix
   public :: mobbrmsd_state_dump
   public :: mobbrmsd_state_dump_real
@@ -33,6 +34,9 @@ module mod_mobbrmsd_state
   public :: mobbrmsd_state_INDEX_TO_N_EVAL
   public :: mobbrmsd_state_INDEX_TO_LOG_RATIO
   public :: mobbrmsd_state_INDEX_TO_ROTMAT
+  public :: mobbrmsd_state_NOT_YET_RUN_FLAG
+  public :: mobbrmsd_state_IS_FINISHED_FLAG
+  public :: mobbrmsd_state_ISNOT_FINISHED_FLAG
 !&<
   integer(IK), parameter :: mobbrmsd_state_RECIPROCAL_OF_N      = 1
   !! Index to auto correlation
@@ -48,6 +52,13 @@ module mod_mobbrmsd_state
   !! Index of log_ratio of dumped state
   integer(IK), parameter :: mobbrmsd_state_INDEX_TO_ROTMAT      = 7
   !! Index to rotmatrix of dumped state
+!
+  integer(IK), parameter :: mobbrmsd_state_NOT_YET_RUN_FLAG     = -1
+  !! Flag as not yet running
+  integer(IK), parameter :: mobbrmsd_state_IS_FINISHED_FLAG     = 0
+  !! Flag as finished
+  integer(IK), parameter :: mobbrmsd_state_ISNOT_FINISHED_FLAG  = 1
+  !! Flag as incomplete
 !&>
 !| mobbrmsd_state
   type mobbrmsd_state
@@ -288,6 +299,16 @@ contains
       res = -RHUGE
     end if
   end function mobbrmsd_state_log_eval_ratio
+!
+!| Returns bb process is finished.
+  pure elemental function mobbrmsd_state_is_finished(this) result(res)
+    type(mobbrmsd_state), intent(in)  :: this
+    !! mobbrmsd_state
+    logical                           :: res
+    integer                           :: ss
+    ss = SIZE(this%s)
+    res = this%s(ss) == mobbrmsd_state_IS_FINISHED_FLAG
+  end function mobbrmsd_state_is_finished
 !
 !| dump header as integer array (for python interface api)
   pure function mobbrmsd_state_dump(this) result(res)

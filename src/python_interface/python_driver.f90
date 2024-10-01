@@ -11,12 +11,6 @@ module driver
   public decode_attributes
   public decode_header
   public setup_dimension_
-  public rmsd
-  public autocorr
-  public bounds
-  public n_eval
-  public log_eval_ratio
-  public is_finished
   public run
   public restart
   public rotate_y
@@ -94,64 +88,6 @@ contains
     call setup_dimension(d)
 
   end subroutine setup_dimension_
-
-  !| return rmsd
-  pure subroutine rmsd(n_float, float_states, res)
-    integer(kind=ik), intent(in) :: n_float
-    real(kind=rk), intent(in)    :: float_states(n_float)
-    real(kind=rk), intent(out)   :: res
-    res = SQRT(float_states(mobbrmsd_state_RECIPROCAL_OF_N) * &
-   &      MAX(ZERO, &
-   &          (float_states(mobbrmsd_state_INDEX_TO_AUTOCORR) &
-   & + 2._RK * float_states(mobbrmsd_state_INDEX_TO_UPPERBOUND))))
-  end subroutine rmsd
-
-  !| return autocorr
-  pure subroutine autocorr(n_float, float_states, res)
-    integer(kind=ik), intent(in) :: n_float
-    real(kind=rk), intent(in)    :: float_states(n_float)
-    real(kind=rk), intent(out)   :: res
-    res = float_states(mobbrmsd_state_INDEX_TO_AUTOCORR)
-  end subroutine autocorr
-
-  !| return bounds
-  pure subroutine bounds(n_float, float_states, res)
-    integer(kind=ik), intent(in) :: n_float
-    real(kind=rk), intent(in)    :: float_states(n_float)
-    real(kind=rk), intent(out)   :: res(2)
-    res(1) = float_states(mobbrmsd_state_INDEX_TO_UPPERBOUND)
-    res(2) = float_states(mobbrmsd_state_INDEX_TO_LOWERBOUND)
-  end subroutine bounds
-
-  !| return n_eval
-  pure subroutine n_eval(n_float, float_states, res)
-    integer(kind=ik), intent(in)  :: n_float
-    real(kind=rk), intent(in)     :: float_states(n_float)
-    integer(kind=ik), intent(out) :: res
-    res = NINT(float_states(mobbrmsd_state_INDEX_TO_N_EVAL), IK)
-  end subroutine n_eval
-
-  !| return log_eval_ratio
-  pure subroutine log_eval_ratio(n_float, float_states, res)
-    integer(kind=ik), intent(in) :: n_float
-    real(kind=rk), intent(in)    :: float_states(n_float)
-    real(kind=rk), intent(out)   :: res
-    res = float_states(mobbrmsd_state_INDEX_TO_LOG_RATIO)
-  end subroutine log_eval_ratio
-
-  !| inquire bb is finished
-  pure subroutine is_finished(n_head, n_int, n_float, header, int_states, float_states, res)
-    integer(kind=ik), intent(in)  :: n_head, n_int, n_float
-    integer(kind=ik), intent(in)  :: header(n_head)
-    integer(kind=ik), intent(in)  :: int_states(n_int)
-    real(kind=rk), intent(in)     :: float_states(n_float)
-    logical, intent(out)          :: res
-    type(mobbrmsd)                :: h
-    type(mobbrmsd_state)          :: s
-    call mobbrmsd_load(h, header)
-    call mobbrmsd_state_load(s, int_states, float_states)
-    res = mobbrmsd_is_finished(h, s)
-  end subroutine is_finished
 
   !| single run with working memory
   pure subroutine run( &
