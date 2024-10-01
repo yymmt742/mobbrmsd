@@ -100,8 +100,9 @@ class __demo__(_demo._demo):
             if ub > ret.upperbound() or lb < ret.lowerbound():
                 _demo.print_ret(ret, post=erace)
             ub, lb = ret.upperbound(), ret.lowerbound()
-            ret.restart(maxeval=0, get_rotation=True)
+            ret.restart(maxeval=0)
             i += 1
+        ret.restart(maxeval=0, get_rotation=True)
         _demo.print_ret(ret, post=erace, header=True, footer=True)
 
         y = ret.rotate_y(y)
