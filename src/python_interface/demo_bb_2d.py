@@ -63,26 +63,6 @@ class __demo__(_demo._demo):
 
     def demo(self, n_apm=3, n_mol=8, n_sym=2, alpha=0.9, beta=1.0, r=0.0, **kwargs):
 
-        def print_ret(ret, post="", end="\n", to_console: bool = False):
-            ev, er, ub, lb, ur, lr = (
-                ret.n_eval,
-                ret.eval_ratio,
-                ret.bounds[1],
-                ret.bounds[0],
-                numpy.sqrt((2 * ret.bounds[1] + ret.autocorr) / (n_mol_ * n_apm_)),
-                numpy.sqrt((2 * ret.bounds[0] + ret.autocorr) / (n_mol_ * n_apm_)),
-            )
-            if sys.stdout.isatty():
-                print(
-                    f"\r{ev:12d}{er:12.8f}{ub:12.6f}{lb:12.6f}{ur:9.3f}{lr:9.3f}  ",
-                    post,
-                    end=end,
-                )
-            else:
-                if to_console:
-                    return
-                print(f"{ev:12d}{er:12.8f}{ub:12.6f}{lb:12.6f}{ur:9.3f}{lr:9.3f}  ")
-
         n_mol_ = int(n_mol)
         n_apm_ = int(n_apm)
         sym = _demo.generate_sym_indices(n_apm_, int(n_sym))
@@ -109,29 +89,25 @@ class __demo__(_demo._demo):
         ub, lb = numpy.inf, -numpy.inf
         ret = mrmsd.run(x, y, maxeval=0, get_rotation=True)
 
-        sep1 = "  ------------------------------------------------------------------"
-        sep2 = "  -------------------------------|--------|---------------|---------"
-        print("      N_eval  Eval_ratio  Lowerbound  Upperbound RMSD(LB) RMSD(UB)")
-        print(sep1)
-        i = 0
         xtra = ["__-¯¯", "-__-¯", "¯-__-", "¯¯-__", "-¯¯-_", "_-¯¯-"]
         erace = "     "
+
+        _demo.print_ret(ret, end="", header=True)
+
+        i = 0
         while not ret.is_finished:
-            print_ret(ret, post=xtra[int(i / 5000) % 6], end="", to_console=True)
-            if ub > ret.bounds[0] or lb < ret.bounds[1]:
-                print_ret(ret, post=erace)
-            ub, lb = ret.bounds[0], ret.bounds[1]
+            _demo.print_ret(ret, post=xtra[int(i / 5000) % 6], end="", to_console=True)
+            if ub > ret.upperbound() or lb < ret.lowerbound():
+                _demo.print_ret(ret, post=erace)
+            ub, lb = ret.upperbound(), ret.lowerbound()
             ret.restart(maxeval=0, get_rotation=True)
             i += 1
+        _demo.print_ret(ret, post=erace, header=True, footer=True)
 
         y = ret.rotate_y(y)
 
-        print()
-        print(sep1)
-        print("      -- Final results --")
-        print("      N_eval  Eval_ratio  Lowerbound  Upperbound RMSD(LB) RMSD(UB)")
-        print_ret(ret)
-        print(sep1, "\n")
+        sep1 = "  ------------------------------------------------------------------"
+        sep2 = "  -------------------------------|--------|---------------|---------"
         print(sep1)
         print("     Reference   | Target (orig) |  disp. | Target (rot)  |  disp.")
         d1, d2 = 0.0, 0.0

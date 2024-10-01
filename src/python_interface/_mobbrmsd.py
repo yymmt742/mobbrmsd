@@ -5,6 +5,15 @@ from tqdm import trange
 import dataclasses
 
 
+##
+# @class DataclassMolecule
+# @brief 分子集合体のデータクラス
+# @details n_apm : number of atoms per molecule.
+#          n_mol : number of molecules.
+#          sym : intramolecular atomic permutation. (optional)
+#          name : name of chemical species. (optional)
+
+
 @dataclasses.dataclass(frozen=True)
 class DataclassMolecule:
     n_apm: int
@@ -156,9 +165,16 @@ class mobbrmsd_result:
             difflim_absolute,
             get_rotation,
         )
+        self.is_finished = driver.is_finished(self.header, self.istate, self.rstate)
 
         del driver
 
+    ##
+    # @brief swap and rotate Y
+    # @details swap and rotation target coordinate
+    # @param
+    #   y (numpy.ndarray): 対象構造
+    # @return None
     def rotate_y(
         self,
         y: npt.NDArray,
