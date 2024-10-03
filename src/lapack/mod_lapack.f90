@@ -77,7 +77,7 @@ contains
   include "lapack_routine/iparmq.f90"
   include "lapack_routine/lsame.f90"
 #ifdef USE_REAL32
-  include "util/slamch.f90"
+  include "lapack_routine/slamch.f90"
   include "lapack_routine/isamax.f90"
   include "lapack_routine/ilaslc.f90"
   include "lapack_routine/ilaslr.f90"
@@ -139,7 +139,7 @@ contains
   include "lapack_routine/strmv.f90"
   include "lapack_routine/strsm.f90"
 #else
-  include "util/dlamch.f90"
+  include "lapack_routine/dlamch.f90"
   include "lapack_routine/idamax.f90"
   include "lapack_routine/iladlc.f90"
   include "lapack_routine/iladlr.f90"
