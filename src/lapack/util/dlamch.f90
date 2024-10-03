@@ -1,5 +1,5 @@
 pure elemental function DLAMCH(CMACH)
-! use LA_CONSTANTS, only: wp => DP, ONE=>DONE, ZERO=>DZERO, EPS => DULP
+! use LA_CONSTANTS, only: wp => DP, ONE=>DONE, ZERO=>DZERO, EPS => ULP
 !
 !  -- LAPACK auxiliary routine (version 3.3.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -76,7 +76,7 @@ pure elemental function DLAMCH(CMACH)
 ! end if
 !
   if (LSAME(CMACH, 'E')) then
-    RMACH = DULP
+    RMACH = ULP
   else if (LSAME(CMACH, 'S')) then
     SFMIN = TINY(ZERO)
     SMALL = ONE / HUGE(ZERO)
@@ -91,7 +91,7 @@ pure elemental function DLAMCH(CMACH)
   else if (LSAME(CMACH, 'B')) then
     RMACH = RADIX(ZERO)
   else if (LSAME(CMACH, 'P')) then
-    RMACH = DULP ! RADIX(ZERO)
+    RMACH = ULP ! RADIX(ZERO)
   else if (LSAME(CMACH, 'N')) then
     RMACH = DIGITS(ZERO)
   else if (LSAME(CMACH, 'R')) then

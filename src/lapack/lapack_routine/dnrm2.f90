@@ -107,14 +107,14 @@ pure function DNRM2(n, x, incx)
   real(RK), parameter :: MAXN = HUGE(0.0_RK)
 !  ..
 !  .. Blue's scaling constants ..
-  real(RK), parameter :: TSML = real(RADIX(0._RK), RK)**CEILING( &
-                       & (MINEXPONENT(0._RK) - 1) * 0.5_RK)
-  real(RK), parameter :: TBIG = real(RADIX(0._RK), RK)**FLOOR( &
-                       & (MAXEXPONENT(0._RK) - DIGITS(0._RK) + 1) * 0.5_RK)
-  real(RK), parameter :: SSML = real(RADIX(0._RK), RK)**(-FLOOR( &
-                       & (MINEXPONENT(0._RK) - DIGITS(0._RK)) * 0.5_RK))
-  real(RK), parameter :: SBIG = real(RADIX(0._RK), RK)**(-CEILING( &
-                       & (MAXEXPONENT(0._RK) + DIGITS(0._RK) - 1) * 0.5_RK))
+! real(RK), parameter :: TSML = real(RADIX(0._RK), RK)**CEILING( &
+!                      & (MINEXPONENT(0._RK) - 1) * 0.5_RK)
+! real(RK), parameter :: TBIG = real(RADIX(0._RK), RK)**FLOOR( &
+!                      & (MAXEXPONENT(0._RK) - DIGITS(0._RK) + 1) * 0.5_RK)
+! real(RK), parameter :: SSML = real(RADIX(0._RK), RK)**(-FLOOR( &
+!                      & (MINEXPONENT(0._RK) - DIGITS(0._RK)) * 0.5_RK))
+! real(RK), parameter :: SBIG = real(RADIX(0._RK), RK)**(-CEILING( &
+!                      & (MAXEXPONENT(0._RK) + DIGITS(0._RK) - 1) * 0.5_RK))
 !  ..
 !  .. Local Scalars ..
   integer :: i, ix

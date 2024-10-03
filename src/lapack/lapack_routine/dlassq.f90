@@ -184,11 +184,11 @@ pure subroutine DLASSQ(n, x, incx, scl, sumsq)
   if (incx < 0) ix = 1 - (n - 1) * incx
   do i = 1, n
     ax = ABS(x(ix))
-    if (ax > DTBIG) then
-      abig = abig + (ax * DSBIG)**2
+    if (ax > TBIG) then
+      abig = abig + (ax * SBIG)**2
       notbig = .false.
-    else if (ax < DTSML) then
-      if (notbig) asml = asml + (ax * DSSML)**2
+    else if (ax < TSML) then
+      if (notbig) asml = asml + (ax * SSML)**2
     else
       amed = amed + ax**2
     end if
@@ -199,12 +199,12 @@ pure subroutine DLASSQ(n, x, incx, scl, sumsq)
 !
   if (sumsq > zero) then
     ax = scl * SQRT(sumsq)
-    if (ax > DTBIG) then
-!        We assume scl >= sqrt( TINY*EPS ) / DSBIG
-      abig = abig + (scl * DSBIG)**2 * sumsq
-    else if (ax < DTSML) then
-!        We assume scl <= sqrt( HUGE ) / DSSML
-      if (notbig) asml = asml + (scl * DSSML)**2 * sumsq
+    if (ax > TBIG) then
+!        We assume scl >= sqrt( TINY*EPS ) / SBIG
+      abig = abig + (scl * SBIG)**2 * sumsq
+    else if (ax < TSML) then
+!        We assume scl <= sqrt( HUGE ) / SSML
+      if (notbig) asml = asml + (scl * SSML)**2 * sumsq
     else
       amed = amed + scl**2 * sumsq
     end if
@@ -218,9 +218,9 @@ pure subroutine DLASSQ(n, x, incx, scl, sumsq)
 !     Combine abig and amed if abig > 0.
 !
     if (amed > zero .or. LA_ISNAN(amed)) then
-      abig = abig + (amed * DSBIG) * DSBIG
+      abig = abig + (amed * SBIG) * SBIG
     end if
-    scl = one / DSBIG
+    scl = one / SBIG
     sumsq = abig
   else if (asml > zero) then
 !
@@ -228,7 +228,7 @@ pure subroutine DLASSQ(n, x, incx, scl, sumsq)
 !
     if (amed > zero .or. LA_ISNAN(amed)) then
       amed = SQRT(amed)
-      asml = SQRT(asml) / DSSML
+      asml = SQRT(asml) / SSML
       if (asml > amed) then
         ymin = amed
         ymax = asml
@@ -239,7 +239,7 @@ pure subroutine DLASSQ(n, x, incx, scl, sumsq)
       scl = one
       sumsq = ymax**2 * (one + (ymin / ymax)**2)
     else
-      scl = one / DSSML
+      scl = one / SSML
       sumsq = asml
     end if
   else

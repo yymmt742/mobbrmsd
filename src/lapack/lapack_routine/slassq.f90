@@ -153,3 +153,4 @@ pure subroutine SLASSQ(N, X, INCX, SCL, SUMSQ)
 ! end of SLASSQ
 !
 end
+

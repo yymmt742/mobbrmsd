@@ -142,15 +142,15 @@ pure elemental subroutine DLARTG(f, g, c, s, r)
     c = zero
     s = SIGN(one, g)
     r = g1
-  else if (f1 > DRTMIN .and. f1 < DRTMAX .and. &
-           g1 > DRTMIN .and. g1 < DRTMAX) then
+  else if (f1 > RTMIN .and. f1 < RTMAX .and. &
+           g1 > RTMIN .and. g1 < RTMAX) then
     d = SQRT(f * f + g * g)
     p = one / d
     c = f1 * p
     s = g * SIGN(p, f)
     r = SIGN(d, f)
   else
-    u = MIN(DSAFMAX, MAX(DSAFMIN, f1, g1))
+    u = MIN(SAFMAX, MAX(SAFMIN, f1, g1))
     uu = one / u
     fs = f * uu
     gs = g * uu
