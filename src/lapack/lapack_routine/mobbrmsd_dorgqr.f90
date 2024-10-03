@@ -169,7 +169,7 @@ pure subroutine mobbrmsd_DORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !     Test the input arguments
 !
   INFO = 0
-  NB = mobbrmsd_ILAENV(1, 'mobbrmsd_DORGQR', ' ', M, N, K, -1)
+  NB = mobbrmsd_ILAENV(1, 'DORGQR', ' ', M, N, K, -1)
   LWKOPT = MAX(1, N) * NB
   WORK(1) = LWKOPT
   LQUERY = (LWORK == -1)
@@ -185,7 +185,7 @@ pure subroutine mobbrmsd_DORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
     INFO = -8
   end if
   if (INFO /= 0) then
-    !CALL XERBLA( 'mobbrmsd_DORGQR', -INFO )
+    !CALL XERBLA( 'DORGQR', -INFO )
     return
   else if (LQUERY) then
     return
@@ -205,7 +205,7 @@ pure subroutine mobbrmsd_DORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !
 !        Determine when to cross over from blocked to unblocked code.
 !
-    NX = MAX(0, mobbrmsd_ILAENV(3, 'mobbrmsd_DORGQR', ' ', M, N, K, -1))
+    NX = MAX(0, mobbrmsd_ILAENV(3, 'DORGQR', ' ', M, N, K, -1))
     if (NX < K) then
 !
 !           Determine if workspace is large enough for blocked code.
@@ -218,7 +218,7 @@ pure subroutine mobbrmsd_DORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !              determine the minimum value of NB.
 !
         NB = LWORK / LDWORK
-        NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'mobbrmsd_DORGQR', ' ', M, N, K, -1))
+        NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'DORGQR', ' ', M, N, K, -1))
       end if
     end if
   end if

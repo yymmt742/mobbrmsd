@@ -261,7 +261,7 @@ pure subroutine mobbrmsd_DGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, B
     INFO = 13
   end if
   if (INFO /= 0) then
-    !CALL XERBLA('mobbrmsd_DGEMM ',INFO)
+    !CALL XERBLA('DGEMM ',INFO)
     return
   end if
 !

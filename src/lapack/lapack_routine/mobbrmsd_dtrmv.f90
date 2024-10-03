@@ -199,7 +199,7 @@ pure subroutine mobbrmsd_DTRMV(UPLO, TRANS, DIAG, N, A, LDA, X, INCX)
     INFO = 8
   end if
   if (INFO /= 0) then
-    !CALL XERBLA('mobbrmsd_DTRMV ',INFO)
+    !CALL XERBLA('DTRMV ',INFO)
     return
   end if
 !

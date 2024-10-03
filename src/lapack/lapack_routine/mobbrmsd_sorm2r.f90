@@ -227,7 +227,7 @@ pure subroutine mobbrmsd_SORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
     INFO = -10
   end if
   if (INFO /= 0) then
-!   call XERBLA('mobbrmsd_SORM2R', -INFO)
+!   call XERBLA('SORM2R', -INFO)
     return
   end if
 !

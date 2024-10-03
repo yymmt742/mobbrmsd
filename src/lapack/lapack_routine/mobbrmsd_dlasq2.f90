@@ -168,7 +168,7 @@ pure subroutine mobbrmsd_DLASQ2(N, Z, INFO)
 !
   if (N < 0) then
     INFO = -1
-    !CALL XERBLA( 'mobbrmsd_DLASQ2', 1 )
+    !CALL XERBLA( 'DLASQ2', 1 )
     return
   else if (N == 0) then
     return
@@ -178,7 +178,7 @@ pure subroutine mobbrmsd_DLASQ2(N, Z, INFO)
 !
     if (Z(1) < ZERO) then
       INFO = -201
-      !CALL XERBLA( 'mobbrmsd_DLASQ2', 2 )
+      !CALL XERBLA( 'DLASQ2', 2 )
     end if
     return
   else if (N == 2) then
@@ -187,15 +187,15 @@ pure subroutine mobbrmsd_DLASQ2(N, Z, INFO)
 !
     if (Z(1) < ZERO) then
       INFO = -201
-      !CALL XERBLA( 'mobbrmsd_DLASQ2', 2 )
+      !CALL XERBLA( 'DLASQ2', 2 )
       return
     else if (Z(2) < ZERO) then
       INFO = -202
-      !CALL XERBLA( 'mobbrmsd_DLASQ2', 2 )
+      !CALL XERBLA( 'DLASQ2', 2 )
       return
     else if (Z(3) < ZERO) then
       INFO = -203
-      !CALL XERBLA( 'mobbrmsd_DLASQ2', 2 )
+      !CALL XERBLA( 'DLASQ2', 2 )
       return
     else if (Z(3) > Z(1)) then
       D = Z(3)
@@ -232,11 +232,11 @@ pure subroutine mobbrmsd_DLASQ2(N, Z, INFO)
   do K = 1, 2 * (N - 1), 2
     if (Z(K) < ZERO) then
       INFO = -(200 + K)
-      !CALL XERBLA( 'mobbrmsd_DLASQ2', 2 )
+      !CALL XERBLA( 'DLASQ2', 2 )
       return
     else if (Z(K + 1) < ZERO) then
       INFO = -(200 + K + 1)
-      !CALL XERBLA( 'mobbrmsd_DLASQ2', 2 )
+      !CALL XERBLA( 'DLASQ2', 2 )
       return
     end if
     D = D + Z(K)
@@ -247,7 +247,7 @@ pure subroutine mobbrmsd_DLASQ2(N, Z, INFO)
   end do
   if (Z(2 * N - 1) < ZERO) then
     INFO = -(200 + 2 * N - 1)
-    !CALL XERBLA( 'mobbrmsd_DLASQ2', 2 )
+    !CALL XERBLA( 'DLASQ2', 2 )
     return
   end if
   D = D + Z(2 * N - 1)
@@ -276,7 +276,7 @@ pure subroutine mobbrmsd_DLASQ2(N, Z, INFO)
 !
 !     Check whether the machine is IEEE conformable.
 !
-  IEEE = (mobbrmsd_ILAENV(10, 'mobbrmsd_DLASQ2', 'N', 1, 2, 3, 4) == 1)
+  IEEE = (mobbrmsd_ILAENV(10, 'DLASQ2', 'N', 1, 2, 3, 4) == 1)
 !
 !     Rearrange data for locality: Z=(q1,qq1,e1,ee1,q2,qq2,e2,ee2,...).
 !

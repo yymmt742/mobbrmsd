@@ -137,7 +137,7 @@ pure subroutine mobbrmsd_SLASRT(ID, N, D, INFO)
     INFO = -2
   end if
   if (INFO /= 0) then
-!   call XERBLA('mobbrmsd_SLASRT', -INFO)
+!   call XERBLA('SLASRT', -INFO)
     return
   end if
 !

@@ -174,7 +174,7 @@ pure subroutine mobbrmsd_DGELQ2(M, N, A, LDA, TAU, WORK, INFO)
     INFO = -4
   end if
   if (INFO /= 0) then
-!   !CALL XERBLA( 'mobbrmsd_DGELQ2', -INFO )
+!   !CALL XERBLA( 'DGELQ2', -INFO )
     return
   end if
 !

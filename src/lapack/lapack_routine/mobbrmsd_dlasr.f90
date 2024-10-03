@@ -251,7 +251,7 @@ pure subroutine mobbrmsd_DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
     INFO = 9
   end if
   if (INFO /= 0) then
-    !CALL XERBLA( 'mobbrmsd_DLASR ', INFO )
+    !CALL XERBLA( 'DLASR ', INFO )
     return
   end if
 !

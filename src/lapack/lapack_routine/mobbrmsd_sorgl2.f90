@@ -162,7 +162,7 @@ pure subroutine mobbrmsd_SORGL2(M, N, K, A, LDA, TAU, WORK, INFO)
     INFO = -5
   end if
   if (INFO /= 0) then
-!   call XERBLA('mobbrmsd_SORGL2', -INFO)
+!   call XERBLA('SORGL2', -INFO)
     return
   end if
 !

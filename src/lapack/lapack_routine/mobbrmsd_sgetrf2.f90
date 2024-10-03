@@ -163,7 +163,7 @@ pure recursive subroutine mobbrmsd_SGETRF2(M, N, A, LDA, IPIV, INFO)
     INFO = -4
   end if
   if (INFO /= 0) then
-!   call XERBLA('mobbrmsd_SGETRF2', -INFO)
+!   call XERBLA('SGETRF2', -INFO)
     return
   end if
 !

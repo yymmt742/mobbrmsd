@@ -243,7 +243,7 @@ pure subroutine mobbrmsd_DTRMM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B,
     INFO = 11
   end if
   if (INFO /= 0) then
-!    CALL XERBLA('mobbrmsd_DTRMM ',INFO)
+!    CALL XERBLA('DTRMM ',INFO)
     return
   end if
 !

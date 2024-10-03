@@ -246,7 +246,7 @@ pure subroutine mobbrmsd_SGEBRD(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, LWORK, INF
 !Test the input parameters
 !
   INFO = 0
-  NB = MAX(1, mobbrmsd_ILAENV(1, 'mobbrmsd_SGEBRD', ' ', M, N, -1, -1))
+  NB = MAX(1, mobbrmsd_ILAENV(1, 'SGEBRD', ' ', M, N, -1, -1))
   LWKOPT = (M + N) * NB
   WORK(1) = real(LWKOPT)
   LQUERY = (LWORK == -1)
@@ -260,7 +260,7 @@ pure subroutine mobbrmsd_SGEBRD(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, LWORK, INF
     INFO = -10
   end if
   if (INFO < 0) then
-    !call XERBLA('mobbrmsd_SGEBRD', -INFO)
+    !call XERBLA('SGEBRD', -INFO)
     return
   else if (LQUERY) then
     return
@@ -282,7 +282,7 @@ pure subroutine mobbrmsd_SGEBRD(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, LWORK, INF
     !
     !Set the crossover point NX.
     !
-    NX = MAX(NB, mobbrmsd_ILAENV(3, 'mobbrmsd_SGEBRD', ' ', M, N, -1, -1))
+    NX = MAX(NB, mobbrmsd_ILAENV(3, 'SGEBRD', ' ', M, N, -1, -1))
     !
     !Determine when to switch from blocked to unblocked code.
     !
@@ -293,7 +293,7 @@ pure subroutine mobbrmsd_SGEBRD(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, LWORK, INF
         !Not enough work space for the optimal NB, consider using
         !a smaller block size.
         !
-        NBMIN = mobbrmsd_ILAENV(2, 'mobbrmsd_SGEBRD', ' ', M, N, -1, -1)
+        NBMIN = mobbrmsd_ILAENV(2, 'SGEBRD', ' ', M, N, -1, -1)
         if (LWORK >= (M + N) * NBMIN) then
           NB = LWORK / (M + N)
         else

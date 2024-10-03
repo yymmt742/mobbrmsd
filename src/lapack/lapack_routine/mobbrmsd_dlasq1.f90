@@ -147,7 +147,7 @@ pure subroutine mobbrmsd_DLASQ1(N, D, E, WORK, INFO)
   INFO = 0
   if (N < 0) then
     INFO = -1
-    !CALL XERBLA( 'mobbrmsd_DLASQ1', -INFO )
+    !CALL XERBLA( 'DLASQ1', -INFO )
     return
   else if (N == 0) then
     return

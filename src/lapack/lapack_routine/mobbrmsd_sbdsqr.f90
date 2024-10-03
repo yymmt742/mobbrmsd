@@ -316,7 +316,7 @@ pure subroutine mobbrmsd_SBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
     INFO = -13
   end if
   if (INFO /= 0) then
-! call XERBLA('mobbrmsd_SBDSQR', -INFO)
+! call XERBLA('SBDSQR', -INFO)
     return
   end if
   if (N == 0) return

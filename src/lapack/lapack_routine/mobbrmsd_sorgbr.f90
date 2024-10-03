@@ -240,7 +240,7 @@ pure subroutine mobbrmsd_SORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
   end if
 !
   if (INFO /= 0) then
-!   call XERBLA('mobbrmsd_SORGBR', -INFO)
+!   call XERBLA('SORGBR', -INFO)
     return
   else if (LQUERY) then
     WORK(1) = LWKOPT

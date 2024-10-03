@@ -157,7 +157,7 @@ pure subroutine mobbrmsd_SGETRF(M, N, A, LDA, IPIV, INFO)
     INFO = -4
   end if
   if (INFO /= 0) then
-!   call XERBLA('mobbrmsd_SGETRF', -INFO)
+!   call XERBLA('SGETRF', -INFO)
     return
   end if
 !
@@ -167,7 +167,7 @@ pure subroutine mobbrmsd_SGETRF(M, N, A, LDA, IPIV, INFO)
 !
 !Determine the block size for this environment.
 !
-  NB = mobbrmsd_ILAENV(1, 'mobbrmsd_SGETRF', ' ', M, N, -1, -1)
+  NB = mobbrmsd_ILAENV(1, 'SGETRF', ' ', M, N, -1, -1)
   if (NB <= 1 .or. NB >= MIN(M, N)) then
     !
     !use unblocked code.

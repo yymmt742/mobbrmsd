@@ -232,7 +232,7 @@ pure subroutine mobbrmsd_DGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
     INFO = -4
   end if
   if (INFO < 0) then
-!   !CALL XERBLA( 'mobbrmsd_DGEBD2', -INFO )
+!   !CALL XERBLA( 'DGEBD2', -INFO )
     return
   end if
 !

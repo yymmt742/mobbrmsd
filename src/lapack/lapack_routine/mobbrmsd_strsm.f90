@@ -247,7 +247,7 @@ pure subroutine mobbrmsd_STRSM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B,
     INFO = 11
   end if
   if (INFO /= 0) then
-!   call XERBLA('mobbrmsd_STRSM ', INFO)
+!   call XERBLA('STRSM ', INFO)
     return
   end if
 !

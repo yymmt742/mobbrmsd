@@ -207,7 +207,7 @@ pure subroutine mobbrmsd_DGEMV(TRANS, M, N, ALPHA, A, LDA, X, INCX, BETA, Y, INC
     INFO = 11
   end if
   if (INFO /= 0) then
-!   CALL XERBLA('mobbrmsd_DGEMV ',INFO)
+!   CALL XERBLA('DGEMV ',INFO)
     return
   end if
 !

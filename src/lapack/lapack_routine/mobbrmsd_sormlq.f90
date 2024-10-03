@@ -251,13 +251,13 @@ pure subroutine mobbrmsd_SORMLQ(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
     !
     !Compute the workspace requirements
     !
-    NB = MIN(NBMAX, mobbrmsd_ILAENV(1, 'mobbrmsd_SORMLQ', SIDE//TRANS, M, N, K, -1))
+    NB = MIN(NBMAX, mobbrmsd_ILAENV(1, 'SORMLQ', SIDE//TRANS, M, N, K, -1))
     LWKOPT = MAX(1, NW) * NB + TSIZE
     WORK(1) = LWKOPT
   end if
 !
   if (INFO /= 0) then
-!   call XERBLA('mobbrmsd_SORMLQ', -INFO)
+!   call XERBLA('SORMLQ', -INFO)
     return
   else if (LQUERY) then
     return
@@ -275,7 +275,7 @@ pure subroutine mobbrmsd_SORMLQ(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
   if (NB > 1 .and. NB < K) then
     if (LWORK < NW * NB + TSIZE) then
       NB = (LWORK - TSIZE) / LDWORK
-      NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'mobbrmsd_SORMLQ', SIDE//TRANS, M, N, K, -1))
+      NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'SORMLQ', SIDE//TRANS, M, N, K, -1))
     end if
   end if
 !

@@ -169,7 +169,7 @@ pure subroutine mobbrmsd_DGER(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
     INFO = 9
   end if
   if (INFO /= 0) then
-!    CALL XERBLA('mobbrmsd_DGER  ',INFO)
+!    CALL XERBLA('DGER  ',INFO)
     return
   end if
 !

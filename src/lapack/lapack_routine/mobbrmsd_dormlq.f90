@@ -249,13 +249,13 @@ pure subroutine mobbrmsd_DORMLQ(SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
 !
 !        Compute the workspace requirements
 !
-    NB = MIN(NBMAX, mobbrmsd_ILAENV(1, 'mobbrmsd_DORMLQ', SIDE//TRANS, M, N, K, -1))
+    NB = MIN(NBMAX, mobbrmsd_ILAENV(1, 'DORMLQ', SIDE//TRANS, M, N, K, -1))
     LWKOPT = NW * NB + TSIZE
     WORK(1) = LWKOPT
   end if
 !
   if (INFO /= 0) then
-    !CALL XERBLA( 'mobbrmsd_DORMLQ', -INFO )
+    !CALL XERBLA( 'DORMLQ', -INFO )
     return
   else if (LQUERY) then
     return
@@ -273,7 +273,7 @@ pure subroutine mobbrmsd_DORMLQ(SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
   if (NB > 1 .and. NB < K) then
     if (LWORK < LWKOPT) then
       NB = (LWORK - TSIZE) / LDWORK
-      NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'mobbrmsd_DORMLQ', SIDE//TRANS, M, N, K, -1))
+      NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'DORMLQ', SIDE//TRANS, M, N, K, -1))
     end if
   end if
 !

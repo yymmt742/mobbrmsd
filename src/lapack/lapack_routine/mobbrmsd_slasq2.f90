@@ -170,7 +170,7 @@ pure subroutine mobbrmsd_SLASQ2(N, Z, INFO)
 !
   if (N < 0) then
     INFO = -1
-!   call XERBLA('mobbrmsd_SLASQ2', 1)
+!   call XERBLA('SLASQ2', 1)
     return
   else if (N == 0) then
     return
@@ -180,7 +180,7 @@ pure subroutine mobbrmsd_SLASQ2(N, Z, INFO)
 !
     if (Z(1) < ZERO) then
       INFO = -201
-!     call XERBLA('mobbrmsd_SLASQ2', 2)
+!     call XERBLA('SLASQ2', 2)
     end if
     return
   else if (N == 2) then
@@ -189,7 +189,7 @@ pure subroutine mobbrmsd_SLASQ2(N, Z, INFO)
 !
     if (Z(2) < ZERO .or. Z(3) < ZERO) then
       INFO = -2
-!     call XERBLA('mobbrmsd_SLASQ2', 2)
+!     call XERBLA('SLASQ2', 2)
       return
     else if (Z(3) > Z(1)) then
       D = Z(3)
@@ -226,11 +226,11 @@ pure subroutine mobbrmsd_SLASQ2(N, Z, INFO)
   do K = 1, 2 * (N - 1), 2
     if (Z(K) < ZERO) then
       INFO = -(200 + K)
-!     call XERBLA('mobbrmsd_SLASQ2', 2)
+!     call XERBLA('SLASQ2', 2)
       return
     else if (Z(K + 1) < ZERO) then
       INFO = -(200 + K + 1)
-!     call XERBLA('mobbrmsd_SLASQ2', 2)
+!     call XERBLA('SLASQ2', 2)
       return
     end if
     D = D + Z(K)
@@ -241,7 +241,7 @@ pure subroutine mobbrmsd_SLASQ2(N, Z, INFO)
   end do
   if (Z(2 * N - 1) < ZERO) then
     INFO = -(200 + 2 * N - 1)
-!   call XERBLA('mobbrmsd_SLASQ2', 2)
+!   call XERBLA('SLASQ2', 2)
     return
   end if
   D = D + Z(2 * N - 1)
@@ -270,8 +270,8 @@ pure subroutine mobbrmsd_SLASQ2(N, Z, INFO)
 !
 ! Check whether the machine is IEEE conformable.
 !
-! IEEE = mobbrmsd_ILAENV(10, 'mobbrmsd_SLASQ2', 'N', 1, 2, 3, 4) == 1 .and.
-! $mobbrmsd_ILAENV(11, 'mobbrmsd_SLASQ2', 'N', 1, 2, 3, 4) == 1
+! IEEE = mobbrmsd_ILAENV(10, 'SLASQ2', 'N', 1, 2, 3, 4) == 1 .and.
+! $mobbrmsd_ILAENV(11, 'SLASQ2', 'N', 1, 2, 3, 4) == 1
 !
 ! [11 / 15 / 2008] The case IEEE = .true.has a problem in single precision with
 ! some the test matrices of type 16.The double precision code is fine.

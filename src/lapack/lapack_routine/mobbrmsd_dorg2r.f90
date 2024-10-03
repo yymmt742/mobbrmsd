@@ -160,7 +160,7 @@ pure subroutine mobbrmsd_DORG2R(M, N, K, A, LDA, TAU, WORK, INFO)
     INFO = -5
   end if
   if (INFO /= 0) then
-    !CALL XERBLA( 'mobbrmsd_DORG2R', -INFO )
+    !CALL XERBLA( 'DORG2R', -INFO )
     return
   end if
 !

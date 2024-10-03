@@ -230,7 +230,7 @@ pure subroutine mobbrmsd_SLASCL(type, KL, KU, CFROM, CTO, M, N, A, LDA, INFO)
   end if
 !
   if (INFO /= 0) then
-!   call XERBLA('mobbrmsd_SLASCL', -INFO)
+!   call XERBLA('SLASCL', -INFO)
     return
   end if
 !

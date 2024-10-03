@@ -271,15 +271,15 @@ pure subroutine mobbrmsd_SORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
   if (INFO == 0) then
     if (APPLYQ) then
       if (LEFT) then
-        NB = mobbrmsd_ILAENV(1, 'mobbrmsd_SORMQR', SIDE//TRANS, M - 1, N, M - 1, -1)
+        NB = mobbrmsd_ILAENV(1, 'SORMQR', SIDE//TRANS, M - 1, N, M - 1, -1)
       else
-        NB = mobbrmsd_ILAENV(1, 'mobbrmsd_SORMQR', SIDE//TRANS, M, N - 1, N - 1, -1)
+        NB = mobbrmsd_ILAENV(1, 'SORMQR', SIDE//TRANS, M, N - 1, N - 1, -1)
       end if
     else
       if (LEFT) then
-        NB = mobbrmsd_ILAENV(1, 'mobbrmsd_SORMLQ', SIDE//TRANS, M - 1, N, M - 1, -1)
+        NB = mobbrmsd_ILAENV(1, 'SORMLQ', SIDE//TRANS, M - 1, N, M - 1, -1)
       else
-        NB = mobbrmsd_ILAENV(1, 'mobbrmsd_SORMLQ', SIDE//TRANS, M, N - 1, N - 1, -1)
+        NB = mobbrmsd_ILAENV(1, 'SORMLQ', SIDE//TRANS, M, N - 1, N - 1, -1)
       end if
     end if
     LWKOPT = MAX(1, NW) * NB
@@ -287,7 +287,7 @@ pure subroutine mobbrmsd_SORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
   end if
 !
   if (INFO /= 0) then
-!   call XERBLA('mobbrmsd_SORMBR', -INFO)
+!   call XERBLA('SORMBR', -INFO)
     return
   else if (LQUERY) then
     return

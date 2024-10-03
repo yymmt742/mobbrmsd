@@ -181,7 +181,7 @@ pure subroutine mobbrmsd_SGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !Test the input arguments
 !
   INFO = 0
-  NB = mobbrmsd_ILAENV(1, 'mobbrmsd_SGELQF', ' ', M, N, -1, -1)
+  NB = mobbrmsd_ILAENV(1, 'SGELQF', ' ', M, N, -1, -1)
   LWKOPT = M * NB
   WORK(1) = LWKOPT
   LQUERY = (LWORK == -1)
@@ -195,7 +195,7 @@ pure subroutine mobbrmsd_SGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
     INFO = -7
   end if
   if (INFO /= 0) then
-!   call XERBLA('mobbrmsd_SGELQF', -INFO)
+!   call XERBLA('SGELQF', -INFO)
     return
   else if (LQUERY) then
     return
@@ -216,7 +216,7 @@ pure subroutine mobbrmsd_SGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
     !
     !Determine when to cross over from blocked to unblocked code.
     !
-    NX = MAX(0, mobbrmsd_ILAENV(3, 'mobbrmsd_SGELQF', ' ', M, N, -1, -1))
+    NX = MAX(0, mobbrmsd_ILAENV(3, 'SGELQF', ' ', M, N, -1, -1))
     if (NX < K) then
       !
       !Determine if workspace is large enough for blocked code.
@@ -229,7 +229,7 @@ pure subroutine mobbrmsd_SGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
         !determine the minimum value of NB.
         !
         NB = LWORK / LDWORK
-        NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'mobbrmsd_SGELQF', ' ', M, N, -1, -1))
+        NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'SGELQF', ' ', M, N, -1, -1))
       end if
     end if
   end if

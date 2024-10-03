@@ -223,7 +223,7 @@ pure subroutine mobbrmsd_DORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK,
     INFO = -10
   end if
   if (INFO /= 0) then
-    !CALL XERBLA( 'mobbrmsd_DORM2R', -INFO )
+    !CALL XERBLA( 'DORM2R', -INFO )
     return
   end if
 !

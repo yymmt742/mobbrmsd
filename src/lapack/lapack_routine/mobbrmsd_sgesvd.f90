@@ -319,7 +319,7 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
 !
 !Compute space needed for mobbrmsd_SBDSQR
 !
-      MNTHR = mobbrmsd_ILAENV(6, 'mobbrmsd_SGESVD', JOBU//JOBVT, M, N, 0, 0)
+      MNTHR = mobbrmsd_ILAENV(6, 'SGESVD', JOBU//JOBVT, M, N, 0, 0)
       BDSPAC = 5 * N
 !Compute space needed for mobbrmsd_SGEQRF
       call mobbrmsd_SGEQRF(M, N, A, LDA, DUM(1), DUM(1), -1, IERR)
@@ -473,7 +473,7 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
 !
 !Compute space needed for mobbrmsd_SBDSQR
 !
-      MNTHR = mobbrmsd_ILAENV(6, 'mobbrmsd_SGESVD', JOBU//JOBVT, M, N, 0, 0)
+      MNTHR = mobbrmsd_ILAENV(6, 'SGESVD', JOBU//JOBVT, M, N, 0, 0)
       BDSPAC = 5 * M
 !Compute space needed for mobbrmsd_SGELQF
       call mobbrmsd_SGELQF(M, N, A, LDA, DUM(1), DUM(1), -1, IERR)
@@ -635,7 +635,7 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
   end if
 !
   if (INFO /= 0) then
-!   call XERBLA('mobbrmsd_SGESVD', -INFO)
+!   call XERBLA('SGESVD', -INFO)
     return
   else if (LQUERY) then
     return

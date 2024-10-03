@@ -199,7 +199,7 @@ pure subroutine mobbrmsd_STRMV(UPLO, TRANS, DIAG, N, A, LDA, X, INCX)
     INFO = 8
   end if
   if (INFO /= 0) then
-!   call XERBLA('mobbrmsd_STRMV ', INFO)
+!   call XERBLA('STRMV ', INFO)
     return
   end if
 !
