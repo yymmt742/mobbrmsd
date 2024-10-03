@@ -153,29 +153,29 @@ pure subroutine SLASCL(type, KL, KU, CFROM, CTO, M, N, A, LDA, INFO)
   character, intent(in) :: type
   integer, intent(in)   :: KL, KU, LDA, M, N
   integer, intent(out)  :: INFO
-  real, intent(in)      :: CFROM, CTO
+  real(RK), intent(in)  :: CFROM, CTO
 !..
 !..Array Arguments..
-  real, intent(inout)   :: A(LDA, *)
+  real(RK), intent(inout) :: A(LDA, *)
 !..
 !
 !  =====================================================================
 !
-!..Parameters..
-  real, parameter :: ZERO = 0.0E0
-  real, parameter :: ONE = 1.0E0
-!..
 !..Local Scalars..
   logical :: DONE
   integer :: I, ITYPE, J, K1, K2, K3, K4
-  real :: BIGNUM, CFROM1, CFROMC, CTO1, CTOC, MUL, SMLNUM
+  real(RK) :: BIGNUM, CFROM1, CFROMC, CTO1, CTOC, MUL, SMLNUM
 !..
-  interface
+!..Parameters..
+! real, parameter :: ZERO = 0.0E0
+! real, parameter :: ONE = 1.0E0
+!..
+! interface
 ! .. External Functions ..
-    include 'lsame.h'
-    include 'sisnan.h'
-    include 'slamch.h'
-  end interface
+!   include 'lsame.h'
+!   include 'sisnan.h'
+!   include 'slamch.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: ABS, MAX, MIN

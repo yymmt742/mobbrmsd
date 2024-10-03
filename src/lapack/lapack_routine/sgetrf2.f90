@@ -124,29 +124,28 @@ pure recursive subroutine SGETRF2(M, N, A, LDA, IPIV, INFO)
 !..
 !..Array Arguments..
   integer, intent(out) :: IPIV(*)
-  real, intent(inout)  :: A(LDA, *)
+  real(RK), intent(inout) :: A(LDA, *)
 !..
 !
 !  =====================================================================
-!
-!..Parameters..
-  real, parameter:: ONE = 1.0E+0, ZERO = 0.0E+0
 !..
 !..Local Scalars..
-  real    :: SFMIN, TEMP
+  real(RK) :: SFMIN, TEMP
   integer :: I, IINFO, n1, n2
+!
+!..Parameters..
+! real(RK), parameter:: ONE = 1.0E+0, ZERO = 0.0E+0
 !..
-  interface
+! interface
 !..external Functions..
-    include 'slamch.h'
-    include 'isamax.h'
+!   include 'slamch.h'
+!   include 'isamax.h'
 !..external Subroutines..
-    include 'sgemm.h'
-    include 'sscal.h'
-    include 'slaswp.h'
-    include 'strsm.h'
-  end interface
-!..
+!   include 'sgemm.h'
+!   include 'sscal.h'
+!   include 'slaswp.h'
+!   include 'strsm.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MAX, MIN

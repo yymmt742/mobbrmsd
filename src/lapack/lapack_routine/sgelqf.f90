@@ -153,8 +153,8 @@ pure subroutine SGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
   integer, intent(out) :: INFO
 !..
 !..Array Arguments..
-  real, intent(inout)  :: A(LDA, *)
-  real, intent(out)    :: TAU(*), WORK(*)
+  real(RK), intent(inout)  :: A(LDA, *)
+  real(RK), intent(out)    :: TAU(*), WORK(*)
 !..
 !
 !  =====================================================================
@@ -163,15 +163,15 @@ pure subroutine SGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
   logical :: LQUERY
   integer :: I, IB, IINFO, IWS, K, LDWORK, LWKOPT, NB, NBMIN, NX
 !..
-  interface
+! interface
 ! .. External Functions ..
-    include 'ilaenv.h'
+!   include 'ilaenv.h'
 ! .. External Subroutines ..
-    include 'sgelq2.h'
-    include 'slarfb.h'
-    include 'slarft.h'
+!   include 'sgelq2.h'
+!   include 'slarfb.h'
+!   include 'slarft.h'
 !   include 'xerbla.h'
-  end interface
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MAX, MIN

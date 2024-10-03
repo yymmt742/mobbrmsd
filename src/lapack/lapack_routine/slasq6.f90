@@ -116,8 +116,7 @@
 !> \ingroup auxOTHERcomputational
 !
 !  =====================================================================
-pure subroutine SLASQ6(I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN, &
-               &       DNM1, DNM2)
+pure subroutine SLASQ6(I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN, DNM1, DNM2)
   implicit none
 !
 !  -- LAPACK computational routine (version 3.7.0) --
@@ -127,25 +126,25 @@ pure subroutine SLASQ6(I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN, &
 !
 !     .. Scalar Arguments ..
   integer, intent(in) :: I0, N0, PP
-  real, intent(out)   :: DMIN, DMIN1, DMIN2, DN, DNM1, DNM2
+  real(RK), intent(out)   :: DMIN, DMIN1, DMIN2, DN, DNM1, DNM2
 !..
 !..Array Arguments..
-  real, intent(inout) :: Z(*)
+  real(RK), intent(inout) :: Z(*)
 !..
 !
 !  =====================================================================
 !
 !..parameter..
-  real, parameter :: ZERO = 0.0E0
+! real(RK), parameter :: ZERO = 0.0E0
 !..
 !..Local Scalars..
   integer :: J4, J4P2
-  real :: D, EMIN, SAFMIN, TEMP
+  real(RK) :: D, EMIN, SAFMIN, TEMP
 !..
-  interface
+! interface
 ! .. External Functions ..
-    include 'slamch.h'
-  end interface
+!   include 'slamch.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MIN

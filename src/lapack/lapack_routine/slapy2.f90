@@ -69,24 +69,24 @@ pure elemental function SLAPY2(X, Y)
 !     June 2017
 !
 !     .. Scalar Arguments ..
-  real, intent(in) :: X, Y
-  real :: SLAPY2
+  real(RK), intent(in) :: X, Y
+  real(RK) :: SLAPY2
 !..
 !
 !  =====================================================================
 !
-!..Parameters..
-  real, parameter :: ZERO = 0.0E0
-  real, parameter :: ONE = 1.0E0
-!..
 !..Local Scalars..
-  real :: W, XABS, YABS, Z
+  real(RK) :: W, XABS, YABS, Z
   logical :: X_IS_NAN, Y_IS_NAN
 !..
-  interface
+!..Parameters..
+! real(RK), parameter :: ZERO = 0.0E0
+! real(RK), parameter :: ONE = 1.0E0
+!..
+! interface
 ! .. External Functions ..
-    include 'sisnan.h'
-  end interface
+!   include 'sisnan.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: ABS, MAX, MIN, SQRT

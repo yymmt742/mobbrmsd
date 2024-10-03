@@ -167,6 +167,7 @@
 !  =====================================================================
 pure subroutine SORMLQ(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
                &       WORK, LWORK, INFO)
+  implicit none
 !
 !  -- LAPACK computational routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -179,9 +180,9 @@ pure subroutine SORMLQ(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
   integer, intent(out)  :: INFO
 !..
 !..Array Arguments..
-  real, intent(in)    :: TAU(*)
-  real, intent(inout) :: A(LDA, *), C(LDC, *)
-  real, intent(out)   :: WORK(*)
+  real(RK), intent(in)    :: TAU(*)
+  real(RK), intent(inout) :: A(LDA, *), C(LDC, *)
+  real(RK), intent(out)   :: WORK(*)
 !..
 !
 !  =====================================================================
@@ -197,15 +198,15 @@ pure subroutine SORMLQ(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
   integer   :: I, I1, I2, I3, IB, IC, IINFO, IWT, JC, LDWORK
   integer   :: LWKOPT, MI, NB, NBMIN, NI, NQ, NW
 !..
-  interface
+! interface
 !..external Functions..
-    include 'lsame.h'
-    include 'ilaenv.h'
+!   include 'lsame.h'
+!   include 'ilaenv.h'
 !.. External Subroutines ..
-    include 'slarfb.h'
-    include 'slarft.h'
-    include 'sorml2.h'
-  end interface
+!   include 'slarfb.h'
+!   include 'slarft.h'
+!   include 'sorml2.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MAX, MIN

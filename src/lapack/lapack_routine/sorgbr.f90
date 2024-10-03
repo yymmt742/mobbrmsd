@@ -169,9 +169,8 @@ pure subroutine SORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
   integer, intent(out)  :: INFO
 !..
 !..Array Arguments..
-  real, intent(in)      ::  TAU(*)
-  real, intent(inout)   ::  A(LDA, *)
-  real, intent(out)     ::  WORK(*)
+  real(RK), intent(inout) :: TAU(*), A(LDA, *)
+  real(RK), intent(out)   :: WORK(*)
 !..
 !
 !  =====================================================================
@@ -181,19 +180,16 @@ pure subroutine SORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
   integer :: I, IINFO, J, LWKOPT, MN
 !
 !..Parameters..
-  real, parameter :: ONE = 1.0E+0
-  real, parameter :: ZERO = 0.0E+0
+! real(RK), parameter :: ONE = 1.0E+0
+! real(RK), parameter :: ZERO = 0.0E+0
 !..
-!..Local Scalars..
-  integer :: I, J, L
-!..
-  interface
+! interface
 !..external Functions..
-    include 'lsame.h'
+!   include 'lsame.h'
 !..external Subroutines..
-    include 'sorglq.h'
-    include 'sorgqr.h'
-  end interface
+!   include 'sorglq.h'
+!   include 'sorgqr.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MAX, MIN
@@ -210,9 +206,7 @@ pure subroutine SORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
     INFO = -1
   else if (M < 0) then
     INFO = -2
-    else if (N < 0 .or. (WANTQ .and. (N > M .or. N < MIN(M,
-    $K))) .or. (.not. WANTQ .and. (M > N .or. M <
-    $MIN(N, K)))) then
+  else if (N < 0 .or. (WANTQ .and. (N > M .or. N < MIN(M, K))) .or. (.not. WANTQ .and. (M > N .or. M < MIN(N, K)))) then
     INFO = -3
   else if (K < 0) then
     INFO = -4

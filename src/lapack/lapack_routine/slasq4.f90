@@ -150,6 +150,7 @@
 !  =====================================================================
 pure subroutine SLASQ4(I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN, &
                &       DN1, DN2, TAU, TTYPE, G)
+  implicit none
 !
 !  -- LAPACK computational routine (version 3.7.1) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -159,32 +160,31 @@ pure subroutine SLASQ4(I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN, &
 !     .. Scalar Arguments ..
   integer, intent(in)  :: I0, N0, N0IN, PP
   integer, intent(out) :: TTYPE
-  real, intent(in)     :: DMIN, DMIN1, DMIN2, DN, DN1, DN2
-  real, intent(inout)  :: G
-  real, intent(out)    :: TAU
+  real(RK), intent(in)     :: DMIN, DMIN1, DMIN2, DN, DN1, DN2
+  real(RK), intent(inout)  :: G
+  real(RK), intent(out)    :: TAU
 !..
 !..Array Arguments..
-  real, intent(in)     :: Z(*)
+  real(RK), intent(in)     :: Z(*)
 !..
 !
 !  =====================================================================
-!
-!..Parameters..
-
-  real, parameter :: CNST1 = 0.5630E0
-  real, parameter :: CNST2 = 1.010E0
-  real, parameter :: CNST3 = 1.050E0
-  real, parameter :: ZERO = 0.0E0
-  real, parameter :: QURTR = 0.250E0
-  real, parameter :: HALF = 0.5E0
-  real, parameter :: THIRD = 0.3330E0
-  real, parameter :: ONE = 1.0E+0
-  real, parameter :: TWO = 2.0E0
-  real, parameter :: HUNDRD = 100.0E0
 !..
 !..Local Scalars..
   integer :: I4, NN, NP
-  real :: A2, B1, B2, GAM, GAP1, GAP2, S
+  real(RK) :: A2, B1, B2, GAM, GAP1, GAP2, S
+!
+!..Parameters..
+  real(RK), parameter :: CNST1 = 0.5630_RK
+  real(RK), parameter :: CNST2 = 1.010_RK
+  real(RK), parameter :: CNST3 = 1.050_RK
+! real(RK), parameter :: ZERO = 0.0E0
+! real(RK), parameter :: QURTR = 0.250E0
+! real(RK), parameter :: HALF = 0.5E0
+! real(RK), parameter :: THIRD = 0.3330E0
+! real(RK), parameter :: ONE = 1.0E+0
+! real(RK), parameter :: TWO = 2.0E0
+! real(RK), parameter :: HUNDRD = 100.0E0
 !..
 !..intrinsic Functions..
   intrinsic :: MAX, MIN, SQRT

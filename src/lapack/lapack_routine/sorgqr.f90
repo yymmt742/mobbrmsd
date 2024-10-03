@@ -139,14 +139,11 @@ pure subroutine SORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
   integer, intent(out) :: INFO
 !..
 !..Array Arguments..
-  real, intent(inout)  :: A(LDA, *), TAU(*)
-  real, intent(out)    :: WORK(*)
+  real(RK), intent(inout)  :: A(LDA, *), TAU(*)
+  real(RK), intent(out)    :: WORK(*)
 !..
 !
 !  =====================================================================
-!
-!..Parameters..
-  real, parameter :: ZERO = 0.0E+0
 !..
 !..Local Scalars..
   logical :: LQUERY
@@ -154,15 +151,18 @@ pure subroutine SORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !..
 !..intrinsic Functions..
   intrinsic :: MAX, MIN
+!
+!..Parameters..
+! real(RK), parameter :: ZERO = 0.0E+0
 !..
-  interface
+! interface
 !..external Functions..
-    include 'ilaenv.h'
+!   include 'ilaenv.h'
 !..External Subroutines ..
-    include 'slarfb.h'
-    include 'slarft.h'
-    include 'sorg2r.h'
-  end interface
+!   include 'slarfb.h'
+!   include 'slarft.h'
+!   include 'sorg2r.h'
+! end interface
 !..
 !..Executable Statements..
 !

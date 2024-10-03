@@ -87,6 +87,7 @@
 !
 !  =====================================================================
 pure subroutine SLASRT(ID, N, D, INFO)
+  implicit none
 !
 !  -- LAPACK computational routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -99,25 +100,25 @@ pure subroutine SLASRT(ID, N, D, INFO)
   integer, intent(out)  :: INFO
 !..
 !..Array Arguments..
-  real, intent(inout)   :: D(*)
+  real(RK), intent(inout)   :: D(*)
 !..
 !
 !  =====================================================================
+!..
+!..Local Scalars..
+  integer :: DIR, ENDD, I, J, START, STKPNT
+  real(RK) :: D1, D2, D3, DMNMX, TMP
+!..
+!..Local Arrays..
+  integer :: STACK(2, 32)
 !
 !..Parameters..
   integer, parameter :: SELCT = 20
 !..
-!..Local Scalars..
-  integer :: DIR, ENDD, I, J, START, STKPNT
-  real :: D1, D2, D3, DMNMX, TMP
-!..
-!..Local Arrays..
-  integer :: STACK(2, 32)
-!..
-  interface
+! interface
 !..external Functions..
-    include 'lsame.h'
-  end interface
+!   include 'lsame.h'
+! end interface
 !..
 !..Executable Statements..
 !

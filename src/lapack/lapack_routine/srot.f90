@@ -99,17 +99,17 @@ pure subroutine SROT(N, SX, INCX, SY, INCY, C, S)
 !     November 2017
 !
 !     .. Scalar Arguments ..
-  real, intent(in)    :: C, S
+  real(RK), intent(in) :: C, S
   integer, intent(in) :: INCX, INCY, N
 !..
 !..Array Arguments..
-  real, intent(inout) :: SX(*), SY(*)
+  real(RK), intent(inout) :: SX(*), SY(*)
 !..
 !
 !  =====================================================================
 !
 !..Local Scalars..
-  real :: STEMP
+  real(RK) :: STEMP
   integer :: I, IX, IY
 !..
   if (N <= 0) return

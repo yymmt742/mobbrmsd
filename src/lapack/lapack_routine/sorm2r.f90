@@ -171,27 +171,27 @@ pure subroutine SORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
   integer, intent(out)  :: INFO
 !..
 !..Array Arguments..
-  real, intent(in)      :: TAU(*)
-  real, intent(inout)   :: A(LDA, *), C(LDC, *)
-  real, intent(out)     :: WORK(*)
+  real(RK), intent(in)      :: TAU(*)
+  real(RK), intent(inout)   :: A(LDA, *), C(LDC, *)
+  real(RK), intent(out)     :: WORK(*)
 !..
 !
 !  =====================================================================
 !
-!..Parameters..
-  real, parameter :: ONE = 1.0E0
-!..
 !..Local Scalars..
   logical :: LEFT, NOTRAN
   integer :: I, I1, I2, I3, IC, JC, MI, NI, NQ
   real :: AII
 !..
-  interface
+!..Parameters..
+! real(RK), parameter :: ONE = 1.0E0
+!..
+! interface
 ! .. External Functions ..
-    include 'lsame.h'
+!   include 'lsame.h'
 !..external Subroutines..
-    include 'slarf.h'
-  end interface
+!   include 'slarf.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MAX

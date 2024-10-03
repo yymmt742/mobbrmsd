@@ -200,24 +200,24 @@ pure subroutine SGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
   integer, intent(out) :: INFO
 !     ..
 !     .. Array Arguments ..
-  real, intent(inout)  :: A(LDA, *)
-  real, intent(out)    :: D(*), E(*), TAUP(*), TAUQ(*), WORK(*)
+  real(RK), intent(inout)  :: A(LDA, *)
+  real(RK), intent(out)    :: D(*), E(*), TAUP(*), TAUQ(*), WORK(*)
 !     ..
 !
 !  =====================================================================
-!
-!     .. Parameters ..
-  real, parameter      :: ZERO = 0.0E+0, ONE = 1.0E+0
 !     ..
 !     .. Local Scalars ..
   integer :: I
+!
+!     .. Parameters ..
+! real(RK), parameter      :: ZERO = 0.0E+0, ONE = 1.0E+0
 !     ..
-  interface
+! interface
 ! .. External Subroutines ..
-    include 'slarf.h'
-    include 'slarfg.h'
+!   include 'slarf.h'
+!   include 'slarfg.h'
 !   include 'xerbla.h'
-  end interface
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MAX, MIN

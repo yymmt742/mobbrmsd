@@ -227,7 +227,7 @@
 !>
 !  =====================================================================
 pure elemental function IPARMQ(ISPEC, NAME, OPTS, N, ILO, IHI, LWORK)
-  use LA_CONSTANTS, only: sp
+! use LA_CONSTANTS, only: sp
   implicit none
 !
 !  -- LAPACK auxiliary routine --
@@ -237,52 +237,45 @@ pure elemental function IPARMQ(ISPEC, NAME, OPTS, N, ILO, IHI, LWORK)
 !     .. Scalar Arguments ..
   integer, intent(in)      :: IHI, ILO, ISPEC, LWORK, N
   character(*), intent(in) :: NAME, OPTS
-  integer                 :: IPARMQ
+  integer                  :: IPARMQ
 !
 !  ================================================================
 !     .. Parameters ..
-  integer, parameter       :: INMIN = 12
-  integer, parameter       :: INWIN = 13
-  integer, parameter       :: INIBL = 14
-  integer, parameter       :: ISHFTS = 15
-  integer, parameter       :: IACC22 = 16
-  integer, parameter       :: ICOST = 17
-  integer, parameter       :: NMIN = 75
-  integer, parameter       :: K22MIN = 14
-  integer, parameter       :: KACMIN = 14
-  integer, parameter       :: NIBBLE = 14
-  integer, parameter       :: KNWSWP = 500
-  integer, parameter       :: RCOST = 10
-  real(sp), parameter      :: TWO = 2.0_SP
+  integer, parameter  :: INMIN = 12
+  integer, parameter  :: INWIN = 13
+  integer, parameter  :: INIBL = 14
+  integer, parameter  :: ISHFTS = 15
+  integer, parameter  :: IACC22 = 16
+  integer, parameter  :: ICOST = 17
+  integer, parameter  :: NMIN = 75
+  integer, parameter  :: K22MIN = 14
+  integer, parameter  :: KACMIN = 14
+  integer, parameter  :: NIBBLE = 14
+  integer, parameter  :: KNWSWP = 500
+  integer, parameter  :: RCOST = 10
 !     ..
 !     .. Local Scalars ..
-  integer                 :: NH, NS
-  integer                 :: I, IC, IZ
-  character(6)            :: SUBNAM
+  integer      :: NH, NS
+  integer      :: I, IC, IZ
+  character(6) :: SUBNAM
 !     ..
 !     .. Intrinsic Functions ..
   intrinsic               :: LOG, MAX, MOD, NINT, real
 !     ..
 !     .. Executable Statements ..
-  if ((ISPEC == ISHFTS) .or. (ISPEC == INWIN) .or. &
- &    (ISPEC == IACC22)) then
+  if ((ISPEC == ISHFTS) .or. (ISPEC == INWIN) .or. (ISPEC == IACC22)) then
 !
 !        ==== Set the number simultaneous shifts ====
 !
     NH = IHI - ILO + 1
     NS = 2
-    if (NH >= 30) &
-&      NS = 4
-    if (NH >= 60) &
-&      NS = 10
-    if (NH >= 150) &
-&      NS = MAX(10, NH / NINT(LOG(real(NH)) / LOG(TWO)))
-    if (NH >= 590) &
-&      NS = 64
-    if (NH >= 3000) &
-&      NS = 128
-    if (NH >= 6000) &
-&      NS = 256
+    if (NH >= 30) NS = 4
+    if (NH >= 60) NS = 10
+    !if (NH >= 150) NS = MAX(10, NH / NINT(LOG(real(NH)) / LOG(TWO)))
+    if (NH >= 150) NS = MAX(10, NH / NINT(LOG(real(NH - 2))))
+    if (NH >= 590) NS = 64
+    if (NH >= 3000) NS = 128
+    if (NH >= 6000) NS = 256
     NS = MAX(2, NS - MOD(NS, 2))
   else
     NS = 0
@@ -346,8 +339,7 @@ pure elemental function IPARMQ(ISPEC, NAME, OPTS, N, ILO, IHI, LWORK)
         SUBNAM(1:1) = CHAR(IC - 32)
         do I = 2, 6
           IC = ICHAR(SUBNAM(I:I))
-          if (IC >= 97 .and. IC <= 122) &
-&               SUBNAM(I:I) = CHAR(IC - 32)
+          if (IC >= 97 .and. IC <= 122) SUBNAM(I:I) = CHAR(IC - 32)
         end do
       end if
 !
@@ -376,21 +368,18 @@ pure elemental function IPARMQ(ISPEC, NAME, OPTS, N, ILO, IHI, LWORK)
         SUBNAM(1:1) = CHAR(IC - 32)
         do I = 2, 6
           IC = ICHAR(SUBNAM(I:I))
-          if (IC >= 225 .and. IC <= 250) &
-&               SUBNAM(I:I) = CHAR(IC - 32)
+          if (IC >= 225 .and. IC <= 250) SUBNAM(I:I) = CHAR(IC - 32)
         end do
       end if
     end if
 !
-    if (SUBNAM(2:6) == 'GGHRD' .or. &
-&       SUBNAM(2:6) == 'GGHD3') then
+    if (SUBNAM(2:6) == 'GGHRD' .or. SUBNAM(2:6) == 'GGHD3') then
       IPARMQ = 1
       if (NH >= K22MIN) IPARMQ = 2
     else if (SUBNAM(4:6) == 'EXC') then
       if (NH >= KACMIN) IPARMQ = 1
       if (NH >= K22MIN) IPARMQ = 2
-    else if (SUBNAM(2:6) == 'HSEQR' .or. &
-&             SUBNAM(2:5) == 'LAQR') then
+    else if (SUBNAM(2:6) == 'HSEQR' .or. SUBNAM(2:5) == 'LAQR') then
       if (NS >= KACMIN) IPARMQ = 1
       if (NS >= K22MIN) IPARMQ = 2
     end if

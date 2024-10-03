@@ -67,6 +67,7 @@
 !
 !  =====================================================================
 pure elemental function SLAMCH(CMACH)
+  implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -75,22 +76,22 @@ pure elemental function SLAMCH(CMACH)
 !
 ! .. Scalar Arguments ..
   character, intent(in) :: CMACH
-  real                  :: SLAMCH
+  real(RK)              :: SLAMCH
 ! ..
 !
 ! =====================================================================
 !
-! .. Parameters ..
-  real ONE, ZERO
-  parameter(ONE=1.0E+0, ZERO=0.0E+0)
-! ..
 ! .. Local Scalars ..
-  real :: RND, EPS, SFMIN, SMALL, RMACH
+  real(RK) :: RND, EPS, SFMIN, SMALL, RMACH
+!
+! .. Parameters ..
+! real(RK), parameter :: ZERO = 0.0E+0
+! real(RK), parameter :: ONE = 1.0E+0
 ! ..
 ! .. External Functions ..
-  interface
-    include 'lsame.h'
-  end interface
+! interface
+!   include 'lsame.h'
+! end interface
 ! ..
 ! ..
 ! .. Intrinsic Functions ..
@@ -172,14 +173,15 @@ end
 !>
 !
 pure elemental function SLAMC3(A, B)
+  implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
 ! Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
 ! November 2010
 !
 ! .. Scalar Arguments ..
-  real, intent(in) :: A, B
-  real             :: SLAMC3
+  real(RK), intent(in) :: A, B
+  real(RK)             :: SLAMC3
 ! ..
 ! =====================================================================
 !

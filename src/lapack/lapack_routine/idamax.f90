@@ -68,7 +68,7 @@
 !>
 !  =====================================================================
 pure function IDAMAX(N, DX, INCX)
-  use LA_CONSTANTS, only: wp => dp
+! use LA_CONSTANTS, only: wp => dp
   implicit none
 !
 !  -- Reference BLAS level1 routine --
@@ -79,7 +79,7 @@ pure function IDAMAX(N, DX, INCX)
   integer, intent(in)  :: INCX, N
 !     ..
 !     .. Array Arguments ..
-  real(wp), intent(in) :: DX(*)
+  real(DP), intent(in) :: DX(*)
 !     ..
 !
   integer :: IDAMAX
@@ -87,7 +87,7 @@ pure function IDAMAX(N, DX, INCX)
 !  =====================================================================
 !
 !     .. Local Scalars ..
-  real(wp) :: DMAX
+  real(DP) :: DMAX
   integer :: I, IX
 !     ..
 !     .. Intrinsic Functions ..

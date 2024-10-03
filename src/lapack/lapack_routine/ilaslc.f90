@@ -85,21 +85,16 @@ pure function ILASLC(M, N, A, LDA)
 ! June 2017
 !
 ! .. Scalar Arguments ..
-  integer, intent(in) :: M, N, LDA
+  integer, intent(in)  :: M, N, LDA
 ! ..
 ! .. Array Arguments ..
-  real, intent(in)    :: A(LDA, *)
+  real(RK), intent(in) :: A(LDA, *)
+  integer              :: ILASLC
 ! ..
-  integer             :: ILASLC
-!
 !  =====================================================================
 !
-! .. Parameters ..
-  real ZERO
-  parameter(ZERO=0.0E+0)
-! ..
 ! .. Local Scalars ..
-  integer I
+  integer :: I
 ! ..
 ! .. Executable Statements ..
 !

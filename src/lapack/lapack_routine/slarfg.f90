@@ -114,35 +114,35 @@ pure subroutine SLARFG(N, ALPHA, X, INCX, TAU)
 !
 !     .. Scalar Arguments ..
   integer, intent(in) :: INCX, N
-  real, intent(inout) :: ALPHA
-  real, intent(out)   :: TAU
+  real(RK), intent(inout) :: ALPHA
+  real(RK), intent(out)   :: TAU
 !..
 !..Array Arguments..
-  real, intent(inout) :: X(*)
+  real(RK), intent(inout) :: X(*)
 !..
 !
 !  =====================================================================
-!
-!..Parameters..
-  real, parameter :: ZERO = 0.0E0
-  real, parameter :: ONE = 1.0E0
 !..
 !..Local Scalars..
   integer :: J, KNT
-  real :: BETA, RSAFMN, SAFMIN, XNORM
+  real(RK) :: BETA, RSAFMN, SAFMIN, XNORM
 !..
 !..intrinsic Functions..
   intrinsic :: ABS, SIGN
+!
+!..Parameters..
+! real(RK), parameter :: ZERO = 0.0E0
+! real(RK), parameter :: ONE = 1.0E0
 !..
-  interface
+! interface
 !..external Functions..
-    include 'slamch.h'
-    include 'slapy2.h'
-    include 'snrm2.h'
+!   include 'slamch.h'
+!   include 'slapy2.h'
+!   include 'snrm2.h'
 !..
 !..external Subroutines..
-    include 'sscal.h'
-  end interface
+!   include 'sscal.h'
+! end interface
 !..
 !..Executable Statements..
 !

@@ -116,12 +116,12 @@ pure subroutine SLASET(UPLO, M, N, ALPHA, BETA, A, LDA)
 !     December 2016
 !
 !     .. Scalar Arguments ..
-  character, intent(in) :: UPLO
-  integer, intent(in)   ::  LDA, M, N
-  real, intent(in)      :: ALPHA, BETA
+  character, intent(in)  :: UPLO
+  integer, intent(in)    ::  LDA, M, N
+  real(RK), intent(in)   :: ALPHA, BETA
 !..
 !..Array Arguments..
-  real, intent(inout)   :: A(LDA, *)
+  real(RK), intent(inout) :: A(LDA, *)
 !..
 !
 ! =====================================================================
@@ -129,10 +129,10 @@ pure subroutine SLASET(UPLO, M, N, ALPHA, BETA, A, LDA)
 !..Local Scalars..
   integer :: I, J
 !..
-  interface
+! interface
 ! .. External Functions ..
-    include 'lsame.h'
-  end interface
+!   include 'lsame.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MIN

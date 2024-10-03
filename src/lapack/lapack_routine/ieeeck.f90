@@ -79,7 +79,7 @@
 !
 !  =====================================================================
 pure elemental function IEEECK(ISPEC, ZERO, ONE)
-  use LA_CONSTANTS, only: SP
+! use LA_CONSTANTS, only: SP
   implicit none
 !
 !  -- LAPACK auxiliary routine --
@@ -88,15 +88,14 @@ pure elemental function IEEECK(ISPEC, ZERO, ONE)
 !
 ! .. Scalar Arguments ..
   integer, intent(in)  :: ISPEC
-  real(SP), intent(in) :: ONE, ZERO
+  real(RK), intent(in) :: ONE, ZERO
   integer              :: IEEECK
 ! ..
 !
 !  =====================================================================
 !
 ! .. Local Scalars ..
-  real(SP)            :: NAN1, NAN2, NAN3, NAN4, NAN5, NAN6, NEGINF, &
- &                       NEGZRO, NEWZRO, POSINF
+  real(RK) :: NAN1, NAN2, NAN3, NAN4, NAN5, NAN6, NEGINF, NEGZRO, NEWZRO, POSINF
 ! ..
 ! .. Executable Statements ..
   IEEECK = 1

@@ -129,6 +129,7 @@
 !>
 !  =====================================================================
 pure subroutine SGEQR2(M, N, A, LDA, TAU, WORK, INFO)
+  implicit none
 !
 !  -- LAPACK computational routine (version 3.9.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -140,25 +141,25 @@ pure subroutine SGEQR2(M, N, A, LDA, TAU, WORK, INFO)
   integer, intent(out) :: INFO
 !..
 !..Array Arguments..
-  real, intent(inout) :: A(LDA, *)
-  real, intent(out)   :: TAU(*), WORK(*)
+  real(RK), intent(inout) :: A(LDA, *)
+  real(RK), intent(out)   :: TAU(*), WORK(*)
 !..
 !
 !  =====================================================================
-!
-!..Parameters..
-  real, parameter :: ONE = 1.0E+0
 !..
 !..Local Scalars..
   integer :: I, K
-  real :: AII
+  real(RK) :: AII
+!
+!..Parameters..
+! real(RK), parameter :: ONE = 1.0E+0
 !..
-  interface
+! interface
 ! .. External Subroutines ..
-    include 'slarf.h'
-    include 'slarfg.h'
+!   include 'slarf.h'
+!   include 'slarfg.h'
 !   include 'xerbla.h'
-  end interface
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MAX, MIN

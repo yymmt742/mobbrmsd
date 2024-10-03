@@ -194,29 +194,29 @@ pure subroutine SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, L
 !     December 2016
 !
 !     .. Scalar Arguments ..
-  real, intent(in)      :: ALPHA, BETA
+  real(RK), intent(in)  :: ALPHA, BETA
   integer, intent(in)   :: K, LDA, LDB, LDC, M, N
   character, intent(in) ::  TRANSA, TRANSB
 !..
 !..Array Arguments..
-  real, intent(in)      :: A(LDA, *), B(LDB, *)
-  real, intent(inout)   :: C(LDC, *)
+  real(RK), intent(in)    :: A(LDA, *), B(LDB, *)
+  real(RK), intent(inout) :: C(LDC, *)
 !..
 !
 !  =====================================================================
 !
-  interface
+! interface
 ! .. External Functions ..
-    include 'lsame.h'
-  end interface
+!   include 'lsame.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MAX
 !..
 !..Local Scalars..
-  real    :: TEMP
-  integer :: I, INFO, J, L, NCOLA, NROWA, NROWB
-  logical :: NOTA, NOTB
+  real(RK) :: TEMP
+  integer  :: I, INFO, J, L, NCOLA, NROWA, NROWB
+  logical  :: NOTA, NOTB
 !..
 !..Parameters..
   real, parameter :: ONE = 1.0E+0, ZERO = 0.0E+0

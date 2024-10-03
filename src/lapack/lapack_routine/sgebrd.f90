@@ -215,28 +215,28 @@ pure subroutine SGEBRD(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, LWORK, INFO)
   integer, intent(out) :: INFO
 !..
 !..Array Arguments..
-  real, intent(inout) :: A(LDA, *)
-  real, intent(out)   :: D(*), E(*), TAUP(*), TAUQ(*), WORK(*)
+  real(RK), intent(inout) :: A(LDA, *)
+  real(RK), intent(out)   :: D(*), E(*), TAUP(*), TAUQ(*), WORK(*)
 !..
 !
 !  =====================================================================
 !
-!..Parameters..
-  real, parameter :: ONE = 1.0E+0
-!..
 !..Local Scalars..
   logical :: LQUERY
   integer :: I, IINFO, J, LDWRKX, LDWRKY, LWKOPT, MINMN, NB, NBMIN, NX, WS
 !..
-  interface
+!..Parameters..
+! real(RK), parameter :: ONE = 1.0E+0
+!..
+! interface
 ! .. External Functions ..
-    include 'ilaenv.h'
+!   include 'ilaenv.h'
 ! .. External Subroutines ..
-    include 'sgebd2.h'
-    include 'sgemm.h'
-    include 'slabrd.h'
+!   include 'sgebd2.h'
+!   include 'sgemm.h'
+!   include 'slabrd.h'
 !   include 'xerbla.h'
-  end interface
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MAX, MIN, real

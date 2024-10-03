@@ -210,23 +210,23 @@ pure subroutine SLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
   integer, intent(in)   :: LDA, M, N
 !..
 !..Array Arguments..
-  real, intent(in)      :: C(*), S(*)
-  real, intent(inout)   :: A(LDA, *)
+  real(RK), intent(in)    :: C(*), S(*)
+  real(RK), intent(inout) :: A(LDA, *)
 !..
 !
 !  =====================================================================
 !
 !..Parameters..
-  real, parameter :: ZERO = 0.0E0
-  real, parameter :: ONE = 1.0E+0
+! real, parameter :: ZERO = 0.0E0
+! real, parameter :: ONE = 1.0E+0
 !..
-  interface
+! interface
 !..external Functions..
-    include 'lsame.h'
-  end interface
+!   include 'lsame.h'
+! end interface
 !..Local Scalars..
   integer :: I, INFO, J
-  real :: CTEMP, STEMP, TEMP
+  real(RK) :: CTEMP, STEMP, TEMP
 !..
 !..intrinsic Functions..
   intrinsic :: MAX

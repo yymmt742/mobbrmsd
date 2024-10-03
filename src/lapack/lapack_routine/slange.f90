@@ -112,7 +112,7 @@
 !> \ingroup realGEauxiliary
 !
 !  =====================================================================
-pure subroutine SLANGE(NORM, M, N, A, LDA, WORK, RES)
+pure subroutine SLANGE(NORM, M, N, A, LDA, RES, WORK)
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -125,30 +125,30 @@ pure subroutine SLANGE(NORM, M, N, A, LDA, WORK, RES)
   integer, intent(in)   :: LDA, M, N
 !..
 !..Array Arguments..
-  real, intent(inout) :: A(LDA, *)
-  real, intent(out)   :: WORK(*), RES
+  real(RK), intent(inout) :: A(LDA, *)
+  real(RK), intent(out)   :: WORK(*), RES
 !..
 !
 ! =====================================================================
-!
-!..Parameters..
-  real, parameter :: ONE = 1.0E+0, ZERO = 0.0E+0
 !..
 !..Local Scalars..
   integer :: I, J
-  real :: SUM, val, TEMP
+  real(RK) :: SUM, val, TEMP
 !..
 !..Local Arrays..
-  real :: SSQ(2), COLSSQ(2)
+  real(RK) :: SSQ(2), COLSSQ(2)
+!
+!..Parameters..
+! real(RK), parameter :: ONE = 1.0E+0, ZERO = 0.0E+0
 !..
-  interface
+! interface
 ! .. External Functions ..
-    include 'lsame.h'
-    include 'sisnan.h'
+!   include 'lsame.h'
+!   include 'sisnan.h'
 ! .. External Subroutines ..
-    include 'slassq.h'
-    include 'scombssq.h'
-  end interface
+!   include 'slassq.h'
+!   include 'scombssq.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: ABS, MIN, SQRT

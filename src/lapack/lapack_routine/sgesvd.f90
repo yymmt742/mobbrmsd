@@ -222,14 +222,11 @@ pure subroutine SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, WORK, LWO
   integer, intent(out)  :: INFO
 !..
 !..Array Arguments..
-  real, intent(inout)   :: A(LDA, *)
-  real, intent(out)     :: S(*), U(LDU, *), VT(LDVT, *), WORK(*)
+  real(RK), intent(inout)   :: A(LDA, *)
+  real(RK), intent(out)     :: S(*), U(LDU, *), VT(LDVT, *), WORK(*)
 !..
 !
 !  =====================================================================
-!
-!..Parameters..
-  real, parameter :: ZERO = 0.0E0, ONE = 1.0E0
 !..
 !..Local Scalars..
   logical :: LQUERY, WNTUA, WNTUAS, WNTUN, WNTUO, WNTUS
@@ -241,32 +238,34 @@ pure subroutine SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, WORK, LWO
   integer :: LWORK_SGEQRF, LWORK_SORGQR_N, LWORK_SORGQR_M
   integer :: LWORK_SGEBRD, LWORK_SORGBR_P, LWORK_SORGBR_Q
   integer :: LWORK_SGELQF, LWORK_SORGLQ_N, LWORK_SORGLQ_M
-  real :: ANRM, BIGNUM, EPS, SMLNUM
+  real(RK) :: ANRM, BIGNUM, EPS, SMLNUM
 !..
 !..Local Arrays..
-  real :: DUM(1)
+  real(RK) :: DUM(1)
+!
+!..Parameters..
+! real(RK), parameter :: ZERO = 0.0E0, ONE = 1.0E0
 !..
-  interface
+! interface
 ! .. External Functions ..
-    include 'lsame.h'
-    include 'ilaenv.h'
-    include 'slamch.h'
-    include 'slange.h'
+!   include 'lsame.h'
+!   include 'ilaenv.h'
+!   include 'slamch.h'
+!   include 'slange.h'
 ! .. External Subroutines ..
-    include 'sgemm.h'
-    include 'sbdsqr.h'
-    include 'sgebrd.h'
-    include 'sgelqf.h'
-    include 'sgeqrf.h'
-    include 'slacpy.h'
-    include 'slascl.h'
-    include 'slaset.h'
-    include 'sorgbr.h'
-    include 'sorglq.h'
-    include 'sorgqr.h'
-    include 'sormbr.h'
-!   include 'xerbla.h'
-  end interface
+!   include 'sgemm.h'
+!   include 'sbdsqr.h'
+!   include 'sgebrd.h'
+!   include 'sgelqf.h'
+!   include 'sgeqrf.h'
+!   include 'slacpy.h'
+!   include 'slascl.h'
+!   include 'slaset.h'
+!   include 'sorgbr.h'
+!   include 'sorglq.h'
+!   include 'sorgqr.h'
+!   include 'sormbr.h'
+! end interface
 !..
 !..
 !..intrinsic Functions..
@@ -1880,15 +1879,15 @@ pure subroutine SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, WORK, LWO
 !Compute A = Q * R, copying result to U
 !(Workspace:need 2 * N, prefer N + N * NB)
 !
-            call SGEQRF(M, N, A, LDA, WORK(ITAU),&
-            &WORK(IWORK), LWORK - IWORK + 1, IERR)
+            call SGEQRF(M, N, A, LDA, WORK(ITAU), &
+                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
             call SLACPY('L', M, N, A, LDA, U, LDU)
 !
 !Generate Q in U
 !(Workspace:need N + M, prefer N + M * NB)
 !
-            call SORGQR(M, M, N, U, LDU, WORK(ITAU),&
-            &WORK(IWORK), LWORK - IWORK + 1, IERR)
+            call SORGQR(M, M, N, U, LDU, WORK(ITAU), &
+                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
 !Copy R from A to VT, zeroing out below it
 !

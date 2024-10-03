@@ -137,24 +137,24 @@ pure subroutine SORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
   integer, intent(out) :: INFO
 !..
 !..Array Arguments..
-  real, intent(in)     :: TAU(*)
-  real, intent(inout)  :: A(LDA, *)
-  real, intent(out)    :: WORK(*)
+  real(RK), intent(in)     :: TAU(*)
+  real(RK), intent(inout)  :: A(LDA, *)
+  real(RK), intent(out)    :: WORK(*)
 !..
 !
 !  =====================================================================
 !
 !..Parameters..
-  real, parameter :: ZERO = 0.0E+0
+! real, parameter :: ZERO = 0.0E+0
 !..
-  interface
+! interface
 !..external Functions..
-    include 'ilaenv.h'
+!   include 'ilaenv.h'
 !..external Subroutines..
-    include 'slarfb.h'
-    include 'slarft.h'
-    include 'sorgl2.h'
-  end interface
+!   include 'slarfb.h'
+!   include 'slarft.h'
+!   include 'sorgl2.h'
+! end interface
 !..
 !..Local Scalars..
   logical :: LQUERY

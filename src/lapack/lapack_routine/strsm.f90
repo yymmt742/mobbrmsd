@@ -189,34 +189,32 @@ pure subroutine STRSM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B, LDB)
 !
 !     .. Scalar Arguments ..
   character, intent(in) :: DIAG, SIDE, TRANSA, UPLO
-  real, intent(in)      :: ALPHA
+  real(RK), intent(in)      :: ALPHA
   integer, intent(in)   :: LDA, LDB, M, N
 !..
 !..Array Arguments..
-  real, intent(in)    :: A(LDA, *)
-  real, intent(inout) :: B(LDB, *)
+  real(RK), intent(in)    :: A(LDA, *)
+  real(RK), intent(inout) :: B(LDB, *)
 !..
 !
 !  =====================================================================
 !
-  interface
-! .. External Functions ..
-    include 'lsame.h'
-  end interface
-!..external Functions..
-!..
 !..intrinsic Functions..
   intrinsic :: MAX
 !..
 !..Local Scalars..
-  real :: TEMP
+  real(RK) :: TEMP
   integer :: I, INFO, J, K, NROWA
   logical :: LSIDE, NOUNIT, UPPER
 !..
 !..Parameters..
-  real, parameter :: ONE = 1.0E+0, ZERO = 0.0E+0
+! real, parameter :: ONE = 1.0E+0, ZERO = 0.0E+0
 !..
-!
+! interface
+! .. External Functions ..
+!   include 'lsame.h'
+! end interface
+!..
 !Test the input parameters.
 !
   LSIDE = LSAME(SIDE, 'L')

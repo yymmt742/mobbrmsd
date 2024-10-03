@@ -173,26 +173,26 @@ pure subroutine SLARFT(DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT)
   integer, intent(in)   :: K, LDT, LDV, N
 !..
 !..Array Arguments..
-  real, intent(in)  :: TAU(*), V(LDV, *)
-  real, intent(out) :: T(LDT, *)
+  real(RK), intent(in)  :: TAU(*), V(LDV, *)
+  real(RK), intent(out) :: T(LDT, *)
 !..
 !
 !  =====================================================================
 !
-!..Parameters..
-  real, parameter :: ZERO = 0.0E0
-  real, parameter :: ONE = 1.0E0
-!..
 !..Local Scalars..
   integer :: I, J, PREVLASTV, LASTV
 !..
-  interface
+!..Parameters..
+! real(RK), parameter :: ZERO = 0.0E0
+! real(RK), parameter :: ONE = 1.0E0
+!..
+! interface
 ! .. External Functions ..
-    include 'lsame.h'
+!   include 'lsame.h'
 !..external Subroutines..
-    include 'sgemv.h'
-    include 'strmv.h'
-  end interface
+!   include 'sgemv.h'
+!   include 'strmv.h'
+! end interface
 !..
 !..Executable Statements..
 !

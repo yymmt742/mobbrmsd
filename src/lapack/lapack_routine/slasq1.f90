@@ -107,6 +107,7 @@
 !
 !  =====================================================================
 pure subroutine SLASQ1(N, D, E, WORK, INFO)
+  implicit none
 !
 !  -- LAPACK computational routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -118,30 +119,29 @@ pure subroutine SLASQ1(N, D, E, WORK, INFO)
   integer, intent(out) :: INFO
 !..
 !..Array Arguments..
-  real, intent(inout)  :: D(*), E(*)
-  real, intent(out)    :: WORK(*)
+  real(RK), intent(inout)  :: D(*), E(*)
+  real(RK), intent(out)    :: WORK(*)
 !..
 !
 !  =====================================================================
-!
-!..Parameters..
-  real, parameter :: ZERO = 0.0E0
 !..
 !..Local Scalars..
   integer :: I, IINFO
-  real :: EPS, SCL, SAFMIN, SIGMN, SIGMX
+  real(RK) :: EPS, SCL, SAFMIN, SIGMN, SIGMX
+!
+!..Parameters..
+! real(RK), parameter :: ZERO = 0.0E0
 !..
-!..
-  interface
+! interface
 ! .. External Functions ..
-    include 'slamch.h'
+!   include 'slamch.h'
 ! .. External Subroutines ..
-    include 'scopy.h'
-    include 'slas2.h'
-    include 'slascl.h'
-    include 'slasq2.h'
-    include 'slasrt.h'
-  end interface
+!   include 'scopy.h'
+!   include 'slas2.h'
+!   include 'slascl.h'
+!   include 'slasq2.h'
+!   include 'slasrt.h'
+! end interface
 !..
 !..
 !..intrinsic Functions..

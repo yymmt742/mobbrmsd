@@ -58,6 +58,7 @@
 !
 !  =====================================================================
 pure elemental function SISNAN(SI)
+  implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.1) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -65,16 +66,16 @@ pure elemental function SISNAN(SI)
 !     June 2017
 !
 !     .. Scalar Arguments ..
-  real, intent(in) :: SI
-  logical          :: SISNAN
+  real(RK), intent(in) :: SI
+  logical              :: SISNAN
 !..
 !
 !  =====================================================================
 !
-  interface
+! interface
 ! .. External Functions ..
-    include 'slaisnan.h'
-  end interface
+!   include 'slaisnan.h'
+! end interface
 !..
 !..Executable Statements..
   SISNAN = SLAISNAN(SI, SI)

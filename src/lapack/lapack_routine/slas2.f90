@@ -106,6 +106,7 @@
 !>
 !  =====================================================================
 pure elemental subroutine SLAS2(F, G, H, SSMIN, SSMAX)
+  implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -113,19 +114,19 @@ pure elemental subroutine SLAS2(F, G, H, SSMIN, SSMAX)
 !     December 2016
 !
 !     .. Scalar Arguments ..
-  real, intent(in)  :: F, G, H
-  real, intent(out) :: SSMAX, SSMIN
+  real(RK), intent(in)  :: F, G, H
+  real(RK), intent(out) :: SSMAX, SSMIN
 !..
 !
 !  ====================================================================
 !
 !..Parameters..
-  real, parameter :: ZERO = 0.0E0
-  real, parameter :: ONE = 1.0E0
-  real, parameter :: TWO = 2.0E0
+! real(RK), parameter :: ZERO = 0.0E0
+! real(RK), parameter :: ONE = 1.0E0
+! real(RK), parameter :: TWO = 2.0E0
 !..
 !..Local Scalars..
-  real :: AS, AT, AU, C, FA, FHMN, FHMX, GA, HA
+  real(RK) :: AS, AT, AU, C, FA, FHMN, FHMX, GA, HA
 !..
 !..intrinsic Functions..
   intrinsic :: ABS, MAX, MIN, SQRT
@@ -177,3 +178,4 @@ pure elemental subroutine SLAS2(F, G, H, SSMIN, SSMAX)
 !end of SLAS2
 !
 end
+

@@ -208,6 +208,7 @@
 !>
 !  =====================================================================
 pure subroutine SLABRD(M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, LDX, Y, LDY)
+  implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.1) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -218,26 +219,25 @@ pure subroutine SLABRD(M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, LDX, Y, LDY)
   integer, intent(in) :: LDA, LDX, LDY, M, N, NB
 !..
 !..Array Arguments..
-  real, intent(inout) :: A(LDA, *)
-  real, intent(out)   :: D(*), E(*), TAUP(*), TAUQ(*), X(LDX, *), Y(LDY, *)
+  real(RK), intent(inout) :: A(LDA, *)
+  real(RK), intent(out)   :: D(*), E(*), TAUP(*), TAUQ(*), X(LDX, *), Y(LDY, *)
 !..
 !
 !  =====================================================================
 !
-!..Parameters..
-  real, parameter :: ZERO = 0.0E0
-  real, parameter :: ONE = 1.0E0
-!..
 !..Local Scalars..
   integer :: I
 !..
+!..Parameters..
+! real(RK), parameter :: ZERO = 0.0E0
+! real(RK), parameter :: ONE = 1.0E0
 !..
-  interface
+! interface
 ! .. External Subroutines ..
-    include 'sgemv.h'
-    include 'slarfg.h'
-    include 'sscal.h'
-  end interface
+!   include 'sgemv.h'
+!   include 'slarfg.h'
+!   include 'sscal.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MIN

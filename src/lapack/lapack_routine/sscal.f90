@@ -78,6 +78,7 @@
 !>
 !  =====================================================================
 pure subroutine SSCAL(N, SA, SX, INCX)
+  implicit none
 !
 !  -- Reference BLAS level1 routine (version 3.8.0) --
 !  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
@@ -85,11 +86,11 @@ pure subroutine SSCAL(N, SA, SX, INCX)
 !     November 2017
 !
 !     .. Scalar Arguments ..
-  integer, intent(in) :: INCX, N
-  real, intent(in)    ::  SA
+  integer, intent(in)  :: INCX, N
+  real(RK), intent(in) :: SA
 !..
 !..Array Arguments..
-  real, intent(inout) ::  SX(*)
+  real(RK), intent(inout) :: SX(*)
 !..
 !
 !  =====================================================================

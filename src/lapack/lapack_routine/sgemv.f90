@@ -163,28 +163,27 @@ pure subroutine SGEMV(TRANS, M, N, ALPHA, A, LDA, X, INCX, BETA, Y, INCY)
 !     December 2016
 !
 !     .. Scalar Arguments ..
-  real, intent(in)      :: ALPHA, BETA
+  real(RK), intent(in)      :: ALPHA, BETA
   integer, intent(in)   :: INCX, INCY, LDA, M, N
   character, intent(in) :: TRANS
 !..
 !..Array Arguments..
-  real, intent(in)    :: A(LDA, *), X(*)
-  real, intent(inout) :: Y(*)
+  real(RK), intent(in)    :: A(LDA, *), X(*)
+  real(RK), intent(inout) :: Y(*)
 !..
 !
 !  =====================================================================
 !
-!..Parameters..
-  real, parameter :: ONE = 1.0E+0, ZERO = 0.0E+0
-!..
 !..Local Scalars..
-  real    :: TEMP
+  real(RK)    :: TEMP
   integer :: I, INFO, IX, IY, J, JX, JY, KX, KY, LENX, LENY
+!..Parameters..
+! real(RK), parameter :: ONE = 1.0E+0, ZERO = 0.0E+0
 !..
-  interface
+! interface
 ! .. External Functions ..
-    include 'lsame.h'
-  end interface
+!   include 'lsame.h'
+! end interface
 !..
 !..
 !..intrinsic Functions..

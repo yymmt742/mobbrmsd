@@ -122,37 +122,37 @@ pure subroutine SLASQ2(N, Z, INFO)
   integer, intent(out) :: INFO
 !..
 !..Array Arguments..
-  real, intent(inout)  :: Z(*)
+  real(RK), intent(inout) :: Z(*)
 !..
 !
 !  =====================================================================
+!..Local Scalars..
+  logical  :: IEEE
+  integer  :: I0, I4, IINFO, IPN4, ITER, IWHILA, IWHILB, K
+  integer  :: KMIN, N0, NBIG, NDIV, NFAIL, PP, SPLT, TTYPE
+  integer  :: I1, N1
+  real(RK) :: D, DEE, DEEMIN, DESIG, DMIN, DMIN1, DMIN2, DN
+  real(RK) :: DN1, DN2, E, EMAX, EMIN, EPS, G, OLDEMN, QMAX
+  real(RK) :: QMIN, S, SAFMIN, SIGMA, T, TAU, TEMP, TOL
+  real(RK) :: TOL2, TRACE, ZMAX, TEMPE, TEMPQ
+!..
 !
 !..Parameters..
-  real, parameter :: CBIAS = 1.50E0
-  real, parameter :: ZERO = 0.0E0
-  real, parameter :: HALF = 0.5E0
-  real, parameter :: ONE = 1.0E0
-  real, parameter :: TWO = 2.0E0
-  real, parameter :: FOUR = 4.0E0
-  real, parameter :: HUNDRD = 100.0E0
+  real(RK), parameter :: CBIAS = 1.50E0
+! real(RK), parameter :: ZERO = 0.0E0
+! real(RK), parameter :: HALF = 0.5E0
+! real(RK), parameter :: ONE = 1.0E0
+! real(RK), parameter :: TWO = 2.0E0
+! real(RK), parameter :: FOUR = 4.0E0
+! real(RK), parameter :: HUNDRD = 100.0E0
 !..
-!..Local Scalars..
-  logical :: IEEE
-  integer :: I0, I4, IINFO, IPN4, ITER, IWHILA, IWHILB, K
-  integer :: KMIN, N0, NBIG, NDIV, NFAIL, PP, SPLT, TTYPE
-  integer :: I1, N1
-  real    :: D, DEE, DEEMIN, DESIG, DMIN, DMIN1, DMIN2, DN
-  real    :: DN1, DN2, E, EMAX, EMIN, EPS, G, OLDEMN, QMAX
-  real    :: QMIN, S, SAFMIN, SIGMA, T, TAU, TEMP, TOL
-  real    :: TOL2, TRACE, ZMAX, TEMPE, TEMPQ
-!..
-  interface
+! interface
 !..external Functions..
-    include 'slamch.h'
+!   include 'slamch.h'
 ! .. External Subroutines ..
-    include 'slasq3.h'
-    include 'slasrt.h'
-  end interface
+!   include 'slasq3.h'
+!   include 'slasrt.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: ABS, MAX, MIN, real, SQRT

@@ -133,32 +133,32 @@ pure subroutine SLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
 !     .. Scalar Arguments ..
   character, intent(in) :: SIDE
   integer, intent(in)   :: INCV, LDC, M, N
-  real, intent(in)      :: TAU
+  real(RK), intent(in)      :: TAU
 !..
 !..Array Arguments..
-  real, intent(in)    :: V(*)
-  real, intent(inout) :: C(LDC, *)
-  real, intent(out)   :: WORK(*)
+  real(RK), intent(in)    :: V(*)
+  real(RK), intent(inout) :: C(LDC, *)
+  real(RK), intent(out)   :: WORK(*)
 !..
 !
 !  =====================================================================
 !
-!..Parameters..
-  real, parameter :: ONE = 1.0E+0, ZERO = 0.0E+0
-!..
 !..Local Scalars..
   logical :: APPLYLEFT
   integer :: I, LASTV, LASTC
 !..
-  interface
+!..Parameters..
+! real(RK), parameter :: ONE = 1.0E+0, ZERO = 0.0E+0
+!..
+! interface
 ! .. External Functions ..
-    include 'lsame.h'
-    include 'ilaslr.h'
-    include 'ilaslc.h'
+!   include 'lsame.h'
+!   include 'ilaslr.h'
+!   include 'ilaslc.h'
 ! .. External Subroutines ..
-    include 'sgemv.h'
-    include 'sger.h'
-  end interface
+!   include 'sgemv.h'
+!   include 'sger.h'
+! end interface
 !..
 !..Executable Statements..
 !

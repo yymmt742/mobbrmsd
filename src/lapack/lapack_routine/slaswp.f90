@@ -125,14 +125,14 @@ pure subroutine SLASWP(N, A, LDA, K1, K2, IPIV, INCX)
 !..
 !..Array Arguments..
   integer, intent(in) ::  IPIV(*)
-  real, intent(inout) ::  A(LDA, *)
+  real(RK), intent(inout) ::  A(LDA, *)
 !..
 !
 ! =====================================================================
 !
 !..Local Scalars..
   integer :: I, I1, I2, INC, IP, IX, IX0, J, K, N32
-  real :: TEMP
+  real(RK) :: TEMP
 !..
 !..Executable Statements..
 !

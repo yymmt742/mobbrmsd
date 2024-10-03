@@ -73,6 +73,7 @@
 !
 !  =====================================================================
 pure elemental function SLAISNAN(SIN1, SIN2)
+  implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.1) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -80,8 +81,8 @@ pure elemental function SLAISNAN(SIN1, SIN2)
 !     June 2017
 !
 !     .. Scalar Arguments ..
-  real, intent(in) :: SIN1, SIN2
-  logical          :: SLAISNAN
+  real(RK), intent(in) :: SIN1, SIN2
+  logical              :: SLAISNAN
 !     ..
 !
 !  =====================================================================

@@ -125,25 +125,25 @@ pure subroutine SORG2R(M, N, K, A, LDA, TAU, WORK, INFO)
   integer, intent(out) :: INFO
 !..
 !..Array Arguments..
-  real, intent(in)     :: TAU(*)
-  real, intent(inout)  :: A(LDA, *)
-  real, intent(out)    :: WORK(*)
+  real(RK), intent(in)     :: TAU(*)
+  real(RK), intent(inout)  :: A(LDA, *)
+  real(RK), intent(out)    :: WORK(*)
 !..
 !
 !  =====================================================================
-!
-!..Parameters..
-  real, parameter :: ONE = 1.0E+0
-  real, parameter :: ZERO = 0.0E+0
 !..
 !..Local Scalars..
   integer :: I, J, L
+!
+!..Parameters..
+! real(RK), parameter :: ONE = 1.0E+0
+! real(RK), parameter :: ZERO = 0.0E+0
 !..
-  interface
+! interface
 !..external Subroutines..
-    include 'slarf.h'
-    include 'sscal.h'
-  end interface
+!   include 'slarf.h'
+!   include 'sscal.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MAX

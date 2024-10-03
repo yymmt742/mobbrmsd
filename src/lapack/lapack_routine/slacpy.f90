@@ -113,8 +113,8 @@ pure subroutine SLACPY(UPLO, M, N, A, LDA, B, LDB)
   integer, intent(in)   :: LDA, LDB, M, N
 !..
 !..Array Arguments..
-  real, intent(in)  :: A(LDA, *)
-  real, intent(out) :: B(LDB, *)
+  real(RK), intent(in)  :: A(LDA, *)
+  real(RK), intent(out) :: B(LDB, *)
 !..
 !
 !  =====================================================================
@@ -122,10 +122,10 @@ pure subroutine SLACPY(UPLO, M, N, A, LDA, B, LDB)
 !..Local Scalars..
   integer :: I, J
 !..
-  interface
+! interface
 ! .. External Functions ..
-    include 'lsame.h'
-  end interface
+!   include 'lsame.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MIN

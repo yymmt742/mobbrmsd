@@ -179,9 +179,9 @@ pure subroutine SORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
   integer, intent(out)  :: INFO
 !..
 !..Array Arguments..
-  real, intent(in)      :: TAU(*)
-  real, intent(inout)   :: A(LDA, *), C(LDC, *)
-  real, intent(out)     :: WORK(*)
+  real(RK), intent(in)    :: TAU(*)
+  real(RK), intent(inout) :: A(LDA, *), C(LDC, *)
+  real(RK), intent(out)   :: WORK(*)
 !..
 !
 !  =====================================================================
@@ -196,15 +196,15 @@ pure subroutine SORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
   integer :: I, I1, I2, I3, IB, IC, IINFO, IWT, JC
   integer :: LDWORK, LWKOPT, MI, NB, NBMIN, NI, NQ, NW
 !..
-  interface
+! interface
 ! .. External Functions ..
-    include 'lsame.h'
-    include 'ilaenv.h'
+!   include 'lsame.h'
+!   include 'ilaenv.h'
 !..external Subroutines..
-    include 'slarfb.h'
-    include 'slarft.h'
-    include 'sorm2r.h'
-  end interface
+!   include 'slarfb.h'
+!   include 'slarft.h'
+!   include 'sorm2r.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MAX, MIN

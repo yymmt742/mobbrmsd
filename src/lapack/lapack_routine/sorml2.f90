@@ -169,27 +169,27 @@ pure subroutine SORML2(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
   integer, intent(out)  :: INFO
 !..
 !..Array Arguments..
-  real, intent(in)      :: TAU(*)
-  real, intent(inout)   :: A(LDA, *), C(LDC, *)
-  real, intent(out)     :: WORK(*)
+  real(RK), intent(in)      :: TAU(*)
+  real(RK), intent(inout)   :: A(LDA, *), C(LDC, *)
+  real(RK), intent(out)     :: WORK(*)
 !..
 !
 !  =====================================================================
-!
-!..Parameters..
-  real, parameter :: ONE = 1.0E+0
 !..
 !..Local Scalars..
   logical :: LEFT, NOTRAN
   integer :: I, I1, I2, I3, IC, JC, MI, NI, NQ
-  real :: AII
+  real(RK) :: AII
+!
+!..Parameters..
+! real(RK), parameter :: ONE = 1.0E+0
 !..
-  interface
+! interface
 !..external Functions..
-    include 'lsame.h'
+!   include 'lsame.h'
 !..external Subroutines..
-    include 'slarf.h'
-  end interface
+!   include 'slarf.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MAX

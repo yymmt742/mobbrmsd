@@ -81,23 +81,23 @@
 !>
 !  =====================================================================
 pure subroutine SSWAP(N, SX, INCX, SY, INCY)
+  implicit none
 !
 !  -- Reference BLAS level1 routine (version 3.8.0) --
 !  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     November 2017
 !
-!     .. Scalar Arguments ..
-  integer, intent(in) :: INCX, INCY, N
-!..
-!..Array Arguments..
-  real, intent(inout) ::  SX(*), SY(*)
+!.. Scalar Arguments ..
+  integer, intent(in)     :: INCX, INCY, N
+!.. Array Arguments..
+  real(RK), intent(inout) :: SX(*), SY(*)
 !..
 !
 !  =====================================================================
 !
 !..Local Scalars..
-  real    :: STEMP
+  real(RK) :: STEMP
   integer :: I, IX, IY, M, MP1
 !..
 !..intrinsic Functions..
@@ -105,12 +105,11 @@ pure subroutine SSWAP(N, SX, INCX, SY, INCY)
 !..
   if (N <= 0) return
   if (INCX == 1 .and. INCY == 1) then
-    !
-    !code for both increments equal to 1
-    !
-    !
-    !clean - up loop
-    !
+!
+! code for both increments equal to 1
+!
+! clean - up loop
+!
     M = MOD(N, 3)
     if (M /= 0) then
       do I = 1, M
@@ -133,10 +132,9 @@ pure subroutine SSWAP(N, SX, INCX, SY, INCY)
       SY(I + 2) = STEMP
     end do
   else
-    !
-    !code for unequal increments or equal increments not equal
-    !to 1
-    !
+!
+! code for unequal increments or equal increments not equal to 1
+!
     IX = 1
     IY = 1
     if (INCX < 0) IX = (-N + 1) * INCX + 1

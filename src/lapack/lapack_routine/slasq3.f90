@@ -189,36 +189,36 @@ pure subroutine SLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL, &
 !     June 2016
 !
 !     .. Scalar Arguments ..
-  logical, intent(in)    :: IEEE
-  integer, intent(in)    :: I0
-  integer, intent(inout) :: N0, PP, NFAIL, ITER, NDIV, TTYPE
-  real, intent(inout)    :: DESIG, DMIN1, DMIN2, DN, DN1, DN2, G, QMAX, TAU
-  real, intent(out)      :: DMIN, SIGMA
+  logical, intent(in)     :: IEEE
+  integer, intent(in)     :: I0
+  integer, intent(inout)  :: N0, PP, NFAIL, ITER, NDIV, TTYPE
+  real(RK), intent(inout) :: DESIG, DMIN1, DMIN2, DN, DN1, DN2, G, QMAX, TAU
+  real(RK), intent(out)   :: DMIN, SIGMA
 !..
 !..Array Arguments..
-  real, intent(inout)    :: Z(*)
+  real(RK), intent(inout) :: Z(*)
 !..
 !
 !  =====================================================================
 !
 !..Parameters..
-  real, parameter :: CBIAS = 1.50E0
-  real, parameter :: ZERO = 0.0E0
-  real, parameter :: QURTR = 0.250E0
-  real, parameter :: HALF = 0.5E0
-  real, parameter :: ONE = 1.0E+0
-  real, parameter :: TWO = 2.0E0
-  real, parameter :: HUNDRD = 100.0E0
+  real(RK), parameter :: CBIAS = 1.50E0
+! real(RK), parameter :: ZERO = 0.0E0
+! real(RK), parameter :: QURTR = 0.250E0
+! real(RK), parameter :: HALF = 0.5E0
+! real(RK), parameter :: ONE = 1.0E+0
+! real(RK), parameter :: TWO = 2.0E0
+! real(RK), parameter :: HUNDRD = 100.0E0
 !..
-  interface
+! interface
 !..external Functions..
-    include 'sisnan.h'
-    include 'slamch.h'
+!   include 'sisnan.h'
+!   include 'slamch.h'
 !..external Subroutines..
-    include 'slasq4.h'
-    include 'slasq5.h'
-    include 'slasq6.h'
-  end interface
+!   include 'slasq4.h'
+!   include 'slasq5.h'
+!   include 'slasq6.h'
+! end interface
 !..
 !..
 !..Local Scalars..
@@ -235,7 +235,7 @@ pure subroutine SLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL, &
   TOL = EPS * HUNDRD
   TOL2 = TOL**2
 !
-!Check for deflation.
+! Check for deflation.
 !
 10 continue
 !
@@ -244,7 +244,7 @@ pure subroutine SLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL, &
   NN = 4 * N0 + PP
   if (N0 == (I0 + 1)) GO TO 40
 !
-!Check whether E(N0 - 1) is negligible, 1 eigenvalue.
+! Check whether E(N0 - 1) is negligible, 1 eigenvalue.
 !
   if (Z(NN - 5) > TOL2 * (SIGMA + Z(NN - 3)) .and. Z(NN - 2 * PP - 4) > TOL2 * Z(NN - 7)) GO TO 30
 !
@@ -254,7 +254,7 @@ pure subroutine SLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL, &
   N0 = N0 - 1
   GO TO 10
 !
-!Check whether E(N0 - 2) is negligible, 2 eigenvalues.
+! Check whether E(N0 - 2) is negligible, 2 eigenvalues.
 !
 30 continue
 !

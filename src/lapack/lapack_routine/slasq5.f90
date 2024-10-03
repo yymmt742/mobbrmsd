@@ -153,21 +153,21 @@ pure subroutine SLASQ5(I0, N0, Z, PP, TAU, SIGMA, DMIN, DMIN1, DMIN2, &
 !     .. Scalar Arguments ..
   logical, intent(in) :: IEEE
   integer, intent(in) :: I0, N0, PP
-  real, intent(in)    :: SIGMA, EPS
-  real, intent(out)   :: TAU, DMIN, DMIN1, DMIN2, DN, DNM1, DNM2
+  real(RK), intent(in) :: SIGMA, EPS
+  real(RK), intent(out) :: TAU, DMIN, DMIN1, DMIN2, DN, DNM1, DNM2
 !..
 !..Array Arguments..
-  real, intent(inout) :: Z(*)
+  real(RK), intent(inout) :: Z(*)
 !..
 !
 !  =====================================================================
 !
 !..parameter..
-  real, parameter :: ZERO = 0.0E0, HALF = 0.5E0
+! real(RK), parameter :: ZERO = 0.0E0, HALF = 0.5E0
 !..
 !..Local Scalars..
   integer :: J4, J4P2
-  real    :: D, EMIN, TEMP, DTHRESH
+  real(RK) :: D, EMIN, TEMP, DTHRESH
 !..
 !..intrinsic Functions..
   intrinsic :: MIN

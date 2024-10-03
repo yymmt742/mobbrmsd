@@ -158,24 +158,24 @@ pure subroutine STRMV(UPLO, TRANS, DIAG, N, A, LDA, X, INCX)
   character, intent(in) :: DIAG, TRANS, UPLO
 !..
 !..Array Arguments..
-  real, intent(in)    :: A(LDA, *)
-  real, intent(inout) :: X(*)
+  real(RK), intent(in)    :: A(LDA, *)
+  real(RK), intent(inout) :: X(*)
 !..
 !
 !  =====================================================================
-!
-!..Parameters..
-  real, parameter :: ZERO = 0.0E+0
 !..
 !..Local Scalars..
-  real :: TEMP
+  real(RK) :: TEMP
   integer :: I, INFO, IX, J, JX, KX
   logical :: NOUNIT
+!
+!..Parameters..
+! real(RK), parameter :: ZERO = 0.0E+0
 !..
-  interface
+! interface
 ! .. External Functions ..
-    include 'lsame.h'
-  end interface
+!   include 'lsame.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MAX

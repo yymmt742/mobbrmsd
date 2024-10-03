@@ -104,42 +104,40 @@ pure elemental subroutine SLARTG(F, G, CS, SN, R)
 !     December 2016
 !
 !     .. Scalar Arguments ..
-  real, intent(in)  :: F, G
-  real, intent(out) :: CS, R, SN
+  real(RK), intent(in)  :: F, G
+  real(RK), intent(out) :: CS, R, SN
 !..
 !
 !  =====================================================================
 !
-!..Parameters..
-  real, parameter :: ZERO = 0.0E0
-  real, parameter :: ONE = 1.0E0
-  real, parameter :: TWO = 2.0E0
-!..
 !..Local Scalars..
-!logical FIRST
+! logical FIRST
   integer :: CNT, I
-  real :: EPS, F1, G1, SAFMIN, SAFMN2, SAFMX2, SCL
+  real(RK) :: F1, G1, SAFMN2, SAFMX2, SCL
 !..
-  interface
+!..Parameters..
+! real(RK), parameter :: ZERO = 0.0E0
+! real(RK), parameter :: ONE = 1.0E0
+! real(RK), parameter :: TWO = 2.0E0
+!..
+! interface
 ! .. External Functions ..
-    include 'slamch.h'
-  end interface
+!   include 'slamch.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: ABS, INT, LOG, MAX, SQRT
 !..
 !..save statement..
-!save FIRST, SAFMX2, SAFMIN, SAFMN2
+! save FIRST, SAFMX2, SAFMN2
 !..
 !..data statements..
-!data FIRST/.true./
+! data FIRST/.true./
 !..
 !..Executable Statements..
 !
 ! if(FIRST) then
-  SAFMIN = SLAMCH('S')
-  EPS = SLAMCH('E')
-  SAFMN2 = SLAMCH('B')**INT(LOG(SAFMIN / EPS) / LOG(SLAMCH('B')) / TWO)
+  SAFMN2 = SLAMCH('B')**INT(LOG(SLAMCH('S') / SLAMCH('E')) / LOG(SLAMCH('B')) / TWO)
   SAFMX2 = ONE / SAFMN2
 ! FIRST = .false.
 ! end if
@@ -201,3 +199,4 @@ pure elemental subroutine SLARTG(F, G, CS, SN, R)
   !end of SLARTG
   !
 end
+

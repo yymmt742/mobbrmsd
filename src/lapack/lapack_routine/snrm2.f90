@@ -83,17 +83,17 @@ pure function SNRM2(N, X, INCX)
   integer, intent(in) :: INCX, N
 !..
 !..Array Arguments..
-  real, intent(in) :: X(*)
-  real             :: SNRM2
+  real(RK), intent(in) :: X(*)
+  real(RK)             :: SNRM2
 !..
 !
 !  =====================================================================
 !
 !..Parameters..
-  real, parameter :: ONE = 1.0E+0, ZERO = 0.0E+0
+! real(RK), parameter :: ONE = 1.0E+0, ZERO = 0.0E+0
 !..
 !..Local Scalars..
-  real :: ABSXI, NORM, SCL, SSQ
+  real(RK) :: ABSXI, NORM, SCL, SSQ
   integer :: IX
 !..
 !..intrinsic Functions..

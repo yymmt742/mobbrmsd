@@ -247,51 +247,47 @@ pure subroutine SBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !June 2017
 !
 !.. Scalar Arguments ..
-  character, intent(in) :: UPLO
-  integer, intent(in)   :: LDC, LDU, LDVT, N, NCC, NCVT, NRU
-  integer, intent(out)  :: INFO
+  character, intent(in)   :: UPLO
+  integer, intent(in)     :: LDC, LDU, LDVT, N, NCC, NCVT, NRU
+  integer, intent(out)    :: INFO
 ! ..
 ! .. Array Arguments ..
-  real, intent(inout)   :: C(LDC, *), D(*), E(*), U(LDU, *), VT(LDVT, *)
-  real, intent(out)     :: WORK(*)
+  real(RK), intent(inout) :: C(LDC, *), D(*), E(*), U(LDU, *), VT(LDVT, *)
+  real(RK), intent(out)   :: WORK(*)
 !..
 !
 ! =====================================================================
 !
 !.. Parameters ..
-  real, parameter    :: ZERO = 0.0E0
-  real, parameter    :: ONE = 1.0E0
-  real, parameter    :: NEGONE = -1.0E0
-  real, parameter    :: HNDRTH = 0.01E0
-  real, parameter    :: TEN = 10.0E0
-  real, parameter    :: HNDRD = 100.0E0
-  real, parameter    :: MEIGTH = -0.125E0
-  integer, parameter :: MAXITR = 6
+  real(RK), parameter :: NEGONE = -1.0E0
+  real(RK), parameter :: HNDRTH = 0.01E0
+  real(RK), parameter :: HNDRD = 100.0E0
+  real(RK), parameter :: MEIGTH = -0.125E0
+  integer, parameter  :: MAXITR = 6
 !..
 !.. Local Scalars ..
-  logical :: LOWER, ROTATE
-  integer :: I, IDIR, ISUB, ITER, ITERDIVN, J, LL, LLL, M
-  integer :: MAXITDIVN, NM1, NM12, NM13, OLDLL, OLDM
-  real    :: ABSE, ABSS, COSL, COSR, CS, EPS, F, G, H, MU
-  real    :: OLDCS, OLDSN, R, SHIFT, SIGMN, SIGMX, SINL
-  real    :: SINR, SLL, SMAX, SMIN, SMINL, SMINOA
-  real    :: SN, THRESH, TOL, TOLMUL, UNFL
+  logical  :: LOWER, ROTATE
+  integer  :: I, IDIR, ISUB, ITER, ITERDIVN, J, LL, LLL, M
+  integer  :: MAXITDIVN, NM1, NM12, NM13, OLDLL, OLDM
+  real(RK) :: ABSE, ABSS, COSL, COSR, CS, EPS, F, G, H, MU
+  real(RK) :: OLDCS, OLDSN, R, SHIFT, SIGMN, SIGMX, SINL
+  real(RK) :: SINR, SLL, SMAX, SMIN, SMINL, SMINOA
+  real(RK) :: SN, THRESH, TOL, TOLMUL, UNFL
 !..
-  interface
+! interface
 ! .. External Functions ..
-    include 'lsame.h'
-    include 'slamch.h'
+!   include 'lsame.h'
+!   include 'slamch.h'
 ! .. External Subroutines ..
-    include 'slartg.h'
-    include 'slas2.h'
-    include 'slasq1.h'
-    include 'slasr.h'
-    include 'slasv2.h'
-    include 'srot.h'
-    include 'sscal.h'
-    include 'sswap.h'
-!   include 'xerbla.h'
-  end interface
+!   include 'slartg.h'
+!   include 'slas2.h'
+!   include 'slasq1.h'
+!   include 'slasr.h'
+!   include 'slasv2.h'
+!   include 'srot.h'
+!   include 'sscal.h'
+!   include 'sswap.h'
+! end interface
 !..
 !.. Intrinsic Functions ..
   intrinsic        :: ABS, MAX, MIN, real, SIGN, SQRT
@@ -804,3 +800,4 @@ pure subroutine SBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !End of SBDSQR
 !
 end
+

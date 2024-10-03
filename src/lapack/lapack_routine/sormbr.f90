@@ -207,34 +207,31 @@ pure subroutine SORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
   integer, intent(out)  :: INFO
 !..
 !..Array Arguments..
-  real, intent(in)    :: TAU(*)
-  real, intent(inout) :: A(LDA, *), C(LDC, *)
-  real, intent(out)   :: WORK(*)
+  real(RK), intent(in)    :: TAU(*)
+  real(RK), intent(inout) :: A(LDA, *), C(LDC, *)
+  real(RK), intent(out)   :: WORK(*)
 !..
-!
 !  =====================================================================
-!
 !..Local Scalars..
   logical :: APPLYQ, LEFT, LQUERY, NOTRAN
   character :: TRANST
   integer :: I1, I2, IINFO, LWKOPT, MI, NB, NI, NQ, NW
 !..
-  interface
+! interface
 !..external Functions..
-    include 'ilaenv.h'
-    include 'lsame.h'
+!   include 'ilaenv.h'
+!   include 'lsame.h'
 !..external Subroutines..
-    include 'sormlq.h'
-    include 'sormqr.h'
-  end interface
-!..
+!   include 'sormlq.h'
+!   include 'sormqr.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MAX, MIN
 !..
 !..Executable Statements..
 !
-!Test the input arguments
+! Test the input arguments
 !
   INFO = 0
   APPLYQ = LSAME(VECT, 'Q')
@@ -242,7 +239,7 @@ pure subroutine SORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
   NOTRAN = LSAME(TRANS, 'N')
   LQUERY = (LWORK == -1)
 !
-!NQ is the order of Q or P and NW is the minimum dimension of WORK
+! NQ is the order of Q or P and NW is the minimum dimension of WORK
 !
   if (LEFT) then
     NQ = M

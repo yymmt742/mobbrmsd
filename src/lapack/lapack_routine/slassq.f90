@@ -110,25 +110,25 @@ pure subroutine SLASSQ(N, X, INCX, SCL, SUMSQ)
 !
 !     .. Scalar Arguments ..
   integer, intent(in) :: INCX, N
-  real, intent(inout) :: SCL, SUMSQ
+  real(RK), intent(inout) :: SCL, SUMSQ
 !..
 !..Array Arguments..
-  real, intent(in)    :: X(*)
+  real(RK), intent(in)    :: X(*)
 !..
 !
 ! =====================================================================
 !
-!..Parameters..
-  real, parameter :: ZERO = 0.0E+0
-!..
 !..Local Scalars..
   integer :: IX
   real :: ABSXI
 !..
-  interface
+!..Parameters..
+! real, parameter :: ZERO = 0.0E+0
+!..
+! interface
 !..external Functions..
-    include 'sisnan.h'
-  end interface
+!   include 'sisnan.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: ABS

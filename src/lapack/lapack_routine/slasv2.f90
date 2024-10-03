@@ -137,6 +137,7 @@
 !>
 !  =====================================================================
 pure elemental subroutine SLASV2(F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL)
+  implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -144,8 +145,8 @@ pure elemental subroutine SLASV2(F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL)
 !     December 2016
 !
 !     .. Scalar Arguments ..
-  real, intent(in)  :: F, G, H
-  real, intent(out) :: CSL, CSR, SNL, SNR, SSMAX, SSMIN
+  real(RK), intent(in)  :: F, G, H
+  real(RK), intent(out) :: CSL, CSR, SNL, SNR, SSMAX, SSMIN
 !..
 !
 ! =====================================================================
@@ -154,23 +155,23 @@ pure elemental subroutine SLASV2(F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL)
 !..Local Scalars..
   logical :: GASMAL, SWAP
   integer :: PMAX
-  real :: A, CLT, CRT, D, FA, FT, GA, GT, HA, HT, L, M
-  real :: MM, R, S, SLT, SRT, T, TEMP, TSIGN, TT
+  real(RK) :: A, CLT, CRT, D, FA, FT, GA, GT, HA, HT, L, M
+  real(RK) :: MM, R, S, SLT, SRT, T, TEMP, TSIGN, TT
 !..
 !..intrinsic Functions..
   intrinsic :: ABS, SIGN, SQRT
 !..
 !..Parameters..
-  real, parameter :: ZERO = 0.0E+0
-  real, parameter :: HALF = 0.5E0
-  real, parameter :: ONE = 1.0E+0
-  real, parameter :: TWO = 2.0E0
-  real, parameter :: FOUR = 4.0E0
+! real(RK), parameter :: ZERO = 0.0E+0
+! real(RK), parameter :: HALF = 0.5E0
+! real(RK), parameter :: ONE = 1.0E+0
+! real(RK), parameter :: TWO = 2.0E0
+! real(RK), parameter :: FOUR = 4.0E0
 !..
-  interface
+! interface
 !..external Subroutines..
-    include 'slamch.h'
-  end interface
+!   include 'slamch.h'
+! end interface
 !..
 !..
 !..Executable Statements..
@@ -319,3 +320,4 @@ pure elemental subroutine SLASV2(F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL)
 ! end of SLASV2
 !
 end
+

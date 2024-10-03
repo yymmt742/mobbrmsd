@@ -136,21 +136,21 @@ pure subroutine SGER(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
 !     December 2016
 !
 !     .. Scalar Arguments ..
-  real, intent(in)    :: ALPHA
+  real(RK), intent(in)    :: ALPHA
   integer, intent(in) :: INCX, INCY, LDA, M, N
 !..
 !..Array Arguments..
-  real, intent(in)    :: X(*), Y(*)
-  real, intent(inout) :: A(LDA, *)
+  real(RK), intent(in)    :: X(*), Y(*)
+  real(RK), intent(inout) :: A(LDA, *)
 !..
 !
 !  =====================================================================
 !
 !..Parameters..
-  real, parameter :: ZERO = 0.0E+0
+! real(RK), parameter :: ZERO = 0.0E+0
 !..
 !..Local Scalars..
-  real :: TEMP
+  real(RK) :: TEMP
   integer :: I, INFO, IX, J, JY, KX
 !..
 !..intrinsic Functions..

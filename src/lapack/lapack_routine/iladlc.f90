@@ -75,7 +75,7 @@
 !
 !  =====================================================================
 pure function ILADLC(M, N, A, LDA)
-  use LA_CONSTANTS, only: DP
+! use LA_CONSTANTS, only: DP
   implicit none
 !
 !  -- LAPACK auxiliary routine --

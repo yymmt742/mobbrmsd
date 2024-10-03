@@ -57,17 +57,17 @@ pure elemental function LSAME(CA, CB)
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
 !     .. Scalar Arguments ..
-  character(1), intent(in) :: CA, CB
-  logical                 :: LSAME
+  character, intent(in) :: CA, CB
+  logical               :: LSAME
 !     ..
 !
 ! =====================================================================
 !
 !     .. Intrinsic Functions ..
-  intrinsic               :: ICHAR
+  intrinsic :: ICHAR
 !     ..
 !     .. Local Scalars ..
-  integer                 :: INTA, INTB, ZCODE
+  integer :: INTA, INTB, ZCODE
 !     ..
 !
 !     Test if the characters are equal

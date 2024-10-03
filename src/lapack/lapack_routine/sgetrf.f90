@@ -120,26 +120,26 @@ pure subroutine SGETRF(M, N, A, LDA, IPIV, INFO)
 !..
 !.. Array Arguments ..
   integer, intent(out) :: IPIV(*)
-  real, intent(inout)  :: A(LDA, *)
+  real(RK), intent(inout) :: A(LDA, *)
 !..
 !
 !  =====================================================================
-!
-!..Parameters..
-  real, parameter :: ONE = 1.0E+0
 !..
 !..Local Scalars..
   integer :: I, IINFO, J, JB, NB
+!
+!..Parameters..
+! real(RK), parameter :: ONE = 1.0E+0
 !..
-  interface
+! interface
 !..external Functions..
-    include 'ilaenv.h'
+!   include 'ilaenv.h'
 !..external Subroutines..
-    include 'sgemm.h'
-    include 'sgetrf2.h'
-    include 'slaswp.h'
-    include 'strsm.h'
-  end interface
+!   include 'sgemm.h'
+!   include 'sgetrf2.h'
+!   include 'slaswp.h'
+!   include 'strsm.h'
+! end interface
 !..
 !..intrinsic Functions..
   intrinsic :: MAX, MIN

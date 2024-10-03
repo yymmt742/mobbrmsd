@@ -78,21 +78,21 @@ pure function ISAMAX(N, SX, INCX)
 ! November 2017
 !
 ! .. Scalar Arguments ..
-  integer, intent(in) :: INCX, N
+  integer, intent(in)  :: INCX, N
 ! ..
 ! .. Array Arguments ..
-  real, intent(in)    :: SX(*)
+  real(RK), intent(in) :: SX(*)
 ! ..
-  integer             :: ISAMAX
+  integer :: ISAMAX
 !
 !  =====================================================================
 !
 ! .. Local Scalars ..
-  real                :: SMAX
-  integer             :: I, IX
+  real(RK) :: SMAX
+  integer  :: I, IX
 ! ..
 ! .. Intrinsic Functions ..
-  intrinsic ABS
+  intrinsic :: ABS
 ! ..
   ISAMAX = 0
   if (N < 1 .or. INCX <= 0) return
@@ -126,3 +126,4 @@ pure function ISAMAX(N, SX, INCX)
   end if
   return
 end
+

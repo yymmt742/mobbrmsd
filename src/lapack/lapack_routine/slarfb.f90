@@ -208,28 +208,28 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
   integer, intent(in)   :: K, LDC, LDT, LDV, LDWORK, M, N
 !     ..
 !     .. Array Arguments ..
-  real, intent(inout) :: C(LDC, *)
-  real, intent(in)    :: T(LDT, *), V(LDV, *)
-  real, intent(out)   :: WORK(LDWORK, *)
+  real(RK), intent(inout) :: C(LDC, *)
+  real(RK), intent(in)    :: T(LDT, *), V(LDV, *)
+  real(RK), intent(out)   :: WORK(LDWORK, *)
 !     ..
 !
 !  =====================================================================
-!
-!     .. Parameters ..
-  real, parameter :: ONE = 1.0E+0
 !     ..
 !     .. Local Scalars ..
-  character       :: TRANST
-  integer         :: I, J
+  character :: TRANST
+  integer   :: I, J
+!
+!     .. Parameters ..
+! real(RK), parameter :: ONE = 1.0E+0
 !..
-  interface
+! interface
 ! .. External Functions ..
-    include 'lsame.h'
+!   include 'lsame.h'
 ! .. External Subroutines ..
-    include 'scopy.h'
-    include 'sgemm.h'
-    include 'strmm.h'
-  end interface
+!   include 'scopy.h'
+!   include 'sgemm.h'
+!   include 'strmm.h'
+! end interface
 !     ..
 !     .. Executable Statements ..
 !

@@ -92,8 +92,8 @@ pure subroutine SCOPY(N, SX, INCX, SY, INCY)
   integer, intent(in) :: INCX, INCY, N
 !   ..
 !   .. Array Arguments ..
-  real, intent(in)    :: SX(*)
-  real, intent(out)   :: SY(*)
+  real(RK), intent(in)    :: SX(*)
+  real(RK), intent(out)   :: SY(*)
 !   ..
 !
 !=====================================================================
@@ -102,7 +102,7 @@ pure subroutine SCOPY(N, SX, INCX, SY, INCY)
   integer :: I, IX, IY, M, MP1
 !   ..
 !   .. Intrinsic Functions ..
-  intrinsic MOD
+  intrinsic :: MOD
 !   ..
   if (N <= 0) return
   if (INCX == 1 .and. INCY == 1) then

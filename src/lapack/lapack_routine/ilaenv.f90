@@ -174,21 +174,21 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
 !  =====================================================================
 !
 !     .. Local Scalars ..
-  integer                  :: I, IC, IZ, NB, NBMIN, NX
-  logical                  :: CNAME, SNAME, TWOSTAGE
-  character(1)             :: C1
-  character(2)             :: C2, C4
-  character(3)             :: C3
-  character(16)            :: SUBNAM * 16
+  integer       :: I, IC, IZ, NB, NBMIN, NX
+  logical       :: CNAME, SNAME, TWOSTAGE
+  character(1)  :: C1
+  character(2)  :: C2, C4
+  character(3)  :: C3
+  character(16) :: SUBNAM * 16
 !     ..
 !     .. Intrinsic Functions ..
   intrinsic                :: CHAR, ICHAR, INT, MIN, real
 !     ..
 !     .. External Functions ..
-  interface
-    include 'ieeeck.h'
-    include 'iparmq.h'
-  end interface
+! interface
+!   include 'ieeeck.h'
+!   include 'iparmq.h'
+! end interface
 !     ..
 !     .. Executable Statements ..
 !
@@ -698,7 +698,7 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
 !       ILAENV = 0
     ILAENV = 1
     if (ILAENV == 1) then
-      ILAENV = IEEECK(1, 0.0, 1.0)
+      ILAENV = IEEECK(1, 0.0_RK, 1.0_RK)
     end if
     return
 !
@@ -710,7 +710,7 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
 !       ILAENV = 0
     ILAENV = 1
     if (ILAENV == 1) then
-      ILAENV = IEEECK(0, 0.0, 1.0)
+      ILAENV = IEEECK(0, 0.0_RK, 1.0_RK)
     end if
     return
 !
