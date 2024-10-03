@@ -130,7 +130,7 @@ contains
         jlcl = 1 + MODULO(ilcl, k)
         ilcl = k + 1 + ilcl / k
         call cantor_pair(f(ilcl), f(jlcl), spnt)
-        if (.not. mobbrmsd_is_finished(header, state(spnt))) then
+        if (.not. mobbrmsd_state_is_finished(state(spnt))) then
           wpnt = (spnt - 1) * ldw + 1
           call mobbrmsd_restart( &
          &       header, &
