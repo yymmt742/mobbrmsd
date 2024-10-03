@@ -1,4 +1,4 @@
-!> \brief \b SLAISNAN tests input for NaN by comparing two arguments for inequality.
+!> \brief \b Smobbrmsd_LAISNAN tests input for NaN by comparing two arguments for inequality.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLAISNAN + dependencies
+!> Download Smobbrmsd_LAISNAN + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slaisnan.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slaisnan.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       LOGICAL FUNCTION SLAISNAN( SIN1, SIN2 )
+!       LOGICAL FUNCTION Smobbrmsd_LAISNAN( SIN1, SIN2 )
 !
 !       .. Scalar Arguments ..
 !       REAL, INTENT(IN) :: SIN1, SIN2
@@ -31,9 +31,9 @@
 !> \verbatim
 !>
 !> This routine is not for general use.  It exists solely to avoid
-!> over-optimization in SISNAN.
+!> over-optimization in mobbrmsd_SISNAN.
 !>
-!> SLAISNAN checks for NaNs by comparing its two arguments for
+!> Smobbrmsd_LAISNAN checks for NaNs by comparing its two arguments for
 !> inequality.  NaN is the only floating-point value where NaN != NaN
 !> returns .TRUE.  To check for NaNs, pass the same variable as both
 !> arguments.
@@ -72,7 +72,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure elemental function SLAISNAN(SIN1, SIN2)
+pure elemental function Smobbrmsd_LAISNAN(SIN1, SIN2)
   implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.1) --
@@ -82,12 +82,12 @@ pure elemental function SLAISNAN(SIN1, SIN2)
 !
 !     .. Scalar Arguments ..
   real(RK), intent(in) :: SIN1, SIN2
-  logical              :: SLAISNAN
+  logical              :: Smobbrmsd_LAISNAN
 !     ..
 !
 !  =====================================================================
 !
 !  .. Executable Statements ..
-  SLAISNAN = (SIN1 /= SIN2)
+  Smobbrmsd_LAISNAN = (SIN1 /= SIN2)
   return
 end

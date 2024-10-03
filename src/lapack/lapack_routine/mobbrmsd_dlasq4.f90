@@ -1,4 +1,4 @@
-!> \brief \b DLASQ4 computes an approximation to the smallest eigenvalue using values of d from the previous transform. Used by sbdsqr.
+!> \brief \b mobbrmsd_DLASQ4 computes an approximation to the smallest eigenvalue using values of d from the previous transform. Used by sbdsqr.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLASQ4 + dependencies
+!> Download mobbrmsd_DLASQ4 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlasq4.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlasq4.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLASQ4( I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN,
+!       SUBROUTINE mobbrmsd_DLASQ4( I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN,
 !                          DN1, DN2, TAU, TTYPE, G )
 !
 !       .. Scalar Arguments ..
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> DLASQ4 computes an approximation TAU to the smallest eigenvalue
+!> mobbrmsd_DLASQ4 computes an approximation TAU to the smallest eigenvalue
 !> using values of d from the previous transform.
 !> \endverbatim
 !
@@ -124,7 +124,7 @@
 !> \verbatim
 !>          G is DOUBLE PRECISION
 !>        G is passed as an argument in order to save its value between
-!>        calls to DLASQ4.
+!>        calls to mobbrmsd_DLASQ4.
 !> \endverbatim
 !
 !  Authors:
@@ -146,7 +146,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DLASQ4(I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN, &
+pure subroutine mobbrmsd_DLASQ4(I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN, &
                &        DN1, DN2, TAU, TTYPE, G)
 ! use LA_CONSTANTS, only: RK => dp
 !
@@ -394,7 +394,7 @@ pure subroutine DLASQ4(I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN, &
   TAU = S
   return
 !
-!     End of DLASQ4
+!     End of mobbrmsd_DLASQ4
 !
-end subroutine DLASQ4
+end subroutine mobbrmsd_DLASQ4
 

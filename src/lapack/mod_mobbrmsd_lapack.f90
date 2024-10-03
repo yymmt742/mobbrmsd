@@ -24,6 +24,48 @@ module mod_mobbrmsd_lapack
   integer, parameter   :: RK = SELECTED_REAL_KIND(15)
 #endif
 !
+#ifdef USE_REAL32
+  interface SGEMM
+    module procedure mobbrmsd_sgemm
+  end interface
+!
+  interface SGESVD
+    module procedure mobbrmsd_sgesvd
+  end interface
+!
+  interface SORMQR
+    module procedure mobbrmsd_sormqr
+  end interface
+!
+  interface SGEQRF
+    module procedure mobbrmsd_SGEQRF
+  end interface
+!
+  interface SGETRF
+    module procedure mobbrmsd_SGETRF
+  end interface
+#else
+  interface DGEMM
+    module procedure mobbrmsd_dgemm
+  end interface
+!
+  interface DGESVD
+    module procedure mobbrmsd_dgesvd
+  end interface
+!
+  interface DORMQR
+    module procedure mobbrmsd_dormqr
+  end interface
+!
+  interface DGEQRF
+    module procedure mobbrmsd_dgeqrf
+  end interface
+!
+  interface DGETRF
+    module procedure mobbrmsd_dgetrf
+  end interface
+#endif
+!
   real(RK), parameter  :: ZERO    = 0.0_RK
   real(RK), parameter  :: QURTR   = 0.250_RK
   real(RK), parameter  :: HALF    = 0.5_RK
@@ -197,3 +239,4 @@ contains
 #endif
 !
 end module mod_mobbrmsd_lapack
+

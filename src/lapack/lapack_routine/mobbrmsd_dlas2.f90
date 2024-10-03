@@ -1,4 +1,4 @@
-!> \brief \b DLAS2 computes singular values of a 2-by-2 triangular matrix.
+!> \brief \b mobbrmsd_DLAS2 computes singular values of a 2-by-2 triangular matrix.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLAS2 + dependencies
+!> Download mobbrmsd_DLAS2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlas2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlas2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLAS2( F, G, H, SSMIN, SSMAX )
+!       SUBROUTINE mobbrmsd_DLAS2( F, G, H, SSMIN, SSMAX )
 !
 !       .. Scalar Arguments ..
 !       DOUBLE PRECISION   F, G, H, SSMAX, SSMIN
@@ -30,7 +30,7 @@
 !>
 !> \verbatim
 !>
-!> DLAS2  computes the singular values of the 2-by-2 matrix
+!> mobbrmsd_DLAS2  computes the singular values of the 2-by-2 matrix
 !>    [  F   G  ]
 !>    [  0   H  ].
 !> On return, SSMIN is the smaller singular value and SSMAX is the
@@ -103,7 +103,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure elemental subroutine DLAS2(F, G, H, SSMIN, SSMAX)
+pure elemental subroutine mobbrmsd_DLAS2(F, G, H, SSMIN, SSMAX)
 ! use LA_CONSTANTS, only: RK => dp
 !
 !  -- LAPACK auxiliary routine --
@@ -172,7 +172,7 @@ pure elemental subroutine DLAS2(F, G, H, SSMIN, SSMAX)
   end if
   return
 !
-!     End of DLAS2
+!     End of mobbrmsd_DLAS2
 !
-end subroutine DLAS2
+end subroutine mobbrmsd_DLAS2
 

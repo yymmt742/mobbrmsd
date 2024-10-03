@@ -1,4 +1,4 @@
-!> \brief \b DGEQRF
+!> \brief \b mobbrmsd_DGEQRF
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DGEQRF + dependencies
+!> Download mobbrmsd_DGEQRF + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dgeqrf.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dgeqrf.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       pure subroutine DGEQRF( M, N, A, LDA, TAU, WORK, LWORK, INFO )
+!       pure subroutine mobbrmsd_DGEQRF( M, N, A, LDA, TAU, WORK, LWORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, LDA, LWORK, M, N
@@ -33,7 +33,7 @@
 !>
 !> \verbatim
 !>
-!> DGEQRF computes a QR factorization of a real M-by-N matrix A:
+!> mobbrmsd_DGEQRF computes a QR factorization of a real M-by-N matrix A:
 !>
 !>    A = Q * ( R ),
 !>            ( 0 )
@@ -142,7 +142,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
+pure subroutine mobbrmsd_DGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -184,7 +184,7 @@ pure subroutine DGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !
   K = MIN(M, N)
   INFO = 0
-  NB = ILAENV(1, 'DGEQRF', ' ', M, N, -1, -1)
+  NB = mobbrmsd_ILAENV(1, 'mobbrmsd_DGEQRF', ' ', M, N, -1, -1)
   LQUERY = (LWORK == -1)
   if (M < 0) then
     INFO = -1
@@ -196,7 +196,7 @@ pure subroutine DGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
     if (LWORK <= 0 .or. (M > 0 .and. LWORK < MAX(1, N))) INFO = -7
   end if
   if (INFO /= 0) then
-    !CALL XERBLA( 'DGEQRF', -INFO )
+    !CALL XERBLA( 'mobbrmsd_DGEQRF', -INFO )
     return
   else if (LQUERY) then
     if (K == 0) then
@@ -222,7 +222,7 @@ pure subroutine DGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !
 ! Determine when to cross over from blocked to unblocked code.
 !
-    NX = MAX(0, ILAENV(3, 'DGEQRF', ' ', M, N, -1, -1))
+    NX = MAX(0, mobbrmsd_ILAENV(3, 'mobbrmsd_DGEQRF', ' ', M, N, -1, -1))
     if (NX < K) then
 !
 ! Determine if workspace is large enough for blocked code.
@@ -235,7 +235,7 @@ pure subroutine DGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 ! determine the minimum value of NB.
 !
         NB = LWORK / LDWORK
-        NBMIN = MAX(2, ILAENV(2, 'DGEQRF', ' ', M, N, -1, -1))
+        NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'mobbrmsd_DGEQRF', ' ', M, N, -1, -1))
       end if
     end if
   end if
@@ -250,18 +250,18 @@ pure subroutine DGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !           Compute the QR factorization of the current block
 !           A(i:m,i:i+ib-1)
 !
-      call DGEQR2(M - I + 1, IB, A(I, I), LDA, TAU(I), WORK, IINFO)
+      call mobbrmsd_DGEQR2(M - I + 1, IB, A(I, I), LDA, TAU(I), WORK, IINFO)
       if (I + IB <= N) then
 !
 !              Form the triangular factor of the block reflector
 !              H = H(i) H(i+1) . . . H(i+ib-1)
 !
-        call DLARFT('Forward', 'Columnwise', M - I + 1, IB, &
+        call mobbrmsd_DLARFT('Forward', 'Columnwise', M - I + 1, IB, &
             &       A(I, I), LDA, TAU(I), WORK, LDWORK)
 !
 !              Apply H**T to A(i:m,i+ib:n) from the left
 !
-        call DLARFB('Left', 'Transpose', 'Forward', &
+        call mobbrmsd_DLARFB('Left', 'Transpose', 'Forward', &
             &       'Columnwise', M - I + 1, N - I - IB + 1, IB, &
             &       A(I, I), LDA, WORK, LDWORK, A(I, I + IB), &
             &       LDA, WORK(IB + 1), LDWORK)
@@ -273,11 +273,11 @@ pure subroutine DGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !
 !     Use unblocked code to factor the last or only block.
 !
-  if (I <= K) call DGEQR2(M - I + 1, N - I + 1, A(I, I), LDA, TAU(I), WORK, IINFO)
+  if (I <= K) call mobbrmsd_DGEQR2(M - I + 1, N - I + 1, A(I, I), LDA, TAU(I), WORK, IINFO)
 !
   WORK(1) = IWS
   return
 !
-!     End of DGEQRF
+!     End of mobbrmsd_DGEQRF
 !
-end subroutine DGEQRF
+end subroutine mobbrmsd_DGEQRF

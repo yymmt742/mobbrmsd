@@ -1,4 +1,4 @@
-!> \brief \b DORGL2
+!> \brief \b mobbrmsd_DORGL2
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DORGL2 + dependencies
+!> Download mobbrmsd_DORGL2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dorgl2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dorgl2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DORGL2( M, N, K, A, LDA, TAU, WORK, INFO )
+!       SUBROUTINE mobbrmsd_DORGL2( M, N, K, A, LDA, TAU, WORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, K, LDA, M, N
@@ -33,13 +33,13 @@
 !>
 !> \verbatim
 !>
-!> DORGL2 generates an m by n real matrix Q with orthonormal rows,
+!> mobbrmsd_DORGL2 generates an m by n real matrix Q with orthonormal rows,
 !> which is defined as the first m rows of a product of k elementary
 !> reflectors of order n
 !>
 !>       Q  =  H(k) . . . H(2) H(1)
 !>
-!> as returned by DGELQF.
+!> as returned by mobbrmsd_DGELQF.
 !> \endverbatim
 !
 !  Arguments:
@@ -69,7 +69,7 @@
 !>          A is real(RK)           :: array, dimension (LDA,N)
 !>          On entry, the i-th row must contain the vector which defines
 !>          the elementary reflector H(i), for i = 1,2,...,k, as returned
-!>          by DGELQF in the first k rows of its array argument A.
+!>          by mobbrmsd_DGELQF in the first k rows of its array argument A.
 !>          On exit, the m-by-n matrix Q.
 !> \endverbatim
 !>
@@ -83,7 +83,7 @@
 !> \verbatim
 !>          TAU is real(RK)           :: array, dimension (K)
 !>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i), as returned by DGELQF.
+!>          reflector H(i), as returned by mobbrmsd_DGELQF.
 !> \endverbatim
 !>
 !> \param[out] WORK
@@ -109,7 +109,7 @@
 !> \ingroup doubleOTHERcomputational
 !
 !  =====================================================================
-pure subroutine DORGL2(M, N, K, A, LDA, TAU, WORK, INFO)
+pure subroutine mobbrmsd_DORGL2(M, N, K, A, LDA, TAU, WORK, INFO)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -161,7 +161,7 @@ pure subroutine DORGL2(M, N, K, A, LDA, TAU, WORK, INFO)
     INFO = -5
   end if
   if (INFO /= 0) then
-    !CALL XERBLA( 'DORGL2', -INFO )
+    !CALL XERBLA( 'mobbrmsd_DORGL2', -INFO )
     return
   end if
 !
@@ -188,10 +188,10 @@ pure subroutine DORGL2(M, N, K, A, LDA, TAU, WORK, INFO)
     if (I < N) then
       if (I < M) then
         A(I, I) = ONE
-        call DLARF('Right', M - I, N - I + 1, A(I, I), LDA, &
+        call mobbrmsd_DLARF('Right', M - I, N - I + 1, A(I, I), LDA, &
        &            TAU(I), A(I + 1, I), LDA, WORK)
       end if
-      call DSCAL(N - I, -TAU(I), A(I, I + 1), LDA)
+      call mobbrmsd_DSCAL(N - I, -TAU(I), A(I, I + 1), LDA)
     end if
     A(I, I) = ONE - TAU(I)
 !
@@ -203,7 +203,7 @@ pure subroutine DORGL2(M, N, K, A, LDA, TAU, WORK, INFO)
   end do
   return
 !
-!     End of DORGL2
+!     End of mobbrmsd_DORGL2
 !
-end subroutine DORGL2
+end subroutine mobbrmsd_DORGL2
 

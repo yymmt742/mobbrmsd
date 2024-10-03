@@ -1,4 +1,4 @@
-!> \brief \b DORM2R multiplies a general matrix by the orthogonal matrix from a QR factorization determined by sgeqrf (unblocked algorithm).
+!> \brief \b mobbrmsd_DORM2R multiplies a general matrix by the orthogonal matrix from a QR factorization determined by sgeqrf (unblocked algorithm).
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DORM2R + dependencies
+!> Download mobbrmsd_DORM2R + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dorm2r.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dorm2r.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DORM2R( SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC,
+!       SUBROUTINE mobbrmsd_DORM2R( SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC,
 !                          WORK, INFO )
 !
 !       .. Scalar Arguments ..
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> DORM2R overwrites the general real m by n matrix C with
+!> mobbrmsd_DORM2R overwrites the general real m by n matrix C with
 !>
 !>       Q * C  if SIDE = 'L' and TRANS = 'N', or
 !>
@@ -50,7 +50,7 @@
 !>
 !>       Q = H(1) H(2) . . . H(k)
 !>
-!> as returned by DGEQRF. Q is of order m if SIDE = 'L' and of order n
+!> as returned by mobbrmsd_DGEQRF. Q is of order m if SIDE = 'L' and of order n
 !> if SIDE = 'R'.
 !> \endverbatim
 !
@@ -97,7 +97,7 @@
 !>          A is real(RK)           :: array, dimension (LDA,K)
 !>          The i-th column must contain the vector which defines the
 !>          elementary reflector H(i), for i = 1,2,...,k, as returned by
-!>          DGEQRF in the first k columns of its array argument A.
+!>          mobbrmsd_DGEQRF in the first k columns of its array argument A.
 !>          A is modified by the routine but restored on exit.
 !> \endverbatim
 !>
@@ -113,7 +113,7 @@
 !> \verbatim
 !>          TAU is real(RK)           :: array, dimension (K)
 !>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i), as returned by DGEQRF.
+!>          reflector H(i), as returned by mobbrmsd_DGEQRF.
 !> \endverbatim
 !>
 !> \param[in,out] C
@@ -154,7 +154,7 @@
 !> \ingroup doubleOTHERcomputational
 !
 !  =====================================================================
-pure subroutine DORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
+pure subroutine mobbrmsd_DORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -197,8 +197,8 @@ pure subroutine DORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
 !     Test the input arguments
 !
   INFO = 0
-  LEFT = LSAME(SIDE, 'L')
-  NOTRAN = LSAME(TRANS, 'N')
+  LEFT = mobbrmsd_LSAME(SIDE, 'L')
+  NOTRAN = mobbrmsd_LSAME(TRANS, 'N')
 !
 !     NQ is the order of Q
 !
@@ -207,9 +207,9 @@ pure subroutine DORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
   else
     NQ = N
   end if
-  if (.not. LEFT .and. .not. LSAME(SIDE, 'R')) then
+  if (.not. LEFT .and. .not. mobbrmsd_LSAME(SIDE, 'R')) then
     INFO = -1
-  else if (.not. NOTRAN .and. .not. LSAME(TRANS, 'T')) then
+  else if (.not. NOTRAN .and. .not. mobbrmsd_LSAME(TRANS, 'T')) then
     INFO = -2
   else if (M < 0) then
     INFO = -3
@@ -223,7 +223,7 @@ pure subroutine DORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
     INFO = -10
   end if
   if (INFO /= 0) then
-    !CALL XERBLA( 'DORM2R', -INFO )
+    !CALL XERBLA( 'mobbrmsd_DORM2R', -INFO )
     return
   end if
 !
@@ -268,13 +268,13 @@ pure subroutine DORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
 !
     AII = A(I, I)
     A(I, I) = ONE
-    call DLARF(SIDE, MI, NI, A(I, I), 1, TAU(I), C(IC, JC), &
+    call mobbrmsd_DLARF(SIDE, MI, NI, A(I, I), 1, TAU(I), C(IC, JC), &
    &            LDC, WORK)
     A(I, I) = AII
   end do
   return
 !
-!     End of DORM2R
+!     End of mobbrmsd_DORM2R
 !
-end subroutine DORM2R
+end subroutine mobbrmsd_DORM2R
 

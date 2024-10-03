@@ -1,4 +1,4 @@
-!> \brief \b SISNAN tests input for NaN.
+!> \brief \b mobbrmsd_SISNAN tests input for NaN.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SISNAN + dependencies
+!> Download mobbrmsd_SISNAN + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sisnan.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sisnan.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       LOGICAL FUNCTION SISNAN( SIN )
+!       LOGICAL FUNCTION mobbrmsd_SISNAN( SIN )
 !
 !       .. Scalar Arguments ..
 !       REAL, INTENT(IN) :: SIN
@@ -30,7 +30,7 @@
 !>
 !> \verbatim
 !>
-!> SISNAN returns .TRUE. if its argument is NaN, and .FALSE.
+!> mobbrmsd_SISNAN returns .TRUE. if its argument is NaN, and .FALSE.
 !> otherwise.  To be replaced by the Fortran 2003 intrinsic in the
 !> future.
 !> \endverbatim
@@ -57,7 +57,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure elemental function SISNAN(SI)
+pure elemental function mobbrmsd_SISNAN(SI)
   implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.1) --
@@ -67,7 +67,7 @@ pure elemental function SISNAN(SI)
 !
 !     .. Scalar Arguments ..
   real(RK), intent(in) :: SI
-  logical              :: SISNAN
+  logical              :: mobbrmsd_SISNAN
 !..
 !
 !  =====================================================================
@@ -78,6 +78,6 @@ pure elemental function SISNAN(SI)
 ! end interface
 !..
 !..Executable Statements..
-  SISNAN = SLAISNAN(SI, SI)
+  mobbrmsd_SISNAN = Smobbrmsd_LAISNAN(SI, SI)
   return
 end

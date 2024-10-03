@@ -1,4 +1,4 @@
-!> \brief \b DSCAL
+!> \brief \b mobbrmsd_DSCAL
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DSCAL(N,DA,DX,INCX)
+!       SUBROUTINE mobbrmsd_DSCAL(N,DA,DX,INCX)
 !
 !       .. Scalar Arguments ..
 !       DOUBLE PRECISION DA
@@ -24,7 +24,7 @@
 !>
 !> \verbatim
 !>
-!>    DSCAL scales a vector by a constant.
+!>    mobbrmsd_DSCAL scales a vector by a constant.
 !>    uses unrolled loops for increment equal to 1.
 !> \endverbatim
 !
@@ -75,7 +75,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DSCAL(N, DA, DX, INCX)
+pure subroutine mobbrmsd_DSCAL(N, DA, DX, INCX)
 ! use LA_CONSTANTS, only: RK => dp
 !
 !  -- Reference BLAS level1 routine --
@@ -130,6 +130,6 @@ pure subroutine DSCAL(N, DA, DX, INCX)
   end if
   return
 !
-!     End of DSCAL
+!     End of mobbrmsd_DSCAL
 !
-end subroutine DSCAL
+end subroutine mobbrmsd_DSCAL

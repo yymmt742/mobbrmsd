@@ -1,4 +1,4 @@
-!> \brief \b SORGL2
+!> \brief \b mobbrmsd_SORGL2
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SORGL2 + dependencies
+!> Download mobbrmsd_SORGL2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sorgl2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sorgl2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SORGL2( M, N, K, A, LDA, TAU, WORK, INFO )
+!       SUBROUTINE mobbrmsd_SORGL2( M, N, K, A, LDA, TAU, WORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, K, LDA, M, N
@@ -33,13 +33,13 @@
 !>
 !> \verbatim
 !>
-!> SORGL2 generates an m by n real matrix Q with orthonormal rows,
+!> mobbrmsd_SORGL2 generates an m by n real matrix Q with orthonormal rows,
 !> which is defined as the first m rows of a product of k elementary
 !> reflectors of order n
 !>
 !>       Q  =  H(k) . . . H(2) H(1)
 !>
-!> as returned by SGELQF.
+!> as returned by mobbrmsd_SGELQF.
 !> \endverbatim
 !
 !  Arguments:
@@ -69,7 +69,7 @@
 !>          A is REAL array, dimension (LDA,N)
 !>          On entry, the i-th row must contain the vector which defines
 !>          the elementary reflector H(i), for i = 1,2,...,k, as returned
-!>          by SGELQF in the first k rows of its array argument A.
+!>          by mobbrmsd_SGELQF in the first k rows of its array argument A.
 !>          On exit, the m-by-n matrix Q.
 !> \endverbatim
 !>
@@ -83,7 +83,7 @@
 !> \verbatim
 !>          TAU is REAL array, dimension (K)
 !>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i), as returned by SGELQF.
+!>          reflector H(i), as returned by mobbrmsd_SGELQF.
 !> \endverbatim
 !>
 !> \param[out] WORK
@@ -111,7 +111,7 @@
 !> \ingroup realOTHERcomputational
 !
 !  =====================================================================
-pure subroutine SORGL2(M, N, K, A, LDA, TAU, WORK, INFO)
+pure subroutine mobbrmsd_SORGL2(M, N, K, A, LDA, TAU, WORK, INFO)
   implicit none
 !
 !  -- LAPACK computational routine (version 3.7.0) --
@@ -162,7 +162,7 @@ pure subroutine SORGL2(M, N, K, A, LDA, TAU, WORK, INFO)
     INFO = -5
   end if
   if (INFO /= 0) then
-!   call XERBLA('SORGL2', -INFO)
+!   call XERBLA('mobbrmsd_SORGL2', -INFO)
     return
   end if
 !
@@ -189,9 +189,9 @@ pure subroutine SORGL2(M, N, K, A, LDA, TAU, WORK, INFO)
     if (I < N) then
       if (I < M) then
         A(I, I) = ONE
-        call SLARF('Right', M - I, N - I + 1, A(I, I), LDA, TAU(I), A(I + 1, I), LDA, WORK)
+        call mobbrmsd_SLARF('Right', M - I, N - I + 1, A(I, I), LDA, TAU(I), A(I + 1, I), LDA, WORK)
       end if
-      call SSCAL(N - I, -TAU(I), A(I, I + 1), LDA)
+      call mobbrmsd_SSCAL(N - I, -TAU(I), A(I, I + 1), LDA)
     end if
     A(I, I) = ONE - TAU(I)
     !
@@ -203,7 +203,7 @@ pure subroutine SORGL2(M, N, K, A, LDA, TAU, WORK, INFO)
   end do
   return
   !
-  !end of SORGL2
+  !end of mobbrmsd_SORGL2
   !
 end
 

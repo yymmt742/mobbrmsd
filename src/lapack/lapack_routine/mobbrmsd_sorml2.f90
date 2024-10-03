@@ -1,4 +1,4 @@
-!> \brief \b SORML2 multiplies a general matrix by the orthogonal matrix from a LQ factorization determined by sgelqf (unblocked algorithm).
+!> \brief \b mobbrmsd_SORML2 multiplies a general matrix by the orthogonal matrix from a LQ factorization determined by sgelqf (unblocked algorithm).
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SORML2 + dependencies
+!> Download mobbrmsd_SORML2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sorml2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sorml2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SORML2( SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC,
+!       SUBROUTINE mobbrmsd_SORML2( SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC,
 !                          WORK, INFO )
 !
 !       .. Scalar Arguments ..
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> SORML2 overwrites the general real m by n matrix C with
+!> mobbrmsd_SORML2 overwrites the general real m by n matrix C with
 !>
 !>       Q * C  if SIDE = 'L' and TRANS = 'N', or
 !>
@@ -50,7 +50,7 @@
 !>
 !>       Q = H(k) . . . H(2) H(1)
 !>
-!> as returned by SGELQF. Q is of order m if SIDE = 'L' and of order n
+!> as returned by mobbrmsd_SGELQF. Q is of order m if SIDE = 'L' and of order n
 !> if SIDE = 'R'.
 !> \endverbatim
 !
@@ -99,7 +99,7 @@
 !>                               (LDA,N) if SIDE = 'R'
 !>          The i-th row must contain the vector which defines the
 !>          elementary reflector H(i), for i = 1,2,...,k, as returned by
-!>          SGELQF in the first k rows of its array argument A.
+!>          mobbrmsd_SGELQF in the first k rows of its array argument A.
 !>          A is modified by the routine but restored on exit.
 !> \endverbatim
 !>
@@ -113,7 +113,7 @@
 !> \verbatim
 !>          TAU is REAL array, dimension (K)
 !>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i), as returned by SGELQF.
+!>          reflector H(i), as returned by mobbrmsd_SGELQF.
 !> \endverbatim
 !>
 !> \param[in,out] C
@@ -156,7 +156,7 @@
 !> \ingroup realOTHERcomputational
 !
 !  =====================================================================
-pure subroutine SORML2(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
+pure subroutine mobbrmsd_SORML2(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
 !
 !  -- LAPACK computational routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -199,8 +199,8 @@ pure subroutine SORML2(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
 !Test the input arguments
 !
   INFO = 0
-  LEFT = LSAME(SIDE, 'L')
-  NOTRAN = LSAME(TRANS, 'N')
+  LEFT = mobbrmsd_LSAME(SIDE, 'L')
+  NOTRAN = mobbrmsd_LSAME(TRANS, 'N')
 !
 !NQ is the order of Q
 !
@@ -209,9 +209,9 @@ pure subroutine SORML2(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
   else
     NQ = N
   end if
-  if (.not. LEFT .and. .not. LSAME(SIDE, 'R')) then
+  if (.not. LEFT .and. .not. mobbrmsd_LSAME(SIDE, 'R')) then
     INFO = -1
-  else if (.not. NOTRAN .and. .not. LSAME(TRANS, 'T')) then
+  else if (.not. NOTRAN .and. .not. mobbrmsd_LSAME(TRANS, 'T')) then
     INFO = -2
   else if (M < 0) then
     INFO = -3
@@ -225,7 +225,7 @@ pure subroutine SORML2(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
     INFO = -10
   end if
   if (INFO /= 0) then
-!   call XERBLA('SORML2', -INFO)
+!   call XERBLA('mobbrmsd_SORML2', -INFO)
     return
   end if
 !
@@ -270,11 +270,11 @@ pure subroutine SORML2(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
     !
     AII = A(I, I)
     A(I, I) = ONE
-    call SLARF(SIDE, MI, NI, A(I, I), LDA, TAU(I), C(IC, JC), LDC, WORK)
+    call mobbrmsd_SLARF(SIDE, MI, NI, A(I, I), LDA, TAU(I), C(IC, JC), LDC, WORK)
     A(I, I) = AII
   end do
   return
   !
-  !end of SORML2
+  !end of mobbrmsd_SORML2
   !
 end

@@ -1,4 +1,4 @@
-!> \brief \b SROT
+!> \brief \b mobbrmsd_SROT
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SROT(N,SX,INCX,SY,INCY,C,S)
+!       SUBROUTINE mobbrmsd_SROT(N,SX,INCX,SY,INCY,C,S)
 !
 !       .. Scalar Arguments ..
 !       REAL C,S
@@ -90,7 +90,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine SROT(N, SX, INCX, SY, INCY, C, S)
+pure subroutine mobbrmsd_SROT(N, SX, INCX, SY, INCY, C, S)
   implicit none
 !
 !  -- Reference BLAS level1 routine (version 3.8.0) --

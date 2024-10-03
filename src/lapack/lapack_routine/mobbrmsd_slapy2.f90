@@ -1,4 +1,4 @@
-!> \brief \b SLAPY2 returns sqrt(x2+y2).
+!> \brief \b mobbrmsd_SLAPY2 returns sqrt(x2+y2).
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLAPY2 + dependencies
+!> Download mobbrmsd_SLAPY2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slapy2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slapy2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       REAL             FUNCTION SLAPY2( X, Y )
+!       REAL             FUNCTION mobbrmsd_SLAPY2( X, Y )
 !
 !       .. Scalar Arguments ..
 !       REAL               X, Y
@@ -30,7 +30,7 @@
 !>
 !> \verbatim
 !>
-!> SLAPY2 returns sqrt(x**2+y**2), taking care not to cause unnecessary
+!> mobbrmsd_SLAPY2 returns sqrt(x**2+y**2), taking care not to cause unnecessary
 !> overflow.
 !> \endverbatim
 !
@@ -61,7 +61,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure elemental function SLAPY2(X, Y)
+pure elemental function mobbrmsd_SLAPY2(X, Y)
 !
 !  -- LAPACK auxiliary routine (version 3.7.1) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -70,7 +70,7 @@ pure elemental function SLAPY2(X, Y)
 !
 !     .. Scalar Arguments ..
   real(RK), intent(in) :: X, Y
-  real(RK) :: SLAPY2
+  real(RK) :: mobbrmsd_SLAPY2
 !..
 !
 !  =====================================================================
@@ -93,10 +93,10 @@ pure elemental function SLAPY2(X, Y)
 !..
 !..Executable Statements..
 !
-  X_IS_NAN = SISNAN(X)
-  Y_IS_NAN = SISNAN(Y)
-  if (X_IS_NAN) SLAPY2 = X
-  if (Y_IS_NAN) SLAPY2 = Y
+  X_IS_NAN = mobbrmsd_SISNAN(X)
+  Y_IS_NAN = mobbrmsd_SISNAN(Y)
+  if (X_IS_NAN) mobbrmsd_SLAPY2 = X
+  if (Y_IS_NAN) mobbrmsd_SLAPY2 = Y
 !
   if (.not. (X_IS_NAN .or. Y_IS_NAN)) then
     XABS = ABS(X)
@@ -104,13 +104,13 @@ pure elemental function SLAPY2(X, Y)
     W = MAX(XABS, YABS)
     Z = MIN(XABS, YABS)
     if (Z == ZERO) then
-      SLAPY2 = W
+      mobbrmsd_SLAPY2 = W
     else
-      SLAPY2 = W * SQRT(ONE + (Z / W)**2)
+      mobbrmsd_SLAPY2 = W * SQRT(ONE + (Z / W)**2)
     end if
   end if
   return
 !
-!end of SLAPY2
+!end of mobbrmsd_SLAPY2
 !
 end

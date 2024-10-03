@@ -1,4 +1,4 @@
-!> \brief \b DLASV2 computes the singular value decomposition of a 2-by-2 triangular matrix.
+!> \brief \b mobbrmsd_DLASV2 computes the singular value decomposition of a 2-by-2 triangular matrix.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLASV2 + dependencies
+!> Download mobbrmsd_DLASV2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlasv2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlasv2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLASV2( F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL )
+!       SUBROUTINE mobbrmsd_DLASV2( F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL )
 !
 !       .. Scalar Arguments ..
 !       DOUBLE PRECISION   CSL, CSR, F, G, H, SNL, SNR, SSMAX, SSMIN
@@ -30,7 +30,7 @@
 !>
 !> \verbatim
 !>
-!> DLASV2 computes the singular value decomposition of a 2-by-2
+!> mobbrmsd_DLASV2 computes the singular value decomposition of a 2-by-2
 !> triangular matrix
 !>    [  F   G  ]
 !>    [  0   H  ].
@@ -134,7 +134,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DLASV2(F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL)
+pure subroutine mobbrmsd_DLASV2(F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL)
 ! use LA_CONSTANTS, only: RK => dp
 !
 !  -- LAPACK auxiliary routine --
@@ -211,7 +211,7 @@ pure subroutine DLASV2(F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL)
     GASMAL = .true.
     if (GA > FA) then
       PMAX = 2
-      if ((FA / GA) < DLAMCH('EPS')) then
+      if ((FA / GA) < mobbrmsd_DLAMCH('EPS')) then
 !
 !              Case of very large GA
 !
@@ -312,7 +312,7 @@ pure subroutine DLASV2(F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL)
   SSMIN = SIGN(SSMIN, TSIGN * SIGN(ONE, F) * SIGN(ONE, H))
   return
 !
-!     End of DLASV2
+!     End of mobbrmsd_DLASV2
 !
-end subroutine DLASV2
+end subroutine mobbrmsd_DLASV2
 

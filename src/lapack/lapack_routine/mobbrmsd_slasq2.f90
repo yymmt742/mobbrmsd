@@ -1,4 +1,4 @@
-!> \brief \b SLASQ2 computes all the eigenvalues of the symmetric positive definite tridiagonal matrix associated with the qd Array Z to high relative accuracy. Used by sbdsqr and sstegr.
+!> \brief \b mobbrmsd_SLASQ2 computes all the eigenvalues of the symmetric positive definite tridiagonal matrix associated with the qd Array Z to high relative accuracy. Used by sbdsqr and sstegr.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLASQ2 + dependencies
+!> Download mobbrmsd_SLASQ2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slasq2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slasq2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLASQ2( N, Z, INFO )
+!       SUBROUTINE mobbrmsd_SLASQ2( N, Z, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, N
@@ -33,7 +33,7 @@
 !>
 !> \verbatim
 !>
-!> SLASQ2 computes all the eigenvalues of the symmetric positive
+!> mobbrmsd_SLASQ2 computes all the eigenvalues of the symmetric positive
 !> definite tridiagonal matrix associated with the qd array Z to high
 !> relative accuracy are computed to high relative accuracy, in the
 !> absence of denormalization, underflow and overflow.
@@ -44,10 +44,10 @@
 !> Z(1,3,5,,..). The tridiagonal is L*U or, if you prefer, the
 !> symmetric tridiagonal to which it is similar.
 !>
-!> Note : SLASQ2 defines a logical variable, IEEE, which is true
+!> Note : mobbrmsd_SLASQ2 defines a logical variable, IEEE, which is true
 !> on machines which follow ieee-754 floating-point standard in their
 !> handling of infinities and NaNs, and false otherwise. This variable
-!> is passed to SLASQ3.
+!> is passed to mobbrmsd_SLASQ3.
 !> \endverbatim
 !
 !  Arguments:
@@ -110,7 +110,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine SLASQ2(N, Z, INFO)
+pure subroutine mobbrmsd_SLASQ2(N, Z, INFO)
 !
 !  -- LAPACK computational routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -160,17 +160,17 @@ pure subroutine SLASQ2(N, Z, INFO)
 !..Executable Statements..
 !
 ! Test the input arguments.
-! (in case SLASQ2 is not called by SLASQ1)
+! (in case mobbrmsd_SLASQ2 is not called by mobbrmsd_SLASQ1)
 !
   INFO = 0
-  EPS = SLAMCH('Precision')
-  SAFMIN = SLAMCH('Safe minimum')
+  EPS = mobbrmsd_SLAMCH('Precision')
+  SAFMIN = mobbrmsd_SLAMCH('Safe minimum')
   TOL = EPS * HUNDRD
   TOL2 = TOL**2
 !
   if (N < 0) then
     INFO = -1
-!   call XERBLA('SLASQ2', 1)
+!   call XERBLA('mobbrmsd_SLASQ2', 1)
     return
   else if (N == 0) then
     return
@@ -180,7 +180,7 @@ pure subroutine SLASQ2(N, Z, INFO)
 !
     if (Z(1) < ZERO) then
       INFO = -201
-!     call XERBLA('SLASQ2', 2)
+!     call XERBLA('mobbrmsd_SLASQ2', 2)
     end if
     return
   else if (N == 2) then
@@ -189,7 +189,7 @@ pure subroutine SLASQ2(N, Z, INFO)
 !
     if (Z(2) < ZERO .or. Z(3) < ZERO) then
       INFO = -2
-!     call XERBLA('SLASQ2', 2)
+!     call XERBLA('mobbrmsd_SLASQ2', 2)
       return
     else if (Z(3) > Z(1)) then
       D = Z(3)
@@ -226,11 +226,11 @@ pure subroutine SLASQ2(N, Z, INFO)
   do K = 1, 2 * (N - 1), 2
     if (Z(K) < ZERO) then
       INFO = -(200 + K)
-!     call XERBLA('SLASQ2', 2)
+!     call XERBLA('mobbrmsd_SLASQ2', 2)
       return
     else if (Z(K + 1) < ZERO) then
       INFO = -(200 + K + 1)
-!     call XERBLA('SLASQ2', 2)
+!     call XERBLA('mobbrmsd_SLASQ2', 2)
       return
     end if
     D = D + Z(K)
@@ -241,7 +241,7 @@ pure subroutine SLASQ2(N, Z, INFO)
   end do
   if (Z(2 * N - 1) < ZERO) then
     INFO = -(200 + 2 * N - 1)
-!   call XERBLA('SLASQ2', 2)
+!   call XERBLA('mobbrmsd_SLASQ2', 2)
     return
   end if
   D = D + Z(2 * N - 1)
@@ -254,7 +254,7 @@ pure subroutine SLASQ2(N, Z, INFO)
     do K = 2, N
       Z(K) = Z(2 * K - 1)
     end do
-    call SLASRT('D', N, Z, IINFO)
+    call mobbrmsd_SLASRT('D', N, Z, IINFO)
     Z(2 * N - 1) = D
     return
   end if
@@ -270,8 +270,8 @@ pure subroutine SLASQ2(N, Z, INFO)
 !
 ! Check whether the machine is IEEE conformable.
 !
-! IEEE = ILAENV(10, 'SLASQ2', 'N', 1, 2, 3, 4) == 1 .and.
-! $ILAENV(11, 'SLASQ2', 'N', 1, 2, 3, 4) == 1
+! IEEE = mobbrmsd_ILAENV(10, 'mobbrmsd_SLASQ2', 'N', 1, 2, 3, 4) == 1 .and.
+! $mobbrmsd_ILAENV(11, 'mobbrmsd_SLASQ2', 'N', 1, 2, 3, 4) == 1
 !
 ! [11 / 15 / 2008] The case IEEE = .true.has a problem in single precision with
 ! some the test matrices of type 16.The double precision code is fine.
@@ -355,7 +355,7 @@ pure subroutine SLASQ2(N, Z, INFO)
     PP = 1 - PP
   end do
 !
-! Initialise variables to pass to SLASQ3.
+! Initialise variables to pass to mobbrmsd_SLASQ3.
 !
   TTYPE = 0
   DMIN1 = ZERO
@@ -453,7 +453,7 @@ pure subroutine SLASQ2(N, Z, INFO)
 !        Now I0:N0 is unreduced.
 !        PP = 0 for ping, PP = 1 for pong.
 !        PP = 2 indicates that flipping was applied to the Z array and
-!               and that the tests for deflation upon entry in SLASQ3
+!               and that the tests for deflation upon entry in mobbrmsd_SLASQ3
 !               should not be performed.
 !
     NBIG = 100 * (N0 - I0 + 1)
@@ -462,7 +462,7 @@ pure subroutine SLASQ2(N, Z, INFO)
 !
 !           While submatrix unfinished take a good dqds step.
 !
-      call SLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL, &
+      call mobbrmsd_SLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL, &
           &       ITER, NDIV, IEEE, TTYPE, DMIN1, DMIN2, DN, DN1, &
           &       DN2, G, TAU)
 !
@@ -564,7 +564,7 @@ pure subroutine SLASQ2(N, Z, INFO)
 !
 ! Sort and compute sum of eigenvalues.
 !
-  call SLASRT('D', N, Z, IINFO)
+  call mobbrmsd_SLASRT('D', N, Z, IINFO)
 !
   E = ZERO
   do K = N, 1, -1
@@ -580,6 +580,6 @@ pure subroutine SLASQ2(N, Z, INFO)
   Z(2 * N + 5) = HUNDRD * NFAIL / real(ITER)
   return
 !
-! end of SLASQ2
+! end of mobbrmsd_SLASQ2
 !
 end

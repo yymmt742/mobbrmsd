@@ -1,4 +1,4 @@
-!> \brief \b DGETRF2
+!> \brief \b mobbrmsd_DGETRF2
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       RECURSIVE pure subroutine DGETRF2( M, N, A, LDA, IPIV, INFO )
+!       RECURSIVE pure subroutine mobbrmsd_DGETRF2( M, N, A, LDA, IPIV, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, LDA, M, N
@@ -24,7 +24,7 @@
 !>
 !> \verbatim
 !>
-!> DGETRF2 computes an LU factorization of a general M-by-N matrix A
+!> mobbrmsd_DGETRF2 computes an LU factorization of a general M-by-N matrix A
 !> using partial pivoting with row interchanges.
 !>
 !> The factorization has the form
@@ -109,7 +109,7 @@
 !> \ingroup doubleGEcomputational
 !
 !  =====================================================================
-pure recursive subroutine DGETRF2(M, N, A, LDA, IPIV, INFO)
+pure recursive subroutine mobbrmsd_DGETRF2(M, N, A, LDA, IPIV, INFO)
 ! use LA_CONSTANTS, only: RK => dp
 !
 !  -- LAPACK computational routine --
@@ -163,7 +163,7 @@ pure recursive subroutine DGETRF2(M, N, A, LDA, IPIV, INFO)
     INFO = -4
   end if
   if (INFO /= 0) then
-    !CALL XERBLA( 'DGETRF2', -INFO )
+    !CALL XERBLA( 'mobbrmsd_DGETRF2', -INFO )
     return
   end if
 !
@@ -186,11 +186,11 @@ pure recursive subroutine DGETRF2(M, N, A, LDA, IPIV, INFO)
 !
 !        Compute machine safe minimum
 !
-    SFMIN = DLAMCH('S')
+    SFMIN = mobbrmsd_DLAMCH('S')
 !
 !        Find pivot and test for singularity
 !
-    I = IDAMAX(M, A(1, 1), 1)
+    I = mobbrmsd_IDAMAX(M, A(1, 1), 1)
     IPIV(1) = I
     if (A(I, 1) /= ZERO) then
 !
@@ -205,7 +205,7 @@ pure recursive subroutine DGETRF2(M, N, A, LDA, IPIV, INFO)
 !           Compute elements 2:M of the column
 !
       if (ABS(A(1, 1)) >= SFMIN) then
-        call DSCAL(M - 1, ONE / A(1, 1), A(2, 1), 1)
+        call mobbrmsd_DSCAL(M - 1, ONE / A(1, 1), A(2, 1), 1)
       else
         do concurrent(I=1:M - 1)
           A(1 + I, 1) = A(1 + I, 1) / A(1, 1)
@@ -227,7 +227,7 @@ pure recursive subroutine DGETRF2(M, N, A, LDA, IPIV, INFO)
 !    Factor [ --- ]
 !           [ A21 ]
 !
-    call DGETRF2(M, N1, A, LDA, IPIV, IINFO)
+    call mobbrmsd_DGETRF2(M, N1, A, LDA, IPIV, IINFO)
 
     if (INFO == 0 .and. IINFO > 0) INFO = IINFO
 !
@@ -235,21 +235,21 @@ pure recursive subroutine DGETRF2(M, N, A, LDA, IPIV, INFO)
 !    Apply interchanges to [ --- ]
 !                          [ A22 ]
 !
-    call DLASWP(N2, A(1, N1 + 1), LDA, 1, N1, IPIV, 1)
+    call mobbrmsd_DLASWP(N2, A(1, N1 + 1), LDA, 1, N1, IPIV, 1)
 !
 !    Solve A12
 !
-    call DTRSM('L', 'L', 'N', 'U', N1, N2, ONE, A, LDA, &
+    call mobbrmsd_DTRSM('L', 'L', 'N', 'U', N1, N2, ONE, A, LDA, &
    &            A(1, N1 + 1), LDA)
 !
 !    Update A22
 !
-    call DGEMM('N', 'N', M - N1, N2, N1, -ONE, A(N1 + 1, 1), LDA, &
+    call mobbrmsd_DGEMM('N', 'N', M - N1, N2, N1, -ONE, A(N1 + 1, 1), LDA, &
    &            A(1, N1 + 1), LDA, ONE, A(N1 + 1, N1 + 1), LDA)
 !
 !    Factor A22
 !
-    call DGETRF2(M - N1, N2, A(N1 + 1, N1 + 1), LDA, IPIV(N1 + 1), &
+    call mobbrmsd_DGETRF2(M - N1, N2, A(N1 + 1, N1 + 1), LDA, IPIV(N1 + 1), &
    &              IINFO)
 !
 !    Adjust INFO and the pivot indices
@@ -261,12 +261,12 @@ pure recursive subroutine DGETRF2(M, N, A, LDA, IPIV, INFO)
 !
 !    Apply interchanges to A21
 !
-    call DLASWP(N1, A(1, 1), LDA, N1 + 1, MIN(M, N), IPIV, 1)
+    call mobbrmsd_DLASWP(N1, A(1, 1), LDA, N1 + 1, MIN(M, N), IPIV, 1)
 !
   end if
   return
 !
-!     End of DGETRF2
+!     End of mobbrmsd_DGETRF2
 !
-end subroutine DGETRF2
+end subroutine mobbrmsd_DGETRF2
 

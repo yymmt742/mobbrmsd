@@ -1,4 +1,4 @@
-!> \brief \b SGETRF
+!> \brief \b mobbrmsd_SGETRF
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SGETRF + dependencies
+!> Download mobbrmsd_SGETRF + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sgetrf.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sgetrf.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SGETRF( M, N, A, LDA, IPIV, INFO )
+!       SUBROUTINE mobbrmsd_SGETRF( M, N, A, LDA, IPIV, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, LDA, M, N
@@ -34,7 +34,7 @@
 !>
 !> \verbatim
 !>
-!> SGETRF computes an LU factorization of a general M-by-N matrix A
+!> mobbrmsd_SGETRF computes an LU factorization of a general M-by-N matrix A
 !> using partial pivoting with row interchanges.
 !>
 !> The factorization has the form
@@ -106,7 +106,7 @@
 !> \ingroup realGEcomputational
 !
 !  =====================================================================
-pure subroutine SGETRF(M, N, A, LDA, IPIV, INFO)
+pure subroutine mobbrmsd_SGETRF(M, N, A, LDA, IPIV, INFO)
   implicit none
 !
 !  -- LAPACK computational routine (version 3.7.0) --
@@ -157,7 +157,7 @@ pure subroutine SGETRF(M, N, A, LDA, IPIV, INFO)
     INFO = -4
   end if
   if (INFO /= 0) then
-!   call XERBLA('SGETRF', -INFO)
+!   call XERBLA('mobbrmsd_SGETRF', -INFO)
     return
   end if
 !
@@ -167,12 +167,12 @@ pure subroutine SGETRF(M, N, A, LDA, IPIV, INFO)
 !
 !Determine the block size for this environment.
 !
-  NB = ILAENV(1, 'SGETRF', ' ', M, N, -1, -1)
+  NB = mobbrmsd_ILAENV(1, 'mobbrmsd_SGETRF', ' ', M, N, -1, -1)
   if (NB <= 1 .or. NB >= MIN(M, N)) then
     !
     !use unblocked code.
     !
-    call SGETRF2(M, N, A, LDA, IPIV, INFO)
+    call mobbrmsd_SGETRF2(M, N, A, LDA, IPIV, INFO)
   else
     !
     !use blocked code.
@@ -183,7 +183,7 @@ pure subroutine SGETRF(M, N, A, LDA, IPIV, INFO)
       !Factor diagonal and subdiagonal blocks and test for exact
       !singularity.
       !
-      call SGETRF2(M - J + 1, JB, A(J, J), LDA, IPIV(J), IINFO)
+      call mobbrmsd_SGETRF2(M - J + 1, JB, A(J, J), LDA, IPIV(J), IINFO)
       !
       !Adjust INFO and the pivot indices.
       !
@@ -194,23 +194,23 @@ pure subroutine SGETRF(M, N, A, LDA, IPIV, INFO)
       !
       !Apply interchanges to columns 1:J - 1.
       !
-      call SLASWP(J - 1, A, LDA, J, J + JB - 1, IPIV, 1)
+      call mobbrmsd_SLASWP(J - 1, A, LDA, J, J + JB - 1, IPIV, 1)
       !
       if (J + JB <= N) then
         !
         !Apply interchanges to columns J + JB:N.
         !
-        call SLASWP(N - J - JB + 1, A(1, J + JB), LDA, J, J + JB - 1, IPIV, 1)
+        call mobbrmsd_SLASWP(N - J - JB + 1, A(1, J + JB), LDA, J, J + JB - 1, IPIV, 1)
         !
         !Compute block row of U.
         !
-        call STRSM('Left', 'Lower', 'No transpose', 'Unit', JB, &
+        call mobbrmsd_STRSM('Left', 'Lower', 'No transpose', 'Unit', JB, &
             & N - J - JB + 1, ONE, A(J, J), LDA, A(J, J + JB), LDA)
         if (J + JB <= M) then
           !
           !Update trailing submatrix.
           !
-          call SGEMM('No transpose', 'No transpose', M - J - JB + 1, &
+          call mobbrmsd_SGEMM('No transpose', 'No transpose', M - J - JB + 1, &
               &      N - J - JB + 1, JB, -ONE, A(J + JB, J), LDA, &
               &      A(J, J + JB), LDA, ONE, A(J + JB, J + JB), LDA)
         end if
@@ -219,6 +219,6 @@ pure subroutine SGETRF(M, N, A, LDA, IPIV, INFO)
   end if
   return
   !
-  !end of SGETRF
+  !end of mobbrmsd_SGETRF
   !
 end

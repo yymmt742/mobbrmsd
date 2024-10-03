@@ -1,4 +1,4 @@
-!> \brief \b SLARF applies an elementary reflector to a general rectangular matrix.
+!> \brief \b mobbrmsd_SLARF applies an elementary reflector to a general rectangular matrix.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLARF + dependencies
+!> Download mobbrmsd_SLARF + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slarf.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slarf.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLARF( SIDE, M, N, V, INCV, TAU, C, LDC, WORK )
+!       SUBROUTINE mobbrmsd_SLARF( SIDE, M, N, V, INCV, TAU, C, LDC, WORK )
 !
 !       .. Scalar Arguments ..
 !       CHARACTER          SIDE
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> SLARF applies a real elementary reflector H to a real m by n matrix
+!> mobbrmsd_SLARF applies a real elementary reflector H to a real m by n matrix
 !> C, from either the left or the right. H is represented in the form
 !>
 !>       H = I - tau * v * v**T
@@ -122,7 +122,7 @@
 !> \ingroup realOTHERauxiliary
 !
 !  =====================================================================
-pure subroutine SLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
+pure subroutine mobbrmsd_SLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
   implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
@@ -162,7 +162,7 @@ pure subroutine SLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
 !..
 !..Executable Statements..
 !
-  APPLYLEFT = LSAME(SIDE, 'L')
+  APPLYLEFT = mobbrmsd_LSAME(SIDE, 'L')
   LASTV = 0
   LASTC = 0
   if (TAU /= ZERO) then
@@ -185,10 +185,10 @@ pure subroutine SLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
     end do
     if (APPLYLEFT) then
 !     Scan for the last non-zero column in C(1:lastv,:).
-      LASTC = ILASLC(LASTV, N, C, LDC)
+      LASTC = mobbrmsd_ILASLC(LASTV, N, C, LDC)
     else
 !     Scan for the last non-zero row in C(:,1:lastv).
-      LASTC = ILASLR(M, LASTV, C, LDC)
+      LASTC = mobbrmsd_ILASLR(M, LASTV, C, LDC)
     end if
   end if
 !     Note that lastc.eq.0 renders the BLAS operations null; no special
@@ -201,12 +201,12 @@ pure subroutine SLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
       !
       !w(1:lastc, 1): = C(1:lastv, 1:lastc)**T * v(1:lastv, 1)
       !
-      call SGEMV('Transpose', LASTV, LASTC, ONE, C, LDC, V, INCV, &
+      call mobbrmsd_SGEMV('Transpose', LASTV, LASTC, ONE, C, LDC, V, INCV, &
           &      ZERO, WORK, 1)
       !
       !C(1:lastv, 1:lastc): = C(...) - v(1:lastv, 1) * w(1:lastc, 1)**T
       !
-      call SGER(LASTV, LASTC, -TAU, V, INCV, WORK, 1, C, LDC)
+      call mobbrmsd_SGER(LASTV, LASTC, -TAU, V, INCV, WORK, 1, C, LDC)
     end if
   else
     !
@@ -216,16 +216,16 @@ pure subroutine SLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
       !
       !w(1:lastc, 1): = C(1:lastc, 1:lastv) * v(1:lastv, 1)
       !
-      call SGEMV('No transpose', LASTC, LASTV, ONE, C, LDC, &
+      call mobbrmsd_SGEMV('No transpose', LASTC, LASTV, ONE, C, LDC, &
           &      V, INCV, ZERO, WORK, 1)
       !
       !C(1:lastc, 1:lastv): = C(...) - w(1:lastc, 1) * v(1:lastv, 1)**T
       !
-      call SGER(LASTC, LASTV, -TAU, WORK, 1, V, INCV, C, LDC)
+      call mobbrmsd_SGER(LASTC, LASTV, -TAU, WORK, 1, V, INCV, C, LDC)
     end if
   end if
   return
 !
-!end of SLARF
+!end of mobbrmsd_SLARF
 !
 end

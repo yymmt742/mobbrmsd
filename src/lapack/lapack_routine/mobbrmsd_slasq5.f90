@@ -1,4 +1,4 @@
-!> \brief <b> SLASQ5 computes one dqds transform in ping-pong form. Used by sbdsqr and sstegr. </b>
+!> \brief <b> mobbrmsd_SLASQ5 computes one dqds transform in ping-pong form. Used by sbdsqr and sstegr. </b>
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLASQ5 + dependencies
+!> Download mobbrmsd_SLASQ5 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slasq5.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slasq5.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLASQ5( I0, N0, Z, PP, TAU, SIGMA, DMIN, DMIN1, DMIN2, DN,
+!       SUBROUTINE mobbrmsd_SLASQ5( I0, N0, Z, PP, TAU, SIGMA, DMIN, DMIN1, DMIN2, DN,
 !                          DNM1, DNM2, IEEE, EPS )
 !
 !       .. Scalar Arguments ..
@@ -36,7 +36,7 @@
 !>
 !> \verbatim
 !>
-!> SLASQ5 computes one dqds transform in ping-pong form, one
+!> mobbrmsd_SLASQ5 computes one dqds transform in ping-pong form, one
 !> version for IEEE machines another for non IEEE machines.
 !> \endverbatim
 !
@@ -141,7 +141,7 @@
 !> \ingroup auxOTHERcomputational
 !
 !  =====================================================================
-pure subroutine SLASQ5(I0, N0, Z, PP, TAU, SIGMA, DMIN, DMIN1, DMIN2, &
+pure subroutine mobbrmsd_SLASQ5(I0, N0, Z, PP, TAU, SIGMA, DMIN, DMIN1, DMIN2, &
                &       DN, DNM1, DNM2, IEEE, EPS)
   implicit none
 !
@@ -405,6 +405,6 @@ pure subroutine SLASQ5(I0, N0, Z, PP, TAU, SIGMA, DMIN, DMIN1, DMIN2, &
   Z(4 * N0 - PP) = EMIN
   return
 !
-! end of SLASQ5
+! end of mobbrmsd_SLASQ5
 !
 end

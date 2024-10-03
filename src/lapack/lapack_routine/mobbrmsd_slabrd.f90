@@ -1,4 +1,4 @@
-!> \brief \b SLABRD reduces the first nb rows and columns of a general matrix to a bidiagonal form.
+!> \brief \b mobbrmsd_SLABRD reduces the first nb rows and columns of a general matrix to a bidiagonal form.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLABRD + dependencies
+!> Download mobbrmsd_SLABRD + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slabrd.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slabrd.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLABRD( M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, LDX, Y,
+!       SUBROUTINE mobbrmsd_SLABRD( M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, LDX, Y,
 !                          LDY )
 !
 !       .. Scalar Arguments ..
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> SLABRD reduces the first NB rows and columns of a real general
+!> mobbrmsd_SLABRD reduces the first NB rows and columns of a real general
 !> m by n matrix A to upper or lower bidiagonal form by an orthogonal
 !> transformation Q**T * A * P, and returns the matrices X and Y which
 !> are needed to apply the transformation to the unreduced part of A.
@@ -43,7 +43,7 @@
 !> If m >= n, A is reduced to upper bidiagonal form; if m < n, to lower
 !> bidiagonal form.
 !>
-!> This is an auxiliary routine called by SGEBRD
+!> This is an auxiliary routine called by mobbrmsd_SGEBRD
 !> \endverbatim
 !
 !  Arguments:
@@ -207,7 +207,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine SLABRD(M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, LDX, Y, LDY)
+pure subroutine mobbrmsd_SLABRD(M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, LDX, Y, LDY)
   implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.1) --
@@ -256,58 +256,58 @@ pure subroutine SLABRD(M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, LDX, Y, LDY)
       !
       !Update A(i:m, i)
       !
-      call SGEMV('No transpose', M - I + 1, I - 1, -ONE, A(I, 1), &
+      call mobbrmsd_SGEMV('No transpose', M - I + 1, I - 1, -ONE, A(I, 1), &
           &      LDA, Y(I, 1), LDY, ONE, A(I, I), 1)
-      call SGEMV('No transpose', M - I + 1, I - 1, -ONE, X(I, 1), &
+      call mobbrmsd_SGEMV('No transpose', M - I + 1, I - 1, -ONE, X(I, 1), &
           &      LDX, A(1, I), 1, ONE, A(I, I), 1)
       !
       !Generate reflection Q(i) to annihilate A(i + 1:m, i)
       !
-      call SLARFG(M - I + 1, A(I, I), A(MIN(I + 1, M), I), 1, TAUQ(I))
+      call mobbrmsd_SLARFG(M - I + 1, A(I, I), A(MIN(I + 1, M), I), 1, TAUQ(I))
       D(I) = A(I, I)
       if (I < N) then
         A(I, I) = ONE
         !
         !Compute Y(i + 1:n, i)
         !
-        call SGEMV('Transpose', M - I + 1, N - I, ONE, A(I, I + 1), &
+        call mobbrmsd_SGEMV('Transpose', M - I + 1, N - I, ONE, A(I, I + 1), &
             &      LDA, A(I, I), 1, ZERO, Y(I + 1, I), 1)
-        call SGEMV('Transpose', M - I + 1, I - 1, ONE, A(I, 1), LDA, &
+        call mobbrmsd_SGEMV('Transpose', M - I + 1, I - 1, ONE, A(I, 1), LDA, &
             &      A(I, I), 1, ZERO, Y(1, I), 1)
-        call SGEMV('No transpose', N - I, I - 1, -ONE, Y(I + 1, 1), &
+        call mobbrmsd_SGEMV('No transpose', N - I, I - 1, -ONE, Y(I + 1, 1), &
             &      LDY, Y(1, I), 1, ONE, Y(I + 1, I), 1)
-        call SGEMV('Transpose', M - I + 1, I - 1, ONE, X(I, 1), LDX, &
+        call mobbrmsd_SGEMV('Transpose', M - I + 1, I - 1, ONE, X(I, 1), LDX, &
             &      A(I, I), 1, ZERO, Y(1, I), 1)
-        call SGEMV('Transpose', I - 1, N - I, -ONE, A(1, I + 1), &
+        call mobbrmsd_SGEMV('Transpose', I - 1, N - I, -ONE, A(1, I + 1), &
             &      LDA, Y(1, I), 1, ONE, Y(I + 1, I), 1)
-        call SSCAL(N - I, TAUQ(I), Y(I + 1, I), 1)
+        call mobbrmsd_SSCAL(N - I, TAUQ(I), Y(I + 1, I), 1)
         !
         !Update A(i, i + 1:n)
         !
-        call SGEMV('No transpose', N - I, I, -ONE, Y(I + 1, 1), &
+        call mobbrmsd_SGEMV('No transpose', N - I, I, -ONE, Y(I + 1, 1), &
             &      LDY, A(I, 1), LDA, ONE, A(I, I + 1), LDA)
-        call SGEMV('Transpose', I - 1, N - I, -ONE, A(1, I + 1), &
+        call mobbrmsd_SGEMV('Transpose', I - 1, N - I, -ONE, A(1, I + 1), &
             &      LDA, X(I, 1), LDX, ONE, A(I, I + 1), LDA)
         !
         !Generate reflection P(i) to annihilate A(i, i + 2:n)
         !
-        call SLARFG(N - I, A(I, I + 1), A(I, MIN(I + 2, N)), LDA, TAUP(I))
+        call mobbrmsd_SLARFG(N - I, A(I, I + 1), A(I, MIN(I + 2, N)), LDA, TAUP(I))
         E(I) = A(I, I + 1)
         A(I, I + 1) = ONE
         !
         !Compute X(i + 1:m, i)
         !
-        call SGEMV('No transpose', M - I, N - I, ONE, A(I + 1, I + 1), &
+        call mobbrmsd_SGEMV('No transpose', M - I, N - I, ONE, A(I + 1, I + 1), &
             &      LDA, A(I, I + 1), LDA, ZERO, X(I + 1, I), 1)
-        call SGEMV('Transpose', N - I, I, ONE, Y(I + 1, 1), LDY, &
+        call mobbrmsd_SGEMV('Transpose', N - I, I, ONE, Y(I + 1, 1), LDY, &
             &      A(I, I + 1), LDA, ZERO, X(1, I), 1)
-        call SGEMV('No transpose', M - I, I, -ONE, A(I + 1, 1), &
+        call mobbrmsd_SGEMV('No transpose', M - I, I, -ONE, A(I + 1, 1), &
             &      LDA, X(1, I), 1, ONE, X(I + 1, I), 1)
-        call SGEMV('No transpose', I - 1, N - I, ONE, A(1, I + 1), &
+        call mobbrmsd_SGEMV('No transpose', I - 1, N - I, ONE, A(1, I + 1), &
             &      LDA, A(I, I + 1), LDA, ZERO, X(1, I), 1)
-        call SGEMV('No transpose', M - I, I - 1, -ONE, X(I + 1, 1), &
+        call mobbrmsd_SGEMV('No transpose', M - I, I - 1, -ONE, X(I + 1, 1), &
             &      LDX, X(1, I), 1, ONE, X(I + 1, I), 1)
-        call SSCAL(M - I, TAUP(I), X(I + 1, I), 1)
+        call mobbrmsd_SSCAL(M - I, TAUP(I), X(I + 1, I), 1)
       end if
     end do
   else
@@ -318,63 +318,63 @@ pure subroutine SLABRD(M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, LDX, Y, LDY)
       !
       !Update A(i, i:n)
       !
-      call SGEMV('No transpose', N - I + 1, I - 1, -ONE, Y(I, 1), &
+      call mobbrmsd_SGEMV('No transpose', N - I + 1, I - 1, -ONE, Y(I, 1), &
           &      LDY, A(I, 1), LDA, ONE, A(I, I), LDA)
-      call SGEMV('Transpose', I - 1, N - I + 1, -ONE, A(1, I), LDA, &
+      call mobbrmsd_SGEMV('Transpose', I - 1, N - I + 1, -ONE, A(1, I), LDA, &
           &      X(I, 1), LDX, ONE, A(I, I), LDA)
       !
       !Generate reflection P(i) to annihilate A(i, i + 1:n)
       !
-      call SLARFG(N - I + 1, A(I, I), A(I, MIN(I + 1, N)), LDA, TAUP(I))
+      call mobbrmsd_SLARFG(N - I + 1, A(I, I), A(I, MIN(I + 1, N)), LDA, TAUP(I))
       D(I) = A(I, I)
       if (I < M) then
         A(I, I) = ONE
         !
         !Compute X(i + 1:m, i)
         !
-        call SGEMV('No transpose', M - I, N - I + 1, ONE, A(I + 1, I), &
+        call mobbrmsd_SGEMV('No transpose', M - I, N - I + 1, ONE, A(I + 1, I), &
             &      LDA, A(I, I), LDA, ZERO, X(I + 1, I), 1)
-        call SGEMV('Transpose', N - I + 1, I - 1, ONE, Y(I, 1), LDY, &
+        call mobbrmsd_SGEMV('Transpose', N - I + 1, I - 1, ONE, Y(I, 1), LDY, &
             &      A(I, I), LDA, ZERO, X(1, I), 1)
-        call SGEMV('No transpose', M - I, I - 1, -ONE, A(I + 1, 1), &
+        call mobbrmsd_SGEMV('No transpose', M - I, I - 1, -ONE, A(I + 1, 1), &
             &      LDA, X(1, I), 1, ONE, X(I + 1, I), 1)
-        call SGEMV('No transpose', I - 1, N - I + 1, ONE, A(1, I), &
+        call mobbrmsd_SGEMV('No transpose', I - 1, N - I + 1, ONE, A(1, I), &
             &      LDA, A(I, I), LDA, ZERO, X(1, I), 1)
-        call SGEMV('No transpose', M - I, I - 1, -ONE, X(I + 1, 1), &
+        call mobbrmsd_SGEMV('No transpose', M - I, I - 1, -ONE, X(I + 1, 1), &
             &      LDX, X(1, I), 1, ONE, X(I + 1, I), 1)
-        call SSCAL(M - I, TAUP(I), X(I + 1, I), 1)
+        call mobbrmsd_SSCAL(M - I, TAUP(I), X(I + 1, I), 1)
         !
         !Update A(i + 1:m, i)
         !
-        call SGEMV('No transpose', M - I, I - 1, -ONE, A(I + 1, 1), &
+        call mobbrmsd_SGEMV('No transpose', M - I, I - 1, -ONE, A(I + 1, 1), &
             &      LDA, Y(I, 1), LDY, ONE, A(I + 1, I), 1)
-        call SGEMV('No transpose', M - I, I, -ONE, X(I + 1, 1), &
+        call mobbrmsd_SGEMV('No transpose', M - I, I, -ONE, X(I + 1, 1), &
             &      LDX, A(1, I), 1, ONE, A(I + 1, I), 1)
         !
         !Generate reflection Q(i) to annihilate A(i + 2:m, i)
         !
-        call SLARFG(M - I, A(I + 1, I), A(MIN(I + 2, M), I), 1, TAUQ(I))
+        call mobbrmsd_SLARFG(M - I, A(I + 1, I), A(MIN(I + 2, M), I), 1, TAUQ(I))
         E(I) = A(I + 1, I)
         A(I + 1, I) = ONE
         !
         !Compute Y(i + 1:n, i)
         !
-        call SGEMV('Transpose', M - I, N - I, ONE, A(I + 1, I + 1), &
+        call mobbrmsd_SGEMV('Transpose', M - I, N - I, ONE, A(I + 1, I + 1), &
             &      LDA, A(I + 1, I), 1, ZERO, Y(I + 1, I), 1)
-        call SGEMV('Transpose', M - I, I - 1, ONE, A(I + 1, 1), LDA, &
+        call mobbrmsd_SGEMV('Transpose', M - I, I - 1, ONE, A(I + 1, 1), LDA, &
             &      A(I + 1, I), 1, ZERO, Y(1, I), 1)
-        call SGEMV('No transpose', N - I, I - 1, -ONE, Y(I + 1, 1), &
+        call mobbrmsd_SGEMV('No transpose', N - I, I - 1, -ONE, Y(I + 1, 1), &
             &      LDY, Y(1, I), 1, ONE, Y(I + 1, I), 1)
-        call SGEMV('Transpose', M - I, I, ONE, X(I + 1, 1), LDX, &
+        call mobbrmsd_SGEMV('Transpose', M - I, I, ONE, X(I + 1, 1), LDX, &
             &      A(I + 1, I), 1, ZERO, Y(1, I), 1)
-        call SGEMV('Transpose', I, N - I, -ONE, A(1, I + 1), LDA, &
+        call mobbrmsd_SGEMV('Transpose', I, N - I, -ONE, A(1, I + 1), LDA, &
             &      Y(1, I), 1, ONE, Y(I + 1, I), 1)
-        call SSCAL(N - I, TAUQ(I), Y(I + 1, I), 1)
+        call mobbrmsd_SSCAL(N - I, TAUQ(I), Y(I + 1, I), 1)
       end if
     end do
   end if
   return
   !
-  !end of SLABRD
+  !end of mobbrmsd_SLABRD
   !
 end

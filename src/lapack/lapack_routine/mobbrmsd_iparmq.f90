@@ -1,4 +1,4 @@
-!> \brief \b IPARMQ
+!> \brief \b mobbrmsd_IPARMQ
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download IPARMQ + dependencies
+!> Download mobbrmsd_IPARMQ + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/iparmq.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/iparmq.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       INTEGER FUNCTION IPARMQ( ISPEC, NAME, OPTS, N, ILO, IHI, LWORK )
+!       INTEGER FUNCTION mobbrmsd_IPARMQ( ISPEC, NAME, OPTS, N, ILO, IHI, LWORK )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            IHI, ILO, ISPEC, LWORK, N
@@ -33,7 +33,7 @@
 !>      This program sets problem and machine dependent parameters
 !>      useful for xHSEQR and related subroutines for eigenvalue
 !>      problems. It is called whenever
-!>      IPARMQ is called with 12 <= ISPEC <= 16
+!>      mobbrmsd_IPARMQ is called with 12 <= ISPEC <= 16
 !> \endverbatim
 !
 !  Arguments:
@@ -42,7 +42,7 @@
 !> \param[in] ISPEC
 !> \verbatim
 !>          ISPEC is INTEGER
-!>              ISPEC specifies which tunable parameter IPARMQ should
+!>              ISPEC specifies which tunable parameter mobbrmsd_IPARMQ should
 !>              return.
 !>
 !>              ISPEC=12: (INMIN)  Matrices of order nmin or less
@@ -64,17 +64,17 @@
 !>                        then the next QR sweep is skipped and early
 !>                        deflation is applied immediately to the
 !>                        remaining active diagonal block.  Setting
-!>                        IPARMQ(ISPEC=14) = 0 causes TTQRE to skip a
+!>                        mobbrmsd_IPARMQ(ISPEC=14) = 0 causes TTQRE to skip a
 !>                        multi-shift QR sweep whenever early deflation
 !>                        finds a converged eigenvalue.  Setting
-!>                        IPARMQ(ISPEC=14) greater than or equal to 100
+!>                        mobbrmsd_IPARMQ(ISPEC=14) greater than or equal to 100
 !>                        prevents TTQRE from skipping a multi-shift
 !>                        QR sweep.
 !>
 !>              ISPEC=15: (NSHFTS) The number of simultaneous shifts in
 !>                        a multi-shift QR iteration.
 !>
-!>              ISPEC=16: (IACC22) IPARMQ is set to 0, 1 or 2 with the
+!>              ISPEC=16: (IACC22) mobbrmsd_IPARMQ is set to 0, 1 or 2 with the
 !>                        following meanings.
 !>                        0:  During the multi-shift QR/QZ sweep,
 !>                            blocked eigenvalue reordering, blocked
@@ -97,8 +97,8 @@
 !>                            is exploited during matrix-matrix
 !>                            multiplies.
 !>                        (If xTRMM is slower than xGEMM, then
-!>                        IPARMQ(ISPEC=16)=1 may be more efficient than
-!>                        IPARMQ(ISPEC=16)=2 despite the greater level of
+!>                        mobbrmsd_IPARMQ(ISPEC=16)=1 may be more efficient than
+!>                        mobbrmsd_IPARMQ(ISPEC=16)=2 despite the greater level of
 !>                        arithmetic work implied by the latter choice.)
 !>
 !>              ISPEC=17: (ICOST) An estimate of the relative cost of flops
@@ -175,23 +175,23 @@
 !>       only practical way to determine which choices are most
 !>       effective.
 !>
-!>       Following is a list of default values supplied by IPARMQ.
+!>       Following is a list of default values supplied by mobbrmsd_IPARMQ.
 !>       These defaults may be adjusted in order to attain better
 !>       performance in any particular computational environment.
 !>
-!>       IPARMQ(ISPEC=12) The xLAHQR vs xLAQR0 crossover point.
+!>       mobbrmsd_IPARMQ(ISPEC=12) The xLAHQR vs xLAQR0 crossover point.
 !>                        Default: 75. (Must be at least 11.)
 !>
-!>       IPARMQ(ISPEC=13) Recommended deflation window size.
+!>       mobbrmsd_IPARMQ(ISPEC=13) Recommended deflation window size.
 !>                        This depends on ILO, IHI and NS, the
 !>                        number of simultaneous shifts returned
-!>                        by IPARMQ(ISPEC=15).  The default for
+!>                        by mobbrmsd_IPARMQ(ISPEC=15).  The default for
 !>                        (IHI-ILO+1) <= 500 is NS.  The default
 !>                        for (IHI-ILO+1) > 500 is 3*NS/2.
 !>
-!>       IPARMQ(ISPEC=14) Nibble crossover point.  Default: 14.
+!>       mobbrmsd_IPARMQ(ISPEC=14) Nibble crossover point.  Default: 14.
 !>
-!>       IPARMQ(ISPEC=15) Number of simultaneous shifts, NS.
+!>       mobbrmsd_IPARMQ(ISPEC=15) Number of simultaneous shifts, NS.
 !>                        a multi-shift QR iteration.
 !>
 !>                        If IHI-ILO+1 is ...
@@ -209,24 +209,24 @@
 !>
 !>                    (+)  By default matrices of this order are
 !>                         passed to the implicit double shift routine
-!>                         xLAHQR.  See IPARMQ(ISPEC=12) above.   These
+!>                         xLAHQR.  See mobbrmsd_IPARMQ(ISPEC=12) above.   These
 !>                         values of NS are used only in case of a rare
 !>                         xLAHQR failure.
 !>
 !>                    (**) The asterisks (**) indicate an ad-hoc
 !>                         function increasing from 10 to 64.
 !>
-!>       IPARMQ(ISPEC=16) Select structured matrix multiply.
+!>       mobbrmsd_IPARMQ(ISPEC=16) Select structured matrix multiply.
 !>                        (See ISPEC=16 above for details.)
 !>                        Default: 3.
 !>
-!>       IPARMQ(ISPEC=17) Relative cost heuristic for blocksize selection.
+!>       mobbrmsd_IPARMQ(ISPEC=17) Relative cost heuristic for blocksize selection.
 !>                        Expressed as a percentage.
 !>                        Default: 10.
 !> \endverbatim
 !>
 !  =====================================================================
-pure elemental function IPARMQ(ISPEC, NAME, OPTS, N, ILO, IHI, LWORK)
+pure elemental function mobbrmsd_IPARMQ(ISPEC, NAME, OPTS, N, ILO, IHI, LWORK)
 ! use LA_CONSTANTS, only: sp
   implicit none
 !
@@ -237,7 +237,7 @@ pure elemental function IPARMQ(ISPEC, NAME, OPTS, N, ILO, IHI, LWORK)
 !     .. Scalar Arguments ..
   integer, intent(in)      :: IHI, ILO, ISPEC, LWORK, N
   character(*), intent(in) :: NAME, OPTS
-  integer                  :: IPARMQ
+  integer                  :: mobbrmsd_IPARMQ
 !
 !  ================================================================
 !     .. Parameters ..
@@ -289,7 +289,7 @@ pure elemental function IPARMQ(ISPEC, NAME, OPTS, N, ILO, IHI, LWORK)
 !        .     to xLAHQR, the classic double shift algorithm.
 !        .     This must be at least 11. ====
 !
-    IPARMQ = NMIN
+    mobbrmsd_IPARMQ = NMIN
 !
   else if (ISPEC == INIBL) then
 !
@@ -297,22 +297,22 @@ pure elemental function IPARMQ(ISPEC, NAME, OPTS, N, ILO, IHI, LWORK)
 !        .    whenever aggressive early deflation finds
 !        .    at least (NIBBLE*(window size)/100) deflations. ====
 !
-    IPARMQ = NIBBLE
+    mobbrmsd_IPARMQ = NIBBLE
 !
   else if (ISPEC == ISHFTS) then
 !
 !        ==== NSHFTS: The number of simultaneous shifts =====
 !
-    IPARMQ = NS
+    mobbrmsd_IPARMQ = NS
 !
   else if (ISPEC == INWIN) then
 !
 !        ==== NW: deflation window size.  ====
 !
     if (NH <= KNWSWP) then
-      IPARMQ = NS
+      mobbrmsd_IPARMQ = NS
     else
-      IPARMQ = 3 * NS / 2
+      mobbrmsd_IPARMQ = 3 * NS / 2
     end if
 !
   else if (ISPEC == IACC22) then
@@ -327,7 +327,7 @@ pure elemental function IPARMQ(ISPEC, NAME, OPTS, N, ILO, IHI, LWORK)
 !
 !        Convert NAME to upper case if the first character is lower case.
 !
-    IPARMQ = 0
+    mobbrmsd_IPARMQ = 0
     SUBNAM = NAME
     IC = ICHAR(SUBNAM(1:1))
     IZ = ICHAR('Z')
@@ -374,14 +374,14 @@ pure elemental function IPARMQ(ISPEC, NAME, OPTS, N, ILO, IHI, LWORK)
     end if
 !
     if (SUBNAM(2:6) == 'GGHRD' .or. SUBNAM(2:6) == 'GGHD3') then
-      IPARMQ = 1
-      if (NH >= K22MIN) IPARMQ = 2
+      mobbrmsd_IPARMQ = 1
+      if (NH >= K22MIN) mobbrmsd_IPARMQ = 2
     else if (SUBNAM(4:6) == 'EXC') then
-      if (NH >= KACMIN) IPARMQ = 1
-      if (NH >= K22MIN) IPARMQ = 2
+      if (NH >= KACMIN) mobbrmsd_IPARMQ = 1
+      if (NH >= K22MIN) mobbrmsd_IPARMQ = 2
     else if (SUBNAM(2:6) == 'HSEQR' .or. SUBNAM(2:5) == 'LAQR') then
-      if (NS >= KACMIN) IPARMQ = 1
-      if (NS >= K22MIN) IPARMQ = 2
+      if (NS >= KACMIN) mobbrmsd_IPARMQ = 1
+      if (NS >= K22MIN) mobbrmsd_IPARMQ = 2
     end if
 !
   else if (ISPEC == ICOST) then
@@ -389,13 +389,13 @@ pure elemental function IPARMQ(ISPEC, NAME, OPTS, N, ILO, IHI, LWORK)
 !        === Relative cost of near-the-diagonal chase vs
 !            BLAS updates ===
 !
-    IPARMQ = RCOST
+    mobbrmsd_IPARMQ = RCOST
   else
 !        ===== invalid value of ispec =====
-    IPARMQ = -1
+    mobbrmsd_IPARMQ = -1
 !
   end if
 !
-!     ==== End of IPARMQ ====
+!     ==== End of mobbrmsd_IPARMQ ====
 !
-end function IPARMQ
+end function mobbrmsd_IPARMQ

@@ -1,4 +1,4 @@
-!> \brief \b DLARTG generates a plane rotation with real cosine and real sine.
+!> \brief \b mobbrmsd_DLARTG generates a plane rotation with real cosine and real sine.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLARTG( F, G, C, S, R )
+!       SUBROUTINE mobbrmsd_DLARTG( F, G, C, S, R )
 !
 !       .. Scalar Arguments ..
 !       REAL(RK)      C, F, G, R, S
@@ -19,7 +19,7 @@
 !>
 !> \verbatim
 !>
-!> DLARTG generates a plane rotation so that
+!> mobbrmsd_DLARTG generates a plane rotation so that
 !>
 !>    [  C  S  ]  .  [ F ]  =  [ R ]
 !>    [ -S  C  ]     [ G ]     [ 0 ]
@@ -37,12 +37,12 @@
 !> This version is discontinuous in R at F = 0 but it returns the same
 !> C and S as ZLARTG for complex inputs (F,0) and (G,0).
 !>
-!> This is a more accurate version of the BLAS1 routine DROTG,
+!> This is a more accurate version of the BLAS1 routine mobbrmsd_DROTG,
 !> with the following other differences:
 !>    F and G are unchanged on return.
 !>    If G=0, then C=1 and S=0.
 !>    If F=0 and (G .ne. 0), then C=0 and S=sign(1,G) without doing any
-!>       floating point operations (saves work in DBDSQR when
+!>       floating point operations (saves work in mobbrmsd_DBDSQR when
 !>       there are zeros on the diagonal).
 !>
 !> If F exceeds G in magnitude, C will be positive.
@@ -109,7 +109,7 @@
 !>
 !> \endverbatim
 !
-pure elemental subroutine DLARTG(f, g, c, s, r)
+pure elemental subroutine mobbrmsd_DLARTG(f, g, c, s, r)
   implicit none
 ! use LA_CONSTANTS, &
 !   only: RK => dp, zero => dzero, half => dhalf, one => done, &
@@ -161,5 +161,5 @@ pure elemental subroutine DLARTG(f, g, c, s, r)
     r = SIGN(d, f) * u
   end if
   return
-end subroutine DLARTG
+end subroutine mobbrmsd_DLARTG
 

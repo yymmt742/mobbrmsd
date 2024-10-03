@@ -1,4 +1,4 @@
-!> \brief \b DGER
+!> \brief \b mobbrmsd_DGER
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DGER(M,N,ALPHA,X,INCX,Y,INCY,A,LDA)
+!       SUBROUTINE mobbrmsd_DGER(M,N,ALPHA,X,INCX,Y,INCY,A,LDA)
 !
 !       .. Scalar Arguments ..
 !       real(RK)           :: ALPHA
@@ -24,7 +24,7 @@
 !>
 !> \verbatim
 !>
-!> DGER   performs the rank 1 operation
+!> mobbrmsd_DGER   performs the rank 1 operation
 !>
 !>    A := alpha*x*y**T + A,
 !>
@@ -126,7 +126,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DGER(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
+pure subroutine mobbrmsd_DGER(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
 ! use LA_CONSTANTS, only: RK => dp
 !
 !  -- Reference BLAS level2 routine --
@@ -169,7 +169,7 @@ pure subroutine DGER(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
     INFO = 9
   end if
   if (INFO /= 0) then
-!    CALL XERBLA('DGER  ',INFO)
+!    CALL XERBLA('mobbrmsd_DGER  ',INFO)
     return
   end if
 !
@@ -216,7 +216,7 @@ pure subroutine DGER(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
 !
   return
 !
-!     End of DGER
+!     End of mobbrmsd_DGER
 !
-end subroutine DGER
+end subroutine mobbrmsd_DGER
 

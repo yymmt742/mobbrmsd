@@ -1,4 +1,4 @@
-!> \brief \b DGEMV
+!> \brief \b mobbrmsd_DGEMV
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+!       SUBROUTINE mobbrmsd_DGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
 !
 !       .. Scalar Arguments ..
 !       real(RK)           :: ALPHA,BETA
@@ -25,7 +25,7 @@
 !>
 !> \verbatim
 !>
-!> DGEMV  performs one of the matrix-vector operations
+!> mobbrmsd_DGEMV  performs one of the matrix-vector operations
 !>
 !>    y := alpha*A*x + beta*y,   or   y := alpha*A**T*x + beta*y,
 !>
@@ -152,7 +152,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DGEMV(TRANS, M, N, ALPHA, A, LDA, X, INCX, BETA, Y, INCY)
+pure subroutine mobbrmsd_DGEMV(TRANS, M, N, ALPHA, A, LDA, X, INCX, BETA, Y, INCY)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -193,7 +193,7 @@ pure subroutine DGEMV(TRANS, M, N, ALPHA, A, LDA, X, INCX, BETA, Y, INCY)
 !     Test the input parameters.
 !
   INFO = 0
-  if (.not. LSAME(TRANS, 'N') .and. .not. LSAME(TRANS, 'T') .and. .not. LSAME(TRANS, 'C')) then
+  if (.not. mobbrmsd_LSAME(TRANS, 'N') .and. .not. mobbrmsd_LSAME(TRANS, 'T') .and. .not. mobbrmsd_LSAME(TRANS, 'C')) then
     INFO = 1
   else if (M < 0) then
     INFO = 2
@@ -207,7 +207,7 @@ pure subroutine DGEMV(TRANS, M, N, ALPHA, A, LDA, X, INCX, BETA, Y, INCY)
     INFO = 11
   end if
   if (INFO /= 0) then
-!   CALL XERBLA('DGEMV ',INFO)
+!   CALL XERBLA('mobbrmsd_DGEMV ',INFO)
     return
   end if
 !
@@ -218,7 +218,7 @@ pure subroutine DGEMV(TRANS, M, N, ALPHA, A, LDA, X, INCX, BETA, Y, INCY)
 !     Set  LENX  and  LENY, the lengths of the vectors x and y, and set
 !     up the start points in  X  and  Y.
 !
-  if (LSAME(TRANS, 'N')) then
+  if (mobbrmsd_LSAME(TRANS, 'N')) then
     LENX = N
     LENY = M
   else
@@ -268,7 +268,7 @@ pure subroutine DGEMV(TRANS, M, N, ALPHA, A, LDA, X, INCX, BETA, Y, INCY)
     end if
   end if
   if (ALPHA == ZERO) return
-  if (LSAME(TRANS, 'N')) then
+  if (mobbrmsd_LSAME(TRANS, 'N')) then
 !
 !        Form  y := alpha*A*x + y.
 !
@@ -322,7 +322,7 @@ pure subroutine DGEMV(TRANS, M, N, ALPHA, A, LDA, X, INCX, BETA, Y, INCY)
 !
   return
 !
-!     End of DGEMV
+!     End of mobbrmsd_DGEMV
 !
-end subroutine DGEMV
+end subroutine mobbrmsd_DGEMV
 

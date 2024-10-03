@@ -1,4 +1,4 @@
-!> \brief \b ILADLC scans a matrix for its last non-zero column.
+!> \brief \b mobbrmsd_ILADLC scans a matrix for its last non-zero column.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 ! http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download ILADLC + dependencies
+!> Download mobbrmsd_ILADLC + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/iladlc.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/iladlc.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!   INTEGER FUNCTION ILADLC( M, N, A, LDA )
+!   INTEGER FUNCTION mobbrmsd_ILADLC( M, N, A, LDA )
 !
 !   .. Scalar Arguments ..
 !   INTEGER            M, N, LDA
@@ -33,7 +33,7 @@
 !>
 !> \verbatim
 !>
-!> ILADLC scans A for its last non-zero column.
+!> mobbrmsd_ILADLC scans A for its last non-zero column.
 !> \endverbatim
 !
 !  Arguments:
@@ -74,7 +74,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure function ILADLC(M, N, A, LDA)
+pure function mobbrmsd_ILADLC(M, N, A, LDA)
 ! use LA_CONSTANTS, only: DP
   implicit none
 !
@@ -87,7 +87,7 @@ pure function ILADLC(M, N, A, LDA)
 ! ..
 ! .. Array Arguments ..
   real(RK), intent(in) :: A(LDA, *)
-  integer :: ILADLC
+  integer :: mobbrmsd_ILADLC
 ! ..
 !
 !  =====================================================================
@@ -102,16 +102,16 @@ pure function ILADLC(M, N, A, LDA)
 !
 ! Quick test for the common case where one corner is non-zero.
   if (N == 0) then
-    ILADLC = N
+    mobbrmsd_ILADLC = N
   else if (A(1, N) /= ZERO .or. A(M, N) /= ZERO) then
-    ILADLC = N
+    mobbrmsd_ILADLC = N
   else
 ! Now scan each column from the end, returning with the first non-zero.
-    do ILADLC = N, 1, -1
+    do mobbrmsd_ILADLC = N, 1, -1
       do I = 1, M
-        if (A(I, ILADLC) /= ZERO) return
+        if (A(I, mobbrmsd_ILADLC) /= ZERO) return
       end do
     end do
   end if
   return
-end function ILADLC
+end function mobbrmsd_ILADLC

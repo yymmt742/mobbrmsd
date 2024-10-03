@@ -1,4 +1,4 @@
-!> \brief \b IEEECK
+!> \brief \b mobbrmsd_IEEECK
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 ! http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download IEEECK + dependencies
+!> Download mobbrmsd_IEEECK + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/ieeeck.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/ieeeck.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!   INTEGER          FUNCTION IEEECK( ISPEC, ZERO, ONE )
+!   INTEGER          FUNCTION mobbrmsd_IEEECK( ISPEC, ZERO, ONE )
 !
 !   .. Scalar Arguments ..
 !   INTEGER            ISPEC
@@ -31,7 +31,7 @@
 !>
 !> \verbatim
 !>
-!> IEEECK is called from the ILAENV to verify that Infinity and
+!> mobbrmsd_IEEECK is called from the mobbrmsd_ILAENV to verify that Infinity and
 !> possibly NaN arithmetic is safe (i.e. will not trap).
 !> \endverbatim
 !
@@ -78,7 +78,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure elemental function IEEECK(ISPEC, ZERO, ONE)
+pure elemental function mobbrmsd_IEEECK(ISPEC, ZERO, ONE)
 ! use LA_CONSTANTS, only: SP
   implicit none
 !
@@ -89,7 +89,7 @@ pure elemental function IEEECK(ISPEC, ZERO, ONE)
 ! .. Scalar Arguments ..
   integer, intent(in)  :: ISPEC
   real(RK), intent(in) :: ONE, ZERO
-  integer              :: IEEECK
+  integer              :: mobbrmsd_IEEECK
 ! ..
 !
 !  =====================================================================
@@ -98,53 +98,53 @@ pure elemental function IEEECK(ISPEC, ZERO, ONE)
   real(RK) :: NAN1, NAN2, NAN3, NAN4, NAN5, NAN6, NEGINF, NEGZRO, NEWZRO, POSINF
 ! ..
 ! .. Executable Statements ..
-  IEEECK = 1
+  mobbrmsd_IEEECK = 1
 !
   POSINF = ONE / ZERO
   if (POSINF <= ONE) then
-    IEEECK = 0
+    mobbrmsd_IEEECK = 0
     return
   end if
 !
   NEGINF = -ONE / ZERO
   if (NEGINF >= ZERO) then
-    IEEECK = 0
+    mobbrmsd_IEEECK = 0
     return
   end if
 !
   NEGZRO = ONE / (NEGINF + ONE)
   if (NEGZRO /= ZERO) then
-    IEEECK = 0
+    mobbrmsd_IEEECK = 0
     return
   end if
 !
   NEGINF = ONE / NEGZRO
   if (NEGINF >= ZERO) then
-    IEEECK = 0
+    mobbrmsd_IEEECK = 0
     return
   end if
 !
   NEWZRO = NEGZRO + ZERO
   if (NEWZRO /= ZERO) then
-    IEEECK = 0
+    mobbrmsd_IEEECK = 0
     return
   end if
 !
   POSINF = ONE / NEWZRO
   if (POSINF <= ONE) then
-    IEEECK = 0
+    mobbrmsd_IEEECK = 0
     return
   end if
 !
   NEGINF = NEGINF * POSINF
   if (NEGINF >= ZERO) then
-    IEEECK = 0
+    mobbrmsd_IEEECK = 0
     return
   end if
 !
   POSINF = POSINF * POSINF
   if (POSINF <= ONE) then
-    IEEECK = 0
+    mobbrmsd_IEEECK = 0
     return
   end if
 !
@@ -165,34 +165,34 @@ pure elemental function IEEECK(ISPEC, ZERO, ONE)
   NAN6 = NAN5 * ZERO
 !
   if (NAN1 == NAN1) then
-    IEEECK = 0
+    mobbrmsd_IEEECK = 0
     return
   end if
 !
   if (NAN2 == NAN2) then
-    IEEECK = 0
+    mobbrmsd_IEEECK = 0
     return
   end if
 !
   if (NAN3 == NAN3) then
-    IEEECK = 0
+    mobbrmsd_IEEECK = 0
     return
   end if
 !
   if (NAN4 == NAN4) then
-    IEEECK = 0
+    mobbrmsd_IEEECK = 0
     return
   end if
 !
   if (NAN5 == NAN5) then
-    IEEECK = 0
+    mobbrmsd_IEEECK = 0
     return
   end if
 !
   if (NAN6 == NAN6) then
-    IEEECK = 0
+    mobbrmsd_IEEECK = 0
     return
   end if
 !
   return
-end function IEEECK
+end function mobbrmsd_IEEECK

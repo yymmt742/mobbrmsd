@@ -1,4 +1,4 @@
-!> \brief \b DLAPY2 returns sqrt(x2+y2).
+!> \brief \b mobbrmsd_DLAPY2 returns sqrt(x2+y2).
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLAPY2 + dependencies
+!> Download mobbrmsd_DLAPY2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dlapy2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dlapy2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       real(RK)           :: FUNCTION DLAPY2( X, Y )
+!       real(RK)           :: FUNCTION mobbrmsd_DLAPY2( X, Y )
 !
 !       .. Scalar Arguments ..
 !       real(RK)           ::   X, Y
@@ -30,7 +30,7 @@
 !>
 !> \verbatim
 !>
-!> DLAPY2 returns sqrt(x**2+y**2), taking care not to cause unnecessary
+!> mobbrmsd_DLAPY2 returns sqrt(x**2+y**2), taking care not to cause unnecessary
 !> overflow and unnecessary underflow.
 !> \endverbatim
 !
@@ -59,7 +59,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure function dlapy2(X, Y)
+pure elemental function mobbrmsd_DLAPY2(X, Y)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -69,7 +69,7 @@ pure function dlapy2(X, Y)
 !
 !     .. Scalar Arguments ..
   real(RK), intent(in) :: X, Y
-  real(RK)            :: dlapy2
+  real(RK)             :: mobbrmsd_DLAPY2
 !     ..
 !  =====================================================================
 !     ..
@@ -93,11 +93,11 @@ pure function dlapy2(X, Y)
 !     ..
 !     .. Executable Statements ..
 !
-  X_IS_NAN = DISNAN(X)
-  Y_IS_NAN = DISNAN(Y)
-  if (X_IS_NAN) DLAPY2 = X
-  if (Y_IS_NAN) DLAPY2 = Y
-  HUGEVAL = DLAMCH('Overflow')
+  X_IS_NAN = mobbrmsd_DISNAN(X)
+  Y_IS_NAN = mobbrmsd_DISNAN(Y)
+  if (X_IS_NAN) mobbrmsd_DLAPY2 = X
+  if (Y_IS_NAN) mobbrmsd_DLAPY2 = Y
+  HUGEVAL = mobbrmsd_DLAMCH('Overflow')
 !
   if (.not. (X_IS_NAN .or. Y_IS_NAN)) then
     XABS = ABS(X)
@@ -105,14 +105,14 @@ pure function dlapy2(X, Y)
     W = MAX(XABS, YABS)
     Z = MIN(XABS, YABS)
     if (Z == ZERO .or. W > HUGEVAL) then
-      DLAPY2 = W
+      mobbrmsd_DLAPY2 = W
     else
-      DLAPY2 = W * SQRT(ONE + (Z / W)**2)
+      mobbrmsd_DLAPY2 = W * SQRT(ONE + (Z / W)**2)
     end if
   end if
   return
 !
-!     End of DLAPY2
+!     End of mobbrmsd_DLAPY2
 !
-end function DLAPY2
+end function mobbrmsd_DLAPY2
 

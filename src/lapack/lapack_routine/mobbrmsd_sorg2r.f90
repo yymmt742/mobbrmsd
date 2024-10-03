@@ -1,4 +1,4 @@
-!> \brief \b SORG2R generates all or part of the orthogonal matrix Q from a QR factorization determined by sgeqrf (unblocked algorithm).
+!> \brief \b mobbrmsd_SORG2R generates all or part of the orthogonal matrix Q from a QR factorization determined by sgeqrf (unblocked algorithm).
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SORG2R + dependencies
+!> Download mobbrmsd_SORG2R + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sorg2r.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sorg2r.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SORG2R( M, N, K, A, LDA, TAU, WORK, INFO )
+!       SUBROUTINE mobbrmsd_SORG2R( M, N, K, A, LDA, TAU, WORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, K, LDA, M, N
@@ -33,13 +33,13 @@
 !>
 !> \verbatim
 !>
-!> SORG2R generates an m by n real matrix Q with orthonormal columns,
+!> mobbrmsd_SORG2R generates an m by n real matrix Q with orthonormal columns,
 !> which is defined as the first n columns of a product of k elementary
 !> reflectors of order m
 !>
 !>       Q  =  H(1) H(2) . . . H(k)
 !>
-!> as returned by SGEQRF.
+!> as returned by mobbrmsd_SGEQRF.
 !> \endverbatim
 !
 !  Arguments:
@@ -69,7 +69,7 @@
 !>          A is REAL array, dimension (LDA,N)
 !>          On entry, the i-th column must contain the vector which
 !>          defines the elementary reflector H(i), for i = 1,2,...,k, as
-!>          returned by SGEQRF in the first k columns of its array
+!>          returned by mobbrmsd_SGEQRF in the first k columns of its array
 !>          argument A.
 !>          On exit, the m-by-n matrix Q.
 !> \endverbatim
@@ -84,7 +84,7 @@
 !> \verbatim
 !>          TAU is REAL array, dimension (K)
 !>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i), as returned by SGEQRF.
+!>          reflector H(i), as returned by mobbrmsd_SGEQRF.
 !> \endverbatim
 !>
 !> \param[out] WORK
@@ -112,7 +112,7 @@
 !> \ingroup realOTHERcomputational
 !
 !  =====================================================================
-pure subroutine SORG2R(M, N, K, A, LDA, TAU, WORK, INFO)
+pure subroutine mobbrmsd_SORG2R(M, N, K, A, LDA, TAU, WORK, INFO)
   implicit none
 !
 !  -- LAPACK computational routine (version 3.7.0) --
@@ -163,7 +163,7 @@ pure subroutine SORG2R(M, N, K, A, LDA, TAU, WORK, INFO)
     INFO = -5
   end if
   if (INFO /= 0) then
-!   call XERBLA('SORG2R', -INFO)
+!   call XERBLA('mobbrmsd_SORG2R', -INFO)
     return
   end if
 !
@@ -186,9 +186,9 @@ pure subroutine SORG2R(M, N, K, A, LDA, TAU, WORK, INFO)
     !
     if (I < N) then
       A(I, I) = ONE
-      call SLARF('Left', M - I + 1, N - I, A(I, I), 1, TAU(I), A(I, I + 1), LDA, WORK)
+      call mobbrmsd_SLARF('Left', M - I + 1, N - I, A(I, I), 1, TAU(I), A(I, I + 1), LDA, WORK)
     end if
-    if (I < M) call SSCAL(M - I, -TAU(I), A(I + 1, I), 1)
+    if (I < M) call mobbrmsd_SSCAL(M - I, -TAU(I), A(I + 1, I), 1)
     A(I, I) = ONE - TAU(I)
     !
     !Set A(1:i - 1, i) to zero
@@ -199,6 +199,6 @@ pure subroutine SORG2R(M, N, K, A, LDA, TAU, WORK, INFO)
   end do
   return
   !
-  !end of SORG2R
+  !end of mobbrmsd_SORG2R
   !
 end

@@ -1,4 +1,4 @@
-!> \brief \b ILAENV
+!> \brief \b mobbrmsd_ILAENV
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download ILAENV + dependencies
+!> Download mobbrmsd_ILAENV + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/ilaenv.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/ilaenv.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       INTEGER FUNCTION ILAENV( ISPEC, NAME, OPTS, N1, N2, N3, N4 )
+!       INTEGER FUNCTION mobbrmsd_ILAENV( ISPEC, NAME, OPTS, N1, N2, N3, N4 )
 !
 !       .. Scalar Arguments ..
 !       CHARACTER*( * )    NAME, OPTS
@@ -31,13 +31,13 @@
 !>
 !> \verbatim
 !>
-!> ILAENV is called from the LAPACK routines to choose problem-dependent
+!> mobbrmsd_ILAENV is called from the LAPACK routines to choose problem-dependent
 !> parameters for the local environment.  See ISPEC for a description of
 !> the parameters.
 !>
-!> ILAENV returns an INTEGER
-!> if ILAENV >= 0: ILAENV returns the value of the parameter specified by ISPEC
-!> if ILAENV < 0:  if ILAENV = -k, the k-th argument had an illegal value.
+!> mobbrmsd_ILAENV returns an INTEGER
+!> if mobbrmsd_ILAENV >= 0: mobbrmsd_ILAENV returns the value of the parameter specified by ISPEC
+!> if mobbrmsd_ILAENV < 0:  if mobbrmsd_ILAENV = -k, the k-th argument had an illegal value.
 !>
 !> This version provides a set of parameters which should give good,
 !> but not optimal, performance on many of the currently available
@@ -56,7 +56,7 @@
 !> \verbatim
 !>          ISPEC is INTEGER
 !>          Specifies the parameter to be returned as the value of
-!>          ILAENV.
+!>          mobbrmsd_ILAENV.
 !>          = 1: the optimal blocksize; if this value is 1, an unblocked
 !>               algorithm will give the best performance.
 !>          = 2: the minimum block size for which the block routine
@@ -68,7 +68,7 @@
 !>               eigenvalue routines (DEPRECATED)
 !>          = 5: the minimum column dimension for blocking to be used;
 !>               rectangular blocks must have dimension at least k by m,
-!>               where k is given by ILAENV(2,...) and m by ILAENV(5,...)
+!>               where k is given by mobbrmsd_ILAENV(2,...) and m by mobbrmsd_ILAENV(5,...)
 !>          = 6: the crossover point for the SVD (when reducing an m by n
 !>               matrix to bidiagonal form, if max(m,n)/min(m,n) exceeds
 !>               this value, a QR factorization is used first to reduce
@@ -83,7 +83,7 @@
 !>          =11: infinity arithmetic can be trusted not to trap
 !>          12 <= ISPEC <= 17:
 !>               xHSEQR or related subroutines,
-!>               see IPARMQ for detailed explanation
+!>               see mobbrmsd_IPARMQ for detailed explanation
 !> \endverbatim
 !>
 !> \param[in] NAME
@@ -139,7 +139,7 @@
 !>
 !> \verbatim
 !>
-!>  The following conventions have been used when calling ILAENV from the
+!>  The following conventions have been used when calling mobbrmsd_ILAENV from the
 !>  LAPACK routines:
 !>  1)  OPTS is a concatenation of all of the character options to
 !>      subroutine NAME, in the same order that they appear in the
@@ -149,16 +149,16 @@
 !>      that they appear in the argument list for NAME.  N1 is used
 !>      first, N2 second, and so on, and unused problem dimensions are
 !>      passed a value of -1.
-!>  3)  The parameter value returned by ILAENV is checked for validity in
-!>      the calling subroutine.  For example, ILAENV is used to retrieve
+!>  3)  The parameter value returned by mobbrmsd_ILAENV is checked for validity in
+!>      the calling subroutine.  For example, mobbrmsd_ILAENV is used to retrieve
 !>      the optimal blocksize for STRTRI as follows:
 !>
-!>      NB = ILAENV( 1, 'STRTRI', UPLO // DIAG, N, -1, -1, -1 )
+!>      NB = mobbrmsd_ILAENV( 1, 'STRTRI', UPLO // DIAG, N, -1, -1, -1 )
 !>      IF( NB.LE.1 ) NB = MAX( 1, N )
 !> \endverbatim
 !>
 !  =====================================================================
-pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
+pure elemental function mobbrmsd_ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
   implicit none
 !
 !  -- LAPACK auxiliary routine --
@@ -168,7 +168,7 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
 !     .. Scalar Arguments ..
   character(*), intent(in) :: NAME, OPTS
   integer, intent(in)      :: ISPEC, N1, N2, N3, N4
-  integer                  :: ILAENV
+  integer                  :: mobbrmsd_ILAENV
 !     ..
 !
 !  =====================================================================
@@ -203,7 +203,7 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
 !
 !   Convert NAME to upper case if the first character is lower case.
 !
-    ILAENV = 1
+    mobbrmsd_ILAENV = 1
     SUBNAM = NAME
     IC = ICHAR(SUBNAM(1:1))
     IZ = ICHAR('Z')
@@ -494,7 +494,7 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
           end if
         end if
       end if
-      ILAENV = NB
+      mobbrmsd_ILAENV = NB
       return
 !
     case (2)
@@ -577,7 +577,7 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
           NBMIN = 2
         end if
       end if
-      ILAENV = NBMIN
+      mobbrmsd_ILAENV = NBMIN
       return
 !
 !   70 CONTINUE
@@ -636,7 +636,7 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
           NX = 128
         end if
       end if
-      ILAENV = NX
+      mobbrmsd_ILAENV = NX
       return
     end select
 !
@@ -645,7 +645,7 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
 !
 !       ISPEC = 4:  number of shifts (used by xHSEQR)
 !
-    ILAENV = 6
+    mobbrmsd_ILAENV = 6
     return
 !
 !   90 CONTINUE
@@ -653,7 +653,7 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
 !
 !       ISPEC = 5:  minimum column dimension (not used)
 !
-    ILAENV = 2
+    mobbrmsd_ILAENV = 2
     return
 !
 !  100 CONTINUE
@@ -661,7 +661,7 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
 !
 !       ISPEC = 6:  crossover point for SVD (used by xGELSS and xGESVD)
 !
-    ILAENV = INT(real(MIN(N1, N2)) * 1.6E0)
+    mobbrmsd_ILAENV = INT(real(MIN(N1, N2)) * 1.6E0)
     return
 !
 ! 110 CONTINUE
@@ -669,7 +669,7 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
 !
 !       ISPEC = 7:  number of processors (not used)
 !
-    ILAENV = 1
+    mobbrmsd_ILAENV = 1
     return
 !
 ! 120 CONTINUE
@@ -677,7 +677,7 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
 !
 !       ISPEC = 8:  crossover point for multishift (used by xHSEQR)
 !
-    ILAENV = 50
+    mobbrmsd_ILAENV = 50
     return
 !
 ! 130 CONTINUE
@@ -687,7 +687,7 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
 !                   computation tree in the divide-and-conquer algorithm
 !                   (used by xGELSD and xGESDD)
 !
-    ILAENV = 25
+    mobbrmsd_ILAENV = 25
     return
 !
 ! 140 CONTINUE
@@ -695,10 +695,10 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
 !
 !       ISPEC = 10: ieee and infinity NaN arithmetic can be trusted not to trap
 !
-!       ILAENV = 0
-    ILAENV = 1
-    if (ILAENV == 1) then
-      ILAENV = IEEECK(1, 0.0_RK, 1.0_RK)
+!       mobbrmsd_ILAENV = 0
+    mobbrmsd_ILAENV = 1
+    if (mobbrmsd_ILAENV == 1) then
+      mobbrmsd_ILAENV = mobbrmsd_IEEECK(1, 0.0_RK, 1.0_RK)
     end if
     return
 !
@@ -707,10 +707,10 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
 !
 !       ISPEC = 11: ieee infinity arithmetic can be trusted not to trap
 !
-!       ILAENV = 0
-    ILAENV = 1
-    if (ILAENV == 1) then
-      ILAENV = IEEECK(0, 0.0_RK, 1.0_RK)
+!       mobbrmsd_ILAENV = 0
+    mobbrmsd_ILAENV = 1
+    if (mobbrmsd_ILAENV == 1) then
+      mobbrmsd_ILAENV = mobbrmsd_IEEECK(0, 0.0_RK, 1.0_RK)
     end if
     return
 !
@@ -719,16 +719,16 @@ pure elemental function ILAENV(ISPEC, NAME, OPTS, N1, N2, N3, N4)
 !
 !       12 <= ISPEC <= 17: xHSEQR or related subroutines.
 !
-    ILAENV = IPARMQ(ISPEC, NAME, OPTS, N1, N2, N3, N4)
+    mobbrmsd_ILAENV = mobbrmsd_IPARMQ(ISPEC, NAME, OPTS, N1, N2, N3, N4)
     return
 !
   case default
 !
-    ILAENV = -1
+    mobbrmsd_ILAENV = -1
     return
 !
   end select
 !
-! End of ILAENV
+! End of mobbrmsd_ILAENV
 !
-end function ILAENV
+end function mobbrmsd_ILAENV

@@ -1,4 +1,4 @@
-!> \brief \b DLASQ5 computes one dqds transform in ping-pong form. Used by sbdsqr and sstegr.
+!> \brief \b mobbrmsd_DLASQ5 computes one dqds transform in ping-pong form. Used by sbdsqr and sstegr.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLASQ5 + dependencies
+!> Download mobbrmsd_DLASQ5 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlasq5.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlasq5.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLASQ5( I0, N0, Z, PP, TAU, SIGMA, DMIN, DMIN1, DMIN2, DN,
+!       SUBROUTINE mobbrmsd_DLASQ5( I0, N0, Z, PP, TAU, SIGMA, DMIN, DMIN1, DMIN2, DN,
 !                          DNM1, DNM2, IEEE, EPS )
 !
 !       .. Scalar Arguments ..
@@ -36,7 +36,7 @@
 !>
 !> \verbatim
 !>
-!> DLASQ5 computes one dqds transform in ping-pong form, one
+!> mobbrmsd_DLASQ5 computes one dqds transform in ping-pong form, one
 !> version for IEEE machines another for non IEEE machines.
 !> \endverbatim
 !
@@ -139,7 +139,7 @@
 !> \ingroup auxOTHERcomputational
 !
 !  =====================================================================
-pure subroutine DLASQ5(I0, N0, Z, PP, TAU, SIGMA, DMIN, DMIN1, DMIN2, &
+pure subroutine mobbrmsd_DLASQ5(I0, N0, Z, PP, TAU, SIGMA, DMIN, DMIN1, DMIN2, &
                &       DN, DNM1, DNM2, IEEE, EPS)
 ! use LA_CONSTANTS, only: RK => dp
 !
@@ -400,7 +400,7 @@ pure subroutine DLASQ5(I0, N0, Z, PP, TAU, SIGMA, DMIN, DMIN1, DMIN2, &
   Z(4 * N0 - PP) = EMIN
   return
 !
-!     End of DLASQ5
+!     End of mobbrmsd_DLASQ5
 !
-end subroutine DLASQ5
+end subroutine mobbrmsd_DLASQ5
 

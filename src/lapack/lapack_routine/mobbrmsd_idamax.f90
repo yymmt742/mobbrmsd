@@ -1,4 +1,4 @@
-!> \brief \b IDAMAX
+!> \brief \b mobbrmsd_IDAMAX
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       INTEGER FUNCTION IDAMAX(N,DX,INCX)
+!       INTEGER FUNCTION mobbrmsd_IDAMAX(N,DX,INCX)
 !
 !       .. Scalar Arguments ..
 !       INTEGER INCX,N
@@ -23,7 +23,7 @@
 !>
 !> \verbatim
 !>
-!>    IDAMAX finds the index of the first element having maximum absolute value.
+!>    mobbrmsd_IDAMAX finds the index of the first element having maximum absolute value.
 !> \endverbatim
 !
 !  Arguments:
@@ -67,7 +67,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure function IDAMAX(N, DX, INCX)
+pure function mobbrmsd_IDAMAX(N, DX, INCX)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -82,7 +82,7 @@ pure function IDAMAX(N, DX, INCX)
   real(RK), intent(in) :: DX(*)
 !     ..
 !
-  integer :: IDAMAX
+  integer :: mobbrmsd_IDAMAX
 !
 !  =====================================================================
 !
@@ -93,9 +93,9 @@ pure function IDAMAX(N, DX, INCX)
 !     .. Intrinsic Functions ..
   intrinsic :: ABS
 !     ..
-  IDAMAX = 0
+  mobbrmsd_IDAMAX = 0
   if (N < 1 .or. INCX <= 0) return
-  IDAMAX = 1
+  mobbrmsd_IDAMAX = 1
   if (N == 1) return
   if (INCX == 1) then
 !
@@ -104,7 +104,7 @@ pure function IDAMAX(N, DX, INCX)
     DMAX = ABS(DX(1))
     do I = 2, N
       if (ABS(DX(I)) > DMAX) then
-        IDAMAX = I
+        mobbrmsd_IDAMAX = I
         DMAX = ABS(DX(I))
       end if
     end do
@@ -117,7 +117,7 @@ pure function IDAMAX(N, DX, INCX)
     IX = IX + INCX
     do I = 2, N
       if (ABS(DX(IX)) > DMAX) then
-        IDAMAX = I
+        mobbrmsd_IDAMAX = I
         DMAX = ABS(DX(IX))
       end if
       IX = IX + INCX
@@ -125,7 +125,7 @@ pure function IDAMAX(N, DX, INCX)
   end if
   return
 !
-!     End of IDAMAX
+!     End of mobbrmsd_IDAMAX
 !
-end function IDAMAX
+end function mobbrmsd_IDAMAX
 

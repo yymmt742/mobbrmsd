@@ -1,4 +1,4 @@
-!> \brief \b DLASET initializes the off-diagonal elements and the diagonal elements of a matrix to given values.
+!> \brief \b mobbrmsd_DLASET initializes the off-diagonal elements and the diagonal elements of a matrix to given values.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLASET + dependencies
+!> Download mobbrmsd_DLASET + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dlaset.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dlaset.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       pure subroutine DLASET( UPLO, M, N, ALPHA, BETA, A, LDA )
+!       pure subroutine mobbrmsd_DLASET( UPLO, M, N, ALPHA, BETA, A, LDA )
 !
 !       .. Scalar Arguments ..
 !       CHARACTER          UPLO
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> DLASET initializes an m-by-n matrix A to BETA on the diagonal and
+!> mobbrmsd_DLASET initializes an m-by-n matrix A to BETA on the diagonal and
 !> ALPHA on the offdiagonals.
 !> \endverbatim
 !
@@ -106,7 +106,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure subroutine DLASET(UPLO, M, N, ALPHA, BETA, A, LDA)
+pure subroutine mobbrmsd_DLASET(UPLO, M, N, ALPHA, BETA, A, LDA)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -137,7 +137,7 @@ pure subroutine DLASET(UPLO, M, N, ALPHA, BETA, A, LDA)
 !     ..
 !     .. Executable Statements ..
 !
-  if (LSAME(UPLO, 'U')) then
+  if (mobbrmsd_LSAME(UPLO, 'U')) then
 !
 !        Set the strictly upper triangular or trapezoidal part of the
 !        array to ALPHA.
@@ -148,7 +148,7 @@ pure subroutine DLASET(UPLO, M, N, ALPHA, BETA, A, LDA)
       end do
     end do
 !
-  else if (LSAME(UPLO, 'L')) then
+  else if (mobbrmsd_LSAME(UPLO, 'L')) then
 !
 !        Set the strictly lower triangular or trapezoidal part of the
 !        array to ALPHA.
@@ -184,7 +184,7 @@ pure subroutine DLASET(UPLO, M, N, ALPHA, BETA, A, LDA)
 !
   return
 !
-!     End of DLASET
+!     End of mobbrmsd_DLASET
 !
-end subroutine DLASET
+end subroutine mobbrmsd_DLASET
 

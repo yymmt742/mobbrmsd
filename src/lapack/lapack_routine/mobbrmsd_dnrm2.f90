@@ -1,4 +1,4 @@
-!> \brief \b DNRM2
+!> \brief \b mobbrmsd_DNRM2
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       DOUBLE PRECISION FUNCTION DNRM2(N,X,INCX)
+!       DOUBLE PRECISION FUNCTION mobbrmsd_DNRM2(N,X,INCX)
 !
 !       .. Scalar Arguments ..
 !       INTEGER INCX,N
@@ -23,10 +23,10 @@
 !>
 !> \verbatim
 !>
-!> DNRM2 returns the euclidean norm of a vector via the function
+!> mobbrmsd_DNRM2 returns the euclidean norm of a vector via the function
 !> name, so that
 !>
-!>    DNRM2 := sqrt( x'*x )
+!>    mobbrmsd_DNRM2 := sqrt( x'*x )
 !> \endverbatim
 !
 !  Arguments:
@@ -85,7 +85,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure function DNRM2(n, x, incx)
+pure function mobbrmsd_DNRM2(n, x, incx)
 ! use LA_CONSTANTS, only: RK => dp
 !  ..
 !  .. Scalar Arguments ..
@@ -94,7 +94,7 @@ pure function DNRM2(n, x, incx)
 !  .. Array Arguments ..
   real(RK), intent(in) :: x(*)
 !
-  real(RK) :: DNRM2
+  real(RK) :: mobbrmsd_DNRM2
 !
 !  -- Reference BLAS level1 routine (version 3.9.1) --
 !  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
@@ -123,7 +123,7 @@ pure function DNRM2(n, x, incx)
 !
 !  Quick return if possible
 !
-  DNRM2 = ZERO
+  mobbrmsd_DNRM2 = ZERO
   if (n <= 0) return
 !
   scl = ONE
@@ -195,7 +195,7 @@ pure function DNRM2(n, x, incx)
     scl = one
     sumsq = amed
   end if
-  DNRM2 = scl * SQRT(sumsq)
+  mobbrmsd_DNRM2 = scl * SQRT(sumsq)
   return
 end function
 

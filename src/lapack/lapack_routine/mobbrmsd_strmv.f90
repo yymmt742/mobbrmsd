@@ -1,4 +1,4 @@
-!> \brief \b STRMV
+!> \brief \b mobbrmsd_STRMV
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE STRMV(UPLO,TRANS,DIAG,N,A,LDA,X,INCX)
+!       SUBROUTINE mobbrmsd_STRMV(UPLO,TRANS,DIAG,N,A,LDA,X,INCX)
 !
 !       .. Scalar Arguments ..
 !       INTEGER INCX,LDA,N
@@ -24,7 +24,7 @@
 !>
 !> \verbatim
 !>
-!> STRMV  performs one of the matrix-vector operations
+!> mobbrmsd_STRMV  performs one of the matrix-vector operations
 !>
 !>    x := A*x,   or   x := A**T*x,
 !>
@@ -145,7 +145,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine STRMV(UPLO, TRANS, DIAG, N, A, LDA, X, INCX)
+pure subroutine mobbrmsd_STRMV(UPLO, TRANS, DIAG, N, A, LDA, X, INCX)
   implicit none
 !
 !  -- Reference BLAS level2 routine (version 3.7.0) --
@@ -184,12 +184,12 @@ pure subroutine STRMV(UPLO, TRANS, DIAG, N, A, LDA, X, INCX)
 !Test the input parameters.
 !
   INFO = 0
-  if (.not. LSAME(UPLO, 'U') .and. .not. LSAME(UPLO, 'L')) then
+  if (.not. mobbrmsd_LSAME(UPLO, 'U') .and. .not. mobbrmsd_LSAME(UPLO, 'L')) then
     INFO = 1
-  else if (.not. LSAME(TRANS, 'N') .and. .not. LSAME(TRANS, 'T') .and.&
-  &.not. LSAME(TRANS, 'C')) then
+  else if (.not. mobbrmsd_LSAME(TRANS, 'N') .and. .not. mobbrmsd_LSAME(TRANS, 'T') .and.&
+  &.not. mobbrmsd_LSAME(TRANS, 'C')) then
     INFO = 2
-  else if (.not. LSAME(DIAG, 'U') .and. .not. LSAME(DIAG, 'N')) then
+  else if (.not. mobbrmsd_LSAME(DIAG, 'U') .and. .not. mobbrmsd_LSAME(DIAG, 'N')) then
     INFO = 3
   else if (N < 0) then
     INFO = 4
@@ -199,7 +199,7 @@ pure subroutine STRMV(UPLO, TRANS, DIAG, N, A, LDA, X, INCX)
     INFO = 8
   end if
   if (INFO /= 0) then
-!   call XERBLA('STRMV ', INFO)
+!   call XERBLA('mobbrmsd_STRMV ', INFO)
     return
   end if
 !
@@ -207,7 +207,7 @@ pure subroutine STRMV(UPLO, TRANS, DIAG, N, A, LDA, X, INCX)
 !
   if (N == 0) return
 !
-  NOUNIT = LSAME(DIAG, 'N')
+  NOUNIT = mobbrmsd_LSAME(DIAG, 'N')
 !
 !Set up the start point in X if the increment is not unity.This
 !will be(N - 1) * INCX too small for descending loops.
@@ -221,11 +221,11 @@ pure subroutine STRMV(UPLO, TRANS, DIAG, N, A, LDA, X, INCX)
 !Start the operations.In this version the elements of A are
 !accessed sequentially with one pass through A.
 !
-  if (LSAME(TRANS, 'N')) then
+  if (mobbrmsd_LSAME(TRANS, 'N')) then
 !
 !Form x: = A * x.
 !
-    if (LSAME(UPLO, 'U')) then
+    if (mobbrmsd_LSAME(UPLO, 'U')) then
       if (INCX == 1) then
         do J = 1, N
           if (X(J) /= ZERO) then
@@ -283,7 +283,7 @@ pure subroutine STRMV(UPLO, TRANS, DIAG, N, A, LDA, X, INCX)
 !
 !Form x: = A**T * x.
 !
-    if (LSAME(UPLO, 'U')) then
+    if (mobbrmsd_LSAME(UPLO, 'U')) then
       if (INCX == 1) then
         do J = N, 1, -1
           TEMP = X(J)
@@ -336,6 +336,6 @@ pure subroutine STRMV(UPLO, TRANS, DIAG, N, A, LDA, X, INCX)
 !
   return
 !
-!end of STRMV.
+!end of mobbrmsd_STRMV.
 !
 end

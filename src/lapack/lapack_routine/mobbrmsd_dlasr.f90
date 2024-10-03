@@ -1,4 +1,4 @@
-!> \brief \b DLASR applies a sequence of plane rotations to a general rectangular matrix.
+!> \brief \b mobbrmsd_DLASR applies a sequence of plane rotations to a general rectangular matrix.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLASR + dependencies
+!> Download mobbrmsd_DLASR + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlasr.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlasr.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLASR( SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA )
+!       SUBROUTINE mobbrmsd_DLASR( SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA )
 !
 !       .. Scalar Arguments ..
 !       CHARACTER          DIRECT, PIVOT, SIDE
@@ -34,7 +34,7 @@
 !>
 !> \verbatim
 !>
-!> DLASR applies a sequence of plane rotations to a real matrix A,
+!> mobbrmsd_DLASR applies a sequence of plane rotations to a real matrix A,
 !> from either the left or the right.
 !>
 !> When SIDE = 'L', the transformation takes the form
@@ -195,7 +195,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
+pure subroutine mobbrmsd_DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
 ! use LA_CONSTANTS, only: RK => dp
 !
 !  -- LAPACK auxiliary routine --
@@ -237,11 +237,11 @@ pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
 !     Test the input parameters
 !
   INFO = 0
-  if (.not. (LSAME(SIDE, 'L') .or. LSAME(SIDE, 'R'))) then
+  if (.not. (mobbrmsd_LSAME(SIDE, 'L') .or. mobbrmsd_LSAME(SIDE, 'R'))) then
     INFO = 1
-  else if (.not. (LSAME(PIVOT, 'V') .or. LSAME(PIVOT, 'T') .or. LSAME(PIVOT, 'B'))) then
+  else if (.not. (mobbrmsd_LSAME(PIVOT, 'V') .or. mobbrmsd_LSAME(PIVOT, 'T') .or. mobbrmsd_LSAME(PIVOT, 'B'))) then
     INFO = 2
-  else if (.not. (LSAME(DIRECT, 'F') .or. LSAME(DIRECT, 'B'))) then
+  else if (.not. (mobbrmsd_LSAME(DIRECT, 'F') .or. mobbrmsd_LSAME(DIRECT, 'B'))) then
     INFO = 3
   else if (M < 0) then
     INFO = 4
@@ -251,7 +251,7 @@ pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
     INFO = 9
   end if
   if (INFO /= 0) then
-    !CALL XERBLA( 'DLASR ', INFO )
+    !CALL XERBLA( 'mobbrmsd_DLASR ', INFO )
     return
   end if
 !
@@ -259,12 +259,12 @@ pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
 !
   if ((M == 0) .or. (N == 0)) return
 !
-  if (LSAME(SIDE, 'L')) then
+  if (mobbrmsd_LSAME(SIDE, 'L')) then
 !
 !        Form  P * A
 !
-    if (LSAME(PIVOT, 'V')) then
-      if (LSAME(DIRECT, 'F')) then
+    if (mobbrmsd_LSAME(PIVOT, 'V')) then
+      if (mobbrmsd_LSAME(DIRECT, 'F')) then
         do J = 1, M - 1
           CTEMP = C(J)
           STEMP = S(J)
@@ -276,7 +276,7 @@ pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
             end do
           end if
         end do
-      else if (LSAME(DIRECT, 'B')) then
+      else if (mobbrmsd_LSAME(DIRECT, 'B')) then
         do J = M - 1, 1, -1
           CTEMP = C(J)
           STEMP = S(J)
@@ -289,8 +289,8 @@ pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
           end if
         end do
       end if
-    else if (LSAME(PIVOT, 'T')) then
-      if (LSAME(DIRECT, 'F')) then
+    else if (mobbrmsd_LSAME(PIVOT, 'T')) then
+      if (mobbrmsd_LSAME(DIRECT, 'F')) then
         do J = 2, M
           CTEMP = C(J - 1)
           STEMP = S(J - 1)
@@ -302,7 +302,7 @@ pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
             end do
           end if
         end do
-      else if (LSAME(DIRECT, 'B')) then
+      else if (mobbrmsd_LSAME(DIRECT, 'B')) then
         do J = M, 2, -1
           CTEMP = C(J - 1)
           STEMP = S(J - 1)
@@ -315,8 +315,8 @@ pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
           end if
         end do
       end if
-    else if (LSAME(PIVOT, 'B')) then
-      if (LSAME(DIRECT, 'F')) then
+    else if (mobbrmsd_LSAME(PIVOT, 'B')) then
+      if (mobbrmsd_LSAME(DIRECT, 'F')) then
         do J = 1, M - 1
           CTEMP = C(J)
           STEMP = S(J)
@@ -328,7 +328,7 @@ pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
             end do
           end if
         end do
-      else if (LSAME(DIRECT, 'B')) then
+      else if (mobbrmsd_LSAME(DIRECT, 'B')) then
         do J = M - 1, 1, -1
           CTEMP = C(J)
           STEMP = S(J)
@@ -342,12 +342,12 @@ pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
         end do
       end if
     end if
-  else if (LSAME(SIDE, 'R')) then
+  else if (mobbrmsd_LSAME(SIDE, 'R')) then
 !
 !        Form P**T
 !
-    if (LSAME(PIVOT, 'V')) then
-      if (LSAME(DIRECT, 'F')) then
+    if (mobbrmsd_LSAME(PIVOT, 'V')) then
+      if (mobbrmsd_LSAME(DIRECT, 'F')) then
         do J = 1, N - 1
           CTEMP = C(J)
           STEMP = S(J)
@@ -359,7 +359,7 @@ pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
             end do
           end if
         end do
-      else if (LSAME(DIRECT, 'B')) then
+      else if (mobbrmsd_LSAME(DIRECT, 'B')) then
         do J = N - 1, 1, -1
           CTEMP = C(J)
           STEMP = S(J)
@@ -372,8 +372,8 @@ pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
           end if
         end do
       end if
-    else if (LSAME(PIVOT, 'T')) then
-      if (LSAME(DIRECT, 'F')) then
+    else if (mobbrmsd_LSAME(PIVOT, 'T')) then
+      if (mobbrmsd_LSAME(DIRECT, 'F')) then
         do J = 2, N
           CTEMP = C(J - 1)
           STEMP = S(J - 1)
@@ -385,7 +385,7 @@ pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
             end do
           end if
         end do
-      else if (LSAME(DIRECT, 'B')) then
+      else if (mobbrmsd_LSAME(DIRECT, 'B')) then
         do J = N, 2, -1
           CTEMP = C(J - 1)
           STEMP = S(J - 1)
@@ -398,8 +398,8 @@ pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
           end if
         end do
       end if
-    else if (LSAME(PIVOT, 'B')) then
-      if (LSAME(DIRECT, 'F')) then
+    else if (mobbrmsd_LSAME(PIVOT, 'B')) then
+      if (mobbrmsd_LSAME(DIRECT, 'F')) then
         do J = 1, N - 1
           CTEMP = C(J)
           STEMP = S(J)
@@ -411,7 +411,7 @@ pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
             end do
           end if
         end do
-      else if (LSAME(DIRECT, 'B')) then
+      else if (mobbrmsd_LSAME(DIRECT, 'B')) then
         do J = N - 1, 1, -1
           CTEMP = C(J)
           STEMP = S(J)
@@ -429,7 +429,7 @@ pure subroutine DLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
 !
   return
 !
-!     End of DLASR
+!     End of mobbrmsd_DLASR
 !
-end subroutine DLASR
+end subroutine mobbrmsd_DLASR
 

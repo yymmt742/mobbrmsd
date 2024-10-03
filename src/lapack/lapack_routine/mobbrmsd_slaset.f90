@@ -1,4 +1,4 @@
-!> \brief \b SLASET initializes the off-diagonal elements and the diagonal elements of a matrix to given values.
+!> \brief \b mobbrmsd_SLASET initializes the off-diagonal elements and the diagonal elements of a matrix to given values.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLASET + dependencies
+!> Download mobbrmsd_SLASET + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slaset.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slaset.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLASET( UPLO, M, N, ALPHA, BETA, A, LDA )
+!       SUBROUTINE mobbrmsd_SLASET( UPLO, M, N, ALPHA, BETA, A, LDA )
 !
 !       .. Scalar Arguments ..
 !       CHARACTER          UPLO
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> SLASET initializes an m-by-n matrix A to BETA on the diagonal and
+!> mobbrmsd_SLASET initializes an m-by-n matrix A to BETA on the diagonal and
 !> ALPHA on the offdiagonals.
 !> \endverbatim
 !
@@ -108,7 +108,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure subroutine SLASET(UPLO, M, N, ALPHA, BETA, A, LDA)
+pure subroutine mobbrmsd_SLASET(UPLO, M, N, ALPHA, BETA, A, LDA)
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -139,7 +139,7 @@ pure subroutine SLASET(UPLO, M, N, ALPHA, BETA, A, LDA)
 !..
 !..Executable Statements..
 !
-  if (LSAME(UPLO, 'U')) then
+  if (mobbrmsd_LSAME(UPLO, 'U')) then
     !
     !Set the strictly upper triangular or trapezoidal part of the
     !array to ALPHA.
@@ -150,7 +150,7 @@ pure subroutine SLASET(UPLO, M, N, ALPHA, BETA, A, LDA)
       end do
     end do
     !
-  else if (LSAME(UPLO, 'L')) then
+  else if (mobbrmsd_LSAME(UPLO, 'L')) then
     !
     !Set the strictly lower triangular or trapezoidal part of the
     !array to ALPHA.
@@ -180,6 +180,6 @@ pure subroutine SLASET(UPLO, M, N, ALPHA, BETA, A, LDA)
   !
   return
   !
-  !end of SLASET
+  !end of mobbrmsd_SLASET
   !
 end

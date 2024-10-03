@@ -1,4 +1,4 @@
-!> \brief \b SLANGE returns the value of the 1-norm, Frobenius norm, infinity-norm, or the largest absolute valie of any element of a general rectangular matrix.
+!> \brief \b mobbrmsd_SLANGE returns the value of the 1-norm, Frobenius norm, infinity-norm, or the largest absolute valie of any element of a general rectangular matrix.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLANGE + dependencies
+!> Download mobbrmsd_SLANGE + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slange.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slange.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       REAL             FUNCTION SLANGE( NORM, M, N, A, LDA, WORK )
+!       REAL             FUNCTION mobbrmsd_SLANGE( NORM, M, N, A, LDA, WORK )
 !
 !       .. Scalar Arguments ..
 !       CHARACTER          NORM
@@ -34,15 +34,15 @@
 !>
 !> \verbatim
 !>
-!> SLANGE  returns the value of the one norm,  or the Frobenius norm, or
+!> mobbrmsd_SLANGE  returns the value of the one norm,  or the Frobenius norm, or
 !> the  infinity norm,  or the  element of  largest absolute value  of a
 !> real matrix A.
 !> \endverbatim
 !>
-!> \return SLANGE
+!> \return mobbrmsd_SLANGE
 !> \verbatim
 !>
-!>    SLANGE = ( max(abs(A(i,j))), NORM = 'M' or 'm'
+!>    mobbrmsd_SLANGE = ( max(abs(A(i,j))), NORM = 'M' or 'm'
 !>             (
 !>             ( norm1(A),         NORM = '1', 'O' or 'o'
 !>             (
@@ -62,7 +62,7 @@
 !> \param[in] NORM
 !> \verbatim
 !>          NORM is CHARACTER*1
-!>          Specifies the value to be returned in SLANGE as described
+!>          Specifies the value to be returned in mobbrmsd_SLANGE as described
 !>          above.
 !> \endverbatim
 !>
@@ -70,14 +70,14 @@
 !> \verbatim
 !>          M is INTEGER
 !>          The number of rows of the matrix A.  M >= 0.  When M = 0,
-!>          SLANGE is set to zero.
+!>          mobbrmsd_SLANGE is set to zero.
 !> \endverbatim
 !>
 !> \param[in] N
 !> \verbatim
 !>          N is INTEGER
 !>          The number of columns of the matrix A.  N >= 0.  When N = 0,
-!>          SLANGE is set to zero.
+!>          mobbrmsd_SLANGE is set to zero.
 !> \endverbatim
 !>
 !> \param[in] A
@@ -112,7 +112,7 @@
 !> \ingroup realGEauxiliary
 !
 !  =====================================================================
-pure subroutine SLANGE(NORM, M, N, A, LDA, RES, WORK)
+pure subroutine mobbrmsd_SLANGE(NORM, M, N, A, LDA, RES, WORK)
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -157,7 +157,7 @@ pure subroutine SLANGE(NORM, M, N, A, LDA, RES, WORK)
 !
   if (MIN(M, N) == 0) then
     val = ZERO
-  else if (LSAME(NORM, 'M')) then
+  else if (mobbrmsd_LSAME(NORM, 'M')) then
     !
     !Find MAX(ABS(A(i, j))) .
     !
@@ -165,10 +165,10 @@ pure subroutine SLANGE(NORM, M, N, A, LDA, RES, WORK)
     do J = 1, N
       do I = 1, M
         TEMP = ABS(A(I, J))
-        if (val < TEMP .or. SISNAN(TEMP)) val = TEMP
+        if (val < TEMP .or. mobbrmsd_SISNAN(TEMP)) val = TEMP
       end do
     end do
-  else if ((LSAME(NORM, 'O')) .or. (NORM == '1')) then
+  else if ((mobbrmsd_LSAME(NORM, 'O')) .or. (NORM == '1')) then
     !
     !Find norm1(A) .
     !
@@ -178,9 +178,9 @@ pure subroutine SLANGE(NORM, M, N, A, LDA, RES, WORK)
       do I = 1, M
         SUM = SUM + ABS(A(I, J))
       end do
-      if (val < SUM .or. SISNAN(SUM)) val = SUM
+      if (val < SUM .or. mobbrmsd_SISNAN(SUM)) val = SUM
     end do
-  else if (LSAME(NORM, 'I')) then
+  else if (mobbrmsd_LSAME(NORM, 'I')) then
     !
     ! Find normI(A) .
     !
@@ -195,9 +195,9 @@ pure subroutine SLANGE(NORM, M, N, A, LDA, RES, WORK)
     val = ZERO
     do I = 1, M
       TEMP = WORK(I)
-      if (val < TEMP .or. SISNAN(TEMP)) val = TEMP
+      if (val < TEMP .or. mobbrmsd_SISNAN(TEMP)) val = TEMP
     end do
-  else if ((LSAME(NORM, 'F')) .or. (LSAME(NORM, 'E'))) then
+  else if ((mobbrmsd_LSAME(NORM, 'F')) .or. (mobbrmsd_LSAME(NORM, 'E'))) then
     !
     !Find normF(A) .
     !SSQ(1) is scale
@@ -209,8 +209,8 @@ pure subroutine SLANGE(NORM, M, N, A, LDA, RES, WORK)
     do J = 1, N
       COLSSQ(1) = ZERO
       COLSSQ(2) = ONE
-      call SLASSQ(M, A(1, J), 1, COLSSQ(1), COLSSQ(2))
-      call SCOMBSSQ(SSQ, COLSSQ)
+      call mobbrmsd_SLASSQ(M, A(1, J), 1, COLSSQ(1), COLSSQ(2))
+      call mobbrmsd_SCOMBSSQ(SSQ, COLSSQ)
     end do
     val = SSQ(1) * SQRT(SSQ(2))
   end if
@@ -218,6 +218,6 @@ pure subroutine SLANGE(NORM, M, N, A, LDA, RES, WORK)
   RES = val
   return
   !
-  !end of SLANGE
+  !end of mobbrmsd_SLANGE
   !
 end

@@ -1,4 +1,4 @@
-!> \brief \b DORGLQ
+!> \brief \b mobbrmsd_DORGLQ
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DORGLQ + dependencies
+!> Download mobbrmsd_DORGLQ + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dorglq.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dorglq.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DORGLQ( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
+!       SUBROUTINE mobbrmsd_DORGLQ( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, K, LDA, LWORK, M, N
@@ -33,13 +33,13 @@
 !>
 !> \verbatim
 !>
-!> DORGLQ generates an M-by-N real matrix Q with orthonormal rows,
+!> mobbrmsd_DORGLQ generates an M-by-N real matrix Q with orthonormal rows,
 !> which is defined as the first M rows of a product of K elementary
 !> reflectors of order N
 !>
 !>       Q  =  H(k) . . . H(2) H(1)
 !>
-!> as returned by DGELQF.
+!> as returned by mobbrmsd_DGELQF.
 !> \endverbatim
 !
 !  Arguments:
@@ -69,7 +69,7 @@
 !>          A is real(RK)           :: array, dimension (LDA,N)
 !>          On entry, the i-th row must contain the vector which defines
 !>          the elementary reflector H(i), for i = 1,2,...,k, as returned
-!>          by DGELQF in the first k rows of its array argument A.
+!>          by mobbrmsd_DGELQF in the first k rows of its array argument A.
 !>          On exit, the M-by-N matrix Q.
 !> \endverbatim
 !>
@@ -83,7 +83,7 @@
 !> \verbatim
 !>          TAU is real(RK)           :: array, dimension (K)
 !>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i), as returned by DGELQF.
+!>          reflector H(i), as returned by mobbrmsd_DGELQF.
 !> \endverbatim
 !>
 !> \param[out] WORK
@@ -123,7 +123,7 @@
 !> \ingroup doubleOTHERcomputational
 !
 !  =====================================================================
-pure subroutine DORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
+pure subroutine mobbrmsd_DORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -168,7 +168,7 @@ pure subroutine DORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !     Test the input arguments
 !
   INFO = 0
-  NB = ILAENV(1, 'DORGLQ', ' ', M, N, K, -1)
+  NB = mobbrmsd_ILAENV(1, 'mobbrmsd_DORGLQ', ' ', M, N, K, -1)
   LWKOPT = MAX(1, M) * NB
   WORK(1) = LWKOPT
   LQUERY = (LWORK == -1)
@@ -184,7 +184,7 @@ pure subroutine DORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
     INFO = -8
   end if
   if (INFO /= 0) then
-!   CALL XERBLA( 'DORGLQ', -INFO )
+!   CALL XERBLA( 'mobbrmsd_DORGLQ', -INFO )
     return
   else if (LQUERY) then
     return
@@ -204,7 +204,7 @@ pure subroutine DORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !
 !        Determine when to cross over from blocked to unblocked code.
 !
-    NX = MAX(0, ILAENV(3, 'DORGLQ', ' ', M, N, K, -1))
+    NX = MAX(0, mobbrmsd_ILAENV(3, 'mobbrmsd_DORGLQ', ' ', M, N, K, -1))
     if (NX < K) then
 !
 !           Determine if workspace is large enough for blocked code.
@@ -217,7 +217,7 @@ pure subroutine DORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !              determine the minimum value of NB.
 !
         NB = LWORK / LDWORK
-        NBMIN = MAX(2, ILAENV(2, 'DORGLQ', ' ', M, N, K, -1))
+        NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'mobbrmsd_DORGLQ', ' ', M, N, K, -1))
       end if
     end if
   end if
@@ -244,7 +244,7 @@ pure subroutine DORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !     Use unblocked code for the last or only block.
 !
   if (KK < M) &
- &   call DORGL2(M - KK, N - KK, K - KK, A(KK + 1, KK + 1), LDA, &
+ &   call mobbrmsd_DORGL2(M - KK, N - KK, K - KK, A(KK + 1, KK + 1), LDA, &
  &                TAU(KK + 1), WORK, IINFO)
 !
   if (KK > 0) then
@@ -258,12 +258,12 @@ pure subroutine DORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !              Form the triangular factor of the block reflector
 !              H = H(i) H(i+1) . . . H(i+ib-1)
 !
-        call DLARFT('Forward', 'Rowwise', N - I + 1, IB, A(I, I), &
+        call mobbrmsd_DLARFT('Forward', 'Rowwise', N - I + 1, IB, A(I, I), &
        &             LDA, TAU(I), WORK, LDWORK)
 !
 !              Apply H**T to A(i+ib:m,i:n) from the right
 !
-        call DLARFB('Right', 'Transpose', 'Forward', 'Rowwise', &
+        call mobbrmsd_DLARFB('Right', 'Transpose', 'Forward', 'Rowwise', &
        &             M - I - IB + 1, N - I + 1, IB, A(I, I), LDA, WORK, &
        &             LDWORK, A(I + IB, I), LDA, WORK(IB + 1), &
        &             LDWORK)
@@ -271,7 +271,7 @@ pure subroutine DORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !
 !           Apply H**T to columns i:n of current block
 !
-      call DORGL2(IB, N - I + 1, IB, A(I, I), LDA, TAU(I), WORK, IINFO)
+      call mobbrmsd_DORGL2(IB, N - I + 1, IB, A(I, I), LDA, TAU(I), WORK, IINFO)
 !
 !           Set columns 1:i-1 of current block to zero
 !
@@ -286,6 +286,6 @@ pure subroutine DORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
   WORK(1) = IWS
   return
 !
-!     End of DORGLQ
+!     End of mobbrmsd_DORGLQ
 !
-end subroutine DORGLQ
+end subroutine mobbrmsd_DORGLQ

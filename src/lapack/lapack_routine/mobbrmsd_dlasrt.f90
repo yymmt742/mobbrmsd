@@ -1,4 +1,4 @@
-!> \brief \b DLASRT sorts numbers in increasing or decreasing order.
+!> \brief \b mobbrmsd_DLASRT sorts numbers in increasing or decreasing order.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLASRT + dependencies
+!> Download mobbrmsd_DLASRT + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlasrt.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlasrt.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLASRT( ID, N, D, INFO )
+!       SUBROUTINE mobbrmsd_DLASRT( ID, N, D, INFO )
 !
 !       .. Scalar Arguments ..
 !       CHARACTER          ID
@@ -84,7 +84,7 @@
 !> \ingroup auxOTHERcomputational
 !
 !  =====================================================================
-pure subroutine DLASRT(ID, N, D, INFO)
+pure subroutine mobbrmsd_DLASRT(ID, N, D, INFO)
 ! use LA_CONSTANTS, only: RK => dp
 !
 !  -- LAPACK computational routine --
@@ -123,9 +123,9 @@ pure subroutine DLASRT(ID, N, D, INFO)
 !
   INFO = 0
   DIR = -1
-  if (LSAME(ID, 'D')) then
+  if (mobbrmsd_LSAME(ID, 'D')) then
     DIR = 0
-  else if (LSAME(ID, 'I')) then
+  else if (mobbrmsd_LSAME(ID, 'I')) then
     DIR = 1
   end if
   if (DIR == -1) then
@@ -134,7 +134,7 @@ pure subroutine DLASRT(ID, N, D, INFO)
     INFO = -2
   end if
   if (INFO /= 0) then
-!   !CALL XERBLA( 'DLASRT', -INFO )
+!   !CALL XERBLA( 'mobbrmsd_DLASRT', -INFO )
     return
   end if
 !
@@ -288,6 +288,6 @@ pure subroutine DLASRT(ID, N, D, INFO)
   if (STKPNT > 0) GO TO 10
   return
 !
-!     End of DLASRT
+!     End of mobbrmsd_DLASRT
 !
-end subroutine DLASRT
+end subroutine mobbrmsd_DLASRT

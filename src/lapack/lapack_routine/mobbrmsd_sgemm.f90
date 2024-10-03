@@ -1,4 +1,4 @@
-!> \brief \b SGEMM
+!> \brief \b mobbrmsd_SGEMM
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+!       SUBROUTINE mobbrmsd_SGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
 !
 !       .. Scalar Arguments ..
 !       REAL ALPHA,BETA
@@ -25,7 +25,7 @@
 !>
 !> \verbatim
 !>
-!> SGEMM  performs one of the matrix-matrix operations
+!> mobbrmsd_SGEMM  performs one of the matrix-matrix operations
 !>
 !>    C := alpha*op( A )*op( B ) + beta*C,
 !>
@@ -185,7 +185,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
+pure subroutine mobbrmsd_SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
   implicit none
 !
 !  -- Reference BLAS level3 routine (version 3.7.0) --
@@ -226,8 +226,8 @@ pure subroutine SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, L
 ! transposed and set NROWA, NCOLA and NROWB as the number of rows
 ! and columns of A and the number of rows of B respectively.
 !
-  NOTA = LSAME(TRANSA, 'N')
-  NOTB = LSAME(TRANSB, 'N')
+  NOTA = mobbrmsd_LSAME(TRANSA, 'N')
+  NOTB = mobbrmsd_LSAME(TRANSB, 'N')
   if (NOTA) then
     NROWA = M
     NCOLA = K
@@ -244,9 +244,9 @@ pure subroutine SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, L
 !Test the input parameters.
 !
   INFO = 0
-  if ((.not. NOTA) .and. (.not. LSAME(TRANSA, 'C')) .and. (.not. LSAME(TRANSA, 'T'))) then
+  if ((.not. NOTA) .and. (.not. mobbrmsd_LSAME(TRANSA, 'C')) .and. (.not. mobbrmsd_LSAME(TRANSA, 'T'))) then
     INFO = 1
-  else if ((.not. NOTB) .and. (.not. LSAME(TRANSB, 'C')) .and. (.not. LSAME(TRANSB, 'T'))) then
+  else if ((.not. NOTB) .and. (.not. mobbrmsd_LSAME(TRANSB, 'C')) .and. (.not. mobbrmsd_LSAME(TRANSB, 'T'))) then
     INFO = 2
   else if (M < 0) then
     INFO = 3
@@ -262,7 +262,7 @@ pure subroutine SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, L
     INFO = 13
   end if
   if (INFO /= 0) then
-    !call XERBLA('SGEMM ', INFO)
+    !call XERBLA('mobbrmsd_SGEMM ', INFO)
     return
   end if
 !
@@ -375,6 +375,6 @@ pure subroutine SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, L
   !
   return
   !
-  !end of SGEMM.
+  !end of mobbrmsd_SGEMM.
   !
 end

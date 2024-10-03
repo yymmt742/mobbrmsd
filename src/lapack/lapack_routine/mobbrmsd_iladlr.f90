@@ -1,4 +1,4 @@
-!> \brief \b ILADLR scans a matrix for its last non-zero row.
+!> \brief \b mobbrmsd_ILADLR scans a matrix for its last non-zero row.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download ILADLR + dependencies
+!> Download mobbrmsd_ILADLR + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/iladlr.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/iladlr.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       INTEGER FUNCTION ILADLR( M, N, A, LDA )
+!       INTEGER FUNCTION mobbrmsd_ILADLR( M, N, A, LDA )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            M, N, LDA
@@ -33,7 +33,7 @@
 !>
 !> \verbatim
 !>
-!> ILADLR scans A for its last non-zero row.
+!> mobbrmsd_ILADLR scans A for its last non-zero row.
 !> \endverbatim
 !
 !  Arguments:
@@ -74,7 +74,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure function ILADLR(M, N, A, LDA)
+pure function mobbrmsd_ILADLR(M, N, A, LDA)
 ! use LA_CONSTANTS, only: DP
   implicit none
 !
@@ -88,7 +88,7 @@ pure function ILADLR(M, N, A, LDA)
 !     .. Array Arguments ..
   real(RK), intent(in) ::  A(LDA, *)
 !     ..
-  integer :: ILADLR
+  integer :: mobbrmsd_ILADLR
 !
 !  =====================================================================
 !     ..
@@ -102,19 +102,19 @@ pure function ILADLR(M, N, A, LDA)
 !
 !     Quick test for the common case where one corner is non-zero.
   if (M == 0) then
-    ILADLR = M
+    mobbrmsd_ILADLR = M
   else if (A(M, 1) /= ZERO .or. A(M, N) /= ZERO) then
-    ILADLR = M
+    mobbrmsd_ILADLR = M
   else
 !     Scan up each column tracking the last zero row seen.
-    ILADLR = 0
+    mobbrmsd_ILADLR = 0
     do J = 1, N
       I = M
       do while ((A(MAX(I, 1), J) == ZERO) .and. (I >= 1))
         I = I - 1
       end do
-      ILADLR = MAX(ILADLR, I)
+      mobbrmsd_ILADLR = MAX(mobbrmsd_ILADLR, I)
     end do
   end if
   return
-end function ILADLR
+end function mobbrmsd_ILADLR

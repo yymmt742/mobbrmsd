@@ -1,4 +1,4 @@
-!> \brief \b SGETRF2
+!> \brief \b mobbrmsd_SGETRF2
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       RECURSIVE SUBROUTINE SGETRF2( M, N, A, LDA, IPIV, INFO )
+!       RECURSIVE SUBROUTINE mobbrmsd_SGETRF2( M, N, A, LDA, IPIV, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, LDA, M, N
@@ -24,7 +24,7 @@
 !>
 !> \verbatim
 !>
-!> SGETRF2 computes an LU factorization of a general M-by-N matrix A
+!> mobbrmsd_SGETRF2 computes an LU factorization of a general M-by-N matrix A
 !> using partial pivoting with row interchanges.
 !>
 !> The factorization has the form
@@ -111,7 +111,7 @@
 !> \ingroup realGEcomputational
 !
 !  =====================================================================
-pure recursive subroutine SGETRF2(M, N, A, LDA, IPIV, INFO)
+pure recursive subroutine mobbrmsd_SGETRF2(M, N, A, LDA, IPIV, INFO)
 !
 !  -- LAPACK computational routine (version 3.7.1) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -163,7 +163,7 @@ pure recursive subroutine SGETRF2(M, N, A, LDA, IPIV, INFO)
     INFO = -4
   end if
   if (INFO /= 0) then
-!   call XERBLA('SGETRF2', -INFO)
+!   call XERBLA('mobbrmsd_SGETRF2', -INFO)
     return
   end if
 !
@@ -186,11 +186,11 @@ pure recursive subroutine SGETRF2(M, N, A, LDA, IPIV, INFO)
 !
 ! Compute machine safe minimum
 !
-    SFMIN = SLAMCH('S')
+    SFMIN = mobbrmsd_SLAMCH('S')
 !
 ! Find pivot and test for singularity
 !
-    I = ISAMAX(M, A(1, 1), 1)
+    I = mobbrmsd_ISAMAX(M, A(1, 1), 1)
     IPIV(1) = I
     if (A(I, 1) /= ZERO) then
 !
@@ -205,7 +205,7 @@ pure recursive subroutine SGETRF2(M, N, A, LDA, IPIV, INFO)
 ! Compute elements 2:M of the column
 !
       if (ABS(A(1, 1)) >= SFMIN) then
-        call SSCAL(M - 1, ONE / A(1, 1), A(2, 1), 1)
+        call mobbrmsd_SSCAL(M - 1, ONE / A(1, 1), A(2, 1), 1)
       else
         do I = 1, M - 1
           A(1 + I, 1) = A(1 + I, 1) / A(1, 1)
@@ -227,7 +227,7 @@ pure recursive subroutine SGETRF2(M, N, A, LDA, IPIV, INFO)
 ! Factor[---]
 ! [A21]
 !
-    call SGETRF2(m, n1, A, lda, ipiv, iinfo)
+    call mobbrmsd_SGETRF2(m, n1, A, lda, ipiv, iinfo)
 
     if (info == 0 .and. iinfo > 0) info = iinfo
 !
@@ -235,19 +235,19 @@ pure recursive subroutine SGETRF2(M, N, A, LDA, IPIV, INFO)
 ! Apply interchanges to[---]
 ! [A22]
 !
-    call SLASWP(N2, A(1, N1 + 1), LDA, 1, N1, IPIV, 1)
+    call mobbrmsd_SLASWP(N2, A(1, N1 + 1), LDA, 1, N1, IPIV, 1)
 !
 ! Solve A12
 !
-    call STRSM('L', 'L', 'N', 'U', N1, N2, ONE, A, LDA, A(1, N1 + 1), LDA)
+    call mobbrmsd_STRSM('L', 'L', 'N', 'U', N1, N2, ONE, A, LDA, A(1, N1 + 1), LDA)
 !
 ! Update A22
 !
-    call SGEMM('N', 'N', M - N1, N2, N1, -ONE, A(N1 + 1, 1), LDA, A(1, N1 + 1), LDA, ONE, A(N1 + 1, N1 + 1), LDA)
+    call mobbrmsd_SGEMM('N', 'N', M - N1, N2, N1, -ONE, A(N1 + 1, 1), LDA, A(1, N1 + 1), LDA, ONE, A(N1 + 1, N1 + 1), LDA)
 !
 ! Factor A22
 !
-    call SGETRF2(M - N1, N2, A(N1 + 1, N1 + 1), LDA, IPIV(N1 + 1), IINFO)
+    call mobbrmsd_SGETRF2(M - N1, N2, A(N1 + 1, N1 + 1), LDA, IPIV(N1 + 1), IINFO)
 !
 ! Adjust INFO and the pivot indices
 !
@@ -258,11 +258,11 @@ pure recursive subroutine SGETRF2(M, N, A, LDA, IPIV, INFO)
 !
 ! Apply interchanges to A21
 !
-    call SLASWP(N1, A(1, 1), LDA, N1 + 1, MIN(M, N), IPIV, 1)
+    call mobbrmsd_SLASWP(N1, A(1, 1), LDA, N1 + 1, MIN(M, N), IPIV, 1)
 !
   end if
   return
 !
-! end of SGETRF2
+! end of mobbrmsd_SGETRF2
 !
 end

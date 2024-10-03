@@ -1,4 +1,4 @@
-!> \brief \b SNRM2
+!> \brief \b mobbrmsd_SNRM2
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       REAL FUNCTION SNRM2(N,X,INCX)
+!       REAL FUNCTION mobbrmsd_SNRM2(N,X,INCX)
 !
 !       .. Scalar Arguments ..
 !       INTEGER INCX,N
@@ -23,10 +23,10 @@
 !>
 !> \verbatim
 !>
-!> SNRM2 returns the euclidean norm of a vector via the function
+!> mobbrmsd_SNRM2 returns the euclidean norm of a vector via the function
 !> name, so that
 !>
-!>    SNRM2 := sqrt( x'*x ).
+!>    mobbrmsd_SNRM2 := sqrt( x'*x ).
 !> \endverbatim
 !
 !  Arguments:
@@ -67,12 +67,12 @@
 !> \verbatim
 !>
 !>  -- This version written on 25-October-1982.
-!>     Modified on 14-October-1993 to inline the call to SLASSQ.
+!>     Modified on 14-October-1993 to inline the call to mobbrmsd_SLASSQ.
 !>     Sven Hammarling, Nag Ltd.
 !> \endverbatim
 !>
 !  =====================================================================
-pure function SNRM2(N, X, INCX)
+pure function mobbrmsd_SNRM2(N, X, INCX)
 !
 !  -- Reference BLAS level1 routine (version 3.8.0) --
 !  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
@@ -84,7 +84,7 @@ pure function SNRM2(N, X, INCX)
 !..
 !..Array Arguments..
   real(RK), intent(in) :: X(*)
-  real(RK)             :: SNRM2
+  real(RK)             :: mobbrmsd_SNRM2
 !..
 !
 !  =====================================================================
@@ -108,7 +108,7 @@ pure function SNRM2(N, X, INCX)
     SSQ = ONE
 ! The following loop is equivalent to this call to the LAPACK
 ! auxiliary routine:
-! call SLASSQ(N, X, INCX, SCL, SSQ)
+! call mobbrmsd_SLASSQ(N, X, INCX, SCL, SSQ)
 !
     do IX = 1, 1 + (N - 1) * INCX, INCX
       if (X(IX) /= ZERO) then
@@ -124,9 +124,9 @@ pure function SNRM2(N, X, INCX)
     NORM = SCL * SQRT(SSQ)
   end if
 !
-  SNRM2 = NORM
+  mobbrmsd_SNRM2 = NORM
   return
 !
-! end of SNRM2.
+! end of mobbrmsd_SNRM2.
 !
 end

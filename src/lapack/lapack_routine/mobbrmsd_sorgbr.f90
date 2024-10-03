@@ -1,4 +1,4 @@
-!> \brief \b SORGBR
+!> \brief \b mobbrmsd_SORGBR
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SORGBR + dependencies
+!> Download mobbrmsd_SORGBR + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sorgbr.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sorgbr.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SORGBR( VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
+!       SUBROUTINE mobbrmsd_SORGBR( VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       CHARACTER          VECT
@@ -34,23 +34,23 @@
 !>
 !> \verbatim
 !>
-!> SORGBR generates one of the real orthogonal matrices Q or P**T
-!> determined by SGEBRD when reducing a real matrix A to bidiagonal
+!> mobbrmsd_SORGBR generates one of the real orthogonal matrices Q or P**T
+!> determined by mobbrmsd_SGEBRD when reducing a real matrix A to bidiagonal
 !> form: A = Q * B * P**T.  Q and P**T are defined as products of
 !> elementary reflectors H(i) or G(i) respectively.
 !>
 !> If VECT = 'Q', A is assumed to have been an M-by-K matrix, and Q
 !> is of order M:
-!> if m >= k, Q = H(1) H(2) . . . H(k) and SORGBR returns the first n
+!> if m >= k, Q = H(1) H(2) . . . H(k) and mobbrmsd_SORGBR returns the first n
 !> columns of Q, where m >= n >= k;
-!> if m < k, Q = H(1) H(2) . . . H(m-1) and SORGBR returns Q as an
+!> if m < k, Q = H(1) H(2) . . . H(m-1) and mobbrmsd_SORGBR returns Q as an
 !> M-by-M matrix.
 !>
 !> If VECT = 'P', A is assumed to have been a K-by-N matrix, and P**T
 !> is of order N:
-!> if k < n, P**T = G(k) . . . G(2) G(1) and SORGBR returns the first m
+!> if k < n, P**T = G(k) . . . G(2) G(1) and mobbrmsd_SORGBR returns the first m
 !> rows of P**T, where n >= m >= k;
-!> if k >= n, P**T = G(n-1) . . . G(2) G(1) and SORGBR returns P**T as
+!> if k >= n, P**T = G(n-1) . . . G(2) G(1) and mobbrmsd_SORGBR returns P**T as
 !> an N-by-N matrix.
 !> \endverbatim
 !
@@ -61,7 +61,7 @@
 !> \verbatim
 !>          VECT is CHARACTER*1
 !>          Specifies whether the matrix Q or the matrix P**T is
-!>          required, as defined in the transformation applied by SGEBRD:
+!>          required, as defined in the transformation applied by mobbrmsd_SGEBRD:
 !>          = 'Q':  generate Q;
 !>          = 'P':  generate P**T.
 !> \endverbatim
@@ -86,9 +86,9 @@
 !> \verbatim
 !>          K is INTEGER
 !>          If VECT = 'Q', the number of columns in the original M-by-K
-!>          matrix reduced by SGEBRD.
+!>          matrix reduced by mobbrmsd_SGEBRD.
 !>          If VECT = 'P', the number of rows in the original K-by-N
-!>          matrix reduced by SGEBRD.
+!>          matrix reduced by mobbrmsd_SGEBRD.
 !>          K >= 0.
 !> \endverbatim
 !>
@@ -96,7 +96,7 @@
 !> \verbatim
 !>          A is REAL array, dimension (LDA,N)
 !>          On entry, the vectors which define the elementary reflectors,
-!>          as returned by SGEBRD.
+!>          as returned by mobbrmsd_SGEBRD.
 !>          On exit, the M-by-N matrix Q or P**T.
 !> \endverbatim
 !>
@@ -113,7 +113,7 @@
 !>                                (min(N,K)) if VECT = 'P'
 !>          TAU(i) must contain the scalar factor of the elementary
 !>          reflector H(i) or G(i), which determines Q or P**T, as
-!>          returned by SGEBRD in its array argument TAUQ or TAUP.
+!>          returned by mobbrmsd_SGEBRD in its array argument TAUQ or TAUP.
 !> \endverbatim
 !>
 !> \param[out] WORK
@@ -155,7 +155,7 @@
 !> \ingroup realGBcomputational
 !
 !  =====================================================================
-pure subroutine SORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
+pure subroutine mobbrmsd_SORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
   implicit none
 !
 !  -- LAPACK computational routine (version 3.7.0) --
@@ -199,10 +199,10 @@ pure subroutine SORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !Test the input arguments
 !
   INFO = 0
-  WANTQ = LSAME(VECT, 'Q')
+  WANTQ = mobbrmsd_LSAME(VECT, 'Q')
   MN = MIN(M, N)
   LQUERY = (LWORK == -1)
-  if (.not. WANTQ .and. .not. LSAME(VECT, 'P')) then
+  if (.not. WANTQ .and. .not. mobbrmsd_LSAME(VECT, 'P')) then
     INFO = -1
   else if (M < 0) then
     INFO = -2
@@ -220,18 +220,18 @@ pure subroutine SORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
     WORK(1) = 1
     if (WANTQ) then
       if (M >= K) then
-        call SORGQR(M, N, K, A, LDA, TAU, WORK, -1, IINFO)
+        call mobbrmsd_SORGQR(M, N, K, A, LDA, TAU, WORK, -1, IINFO)
       else
         if (M > 1) then
-          call SORGQR(M - 1, M - 1, M - 1, A(2, 2), LDA, TAU, WORK, -1, IINFO)
+          call mobbrmsd_SORGQR(M - 1, M - 1, M - 1, A(2, 2), LDA, TAU, WORK, -1, IINFO)
         end if
       end if
     else
       if (K < N) then
-        call SORGLQ(M, N, K, A, LDA, TAU, WORK, -1, IINFO)
+        call mobbrmsd_SORGLQ(M, N, K, A, LDA, TAU, WORK, -1, IINFO)
       else
         if (N > 1) then
-          call SORGLQ(N - 1, N - 1, N - 1, A(2, 2), LDA, TAU, WORK, -1, IINFO)
+          call mobbrmsd_SORGLQ(N - 1, N - 1, N - 1, A(2, 2), LDA, TAU, WORK, -1, IINFO)
         end if
       end if
     end if
@@ -240,7 +240,7 @@ pure subroutine SORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
   end if
 !
   if (INFO /= 0) then
-!   call XERBLA('SORGBR', -INFO)
+!   call XERBLA('mobbrmsd_SORGBR', -INFO)
     return
   else if (LQUERY) then
     WORK(1) = LWKOPT
@@ -256,13 +256,13 @@ pure subroutine SORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !
   if (WANTQ) then
 !
-! Form Q, determined by a call to SGEBRD to reduce an m - by - k matrix
+! Form Q, determined by a call to mobbrmsd_SGEBRD to reduce an m - by - k matrix
 !
     if (M >= K) then
 !
 ! if m >= k, assume m >= n >= k
 !
-      call SORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, IINFO)
+      call mobbrmsd_SORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, IINFO)
 !
     else
 !
@@ -286,18 +286,18 @@ pure subroutine SORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !
 ! Form Q(2:m, 2:m)
 !
-        call SORGQR(M - 1, M - 1, M - 1, A(2, 2), LDA, TAU, WORK, LWORK, IINFO)
+        call mobbrmsd_SORGQR(M - 1, M - 1, M - 1, A(2, 2), LDA, TAU, WORK, LWORK, IINFO)
       end if
     end if
   else
 !
-! Form P**T, determined by a call to SGEBRD to reduce a k - by - n matrix
+! Form P**T, determined by a call to mobbrmsd_SGEBRD to reduce a k - by - n matrix
 !
     if (K < N) then
 !
 !if k < n, assume k <= m <= n
 !
-      call SORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, IINFO)
+      call mobbrmsd_SORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, IINFO)
 !
     else
 !
@@ -321,13 +321,13 @@ pure subroutine SORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !
 ! Form P**T(2:n, 2:n)
 !
-        call SORGLQ(N - 1, N - 1, N - 1, A(2, 2), LDA, TAU, WORK, LWORK, IINFO)
+        call mobbrmsd_SORGLQ(N - 1, N - 1, N - 1, A(2, 2), LDA, TAU, WORK, LWORK, IINFO)
       end if
     end if
   end if
   WORK(1) = LWKOPT
   return
 !
-! end of SORGBR
+! end of mobbrmsd_SORGBR
 !
 end

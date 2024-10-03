@@ -1,4 +1,4 @@
-!> \brief \b DLASWP performs a series of row interchanges on a general rectangular matrix.
+!> \brief \b mobbrmsd_DLASWP performs a series of row interchanges on a general rectangular matrix.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLASWP + dependencies
+!> Download mobbrmsd_DLASWP + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dlaswp.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dlaswp.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLASWP( N, A, LDA, K1, K2, IPIV, INCX )
+!       SUBROUTINE mobbrmsd_DLASWP( N, A, LDA, K1, K2, IPIV, INCX )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INCX, K1, K2, LDA, N
@@ -34,7 +34,7 @@
 !>
 !> \verbatim
 !>
-!> DLASWP performs a series of row interchanges on the matrix A.
+!> mobbrmsd_DLASWP performs a series of row interchanges on the matrix A.
 !> One row interchange is initiated for each of rows K1 through K2 of A.
 !> \endverbatim
 !
@@ -111,7 +111,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DLASWP(N, A, LDA, K1, K2, IPIV, INCX)
+pure subroutine mobbrmsd_DLASWP(N, A, LDA, K1, K2, IPIV, INCX)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -187,7 +187,7 @@ pure subroutine DLASWP(N, A, LDA, K1, K2, IPIV, INCX)
 !
   return
 !
-!     End of DLASWP
+!     End of mobbrmsd_DLASWP
 !
-end subroutine DLASWP
+end subroutine mobbrmsd_DLASWP
 

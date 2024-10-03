@@ -1,4 +1,4 @@
-!> \brief \b SORM2R multiplies a general matrix by the orthogonal matrix from a QR factorization determined by sgeqrf (unblocked algorithm).
+!> \brief \b mobbrmsd_SORM2R multiplies a general matrix by the orthogonal matrix from a QR factorization determined by sgeqrf (unblocked algorithm).
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SORM2R + dependencies
+!> Download mobbrmsd_SORM2R + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sorm2r.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sorm2r.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SORM2R( SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC,
+!       SUBROUTINE mobbrmsd_SORM2R( SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC,
 !                          WORK, INFO )
 !
 !       .. Scalar Arguments ..
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> SORM2R overwrites the general real m by n matrix C with
+!> mobbrmsd_SORM2R overwrites the general real m by n matrix C with
 !>
 !>       Q * C  if SIDE = 'L' and TRANS = 'N', or
 !>
@@ -50,7 +50,7 @@
 !>
 !>       Q = H(1) H(2) . . . H(k)
 !>
-!> as returned by SGEQRF. Q is of order m if SIDE = 'L' and of order n
+!> as returned by mobbrmsd_SGEQRF. Q is of order m if SIDE = 'L' and of order n
 !> if SIDE = 'R'.
 !> \endverbatim
 !
@@ -97,7 +97,7 @@
 !>          A is REAL array, dimension (LDA,K)
 !>          The i-th column must contain the vector which defines the
 !>          elementary reflector H(i), for i = 1,2,...,k, as returned by
-!>          SGEQRF in the first k columns of its array argument A.
+!>          mobbrmsd_SGEQRF in the first k columns of its array argument A.
 !>          A is modified by the routine but restored on exit.
 !> \endverbatim
 !>
@@ -113,7 +113,7 @@
 !> \verbatim
 !>          TAU is REAL array, dimension (K)
 !>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i), as returned by SGEQRF.
+!>          reflector H(i), as returned by mobbrmsd_SGEQRF.
 !> \endverbatim
 !>
 !> \param[in,out] C
@@ -156,7 +156,7 @@
 !> \ingroup realOTHERcomputational
 !
 !  =====================================================================
-pure subroutine SORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
+pure subroutine mobbrmsd_SORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
      &                 WORK, INFO)
   implicit none
 !
@@ -201,8 +201,8 @@ pure subroutine SORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
 !Test the input arguments
 !
   INFO = 0
-  LEFT = LSAME(SIDE, 'L')
-  NOTRAN = LSAME(TRANS, 'N')
+  LEFT = mobbrmsd_LSAME(SIDE, 'L')
+  NOTRAN = mobbrmsd_LSAME(TRANS, 'N')
 !
 !NQ is the order of Q
 !
@@ -211,9 +211,9 @@ pure subroutine SORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
   else
     NQ = N
   end if
-  if (.not. LEFT .and. .not. LSAME(SIDE, 'R')) then
+  if (.not. LEFT .and. .not. mobbrmsd_LSAME(SIDE, 'R')) then
     INFO = -1
-  else if (.not. NOTRAN .and. .not. LSAME(TRANS, 'T')) then
+  else if (.not. NOTRAN .and. .not. mobbrmsd_LSAME(TRANS, 'T')) then
     INFO = -2
   else if (M < 0) then
     INFO = -3
@@ -227,7 +227,7 @@ pure subroutine SORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
     INFO = -10
   end if
   if (INFO /= 0) then
-!   call XERBLA('SORM2R', -INFO)
+!   call XERBLA('mobbrmsd_SORM2R', -INFO)
     return
   end if
 !
@@ -272,11 +272,11 @@ pure subroutine SORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
     !
     AII = A(I, I)
     A(I, I) = ONE
-    call SLARF(SIDE, MI, NI, A(I, I), 1, TAU(I), C(IC, JC), LDC, WORK)
+    call mobbrmsd_SLARF(SIDE, MI, NI, A(I, I), 1, TAU(I), C(IC, JC), LDC, WORK)
     A(I, I) = AII
   end do
   return
   !
-  !end of SORM2R
+  !end of mobbrmsd_SORM2R
   !
 end

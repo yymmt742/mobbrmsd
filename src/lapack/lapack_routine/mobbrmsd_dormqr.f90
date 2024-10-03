@@ -1,4 +1,4 @@
-!> \brief \b DORMQR
+!> \brief \b mobbrmsd_DORMQR
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DORMQR + dependencies
+!> Download mobbrmsd_DORMQR + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dormqr.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dormqr.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       pure subroutine DORMQR( SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC,
+!       pure subroutine mobbrmsd_DORMQR( SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC,
 !                          WORK, LWORK, INFO )
 !
 !       .. Scalar Arguments ..
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> DORMQR overwrites the general real M-by-N matrix C with
+!> mobbrmsd_DORMQR overwrites the general real M-by-N matrix C with
 !>
 !>                 SIDE = 'L'     SIDE = 'R'
 !> TRANS = 'N':      Q * C          C * Q
@@ -46,7 +46,7 @@
 !>
 !>       Q = H(1) H(2) . . . H(k)
 !>
-!> as returned by DGEQRF. Q is of order M if SIDE = 'L' and of order N
+!> as returned by mobbrmsd_DGEQRF. Q is of order M if SIDE = 'L' and of order N
 !> if SIDE = 'R'.
 !> \endverbatim
 !
@@ -93,7 +93,7 @@
 !>          A is real(RK)           :: array, dimension (LDA,K)
 !>          The i-th column must contain the vector which defines the
 !>          elementary reflector H(i), for i = 1,2,...,k, as returned by
-!>          DGEQRF in the first k columns of its array argument A.
+!>          mobbrmsd_DGEQRF in the first k columns of its array argument A.
 !> \endverbatim
 !>
 !> \param[in] LDA
@@ -108,7 +108,7 @@
 !> \verbatim
 !>          TAU is real(RK)           :: array, dimension (K)
 !>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i), as returned by DGEQRF.
+!>          reflector H(i), as returned by mobbrmsd_DGEQRF.
 !> \endverbatim
 !>
 !> \param[in,out] C
@@ -162,7 +162,7 @@
 !> \ingroup doubleOTHERcomputational
 !
 !  =====================================================================
-pure subroutine DORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
+pure subroutine mobbrmsd_DORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
                &       WORK, LWORK, INFO)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
@@ -213,8 +213,8 @@ pure subroutine DORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
 !     Test the input arguments
 !
   INFO = 0
-  LEFT = LSAME(SIDE, 'L')
-  NOTRAN = LSAME(TRANS, 'N')
+  LEFT = mobbrmsd_LSAME(SIDE, 'L')
+  NOTRAN = mobbrmsd_LSAME(TRANS, 'N')
   LQUERY = (LWORK == -1)
 !
 !     NQ is the order of Q and NW is the minimum dimension of WORK
@@ -226,9 +226,9 @@ pure subroutine DORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
     NQ = N
     NW = MAX(1, M)
   end if
-  if (.not. LEFT .and. .not. LSAME(SIDE, 'R')) then
+  if (.not. LEFT .and. .not. mobbrmsd_LSAME(SIDE, 'R')) then
     INFO = -1
-  else if (.not. NOTRAN .and. .not. LSAME(TRANS, 'T')) then
+  else if (.not. NOTRAN .and. .not. mobbrmsd_LSAME(TRANS, 'T')) then
     INFO = -2
   else if (M < 0) then
     INFO = -3
@@ -248,13 +248,13 @@ pure subroutine DORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
 !
 !        Compute the workspace requirements
 !
-    NB = MIN(NBMAX, ILAENV(1, 'DORMQR', SIDE//TRANS, M, N, K, -1))
+    NB = MIN(NBMAX, mobbrmsd_ILAENV(1, 'mobbrmsd_DORMQR', SIDE//TRANS, M, N, K, -1))
     LWKOPT = NW * NB + TSIZE
     WORK(1) = LWKOPT
   end if
 !
   if (INFO /= 0) then
-    !CALL XERBLA( 'DORMQR', -INFO )
+    !CALL XERBLA( 'mobbrmsd_DORMQR', -INFO )
     return
   else if (LQUERY) then
     return
@@ -272,7 +272,7 @@ pure subroutine DORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
   if (NB > 1 .and. NB < K) then
     if (LWORK < LWKOPT) then
       NB = (LWORK - TSIZE) / LDWORK
-      NBMIN = MAX(2, ILAENV(2, 'DORMQR', SIDE//TRANS, M, N, K, -1))
+      NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'mobbrmsd_DORMQR', SIDE//TRANS, M, N, K, -1))
     end if
   end if
 !
@@ -280,7 +280,7 @@ pure subroutine DORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
 !
 !        Use unblocked code
 !
-    call DORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, IINFO)
+    call mobbrmsd_DORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, IINFO)
   else
 !
 !        Use blocked code
@@ -311,7 +311,7 @@ pure subroutine DORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
 !           Form the triangular factor of the block reflector
 !           H = H(i) H(i+1) . . . H(i+ib-1)
 !
-      call DLARFT('Forward', 'Columnwise', NQ - I + 1, IB, A(I, I), &
+      call mobbrmsd_DLARFT('Forward', 'Columnwise', NQ - I + 1, IB, A(I, I), &
      &             LDA, TAU(I), WORK(IWT), LDT)
       if (LEFT) then
 !
@@ -329,7 +329,7 @@ pure subroutine DORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
 !
 !           Apply H or H**T
 !
-      call DLARFB(SIDE, TRANS, 'Forward', 'Columnwise', MI, NI, &
+      call mobbrmsd_DLARFB(SIDE, TRANS, 'Forward', 'Columnwise', MI, NI, &
      &             IB, A(I, I), LDA, WORK(IWT), LDT, &
      &             C(IC, JC), LDC, WORK, LDWORK)
     end do
@@ -337,7 +337,7 @@ pure subroutine DORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
   WORK(1) = LWKOPT
   return
 !
-!     End of DORMQR
+!     End of mobbrmsd_DORMQR
 !
-end subroutine DORMQR
+end subroutine mobbrmsd_DORMQR
 

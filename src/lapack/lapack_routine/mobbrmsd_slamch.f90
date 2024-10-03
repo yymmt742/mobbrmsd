@@ -1,4 +1,4 @@
-!> \brief \b SLAMCH
+!> \brief \b mobbrmsd_SLAMCH
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!  REAL             FUNCTION SLAMCH( CMACH )
+!  REAL             FUNCTION mobbrmsd_SLAMCH( CMACH )
 !
 ! .. Scalar Arguments ..
 !  CHARACTER          CMACH
@@ -20,7 +20,7 @@
 !>
 !> \verbatim
 !>
-!> SLAMCH determines single precision machine parameters.
+!> mobbrmsd_SLAMCH determines single precision machine parameters.
 !> \endverbatim
 !
 !  Arguments:
@@ -29,17 +29,17 @@
 !> \param[in] CMACH
 !> \verbatim
 !>          CMACH is CHARACTER*1
-!>          Specifies the value to be returned by SLAMCH:
-!>          = 'E' or 'e',   SLAMCH := eps
-!>          = 'S' or 's ,   SLAMCH := sfmin
-!>          = 'B' or 'b',   SLAMCH := base
-!>          = 'P' or 'p',   SLAMCH := eps*base
-!>          = 'N' or 'n',   SLAMCH := t
-!>          = 'R' or 'r',   SLAMCH := rnd
-!>          = 'M' or 'm',   SLAMCH := emin
-!>          = 'U' or 'u',   SLAMCH := rmin
-!>          = 'L' or 'l',   SLAMCH := emax
-!>          = 'O' or 'o',   SLAMCH := rmax
+!>          Specifies the value to be returned by mobbrmsd_SLAMCH:
+!>          = 'E' or 'e',   mobbrmsd_SLAMCH := eps
+!>          = 'S' or 's ,   mobbrmsd_SLAMCH := sfmin
+!>          = 'B' or 'b',   mobbrmsd_SLAMCH := base
+!>          = 'P' or 'p',   mobbrmsd_SLAMCH := eps*base
+!>          = 'N' or 'n',   mobbrmsd_SLAMCH := t
+!>          = 'R' or 'r',   mobbrmsd_SLAMCH := rnd
+!>          = 'M' or 'm',   mobbrmsd_SLAMCH := emin
+!>          = 'U' or 'u',   mobbrmsd_SLAMCH := rmin
+!>          = 'L' or 'l',   mobbrmsd_SLAMCH := emax
+!>          = 'O' or 'o',   mobbrmsd_SLAMCH := rmax
 !>          where
 !>          eps   = relative machine precision
 !>          sfmin = safe minimum, such that 1/sfmin does not overflow
@@ -66,7 +66,7 @@
 !> \ingroup auxOTHERauxiliary
 !
 !  =====================================================================
-pure elemental function SLAMCH(CMACH)
+pure elemental function mobbrmsd_SLAMCH(CMACH)
   implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
@@ -76,7 +76,7 @@ pure elemental function SLAMCH(CMACH)
 !
 ! .. Scalar Arguments ..
   character, intent(in) :: CMACH
-  real(RK)              :: SLAMCH
+  real(RK)              :: mobbrmsd_SLAMCH
 ! ..
 !
 ! =====================================================================
@@ -110,9 +110,9 @@ pure elemental function SLAMCH(CMACH)
     EPS = EPSILON(ZERO)
   end if
 !
-  if (LSAME(CMACH, 'E')) then
+  if (mobbrmsd_LSAME(CMACH, 'E')) then
     RMACH = EPS
-  else if (LSAME(CMACH, 'S')) then
+  else if (mobbrmsd_LSAME(CMACH, 'S')) then
     SFMIN = TINY(ZERO)
     SMALL = ONE / HUGE(ZERO)
     if (SMALL >= SFMIN) then
@@ -123,30 +123,30 @@ pure elemental function SLAMCH(CMACH)
       SFMIN = SMALL * (ONE + EPS)
     end if
     RMACH = SFMIN
-  else if (LSAME(CMACH, 'B')) then
+  else if (mobbrmsd_LSAME(CMACH, 'B')) then
     RMACH = RADIX(ZERO)
-  else if (LSAME(CMACH, 'P')) then
+  else if (mobbrmsd_LSAME(CMACH, 'P')) then
     RMACH = EPS ! RADIX(ZERO)
-  else if (LSAME(CMACH, 'N')) then
+  else if (mobbrmsd_LSAME(CMACH, 'N')) then
     RMACH = DIGITS(ZERO)
-  else if (LSAME(CMACH, 'R')) then
+  else if (mobbrmsd_LSAME(CMACH, 'R')) then
     RMACH = RND
-  else if (LSAME(CMACH, 'M')) then
+  else if (mobbrmsd_LSAME(CMACH, 'M')) then
     RMACH = MINEXPONENT(ZERO)
-  else if (LSAME(CMACH, 'U')) then
+  else if (mobbrmsd_LSAME(CMACH, 'U')) then
     RMACH = TINY(zero)
-  else if (LSAME(CMACH, 'L')) then
+  else if (mobbrmsd_LSAME(CMACH, 'L')) then
     RMACH = MAXEXPONENT(ZERO)
-  else if (LSAME(CMACH, 'O')) then
+  else if (mobbrmsd_LSAME(CMACH, 'O')) then
     RMACH = HUGE(ZERO)
   else
     RMACH = ZERO
   end if
 !
-  SLAMCH = RMACH
+  mobbrmsd_SLAMCH = RMACH
   return
 !
-! End of SLAMCH
+! End of mobbrmsd_SLAMCH
 !
 end
 !***********************************************************************

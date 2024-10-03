@@ -1,4 +1,4 @@
-!> \brief \b SLARTG generates a plane rotation with real cosine and real sine.
+!> \brief \b mobbrmsd_SLARTG generates a plane rotation with real cosine and real sine.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLARTG + dependencies
+!> Download mobbrmsd_SLARTG + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slartg.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slartg.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLARTG( F, G, CS, SN, R )
+!       SUBROUTINE mobbrmsd_SLARTG( F, G, CS, SN, R )
 !
 !       .. Scalar Arguments ..
 !       REAL               CS, F, G, R, SN
@@ -30,17 +30,17 @@
 !>
 !> \verbatim
 !>
-!> SLARTG generate a plane rotation so that
+!> mobbrmsd_SLARTG generate a plane rotation so that
 !>
 !>    [  CS  SN  ]  .  [ F ]  =  [ R ]   where CS**2 + SN**2 = 1.
 !>    [ -SN  CS  ]     [ G ]     [ 0 ]
 !>
-!> This is a slower, more accurate version of the BLAS1 routine SROTG,
+!> This is a slower, more accurate version of the BLAS1 routine mobbrmsd_SROTG,
 !> with the following other differences:
 !>    F and G are unchanged on return.
 !>    If G=0, then CS=1 and SN=0.
 !>    If F=0 and (G .ne. 0), then CS=0 and SN=1 without doing any
-!>       floating point operations (saves work in SBDSQR when
+!>       floating point operations (saves work in mobbrmsd_SBDSQR when
 !>       there are zeros on the diagonal).
 !>
 !> If F exceeds G in magnitude, CS will be positive.
@@ -95,7 +95,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure elemental subroutine SLARTG(F, G, CS, SN, R)
+pure elemental subroutine mobbrmsd_SLARTG(F, G, CS, SN, R)
   implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
@@ -137,7 +137,7 @@ pure elemental subroutine SLARTG(F, G, CS, SN, R)
 !..Executable Statements..
 !
 ! if(FIRST) then
-  SAFMN2 = SLAMCH('B')**INT(LOG(SLAMCH('S') / SLAMCH('E')) / LOG(SLAMCH('B')) / TWO)
+  SAFMN2 = mobbrmsd_SLAMCH('B')**INT(LOG(mobbrmsd_SLAMCH('S') / mobbrmsd_SLAMCH('E')) / LOG(mobbrmsd_SLAMCH('B')) / TWO)
   SAFMX2 = ONE / SAFMN2
 ! FIRST = .false.
 ! end if
@@ -196,7 +196,7 @@ pure elemental subroutine SLARTG(F, G, CS, SN, R)
   end if
   return
   !
-  !end of SLARTG
+  !end of mobbrmsd_SLARTG
   !
 end
 

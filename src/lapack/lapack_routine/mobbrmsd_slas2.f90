@@ -1,4 +1,4 @@
-!> \brief \b SLAS2 computes singular values of a 2-by-2 triangular matrix.
+!> \brief \b mobbrmsd_SLAS2 computes singular values of a 2-by-2 triangular matrix.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLAS2 + dependencies
+!> Download mobbrmsd_SLAS2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slas2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slas2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLAS2( F, G, H, SSMIN, SSMAX )
+!       SUBROUTINE mobbrmsd_SLAS2( F, G, H, SSMIN, SSMAX )
 !
 !       .. Scalar Arguments ..
 !       REAL               F, G, H, SSMAX, SSMIN
@@ -30,7 +30,7 @@
 !>
 !> \verbatim
 !>
-!> SLAS2  computes the singular values of the 2-by-2 matrix
+!> mobbrmsd_SLAS2  computes the singular values of the 2-by-2 matrix
 !>    [  F   G  ]
 !>    [  0   H  ].
 !> On return, SSMIN is the smaller singular value and SSMAX is the
@@ -105,7 +105,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure elemental subroutine SLAS2(F, G, H, SSMIN, SSMAX)
+pure elemental subroutine mobbrmsd_SLAS2(F, G, H, SSMIN, SSMAX)
   implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
@@ -175,7 +175,7 @@ pure elemental subroutine SLAS2(F, G, H, SSMIN, SSMAX)
   end if
   return
 !
-!end of SLAS2
+!end of mobbrmsd_SLAS2
 !
 end
 

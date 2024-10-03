@@ -1,4 +1,4 @@
-!> \brief \b SLASV2 computes the singular value decomposition of a 2-by-2 triangular matrix.
+!> \brief \b mobbrmsd_SLASV2 computes the singular value decomposition of a 2-by-2 triangular matrix.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLASV2 + dependencies
+!> Download mobbrmsd_SLASV2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slasv2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slasv2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLASV2( F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL )
+!       SUBROUTINE mobbrmsd_SLASV2( F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL )
 !
 !       .. Scalar Arguments ..
 !       REAL               CSL, CSR, F, G, H, SNL, SNR, SSMAX, SSMIN
@@ -30,7 +30,7 @@
 !>
 !> \verbatim
 !>
-!> SLASV2 computes the singular value decomposition of a 2-by-2
+!> mobbrmsd_SLASV2 computes the singular value decomposition of a 2-by-2
 !> triangular matrix
 !>    [  F   G  ]
 !>    [  0   H  ].
@@ -136,7 +136,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure elemental subroutine SLASV2(F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL)
+pure elemental subroutine mobbrmsd_SLASV2(F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL)
   implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
@@ -216,7 +216,7 @@ pure elemental subroutine SLASV2(F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL)
     GASMAL = .true.
     if (GA > FA) then
       PMAX = 2
-      if ((FA / GA) < SLAMCH('EPS')) then
+      if ((FA / GA) < mobbrmsd_SLAMCH('EPS')) then
 !
 ! case of very large GA
 !
@@ -317,7 +317,7 @@ pure elemental subroutine SLASV2(F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL)
   SSMIN = SIGN(SSMIN, TSIGN * SIGN(ONE, F) * SIGN(ONE, H))
   return
 !
-! end of SLASV2
+! end of mobbrmsd_SLASV2
 !
 end
 

@@ -1,4 +1,4 @@
-!> \brief \b DTRMM
+!> \brief \b mobbrmsd_DTRMM
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DTRMM(SIDE,UPLO,TRANSA,DIAG,M,N,ALPHA,A,LDA,B,LDB)
+!       SUBROUTINE mobbrmsd_DTRMM(SIDE,UPLO,TRANSA,DIAG,M,N,ALPHA,A,LDA,B,LDB)
 !
 !       .. Scalar Arguments ..
 !       real(RK)           :: ALPHA
@@ -25,7 +25,7 @@
 !>
 !> \verbatim
 !>
-!> DTRMM  performs one of the matrix-matrix operations
+!> mobbrmsd_DTRMM  performs one of the matrix-matrix operations
 !>
 !>    B := alpha*op( A )*B,   or   B := alpha*B*op( A ),
 !>
@@ -173,7 +173,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DTRMM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B, LDB)
+pure subroutine mobbrmsd_DTRMM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B, LDB)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -213,25 +213,25 @@ pure subroutine DTRMM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B, LDB)
 !     ..
 !     Test the input parameters.
 !
-  LSIDE = LSAME(SIDE, 'L')
+  LSIDE = mobbrmsd_LSAME(SIDE, 'L')
   if (LSIDE) then
     NROWA = M
   else
     NROWA = N
   end if
-  NOUNIT = LSAME(DIAG, 'N')
-  UPPER = LSAME(UPLO, 'U')
+  NOUNIT = mobbrmsd_LSAME(DIAG, 'N')
+  UPPER = mobbrmsd_LSAME(UPLO, 'U')
 !
   INFO = 0
-  if ((.not. LSIDE) .and. (.not. LSAME(SIDE, 'R'))) then
+  if ((.not. LSIDE) .and. (.not. mobbrmsd_LSAME(SIDE, 'R'))) then
     INFO = 1
-  else if ((.not. UPPER) .and. (.not. LSAME(UPLO, 'L'))) then
+  else if ((.not. UPPER) .and. (.not. mobbrmsd_LSAME(UPLO, 'L'))) then
     INFO = 2
-  else if ((.not. LSAME(TRANSA, 'N')) .and.&
- &         (.not. LSAME(TRANSA, 'T')) .and.&
- &         (.not. LSAME(TRANSA, 'C'))) then
+  else if ((.not. mobbrmsd_LSAME(TRANSA, 'N')) .and.&
+ &         (.not. mobbrmsd_LSAME(TRANSA, 'T')) .and.&
+ &         (.not. mobbrmsd_LSAME(TRANSA, 'C'))) then
     INFO = 3
-  else if ((.not. LSAME(DIAG, 'U')) .and. (.not. LSAME(DIAG, 'N'))) then
+  else if ((.not. mobbrmsd_LSAME(DIAG, 'U')) .and. (.not. mobbrmsd_LSAME(DIAG, 'N'))) then
     INFO = 4
   else if (M < 0) then
     INFO = 5
@@ -243,7 +243,7 @@ pure subroutine DTRMM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B, LDB)
     INFO = 11
   end if
   if (INFO /= 0) then
-!    CALL XERBLA('DTRMM ',INFO)
+!    CALL XERBLA('mobbrmsd_DTRMM ',INFO)
     return
   end if
 !
@@ -263,7 +263,7 @@ pure subroutine DTRMM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B, LDB)
 !     Start the operations.
 !
   if (LSIDE) then
-    if (LSAME(TRANSA, 'N')) then
+    if (mobbrmsd_LSAME(TRANSA, 'N')) then
 !
 !           Form  B := alpha*A*B.
 !
@@ -323,7 +323,7 @@ pure subroutine DTRMM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B, LDB)
       end if
     end if
   else
-    if (LSAME(TRANSA, 'N')) then
+    if (mobbrmsd_LSAME(TRANSA, 'N')) then
 !
 !           Form  B := alpha*B*A.
 !
@@ -406,7 +406,7 @@ pure subroutine DTRMM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B, LDB)
 !
   return
 !
-!     End of DTRMM
+!     End of mobbrmsd_DTRMM
 !
-end subroutine DTRMM
+end subroutine mobbrmsd_DTRMM
 

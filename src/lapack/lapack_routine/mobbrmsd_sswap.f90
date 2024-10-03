@@ -1,4 +1,4 @@
-!> \brief \b SSWAP
+!> \brief \b mobbrmsd_SSWAP
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SSWAP(N,SX,INCX,SY,INCY)
+!       SUBROUTINE mobbrmsd_SSWAP(N,SX,INCX,SY,INCY)
 !
 !       .. Scalar Arguments ..
 !       INTEGER INCX,INCY,N
@@ -23,7 +23,7 @@
 !>
 !> \verbatim
 !>
-!>    SSWAP interchanges two vectors.
+!>    mobbrmsd_SSWAP interchanges two vectors.
 !>    uses unrolled loops for increments equal to 1.
 !> \endverbatim
 !
@@ -80,7 +80,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine SSWAP(N, SX, INCX, SY, INCY)
+pure subroutine mobbrmsd_SSWAP(N, SX, INCX, SY, INCY)
   implicit none
 !
 !  -- Reference BLAS level1 routine (version 3.8.0) --

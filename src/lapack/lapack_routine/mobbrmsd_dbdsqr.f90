@@ -1,4 +1,4 @@
-!> \brief \b DBDSQR
+!> \brief \b mobbrmsd_DBDSQR
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DBDSQR + dependencies
+!> Download mobbrmsd_DBDSQR + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dbdsqr.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dbdsqr.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DBDSQR( UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U,
+!       SUBROUTINE mobbrmsd_DBDSQR( UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U,
 !                          LDU, C, LDC, WORK, INFO )
 !
 !       .. Scalar Arguments ..
@@ -36,7 +36,7 @@
 !>
 !> \verbatim
 !>
-!> DBDSQR computes the singular values and, optionally, the right and/or
+!> mobbrmsd_DBDSQR computes the singular values and, optionally, the right and/or
 !> left singular vectors from the singular value decomposition (SVD) of
 !> a real N-by-N (upper or lower) bidiagonal matrix B using the implicit
 !> zero-shift QR algorithm.  The SVD of B has the form
@@ -50,7 +50,7 @@
 !> vectors are requested, this subroutine returns P**T*VT instead of
 !> P**T, for given real input matrices U and VT.  When U and VT are the
 !> orthogonal matrices that reduce a general matrix A to bidiagonal
-!> form:  A = U*B*VT, as computed by DGEBRD, then
+!> form:  A = U*B*VT, as computed by mobbrmsd_DGEBRD, then
 !>
 !>    A = (U*Q) * S * (P**T*VT)
 !>
@@ -236,7 +236,7 @@
 !> \ingroup auxOTHERcomputational
 !
 !  =====================================================================
-pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
+pure subroutine mobbrmsd_DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
      &                        LDU, C, LDC, WORK, INFO)
 ! use LA_CONSTANTS, only: RK, ZERO => DZERO, ONE => DONE, TEN => DTEN
   implicit none
@@ -297,8 +297,8 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !     Test the input parameters.
 !
   INFO = 0
-  LOWER = LSAME(UPLO, 'L')
-  if (.not. LSAME(UPLO, 'U') .and. .not. LOWER) then
+  LOWER = mobbrmsd_LSAME(UPLO, 'L')
+  if (.not. mobbrmsd_LSAME(UPLO, 'U') .and. .not. LOWER) then
     INFO = -1
   else if (N < 0) then
     INFO = -2
@@ -319,7 +319,7 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
   end if
 !
   if (INFO /= 0) then
-    !CALL XERBLA( 'DBDSQR', -INFO )
+    !CALL XERBLA( 'mobbrmsd_DBDSQR', -INFO )
     return
   end if
 !
@@ -333,7 +333,7 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !     If no singular vectors desired, use qd algorithm
 !
   if (.not. ROTATE) then
-    call DLASQ1(N, D, E, WORK, INFO)
+    call mobbrmsd_DLASQ1(N, D, E, WORK, INFO)
 !
 !     If INFO equals 2, dqds didn't finish, try to finish
 !
@@ -348,15 +348,15 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !
 !     Get machine constants
 !
-  EPS = DLAMCH('Epsilon')
-  UNFL = DLAMCH('Safe minimum')
+  EPS = mobbrmsd_DLAMCH('Epsilon')
+  UNFL = mobbrmsd_DLAMCH('Safe minimum')
 !
 !     If matrix lower bidiagonal, rotate to be upper bidiagonal
 !     by applying Givens rotations on the left
 !
   if (LOWER) then
     do I = 1, N - 1
-      call DLARTG(D(I), E(I), CS, SN, R)
+      call mobbrmsd_DLARTG(D(I), E(I), CS, SN, R)
       D(I) = R
       E(I) = SN * D(I + 1)
       D(I + 1) = CS * D(I + 1)
@@ -366,8 +366,8 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !
 !   Update singular vectors if desired
 !
-    if (NRU > 0) call DLASR('R', 'V', 'F', NRU, N, WORK(1), WORK(N), U, LDU)
-    if (NCC > 0) call DLASR('L', 'V', 'F', N, NCC, WORK(1), WORK(N), C, LDC)
+    if (NRU > 0) call mobbrmsd_DLASR('R', 'V', 'F', NRU, N, WORK(1), WORK(N), U, LDU)
+    if (NCC > 0) call mobbrmsd_DLASR('L', 'V', 'F', N, NCC, WORK(1), WORK(N), C, LDC)
   end if
 !
 !   Compute singular values to relative accuracy TOL
@@ -488,16 +488,16 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !
 !      2 by 2 block, handle separately
 !
-    call DLASV2(D(M - 1), E(M - 1), D(M), SIGMN, SIGMX, SINR, COSR, SINL, COSL)
+    call mobbrmsd_DLASV2(D(M - 1), E(M - 1), D(M), SIGMN, SIGMX, SINR, COSR, SINL, COSL)
     D(M - 1) = SIGMX
     E(M - 1) = ZERO
     D(M) = SIGMN
 !
 !      Compute singular vectors, if desired
 !
-    if (NCVT > 0) call DROT(NCVT, VT(M - 1, 1), LDVT, VT(M, 1), LDVT, COSR, SINR)
-    if (NRU > 0) call DROT(NRU, U(1, M - 1), 1, U(1, M), 1, COSL, SINL)
-    if (NCC > 0) call DROT(NCC, C(M - 1, 1), LDC, C(M, 1), LDC, COSL, SINL)
+    if (NCVT > 0) call mobbrmsd_DROT(NCVT, VT(M - 1, 1), LDVT, VT(M, 1), LDVT, COSR, SINR)
+    if (NRU > 0) call mobbrmsd_DROT(NRU, U(1, M - 1), 1, U(1, M), 1, COSL, SINL)
+    if (NCC > 0) call mobbrmsd_DROT(NCC, C(M - 1, 1), LDC, C(M, 1), LDC, COSL, SINL)
     M = M - 2
     GO TO 60
   end if
@@ -594,10 +594,10 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !
     if (IDIR == 1) then
       SLL = ABS(D(LL))
-      call DLAS2(D(M - 1), E(M - 1), D(M), SHIFT, R)
+      call mobbrmsd_DLAS2(D(M - 1), E(M - 1), D(M), SHIFT, R)
     else
       SLL = ABS(D(M))
-      call DLAS2(D(LL), E(LL), D(LL + 1), SHIFT, R)
+      call mobbrmsd_DLAS2(D(LL), E(LL), D(LL + 1), SHIFT, R)
     end if
 !
 !      Test if shift negligible, and if so set to zero
@@ -622,9 +622,9 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
       CS = ONE
       OLDCS = ONE
       do I = LL, M - 1
-        call DLARTG(D(I) * CS, E(I), CS, SN, R)
+        call mobbrmsd_DLARTG(D(I) * CS, E(I), CS, SN, R)
         if (I > LL) E(I - 1) = OLDSN * R
-        call DLARTG(OLDCS * R, D(I + 1) * SN, OLDCS, OLDSN, D(I))
+        call mobbrmsd_DLARTG(OLDCS * R, D(I + 1) * SN, OLDCS, OLDSN, D(I))
         WORK(I - LL + 1) = CS
         WORK(I - LL + 1 + NM1) = SN
         WORK(I - LL + 1 + NM12) = OLDCS
@@ -637,13 +637,13 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !         Update singular vectors
 !
       if (NCVT > 0) &
-&         call DLASR('L', 'V', 'F', M - LL + 1, NCVT, WORK(1),&
+&         call mobbrmsd_DLASR('L', 'V', 'F', M - LL + 1, NCVT, WORK(1),&
 &                     WORK(N), VT(LL, 1), LDVT)
       if (NRU > 0) &
-&         call DLASR('R', 'V', 'F', NRU, M - LL + 1, WORK(NM12 + 1),&
+&         call mobbrmsd_DLASR('R', 'V', 'F', NRU, M - LL + 1, WORK(NM12 + 1),&
 &                     WORK(NM13 + 1), U(1, LL), LDU)
       if (NCC > 0) &
-&         call DLASR('L', 'V', 'F', M - LL + 1, NCC, WORK(NM12 + 1),&
+&         call mobbrmsd_DLASR('L', 'V', 'F', M - LL + 1, NCC, WORK(NM12 + 1),&
 &                     WORK(NM13 + 1), C(LL, 1), LDC)
 !
 !         Test convergence
@@ -658,9 +658,9 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
       CS = ONE
       OLDCS = ONE
       do I = M, LL + 1, -1
-        call DLARTG(D(I) * CS, E(I - 1), CS, SN, R)
+        call mobbrmsd_DLARTG(D(I) * CS, E(I - 1), CS, SN, R)
         if (I < M) E(I) = OLDSN * R
-        call DLARTG(OLDCS * R, D(I - 1) * SN, OLDCS, OLDSN, D(I))
+        call mobbrmsd_DLARTG(OLDCS * R, D(I - 1) * SN, OLDCS, OLDSN, D(I))
         WORK(I - LL) = CS
         WORK(I - LL + NM1) = -SN
         WORK(I - LL + NM12) = OLDCS
@@ -673,13 +673,13 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !         Update singular vectors
 !
       if (NCVT > 0) &
-&         call DLASR('L', 'V', 'B', M - LL + 1, NCVT, WORK(NM12 + 1),&
+&         call mobbrmsd_DLASR('L', 'V', 'B', M - LL + 1, NCVT, WORK(NM12 + 1),&
 &                     WORK(NM13 + 1), VT(LL, 1), LDVT)
       if (NRU > 0) &
-&         call DLASR('R', 'V', 'B', NRU, M - LL + 1, WORK(1),&
+&         call mobbrmsd_DLASR('R', 'V', 'B', NRU, M - LL + 1, WORK(1),&
 &                     WORK(N), U(1, LL), LDU)
       if (NCC > 0) &
-&         call DLASR('L', 'V', 'B', M - LL + 1, NCC, WORK(1),&
+&         call mobbrmsd_DLASR('L', 'V', 'B', M - LL + 1, NCC, WORK(1),&
 &                     WORK(N), C(LL, 1), LDC)
 !
 !         Test convergence
@@ -698,13 +698,13 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
       F = (ABS(D(LL)) - SHIFT) * (SIGN(ONE, D(LL)) + SHIFT / D(LL))
       G = E(LL)
       do I = LL, M - 1
-        call DLARTG(F, G, COSR, SINR, R)
+        call mobbrmsd_DLARTG(F, G, COSR, SINR, R)
         if (I > LL) E(I - 1) = R
         F = COSR * D(I) + SINR * E(I)
         E(I) = COSR * E(I) - SINR * D(I)
         G = SINR * D(I + 1)
         D(I + 1) = COSR * D(I + 1)
-        call DLARTG(F, G, COSL, SINL, R)
+        call mobbrmsd_DLARTG(F, G, COSL, SINL, R)
         D(I) = R
         F = COSL * E(I) + SINL * D(I + 1)
         D(I + 1) = COSL * D(I + 1) - SINL * E(I)
@@ -722,13 +722,13 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !         Update singular vectors
 !
       if (NCVT > 0) &
-&         call DLASR('L', 'V', 'F', M - LL + 1, NCVT, WORK(1),&
+&         call mobbrmsd_DLASR('L', 'V', 'F', M - LL + 1, NCVT, WORK(1),&
 &                     WORK(N), VT(LL, 1), LDVT)
       if (NRU > 0) &
-&         call DLASR('R', 'V', 'F', NRU, M - LL + 1, WORK(NM12 + 1),&
+&         call mobbrmsd_DLASR('R', 'V', 'F', NRU, M - LL + 1, WORK(NM12 + 1),&
 &                     WORK(NM13 + 1), U(1, LL), LDU)
       if (NCC > 0) &
-&         call DLASR('L', 'V', 'F', M - LL + 1, NCC, WORK(NM12 + 1),&
+&         call mobbrmsd_DLASR('L', 'V', 'F', M - LL + 1, NCC, WORK(NM12 + 1),&
 &                     WORK(NM13 + 1), C(LL, 1), LDC)
 !
 !         Test convergence
@@ -743,13 +743,13 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
       F = (ABS(D(M)) - SHIFT) * (SIGN(ONE, D(M)) + SHIFT / D(M))
       G = E(M - 1)
       do I = M, LL + 1, -1
-        call DLARTG(F, G, COSR, SINR, R)
+        call mobbrmsd_DLARTG(F, G, COSR, SINR, R)
         if (I < M) E(I) = R
         F = COSR * D(I) + SINR * E(I - 1)
         E(I - 1) = COSR * E(I - 1) - SINR * D(I)
         G = SINR * D(I - 1)
         D(I - 1) = COSR * D(I - 1)
-        call DLARTG(F, G, COSL, SINL, R)
+        call mobbrmsd_DLARTG(F, G, COSL, SINL, R)
         D(I) = R
         F = COSL * E(I - 1) + SINL * D(I - 1)
         D(I - 1) = COSL * D(I - 1) - SINL * E(I - 1)
@@ -771,13 +771,13 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !         Update singular vectors if desired
 !
       if (NCVT > 0) &
-&         call DLASR('L', 'V', 'B', M - LL + 1, NCVT, WORK(NM12 + 1),&
+&         call mobbrmsd_DLASR('L', 'V', 'B', M - LL + 1, NCVT, WORK(NM12 + 1),&
 &                     WORK(NM13 + 1), VT(LL, 1), LDVT)
       if (NRU > 0) &
-&         call DLASR('R', 'V', 'B', NRU, M - LL + 1, WORK(1),&
+&         call mobbrmsd_DLASR('R', 'V', 'B', NRU, M - LL + 1, WORK(1),&
 &                     WORK(N), U(1, LL), LDU)
       if (NCC > 0) &
-&         call DLASR('L', 'V', 'B', M - LL + 1, NCC, WORK(1),&
+&         call mobbrmsd_DLASR('L', 'V', 'B', M - LL + 1, NCC, WORK(1),&
 &                     WORK(N), C(LL, 1), LDC)
     end if
   end if
@@ -795,7 +795,7 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !
 !         Change sign of singular vectors, if desired
 !
-      if (NCVT > 0) call DSCAL(NCVT, NEGONE, VT(I, 1), LDVT)
+      if (NCVT > 0) call mobbrmsd_DSCAL(NCVT, NEGONE, VT(I, 1), LDVT)
     end if
   end do
 !
@@ -820,13 +820,13 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !
       D(ISUB) = D(N + 1 - I)
       D(N + 1 - I) = SMIN
-      if (NCVT > 0) call DSWAP(NCVT, VT(ISUB, 1), LDVT, VT(N + 1 - I, 1), LDVT)
-      if (NRU > 0) call DSWAP(NRU, U(1, ISUB), 1, U(1, N + 1 - I), 1)
-      if (NCC > 0) call DSWAP(NCC, C(ISUB, 1), LDC, C(N + 1 - I, 1), LDC)
+      if (NCVT > 0) call mobbrmsd_DSWAP(NCVT, VT(ISUB, 1), LDVT, VT(N + 1 - I, 1), LDVT)
+      if (NRU > 0) call mobbrmsd_DSWAP(NRU, U(1, ISUB), 1, U(1, N + 1 - I), 1)
+      if (NCC > 0) call mobbrmsd_DSWAP(NCC, C(ISUB, 1), LDC, C(N + 1 - I, 1), LDC)
     end if
   end do
   return
 !
-!     End of DBDSQR
+!     End of mobbrmsd_DBDSQR
 !
-end subroutine DBDSQR
+end subroutine mobbrmsd_DBDSQR

@@ -1,4 +1,4 @@
-!> \brief \b SORMQR
+!> \brief \b mobbrmsd_SORMQR
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SORMQR + dependencies
+!> Download mobbrmsd_SORMQR + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sormqr.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sormqr.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SORMQR( SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC,
+!       SUBROUTINE mobbrmsd_SORMQR( SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC,
 !                          WORK, LWORK, INFO )
 !
 !       .. Scalar Arguments ..
@@ -36,7 +36,7 @@
 !>
 !> \verbatim
 !>
-!> SORMQR overwrites the general real M-by-N matrix C with
+!> mobbrmsd_SORMQR overwrites the general real M-by-N matrix C with
 !>
 !>                 SIDE = 'L'     SIDE = 'R'
 !> TRANS = 'N':      Q * C          C * Q
@@ -47,7 +47,7 @@
 !>
 !>       Q = H(1) H(2) . . . H(k)
 !>
-!> as returned by SGEQRF. Q is of order M if SIDE = 'L' and of order N
+!> as returned by mobbrmsd_SGEQRF. Q is of order M if SIDE = 'L' and of order N
 !> if SIDE = 'R'.
 !> \endverbatim
 !
@@ -94,7 +94,7 @@
 !>          A is REAL array, dimension (LDA,K)
 !>          The i-th column must contain the vector which defines the
 !>          elementary reflector H(i), for i = 1,2,...,k, as returned by
-!>          SGEQRF in the first k columns of its array argument A.
+!>          mobbrmsd_SGEQRF in the first k columns of its array argument A.
 !> \endverbatim
 !>
 !> \param[in] LDA
@@ -109,7 +109,7 @@
 !> \verbatim
 !>          TAU is REAL array, dimension (K)
 !>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i), as returned by SGEQRF.
+!>          reflector H(i), as returned by mobbrmsd_SGEQRF.
 !> \endverbatim
 !>
 !> \param[in,out] C
@@ -165,7 +165,7 @@
 !> \ingroup realOTHERcomputational
 !
 !  =====================================================================
-pure subroutine SORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
+pure subroutine mobbrmsd_SORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
                &       WORK, LWORK, INFO)
 !
 !  -- LAPACK computational routine (version 3.7.0) --
@@ -214,8 +214,8 @@ pure subroutine SORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
 !Test the input arguments
 !
   INFO = 0
-  LEFT = LSAME(SIDE, 'L')
-  NOTRAN = LSAME(TRANS, 'N')
+  LEFT = mobbrmsd_LSAME(SIDE, 'L')
+  NOTRAN = mobbrmsd_LSAME(TRANS, 'N')
   LQUERY = (LWORK == -1)
 !
 !NQ is the order of Q and NW is the minimum dimension of WORK
@@ -227,9 +227,9 @@ pure subroutine SORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
     NQ = N
     NW = M
   end if
-  if (.not. LEFT .and. .not. LSAME(SIDE, 'R')) then
+  if (.not. LEFT .and. .not. mobbrmsd_LSAME(SIDE, 'R')) then
     INFO = -1
-  else if (.not. NOTRAN .and. .not. LSAME(TRANS, 'T')) then
+  else if (.not. NOTRAN .and. .not. mobbrmsd_LSAME(TRANS, 'T')) then
     INFO = -2
   else if (M < 0) then
     INFO = -3
@@ -249,13 +249,13 @@ pure subroutine SORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
     !
     !Compute the workspace requirements
     !
-    NB = MIN(NBMAX, ILAENV(1, 'SORMQR', SIDE//TRANS, M, N, K, -1))
+    NB = MIN(NBMAX, mobbrmsd_ILAENV(1, 'mobbrmsd_SORMQR', SIDE//TRANS, M, N, K, -1))
     LWKOPT = MAX(1, NW) * NB + TSIZE
     WORK(1) = LWKOPT
   end if
 !
   if (INFO /= 0) then
-!   call XERBLA('SORMQR', -INFO)
+!   call XERBLA('mobbrmsd_SORMQR', -INFO)
     return
   else if (LQUERY) then
     return
@@ -273,7 +273,7 @@ pure subroutine SORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
   if (NB > 1 .and. NB < K) then
     if (LWORK < NW * NB + TSIZE) then
       NB = (LWORK - TSIZE) / LDWORK
-      NBMIN = MAX(2, ILAENV(2, 'SORMQR', SIDE//TRANS, M, N, K, -1))
+      NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'mobbrmsd_SORMQR', SIDE//TRANS, M, N, K, -1))
     end if
   end if
 !
@@ -281,7 +281,7 @@ pure subroutine SORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
     !
     !use unblocked code
     !
-    call SORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, IINFO)
+    call mobbrmsd_SORM2R(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, IINFO)
   else
     !
     !use blocked code
@@ -311,7 +311,7 @@ pure subroutine SORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
       !Form the triangular factor of the block reflector
       !H = H(i) H(i + 1) ...H(i + ib - 1)
       !
-      call SLARFT('Forward', 'Columnwise', NQ - I + 1, IB, A(I, I), LDA, TAU(I), WORK(IWT), LDT)
+      call mobbrmsd_SLARFT('Forward', 'Columnwise', NQ - I + 1, IB, A(I, I), LDA, TAU(I), WORK(IWT), LDT)
       if (LEFT) then
         !
         !H or H**T is applied to C(i:m, 1:n)
@@ -328,7 +328,7 @@ pure subroutine SORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
       !
       !Apply H or H**T
       !
-      call SLARFB(SIDE, TRANS, 'Forward', 'Columnwise', MI, NI, &
+      call mobbrmsd_SLARFB(SIDE, TRANS, 'Forward', 'Columnwise', MI, NI, &
           &       IB, A(I, I), LDA, WORK(IWT), LDT, &
           &       C(IC, JC), LDC, WORK, LDWORK)
     end do
@@ -336,6 +336,6 @@ pure subroutine SORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
   WORK(1) = LWKOPT
   return
   !
-  !end of SORMQR
+  !end of mobbrmsd_SORMQR
   !
 end

@@ -1,4 +1,4 @@
-!> \brief \b DORML2 multiplies a general matrix by the orthogonal matrix from a LQ factorization determined by sgelqf (unblocked algorithm).
+!> \brief \b mobbrmsd_DORML2 multiplies a general matrix by the orthogonal matrix from a LQ factorization determined by sgelqf (unblocked algorithm).
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DORML2 + dependencies
+!> Download mobbrmsd_DORML2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dorml2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dorml2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       pure subroutine DORML2( SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC,
+!       pure subroutine mobbrmsd_DORML2( SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC,
 !                          WORK, INFO )
 !
 !       .. Scalar Arguments ..
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> DORML2 overwrites the general real m by n matrix C with
+!> mobbrmsd_DORML2 overwrites the general real m by n matrix C with
 !>
 !>       Q * C  if SIDE = 'L' and TRANS = 'N', or
 !>
@@ -50,7 +50,7 @@
 !>
 !>       Q = H(k) . . . H(2) H(1)
 !>
-!> as returned by DGELQF. Q is of order m if SIDE = 'L' and of order n
+!> as returned by mobbrmsd_DGELQF. Q is of order m if SIDE = 'L' and of order n
 !> if SIDE = 'R'.
 !> \endverbatim
 !
@@ -99,7 +99,7 @@
 !>                               (LDA,N) if SIDE = 'R'
 !>          The i-th row must contain the vector which defines the
 !>          elementary reflector H(i), for i = 1,2,...,k, as returned by
-!>          DGELQF in the first k rows of its array argument A.
+!>          mobbrmsd_DGELQF in the first k rows of its array argument A.
 !>          A is modified by the routine but restored on exit.
 !> \endverbatim
 !>
@@ -113,7 +113,7 @@
 !> \verbatim
 !>          TAU is real(RK)           :: array, dimension (K)
 !>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i), as returned by DGELQF.
+!>          reflector H(i), as returned by mobbrmsd_DGELQF.
 !> \endverbatim
 !>
 !> \param[in,out] C
@@ -154,7 +154,7 @@
 !> \ingroup doubleOTHERcomputational
 !
 !  =====================================================================
-pure subroutine DORML2(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
+pure subroutine mobbrmsd_DORML2(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -197,8 +197,8 @@ pure subroutine DORML2(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
 !     Test the input arguments
 !
   INFO = 0
-  LEFT = LSAME(SIDE, 'L')
-  NOTRAN = LSAME(TRANS, 'N')
+  LEFT = mobbrmsd_LSAME(SIDE, 'L')
+  NOTRAN = mobbrmsd_LSAME(TRANS, 'N')
 !
 !     NQ is the order of Q
 !
@@ -207,9 +207,9 @@ pure subroutine DORML2(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
   else
     NQ = N
   end if
-  if (.not. LEFT .and. .not. LSAME(SIDE, 'R')) then
+  if (.not. LEFT .and. .not. mobbrmsd_LSAME(SIDE, 'R')) then
     INFO = -1
-  else if (.not. NOTRAN .and. .not. LSAME(TRANS, 'T')) then
+  else if (.not. NOTRAN .and. .not. mobbrmsd_LSAME(TRANS, 'T')) then
     INFO = -2
   else if (M < 0) then
     INFO = -3
@@ -223,7 +223,7 @@ pure subroutine DORML2(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
     INFO = -10
   end if
   if (INFO /= 0) then
-    !CALL XERBLA( 'DORML2', -INFO )
+    !CALL XERBLA( 'mobbrmsd_DORML2', -INFO )
     return
   end if
 !
@@ -268,12 +268,12 @@ pure subroutine DORML2(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, WORK, INFO)
 !
     AII = A(I, I)
     A(I, I) = ONE
-    call DLARF(SIDE, MI, NI, A(I, I), LDA, TAU(I), C(IC, JC), LDC, WORK)
+    call mobbrmsd_DLARF(SIDE, MI, NI, A(I, I), LDA, TAU(I), C(IC, JC), LDC, WORK)
     A(I, I) = AII
   end do
   return
 !
-!     End of DORML2
+!     End of mobbrmsd_DORML2
 !
-end subroutine DORML2
+end subroutine mobbrmsd_DORML2
 

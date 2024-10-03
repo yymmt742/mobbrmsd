@@ -1,4 +1,4 @@
-!> \brief \b DLARF applies an elementary reflector to a general rectangular matrix.
+!> \brief \b mobbrmsd_DLARF applies an elementary reflector to a general rectangular matrix.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLARF + dependencies
+!> Download mobbrmsd_DLARF + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dlarf.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dlarf.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLARF( SIDE, M, N, V, INCV, TAU, C, LDC, WORK )
+!       SUBROUTINE mobbrmsd_DLARF( SIDE, M, N, V, INCV, TAU, C, LDC, WORK )
 !
 !       .. Scalar Arguments ..
 !       CHARACTER          SIDE
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> DLARF applies a real elementary reflector H to a real m by n matrix
+!> mobbrmsd_DLARF applies a real elementary reflector H to a real m by n matrix
 !> C, from either the left or the right. H is represented in the form
 !>
 !>       H = I - tau * v * v**T
@@ -120,7 +120,7 @@
 !> \ingroup doubleOTHERauxiliary
 !
 !  =====================================================================
-pure subroutine DLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
+pure subroutine mobbrmsd_DLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -161,7 +161,7 @@ pure subroutine DLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
 !     ..
 !     .. Executable Statements ..
 !
-  APPLYLEFT = LSAME(SIDE, 'L')
+  APPLYLEFT = mobbrmsd_LSAME(SIDE, 'L')
   LASTV = 0
   LASTC = 0
   if (TAU /= ZERO) then
@@ -184,10 +184,10 @@ pure subroutine DLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
     end do
     if (APPLYLEFT) then
 !     Scan for the last non-zero column in C(1:lastv,:).
-      LASTC = ILADLC(LASTV, N, C, LDC)
+      LASTC = mobbrmsd_ILADLC(LASTV, N, C, LDC)
     else
 !     Scan for the last non-zero row in C(:,1:lastv).
-      LASTC = ILADLR(M, LASTV, C, LDC)
+      LASTC = mobbrmsd_ILADLR(M, LASTV, C, LDC)
     end if
   end if
 !     Note that lastc.eq.0 renders the BLAS operations null; no special
@@ -200,12 +200,12 @@ pure subroutine DLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
 !
 !           w(1:lastc,1) := C(1:lastv,1:lastc)**T * v(1:lastv,1)
 !
-      call DGEMV('Transpose', LASTV, LASTC, ONE, C, LDC, V, INCV,&
+      call mobbrmsd_DGEMV('Transpose', LASTV, LASTC, ONE, C, LDC, V, INCV,&
      &     ZERO, WORK, 1)
 !
 !           C(1:lastv,1:lastc) := C(...) - v(1:lastv,1) * w(1:lastc,1)**T
 !
-      call DGER(LASTV, LASTC, -TAU, V, INCV, WORK, 1, C, LDC)
+      call mobbrmsd_DGER(LASTV, LASTC, -TAU, V, INCV, WORK, 1, C, LDC)
     end if
   else
 !
@@ -215,16 +215,16 @@ pure subroutine DLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
 !
 !           w(1:lastc,1) := C(1:lastc,1:lastv) * v(1:lastv,1)
 !
-      call DGEMV('No transpose', LASTC, LASTV, ONE, C, LDC,&
+      call mobbrmsd_DGEMV('No transpose', LASTC, LASTV, ONE, C, LDC,&
      &     V, INCV, ZERO, WORK, 1)
 !
 !           C(1:lastc,1:lastv) := C(...) - w(1:lastc,1) * v(1:lastv,1)**T
 !
-      call DGER(LASTC, LASTV, -TAU, WORK, 1, V, INCV, C, LDC)
+      call mobbrmsd_DGER(LASTC, LASTV, -TAU, WORK, 1, V, INCV, C, LDC)
     end if
   end if
   return
 !
-!     End of DLARF
+!     End of mobbrmsd_DLARF
 !
-end subroutine DLARF
+end subroutine mobbrmsd_DLARF

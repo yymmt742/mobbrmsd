@@ -1,4 +1,4 @@
-!> \brief \b SGER
+!> \brief \b mobbrmsd_SGER
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SGER(M,N,ALPHA,X,INCX,Y,INCY,A,LDA)
+!       SUBROUTINE mobbrmsd_SGER(M,N,ALPHA,X,INCX,Y,INCY,A,LDA)
 !
 !       .. Scalar Arguments ..
 !       REAL ALPHA
@@ -24,7 +24,7 @@
 !>
 !> \verbatim
 !>
-!> SGER   performs the rank 1 operation
+!> mobbrmsd_SGER   performs the rank 1 operation
 !>
 !>    A := alpha*x*y**T + A,
 !>
@@ -128,7 +128,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine SGER(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
+pure subroutine mobbrmsd_SGER(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
 !
 !  -- Reference BLAS level2 routine (version 3.7.0) --
 !  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
@@ -172,7 +172,7 @@ pure subroutine SGER(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
     INFO = 9
   end if
   if (INFO /= 0) then
-!   call XERBLA('SGER  ', INFO)
+!   call XERBLA('mobbrmsd_SGER  ', INFO)
     return
   end if
 !
@@ -219,6 +219,6 @@ pure subroutine SGER(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
   !
   return
   !
-  !end of SGER.
+  !end of mobbrmsd_SGER.
   !
 end

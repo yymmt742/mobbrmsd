@@ -1,4 +1,4 @@
-!> \brief \b SLASQ4 computes an approximation to the smallest eigenvalue using values of d from the previous transform. Used by sbdsqr.
+!> \brief \b mobbrmsd_SLASQ4 computes an approximation to the smallest eigenvalue using values of d from the previous transform. Used by sbdsqr.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLASQ4 + dependencies
+!> Download mobbrmsd_SLASQ4 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slasq4.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slasq4.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLASQ4( I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN,
+!       SUBROUTINE mobbrmsd_SLASQ4( I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN,
 !                          DN1, DN2, TAU, TTYPE, G )
 !
 !       .. Scalar Arguments ..
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> SLASQ4 computes an approximation TAU to the smallest eigenvalue
+!> mobbrmsd_SLASQ4 computes an approximation TAU to the smallest eigenvalue
 !> using values of d from the previous transform.
 !> \endverbatim
 !
@@ -124,7 +124,7 @@
 !> \verbatim
 !>          G is REAL
 !>        G is passed as an argument in order to save its value between
-!>        calls to SLASQ4.
+!>        calls to mobbrmsd_SLASQ4.
 !> \endverbatim
 !
 !  Authors:
@@ -148,7 +148,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine SLASQ4(I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN, &
+pure subroutine mobbrmsd_SLASQ4(I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN, &
                &       DN1, DN2, TAU, TTYPE, G)
   implicit none
 !
@@ -400,6 +400,6 @@ pure subroutine SLASQ4(I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN, &
   TAU = S
   return
   !
-  !end of SLASQ4
+  !end of mobbrmsd_SLASQ4
   !
 end

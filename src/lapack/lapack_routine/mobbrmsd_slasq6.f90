@@ -1,4 +1,4 @@
-!> \brief \b SLASQ6 computes one dqd transform in ping-pong form. Used by sbdsqr and sstegr.
+!> \brief \b mobbrmsd_SLASQ6 computes one dqd transform in ping-pong form. Used by sbdsqr and sstegr.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLASQ6 + dependencies
+!> Download mobbrmsd_SLASQ6 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slasq6.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slasq6.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLASQ6( I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN,
+!       SUBROUTINE mobbrmsd_SLASQ6( I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN,
 !                          DNM1, DNM2 )
 !
 !       .. Scalar Arguments ..
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> SLASQ6 computes one dqd (shift equal to zero) transform in
+!> mobbrmsd_SLASQ6 computes one dqd (shift equal to zero) transform in
 !> ping-pong form, with protection against underflow and overflow.
 !> \endverbatim
 !
@@ -116,7 +116,7 @@
 !> \ingroup auxOTHERcomputational
 !
 !  =====================================================================
-pure subroutine SLASQ6(I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN, DNM1, DNM2)
+pure subroutine mobbrmsd_SLASQ6(I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN, DNM1, DNM2)
   implicit none
 !
 !  -- LAPACK computational routine (version 3.7.0) --
@@ -153,7 +153,7 @@ pure subroutine SLASQ6(I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN, DNM1, DNM2)
 !
   if ((N0 - I0 - 1) <= 0) return
 !
-  SAFMIN = SLAMCH('Safe minimum')
+  SAFMIN = mobbrmsd_SLAMCH('Safe minimum')
   J4 = 4 * I0 + PP - 3
   EMIN = Z(J4 + 4)
   D = Z(J4)
@@ -244,6 +244,6 @@ pure subroutine SLASQ6(I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN, DNM1, DNM2)
   Z(4 * N0 - PP) = EMIN
   return
 !
-! end of SLASQ6
+! end of mobbrmsd_SLASQ6
 !
 end

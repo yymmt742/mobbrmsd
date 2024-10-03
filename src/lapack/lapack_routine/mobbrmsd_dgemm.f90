@@ -1,4 +1,4 @@
-!> \brief \b DGEMM
+!> \brief \b mobbrmsd_DGEMM
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+!       SUBROUTINE mobbrmsd_DGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
 !
 !       .. Scalar Arguments ..
 !       DOUBLE PRECISION ALPHA,BETA
@@ -25,7 +25,7 @@
 !>
 !> \verbatim
 !>
-!> DGEMM  performs one of the matrix-matrix operations
+!> mobbrmsd_DGEMM  performs one of the matrix-matrix operations
 !>
 !>    C := alpha*op( A )*op( B ) + beta*C,
 !>
@@ -183,7 +183,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
+pure subroutine mobbrmsd_DGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
   implicit none
 ! use LA_CONSTANTS, only: RK => dp
 !
@@ -225,8 +225,8 @@ pure subroutine DGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, L
 !     transposed and set  NROWA and NROWB  as the number of rows of  A
 !     and  B  respectively.
 !
-  NOTA = LSAME(TRANSA, 'N')
-  NOTB = LSAME(TRANSB, 'N')
+  NOTA = mobbrmsd_LSAME(TRANSA, 'N')
+  NOTB = mobbrmsd_LSAME(TRANSB, 'N')
   if (NOTA) then
     NROWA = M
   else
@@ -241,11 +241,11 @@ pure subroutine DGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, L
 !     Test the input parameters.
 !
   INFO = 0
-  if ((.not. NOTA) .and. (.not. LSAME(TRANSA, 'C')) .and. &
- &    (.not. LSAME(TRANSA, 'T'))) then
+  if ((.not. NOTA) .and. (.not. mobbrmsd_LSAME(TRANSA, 'C')) .and. &
+ &    (.not. mobbrmsd_LSAME(TRANSA, 'T'))) then
     INFO = 1
-  else if ((.not. NOTB) .and. (.not. LSAME(TRANSB, 'C')) .and. &
- &         (.not. LSAME(TRANSB, 'T'))) then
+  else if ((.not. NOTB) .and. (.not. mobbrmsd_LSAME(TRANSB, 'C')) .and. &
+ &         (.not. mobbrmsd_LSAME(TRANSB, 'T'))) then
     INFO = 2
   else if (M < 0) then
     INFO = 3
@@ -261,7 +261,7 @@ pure subroutine DGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, L
     INFO = 13
   end if
   if (INFO /= 0) then
-    !CALL XERBLA('DGEMM ',INFO)
+    !CALL XERBLA('mobbrmsd_DGEMM ',INFO)
     return
   end if
 !
@@ -375,7 +375,7 @@ pure subroutine DGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, L
 !
   return
 !
-!     End of DGEMM
+!     End of mobbrmsd_DGEMM
 !
-end subroutine DGEMM
+end subroutine mobbrmsd_DGEMM
 

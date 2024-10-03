@@ -1,4 +1,4 @@
-!> \brief \b DORG2R generates all or part of the orthogonal matrix Q from a QR factorization determined by sgeqrf (unblocked algorithm).
+!> \brief \b mobbrmsd_DORG2R generates all or part of the orthogonal matrix Q from a QR factorization determined by sgeqrf (unblocked algorithm).
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DORG2R + dependencies
+!> Download mobbrmsd_DORG2R + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dorg2r.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dorg2r.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DORG2R( M, N, K, A, LDA, TAU, WORK, INFO )
+!       SUBROUTINE mobbrmsd_DORG2R( M, N, K, A, LDA, TAU, WORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, K, LDA, M, N
@@ -33,13 +33,13 @@
 !>
 !> \verbatim
 !>
-!> DORG2R generates an m by n real matrix Q with orthonormal columns,
+!> mobbrmsd_DORG2R generates an m by n real matrix Q with orthonormal columns,
 !> which is defined as the first n columns of a product of k elementary
 !> reflectors of order m
 !>
 !>       Q  =  H(1) H(2) . . . H(k)
 !>
-!> as returned by DGEQRF.
+!> as returned by mobbrmsd_DGEQRF.
 !> \endverbatim
 !
 !  Arguments:
@@ -69,7 +69,7 @@
 !>          A is real(RK)           :: array, dimension (LDA,N)
 !>          On entry, the i-th column must contain the vector which
 !>          defines the elementary reflector H(i), for i = 1,2,...,k, as
-!>          returned by DGEQRF in the first k columns of its array
+!>          returned by mobbrmsd_DGEQRF in the first k columns of its array
 !>          argument A.
 !>          On exit, the m-by-n matrix Q.
 !> \endverbatim
@@ -84,7 +84,7 @@
 !> \verbatim
 !>          TAU is real(RK)           :: array, dimension (K)
 !>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i), as returned by DGEQRF.
+!>          reflector H(i), as returned by mobbrmsd_DGEQRF.
 !> \endverbatim
 !>
 !> \param[out] WORK
@@ -110,7 +110,7 @@
 !> \ingroup doubleOTHERcomputational
 !
 !  =====================================================================
-pure subroutine DORG2R(M, N, K, A, LDA, TAU, WORK, INFO)
+pure subroutine mobbrmsd_DORG2R(M, N, K, A, LDA, TAU, WORK, INFO)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -160,7 +160,7 @@ pure subroutine DORG2R(M, N, K, A, LDA, TAU, WORK, INFO)
     INFO = -5
   end if
   if (INFO /= 0) then
-    !CALL XERBLA( 'DORG2R', -INFO )
+    !CALL XERBLA( 'mobbrmsd_DORG2R', -INFO )
     return
   end if
 !
@@ -189,10 +189,10 @@ pure subroutine DORG2R(M, N, K, A, LDA, TAU, WORK, INFO)
 !
     if (I < N) then
       A(I, I) = ONE
-      call DLARF('Left', M - I + 1, N - I, A(I, I), 1, TAU(I), &
+      call mobbrmsd_DLARF('Left', M - I + 1, N - I, A(I, I), 1, TAU(I), &
      &            A(I, I + 1), LDA, WORK)
     end if
-    if (I < M) call DSCAL(M - I, -TAU(I), A(I + 1, I), 1)
+    if (I < M) call mobbrmsd_DSCAL(M - I, -TAU(I), A(I + 1, I), 1)
     A(I, I) = ONE - TAU(I)
 !
 !    Set A(1:i-1,i) to zero
@@ -206,7 +206,7 @@ pure subroutine DORG2R(M, N, K, A, LDA, TAU, WORK, INFO)
   end do
   return
 !
-!     End of DORG2R
+!     End of mobbrmsd_DORG2R
 !
-end subroutine DORG2R
+end subroutine mobbrmsd_DORG2R
 

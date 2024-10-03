@@ -1,4 +1,4 @@
-!> \brief \b DCOPY
+!> \brief \b mobbrmsd_DCOPY
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DCOPY(N,DX,INCX,DY,INCY)
+!       SUBROUTINE mobbrmsd_DCOPY(N,DX,INCX,DY,INCY)
 !
 !       .. Scalar Arguments ..
 !       INTEGER INCX,INCY,N
@@ -23,7 +23,7 @@
 !>
 !> \verbatim
 !>
-!>    DCOPY copies a vector, x, to a vector, y.
+!>    mobbrmsd_DCOPY copies a vector, x, to a vector, y.
 !>    uses unrolled loops for increments equal to 1.
 !> \endverbatim
 !
@@ -78,7 +78,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DCOPY(N, DX, INCX, DY, INCY)
+pure subroutine mobbrmsd_DCOPY(N, DX, INCX, DY, INCY)
 ! use LA_CONSTANTS, only: RK => DP
 !
 !  -- Reference BLAS level1 routine --
@@ -182,6 +182,6 @@ pure subroutine DCOPY(N, DX, INCX, DY, INCY)
 !
   end if
 !
-!     End of DCOPY
+!     End of mobbrmsd_DCOPY
 !
-end subroutine DCOPY
+end subroutine mobbrmsd_DCOPY

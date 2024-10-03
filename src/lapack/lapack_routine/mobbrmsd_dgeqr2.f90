@@ -1,4 +1,4 @@
-!> \brief \b DGEQR2 computes the QR factorization of a general rectangular matrix using an unblocked algorithm.
+!> \brief \b mobbrmsd_DGEQR2 computes the QR factorization of a general rectangular matrix using an unblocked algorithm.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DGEQR2 + dependencies
+!> Download mobbrmsd_DGEQR2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dgeqr2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dgeqr2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DGEQR2( M, N, A, LDA, TAU, WORK, INFO )
+!       SUBROUTINE mobbrmsd_DGEQR2( M, N, A, LDA, TAU, WORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, LDA, M, N
@@ -33,7 +33,7 @@
 !>
 !> \verbatim
 !>
-!> DGEQR2 computes a QR factorization of a real m-by-n matrix A:
+!> mobbrmsd_DGEQR2 computes a QR factorization of a real m-by-n matrix A:
 !>
 !>    A = Q * ( R ),
 !>            ( 0 )
@@ -126,7 +126,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DGEQR2(M, N, A, LDA, TAU, WORK, INFO)
+pure subroutine mobbrmsd_DGEQR2(M, N, A, LDA, TAU, WORK, INFO)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -174,7 +174,7 @@ pure subroutine DGEQR2(M, N, A, LDA, TAU, WORK, INFO)
     INFO = -4
   end if
   if (INFO /= 0) then
-    !CALL XERBLA( 'DGEQR2', -INFO )
+    !CALL XERBLA( 'mobbrmsd_DGEQR2', -INFO )
     return
   end if
 !
@@ -184,7 +184,7 @@ pure subroutine DGEQR2(M, N, A, LDA, TAU, WORK, INFO)
 !
 !        Generate elementary reflector H(i) to annihilate A(i+1:m,i)
 !
-    call DLARFG(M - I + 1, A(I, I), A(MIN(I + 1, M), I), 1, TAU(I))
+    call mobbrmsd_DLARFG(M - I + 1, A(I, I), A(MIN(I + 1, M), I), 1, TAU(I))
 !
     if (I < N) then
 !
@@ -192,13 +192,13 @@ pure subroutine DGEQR2(M, N, A, LDA, TAU, WORK, INFO)
 !
       AII = A(I, I)
       A(I, I) = ONE
-      call DLARF('Left', M - I + 1, N - I, A(I, I), 1, TAU(I), &
+      call mobbrmsd_DLARF('Left', M - I + 1, N - I, A(I, I), 1, TAU(I), &
           &      A(I, I + 1), LDA, WORK)
       A(I, I) = AII
     end if
   end do
   return
 !
-!     End of DGEQR2
+!     End of mobbrmsd_DGEQR2
 !
-end subroutine DGEQR2
+end subroutine mobbrmsd_DGEQR2

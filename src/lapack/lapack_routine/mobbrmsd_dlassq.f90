@@ -1,4 +1,4 @@
-!> \brief \b DLASSQ updates a sum of squares represented in scaled form.
+!> \brief \b mobbrmsd_DLASSQ updates a sum of squares represented in scaled form.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLASSQ + dependencies
+!> Download mobbrmsd_DLASSQ + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlassq.f90">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlassq.f90">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLASSQ( N, X, INCX, SCALE, SUMSQ )
+!       SUBROUTINE mobbrmsd_DLASSQ( N, X, INCX, SCALE, SUMSQ )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INCX, N
@@ -34,7 +34,7 @@
 !>
 !> \verbatim
 !>
-!> DLASSQ  returns the values  scl  and  smsq  such that
+!> mobbrmsd_DLASSQ  returns the values  scl  and  smsq  such that
 !>
 !>    ( scl**2 )*smsq = x( 1 )**2 +...+ x( n )**2 + ( scale**2 )*sumsq,
 !>
@@ -133,7 +133,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure subroutine DLASSQ(n, x, incx, scl, sumsq)
+pure subroutine mobbrmsd_DLASSQ(n, x, incx, scl, sumsq)
 ! use LA_CONSTANTS, &
 !   only: RK => dp, zero => dzero, one => done, &
 !         sbig => dsbig, ssml => dssml, tbig => dtbig, tsml => dtsml
@@ -250,5 +250,5 @@ pure subroutine DLASSQ(n, x, incx, scl, sumsq)
     sumsq = amed
   end if
   return
-end subroutine DLASSQ
+end subroutine mobbrmsd_DLASSQ
 

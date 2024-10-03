@@ -1,4 +1,4 @@
-!> \brief \b DGEBRD
+!> \brief \b mobbrmsd_DGEBRD
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DGEBRD + dependencies
+!> Download mobbrmsd_DGEBRD + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dgebrd.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dgebrd.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DGEBRD( M, N, A, LDA, D, E, TAUQ, TAUP, WORK, LWORK,
+!       SUBROUTINE mobbrmsd_DGEBRD( M, N, A, LDA, D, E, TAUQ, TAUP, WORK, LWORK,
 !                          INFO )
 !
 !       .. Scalar Arguments ..
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> DGEBRD reduces a general real M-by-N matrix A to upper or lower
+!> mobbrmsd_DGEBRD reduces a general real M-by-N matrix A to upper or lower
 !> bidiagonal form B by an orthogonal transformation: Q**T * A * P = B.
 !>
 !> If m >= n, B is upper bidiagonal; if m < n, B is lower bidiagonal.
@@ -200,7 +200,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DGEBRD(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, LWORK, INFO)
+pure subroutine mobbrmsd_DGEBRD(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, LWORK, INFO)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -244,7 +244,7 @@ pure subroutine DGEBRD(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, LWORK, INFO)
 !     Test the input parameters
 !
   INFO = 0
-  NB = MAX(1, ILAENV(1, 'DGEBRD', ' ', M, N, -1, -1))
+  NB = MAX(1, mobbrmsd_ILAENV(1, 'mobbrmsd_DGEBRD', ' ', M, N, -1, -1))
   LWKOPT = (M + N) * NB
   WORK(1) = DBLE(LWKOPT)
   LQUERY = (LWORK == -1)
@@ -258,7 +258,7 @@ pure subroutine DGEBRD(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, LWORK, INFO)
     INFO = -10
   end if
   if (INFO < 0) then
-!   CALL XERBLA( 'DGEBRD', -INFO )
+!   CALL XERBLA( 'mobbrmsd_DGEBRD', -INFO )
     return
   else if (LQUERY) then
     return
@@ -280,7 +280,7 @@ pure subroutine DGEBRD(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, LWORK, INFO)
 !
 !        Set the crossover point NX.
 !
-    NX = MAX(NB, ILAENV(3, 'DGEBRD', ' ', M, N, -1, -1))
+    NX = MAX(NB, mobbrmsd_ILAENV(3, 'mobbrmsd_DGEBRD', ' ', M, N, -1, -1))
 !
 !        Determine when to switch from blocked to unblocked code.
 !
@@ -291,7 +291,7 @@ pure subroutine DGEBRD(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, LWORK, INFO)
 !              Not enough work space for the optimal NB, consider using
 !              a smaller block size.
 !
-        NBMIN = ILAENV(2, 'DGEBRD', ' ', M, N, -1, -1)
+        NBMIN = mobbrmsd_ILAENV(2, 'mobbrmsd_DGEBRD', ' ', M, N, -1, -1)
         if (LWORK >= (M + N) * NBMIN) then
           NB = LWORK / (M + N)
         else
@@ -310,18 +310,18 @@ pure subroutine DGEBRD(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, LWORK, INFO)
 !        the matrices X and Y which are needed to update the unreduced
 !        part of the matrix
 !
-    call DLABRD(M - I + 1, N - I + 1, NB, A(I, I), LDA, D(I), E(I), &
+    call mobbrmsd_DLABRD(M - I + 1, N - I + 1, NB, A(I, I), LDA, D(I), E(I), &
 &                TAUQ(I), TAUP(I), WORK, LDWRKX, &
 &                WORK(LDWRKX * NB + 1), LDWRKY)
 !
 !        Update the trailing submatrix A(i+nb:m,i+nb:n), using an update
 !        of the form  A := A - V*Y**T - X*U**T
 !
-    call DGEMM('No transpose', 'Transpose', M - I - NB + 1, N - I - NB + 1,&
+    call mobbrmsd_DGEMM('No transpose', 'Transpose', M - I - NB + 1, N - I - NB + 1,&
 &               NB, -ONE, A(I + NB, I), LDA,&
 &               WORK(LDWRKX * NB + NB + 1), LDWRKY, ONE,&
 &               A(I + NB, I + NB), LDA)
-    call DGEMM('No transpose', 'No transpose', M - I - NB + 1, N - I - NB + 1,&
+    call mobbrmsd_DGEMM('No transpose', 'No transpose', M - I - NB + 1, N - I - NB + 1,&
 &               NB, -ONE, WORK(NB + 1), LDWRKX, A(I, I + NB), LDA,&
 &               ONE, A(I + NB, I + NB), LDA)
 !
@@ -342,12 +342,12 @@ pure subroutine DGEBRD(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, LWORK, INFO)
 !
 !     Use unblocked code to reduce the remainder of the matrix
 !
-  call DGEBD2(M - I + 1, N - I + 1, A(I, I), LDA, D(I), E(I),&
+  call mobbrmsd_DGEBD2(M - I + 1, N - I + 1, A(I, I), LDA, D(I), E(I),&
  &            TAUQ(I), TAUP(I), WORK, IINFO)
   WORK(1) = WS
   return
 !
-!     End of DGEBRD
+!     End of mobbrmsd_DGEBRD
 !
-end subroutine DGEBRD
+end subroutine mobbrmsd_DGEBRD
 

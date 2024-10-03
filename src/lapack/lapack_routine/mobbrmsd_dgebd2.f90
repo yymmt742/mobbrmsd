@@ -1,4 +1,4 @@
-!> \brief \b DGEBD2 reduces a general matrix to bidiagonal form using an unblocked algorithm.
+!> \brief \b mobbrmsd_DGEBD2 reduces a general matrix to bidiagonal form using an unblocked algorithm.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DGEBD2 + dependencies
+!> Download mobbrmsd_DGEBD2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dgebd2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dgebd2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DGEBD2( M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO )
+!       SUBROUTINE mobbrmsd_DGEBD2( M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, LDA, M, N
@@ -34,7 +34,7 @@
 !>
 !> \verbatim
 !>
-!> DGEBD2 reduces a real general m by n matrix A to upper or lower
+!> mobbrmsd_DGEBD2 reduces a real general m by n matrix A to upper or lower
 !> bidiagonal form B by an orthogonal transformation: Q**T * A * P = B.
 !>
 !> If m >= n, B is upper bidiagonal; if m < n, B is lower bidiagonal.
@@ -185,7 +185,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
+pure subroutine mobbrmsd_DGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -232,7 +232,7 @@ pure subroutine DGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
     INFO = -4
   end if
   if (INFO < 0) then
-!   !CALL XERBLA( 'DGEBD2', -INFO )
+!   !CALL XERBLA( 'mobbrmsd_DGEBD2', -INFO )
     return
   end if
 !
@@ -244,14 +244,14 @@ pure subroutine DGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
 !
 !           Generate elementary reflector H(i) to annihilate A(i+1:m,i)
 !
-      call DLARFG(M - I + 1, A(I, I), A(MIN(I + 1, M), I), 1, TAUQ(I))
+      call mobbrmsd_DLARFG(M - I + 1, A(I, I), A(MIN(I + 1, M), I), 1, TAUQ(I))
       D(I) = A(I, I)
       A(I, I) = ONE
 !
 !           Apply H(i) to A(i:m,i+1:n) from the left
 !
       if (I < N)&
-&         call DLARF('Left', M - I + 1, N - I, A(I, I), 1, TAUQ(I),&
+&         call mobbrmsd_DLARF('Left', M - I + 1, N - I, A(I, I), 1, TAUQ(I),&
 &                     A(I, I + 1), LDA, WORK)
       A(I, I) = D(I)
 !
@@ -260,13 +260,13 @@ pure subroutine DGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
 !              Generate elementary reflector G(i) to annihilate
 !              A(i,i+2:n)
 !
-        call DLARFG(N - I, A(I, I + 1), A(I, MIN(I + 2, N)), LDA, TAUP(I))
+        call mobbrmsd_DLARFG(N - I, A(I, I + 1), A(I, MIN(I + 2, N)), LDA, TAUP(I))
         E(I) = A(I, I + 1)
         A(I, I + 1) = ONE
 !
 !              Apply G(i) to A(i+1:m,i+1:n) from the right
 !
-        call DLARF('Right', M - I, N - I, A(I, I + 1), LDA,&
+        call mobbrmsd_DLARF('Right', M - I, N - I, A(I, I + 1), LDA,&
 &                     TAUP(I), A(I + 1, I + 1), LDA, WORK)
         A(I, I + 1) = E(I)
       else
@@ -281,14 +281,14 @@ pure subroutine DGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
 !
 !           Generate elementary reflector G(i) to annihilate A(i,i+1:n)
 !
-      call DLARFG(N - I + 1, A(I, I), A(I, MIN(I + 1, N)), LDA, TAUP(I))
+      call mobbrmsd_DLARFG(N - I + 1, A(I, I), A(I, MIN(I + 1, N)), LDA, TAUP(I))
       D(I) = A(I, I)
       A(I, I) = ONE
 !
 !           Apply G(i) to A(i+1:m,i:n) from the right
 !
       if (I < M)&
- &      call DLARF('Right', M - I, N - I + 1, A(I, I), LDA,&
+ &      call mobbrmsd_DLARF('Right', M - I, N - I + 1, A(I, I), LDA,&
  &                 TAUP(I), A(I + 1, I), LDA, WORK)
       A(I, I) = D(I)
 !
@@ -297,13 +297,13 @@ pure subroutine DGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
 !            Generate elementary reflector H(i) to annihilate
 !            A(i+2:m,i)
 !
-        call DLARFG(M - I, A(I + 1, I), A(MIN(I + 2, M), I), 1, TAUQ(I))
+        call mobbrmsd_DLARFG(M - I, A(I + 1, I), A(MIN(I + 2, M), I), 1, TAUQ(I))
         E(I) = A(I + 1, I)
         A(I + 1, I) = ONE
 !
 !              Apply H(i) to A(i+1:m,i+1:n) from the left
 !
-        call DLARF('Left', M - I, N - I, A(I + 1, I), 1, TAUQ(I),&
+        call mobbrmsd_DLARF('Left', M - I, N - I, A(I + 1, I), 1, TAUQ(I),&
 &                  A(I + 1, I + 1), LDA, WORK)
         A(I + 1, I) = E(I)
       else
@@ -313,7 +313,7 @@ pure subroutine DGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
   end if
   return
 !
-!     End of DGEBD2
+!     End of mobbrmsd_DGEBD2
 !
-end subroutine DGEBD2
+end subroutine mobbrmsd_DGEBD2
 

@@ -1,4 +1,4 @@
-!> \brief \b SGELQF
+!> \brief \b mobbrmsd_SGELQF
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SGELQF + dependencies
+!> Download mobbrmsd_SGELQF + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sgelqf.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sgelqf.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SGELQF( M, N, A, LDA, TAU, WORK, LWORK, INFO )
+!       SUBROUTINE mobbrmsd_SGELQF( M, N, A, LDA, TAU, WORK, LWORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, LDA, LWORK, M, N
@@ -33,7 +33,7 @@
 !>
 !> \verbatim
 !>
-!> SGELQF computes an LQ factorization of a real M-by-N matrix A:
+!> mobbrmsd_SGELQF computes an LQ factorization of a real M-by-N matrix A:
 !>
 !>    A = ( L 0 ) *  Q
 !>
@@ -141,7 +141,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine SGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
+pure subroutine mobbrmsd_SGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !
 !  -- LAPACK computational routine (version 3.9.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -181,7 +181,7 @@ pure subroutine SGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !Test the input arguments
 !
   INFO = 0
-  NB = ILAENV(1, 'SGELQF', ' ', M, N, -1, -1)
+  NB = mobbrmsd_ILAENV(1, 'mobbrmsd_SGELQF', ' ', M, N, -1, -1)
   LWKOPT = M * NB
   WORK(1) = LWKOPT
   LQUERY = (LWORK == -1)
@@ -195,7 +195,7 @@ pure subroutine SGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
     INFO = -7
   end if
   if (INFO /= 0) then
-!   call XERBLA('SGELQF', -INFO)
+!   call XERBLA('mobbrmsd_SGELQF', -INFO)
     return
   else if (LQUERY) then
     return
@@ -216,7 +216,7 @@ pure subroutine SGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
     !
     !Determine when to cross over from blocked to unblocked code.
     !
-    NX = MAX(0, ILAENV(3, 'SGELQF', ' ', M, N, -1, -1))
+    NX = MAX(0, mobbrmsd_ILAENV(3, 'mobbrmsd_SGELQF', ' ', M, N, -1, -1))
     if (NX < K) then
       !
       !Determine if workspace is large enough for blocked code.
@@ -229,7 +229,7 @@ pure subroutine SGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
         !determine the minimum value of NB.
         !
         NB = LWORK / LDWORK
-        NBMIN = MAX(2, ILAENV(2, 'SGELQF', ' ', M, N, -1, -1))
+        NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'mobbrmsd_SGELQF', ' ', M, N, -1, -1))
       end if
     end if
   end if
@@ -244,17 +244,17 @@ pure subroutine SGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
       !Compute the LQ factorization of the current block
       !A(i:i + ib - 1, i:n)
       !
-      call SGELQ2(IB, N - I + 1, A(I, I), LDA, TAU(I), WORK, IINFO)
+      call mobbrmsd_SGELQ2(IB, N - I + 1, A(I, I), LDA, TAU(I), WORK, IINFO)
       if (I + IB <= M) then
         !
         !Form the triangular factor of the block reflector
         !H = H(i) H(i + 1) ...H(i + ib - 1)
         !
-        call SLARFT('Forward', 'Rowwise', N - I + 1, IB, A(I, I), LDA, TAU(I), WORK, LDWORK)
+        call mobbrmsd_SLARFT('Forward', 'Rowwise', N - I + 1, IB, A(I, I), LDA, TAU(I), WORK, LDWORK)
         !
         !Apply H to A(i + ib:m, i:n) from the right
         !
-        call SLARFB('Right', 'No transpose', 'Forward', &
+        call mobbrmsd_SLARFB('Right', 'No transpose', 'Forward', &
             &       'Rowwise', M - I - IB + 1, N - I + 1, IB, A(I, I), &
             &       LDA, WORK, LDWORK, A(I + IB, I), LDA, &
             &       WORK(IB + 1), LDWORK)
@@ -266,11 +266,11 @@ pure subroutine SGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
   !
   !use unblocked code to factor the last or only block.
   !
-  if (I <= K) call SGELQ2(M - I + 1, N - I + 1, A(I, I), LDA, TAU(I), WORK, IINFO)
+  if (I <= K) call mobbrmsd_SGELQ2(M - I + 1, N - I + 1, A(I, I), LDA, TAU(I), WORK, IINFO)
   !
   WORK(1) = IWS
   return
   !
-  !end of SGELQF
+  !end of mobbrmsd_SGELQF
   !
 end

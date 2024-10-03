@@ -1,4 +1,4 @@
-!> \brief \b SLARFB applies a block reflector or its transpose to a general rectangular matrix.
+!> \brief \b mobbrmsd_SLARFB applies a block reflector or its transpose to a general rectangular matrix.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLARFB + dependencies
+!> Download mobbrmsd_SLARFB + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slarfb.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slarfb.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLARFB( SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV,
+!       SUBROUTINE mobbrmsd_SLARFB( SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV,
 !                          T, LDT, C, LDC, WORK, LDWORK )
 !
 !       .. Scalar Arguments ..
@@ -36,7 +36,7 @@
 !>
 !> \verbatim
 !>
-!> SLARFB applies a real block reflector H or its transpose H**T to a
+!> mobbrmsd_SLARFB applies a real block reflector H or its transpose H**T to a
 !> real m by n matrix C, from either the left or the right.
 !> \endverbatim
 !
@@ -194,7 +194,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
+pure subroutine mobbrmsd_SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
      &                   T, LDT, C, LDC, WORK, LDWORK)
   implicit none
 !
@@ -237,21 +237,21 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
   if (M <= 0 .or. N <= 0) return
 !
-  if (LSAME(TRANS, 'N')) then
+  if (mobbrmsd_LSAME(TRANS, 'N')) then
     TRANST = 'T'
   else
     TRANST = 'N'
   end if
 !
-  if (LSAME(STOREV, 'C')) then
+  if (mobbrmsd_LSAME(STOREV, 'C')) then
 !
-    if (LSAME(DIRECT, 'F')) then
+    if (mobbrmsd_LSAME(DIRECT, 'F')) then
 !
 !           Let  V =  ( V1 )    (first K rows)
 !                     ( V2 )
 !           where  V1  is unit lower triangular.
 !
-      if (LSAME(SIDE, 'L')) then
+      if (mobbrmsd_LSAME(SIDE, 'L')) then
 !
 !              Form  H * C  or  H**T * C  where  C = ( C1 )
 !                                                    ( C2 )
@@ -261,25 +261,25 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !              W := C1**T
 !
         do J = 1, K
-          call SCOPY(N, C(J, 1), LDC, WORK(1, J), 1)
+          call mobbrmsd_SCOPY(N, C(J, 1), LDC, WORK(1, J), 1)
         end do
 !
 !              W := W * V1
 !
-        call STRMM('Right', 'Lower', 'No transpose', 'Unit', N, &
+        call mobbrmsd_STRMM('Right', 'Lower', 'No transpose', 'Unit', N, &
 &                     K, ONE, V, LDV, WORK, LDWORK)
         if (M > K) then
 !
 !                 W := W + C2**T * V2
 !
-          call SGEMM('Transpose', 'No transpose', N, K, M - K,&
+          call mobbrmsd_SGEMM('Transpose', 'No transpose', N, K, M - K,&
 &                        ONE, C(K + 1, 1), LDC, V(K + 1, 1), LDV, &
 &                        ONE, WORK, LDWORK)
         end if
 !
 !              W := W * T**T  or  W * T
 !
-        call STRMM('Right', 'Upper', TRANST, 'Non-unit', N, K,&
+        call mobbrmsd_STRMM('Right', 'Upper', TRANST, 'Non-unit', N, K,&
 &                     ONE, T, LDT, WORK, LDWORK)
 !
 !              C := C - V * W**T
@@ -288,14 +288,14 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
 !                 C2 := C2 - V2 * W**T
 !
-          call SGEMM('No transpose', 'Transpose', M - K, N, K, &
+          call mobbrmsd_SGEMM('No transpose', 'Transpose', M - K, N, K, &
 &                        -ONE, V(K + 1, 1), LDV, WORK, LDWORK, ONE, &
 &                        C(K + 1, 1), LDC)
         end if
 !
 !              W := W * V1**T
 !
-        call STRMM('Right', 'Lower', 'Transpose', 'Unit', N, K, &
+        call mobbrmsd_STRMM('Right', 'Lower', 'Transpose', 'Unit', N, K, &
 &                     ONE, V, LDV, WORK, LDWORK)
 !
 !              C1 := C1 - W**T
@@ -306,7 +306,7 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
           end do
         end do
 !
-      else if (LSAME(SIDE, 'R')) then
+      else if (mobbrmsd_LSAME(SIDE, 'R')) then
 !
 !              Form  C * H  or  C * H**T  where  C = ( C1  C2 )
 !
@@ -315,25 +315,25 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !              W := C1
 !
         do J = 1, K
-          call SCOPY(M, C(1, J), 1, WORK(1, J), 1)
+          call mobbrmsd_SCOPY(M, C(1, J), 1, WORK(1, J), 1)
         end do
 !
 !              W := W * V1
 !
-        call STRMM('Right', 'Lower', 'No transpose', 'Unit', M, &
+        call mobbrmsd_STRMM('Right', 'Lower', 'No transpose', 'Unit', M, &
 &                     K, ONE, V, LDV, WORK, LDWORK)
         if (N > K) then
 !
 !                 W := W + C2 * V2
 !
-          call SGEMM('No transpose', 'No transpose', M, K, N - K, &
+          call mobbrmsd_SGEMM('No transpose', 'No transpose', M, K, N - K, &
 &                        ONE, C(1, K + 1), LDC, V(K + 1, 1), LDV, &
 &                        ONE, WORK, LDWORK)
         end if
 !
 !              W := W * T  or  W * T**T
 !
-        call STRMM('Right', 'Upper', TRANS, 'Non-unit', M, K, &
+        call mobbrmsd_STRMM('Right', 'Upper', TRANS, 'Non-unit', M, K, &
 &                     ONE, T, LDT, WORK, LDWORK)
 !
 !              C := C - W * V**T
@@ -342,14 +342,14 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
 !                 C2 := C2 - W * V2**T
 !
-          call SGEMM('No transpose', 'Transpose', M, N - K, K, &
+          call mobbrmsd_SGEMM('No transpose', 'Transpose', M, N - K, K, &
 &                        -ONE, WORK, LDWORK, V(K + 1, 1), LDV, ONE, &
 &                        C(1, K + 1), LDC)
         end if
 !
 !              W := W * V1**T
 !
-        call STRMM('Right', 'Lower', 'Transpose', 'Unit', M, K, &
+        call mobbrmsd_STRMM('Right', 'Lower', 'Transpose', 'Unit', M, K, &
 &                     ONE, V, LDV, WORK, LDWORK)
 !
 !              C1 := C1 - W
@@ -367,7 +367,7 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !                     ( V2 )    (last K rows)
 !           where  V2  is unit upper triangular.
 !
-      if (LSAME(SIDE, 'L')) then
+      if (mobbrmsd_LSAME(SIDE, 'L')) then
 !
 !              Form  H * C  or  H**T * C  where  C = ( C1 )
 !                                                    ( C2 )
@@ -377,24 +377,24 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !              W := C2**T
 !
         do J = 1, K
-          call SCOPY(N, C(M - K + J, 1), LDC, WORK(1, J), 1)
+          call mobbrmsd_SCOPY(N, C(M - K + J, 1), LDC, WORK(1, J), 1)
         end do
 !
 !              W := W * V2
 !
-        call STRMM('Right', 'Upper', 'No transpose', 'Unit', N, &
+        call mobbrmsd_STRMM('Right', 'Upper', 'No transpose', 'Unit', N, &
 &                     K, ONE, V(M - K + 1, 1), LDV, WORK, LDWORK)
         if (M > K) then
 !
 !                 W := W + C1**T * V1
 !
-          call SGEMM('Transpose', 'No transpose', N, K, M - K, &
+          call mobbrmsd_SGEMM('Transpose', 'No transpose', N, K, M - K, &
 &                        ONE, C, LDC, V, LDV, ONE, WORK, LDWORK)
         end if
 !
 !              W := W * T**T  or  W * T
 !
-        call STRMM('Right', 'Lower', TRANST, 'Non-unit', N, K, &
+        call mobbrmsd_STRMM('Right', 'Lower', TRANST, 'Non-unit', N, K, &
 &                     ONE, T, LDT, WORK, LDWORK)
 !
 !              C := C - V * W**T
@@ -403,13 +403,13 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
 !                 C1 := C1 - V1 * W**T
 !
-          call SGEMM('No transpose', 'Transpose', M - K, N, K, &
+          call mobbrmsd_SGEMM('No transpose', 'Transpose', M - K, N, K, &
 &                        -ONE, V, LDV, WORK, LDWORK, ONE, C, LDC)
         end if
 !
 !              W := W * V2**T
 !
-        call STRMM('Right', 'Upper', 'Transpose', 'Unit', N, K, &
+        call mobbrmsd_STRMM('Right', 'Upper', 'Transpose', 'Unit', N, K, &
 &                     ONE, V(M - K + 1, 1), LDV, WORK, LDWORK)
 !
 !              C2 := C2 - W**T
@@ -420,7 +420,7 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
           end do
         end do
 !
-      else if (LSAME(SIDE, 'R')) then
+      else if (mobbrmsd_LSAME(SIDE, 'R')) then
 !
 !              Form  C * H  or  C * H'  where  C = ( C1  C2 )
 !
@@ -429,24 +429,24 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !              W := C2
 !
         do J = 1, K
-          call SCOPY(M, C(1, N - K + J), 1, WORK(1, J), 1)
+          call mobbrmsd_SCOPY(M, C(1, N - K + J), 1, WORK(1, J), 1)
         end do
 !
 !              W := W * V2
 !
-        call STRMM('Right', 'Upper', 'No transpose', 'Unit', M, &
+        call mobbrmsd_STRMM('Right', 'Upper', 'No transpose', 'Unit', M, &
 &                     K, ONE, V(N - K + 1, 1), LDV, WORK, LDWORK)
         if (N > K) then
 !
 !                 W := W + C1 * V1
 !
-          call SGEMM('No transpose', 'No transpose', M, K, N - K, &
+          call mobbrmsd_SGEMM('No transpose', 'No transpose', M, K, N - K, &
 &                        ONE, C, LDC, V, LDV, ONE, WORK, LDWORK)
         end if
 !
 !              W := W * T  or  W * T**T
 !
-        call STRMM('Right', 'Lower', TRANS, 'Non-unit', M, K, &
+        call mobbrmsd_STRMM('Right', 'Lower', TRANS, 'Non-unit', M, K, &
 &                     ONE, T, LDT, WORK, LDWORK)
 !
 !              C := C - W * V**T
@@ -455,13 +455,13 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
 !                 C1 := C1 - W * V1**T
 !
-          call SGEMM('No transpose', 'Transpose', M, N - K, K, &
+          call mobbrmsd_SGEMM('No transpose', 'Transpose', M, N - K, K, &
 &                        -ONE, WORK, LDWORK, V, LDV, ONE, C, LDC)
         end if
 !
 !              W := W * V2**T
 !
-        call STRMM('Right', 'Upper', 'Transpose', 'Unit', M, K, &
+        call mobbrmsd_STRMM('Right', 'Upper', 'Transpose', 'Unit', M, K, &
 &                     ONE, V(N - K + 1, 1), LDV, WORK, LDWORK)
 !
 !              C2 := C2 - W
@@ -474,14 +474,14 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
       end if
     end if
 !
-  else if (LSAME(STOREV, 'R')) then
+  else if (mobbrmsd_LSAME(STOREV, 'R')) then
 !
-    if (LSAME(DIRECT, 'F')) then
+    if (mobbrmsd_LSAME(DIRECT, 'F')) then
 !
 !           Let  V =  ( V1  V2 )    (V1: first K columns)
 !           where  V1  is unit upper triangular.
 !
-      if (LSAME(SIDE, 'L')) then
+      if (mobbrmsd_LSAME(SIDE, 'L')) then
 !
 !              Form  H * C  or  H**T * C  where  C = ( C1 )
 !                                                    ( C2 )
@@ -491,25 +491,25 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !              W := C1**T
 !
         do J = 1, K
-          call SCOPY(N, C(J, 1), LDC, WORK(1, J), 1)
+          call mobbrmsd_SCOPY(N, C(J, 1), LDC, WORK(1, J), 1)
         end do
 !
 !              W := W * V1**T
 !
-        call STRMM('Right', 'Upper', 'Transpose', 'Unit', N, K, &
+        call mobbrmsd_STRMM('Right', 'Upper', 'Transpose', 'Unit', N, K, &
 &                     ONE, V, LDV, WORK, LDWORK)
         if (M > K) then
 !
 !                 W := W + C2**T * V2**T
 !
-          call SGEMM('Transpose', 'Transpose', N, K, M - K, ONE, &
+          call mobbrmsd_SGEMM('Transpose', 'Transpose', N, K, M - K, ONE, &
 &                        C(K + 1, 1), LDC, V(1, K + 1), LDV, ONE, &
 &                        WORK, LDWORK)
         end if
 !
 !              W := W * T**T  or  W * T
 !
-        call STRMM('Right', 'Upper', TRANST, 'Non-unit', N, K, &
+        call mobbrmsd_STRMM('Right', 'Upper', TRANST, 'Non-unit', N, K, &
 &                     ONE, T, LDT, WORK, LDWORK)
 !
 !              C := C - V**T * W**T
@@ -518,14 +518,14 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
 !                 C2 := C2 - V2**T * W**T
 !
-          call SGEMM('Transpose', 'Transpose', M - K, N, K, -ONE, &
+          call mobbrmsd_SGEMM('Transpose', 'Transpose', M - K, N, K, -ONE, &
 &                        V(1, K + 1), LDV, WORK, LDWORK, ONE, &
 &                        C(K + 1, 1), LDC)
         end if
 !
 !              W := W * V1
 !
-        call STRMM('Right', 'Upper', 'No transpose', 'Unit', N, &
+        call mobbrmsd_STRMM('Right', 'Upper', 'No transpose', 'Unit', N, &
 &                     K, ONE, V, LDV, WORK, LDWORK)
 !
 !              C1 := C1 - W**T
@@ -536,7 +536,7 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
           end do
         end do
 !
-      else if (LSAME(SIDE, 'R')) then
+      else if (mobbrmsd_LSAME(SIDE, 'R')) then
 !
 !              Form  C * H  or  C * H**T  where  C = ( C1  C2 )
 !
@@ -545,25 +545,25 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !              W := C1
 !
         do J = 1, K
-          call SCOPY(M, C(1, J), 1, WORK(1, J), 1)
+          call mobbrmsd_SCOPY(M, C(1, J), 1, WORK(1, J), 1)
         end do
 !
 !              W := W * V1**T
 !
-        call STRMM('Right', 'Upper', 'Transpose', 'Unit', M, K, &
+        call mobbrmsd_STRMM('Right', 'Upper', 'Transpose', 'Unit', M, K, &
 &                     ONE, V, LDV, WORK, LDWORK)
         if (N > K) then
 !
 !                 W := W + C2 * V2**T
 !
-          call SGEMM('No transpose', 'Transpose', M, K, N - K, &
+          call mobbrmsd_SGEMM('No transpose', 'Transpose', M, K, N - K, &
 &                        ONE, C(1, K + 1), LDC, V(1, K + 1), LDV, &
 &                        ONE, WORK, LDWORK)
         end if
 !
 !              W := W * T  or  W * T**T
 !
-        call STRMM('Right', 'Upper', TRANS, 'Non-unit', M, K, &
+        call mobbrmsd_STRMM('Right', 'Upper', TRANS, 'Non-unit', M, K, &
 &                     ONE, T, LDT, WORK, LDWORK)
 !
 !              C := C - W * V
@@ -572,14 +572,14 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
 !                 C2 := C2 - W * V2
 !
-          call SGEMM('No transpose', 'No transpose', M, N - K, K, &
+          call mobbrmsd_SGEMM('No transpose', 'No transpose', M, N - K, K, &
 &                        -ONE, WORK, LDWORK, V(1, K + 1), LDV, ONE, &
 &                        C(1, K + 1), LDC)
         end if
 !
 !              W := W * V1
 !
-        call STRMM('Right', 'Upper', 'No transpose', 'Unit', M, &
+        call mobbrmsd_STRMM('Right', 'Upper', 'No transpose', 'Unit', M, &
 &                     K, ONE, V, LDV, WORK, LDWORK)
 !
 !              C1 := C1 - W
@@ -597,7 +597,7 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !           Let  V =  ( V1  V2 )    (V2: last K columns)
 !           where  V2  is unit lower triangular.
 !
-      if (LSAME(SIDE, 'L')) then
+      if (mobbrmsd_LSAME(SIDE, 'L')) then
 !
 !              Form  H * C  or  H**T * C  where  C = ( C1 )
 !                                                    ( C2 )
@@ -607,24 +607,24 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !              W := C2**T
 !
         do J = 1, K
-          call SCOPY(N, C(M - K + J, 1), LDC, WORK(1, J), 1)
+          call mobbrmsd_SCOPY(N, C(M - K + J, 1), LDC, WORK(1, J), 1)
         end do
 !
 !              W := W * V2**T
 !
-        call STRMM('Right', 'Lower', 'Transpose', 'Unit', N, K, &
+        call mobbrmsd_STRMM('Right', 'Lower', 'Transpose', 'Unit', N, K, &
 &                     ONE, V(1, M - K + 1), LDV, WORK, LDWORK)
         if (M > K) then
 !
 !                 W := W + C1**T * V1**T
 !
-          call SGEMM('Transpose', 'Transpose', N, K, M - K, ONE, &
+          call mobbrmsd_SGEMM('Transpose', 'Transpose', N, K, M - K, ONE, &
 &                        C, LDC, V, LDV, ONE, WORK, LDWORK)
         end if
 !
 !              W := W * T**T  or  W * T
 !
-        call STRMM('Right', 'Lower', TRANST, 'Non-unit', N, K, &
+        call mobbrmsd_STRMM('Right', 'Lower', TRANST, 'Non-unit', N, K, &
 &                     ONE, T, LDT, WORK, LDWORK)
 !
 !              C := C - V**T * W**T
@@ -633,13 +633,13 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
 !                 C1 := C1 - V1**T * W**T
 !
-          call SGEMM('Transpose', 'Transpose', M - K, N, K, -ONE, &
+          call mobbrmsd_SGEMM('Transpose', 'Transpose', M - K, N, K, -ONE, &
               &       V, LDV, WORK, LDWORK, ONE, C, LDC)
         end if
 !
 !              W := W * V2
 !
-        call STRMM('Right', 'Lower', 'No transpose', 'Unit', N, &
+        call mobbrmsd_STRMM('Right', 'Lower', 'No transpose', 'Unit', N, &
             &      K, ONE, V(1, M - K + 1), LDV, WORK, LDWORK)
 !
 !              C2 := C2 - W**T
@@ -650,7 +650,7 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
           end do
         end do
 !
-      else if (LSAME(SIDE, 'R')) then
+      else if (mobbrmsd_LSAME(SIDE, 'R')) then
 !
 !              Form  C * H  or  C * H**T  where  C = ( C1  C2 )
 !
@@ -659,24 +659,24 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !              W := C2
 !
         do J = 1, K
-          call SCOPY(M, C(1, N - K + J), 1, WORK(1, J), 1)
+          call mobbrmsd_SCOPY(M, C(1, N - K + J), 1, WORK(1, J), 1)
         end do
 !
 !              W := W * V2**T
 !
-        call STRMM('Right', 'Lower', 'Transpose', 'Unit', M, K, &
+        call mobbrmsd_STRMM('Right', 'Lower', 'Transpose', 'Unit', M, K, &
             &      ONE, V(1, N - K + 1), LDV, WORK, LDWORK)
         if (N > K) then
 !
 !                 W := W + C1 * V1**T
 !
-          call SGEMM('No transpose', 'Transpose', M, K, N - K, &
+          call mobbrmsd_SGEMM('No transpose', 'Transpose', M, K, N - K, &
               &      ONE, C, LDC, V, LDV, ONE, WORK, LDWORK)
         end if
 !
 !              W := W * T  or  W * T**T
 !
-        call STRMM('Right', 'Lower', TRANS, 'Non-unit', M, K, &
+        call mobbrmsd_STRMM('Right', 'Lower', TRANS, 'Non-unit', M, K, &
             &      ONE, T, LDT, WORK, LDWORK)
 !
 !              C := C - W * V
@@ -685,13 +685,13 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
 !                 C1 := C1 - W * V1
 !
-          call SGEMM('No transpose', 'No transpose', M, N - K, K, &
+          call mobbrmsd_SGEMM('No transpose', 'No transpose', M, N - K, K, &
               &      -ONE, WORK, LDWORK, V, LDV, ONE, C, LDC)
         end if
 !
 !              W := W * V2
 !
-        call STRMM('Right', 'Lower', 'No transpose', 'Unit', M, &
+        call mobbrmsd_STRMM('Right', 'Lower', 'No transpose', 'Unit', M, &
             &      K, ONE, V(1, N - K + 1), LDV, WORK, LDWORK)
 !
 !              C1 := C1 - W
@@ -707,6 +707,6 @@ pure subroutine SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
   return
 !
-!     End of SLARFB
+!     End of mobbrmsd_SLARFB
 !
 end

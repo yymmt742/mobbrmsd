@@ -1,4 +1,4 @@
-!> \brief \b DLAISNAN tests input for NaN by comparing two arguments for inequality.
+!> \brief \b mobbrmsd_Dmobbrmsd_LAISNAN tests input for NaN by comparing two arguments for inequality.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLAISNAN + dependencies
+!> Download mobbrmsd_Dmobbrmsd_LAISNAN + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlaisnan.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlaisnan.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       LOGICAL FUNCTION DLAISNAN( DIN1, DIN2 )
+!       LOGICAL FUNCTION mobbrmsd_Dmobbrmsd_LAISNAN( DIN1, DIN2 )
 !
 !       .. Scalar Arguments ..
 !       DOUBLE PRECISION, INTENT(IN) :: DIN1, DIN2
@@ -31,9 +31,9 @@
 !> \verbatim
 !>
 !> This routine is not for general use.  It exists solely to avoid
-!> over-optimization in DISNAN.
+!> over-optimization in mobbrmsd_DISNAN.
 !>
-!> DLAISNAN checks for NaNs by comparing its two arguments for
+!> mobbrmsd_Dmobbrmsd_LAISNAN checks for NaNs by comparing its two arguments for
 !> inequality.  NaN is the only floating-point value where NaN != NaN
 !> returns .TRUE.  To check for NaNs, pass the same variable as both
 !> arguments.
@@ -70,7 +70,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure elemental function DLAISNAN(DIN1, DIN2)
+pure elemental function mobbrmsd_Dmobbrmsd_LAISNAN(DIN1, DIN2)
 ! use LA_CONSTANTS, only: RK => dp
 !
 !  -- LAPACK auxiliary routine --
@@ -79,12 +79,12 @@ pure elemental function DLAISNAN(DIN1, DIN2)
 !
 !     .. Scalar Arguments ..
   real(RK), intent(in) :: DIN1, DIN2
-  logical              :: DLAISNAN
+  logical              :: mobbrmsd_Dmobbrmsd_LAISNAN
 !     ..
 !
 !  =====================================================================
 !
 !  .. Executable Statements ..
-  DLAISNAN = (DIN1 /= DIN2)
+  mobbrmsd_Dmobbrmsd_LAISNAN = (DIN1 /= DIN2)
   return
-end function DLAISNAN
+end function mobbrmsd_Dmobbrmsd_LAISNAN

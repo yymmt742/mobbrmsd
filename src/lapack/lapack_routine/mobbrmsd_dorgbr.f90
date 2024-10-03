@@ -1,4 +1,4 @@
-!> \brief \b DORGBR
+!> \brief \b mobbrmsd_DORGBR
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DORGBR + dependencies
+!> Download mobbrmsd_DORGBR + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dorgbr.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dorgbr.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DORGBR( VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
+!       SUBROUTINE mobbrmsd_DORGBR( VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       CHARACTER          VECT
@@ -34,23 +34,23 @@
 !>
 !> \verbatim
 !>
-!> DORGBR generates one of the real orthogonal matrices Q or P**T
-!> determined by DGEBRD when reducing a real matrix A to bidiagonal
+!> mobbrmsd_DORGBR generates one of the real orthogonal matrices Q or P**T
+!> determined by mobbrmsd_DGEBRD when reducing a real matrix A to bidiagonal
 !> form: A = Q * B * P**T.  Q and P**T are defined as products of
 !> elementary reflectors H(i) or G(i) respectively.
 !>
 !> If VECT = 'Q', A is assumed to have been an M-by-K matrix, and Q
 !> is of order M:
-!> if m >= k, Q = H(1) H(2) . . . H(k) and DORGBR returns the first n
+!> if m >= k, Q = H(1) H(2) . . . H(k) and mobbrmsd_DORGBR returns the first n
 !> columns of Q, where m >= n >= k;
-!> if m < k, Q = H(1) H(2) . . . H(m-1) and DORGBR returns Q as an
+!> if m < k, Q = H(1) H(2) . . . H(m-1) and mobbrmsd_DORGBR returns Q as an
 !> M-by-M matrix.
 !>
 !> If VECT = 'P', A is assumed to have been a K-by-N matrix, and P**T
 !> is of order N:
-!> if k < n, P**T = G(k) . . . G(2) G(1) and DORGBR returns the first m
+!> if k < n, P**T = G(k) . . . G(2) G(1) and mobbrmsd_DORGBR returns the first m
 !> rows of P**T, where n >= m >= k;
-!> if k >= n, P**T = G(n-1) . . . G(2) G(1) and DORGBR returns P**T as
+!> if k >= n, P**T = G(n-1) . . . G(2) G(1) and mobbrmsd_DORGBR returns P**T as
 !> an N-by-N matrix.
 !> \endverbatim
 !
@@ -61,7 +61,7 @@
 !> \verbatim
 !>          VECT is CHARACTER*1
 !>          Specifies whether the matrix Q or the matrix P**T is
-!>          required, as defined in the transformation applied by DGEBRD:
+!>          required, as defined in the transformation applied by mobbrmsd_DGEBRD:
 !>          = 'Q':  generate Q;
 !>          = 'P':  generate P**T.
 !> \endverbatim
@@ -86,9 +86,9 @@
 !> \verbatim
 !>          K is INTEGER
 !>          If VECT = 'Q', the number of columns in the original M-by-K
-!>          matrix reduced by DGEBRD.
+!>          matrix reduced by mobbrmsd_DGEBRD.
 !>          If VECT = 'P', the number of rows in the original K-by-N
-!>          matrix reduced by DGEBRD.
+!>          matrix reduced by mobbrmsd_DGEBRD.
 !>          K >= 0.
 !> \endverbatim
 !>
@@ -96,7 +96,7 @@
 !> \verbatim
 !>          A is real(RK)           :: array, dimension (LDA,N)
 !>          On entry, the vectors which define the elementary reflectors,
-!>          as returned by DGEBRD.
+!>          as returned by mobbrmsd_DGEBRD.
 !>          On exit, the M-by-N matrix Q or P**T.
 !> \endverbatim
 !>
@@ -113,7 +113,7 @@
 !>                                (min(N,K)) if VECT = 'P'
 !>          TAU(i) must contain the scalar factor of the elementary
 !>          reflector H(i) or G(i), which determines Q or P**T, as
-!>          returned by DGEBRD in its array argument TAUQ or TAUP.
+!>          returned by mobbrmsd_DGEBRD in its array argument TAUQ or TAUP.
 !> \endverbatim
 !>
 !> \param[out] WORK
@@ -153,7 +153,7 @@
 !> \ingroup doubleGBcomputational
 !
 !  =====================================================================
-pure subroutine DORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
+pure subroutine mobbrmsd_DORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -198,10 +198,10 @@ pure subroutine DORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !     Test the input arguments
 !
   INFO = 0
-  WANTQ = LSAME(VECT, 'Q')
+  WANTQ = mobbrmsd_LSAME(VECT, 'Q')
   MN = MIN(M, N)
   LQUERY = (LWORK == -1)
-  if (.not. WANTQ .and. .not. LSAME(VECT, 'P')) then
+  if (.not. WANTQ .and. .not. mobbrmsd_LSAME(VECT, 'P')) then
     INFO = -1
   else if (M < 0) then
     INFO = -2
@@ -220,18 +220,18 @@ pure subroutine DORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
     WORK(1) = 1
     if (WANTQ) then
       if (M >= K) then
-        call DORGQR(M, N, K, A, LDA, TAU, WORK, -1, IINFO)
+        call mobbrmsd_DORGQR(M, N, K, A, LDA, TAU, WORK, -1, IINFO)
       else
         if (M > 1) then
-          call DORGQR(M - 1, M - 1, M - 1, A, LDA, TAU, WORK, -1, IINFO)
+          call mobbrmsd_DORGQR(M - 1, M - 1, M - 1, A, LDA, TAU, WORK, -1, IINFO)
         end if
       end if
     else
       if (K < N) then
-        call DORGLQ(M, N, K, A, LDA, TAU, WORK, -1, IINFO)
+        call mobbrmsd_DORGLQ(M, N, K, A, LDA, TAU, WORK, -1, IINFO)
       else
         if (N > 1) then
-          call DORGLQ(N - 1, N - 1, N - 1, A, LDA, TAU, WORK, -1, IINFO)
+          call mobbrmsd_DORGLQ(N - 1, N - 1, N - 1, A, LDA, TAU, WORK, -1, IINFO)
         end if
       end if
     end if
@@ -240,7 +240,7 @@ pure subroutine DORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
   end if
 !
   if (INFO /= 0) then
-    !CALL XERBLA( 'DORGBR', -INFO )
+    !CALL XERBLA( 'mobbrmsd_DORGBR', -INFO )
     return
   else if (LQUERY) then
     WORK(1) = LWKOPT
@@ -256,14 +256,14 @@ pure subroutine DORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !
   if (WANTQ) then
 !
-!        Form Q, determined by a call to DGEBRD to reduce an m-by-k
+!        Form Q, determined by a call to mobbrmsd_DGEBRD to reduce an m-by-k
 !        matrix
 !
     if (M >= K) then
 !
 !           If m >= k, assume m >= n >= k
 !
-      call DORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, IINFO)
+      call mobbrmsd_DORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, IINFO)
 !
     else
 !
@@ -287,19 +287,19 @@ pure subroutine DORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !
 !             Form Q(2:m,2:m)
 !
-        call DORGQR(M - 1, M - 1, M - 1, A(2, 2), LDA, TAU, WORK, LWORK, IINFO)
+        call mobbrmsd_DORGQR(M - 1, M - 1, M - 1, A(2, 2), LDA, TAU, WORK, LWORK, IINFO)
       end if
     end if
   else
 !
-!        Form P**T, determined by a call to DGEBRD to reduce a k-by-n
+!        Form P**T, determined by a call to mobbrmsd_DGEBRD to reduce a k-by-n
 !        matrix
 !
     if (K < N) then
 !
 !           If k < n, assume k <= m <= n
 !
-      call DORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, IINFO)
+      call mobbrmsd_DORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, IINFO)
 !
     else
 !
@@ -323,13 +323,13 @@ pure subroutine DORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !
 !            Form P**T(2:n,2:n)
 !
-        call DORGLQ(N - 1, N - 1, N - 1, A(2, 2), LDA, TAU, WORK, LWORK, IINFO)
+        call mobbrmsd_DORGLQ(N - 1, N - 1, N - 1, A(2, 2), LDA, TAU, WORK, LWORK, IINFO)
       end if
     end if
   end if
   WORK(1) = LWKOPT
   return
 !
-!     End of DORGBR
+!     End of mobbrmsd_DORGBR
 !
-end subroutine DORGBR
+end subroutine mobbrmsd_DORGBR

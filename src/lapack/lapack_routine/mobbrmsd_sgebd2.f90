@@ -1,4 +1,4 @@
-!> \brief \b SGEBD2 reduces a general matrix to bidiagonal form using an unblocked algorithm.
+!> \brief \b mobbrmsd_SGEBD2 reduces a general matrix to bidiagonal form using an unblocked algorithm.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SGEBD2 + dependencies
+!> Download mobbrmsd_SGEBD2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sgebd2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sgebd2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SGEBD2( M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO )
+!       SUBROUTINE mobbrmsd_SGEBD2( M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, LDA, M, N
@@ -34,7 +34,7 @@
 !>
 !> \verbatim
 !>
-!> SGEBD2 reduces a real general m by n matrix A to upper or lower
+!> mobbrmsd_SGEBD2 reduces a real general m by n matrix A to upper or lower
 !> bidiagonal form B by an orthogonal transformation: Q**T * A * P = B.
 !>
 !> If m >= n, B is upper bidiagonal; if m < n, B is lower bidiagonal.
@@ -187,7 +187,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine SGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
+pure subroutine mobbrmsd_SGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
   implicit none
 !
 !  -- LAPACK computational routine (version 3.7.1) --
@@ -235,7 +235,7 @@ pure subroutine SGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
     INFO = -4
   end if
   if (INFO < 0) then
-!   call XERBLA('SGEBD2', -INFO)
+!   call XERBLA('mobbrmsd_SGEBD2', -INFO)
     return
   end if
 !
@@ -247,26 +247,26 @@ pure subroutine SGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
 !
 ! Generate elementary reflector H(i) to annihilate A(i + 1:m, i)
 !
-      call SLARFG(M - I + 1, A(I, I), A(MIN(I + 1, M), I), 1, TAUQ(I))
+      call mobbrmsd_SLARFG(M - I + 1, A(I, I), A(MIN(I + 1, M), I), 1, TAUQ(I))
       D(I) = A(I, I)
       A(I, I) = ONE
 !
 ! Apply H(i) to A(i:m, i + 1:n) from the left
 !
-      if (I < N) call SLARF('Left', M - I + 1, N - I, A(I, I), 1, TAUQ(I), A(I, I + 1), LDA, WORK)
+      if (I < N) call mobbrmsd_SLARF('Left', M - I + 1, N - I, A(I, I), 1, TAUQ(I), A(I, I + 1), LDA, WORK)
       A(I, I) = D(I)
 !
       if (I < N) then
 !
 ! Generate elementary reflector G(i) to annihilate A(i, i + 2:n)
 !
-        call SLARFG(N - I, A(I, I + 1), A(I, MIN(I + 2, N)), LDA, TAUP(I))
+        call mobbrmsd_SLARFG(N - I, A(I, I + 1), A(I, MIN(I + 2, N)), LDA, TAUP(I))
         E(I) = A(I, I + 1)
         A(I, I + 1) = ONE
 !
 ! Apply G(i) to A(i + 1:m, i + 1:n) from the right
 !
-        call SLARF('Right', M - I, N - I, A(I, I + 1), LDA, TAUP(I), A(I + 1, I + 1), LDA, WORK)
+        call mobbrmsd_SLARF('Right', M - I, N - I, A(I, I + 1), LDA, TAUP(I), A(I + 1, I + 1), LDA, WORK)
         A(I, I + 1) = E(I)
       else
         TAUP(I) = ZERO
@@ -280,26 +280,26 @@ pure subroutine SGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
 !
 ! Generate elementary reflector G(i) to annihilate A(i, i + 1:n)
 !
-      call SLARFG(N - I + 1, A(I, I), A(I, MIN(I + 1, N)), LDA, TAUP(I))
+      call mobbrmsd_SLARFG(N - I + 1, A(I, I), A(I, MIN(I + 1, N)), LDA, TAUP(I))
       D(I) = A(I, I)
       A(I, I) = ONE
 !
 ! Apply G(i) to A(i + 1:m, i:n) from the right
 !
-      if (I < M) call SLARF('Right', M - I, N - I + 1, A(I, I), LDA, TAUP(I), A(I + 1, I), LDA, WORK)
+      if (I < M) call mobbrmsd_SLARF('Right', M - I, N - I + 1, A(I, I), LDA, TAUP(I), A(I + 1, I), LDA, WORK)
       A(I, I) = D(I)
 !
       if (I < M) then
 !
 ! Generate elementary reflector H(i) to annihilate A(i + 2:m, i)
 !
-        call SLARFG(M - I, A(I + 1, I), A(MIN(I + 2, M), I), 1, TAUQ(I))
+        call mobbrmsd_SLARFG(M - I, A(I + 1, I), A(MIN(I + 2, M), I), 1, TAUQ(I))
         E(I) = A(I + 1, I)
         A(I + 1, I) = ONE
 !
 ! Apply H(i) to A(i + 1:m, i + 1:n) from the left
 !
-        call SLARF('Left', M - I, N - I, A(I + 1, I), 1, TAUQ(I), A(I + 1, I + 1), LDA, WORK)
+        call mobbrmsd_SLARF('Left', M - I, N - I, A(I + 1, I), 1, TAUQ(I), A(I + 1, I + 1), LDA, WORK)
         A(I + 1, I) = E(I)
       else
         TAUQ(I) = ZERO
@@ -308,6 +308,6 @@ pure subroutine SGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
   end if
   return
 !
-! end of SGEBD2
+! end of mobbrmsd_SGEBD2
 !
 end

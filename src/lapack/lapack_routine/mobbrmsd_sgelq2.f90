@@ -1,4 +1,4 @@
-!> \brief \b SGELQ2 computes the LQ factorization of a general rectangular matrix using an unblocked algorithm.
+!> \brief \b mobbrmsd_SGELQ2 computes the LQ factorization of a general rectangular matrix using an unblocked algorithm.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SGELQ2 + dependencies
+!> Download mobbrmsd_SGELQ2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sgelq2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sgelq2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SGELQ2( M, N, A, LDA, TAU, WORK, INFO )
+!       SUBROUTINE mobbrmsd_SGELQ2( M, N, A, LDA, TAU, WORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, LDA, M, N
@@ -33,7 +33,7 @@
 !>
 !> \verbatim
 !>
-!> SGELQ2 computes an LQ factorization of a real m-by-n matrix A:
+!> mobbrmsd_SGELQ2 computes an LQ factorization of a real m-by-n matrix A:
 !>
 !>    A = ( L 0 ) *  Q
 !>
@@ -127,7 +127,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine SGELQ2(M, N, A, LDA, TAU, WORK, INFO)
+pure subroutine mobbrmsd_SGELQ2(M, N, A, LDA, TAU, WORK, INFO)
   implicit none
 !
 !  -- LAPACK computational routine (version 3.9.0) --
@@ -176,7 +176,7 @@ pure subroutine SGELQ2(M, N, A, LDA, TAU, WORK, INFO)
     INFO = -4
   end if
   if (INFO /= 0) then
-! call XERBLA('SGELQ2', -INFO)
+! call XERBLA('mobbrmsd_SGELQ2', -INFO)
     return
   end if
 !
@@ -186,19 +186,19 @@ pure subroutine SGELQ2(M, N, A, LDA, TAU, WORK, INFO)
 !
 ! Generate elementary reflector H(i) to annihilate A(i, i + 1:n)
 !
-    call SLARFG(N - I + 1, A(I, I), A(I, MIN(I + 1, N)), LDA, TAU(I))
+    call mobbrmsd_SLARFG(N - I + 1, A(I, I), A(I, MIN(I + 1, N)), LDA, TAU(I))
     if (I < M) then
 !
 !Apply H(i) to A(i + 1:m, i:n) from the right
 !
       AII = A(I, I)
       A(I, I) = ONE
-      call SLARF('Right', M - I, N - I + 1, A(I, I), LDA, TAU(I), A(I + 1, I), LDA, WORK)
+      call mobbrmsd_SLARF('Right', M - I, N - I + 1, A(I, I), LDA, TAU(I), A(I + 1, I), LDA, WORK)
       A(I, I) = AII
     end if
   end do
   return
 !
-! end of SGELQ2
+! end of mobbrmsd_SGELQ2
 !
 end

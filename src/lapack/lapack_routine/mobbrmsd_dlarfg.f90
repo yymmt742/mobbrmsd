@@ -1,4 +1,4 @@
-!> \brief \b DLARFG generates an elementary reflector (Householder matrix).
+!> \brief \b mobbrmsd_DLARFG generates an elementary reflector (Householder matrix).
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLARFG + dependencies
+!> Download mobbrmsd_DLARFG + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dlarfg.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dlarfg.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLARFG( N, ALPHA, X, INCX, TAU )
+!       SUBROUTINE mobbrmsd_DLARFG( N, ALPHA, X, INCX, TAU )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INCX, N
@@ -34,7 +34,7 @@
 !>
 !> \verbatim
 !>
-!> DLARFG generates a real elementary reflector H of order n, such
+!> mobbrmsd_DLARFG generates a real elementary reflector H of order n, such
 !> that
 !>
 !>       H * ( alpha ) = ( beta ),   H**T * H = I.
@@ -102,7 +102,7 @@
 !> \ingroup doubleOTHERauxiliary
 !
 !  =====================================================================
-pure subroutine DLARFG(N, ALPHA, X, INCX, TAU)
+pure subroutine mobbrmsd_DLARFG(N, ALPHA, X, INCX, TAU)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -148,7 +148,7 @@ pure subroutine DLARFG(N, ALPHA, X, INCX, TAU)
     return
   end if
 !
-  XNORM = DNRM2(N - 1, X, INCX)
+  XNORM = mobbrmsd_DNRM2(N - 1, X, INCX)
 !
   if (XNORM == ZERO) then
 !
@@ -159,8 +159,8 @@ pure subroutine DLARFG(N, ALPHA, X, INCX, TAU)
 !
 !        general case
 !
-    BETA = -SIGN(DLAPY2(ALPHA, XNORM), ALPHA)
-    SAFMIN = DLAMCH('S') / DLAMCH('E')
+    BETA = -SIGN(mobbrmsd_DLAPY2(ALPHA, XNORM), ALPHA)
+    SAFMIN = mobbrmsd_DLAMCH('S') / mobbrmsd_DLAMCH('E')
     KNT = 0
     if (ABS(BETA) < SAFMIN) then
 !
@@ -169,18 +169,18 @@ pure subroutine DLARFG(N, ALPHA, X, INCX, TAU)
       RSAFMN = ONE / SAFMIN
 10    continue
       KNT = KNT + 1
-      call DSCAL(N - 1, RSAFMN, X, INCX)
+      call mobbrmsd_DSCAL(N - 1, RSAFMN, X, INCX)
       BETA = BETA * RSAFMN
       ALPHA = ALPHA * RSAFMN
       if ((ABS(BETA) < SAFMIN) .and. (KNT < 20)) GO TO 10
 !
 !           New BETA is at most 1, at least SAFMIN
 !
-      XNORM = DNRM2(N - 1, X, INCX)
-      BETA = -SIGN(DLAPY2(ALPHA, XNORM), ALPHA)
+      XNORM = mobbrmsd_DNRM2(N - 1, X, INCX)
+      BETA = -SIGN(mobbrmsd_DLAPY2(ALPHA, XNORM), ALPHA)
     end if
     TAU = (BETA - ALPHA) / BETA
-    call DSCAL(N - 1, ONE / (ALPHA - BETA), X, INCX)
+    call mobbrmsd_DSCAL(N - 1, ONE / (ALPHA - BETA), X, INCX)
 !
 !        If ALPHA is subnormal, it may lose relative accuracy
 !
@@ -192,6 +192,6 @@ pure subroutine DLARFG(N, ALPHA, X, INCX, TAU)
 !
   return
 !
-!     End of DLARFG
+!     End of mobbrmsd_DLARFG
 !
-end subroutine DLARFG
+end subroutine mobbrmsd_DLARFG

@@ -1,4 +1,4 @@
-!> \brief \b DISNAN tests input for NaN.
+!> \brief \b mobbrmsd_DISNAN tests input for NaN.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DISNAN + dependencies
+!> Download mobbrmsd_DISNAN + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/disnan.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/disnan.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       LOGICAL FUNCTION DISNAN( DIN )
+!       LOGICAL FUNCTION mobbrmsd_DISNAN( DIN )
 !
 !       .. Scalar Arguments ..
 !       DOUBLE PRECISION, INTENT(IN) :: DIN
@@ -30,7 +30,7 @@
 !>
 !> \verbatim
 !>
-!> DISNAN returns .TRUE. if its argument is NaN, and .FALSE.
+!> mobbrmsd_DISNAN returns .TRUE. if its argument is NaN, and .FALSE.
 !> otherwise.  To be replaced by the Fortran 2003 intrinsic in the
 !> future.
 !> \endverbatim
@@ -55,7 +55,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure elemental function DISNAN(DIN)
+pure elemental function mobbrmsd_DISNAN(DIN)
 ! use LA_CONSTANTS, only: RK => dp
 !
 !  -- LAPACK auxiliary routine --
@@ -64,7 +64,7 @@ pure elemental function DISNAN(DIN)
 !
 !     .. Scalar Arguments ..
   real(RK), intent(in) :: DIN
-  logical              :: DISNAN
+  logical              :: mobbrmsd_DISNAN
 !     ..
 !
 !  =====================================================================
@@ -75,6 +75,6 @@ pure elemental function DISNAN(DIN)
 ! end interface
 !  ..
 !  .. Executable Statements ..
-  DISNAN = DLAISNAN(DIN, DIN)
+  mobbrmsd_DISNAN = mobbrmsd_Dmobbrmsd_LAISNAN(DIN, DIN)
   return
-end function DISNAN
+end function mobbrmsd_DISNAN

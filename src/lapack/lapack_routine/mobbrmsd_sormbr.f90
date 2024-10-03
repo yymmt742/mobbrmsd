@@ -1,4 +1,4 @@
-!> \brief \b SORMBR
+!> \brief \b mobbrmsd_SORMBR
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SORMBR + dependencies
+!> Download mobbrmsd_SORMBR + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sormbr.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sormbr.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SORMBR( VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C,
+!       SUBROUTINE mobbrmsd_SORMBR( VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C,
 !                          LDC, WORK, LWORK, INFO )
 !
 !       .. Scalar Arguments ..
@@ -36,19 +36,19 @@
 !>
 !> \verbatim
 !>
-!> If VECT = 'Q', SORMBR overwrites the general real M-by-N matrix C
+!> If VECT = 'Q', mobbrmsd_SORMBR overwrites the general real M-by-N matrix C
 !> with
 !>                 SIDE = 'L'     SIDE = 'R'
 !> TRANS = 'N':      Q * C          C * Q
 !> TRANS = 'T':      Q**T * C       C * Q**T
 !>
-!> If VECT = 'P', SORMBR overwrites the general real M-by-N matrix C
+!> If VECT = 'P', mobbrmsd_SORMBR overwrites the general real M-by-N matrix C
 !> with
 !>                 SIDE = 'L'     SIDE = 'R'
 !> TRANS = 'N':      P * C          C * P
 !> TRANS = 'T':      P**T * C       C * P**T
 !>
-!> Here Q and P**T are the orthogonal matrices determined by SGEBRD when
+!> Here Q and P**T are the orthogonal matrices determined by mobbrmsd_SGEBRD when
 !> reducing a real matrix A to bidiagonal form: A = Q * B * P**T. Q and
 !> P**T are defined as products of elementary reflectors H(i) and G(i)
 !> respectively.
@@ -105,9 +105,9 @@
 !> \verbatim
 !>          K is INTEGER
 !>          If VECT = 'Q', the number of columns in the original
-!>          matrix reduced by SGEBRD.
+!>          matrix reduced by mobbrmsd_SGEBRD.
 !>          If VECT = 'P', the number of rows in the original
-!>          matrix reduced by SGEBRD.
+!>          matrix reduced by mobbrmsd_SGEBRD.
 !>          K >= 0.
 !> \endverbatim
 !>
@@ -118,7 +118,7 @@
 !>                                (LDA,nq)        if VECT = 'P'
 !>          The vectors which define the elementary reflectors H(i) and
 !>          G(i), whose products determine the matrices Q and P, as
-!>          returned by SGEBRD.
+!>          returned by mobbrmsd_SGEBRD.
 !> \endverbatim
 !>
 !> \param[in] LDA
@@ -134,7 +134,7 @@
 !>          TAU is REAL array, dimension (min(nq,K))
 !>          TAU(i) must contain the scalar factor of the elementary
 !>          reflector H(i) or G(i) which determines Q or P, as returned
-!>          by SGEBRD in the array argument TAUQ or TAUP.
+!>          by mobbrmsd_SGEBRD in the array argument TAUQ or TAUP.
 !> \endverbatim
 !>
 !> \param[in,out] C
@@ -193,7 +193,7 @@
 !> \ingroup realOTHERcomputational
 !
 !  =====================================================================
-pure subroutine SORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
+pure subroutine mobbrmsd_SORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
                &       LDC, WORK, LWORK, INFO)
 !
 !  -- LAPACK computational routine (version 3.7.0) --
@@ -234,9 +234,9 @@ pure subroutine SORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
 ! Test the input arguments
 !
   INFO = 0
-  APPLYQ = LSAME(VECT, 'Q')
-  LEFT = LSAME(SIDE, 'L')
-  NOTRAN = LSAME(TRANS, 'N')
+  APPLYQ = mobbrmsd_LSAME(VECT, 'Q')
+  LEFT = mobbrmsd_LSAME(SIDE, 'L')
+  NOTRAN = mobbrmsd_LSAME(TRANS, 'N')
   LQUERY = (LWORK == -1)
 !
 ! NQ is the order of Q or P and NW is the minimum dimension of WORK
@@ -248,11 +248,11 @@ pure subroutine SORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
     NQ = N
     NW = M
   end if
-  if (.not. APPLYQ .and. .not. LSAME(VECT, 'P')) then
+  if (.not. APPLYQ .and. .not. mobbrmsd_LSAME(VECT, 'P')) then
     INFO = -1
-  else if (.not. LEFT .and. .not. LSAME(SIDE, 'R')) then
+  else if (.not. LEFT .and. .not. mobbrmsd_LSAME(SIDE, 'R')) then
     INFO = -2
-  else if (.not. NOTRAN .and. .not. LSAME(TRANS, 'T')) then
+  else if (.not. NOTRAN .and. .not. mobbrmsd_LSAME(TRANS, 'T')) then
     INFO = -3
   else if (M < 0) then
     INFO = -4
@@ -271,15 +271,15 @@ pure subroutine SORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
   if (INFO == 0) then
     if (APPLYQ) then
       if (LEFT) then
-        NB = ILAENV(1, 'SORMQR', SIDE//TRANS, M - 1, N, M - 1, -1)
+        NB = mobbrmsd_ILAENV(1, 'mobbrmsd_SORMQR', SIDE//TRANS, M - 1, N, M - 1, -1)
       else
-        NB = ILAENV(1, 'SORMQR', SIDE//TRANS, M, N - 1, N - 1, -1)
+        NB = mobbrmsd_ILAENV(1, 'mobbrmsd_SORMQR', SIDE//TRANS, M, N - 1, N - 1, -1)
       end if
     else
       if (LEFT) then
-        NB = ILAENV(1, 'SORMLQ', SIDE//TRANS, M - 1, N, M - 1, -1)
+        NB = mobbrmsd_ILAENV(1, 'mobbrmsd_SORMLQ', SIDE//TRANS, M - 1, N, M - 1, -1)
       else
-        NB = ILAENV(1, 'SORMLQ', SIDE//TRANS, M, N - 1, N - 1, -1)
+        NB = mobbrmsd_ILAENV(1, 'mobbrmsd_SORMLQ', SIDE//TRANS, M, N - 1, N - 1, -1)
       end if
     end if
     LWKOPT = MAX(1, NW) * NB
@@ -287,7 +287,7 @@ pure subroutine SORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
   end if
 !
   if (INFO /= 0) then
-!   call XERBLA('SORMBR', -INFO)
+!   call XERBLA('mobbrmsd_SORMBR', -INFO)
     return
   else if (LQUERY) then
     return
@@ -304,13 +304,13 @@ pure subroutine SORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
     !
     if (NQ >= K) then
       !
-      !Q was determined by a call to SGEBRD with nq >= k
+      !Q was determined by a call to mobbrmsd_SGEBRD with nq >= k
       !
-      call SORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
+      call mobbrmsd_SORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, LDC, &
           &       WORK, LWORK, IINFO)
     else if (NQ > 1) then
       !
-      !Q was determined by a call to SGEBRD with nq < k
+      !Q was determined by a call to mobbrmsd_SGEBRD with nq < k
       !
       if (LEFT) then
         MI = M - 1
@@ -323,7 +323,7 @@ pure subroutine SORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
         I1 = 1
         I2 = 2
       end if
-      call SORMQR(SIDE, TRANS, MI, NI, NQ - 1, A(2, 1), LDA, TAU, &
+      call mobbrmsd_SORMQR(SIDE, TRANS, MI, NI, NQ - 1, A(2, 1), LDA, TAU, &
           &       C(I1, I2), LDC, WORK, LWORK, IINFO)
     end if
   else
@@ -337,13 +337,13 @@ pure subroutine SORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
     end if
     if (NQ > K) then
       !
-      !P was determined by a call to SGEBRD with nq > k
+      !P was determined by a call to mobbrmsd_SGEBRD with nq > k
       !
-      call SORMLQ(SIDE, TRANST, M, N, K, A, LDA, TAU, C, LDC, &
+      call mobbrmsd_SORMLQ(SIDE, TRANST, M, N, K, A, LDA, TAU, C, LDC, &
           &       WORK, LWORK, IINFO)
     else if (NQ > 1) then
       !
-      !P was determined by a call to SGEBRD with nq <= k
+      !P was determined by a call to mobbrmsd_SGEBRD with nq <= k
       !
       if (LEFT) then
         MI = M - 1
@@ -356,13 +356,13 @@ pure subroutine SORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
         I1 = 1
         I2 = 2
       end if
-      call SORMLQ(SIDE, TRANST, MI, NI, NQ - 1, A(1, 2), LDA, &
+      call mobbrmsd_SORMLQ(SIDE, TRANST, MI, NI, NQ - 1, A(1, 2), LDA, &
           &       TAU, C(I1, I2), LDC, WORK, LWORK, IINFO)
     end if
   end if
   WORK(1) = LWKOPT
   return
 !
-!end of SORMBR
+!end of mobbrmsd_SORMBR
 !
 end

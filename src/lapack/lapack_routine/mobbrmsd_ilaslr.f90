@@ -1,4 +1,4 @@
-! > \brief\b ILASLR scans a matrix for its last non - zero row.
+! > \brief\b mobbrmsd_ILASLR scans a matrix for its last non - zero row.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 ! http://www.netlib.org/lapack/explore-html/
 !
 ! > \htmlonly
-! > Download ILASLR + dependencies
+! > Download mobbrmsd_ILASLR + dependencies
 ! >  < a href = "http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/ilaslr.f" >
 ! > [TGZ] < /a >
 ! >  < a href = "http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/ilaslr.f" >
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!   INTEGER FUNCTION ILASLR( M, N, A, LDA )
+!   INTEGER FUNCTION mobbrmsd_ILASLR( M, N, A, LDA )
 !
 !   .. Scalar Arguments ..
 !   INTEGER            M, N, LDA
@@ -33,7 +33,7 @@
 ! >
 ! > \verbatim
 ! >
-! > ILASLR scans A for its last non - zero row.
+! > mobbrmsd_ILASLR scans A for its last non - zero row.
 ! > \endverbatim
 !
 !  Arguments:
@@ -76,7 +76,7 @@
 ! > \ingroup realOTHERauxiliary
 !
 !  =====================================================================
-pure function ILASLR(M, N, A, LDA)
+pure function mobbrmsd_ILASLR(M, N, A, LDA)
   implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
@@ -89,7 +89,7 @@ pure function ILASLR(M, N, A, LDA)
 ! ..
 ! .. Array Arguments ..
   real(RK), intent(in) :: A(LDA, *)
-  integer :: ILASLR
+  integer :: mobbrmsd_ILASLR
 ! ..
 !  =====================================================================
 ! ..
@@ -100,18 +100,18 @@ pure function ILASLR(M, N, A, LDA)
 !
 ! Quick test for the common case where one corner is non-zero.
   if (M == 0) then
-    ILASLR = M
+    mobbrmsd_ILASLR = M
   elseif (A(M, 1) /= ZERO .or. A(M, N) /= ZERO) then
-    ILASLR = M
+    mobbrmsd_ILASLR = M
   else
 ! Scan up each column tracking the last zero row seen.
-    ILASLR = 0
+    mobbrmsd_ILASLR = 0
     do J = 1, N
       I = M
       do while ((A(MAX(I, 1), J) == ZERO) .and. (I >= 1))
         I = I - 1
       end do
-      ILASLR = MAX(ILASLR, I)
+      mobbrmsd_ILASLR = MAX(mobbrmsd_ILASLR, I)
     end do
   end if
   return

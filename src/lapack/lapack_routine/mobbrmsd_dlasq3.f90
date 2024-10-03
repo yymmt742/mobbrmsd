@@ -1,4 +1,4 @@
-!> \brief \b DLASQ3 checks for deflation, computes a shift and calls dqds. Used by sbdsqr.
+!> \brief \b mobbrmsd_DLASQ3 checks for deflation, computes a shift and calls dqds. Used by sbdsqr.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLASQ3 + dependencies
+!> Download mobbrmsd_DLASQ3 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlasq3.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlasq3.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLASQ3( I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL,
+!       SUBROUTINE mobbrmsd_DLASQ3( I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL,
 !                          ITER, NDIV, IEEE, TTYPE, DMIN1, DMIN2, DN, DN1,
 !                          DN2, G, TAU )
 !
@@ -38,7 +38,7 @@
 !>
 !> \verbatim
 !>
-!> DLASQ3 checks for deflation, computes a shift (TAU) and calls dqds.
+!> mobbrmsd_DLASQ3 checks for deflation, computes a shift (TAU) and calls dqds.
 !> In case of failure it changes shifts, and tries again until output
 !> is positive.
 !> \endverbatim
@@ -118,7 +118,7 @@
 !> \param[in] IEEE
 !> \verbatim
 !>          IEEE is LOGICAL
-!>         Flag for IEEE or non IEEE arithmetic (passed to DLASQ5).
+!>         Flag for IEEE or non IEEE arithmetic (passed to mobbrmsd_DLASQ5).
 !> \endverbatim
 !>
 !> \param[in,out] TTYPE
@@ -162,7 +162,7 @@
 !>          TAU is DOUBLE PRECISION
 !>
 !>         These are passed as arguments in order to save their values
-!>         between calls to DLASQ3.
+!>         between calls to mobbrmsd_DLASQ3.
 !> \endverbatim
 !
 !  Authors:
@@ -176,7 +176,7 @@
 !> \ingroup auxOTHERcomputational
 !
 !  =====================================================================
-pure subroutine DLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL,&
+pure subroutine mobbrmsd_DLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL,&
                &       ITER, NDIV, IEEE, TTYPE, DMIN1, DMIN2, DN, DN1,     &
                &       DN2, G, TAU)
 ! use LA_CONSTANTS, only: RK => dp
@@ -225,7 +225,7 @@ pure subroutine DLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL,&
 !     .. Executable Statements ..
 !
   N0IN = N0
-  EPS = DLAMCH('Precision')
+  EPS = mobbrmsd_DLAMCH('Precision')
   TOL = EPS * HUNDRD
   TOL2 = TOL**2
 !
@@ -321,14 +321,14 @@ pure subroutine DLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL,&
 !
 !     Choose a shift.
 !
-  call DLASQ4(I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN, DN1, &
+  call mobbrmsd_DLASQ4(I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN, DN1, &
  &             DN2, TAU, TTYPE, G)
 !
 !     Call dqds until DMIN > 0.
 !
 70 continue
 !
-  call DLASQ5(I0, N0, Z, PP, TAU, SIGMA, DMIN, DMIN1, DMIN2, DN, &
+  call mobbrmsd_DLASQ5(I0, N0, Z, PP, TAU, SIGMA, DMIN, DMIN1, DMIN2, DN, &
  &            DN1, DN2, IEEE, EPS)
 !
   NDIV = NDIV + (N0 - I0 + 2)
@@ -375,7 +375,7 @@ pure subroutine DLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL,&
       TTYPE = TTYPE - 12
     end if
     GO TO 70
-  else if (DISNAN(DMIN)) then
+  else if (mobbrmsd_DISNAN(DMIN)) then
 !
 !        NaN.
 !
@@ -395,7 +395,7 @@ pure subroutine DLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL,&
 !     Risk of underflow.
 !
 80 continue
-  call DLASQ6(I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN, DN1, DN2)
+  call mobbrmsd_DLASQ6(I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN, DN1, DN2)
   NDIV = NDIV + (N0 - I0 + 2)
   ITER = ITER + 1
   TAU = ZERO
@@ -413,7 +413,7 @@ pure subroutine DLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL,&
 !
   return
 !
-!     End of DLASQ3
+!     End of mobbrmsd_DLASQ3
 !
-end subroutine DLASQ3
+end subroutine mobbrmsd_DLASQ3
 

@@ -1,4 +1,4 @@
-!> \brief \b SLACPY copies all or part of one two-dimensional array to another.
+!> \brief \b mobbrmsd_SLACPY copies all or part of one two-dimensional array to another.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLACPY + dependencies
+!> Download mobbrmsd_SLACPY + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slacpy.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slacpy.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLACPY( UPLO, M, N, A, LDA, B, LDB )
+!       SUBROUTINE mobbrmsd_SLACPY( UPLO, M, N, A, LDA, B, LDB )
 !
 !       .. Scalar Arguments ..
 !       CHARACTER          UPLO
@@ -34,7 +34,7 @@
 !>
 !> \verbatim
 !>
-!> SLACPY copies all or part of a two-dimensional matrix A to another
+!> mobbrmsd_SLACPY copies all or part of a two-dimensional matrix A to another
 !> matrix B.
 !> \endverbatim
 !
@@ -101,7 +101,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure subroutine SLACPY(UPLO, M, N, A, LDA, B, LDB)
+pure subroutine mobbrmsd_SLACPY(UPLO, M, N, A, LDA, B, LDB)
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -132,13 +132,13 @@ pure subroutine SLACPY(UPLO, M, N, A, LDA, B, LDB)
 !..
 !..Executable Statements..
 !
-  if (LSAME(UPLO, 'U')) then
+  if (mobbrmsd_LSAME(UPLO, 'U')) then
     do J = 1, N
       do I = 1, MIN(J, M)
         B(I, J) = A(I, J)
       end do
     end do
-  else if (LSAME(UPLO, 'L')) then
+  else if (mobbrmsd_LSAME(UPLO, 'L')) then
     do J = 1, N
       do I = J, M
         B(I, J) = A(I, J)
@@ -153,6 +153,6 @@ pure subroutine SLACPY(UPLO, M, N, A, LDA, B, LDB)
   end if
   return
   !
-  !end of SLACPY
+  !end of mobbrmsd_SLACPY
   !
 end

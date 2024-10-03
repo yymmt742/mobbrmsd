@@ -1,4 +1,4 @@
-!> \brief \b SLASSQ updates a sum of squares represented in scaled form.
+!> \brief \b mobbrmsd_SLASSQ updates a sum of squares represented in scaled form.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLASSQ + dependencies
+!> Download mobbrmsd_SLASSQ + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slassq.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slassq.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLASSQ( N, X, INCX, SCALE, SUMSQ )
+!       SUBROUTINE mobbrmsd_SLASSQ( N, X, INCX, SCALE, SUMSQ )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INCX, N
@@ -34,7 +34,7 @@
 !>
 !> \verbatim
 !>
-!> SLASSQ  returns the values  scl  and  smsq  such that
+!> mobbrmsd_SLASSQ  returns the values  scl  and  smsq  such that
 !>
 !>    ( scl**2 )*smsq = x( 1 )**2 +...+ x( n )**2 + ( scale**2 )*sumsq,
 !>
@@ -101,7 +101,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure subroutine SLASSQ(N, X, INCX, SCL, SUMSQ)
+pure subroutine mobbrmsd_SLASSQ(N, X, INCX, SCL, SUMSQ)
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -138,7 +138,7 @@ pure subroutine SLASSQ(N, X, INCX, SCL, SUMSQ)
   if (N > 0) then
     do IX = 1, 1 + (N - 1) * INCX, INCX
       ABSXI = ABS(X(IX))
-      if (ABSXI > ZERO .or. SISNAN(ABSXI)) then
+      if (ABSXI > ZERO .or. mobbrmsd_SISNAN(ABSXI)) then
         if (SCL < ABSXI) then
           SUMSQ = 1 + SUMSQ * (SCL / ABSXI)**2
           SCL = ABSXI
@@ -150,7 +150,7 @@ pure subroutine SLASSQ(N, X, INCX, SCL, SUMSQ)
   end if
   return
 !
-! end of SLASSQ
+! end of mobbrmsd_SLASSQ
 !
 end
 

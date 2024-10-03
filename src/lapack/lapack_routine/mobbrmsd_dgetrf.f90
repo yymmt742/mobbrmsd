@@ -1,4 +1,4 @@
-!> \brief \b DGETRF
+!> \brief \b mobbrmsd_DGETRF
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DGETRF + dependencies
+!> Download mobbrmsd_DGETRF + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dgetrf.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dgetrf.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       pure subroutine DGETRF( M, N, A, LDA, IPIV, INFO )
+!       pure subroutine mobbrmsd_DGETRF( M, N, A, LDA, IPIV, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, LDA, M, N
@@ -34,7 +34,7 @@
 !>
 !> \verbatim
 !>
-!> DGETRF computes an LU factorization of a general M-by-N matrix A
+!> mobbrmsd_DGETRF computes an LU factorization of a general M-by-N matrix A
 !> using partial pivoting with row interchanges.
 !>
 !> The factorization has the form
@@ -104,7 +104,7 @@
 !> \ingroup doubleGEcomputational
 !
 !  =====================================================================
-pure subroutine DGETRF(M, N, A, LDA, IPIV, INFO)
+pure subroutine mobbrmsd_DGETRF(M, N, A, LDA, IPIV, INFO)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -154,7 +154,7 @@ pure subroutine DGETRF(M, N, A, LDA, IPIV, INFO)
     INFO = -4
   end if
   if (INFO /= 0) then
-!   !CALL XERBLA( 'DGETRF', -INFO )
+!   !CALL XERBLA( 'mobbrmsd_DGETRF', -INFO )
     return
   end if
 !
@@ -164,12 +164,12 @@ pure subroutine DGETRF(M, N, A, LDA, IPIV, INFO)
 !
 !     Determine the block size for this environment.
 !
-  NB = ILAENV(1, 'DGETRF', ' ', M, N, -1, -1)
+  NB = mobbrmsd_ILAENV(1, 'mobbrmsd_DGETRF', ' ', M, N, -1, -1)
   if (NB <= 1 .or. NB >= MIN(M, N)) then
 !
 !        Use unblocked code.
 !
-    call DGETRF2(M, N, A, LDA, IPIV, INFO)
+    call mobbrmsd_DGETRF2(M, N, A, LDA, IPIV, INFO)
 !
   else
 !
@@ -181,7 +181,7 @@ pure subroutine DGETRF(M, N, A, LDA, IPIV, INFO)
 !           Factor diagonal and subdiagonal blocks and test for exact
 !           singularity.
 !
-      call DGETRF2(M - J + 1, JB, A(J, J), LDA, IPIV(J), IINFO)
+      call mobbrmsd_DGETRF2(M - J + 1, JB, A(J, J), LDA, IPIV(J), IINFO)
 !
 !           Adjust INFO and the pivot indices.
 !
@@ -192,23 +192,23 @@ pure subroutine DGETRF(M, N, A, LDA, IPIV, INFO)
 !
 !         Apply interchanges to columns 1:J-1.
 !
-      call DLASWP(J - 1, A, LDA, J, J + JB - 1, IPIV, 1)
+      call mobbrmsd_DLASWP(J - 1, A, LDA, J, J + JB - 1, IPIV, 1)
 !
       if (J + JB <= N) then
 !
 !            Apply interchanges to columns J+JB:N.
 !
-        call DLASWP(N - J - JB + 1, A(1, J + JB), LDA, J, J + JB - 1, IPIV, 1)
+        call mobbrmsd_DLASWP(N - J - JB + 1, A(1, J + JB), LDA, J, J + JB - 1, IPIV, 1)
 !
 !            Compute block row of U.
 !
-        call DTRSM('Left', 'Lower', 'No transpose', 'Unit', JB, &
+        call mobbrmsd_DTRSM('Left', 'Lower', 'No transpose', 'Unit', JB, &
        &           N - J - JB + 1, ONE, A(J, J), LDA, A(J, J + JB), LDA)
         if (J + JB <= M) then
 !
 !               Update trailing submatrix.
 !
-          call DGEMM('No transpose', 'No transpose', M - J - JB + 1, &
+          call mobbrmsd_DGEMM('No transpose', 'No transpose', M - J - JB + 1, &
          &            N - J - JB + 1, JB, -ONE, A(J + JB, J), LDA, &
          &            A(J, J + JB), LDA, ONE, A(J + JB, J + JB), LDA)
         end if
@@ -217,7 +217,7 @@ pure subroutine DGETRF(M, N, A, LDA, IPIV, INFO)
   end if
   return
 !
-!     End of DGETRF
+!     End of mobbrmsd_DGETRF
 !
-end subroutine DGETRF
+end subroutine mobbrmsd_DGETRF
 

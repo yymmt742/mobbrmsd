@@ -1,4 +1,4 @@
-!> \brief \b DLACPY copies all or part of one two-dimensional array to another.
+!> \brief \b mobbrmsd_DLACPY copies all or part of one two-dimensional array to another.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLACPY + dependencies
+!> Download mobbrmsd_DLACPY + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dlacpy.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dlacpy.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLACPY( UPLO, M, N, A, LDA, B, LDB )
+!       SUBROUTINE mobbrmsd_DLACPY( UPLO, M, N, A, LDA, B, LDB )
 !
 !       .. Scalar Arguments ..
 !       CHARACTER          UPLO
@@ -34,7 +34,7 @@
 !>
 !> \verbatim
 !>
-!> DLACPY copies all or part of a two-dimensional matrix A to another
+!> mobbrmsd_DLACPY copies all or part of a two-dimensional matrix A to another
 !> matrix B.
 !> \endverbatim
 !
@@ -99,7 +99,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure subroutine DLACPY(UPLO, M, N, A, LDA, B, LDB)
+pure subroutine mobbrmsd_DLACPY(UPLO, M, N, A, LDA, B, LDB)
 ! use LA_CONSTANTS, only: RK => DP
   implicit none
 !
@@ -130,13 +130,13 @@ pure subroutine DLACPY(UPLO, M, N, A, LDA, B, LDB)
 !     ..
 !     .. Executable Statements ..
 !
-  if (LSAME(UPLO, 'U')) then
+  if (mobbrmsd_LSAME(UPLO, 'U')) then
     do concurrent(J=1:N)
       do concurrent(I=1:MIN(J, M))
         B(I, J) = A(I, J)
       end do
     end do
-  else if (LSAME(UPLO, 'L')) then
+  else if (mobbrmsd_LSAME(UPLO, 'L')) then
     do concurrent(J=1:N)
       do concurrent(I=J:M)
         B(I, J) = A(I, J)
@@ -148,6 +148,6 @@ pure subroutine DLACPY(UPLO, M, N, A, LDA, B, LDB)
     end do
   end if
 !
-!     End of DLACPY
+!     End of mobbrmsd_DLACPY
 !
-end subroutine DLACPY
+end subroutine mobbrmsd_DLACPY

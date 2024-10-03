@@ -1,4 +1,4 @@
-!> \brief \b DLABRD reduces the first nb rows and columns of a general matrix to a bidiagonal form.
+!> \brief \b mobbrmsd_DLABRD reduces the first nb rows and columns of a general matrix to a bidiagonal form.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLABRD + dependencies
+!> Download mobbrmsd_DLABRD + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dlabrd.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dlabrd.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLABRD( M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, LDX, Y,
+!       SUBROUTINE mobbrmsd_DLABRD( M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, LDX, Y,
 !                          LDY )
 !
 !       .. Scalar Arguments ..
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> DLABRD reduces the first NB rows and columns of a real general
+!> mobbrmsd_DLABRD reduces the first NB rows and columns of a real general
 !> m by n matrix A to upper or lower bidiagonal form by an orthogonal
 !> transformation Q**T * A * P, and returns the matrices X and Y which
 !> are needed to apply the transformation to the unreduced part of A.
@@ -43,7 +43,7 @@
 !> If m >= n, A is reduced to upper bidiagonal form; if m < n, to lower
 !> bidiagonal form.
 !>
-!> This is an auxiliary routine called by DGEBRD
+!> This is an auxiliary routine called by mobbrmsd_DGEBRD
 !> \endverbatim
 !
 !  Arguments:
@@ -205,7 +205,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DLABRD(M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, &
+pure subroutine mobbrmsd_DLABRD(M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, &
     &                  LDX, Y, LDY)
 ! use LA_CONSTANTS, only: RK => DP, ZERO => DZERO, ONE => DONE
   implicit none
@@ -251,14 +251,14 @@ pure subroutine DLABRD(M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, &
 !
 !           Update A(i:m,i)
 !
-      call DGEMV('No transpose', M - I + 1, I - 1, -ONE, A(I, 1),&
+      call mobbrmsd_DGEMV('No transpose', M - I + 1, I - 1, -ONE, A(I, 1),&
      &            LDA, Y(I, 1), LDY, ONE, A(I, I), 1)
-      call DGEMV('No transpose', M - I + 1, I - 1, -ONE, X(I, 1),&
+      call mobbrmsd_DGEMV('No transpose', M - I + 1, I - 1, -ONE, X(I, 1),&
      &            LDX, A(1, I), 1, ONE, A(I, I), 1)
 !
 !           Generate reflection Q(i) to annihilate A(i+1:m,i)
 !
-      call DLARFG(M - I + 1, A(I, I), A(MIN(I + 1, M), I), 1,&
+      call mobbrmsd_DLARFG(M - I + 1, A(I, I), A(MIN(I + 1, M), I), 1,&
      &             TAUQ(I))
       D(I) = A(I, I)
       if (I < N) then
@@ -266,45 +266,45 @@ pure subroutine DLABRD(M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, &
 !
 !              Compute Y(i+1:n,i)
 !
-        call DGEMV('Transpose', M - I + 1, N - I, ONE, A(I, I + 1),&
+        call mobbrmsd_DGEMV('Transpose', M - I + 1, N - I, ONE, A(I, I + 1),&
        &            LDA, A(I, I), 1, ZERO, Y(I + 1, I), 1)
-        call DGEMV('Transpose', M - I + 1, I - 1, ONE, A(I, 1), LDA,&
+        call mobbrmsd_DGEMV('Transpose', M - I + 1, I - 1, ONE, A(I, 1), LDA,&
        &            A(I, I), 1, ZERO, Y(1, I), 1)
-        call DGEMV('No transpose', N - I, I - 1, -ONE, Y(I + 1, 1),&
+        call mobbrmsd_DGEMV('No transpose', N - I, I - 1, -ONE, Y(I + 1, 1),&
        &            LDY, Y(1, I), 1, ONE, Y(I + 1, I), 1)
-        call DGEMV('Transpose', M - I + 1, I - 1, ONE, X(I, 1), LDX,&
+        call mobbrmsd_DGEMV('Transpose', M - I + 1, I - 1, ONE, X(I, 1), LDX,&
        &            A(I, I), 1, ZERO, Y(1, I), 1)
-        call DGEMV('Transpose', I - 1, N - I, -ONE, A(1, I + 1),&
+        call mobbrmsd_DGEMV('Transpose', I - 1, N - I, -ONE, A(1, I + 1),&
        &            LDA, Y(1, I), 1, ONE, Y(I + 1, I), 1)
-        call DSCAL(N - I, TAUQ(I), Y(I + 1, I), 1)
+        call mobbrmsd_DSCAL(N - I, TAUQ(I), Y(I + 1, I), 1)
 !
 !              Update A(i,i+1:n)
 !
-        call DGEMV('No transpose', N - I, I, -ONE, Y(I + 1, 1),&
+        call mobbrmsd_DGEMV('No transpose', N - I, I, -ONE, Y(I + 1, 1),&
        &            LDY, A(I, 1), LDA, ONE, A(I, I + 1), LDA)
-        call DGEMV('Transpose', I - 1, N - I, -ONE, A(1, I + 1),&
+        call mobbrmsd_DGEMV('Transpose', I - 1, N - I, -ONE, A(1, I + 1),&
        &            LDA, X(I, 1), LDX, ONE, A(I, I + 1), LDA)
 !
 !              Generate reflection P(i) to annihilate A(i,i+2:n)
 !
-        call DLARFG(N - I, A(I, I + 1), A(I, MIN(I + 2, N)),&
+        call mobbrmsd_DLARFG(N - I, A(I, I + 1), A(I, MIN(I + 2, N)),&
        &             LDA, TAUP(I))
         E(I) = A(I, I + 1)
         A(I, I + 1) = ONE
 !
 !              Compute X(i+1:m,i)
 !
-        call DGEMV('No transpose', M - I, N - I, ONE, A(I + 1, I + 1),&
+        call mobbrmsd_DGEMV('No transpose', M - I, N - I, ONE, A(I + 1, I + 1),&
       &             LDA, A(I, I + 1), LDA, ZERO, X(I + 1, I), 1)
-        call DGEMV('Transpose', N - I, I, ONE, Y(I + 1, 1), LDY,&
+        call mobbrmsd_DGEMV('Transpose', N - I, I, ONE, Y(I + 1, 1), LDY,&
        &            A(I, I + 1), LDA, ZERO, X(1, I), 1)
-        call DGEMV('No transpose', M - I, I, -ONE, A(I + 1, 1),&
+        call mobbrmsd_DGEMV('No transpose', M - I, I, -ONE, A(I + 1, 1),&
        &            LDA, X(1, I), 1, ONE, X(I + 1, I), 1)
-        call DGEMV('No transpose', I - 1, N - I, ONE, A(1, I + 1),&
+        call mobbrmsd_DGEMV('No transpose', I - 1, N - I, ONE, A(1, I + 1),&
        &            LDA, A(I, I + 1), LDA, ZERO, X(1, I), 1)
-        call DGEMV('No transpose', M - I, I - 1, -ONE, X(I + 1, 1),&
+        call mobbrmsd_DGEMV('No transpose', M - I, I - 1, -ONE, X(I + 1, 1),&
        &            LDX, X(1, I), 1, ONE, X(I + 1, I), 1)
-        call DSCAL(M - I, TAUP(I), X(I + 1, I), 1)
+        call mobbrmsd_DSCAL(M - I, TAUP(I), X(I + 1, I), 1)
       end if
     end do
   else
@@ -315,14 +315,14 @@ pure subroutine DLABRD(M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, &
 !
 !         Update A(i,i:n)
 !
-      call DGEMV('No transpose', N - I + 1, I - 1, -ONE, Y(I, 1),&
+      call mobbrmsd_DGEMV('No transpose', N - I + 1, I - 1, -ONE, Y(I, 1),&
      &            LDY, A(I, 1), LDA, ONE, A(I, I), LDA)
-      call DGEMV('Transpose', I - 1, N - I + 1, -ONE, A(1, I), LDA,&
+      call mobbrmsd_DGEMV('Transpose', I - 1, N - I + 1, -ONE, A(1, I), LDA,&
      &            X(I, 1), LDX, ONE, A(I, I), LDA)
 !
 !         Generate reflection P(i) to annihilate A(i,i+1:n)
 !
-      call DLARFG(N - I + 1, A(I, I), A(I, MIN(I + 1, N)), LDA,&
+      call mobbrmsd_DLARFG(N - I + 1, A(I, I), A(I, MIN(I + 1, N)), LDA,&
      &            TAUP(I))
       D(I) = A(I, I)
       if (I < M) then
@@ -330,49 +330,49 @@ pure subroutine DLABRD(M, N, NB, A, LDA, D, E, TAUQ, TAUP, X, &
 !
 !            Compute X(i+1:m,i)
 !
-        call DGEMV('No transpose', M - I, N - I + 1, ONE, A(I + 1, I),&
+        call mobbrmsd_DGEMV('No transpose', M - I, N - I + 1, ONE, A(I + 1, I),&
        &            LDA, A(I, I), LDA, ZERO, X(I + 1, I), 1)
-        call DGEMV('Transpose', N - I + 1, I - 1, ONE, Y(I, 1), LDY,&
+        call mobbrmsd_DGEMV('Transpose', N - I + 1, I - 1, ONE, Y(I, 1), LDY,&
        &            A(I, I), LDA, ZERO, X(1, I), 1)
-        call DGEMV('No transpose', M - I, I - 1, -ONE, A(I + 1, 1),&
+        call mobbrmsd_DGEMV('No transpose', M - I, I - 1, -ONE, A(I + 1, 1),&
        &            LDA, X(1, I), 1, ONE, X(I + 1, I), 1)
-        call DGEMV('No transpose', I - 1, N - I + 1, ONE, A(1, I),&
+        call mobbrmsd_DGEMV('No transpose', I - 1, N - I + 1, ONE, A(1, I),&
        &            LDA, A(I, I), LDA, ZERO, X(1, I), 1)
-        call DGEMV('No transpose', M - I, I - 1, -ONE, X(I + 1, 1),&
+        call mobbrmsd_DGEMV('No transpose', M - I, I - 1, -ONE, X(I + 1, 1),&
        &            LDX, X(1, I), 1, ONE, X(I + 1, I), 1)
-        call DSCAL(M - I, TAUP(I), X(I + 1, I), 1)
+        call mobbrmsd_DSCAL(M - I, TAUP(I), X(I + 1, I), 1)
 !
 !            Update A(i+1:m,i)
 !
-        call DGEMV('No transpose', M - I, I - 1, -ONE, A(I + 1, 1),&
+        call mobbrmsd_DGEMV('No transpose', M - I, I - 1, -ONE, A(I + 1, 1),&
        &            LDA, Y(I, 1), LDY, ONE, A(I + 1, I), 1)
-        call DGEMV('No transpose', M - I, I, -ONE, X(I + 1, 1),&
+        call mobbrmsd_DGEMV('No transpose', M - I, I, -ONE, X(I + 1, 1),&
        &            LDX, A(1, I), 1, ONE, A(I + 1, I), 1)
 !
 !            Generate reflection Q(i) to annihilate A(i+2:m,i)
 !
-        call DLARFG(M - I, A(I + 1, I), A(MIN(I + 2, M), I), 1,&
+        call mobbrmsd_DLARFG(M - I, A(I + 1, I), A(MIN(I + 2, M), I), 1,&
        &            TAUQ(I))
         E(I) = A(I + 1, I)
         A(I + 1, I) = ONE
 !
 !            Compute Y(i+1:n,i)
 !
-        call DGEMV('Transpose', M - I, N - I, ONE, A(I + 1, I + 1),&
+        call mobbrmsd_DGEMV('Transpose', M - I, N - I, ONE, A(I + 1, I + 1),&
        &            LDA, A(I + 1, I), 1, ZERO, Y(I + 1, I), 1)
-        call DGEMV('Transpose', M - I, I - 1, ONE, A(I + 1, 1), LDA,&
+        call mobbrmsd_DGEMV('Transpose', M - I, I - 1, ONE, A(I + 1, 1), LDA,&
        &            A(I + 1, I), 1, ZERO, Y(1, I), 1)
-        call DGEMV('No transpose', N - I, I - 1, -ONE, Y(I + 1, 1),&
+        call mobbrmsd_DGEMV('No transpose', N - I, I - 1, -ONE, Y(I + 1, 1),&
        &            LDY, Y(1, I), 1, ONE, Y(I + 1, I), 1)
-        call DGEMV('Transpose', M - I, I, ONE, X(I + 1, 1), LDX,&
+        call mobbrmsd_DGEMV('Transpose', M - I, I, ONE, X(I + 1, 1), LDX,&
        &            A(I + 1, I), 1, ZERO, Y(1, I), 1)
-        call DGEMV('Transpose', I, N - I, -ONE, A(1, I + 1), LDA,&
+        call mobbrmsd_DGEMV('Transpose', I, N - I, -ONE, A(1, I + 1), LDA,&
        &            Y(1, I), 1, ONE, Y(I + 1, I), 1)
-        call DSCAL(N - I, TAUQ(I), Y(I + 1, I), 1)
+        call mobbrmsd_DSCAL(N - I, TAUQ(I), Y(I + 1, I), 1)
       end if
     end do
   end if
 !
-!     End of DLABRD
+!     End of mobbrmsd_DLABRD
 !
-end subroutine DLABRD
+end subroutine mobbrmsd_DLABRD

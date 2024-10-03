@@ -1,4 +1,4 @@
-!> \brief \b DORMBR
+!> \brief \b mobbrmsd_DORMBR
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DORMBR + dependencies
+!> Download mobbrmsd_DORMBR + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dormbr.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dormbr.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       pure subroutine DORMBR( VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C,
+!       pure subroutine mobbrmsd_DORMBR( VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C,
 !                          LDC, WORK, LWORK, INFO )
 !
 !       .. Scalar Arguments ..
@@ -35,19 +35,19 @@
 !>
 !> \verbatim
 !>
-!> If VECT = 'Q', DORMBR overwrites the general real M-by-N matrix C
+!> If VECT = 'Q', mobbrmsd_DORMBR overwrites the general real M-by-N matrix C
 !> with
 !>                 SIDE = 'L'     SIDE = 'R'
 !> TRANS = 'N':      Q * C          C * Q
 !> TRANS = 'T':      Q**T * C       C * Q**T
 !>
-!> If VECT = 'P', DORMBR overwrites the general real M-by-N matrix C
+!> If VECT = 'P', mobbrmsd_DORMBR overwrites the general real M-by-N matrix C
 !> with
 !>                 SIDE = 'L'     SIDE = 'R'
 !> TRANS = 'N':      P * C          C * P
 !> TRANS = 'T':      P**T * C       C * P**T
 !>
-!> Here Q and P**T are the orthogonal matrices determined by DGEBRD when
+!> Here Q and P**T are the orthogonal matrices determined by mobbrmsd_DGEBRD when
 !> reducing a real matrix A to bidiagonal form: A = Q * B * P**T. Q and
 !> P**T are defined as products of elementary reflectors H(i) and G(i)
 !> respectively.
@@ -104,9 +104,9 @@
 !> \verbatim
 !>          K is INTEGER
 !>          If VECT = 'Q', the number of columns in the original
-!>          matrix reduced by DGEBRD.
+!>          matrix reduced by mobbrmsd_DGEBRD.
 !>          If VECT = 'P', the number of rows in the original
-!>          matrix reduced by DGEBRD.
+!>          matrix reduced by mobbrmsd_DGEBRD.
 !>          K >= 0.
 !> \endverbatim
 !>
@@ -117,7 +117,7 @@
 !>                                (LDA,nq)        if VECT = 'P'
 !>          The vectors which define the elementary reflectors H(i) and
 !>          G(i), whose products determine the matrices Q and P, as
-!>          returned by DGEBRD.
+!>          returned by mobbrmsd_DGEBRD.
 !> \endverbatim
 !>
 !> \param[in] LDA
@@ -133,7 +133,7 @@
 !>          TAU is real(RK)           :: array, dimension (min(nq,K))
 !>          TAU(i) must contain the scalar factor of the elementary
 !>          reflector H(i) or G(i) which determines Q or P, as returned
-!>          by DGEBRD in the array argument TAUQ or TAUP.
+!>          by mobbrmsd_DGEBRD in the array argument TAUQ or TAUP.
 !> \endverbatim
 !>
 !> \param[in,out] C
@@ -190,7 +190,7 @@
 !> \ingroup doubleOTHERcomputational
 !
 !  =====================================================================
-pure subroutine DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
+pure subroutine mobbrmsd_DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
                &       C, LDC, WORK, LWORK, INFO)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
@@ -235,9 +235,9 @@ pure subroutine DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
 !     Test the input arguments
 !
   INFO = 0
-  APPLYQ = LSAME(VECT, 'Q')
-  LEFT = LSAME(SIDE, 'L')
-  NOTRAN = LSAME(TRANS, 'N')
+  APPLYQ = mobbrmsd_LSAME(VECT, 'Q')
+  LEFT = mobbrmsd_LSAME(SIDE, 'L')
+  NOTRAN = mobbrmsd_LSAME(TRANS, 'N')
   LQUERY = (LWORK == -1)
 !
 !     NQ is the order of Q or P and NW is the minimum dimension of WORK
@@ -249,11 +249,11 @@ pure subroutine DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
     NQ = N
     NW = MAX(1, M)
   end if
-  if (.not. APPLYQ .and. .not. LSAME(VECT, 'P')) then
+  if (.not. APPLYQ .and. .not. mobbrmsd_LSAME(VECT, 'P')) then
     INFO = -1
-  else if (.not. LEFT .and. .not. LSAME(SIDE, 'R')) then
+  else if (.not. LEFT .and. .not. mobbrmsd_LSAME(SIDE, 'R')) then
     INFO = -2
-  else if (.not. NOTRAN .and. .not. LSAME(TRANS, 'T')) then
+  else if (.not. NOTRAN .and. .not. mobbrmsd_LSAME(TRANS, 'T')) then
     INFO = -3
   else if (M < 0) then
     INFO = -4
@@ -274,15 +274,15 @@ pure subroutine DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
   if (INFO == 0) then
     if (APPLYQ) then
       if (LEFT) then
-        NB = ILAENV(1, 'DORMQR', SIDE//TRANS, M - 1, N, M - 1, -1)
+        NB = mobbrmsd_ILAENV(1, 'mobbrmsd_DORMQR', SIDE//TRANS, M - 1, N, M - 1, -1)
       else
-        NB = ILAENV(1, 'DORMQR', SIDE//TRANS, M, N - 1, N - 1, -1)
+        NB = mobbrmsd_ILAENV(1, 'mobbrmsd_DORMQR', SIDE//TRANS, M, N - 1, N - 1, -1)
       end if
     else
       if (LEFT) then
-        NB = ILAENV(1, 'DORMLQ', SIDE//TRANS, M - 1, N, M - 1, -1)
+        NB = mobbrmsd_ILAENV(1, 'mobbrmsd_DORMLQ', SIDE//TRANS, M - 1, N, M - 1, -1)
       else
-        NB = ILAENV(1, 'DORMLQ', SIDE//TRANS, M, N - 1, N - 1, -1)
+        NB = mobbrmsd_ILAENV(1, 'mobbrmsd_DORMLQ', SIDE//TRANS, M, N - 1, N - 1, -1)
       end if
     end if
     LWKOPT = NW * NB
@@ -290,7 +290,7 @@ pure subroutine DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
   end if
 !
   if (INFO /= 0) then
-    !CALL XERBLA( 'DORMBR', -INFO )
+    !CALL XERBLA( 'mobbrmsd_DORMBR', -INFO )
     return
   else if (LQUERY) then
     return
@@ -307,13 +307,13 @@ pure subroutine DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
 !
     if (NQ >= K) then
 !
-!           Q was determined by a call to DGEBRD with nq >= k
+!           Q was determined by a call to mobbrmsd_DGEBRD with nq >= k
 !
-      call DORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
+      call mobbrmsd_DORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
      &            LDC, WORK, LWORK, IINFO)
     else if (NQ > 1) then
 !
-!           Q was determined by a call to DGEBRD with nq < k
+!           Q was determined by a call to mobbrmsd_DGEBRD with nq < k
 !
       if (LEFT) then
         MI = M - 1
@@ -326,7 +326,7 @@ pure subroutine DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
         I1 = 1
         I2 = 2
       end if
-      call DORMQR(SIDE, TRANS, MI, NI, NQ - 1, A(2, 1), LDA, &
+      call mobbrmsd_DORMQR(SIDE, TRANS, MI, NI, NQ - 1, A(2, 1), LDA, &
      &            TAU, C(I1, I2), LDC, WORK, LWORK, IINFO)
     end if
   else
@@ -340,13 +340,13 @@ pure subroutine DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
     end if
     if (NQ > K) then
 !
-!           P was determined by a call to DGEBRD with nq > k
+!           P was determined by a call to mobbrmsd_DGEBRD with nq > k
 !
-      call DORMLQ(SIDE, TRANST, M, N, K, A, LDA, TAU, C, LDC, &
+      call mobbrmsd_DORMLQ(SIDE, TRANST, M, N, K, A, LDA, TAU, C, LDC, &
      &            WORK, LWORK, IINFO)
     else if (NQ > 1) then
 !
-!           P was determined by a call to DGEBRD with nq <= k
+!           P was determined by a call to mobbrmsd_DGEBRD with nq <= k
 !
       if (LEFT) then
         MI = M - 1
@@ -359,13 +359,13 @@ pure subroutine DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
         I1 = 1
         I2 = 2
       end if
-      call DORMLQ(SIDE, TRANST, MI, NI, NQ - 1, A(1, 2), LDA, &
+      call mobbrmsd_DORMLQ(SIDE, TRANST, MI, NI, NQ - 1, A(1, 2), LDA, &
      &            TAU, C(I1, I2), LDC, WORK, LWORK, IINFO)
     end if
   end if
   WORK(1) = LWKOPT
   return
 !
-!     End of DORMBR
+!     End of mobbrmsd_DORMBR
 !
-end subroutine DORMBR
+end subroutine mobbrmsd_DORMBR

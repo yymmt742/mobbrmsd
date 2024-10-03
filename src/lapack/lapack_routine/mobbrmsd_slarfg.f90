@@ -1,4 +1,4 @@
-!> \brief \b SLARFG generates an elementary reflector (Householder matrix).
+!> \brief \b mobbrmsd_SLARFG generates an elementary reflector (Householder matrix).
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLARFG + dependencies
+!> Download mobbrmsd_SLARFG + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slarfg.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slarfg.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLARFG( N, ALPHA, X, INCX, TAU )
+!       SUBROUTINE mobbrmsd_SLARFG( N, ALPHA, X, INCX, TAU )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INCX, N
@@ -34,7 +34,7 @@
 !>
 !> \verbatim
 !>
-!> SLARFG generates a real elementary reflector H of order n, such
+!> mobbrmsd_SLARFG generates a real elementary reflector H of order n, such
 !> that
 !>
 !>       H * ( alpha ) = ( beta ),   H**T * H = I.
@@ -104,7 +104,7 @@
 !> \ingroup realOTHERauxiliary
 !
 !  =====================================================================
-pure subroutine SLARFG(N, ALPHA, X, INCX, TAU)
+pure subroutine mobbrmsd_SLARFG(N, ALPHA, X, INCX, TAU)
   implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.8.0) --
@@ -151,7 +151,7 @@ pure subroutine SLARFG(N, ALPHA, X, INCX, TAU)
     return
   end if
 !
-  XNORM = SNRM2(N - 1, X, INCX)
+  XNORM = mobbrmsd_SNRM2(N - 1, X, INCX)
 !
   if (XNORM == ZERO) then
 !
@@ -162,8 +162,8 @@ pure subroutine SLARFG(N, ALPHA, X, INCX, TAU)
 !
 ! general case
 !
-    BETA = -SIGN(SLAPY2(ALPHA, XNORM), ALPHA)
-    SAFMIN = SLAMCH('S') / SLAMCH('E')
+    BETA = -SIGN(mobbrmsd_SLAPY2(ALPHA, XNORM), ALPHA)
+    SAFMIN = mobbrmsd_SLAMCH('S') / mobbrmsd_SLAMCH('E')
     KNT = 0
     if (ABS(BETA) < SAFMIN) then
 !
@@ -173,7 +173,7 @@ pure subroutine SLARFG(N, ALPHA, X, INCX, TAU)
       do
 !10    continue
         KNT = KNT + 1
-        call SSCAL(N - 1, RSAFMN, X, INCX)
+        call mobbrmsd_SSCAL(N - 1, RSAFMN, X, INCX)
         BETA = BETA * RSAFMN
         ALPHA = ALPHA * RSAFMN
 !       if ((ABS(BETA) < SAFMIN) .and. (KNT < 20)) GO TO 10
@@ -182,11 +182,11 @@ pure subroutine SLARFG(N, ALPHA, X, INCX, TAU)
 !
 ! New BETA is at most 1, at least SAFMIN
 !
-      XNORM = SNRM2(N - 1, X, INCX)
-      BETA = -SIGN(SLAPY2(ALPHA, XNORM), ALPHA)
+      XNORM = mobbrmsd_SNRM2(N - 1, X, INCX)
+      BETA = -SIGN(mobbrmsd_SLAPY2(ALPHA, XNORM), ALPHA)
     end if
     TAU = (BETA - ALPHA) / BETA
-    call SSCAL(N - 1, ONE / (ALPHA - BETA), X, INCX)
+    call mobbrmsd_SSCAL(N - 1, ONE / (ALPHA - BETA), X, INCX)
 !
 ! if ALPHA is subnormal, it may lose relative accuracy
 !
@@ -198,6 +198,6 @@ pure subroutine SLARFG(N, ALPHA, X, INCX, TAU)
 !
   return
 !
-! end of SLARFG
+! end of mobbrmsd_SLARFG
 !
 end

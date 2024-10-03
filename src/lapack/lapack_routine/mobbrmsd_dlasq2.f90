@@ -1,4 +1,4 @@
-!> \brief \b DLASQ2 computes all the eigenvalues of the symmetric positive definite tridiagonal matrix associated with the qd Array Z to high relative accuracy. Used by sbdsqr and sstegr.
+!> \brief \b mobbrmsd_DLASQ2 computes all the eigenvalues of the symmetric positive definite tridiagonal matrix associated with the qd Array Z to high relative accuracy. Used by sbdsqr and sstegr.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLASQ2 + dependencies
+!> Download mobbrmsd_DLASQ2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlasq2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlasq2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLASQ2( N, Z, INFO )
+!       SUBROUTINE mobbrmsd_DLASQ2( N, Z, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, N
@@ -33,7 +33,7 @@
 !>
 !> \verbatim
 !>
-!> DLASQ2 computes all the eigenvalues of the symmetric positive
+!> mobbrmsd_DLASQ2 computes all the eigenvalues of the symmetric positive
 !> definite tridiagonal matrix associated with the qd array Z to high
 !> relative accuracy are computed to high relative accuracy, in the
 !> absence of denormalization, underflow and overflow.
@@ -44,10 +44,10 @@
 !> Z(1,3,5,,..). The tridiagonal is L*U or, if you prefer, the
 !> symmetric tridiagonal to which it is similar.
 !>
-!> Note : DLASQ2 defines a logical variable, IEEE, which is true
+!> Note : mobbrmsd_DLASQ2 defines a logical variable, IEEE, which is true
 !> on machines which follow ieee-754 floating-point standard in their
 !> handling of infinities and NaNs, and false otherwise. This variable
-!> is passed to DLASQ3.
+!> is passed to mobbrmsd_DLASQ3.
 !> \endverbatim
 !
 !  Arguments:
@@ -108,7 +108,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DLASQ2(N, Z, INFO)
+pure subroutine mobbrmsd_DLASQ2(N, Z, INFO)
 ! use LA_CONSTANTS, only: RK => dp
 !
 !  -- LAPACK computational routine --
@@ -158,17 +158,17 @@ pure subroutine DLASQ2(N, Z, INFO)
 !     .. Executable Statements ..
 !
 !     Test the input arguments.
-!     (in case DLASQ2 is not called by DLASQ1)
+!     (in case mobbrmsd_DLASQ2 is not called by mobbrmsd_DLASQ1)
 !
   INFO = 0
-  EPS = DLAMCH('Precision')
-  SAFMIN = DLAMCH('Safe minimum')
+  EPS = mobbrmsd_DLAMCH('Precision')
+  SAFMIN = mobbrmsd_DLAMCH('Safe minimum')
   TOL = EPS * HUNDRD
   TOL2 = TOL**2
 !
   if (N < 0) then
     INFO = -1
-    !CALL XERBLA( 'DLASQ2', 1 )
+    !CALL XERBLA( 'mobbrmsd_DLASQ2', 1 )
     return
   else if (N == 0) then
     return
@@ -178,7 +178,7 @@ pure subroutine DLASQ2(N, Z, INFO)
 !
     if (Z(1) < ZERO) then
       INFO = -201
-      !CALL XERBLA( 'DLASQ2', 2 )
+      !CALL XERBLA( 'mobbrmsd_DLASQ2', 2 )
     end if
     return
   else if (N == 2) then
@@ -187,15 +187,15 @@ pure subroutine DLASQ2(N, Z, INFO)
 !
     if (Z(1) < ZERO) then
       INFO = -201
-      !CALL XERBLA( 'DLASQ2', 2 )
+      !CALL XERBLA( 'mobbrmsd_DLASQ2', 2 )
       return
     else if (Z(2) < ZERO) then
       INFO = -202
-      !CALL XERBLA( 'DLASQ2', 2 )
+      !CALL XERBLA( 'mobbrmsd_DLASQ2', 2 )
       return
     else if (Z(3) < ZERO) then
       INFO = -203
-      !CALL XERBLA( 'DLASQ2', 2 )
+      !CALL XERBLA( 'mobbrmsd_DLASQ2', 2 )
       return
     else if (Z(3) > Z(1)) then
       D = Z(3)
@@ -232,11 +232,11 @@ pure subroutine DLASQ2(N, Z, INFO)
   do K = 1, 2 * (N - 1), 2
     if (Z(K) < ZERO) then
       INFO = -(200 + K)
-      !CALL XERBLA( 'DLASQ2', 2 )
+      !CALL XERBLA( 'mobbrmsd_DLASQ2', 2 )
       return
     else if (Z(K + 1) < ZERO) then
       INFO = -(200 + K + 1)
-      !CALL XERBLA( 'DLASQ2', 2 )
+      !CALL XERBLA( 'mobbrmsd_DLASQ2', 2 )
       return
     end if
     D = D + Z(K)
@@ -247,7 +247,7 @@ pure subroutine DLASQ2(N, Z, INFO)
   end do
   if (Z(2 * N - 1) < ZERO) then
     INFO = -(200 + 2 * N - 1)
-    !CALL XERBLA( 'DLASQ2', 2 )
+    !CALL XERBLA( 'mobbrmsd_DLASQ2', 2 )
     return
   end if
   D = D + Z(2 * N - 1)
@@ -260,7 +260,7 @@ pure subroutine DLASQ2(N, Z, INFO)
     do K = 2, N
       Z(K) = Z(2 * K - 1)
     end do
-    call DLASRT('D', N, Z, IINFO)
+    call mobbrmsd_DLASRT('D', N, Z, IINFO)
     Z(2 * N - 1) = D
     return
   end if
@@ -276,7 +276,7 @@ pure subroutine DLASQ2(N, Z, INFO)
 !
 !     Check whether the machine is IEEE conformable.
 !
-  IEEE = (ILAENV(10, 'DLASQ2', 'N', 1, 2, 3, 4) == 1)
+  IEEE = (mobbrmsd_ILAENV(10, 'mobbrmsd_DLASQ2', 'N', 1, 2, 3, 4) == 1)
 !
 !     Rearrange data for locality: Z=(q1,qq1,e1,ee1,q2,qq2,e2,ee2,...).
 !
@@ -356,7 +356,7 @@ pure subroutine DLASQ2(N, Z, INFO)
     PP = 1 - PP
   end do
 !
-!     Initialise variables to pass to DLASQ3.
+!     Initialise variables to pass to mobbrmsd_DLASQ3.
 !
   TTYPE = 0
   DMIN1 = ZERO
@@ -455,7 +455,7 @@ pure subroutine DLASQ2(N, Z, INFO)
 !        Now I0:N0 is unreduced.
 !        PP = 0 for ping, PP = 1 for pong.
 !        PP = 2 indicates that flipping was applied to the Z array and
-!               and that the tests for deflation upon entry in DLASQ3
+!               and that the tests for deflation upon entry in mobbrmsd_DLASQ3
 !               should not be performed.
 !
     NBIG = 100 * (N0 - I0 + 1)
@@ -464,7 +464,7 @@ pure subroutine DLASQ2(N, Z, INFO)
 !
 !           While submatrix unfinished take a good dqds step.
 !
-      call DLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL, &
+      call mobbrmsd_DLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL, &
      &             ITER, NDIV, IEEE, TTYPE, DMIN1, DMIN2, DN, DN1, &
      &             DN2, G, TAU)
 !
@@ -566,7 +566,7 @@ pure subroutine DLASQ2(N, Z, INFO)
 !
 !     Sort and compute sum of eigenvalues.
 !
-  call DLASRT('D', N, Z, IINFO)
+  call mobbrmsd_DLASRT('D', N, Z, IINFO)
 !
   E = ZERO
   do K = N, 1, -1
@@ -582,6 +582,6 @@ pure subroutine DLASQ2(N, Z, INFO)
   Z(2 * N + 5) = HUNDRD * NFAIL / DBLE(ITER)
   return
 !
-!     End of DLASQ2
+!     End of mobbrmsd_DLASQ2
 !
-end subroutine DLASQ2
+end subroutine mobbrmsd_DLASQ2

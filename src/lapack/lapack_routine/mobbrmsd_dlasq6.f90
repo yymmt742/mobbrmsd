@@ -1,4 +1,4 @@
-!> \brief \b DLASQ6 computes one dqd transform in ping-pong form. Used by sbdsqr and sstegr.
+!> \brief \b mobbrmsd_DLASQ6 computes one dqd transform in ping-pong form. Used by sbdsqr and sstegr.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DLASQ6 + dependencies
+!> Download mobbrmsd_DLASQ6 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlasq6.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlasq6.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DLASQ6( I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN,
+!       SUBROUTINE mobbrmsd_DLASQ6( I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN,
 !                          DNM1, DNM2 )
 !
 !       .. Scalar Arguments ..
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> DLASQ6 computes one dqd (shift equal to zero) transform in
+!> mobbrmsd_DLASQ6 computes one dqd (shift equal to zero) transform in
 !> ping-pong form, with protection against underflow and overflow.
 !> \endverbatim
 !
@@ -114,7 +114,7 @@
 !> \ingroup auxOTHERcomputational
 !
 !  =====================================================================
-pure subroutine DLASQ6(I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN, DNM1, DNM2)
+pure subroutine mobbrmsd_DLASQ6(I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN, DNM1, DNM2)
 ! use LA_CONSTANTS, only: RK => dp
 !
 !  -- LAPACK computational routine --
@@ -143,18 +143,18 @@ pure subroutine DLASQ6(I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN, DNM1, DNM2)
 !     ..
 !     .. External Function ..
 ! interface
-!   pure elemental function DLAMCH(CMACH)
+!   pure elemental function mobbrmsd_DLAMCH(CMACH)
 !     use LA_CONSTANTS, only: RK => dp
 !     character(*), intent(in) :: CMACH
-!     real(RK)                :: DLAMCH
-!   end function DLAMCH
+!     real(RK)                :: mobbrmsd_DLAMCH
+!   end function mobbrmsd_DLAMCH
 ! end interface
 !     ..
 !     .. Executable Statements ..
 !
   if ((N0 - I0 - 1) <= 0) return
 !
-  SAFMIN = DLAMCH('Safe minimum')
+  SAFMIN = mobbrmsd_DLAMCH('Safe minimum')
   J4 = 4 * I0 + PP - 3
   EMIN = Z(J4 + 4)
   D = Z(J4)
@@ -249,7 +249,7 @@ pure subroutine DLASQ6(I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN, DNM1, DNM2)
   Z(4 * N0 - PP) = EMIN
   return
 !
-!     End of DLASQ6
+!     End of mobbrmsd_DLASQ6
 !
-end subroutine DLASQ6
+end subroutine mobbrmsd_DLASQ6
 

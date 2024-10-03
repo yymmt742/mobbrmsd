@@ -1,4 +1,4 @@
-!> \brief \b SGEQRF
+!> \brief \b mobbrmsd_SGEQRF
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SGEQRF + dependencies
+!> Download mobbrmsd_SGEQRF + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sgeqrf.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sgeqrf.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SGEQRF( M, N, A, LDA, TAU, WORK, LWORK, INFO )
+!       SUBROUTINE mobbrmsd_SGEQRF( M, N, A, LDA, TAU, WORK, LWORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, LDA, LWORK, M, N
@@ -33,7 +33,7 @@
 !>
 !> \verbatim
 !>
-!> SGEQRF computes a QR factorization of a real M-by-N matrix A:
+!> mobbrmsd_SGEQRF computes a QR factorization of a real M-by-N matrix A:
 !>
 !>    A = Q * ( R ),
 !>            ( 0 )
@@ -143,7 +143,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine SGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
+pure subroutine mobbrmsd_SGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
   implicit none
 !
 !  -- LAPACK computational routine (version 3.9.0) --
@@ -184,7 +184,7 @@ pure subroutine SGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 ! Test the input arguments
 !
   INFO = 0
-  NB = ILAENV(1, 'SGEQRF', ' ', M, N, -1, -1)
+  NB = mobbrmsd_ILAENV(1, 'mobbrmsd_SGEQRF', ' ', M, N, -1, -1)
   LWKOPT = N * NB
   WORK(1) = LWKOPT
   LQUERY = (LWORK == -1)
@@ -198,7 +198,7 @@ pure subroutine SGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
     INFO = -7
   end if
   if (INFO /= 0) then
-!   call XERBLA('SGEQRF', -INFO)
+!   call XERBLA('mobbrmsd_SGEQRF', -INFO)
     return
   else if (LQUERY) then
     return
@@ -219,7 +219,7 @@ pure subroutine SGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !
 !Determine when to cross over from blocked to unblocked code.
 !
-    NX = MAX(0, ILAENV(3, 'SGEQRF', ' ', M, N, -1, -1))
+    NX = MAX(0, mobbrmsd_ILAENV(3, 'mobbrmsd_SGEQRF', ' ', M, N, -1, -1))
     if (NX < K) then
 !
 !Determine if workspace is large enough for blocked code.
@@ -232,7 +232,7 @@ pure subroutine SGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !determine the minimum value of NB.
 !
         NB = LWORK / LDWORK
-        NBMIN = MAX(2, ILAENV(2, 'SGEQRF', ' ', M, N, -1, -1))
+        NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'mobbrmsd_SGEQRF', ' ', M, N, -1, -1))
       end if
     end if
   end if
@@ -247,17 +247,17 @@ pure subroutine SGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 ! Compute the QR factorization of the current block
 ! A(i:m, i:i + ib - 1)
 !
-      call SGEQR2(M - I + 1, IB, A(I, I), LDA, TAU(I), WORK, IINFO)
+      call mobbrmsd_SGEQR2(M - I + 1, IB, A(I, I), LDA, TAU(I), WORK, IINFO)
       if (I + IB <= N) then
 !
 ! Form the triangular factor of the block reflector
 ! H = H(i) H(i + 1) ...H(i + ib - 1)
 !
-        call SLARFT('Forward', 'Columnwise', M - I + 1, IB, A(I, I), LDA, TAU(I), WORK, LDWORK)
+        call mobbrmsd_SLARFT('Forward', 'Columnwise', M - I + 1, IB, A(I, I), LDA, TAU(I), WORK, LDWORK)
 !
 ! Apply H**T to A(i:m, i + ib:n) from the left
 !
-        call SLARFB('Left', 'Transpose', 'Forward', &
+        call mobbrmsd_SLARFB('Left', 'Transpose', 'Forward', &
             &       'Columnwise', M - I + 1, N - I - IB + 1, IB, &
             &       A(I, I), LDA, WORK, LDWORK, A(I, I + IB), &
             &       LDA, WORK(IB + 1), LDWORK)
@@ -269,11 +269,11 @@ pure subroutine SGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !
 ! use unblocked code to factor the last or only block.
 !
-  if (I <= K) call SGEQR2(M - I + 1, N - I + 1, A(I, I), LDA, TAU(I), WORK, IINFO)
+  if (I <= K) call mobbrmsd_SGEQR2(M - I + 1, N - I + 1, A(I, I), LDA, TAU(I), WORK, IINFO)
 !
   WORK(1) = IWS
   return
 !
-! end of SGEQRF
+! end of mobbrmsd_SGEQRF
 !
 end

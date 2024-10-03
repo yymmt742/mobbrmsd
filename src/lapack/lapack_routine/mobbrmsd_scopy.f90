@@ -1,4 +1,4 @@
-!> \brief \b SCOPY
+!> \brief \b mobbrmsd_SCOPY
 !
 !=========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !Definition:
 !===========
 !
-!     SUBROUTINE SCOPY(N,SX,INCX,SY,INCY)
+!     SUBROUTINE mobbrmsd_SCOPY(N,SX,INCX,SY,INCY)
 !
 !     .. Scalar Arguments ..
 !     INTEGER INCX,INCY,N
@@ -23,7 +23,7 @@
 !>
 !> \verbatim
 !>
-!>    SCOPY copies a vector, x, to a vector, y.
+!>    mobbrmsd_SCOPY copies a vector, x, to a vector, y.
 !>    uses unrolled loops for increments equal to 1.
 !> \endverbatim
 !
@@ -80,7 +80,7 @@
 !> \endverbatim
 !>
 !=====================================================================
-pure subroutine SCOPY(N, SX, INCX, SY, INCY)
+pure subroutine mobbrmsd_SCOPY(N, SX, INCX, SY, INCY)
   implicit none
 !
 !-- Reference BLAS level1 routine (version 3.8.0) --

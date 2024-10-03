@@ -1,4 +1,4 @@
-!> \brief \b DGELQ2 computes the LQ factorization of a general rectangular matrix using an unblocked algorithm.
+!> \brief \b mobbrmsd_DGELQ2 computes the LQ factorization of a general rectangular matrix using an unblocked algorithm.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DGELQ2 + dependencies
+!> Download mobbrmsd_DGELQ2 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dgelq2.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dgelq2.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DGELQ2( M, N, A, LDA, TAU, WORK, INFO )
+!       SUBROUTINE mobbrmsd_DGELQ2( M, N, A, LDA, TAU, WORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, LDA, M, N
@@ -33,7 +33,7 @@
 !>
 !> \verbatim
 !>
-!> DGELQ2 computes an LQ factorization of a real m-by-n matrix A:
+!> mobbrmsd_DGELQ2 computes an LQ factorization of a real m-by-n matrix A:
 !>
 !>    A = ( L 0 ) *  Q
 !>
@@ -125,7 +125,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DGELQ2(M, N, A, LDA, TAU, WORK, INFO)
+pure subroutine mobbrmsd_DGELQ2(M, N, A, LDA, TAU, WORK, INFO)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -174,7 +174,7 @@ pure subroutine DGELQ2(M, N, A, LDA, TAU, WORK, INFO)
     INFO = -4
   end if
   if (INFO /= 0) then
-!   !CALL XERBLA( 'DGELQ2', -INFO )
+!   !CALL XERBLA( 'mobbrmsd_DGELQ2', -INFO )
     return
   end if
 !
@@ -184,19 +184,19 @@ pure subroutine DGELQ2(M, N, A, LDA, TAU, WORK, INFO)
 !
 !        Generate elementary reflector H(i) to annihilate A(i,i+1:n)
 !
-    call DLARFG(N - I + 1, A(I, I), A(I, MIN(I + 1, N)), LDA, TAU(I))
+    call mobbrmsd_DLARFG(N - I + 1, A(I, I), A(I, MIN(I + 1, N)), LDA, TAU(I))
     if (I < M) then
 !
 !           Apply H(i) to A(i+1:m,i:n) from the right
 !
       AII = A(I, I)
       A(I, I) = ONE
-      call DLARF('Right', M - I, N - I + 1, A(I, I), LDA, TAU(I), A(I + 1, I), LDA, WORK)
+      call mobbrmsd_DLARF('Right', M - I, N - I + 1, A(I, I), LDA, TAU(I), A(I + 1, I), LDA, WORK)
       A(I, I) = AII
     end if
   end do
   return
 !
-!     End of DGELQ2
+!     End of mobbrmsd_DGELQ2
 !
-end subroutine DGELQ2
+end subroutine mobbrmsd_DGELQ2

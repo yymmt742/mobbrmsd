@@ -1,4 +1,4 @@
-!> \brief \b LSAME
+!> \brief \b mobbrmsd_LSAME
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       LOGICAL FUNCTION LSAME(CA,CB)
+!       LOGICAL FUNCTION mobbrmsd_LSAME(CA,CB)
 !
 !       .. Scalar Arguments ..
 !       CHARACTER CA,CB
@@ -20,7 +20,7 @@
 !>
 !> \verbatim
 !>
-!> LSAME returns .TRUE. if CA is the same letter as CB regardless of
+!> mobbrmsd_LSAME returns .TRUE. if CA is the same letter as CB regardless of
 !> case.
 !> \endverbatim
 !
@@ -49,7 +49,7 @@
 !> \ingroup aux_blas
 !
 !  =====================================================================
-pure elemental function LSAME(CA, CB)
+pure elemental function mobbrmsd_LSAME(CA, CB)
   implicit none
 !
 !  -- Reference BLAS level1 routine --
@@ -58,7 +58,7 @@ pure elemental function LSAME(CA, CB)
 !
 !     .. Scalar Arguments ..
   character, intent(in) :: CA, CB
-  logical               :: LSAME
+  logical               :: mobbrmsd_LSAME
 !     ..
 !
 ! =====================================================================
@@ -72,8 +72,8 @@ pure elemental function LSAME(CA, CB)
 !
 !     Test if the characters are equal
 !
-  LSAME = CA == CB
-  if (LSAME) return
+  mobbrmsd_LSAME = CA == CB
+  if (mobbrmsd_LSAME) return
 !
 !     Now test for equivalence if both characters are alphabetic.
 !
@@ -115,10 +115,10 @@ pure elemental function LSAME(CA, CB)
     if (INTA >= 225 .and. INTA <= 250) INTA = INTA - 32
     if (INTB >= 225 .and. INTB <= 250) INTB = INTB - 32
   end if
-  LSAME = INTA == INTB
+  mobbrmsd_LSAME = INTA == INTB
 !
   return
 !
-!     End of LSAME
+!     End of mobbrmsd_LSAME
 !
-end function LSAME
+end function mobbrmsd_LSAME

@@ -1,4 +1,4 @@
-!> \brief \b DROT
+!> \brief \b mobbrmsd_DROT
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DROT(N,DX,INCX,DY,INCY,C,S)
+!       SUBROUTINE mobbrmsd_DROT(N,DX,INCX,DY,INCY,C,S)
 !
 !       .. Scalar Arguments ..
 !       DOUBLE PRECISION C,S
@@ -24,7 +24,7 @@
 !>
 !> \verbatim
 !>
-!>    DROT applies a plane rotation.
+!>    mobbrmsd_DROT applies a plane rotation.
 !> \endverbatim
 !
 !  Arguments:
@@ -88,7 +88,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DROT(N, DX, INCX, DY, INCY, C, S)
+pure subroutine mobbrmsd_DROT(N, DX, INCX, DY, INCY, C, S)
 ! use LA_CONSTANTS, only: RK => dp
 !
 !  -- Reference BLAS level1 routine --
@@ -138,7 +138,7 @@ pure subroutine DROT(N, DX, INCX, DY, INCY, C, S)
   end if
   return
 !
-!     End of DROT
+!     End of mobbrmsd_DROT
 !
-end subroutine DROT
+end subroutine mobbrmsd_DROT
 

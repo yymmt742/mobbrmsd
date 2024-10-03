@@ -1,4 +1,4 @@
-!> \brief \b SSCAL
+!> \brief \b mobbrmsd_SSCAL
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SSCAL(N,SA,SX,INCX)
+!       SUBROUTINE mobbrmsd_SSCAL(N,SA,SX,INCX)
 !
 !       .. Scalar Arguments ..
 !       REAL SA
@@ -24,7 +24,7 @@
 !>
 !> \verbatim
 !>
-!>    SSCAL scales a vector by a constant.
+!>    mobbrmsd_SSCAL scales a vector by a constant.
 !>    uses unrolled loops for increment equal to 1.
 !> \endverbatim
 !
@@ -77,7 +77,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine SSCAL(N, SA, SX, INCX)
+pure subroutine mobbrmsd_SSCAL(N, SA, SX, INCX)
   implicit none
 !
 !  -- Reference BLAS level1 routine (version 3.8.0) --

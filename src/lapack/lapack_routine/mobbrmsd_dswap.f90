@@ -1,4 +1,4 @@
-!> \brief \b DSWAP
+!> \brief \b mobbrmsd_DSWAP
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DSWAP(N,DX,INCX,DY,INCY)
+!       SUBROUTINE mobbrmsd_DSWAP(N,DX,INCX,DY,INCY)
 !
 !       .. Scalar Arguments ..
 !       INTEGER INCX,INCY,N
@@ -23,7 +23,7 @@
 !>
 !> \verbatim
 !>
-!>    DSWAP interchanges two vectors.
+!>    mobbrmsd_DSWAP interchanges two vectors.
 !>    uses unrolled loops for increments equal to 1.
 !> \endverbatim
 !
@@ -78,7 +78,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DSWAP(N, DX, INCX, DY, INCY)
+pure subroutine mobbrmsd_DSWAP(N, DX, INCX, DY, INCY)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -160,7 +160,7 @@ pure subroutine DSWAP(N, DX, INCX, DY, INCY)
   end if
   return
 !
-!     End of DSWAP
+!     End of mobbrmsd_DSWAP
 !
-end subroutine DSWAP
+end subroutine mobbrmsd_DSWAP
 

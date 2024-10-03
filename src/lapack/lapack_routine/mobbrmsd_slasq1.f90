@@ -1,4 +1,4 @@
-!> \brief \b SLASQ1 computes the singular values of a real square bidiagonal matrix. Used by sbdsqr.
+!> \brief \b mobbrmsd_SLASQ1 computes the singular values of a real square bidiagonal matrix. Used by sbdsqr.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLASQ1 + dependencies
+!> Download mobbrmsd_SLASQ1 + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slasq1.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slasq1.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLASQ1( N, D, E, WORK, INFO )
+!       SUBROUTINE mobbrmsd_SLASQ1( N, D, E, WORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, N
@@ -33,7 +33,7 @@
 !>
 !> \verbatim
 !>
-!> SLASQ1 computes the singular values of a real N-by-N bidiagonal
+!> mobbrmsd_SLASQ1 computes the singular values of a real N-by-N bidiagonal
 !> matrix with diagonal D and off-diagonal E. The singular values
 !> are computed to high relative accuracy, in the absence of
 !> denormalization, underflow and overflow. The algorithm was first
@@ -88,7 +88,7 @@
 !>                  iterations (in inner while loop)  On exit D and E
 !>                  represent a matrix with the same singular values
 !>                  which the calling subroutine could use to finish the
-!>                  computation, or even feed back into SLASQ1
+!>                  computation, or even feed back into mobbrmsd_SLASQ1
 !>             = 3, termination criterion of outer while loop not met
 !>                  (program created more than N unreduced blocks)
 !> \endverbatim
@@ -106,7 +106,7 @@
 !> \ingroup auxOTHERcomputational
 !
 !  =====================================================================
-pure subroutine SLASQ1(N, D, E, WORK, INFO)
+pure subroutine mobbrmsd_SLASQ1(N, D, E, WORK, INFO)
   implicit none
 !
 !  -- LAPACK computational routine (version 3.7.0) --
@@ -152,7 +152,7 @@ pure subroutine SLASQ1(N, D, E, WORK, INFO)
   INFO = 0
   if (N < 0) then
     INFO = -1
-!   call XERBLA('SLASQ1', -INFO)
+!   call XERBLA('mobbrmsd_SLASQ1', -INFO)
     return
   else if (N == 0) then
     return
@@ -160,7 +160,7 @@ pure subroutine SLASQ1(N, D, E, WORK, INFO)
     D(1) = ABS(D(1))
     return
   else if (N == 2) then
-    call SLAS2(D(1), E(1), D(2), SIGMN, SIGMX)
+    call mobbrmsd_SLAS2(D(1), E(1), D(2), SIGMN, SIGMX)
     D(1) = SIGMX
     D(2) = SIGMN
     return
@@ -178,7 +178,7 @@ pure subroutine SLASQ1(N, D, E, WORK, INFO)
 ! Early return if SIGMX is zero(matrix is already diagonal).
 !
   if (SIGMX == ZERO) then
-    call SLASRT('D', N, D, IINFO)
+    call mobbrmsd_SLASRT('D', N, D, IINFO)
     return
   end if
 !
@@ -189,12 +189,12 @@ pure subroutine SLASQ1(N, D, E, WORK, INFO)
 ! Copy D and E into WORK(in the Z format) and SCL(squaring the
 ! input data makes scaling by a power of the radix pointless).
 !
-  EPS = SLAMCH('Precision')
-  SAFMIN = SLAMCH('Safe minimum')
+  EPS = mobbrmsd_SLAMCH('Precision')
+  SAFMIN = mobbrmsd_SLAMCH('Safe minimum')
   SCL = SQRT(EPS / SAFMIN)
-  call SCOPY(N, D, 1, WORK(1), 2)
-  call SCOPY(N - 1, E, 1, WORK(2), 2)
-  call SLASCL('G', 0, 0, SIGMX, SCL, 2 * N - 1, 1, WORK, 2 * N - 1, IINFO)
+  call mobbrmsd_SCOPY(N, D, 1, WORK(1), 2)
+  call mobbrmsd_SCOPY(N - 1, E, 1, WORK(2), 2)
+  call mobbrmsd_SLASCL('G', 0, 0, SIGMX, SCL, 2 * N - 1, 1, WORK, 2 * N - 1, IINFO)
 !
 ! Compute the q's and e's.
 !
@@ -203,13 +203,13 @@ pure subroutine SLASQ1(N, D, E, WORK, INFO)
   end do
   WORK(2 * N) = ZERO
 !
-  call SLASQ2(N, WORK, INFO)
+  call mobbrmsd_SLASQ2(N, WORK, INFO)
 !
   if (INFO == 0) then
     do I = 1, N
       D(I) = SQRT(WORK(I))
     end do
-    call SLASCL('G', 0, 0, SCL, SIGMX, N, 1, D, N, IINFO)
+    call mobbrmsd_SLASCL('G', 0, 0, SCL, SIGMX, N, 1, D, N, IINFO)
   else if (INFO == 2) then
 !
 !Maximum number of iterations exceeded.Move data from WORK
@@ -219,12 +219,12 @@ pure subroutine SLASQ1(N, D, E, WORK, INFO)
       D(I) = SQRT(WORK(2 * I - 1))
       E(I) = SQRT(WORK(2 * I))
     end do
-    call SLASCL('G', 0, 0, SCL, SIGMX, N, 1, D, N, IINFO)
-    call SLASCL('G', 0, 0, SCL, SIGMX, N, 1, E, N, IINFO)
+    call mobbrmsd_SLASCL('G', 0, 0, SCL, SIGMX, N, 1, D, N, IINFO)
+    call mobbrmsd_SLASCL('G', 0, 0, SCL, SIGMX, N, 1, E, N, IINFO)
   end if
 !
   return
 !
-!end of SLASQ1
+!end of mobbrmsd_SLASQ1
 !
 end

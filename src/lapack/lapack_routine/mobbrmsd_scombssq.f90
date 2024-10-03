@@ -1,4 +1,4 @@
-!> \brief \b SCOMBSSQ adds two scaled sum of squares quantities
+!> \brief \b mobbrmsd_SCOMBSSQ adds two scaled sum of squares quantities
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -9,7 +9,7 @@
 !  Definition:
 !  ===========
 !
-!   SUBROUTINE SCOMBSSQ( V1, V2 )
+!   SUBROUTINE mobbrmsd_SCOMBSSQ( V1, V2 )
 !
 !   .. Array Arguments ..
 !   REAL               V1( 2 ), V2( 2 )
@@ -21,7 +21,7 @@
 !>
 !> \verbatim
 !>
-!> SCOMBSSQ adds two scaled sum of squares quantities, V1 := V1 + V2.
+!> mobbrmsd_SCOMBSSQ adds two scaled sum of squares quantities, V1 := V1 + V2.
 !> That is,
 !>
 !>    V1_scale!!2 ! V1_sumsq := V1_scale!!2 ! V1_sumsq
@@ -58,7 +58,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure subroutine SCOMBSSQ(V1, V2)
+pure subroutine mobbrmsd_SCOMBSSQ(V1, V2)
   implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
@@ -91,6 +91,6 @@ pure subroutine SCOMBSSQ(V1, V2)
   end if
   return
 !
-! End of SCOMBSSQ
+! End of mobbrmsd_SCOMBSSQ
 !
 end

@@ -1,4 +1,4 @@
-!> \brief \b SORGLQ
+!> \brief \b mobbrmsd_SORGLQ
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SORGLQ + dependencies
+!> Download mobbrmsd_SORGLQ + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sorglq.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sorglq.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SORGLQ( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
+!       SUBROUTINE mobbrmsd_SORGLQ( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, K, LDA, LWORK, M, N
@@ -33,13 +33,13 @@
 !>
 !> \verbatim
 !>
-!> SORGLQ generates an M-by-N real matrix Q with orthonormal rows,
+!> mobbrmsd_SORGLQ generates an M-by-N real matrix Q with orthonormal rows,
 !> which is defined as the first M rows of a product of K elementary
 !> reflectors of order N
 !>
 !>       Q  =  H(k) . . . H(2) H(1)
 !>
-!> as returned by SGELQF.
+!> as returned by mobbrmsd_SGELQF.
 !> \endverbatim
 !
 !  Arguments:
@@ -69,7 +69,7 @@
 !>          A is REAL array, dimension (LDA,N)
 !>          On entry, the i-th row must contain the vector which defines
 !>          the elementary reflector H(i), for i = 1,2,...,k, as returned
-!>          by SGELQF in the first k rows of its array argument A.
+!>          by mobbrmsd_SGELQF in the first k rows of its array argument A.
 !>          On exit, the M-by-N matrix Q.
 !> \endverbatim
 !>
@@ -83,7 +83,7 @@
 !> \verbatim
 !>          TAU is REAL array, dimension (K)
 !>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i), as returned by SGELQF.
+!>          reflector H(i), as returned by mobbrmsd_SGELQF.
 !> \endverbatim
 !>
 !> \param[out] WORK
@@ -125,7 +125,7 @@
 !> \ingroup realOTHERcomputational
 !
 !  =====================================================================
-pure subroutine SORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
+pure subroutine mobbrmsd_SORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !
 !  -- LAPACK computational routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -168,7 +168,7 @@ pure subroutine SORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
 !Test the input arguments
 !
   INFO = 0
-  NB = ILAENV(1, 'SORGLQ', ' ', M, N, K, -1)
+  NB = mobbrmsd_ILAENV(1, 'mobbrmsd_SORGLQ', ' ', M, N, K, -1)
   LWKOPT = MAX(1, M) * NB
   WORK(1) = LWKOPT
   LQUERY = (LWORK == -1)
@@ -184,7 +184,7 @@ pure subroutine SORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
     INFO = -8
   end if
   if (INFO /= 0) then
-!   call XERBLA('SORGLQ', -INFO)
+!   call XERBLA('mobbrmsd_SORGLQ', -INFO)
     return
   else if (LQUERY) then
     return
@@ -204,7 +204,7 @@ pure subroutine SORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
     !
     !Determine when to cross over from blocked to unblocked code.
     !
-    NX = MAX(0, ILAENV(3, 'SORGLQ', ' ', M, N, K, -1))
+    NX = MAX(0, mobbrmsd_ILAENV(3, 'mobbrmsd_SORGLQ', ' ', M, N, K, -1))
     if (NX < K) then
       !
       !Determine if workspace is large enough for blocked code.
@@ -217,7 +217,7 @@ pure subroutine SORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
         !determine the minimum value of NB.
         !
         NB = LWORK / LDWORK
-        NBMIN = MAX(2, ILAENV(2, 'SORGLQ', ' ', M, N, K, -1))
+        NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'mobbrmsd_SORGLQ', ' ', M, N, K, -1))
       end if
     end if
   end if
@@ -243,7 +243,7 @@ pure subroutine SORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
   !
   !use unblocked code for the last or only block.
   !
-  if (KK < M) call SORGL2(M - KK, N - KK, K - KK, A(KK + 1, KK + 1), LDA, TAU(KK + 1), WORK, IINFO)
+  if (KK < M) call mobbrmsd_SORGL2(M - KK, N - KK, K - KK, A(KK + 1, KK + 1), LDA, TAU(KK + 1), WORK, IINFO)
   !
   if (KK > 0) then
     !
@@ -256,18 +256,18 @@ pure subroutine SORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
         !Form the triangular factor of the block reflector
         !H = H(i) H(i + 1) ...H(i + ib - 1)
         !
-        call SLARFT('Forward', 'Rowwise', N - I + 1, IB, A(I, I), LDA, TAU(I), WORK, LDWORK)
+        call mobbrmsd_SLARFT('Forward', 'Rowwise', N - I + 1, IB, A(I, I), LDA, TAU(I), WORK, LDWORK)
         !
         !Apply H**T to A(i + ib:m, i:n) from the right
         !
-        call SLARFB('Right', 'Transpose', 'Forward', 'Rowwise', &
+        call mobbrmsd_SLARFB('Right', 'Transpose', 'Forward', 'Rowwise', &
             &       M - I - IB + 1, N - I + 1, IB, A(I, I), LDA, WORK, &
             &       LDWORK, A(I + IB, I), LDA, WORK(IB + 1), LDWORK)
       end if
       !
       !Apply H**T to columns i:n of current block
       !
-      call SORGL2(IB, N - I + 1, IB, A(I, I), LDA, TAU(I), WORK, IINFO)
+      call mobbrmsd_SORGL2(IB, N - I + 1, IB, A(I, I), LDA, TAU(I), WORK, IINFO)
       !
       !Set columns 1:i - 1 of current block to zero
       !
@@ -282,6 +282,6 @@ pure subroutine SORGLQ(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
   WORK(1) = IWS
   return
   !
-  !end of SORGLQ
+  !end of mobbrmsd_SORGLQ
   !
 end

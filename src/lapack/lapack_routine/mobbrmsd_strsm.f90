@@ -1,4 +1,4 @@
-!> \brief \b STRSM
+!> \brief \b mobbrmsd_STRSM
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE STRSM(SIDE,UPLO,TRANSA,DIAG,M,N,ALPHA,A,LDA,B,LDB)
+!       SUBROUTINE mobbrmsd_STRSM(SIDE,UPLO,TRANSA,DIAG,M,N,ALPHA,A,LDA,B,LDB)
 !
 !       .. Scalar Arguments ..
 !       REAL ALPHA
@@ -25,7 +25,7 @@
 !>
 !> \verbatim
 !>
-!> STRSM  solves one of the matrix equations
+!> mobbrmsd_STRSM  solves one of the matrix equations
 !>
 !>    op( A )*X = alpha*B,   or   X*op( A ) = alpha*B,
 !>
@@ -179,7 +179,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine STRSM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B, LDB)
+pure subroutine mobbrmsd_STRSM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B, LDB)
   implicit none
 !
 !  -- Reference BLAS level3 routine (version 3.7.0) --
@@ -217,25 +217,25 @@ pure subroutine STRSM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B, LDB)
 !..
 !Test the input parameters.
 !
-  LSIDE = LSAME(SIDE, 'L')
+  LSIDE = mobbrmsd_LSAME(SIDE, 'L')
   if (LSIDE) then
     NROWA = M
   else
     NROWA = N
   end if
-  NOUNIT = LSAME(DIAG, 'N')
-  UPPER = LSAME(UPLO, 'U')
+  NOUNIT = mobbrmsd_LSAME(DIAG, 'N')
+  UPPER = mobbrmsd_LSAME(UPLO, 'U')
 !
   INFO = 0
-  if ((.not. LSIDE) .and. (.not. LSAME(SIDE, 'R'))) then
+  if ((.not. LSIDE) .and. (.not. mobbrmsd_LSAME(SIDE, 'R'))) then
     INFO = 1
-  else if ((.not. UPPER) .and. (.not. LSAME(UPLO, 'L'))) then
+  else if ((.not. UPPER) .and. (.not. mobbrmsd_LSAME(UPLO, 'L'))) then
     INFO = 2
-  else if ((.not. LSAME(TRANSA, 'N')) .and. &
-        & (.not. LSAME(TRANSA, 'T')) .and. &
-        & (.not. LSAME(TRANSA, 'C'))) then
+  else if ((.not. mobbrmsd_LSAME(TRANSA, 'N')) .and. &
+        & (.not. mobbrmsd_LSAME(TRANSA, 'T')) .and. &
+        & (.not. mobbrmsd_LSAME(TRANSA, 'C'))) then
     INFO = 3
-  else if ((.not. LSAME(DIAG, 'U')) .and. (.not. LSAME(DIAG, 'N'))) then
+  else if ((.not. mobbrmsd_LSAME(DIAG, 'U')) .and. (.not. mobbrmsd_LSAME(DIAG, 'N'))) then
     INFO = 4
   else if (M < 0) then
     INFO = 5
@@ -247,7 +247,7 @@ pure subroutine STRSM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B, LDB)
     INFO = 11
   end if
   if (INFO /= 0) then
-!   call XERBLA('STRSM ', INFO)
+!   call XERBLA('mobbrmsd_STRSM ', INFO)
     return
   end if
 !
@@ -269,7 +269,7 @@ pure subroutine STRSM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B, LDB)
   !Start the operations.
   !
   if (LSIDE) then
-    if (LSAME(TRANSA, 'N')) then
+    if (mobbrmsd_LSAME(TRANSA, 'N')) then
       !
       !Form B: = alpha * inv(A) * B.
       !
@@ -335,7 +335,7 @@ pure subroutine STRSM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B, LDB)
       end if
     end if
   else
-    if (LSAME(TRANSA, 'N')) then
+    if (mobbrmsd_LSAME(TRANSA, 'N')) then
       !
       !Form B: = alpha * B * inv(A) .
       !
@@ -436,6 +436,6 @@ pure subroutine STRSM(SIDE, UPLO, TRANSA, DIAG, M, N, ALPHA, A, LDA, B, LDB)
   !
   return
   !
-  !end of STRSM.
+  !end of mobbrmsd_STRSM.
   !
 end

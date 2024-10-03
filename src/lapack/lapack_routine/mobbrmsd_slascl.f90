@@ -1,4 +1,4 @@
-!> \brief \b SLASCL multiplies a general rectangular matrix by a real scalar defined as cto/cfrom.
+!> \brief \b mobbrmsd_SLASCL multiplies a general rectangular matrix by a real scalar defined as cto/cfrom.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLASCL + dependencies
+!> Download mobbrmsd_SLASCL + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slascl.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slascl.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLASCL( TYPE, KL, KU, CFROM, CTO, M, N, A, LDA, INFO )
+!       SUBROUTINE mobbrmsd_SLASCL( TYPE, KL, KU, CFROM, CTO, M, N, A, LDA, INFO )
 !
 !       .. Scalar Arguments ..
 !       CHARACTER          TYPE
@@ -35,7 +35,7 @@
 !>
 !> \verbatim
 !>
-!> SLASCL multiplies the M by N real matrix A by the real scalar
+!> mobbrmsd_SLASCL multiplies the M by N real matrix A by the real scalar
 !> CTO/CFROM.  This is done without over/underflow as long as the final
 !> result CTO*A(I,J)/CFROM does not over/underflow. TYPE specifies that
 !> A may be full, upper triangular, lower triangular, upper Hessenberg,
@@ -141,7 +141,7 @@
 !> \ingroup OTHERauxiliary
 !
 !  =====================================================================
-pure subroutine SLASCL(type, KL, KU, CFROM, CTO, M, N, A, LDA, INFO)
+pure subroutine mobbrmsd_SLASCL(type, KL, KU, CFROM, CTO, M, N, A, LDA, INFO)
   implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
@@ -186,19 +186,19 @@ pure subroutine SLASCL(type, KL, KU, CFROM, CTO, M, N, A, LDA, INFO)
 !
   INFO = 0
 !
-  if (LSAME(type, 'G')) then
+  if (mobbrmsd_LSAME(type, 'G')) then
     ITYPE = 0
-  else if (LSAME(type, 'L')) then
+  else if (mobbrmsd_LSAME(type, 'L')) then
     ITYPE = 1
-  else if (LSAME(type, 'U')) then
+  else if (mobbrmsd_LSAME(type, 'U')) then
     ITYPE = 2
-  else if (LSAME(type, 'H')) then
+  else if (mobbrmsd_LSAME(type, 'H')) then
     ITYPE = 3
-  else if (LSAME(type, 'B')) then
+  else if (mobbrmsd_LSAME(type, 'B')) then
     ITYPE = 4
-  else if (LSAME(type, 'Q')) then
+  else if (mobbrmsd_LSAME(type, 'Q')) then
     ITYPE = 5
-  else if (LSAME(type, 'Z')) then
+  else if (mobbrmsd_LSAME(type, 'Z')) then
     ITYPE = 6
   else
     ITYPE = -1
@@ -206,9 +206,9 @@ pure subroutine SLASCL(type, KL, KU, CFROM, CTO, M, N, A, LDA, INFO)
 !
   if (ITYPE == -1) then
     INFO = -1
-  else if (CFROM == ZERO .or. SISNAN(CFROM)) then
+  else if (CFROM == ZERO .or. mobbrmsd_SISNAN(CFROM)) then
     INFO = -4
-  else if (SISNAN(CTO)) then
+  else if (mobbrmsd_SISNAN(CTO)) then
     INFO = -5
   else if (M < 0) then
     INFO = -6
@@ -230,7 +230,7 @@ pure subroutine SLASCL(type, KL, KU, CFROM, CTO, M, N, A, LDA, INFO)
   end if
 !
   if (INFO /= 0) then
-!   call XERBLA('SLASCL', -INFO)
+!   call XERBLA('mobbrmsd_SLASCL', -INFO)
     return
   end if
 !
@@ -240,7 +240,7 @@ pure subroutine SLASCL(type, KL, KU, CFROM, CTO, M, N, A, LDA, INFO)
 !
 !Get machine parameters
 !
-  SMLNUM = SLAMCH('S')
+  SMLNUM = mobbrmsd_SLAMCH('S')
   BIGNUM = ONE / SMLNUM
 !
   CFROMC = CFROM
@@ -362,6 +362,6 @@ pure subroutine SLASCL(type, KL, KU, CFROM, CTO, M, N, A, LDA, INFO)
   !
   return
   !
-  !end of SLASCL
+  !end of mobbrmsd_SLASCL
   !
 end

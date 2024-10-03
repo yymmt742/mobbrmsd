@@ -1,4 +1,4 @@
-! > \brief\b ILASLC scans a matrix for its last non - zero column.
+! > \brief\b mobbrmsd_ILASLC scans a matrix for its last non - zero column.
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 ! http://www.netlib.org/lapack/explore-html/
 !
 ! > \htmlonly
-! > Download ILASLC + dependencies
+! > Download mobbrmsd_ILASLC + dependencies
 ! >  < a href = "http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/ilaslc.f" >
 ! > [TGZ] < /a >
 ! >  < a href = "http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/ilaslc.f" >
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!   INTEGER FUNCTION ILASLC( M, N, A, LDA )
+!   INTEGER FUNCTION mobbrmsd_ILASLC( M, N, A, LDA )
 !
 !   .. Scalar Arguments ..
 !   INTEGER            M, N, LDA
@@ -33,7 +33,7 @@
 ! >
 ! > \verbatim
 ! >
-! > ILASLC scans A for its last non - zero column.
+! > mobbrmsd_ILASLC scans A for its last non - zero column.
 ! > \endverbatim
 !
 !  Arguments:
@@ -76,7 +76,7 @@
 ! > \ingroup realOTHERauxiliary
 !
 !  =====================================================================
-pure function ILASLC(M, N, A, LDA)
+pure function mobbrmsd_ILASLC(M, N, A, LDA)
   implicit none
 !
 !  -- LAPACK auxiliary routine (version 3.7.1) --
@@ -89,7 +89,7 @@ pure function ILASLC(M, N, A, LDA)
 ! ..
 ! .. Array Arguments ..
   real(RK), intent(in) :: A(LDA, *)
-  integer              :: ILASLC
+  integer              :: mobbrmsd_ILASLC
 ! ..
 !  =====================================================================
 !
@@ -100,14 +100,14 @@ pure function ILASLC(M, N, A, LDA)
 !
 ! Quick test for the common case where one corner is non-zero.
   if (N == 0) then
-    ILASLC = N
+    mobbrmsd_ILASLC = N
   else if (A(1, N) /= ZERO .or. A(M, N) /= ZERO) then
-    ILASLC = N
+    mobbrmsd_ILASLC = N
   else
 ! Now scan each column from the end, returning with the first non-zero.
-    do ILASLC = N, 1, -1
+    do mobbrmsd_ILASLC = N, 1, -1
       do I = 1, M
-        if (A(I, ILASLC) /= ZERO) return
+        if (A(I, mobbrmsd_ILASLC) /= ZERO) return
       end do
     end do
   end if

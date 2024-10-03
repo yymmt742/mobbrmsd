@@ -1,4 +1,4 @@
-!> \brief\b ISAMAX
+!> \brief\b mobbrmsd_ISAMAX
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,7 +8,7 @@
 !  Definition:
 !  ===========
 !
-!   INTEGER FUNCTION ISAMAX(N,SX,INCX)
+!   INTEGER FUNCTION mobbrmsd_ISAMAX(N,SX,INCX)
 !
 !   .. Scalar Arguments ..
 !   INTEGER INCX,N
@@ -23,7 +23,7 @@
 !>
 !> \verbatim
 !>
-!> ISAMAX finds the index of the first element having maximum absolute value.
+!> mobbrmsd_ISAMAX finds the index of the first element having maximum absolute value.
 !> \endverbatim
 !
 !  Arguments:
@@ -69,7 +69,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure function ISAMAX(N, SX, INCX)
+pure function mobbrmsd_ISAMAX(N, SX, INCX)
   implicit none
 !
 !  -- Reference BLAS level1 routine (version 3.8.0) --
@@ -83,7 +83,7 @@ pure function ISAMAX(N, SX, INCX)
 ! .. Array Arguments ..
   real(RK), intent(in) :: SX(*)
 ! ..
-  integer :: ISAMAX
+  integer :: mobbrmsd_ISAMAX
 !
 !  =====================================================================
 !
@@ -94,9 +94,9 @@ pure function ISAMAX(N, SX, INCX)
 ! .. Intrinsic Functions ..
   intrinsic :: ABS
 ! ..
-  ISAMAX = 0
+  mobbrmsd_ISAMAX = 0
   if (N < 1 .or. INCX <= 0) return
-  ISAMAX = 1
+  mobbrmsd_ISAMAX = 1
   if (N == 1) return
   if (INCX == 1) then
 !
@@ -105,7 +105,7 @@ pure function ISAMAX(N, SX, INCX)
     SMAX = ABS(SX(1))
     do I = 2, N
       if (ABS(SX(I)) > SMAX) then
-        ISAMAX = I
+        mobbrmsd_ISAMAX = I
         SMAX = ABS(SX(I))
       end if
     end do
@@ -118,7 +118,7 @@ pure function ISAMAX(N, SX, INCX)
     IX = IX + INCX
     do I = 2, N
       if (ABS(SX(IX)) > SMAX) then
-        ISAMAX = I
+        mobbrmsd_ISAMAX = I
         SMAX = ABS(SX(IX))
       end if
       IX = IX + INCX

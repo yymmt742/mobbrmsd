@@ -1,4 +1,4 @@
-!> \brief \b SLARFT forms the triangular factor T of a block reflector H = I - vtvH
+!> \brief \b mobbrmsd_SLARFT forms the triangular factor T of a block reflector H = I - vtvH
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download SLARFT + dependencies
+!> Download mobbrmsd_SLARFT + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slarft.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slarft.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE SLARFT( DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT )
+!       SUBROUTINE mobbrmsd_SLARFT( DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT )
 !
 !       .. Scalar Arguments ..
 !       CHARACTER          DIRECT, STOREV
@@ -34,7 +34,7 @@
 !>
 !> \verbatim
 !>
-!> SLARFT forms the triangular factor T of a real block reflector H
+!> mobbrmsd_SLARFT forms the triangular factor T of a real block reflector H
 !> of order n, which is defined as a product of k elementary reflectors.
 !>
 !> If DIRECT = 'F', H = H(1) H(2) . . . H(k) and T is upper triangular;
@@ -161,7 +161,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine SLARFT(DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT)
+pure subroutine mobbrmsd_SLARFT(DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT)
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -200,7 +200,7 @@ pure subroutine SLARFT(DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT)
 !
   if (N == 0) return
 !
-  if (LSAME(DIRECT, 'F')) then
+  if (mobbrmsd_LSAME(DIRECT, 'F')) then
     PREVLASTV = N
     do I = 1, K
       PREVLASTV = MAX(I, PREVLASTV)
@@ -215,7 +215,7 @@ pure subroutine SLARFT(DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT)
 !
 ! general case
 !
-        if (LSAME(STOREV, 'C')) then
+        if (mobbrmsd_LSAME(STOREV, 'C')) then
 ! Skip any trailing zeros.
           do LASTV = N, I + 1, -1
             if (V(LASTV, I) /= ZERO) exit
@@ -227,7 +227,7 @@ pure subroutine SLARFT(DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT)
 !
 ! T(1:i - 1, i): = -tau(i) * V(i:j, 1:i - 1)**T * V(i:j, i)
 !
-          call SGEMV('Transpose', J - I, I - 1, -TAU(I), &
+          call mobbrmsd_SGEMV('Transpose', J - I, I - 1, -TAU(I), &
           & V(I + 1, 1), LDV, V(I + 1, I), 1, ONE, &
           & T(1, I), 1)
         else
@@ -242,13 +242,13 @@ pure subroutine SLARFT(DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT)
 !
 ! T(1:i - 1, i): = -tau(i) * V(1:i - 1, i:j) * V(i, i:j)**T
 !
-          call SGEMV('No transpose', I - 1, J - I, -TAU(I), &
+          call mobbrmsd_SGEMV('No transpose', I - 1, J - I, -TAU(I), &
               &      V(1, I + 1), LDV, V(I, I + 1), LDV, ONE, T(1, I), 1)
         end if
 !
 ! T(1:i - 1, i): = T(1:i - 1, 1:i - 1) * T(1:i - 1, i)
 !
-        call STRMV('Upper', 'No transpose', 'Non-unit', I - 1, T, &
+        call mobbrmsd_STRMV('Upper', 'No transpose', 'Non-unit', I - 1, T, &
             &      LDT, T(1, I), 1)
         T(I, I) = TAU(I)
         if (I > 1) then
@@ -273,7 +273,7 @@ pure subroutine SLARFT(DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT)
 ! general case
 !
         if (I < K) then
-          if (LSAME(STOREV, 'C')) then
+          if (mobbrmsd_LSAME(STOREV, 'C')) then
 ! Skip any leading zeros.
             do LASTV = 1, I - 1
               if (V(LASTV, I) /= ZERO) exit
@@ -285,7 +285,7 @@ pure subroutine SLARFT(DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT)
 !
 ! T(i + 1:k, i) = -tau(i) * V(j:n - k + i, i + 1:k)**T * V(j:n - k + i, i)
 !
-            call SGEMV('Transpose', N - K + I - J, K - I, -TAU(I), &
+            call mobbrmsd_SGEMV('Transpose', N - K + I - J, K - I, -TAU(I), &
                 &      V(J, I + 1), LDV, V(J, I), 1, ONE, &
                 &      T(I + 1, I), 1)
           else
@@ -300,14 +300,14 @@ pure subroutine SLARFT(DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT)
 !
 ! T(i + 1:k, i) = -tau(i) * V(i + 1:k, j:n - k + i) * V(i, j:n - k + i)**T
 !
-            call SGEMV('No transpose', K - I, N - K + I - J, &
+            call mobbrmsd_SGEMV('No transpose', K - I, N - K + I - J, &
                 &      -TAU(I), V(I + 1, J), LDV, V(I, J), LDV, &
                 &      ONE, T(I + 1, I), 1)
           end if
 !
 ! T(i + 1:k, i): = T(i + 1:k, i + 1:k) * T(i + 1:k, i)
 !
-          call STRMV('Lower', 'No transpose', 'Non-unit', K - I, &
+          call mobbrmsd_STRMV('Lower', 'No transpose', 'Non-unit', K - I, &
               &      T(I + 1, I + 1), LDT, T(I + 1, I), 1)
           if (I > 1) then
             PREVLASTV = MIN(PREVLASTV, LASTV)
@@ -321,6 +321,6 @@ pure subroutine SLARFT(DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT)
   end if
   return
 !
-! end of SLARFT
+! end of mobbrmsd_SLARFT
 !
 end

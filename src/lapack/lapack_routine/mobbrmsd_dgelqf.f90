@@ -1,4 +1,4 @@
-!> \brief \b DGELQF
+!> \brief \b mobbrmsd_DGELQF
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -6,7 +6,7 @@
 !            http://www.netlib.org/lapack/explore-html/
 !
 !> \htmlonly
-!> Download DGELQF + dependencies
+!> Download mobbrmsd_DGELQF + dependencies
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dgelqf.f">
 !> [TGZ]</a>
 !> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dgelqf.f">
@@ -18,7 +18,7 @@
 !  Definition:
 !  ===========
 !
-!       SUBROUTINE DGELQF( M, N, A, LDA, TAU, WORK, LWORK, INFO )
+!       SUBROUTINE mobbrmsd_DGELQF( M, N, A, LDA, TAU, WORK, LWORK, INFO )
 !
 !       .. Scalar Arguments ..
 !       INTEGER            INFO, LDA, LWORK, M, N
@@ -33,7 +33,7 @@
 !>
 !> \verbatim
 !>
-!> DGELQF computes an LQ factorization of a real M-by-N matrix A:
+!> mobbrmsd_DGELQF computes an LQ factorization of a real M-by-N matrix A:
 !>
 !>    A = ( L 0 ) *  Q
 !>
@@ -139,7 +139,7 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure subroutine DGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
+pure subroutine mobbrmsd_DGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 ! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
@@ -181,7 +181,7 @@ pure subroutine DGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !     Test the input arguments
 !
   INFO = 0
-  NB = ILAENV(1, 'DGELQF', ' ', M, N, -1, -1)
+  NB = mobbrmsd_ILAENV(1, 'mobbrmsd_DGELQF', ' ', M, N, -1, -1)
   LWKOPT = M * NB
   WORK(1) = LWKOPT
   LQUERY = (LWORK == -1)
@@ -195,7 +195,7 @@ pure subroutine DGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
     INFO = -7
   end if
   if (INFO /= 0) then
-!   CALL XERBLA( 'DGELQF', -INFO )
+!   CALL XERBLA( 'mobbrmsd_DGELQF', -INFO )
     return
   else if (LQUERY) then
     return
@@ -216,7 +216,7 @@ pure subroutine DGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !
 !        Determine when to cross over from blocked to unblocked code.
 !
-    NX = MAX(0, ILAENV(3, 'DGELQF', ' ', M, N, -1, -1))
+    NX = MAX(0, mobbrmsd_ILAENV(3, 'mobbrmsd_DGELQF', ' ', M, N, -1, -1))
     if (NX < K) then
 !
 !           Determine if workspace is large enough for blocked code.
@@ -229,7 +229,7 @@ pure subroutine DGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !              determine the minimum value of NB.
 !
         NB = LWORK / LDWORK
-        NBMIN = MAX(2, ILAENV(2, 'DGELQF', ' ', M, N, -1, -1))
+        NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'mobbrmsd_DGELQF', ' ', M, N, -1, -1))
       end if
     end if
   end if
@@ -244,19 +244,19 @@ pure subroutine DGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !           Compute the LQ factorization of the current block
 !           A(i:i+ib-1,i:n)
 !
-      call DGELQ2(IB, N - I + 1, A(I, I), LDA, TAU(I), WORK, IINFO)
+      call mobbrmsd_DGELQ2(IB, N - I + 1, A(I, I), LDA, TAU(I), WORK, IINFO)
 !
       if (I + IB <= M) then
 !
 !              Form the triangular factor of the block reflector
 !              H = H(i) H(i+1) . . . H(i+ib-1)
 !
-        call DLARFT('Forward', 'Rowwise', N - I + 1, IB, A(I, I), &
+        call mobbrmsd_DLARFT('Forward', 'Rowwise', N - I + 1, IB, A(I, I), &
        &             LDA, TAU(I), WORK, LDWORK)
 !
 !              Apply H to A(i+ib:m,i:n) from the right
 !
-        call DLARFB('Right', 'No transpose', 'Forward', &
+        call mobbrmsd_DLARFB('Right', 'No transpose', 'Forward', &
        &            'Rowwise', M - I - IB + 1, N - I + 1, IB, A(I, I), &
        &            LDA, WORK, LDWORK, A(I + IB, I), LDA, &
        &            WORK(IB + 1), LDWORK)
@@ -270,11 +270,11 @@ pure subroutine DGELQF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !
 !     Use unblocked code to factor the last or only block.
 !
-  if (I <= K) call DGELQ2(M - I + 1, N - I + 1, A(I, I), LDA, TAU(I), WORK, IINFO)
+  if (I <= K) call mobbrmsd_DGELQ2(M - I + 1, N - I + 1, A(I, I), LDA, TAU(I), WORK, IINFO)
 !
   WORK(1) = IWS
   return
 !
-! End of DGELQF
+! End of mobbrmsd_DGELQF
 !
-end subroutine DGELQF
+end subroutine mobbrmsd_DGELQF
