@@ -75,7 +75,7 @@
 !
 !  =====================================================================
 pure function ILADLR(M, N, A, LDA)
-  use LA_CONSTANTS, only: DP
+! use LA_CONSTANTS, only: DP
   implicit none
 !
 !  -- LAPACK auxiliary routine --
@@ -86,17 +86,17 @@ pure function ILADLR(M, N, A, LDA)
   integer, intent(in)  :: M, N, LDA
 !     ..
 !     .. Array Arguments ..
-  real(DP), intent(in) ::  A(LDA, *)
+  real(RK), intent(in) ::  A(LDA, *)
 !     ..
-  integer             :: ILADLR
+  integer :: ILADLR
 !
 !  =====================================================================
-!
-!     .. Parameters ..
-  real(DP), parameter  :: ZERO = 0.0_DP
 !     ..
 !     .. Local Scalars ..
-  integer             :: I, J
+  integer :: I, J
+!
+!     .. Parameters ..
+! real(RK), parameter  :: ZERO = 0.0_DP
 !     ..
 !     .. Executable Statements ..
 !

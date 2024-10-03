@@ -1,4 +1,4 @@
-module lapack_sp
+module mod_lapack_sp
   implicit none
   private
   public :: SGEMM, &
@@ -113,5 +113,5 @@ contains
   include "lapack_routine/strmm.f90"
   include "lapack_routine/strmv.f90"
   include "lapack_routine/strsm.f90"
-end module lapack_sp
+end module mod_lapack_sp
 

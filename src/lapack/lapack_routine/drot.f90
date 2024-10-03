@@ -1,4 +1,4 @@
-!> \brief \b IDAMAX
+!> \brief \b DROT
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,13 +8,14 @@
 !  Definition:
 !  ===========
 !
-!       INTEGER FUNCTION IDAMAX(N,DX,INCX)
+!       SUBROUTINE DROT(N,DX,INCX,DY,INCY,C,S)
 !
 !       .. Scalar Arguments ..
-!       INTEGER INCX,N
+!       DOUBLE PRECISION C,S
+!       INTEGER INCX,INCY,N
 !       ..
 !       .. Array Arguments ..
-!       DOUBLE PRECISION DX(*)
+!       DOUBLE PRECISION DX(*),DY(*)
 !       ..
 !
 !
@@ -23,7 +24,7 @@
 !>
 !> \verbatim
 !>
-!>    IDAMAX finds the index of the first element having maximum absolute value.
+!>    DROT applies a plane rotation.
 !> \endverbatim
 !
 !  Arguments:
@@ -35,7 +36,7 @@
 !>         number of elements in input vector(s)
 !> \endverbatim
 !>
-!> \param[in] DX
+!> \param[in,out] DX
 !> \verbatim
 !>          DX is DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
 !> \endverbatim
@@ -44,6 +45,27 @@
 !> \verbatim
 !>          INCX is INTEGER
 !>         storage spacing between elements of DX
+!> \endverbatim
+!>
+!> \param[in,out] DY
+!> \verbatim
+!>          DY is DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCY ) )
+!> \endverbatim
+!>
+!> \param[in] INCY
+!> \verbatim
+!>          INCY is INTEGER
+!>         storage spacing between elements of DY
+!> \endverbatim
+!>
+!> \param[in] C
+!> \verbatim
+!>          C is DOUBLE PRECISION
+!> \endverbatim
+!>
+!> \param[in] S
+!> \verbatim
+!>          S is DOUBLE PRECISION
 !> \endverbatim
 !
 !  Authors:
@@ -54,7 +76,7 @@
 !> \author Univ. of Colorado Denver
 !> \author NAG Ltd.
 !
-!> \ingroup aux_blas
+!> \ingroup double_blas_level1
 !
 !> \par Further Details:
 !  =====================
@@ -62,70 +84,61 @@
 !> \verbatim
 !>
 !>     jack dongarra, linpack, 3/11/78.
-!>     modified 3/93 to return if incx .le. 0.
 !>     modified 12/3/93, array(1) declarations changed to array(*)
 !> \endverbatim
 !>
 !  =====================================================================
-pure function IDAMAX(N, DX, INCX)
+pure subroutine DROT(N, DX, INCX, DY, INCY, C, S)
 ! use LA_CONSTANTS, only: RK => dp
-  implicit none
 !
 !  -- Reference BLAS level1 routine --
 !  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
 !     .. Scalar Arguments ..
-  integer, intent(in)  :: INCX, N
+  real(RK), intent(in)    :: C, S
+  integer, intent(in)     :: INCX, INCY, N
 !     ..
 !     .. Array Arguments ..
-  real(RK), intent(in) :: DX(*)
+  real(RK), intent(inout) :: DX(*), DY(*)
 !     ..
-!
-  integer :: IDAMAX
 !
 !  =====================================================================
 !
 !     .. Local Scalars ..
-  real(RK) :: DMAX
-  integer :: I, IX
+  real(RK)               :: DTEMP
+  integer                :: I, IX, IY
 !     ..
-!     .. Intrinsic Functions ..
-  intrinsic :: DABS
-!     ..
-  IDAMAX = 0
-  if (N < 1 .or. INCX <= 0) return
-  IDAMAX = 1
-  if (N == 1) return
-  if (INCX == 1) then
+  if (N <= 0) return
+  if (INCX == 1 .and. INCY == 1) then
 !
-!        code for increment equal to 1
+!       code for both increments equal to 1
 !
-    DMAX = DABS(DX(1))
-    do I = 2, N
-      if (DABS(DX(I)) > DMAX) then
-        IDAMAX = I
-        DMAX = DABS(DX(I))
-      end if
+    do I = 1, N
+      DTEMP = C * DX(I) + S * DY(I)
+      DY(I) = C * DY(I) - S * DX(I)
+      DX(I) = DTEMP
     end do
   else
 !
-!        code for increment not equal to 1
+!       code for unequal increments or equal increments not equal
+!         to 1
 !
     IX = 1
-    DMAX = DABS(DX(1))
-    IX = IX + INCX
-    do I = 2, N
-      if (DABS(DX(IX)) > DMAX) then
-        IDAMAX = I
-        DMAX = DABS(DX(IX))
-      end if
+    IY = 1
+    if (INCX < 0) IX = (-N + 1) * INCX + 1
+    if (INCY < 0) IY = (-N + 1) * INCY + 1
+    do I = 1, N
+      DTEMP = C * DX(IX) + S * DY(IY)
+      DY(IY) = C * DY(IY) - S * DX(IX)
+      DX(IX) = DTEMP
       IX = IX + INCX
+      IY = IY + INCY
     end do
   end if
   return
 !
-!     End of IDAMAX
+!     End of DROT
 !
-end function IDAMAX
+end subroutine DROT
 

@@ -86,17 +86,17 @@ pure function ILADLC(M, N, A, LDA)
   integer, intent(in)  :: M, N, LDA
 ! ..
 ! .. Array Arguments ..
-  real(DP), intent(in) :: A(LDA, *)
-  integer              :: ILADLC
+  real(RK), intent(in) :: A(LDA, *)
+  integer :: ILADLC
 ! ..
 !
 !  =====================================================================
-!
-! .. Parameters ..
-  real(DP), parameter  :: ZERO = 0.0_DP
 ! ..
 ! .. Local Scalars ..
-  integer             :: I
+  integer :: I
+!
+! .. Parameters ..
+! real(RK), parameter  :: ZERO = 0.0_DP
 ! ..
 ! .. Executable Statements ..
 !

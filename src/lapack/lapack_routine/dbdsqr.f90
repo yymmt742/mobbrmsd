@@ -238,7 +238,7 @@
 !  =====================================================================
 pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
      &                        LDU, C, LDC, WORK, INFO)
-  use LA_CONSTANTS, only: DP, ZERO => DZERO, ONE => DONE, TEN => DTEN
+! use LA_CONSTANTS, only: RK, ZERO => DZERO, ONE => DONE, TEN => DTEN
   implicit none
 !
 !  -- LAPACK computational routine --
@@ -246,51 +246,51 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
 !     .. Scalar Arguments ..
-  character(1), intent(in) :: UPLO
-  integer, intent(in)      :: LDC, LDU, LDVT, N, NCC, NCVT, NRU
-  integer, intent(out)     :: INFO
+  character, intent(in) :: UPLO
+  integer, intent(in)   :: LDC, LDU, LDVT, N, NCC, NCVT, NRU
+  integer, intent(out)  :: INFO
 !     ..
 !     .. Array Arguments ..
-  real(DP), intent(inout)  :: C(LDC, *), D(*), E(*), U(LDU, *), VT(LDVT, *)
-  real(DP), intent(out)    :: WORK(*)
+  real(RK), intent(inout) :: C(LDC, *), D(*), E(*), U(LDU, *), VT(LDVT, *)
+  real(RK), intent(out)   :: WORK(*)
 !     ..
 !
 !  =====================================================================
 !
+!     .. Local Scalars ..
+  logical  :: LOWER, ROTATE
+  integer  :: I, IDIR, ISUB, ITER, ITERDIVN, J, LL, LLL, M, &
+ &            MAXITDIVN, NM1, NM12, NM13, OLDLL, OLDM
+  real(RK) :: ABSE, ABSS, COSL, COSR, CS, EPS, F, G, H, MU, &
+ &            OLDCS, OLDSN, R, SHIFT, SIGMN, SIGMX, SINL, &
+ &            SINR, SLL, SMAX, SMIN, SMINL, SMINOA, &
+ &            SN, THRESH, TOL, TOLMUL, UNFL
+!     ..
 !     .. Parameters ..
-  real(DP), parameter :: NEGONE = -1.0_DP
-  real(DP), parameter :: HNDRTH = 0.01_DP
-  real(DP), parameter ::  HNDRD = 100.0_DP
-  real(DP), parameter :: MEIGTH = -0.125_DP
+! real(RK), parameter :: HUNDRD = 100.0_RK
+  real(RK), parameter :: NEGONE = -1.0_RK
+  real(RK), parameter :: HNDRTH = 0.01_RK
+  real(RK), parameter :: MEIGTH = -0.125_RK
   integer, parameter  :: MAXITR = 6
 !     ..
-!     .. Local Scalars ..
-  logical            :: LOWER, ROTATE
-  integer            :: I, IDIR, ISUB, ITER, ITERDIVN, J, LL, LLL, M, &
- &                      MAXITDIVN, NM1, NM12, NM13, OLDLL, OLDM
-  real(DP)           :: ABSE, ABSS, COSL, COSR, CS, EPS, F, G, H, MU, &
- &                      OLDCS, OLDSN, R, SHIFT, SIGMN, SIGMX, SINL, &
- &                      SINR, SLL, SMAX, SMIN, SMINL, SMINOA, &
- &                      SN, THRESH, TOL, TOLMUL, UNFL
-!     ..
-  interface
+! interface
 !     .. External Functions ..
-    include 'lsame.h'
-    include 'dlamch.h'
+!   include 'lsame.h'
+!   include 'dlamch.h'
 !     .. External Subroutines ..
-    include 'dlartg.h'
-    include 'dlas2.h'
-    include 'dlasq1.h'
-    include 'dlasr.h'
-    include 'dlasv2.h'
-    include 'drot.h'
-    include 'dscal.h'
-    include 'dswap.h'
-    !include 'xerbla.h'
-  end interface
+!   include 'dlartg.h'
+!   include 'dlas2.h'
+!   include 'dlasq1.h'
+!   include 'dlasr.h'
+!   include 'dlasv2.h'
+!   include 'drot.h'
+!   include 'dscal.h'
+!   include 'dswap.h'
+!   !include 'xerbla.h'
+! end interface
 !     ..
 !     .. Intrinsic Functions ..
-  intrinsic        :: ABS, DBLE, MAX, MIN, SIGN, SQRT
+  intrinsic :: ABS, DBLE, MAX, MIN, SIGN, SQRT
 !     ..
 !     .. Executable Statements ..
 !
@@ -374,7 +374,7 @@ pure subroutine DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, LDVT, U, &
 !   (By setting TOL to be negative, algorithm will compute
 !   singular values to absolute accuracy ABS(TOL)*norm(input matrix))
 !
-  TOLMUL = MAX(TEN, MIN(HNDRD, EPS**MEIGTH))
+  TOLMUL = MAX(TEN, MIN(HUNDRD, EPS**MEIGTH))
   TOL = TOLMUL * EPS
 !
 !   Compute approximate maximum, minimum singular values

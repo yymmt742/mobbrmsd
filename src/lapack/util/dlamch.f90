@@ -1,5 +1,5 @@
 pure elemental function DLAMCH(CMACH)
-  use LA_CONSTANTS, only: wp => DP, ONE=>DONE, ZERO=>DZERO, EPS => DULP
+! use LA_CONSTANTS, only: wp => DP, ONE=>DONE, ZERO=>DZERO, EPS => DULP
 !
 !  -- LAPACK auxiliary routine (version 3.3.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -11,7 +11,7 @@ pure elemental function DLAMCH(CMACH)
 !
 !     .. Scalar Arguments ..
   character(*), intent(in) :: CMACH
-  real(wp)                 :: DLAMCH
+  real(RK)                 :: DLAMCH
 !     ..
 !
 !  Purpose
@@ -51,16 +51,16 @@ pure elemental function DLAMCH(CMACH)
 ! =====================================================================
 !     ..
 !     .. Local Scalars ..
-  real(wp)           ::  RND, SFMIN, SMALL, RMACH
+  real(RK) :: RND, SFMIN, SMALL, RMACH
 !     ..
 !     .. External Functions ..
-  interface
-    include 'lsame.h'
-  end interface
+! interface
+!   include 'lsame.h'
+! end interface
 !     ..
 !     .. Intrinsic Functions ..
-  intrinsic          :: DIGITS, EPSILON, HUGE, MAXEXPONENT, &
- &                      MINEXPONENT, RADIX, TINY
+  intrinsic :: DIGITS, EPSILON, HUGE, MAXEXPONENT, &
+ &             MINEXPONENT, RADIX, TINY
 !     ..
 !     .. Executable Statements ..
 !
@@ -76,7 +76,7 @@ pure elemental function DLAMCH(CMACH)
 ! end if
 !
   if (LSAME(CMACH, 'E')) then
-    RMACH = EPS
+    RMACH = DULP
   else if (LSAME(CMACH, 'S')) then
     SFMIN = TINY(ZERO)
     SMALL = ONE / HUGE(ZERO)
@@ -91,7 +91,7 @@ pure elemental function DLAMCH(CMACH)
   else if (LSAME(CMACH, 'B')) then
     RMACH = RADIX(ZERO)
   else if (LSAME(CMACH, 'P')) then
-    RMACH = EPS ! RADIX(ZERO)
+    RMACH = DULP ! RADIX(ZERO)
   else if (LSAME(CMACH, 'N')) then
     RMACH = DIGITS(ZERO)
   else if (LSAME(CMACH, 'R')) then
@@ -117,15 +117,15 @@ end function DLAMCH
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 pure elemental function DLAMC3(A, B)
-  use LA_CONSTANTS, only: wp => DP
+! use LA_CONSTANTS, only: wp => DP
 !
 !  -- LAPACK auxiliary routine (version 3.3.0) --
 !     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
 !     November 2010
 !
 !     .. Scalar Arguments ..
-  real(wp), intent(in)     :: A, B
-  real(wp)                 :: DLAMC3
+  real(RK), intent(in) :: A, B
+  real(RK)             :: DLAMC3
 !     ..
 !
 !  Purpose

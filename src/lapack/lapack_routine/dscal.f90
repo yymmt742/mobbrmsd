@@ -1,4 +1,4 @@
-!> \brief \b IDAMAX
+!> \brief \b DSCAL
 !
 !  =========== DOCUMENTATION ===========
 !
@@ -8,9 +8,10 @@
 !  Definition:
 !  ===========
 !
-!       INTEGER FUNCTION IDAMAX(N,DX,INCX)
+!       SUBROUTINE DSCAL(N,DA,DX,INCX)
 !
 !       .. Scalar Arguments ..
+!       DOUBLE PRECISION DA
 !       INTEGER INCX,N
 !       ..
 !       .. Array Arguments ..
@@ -23,7 +24,8 @@
 !>
 !> \verbatim
 !>
-!>    IDAMAX finds the index of the first element having maximum absolute value.
+!>    DSCAL scales a vector by a constant.
+!>    uses unrolled loops for increment equal to 1.
 !> \endverbatim
 !
 !  Arguments:
@@ -35,7 +37,13 @@
 !>         number of elements in input vector(s)
 !> \endverbatim
 !>
-!> \param[in] DX
+!> \param[in] DA
+!> \verbatim
+!>          DA is DOUBLE PRECISION
+!>           On entry, DA specifies the scalar alpha.
+!> \endverbatim
+!>
+!> \param[in,out] DX
 !> \verbatim
 !>          DX is DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
 !> \endverbatim
@@ -54,7 +62,7 @@
 !> \author Univ. of Colorado Denver
 !> \author NAG Ltd.
 !
-!> \ingroup aux_blas
+!> \ingroup double_blas_level1
 !
 !> \par Further Details:
 !  =====================
@@ -67,65 +75,61 @@
 !> \endverbatim
 !>
 !  =====================================================================
-pure function IDAMAX(N, DX, INCX)
+pure subroutine DSCAL(N, DA, DX, INCX)
 ! use LA_CONSTANTS, only: RK => dp
-  implicit none
 !
 !  -- Reference BLAS level1 routine --
 !  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
 !     .. Scalar Arguments ..
-  integer, intent(in)  :: INCX, N
+  integer, intent(in)     :: INCX, N
+  real(RK), intent(in)    :: DA
 !     ..
 !     .. Array Arguments ..
-  real(RK), intent(in) :: DX(*)
+  real(RK), intent(inout) :: DX(*)
 !     ..
-!
-  integer :: IDAMAX
-!
 !  =====================================================================
-!
 !     .. Local Scalars ..
-  real(RK) :: DMAX
-  integer :: I, IX
+  integer                :: I, M, MP1, NINCX
 !     ..
 !     .. Intrinsic Functions ..
-  intrinsic :: DABS
+  intrinsic              :: MOD
 !     ..
-  IDAMAX = 0
-  if (N < 1 .or. INCX <= 0) return
-  IDAMAX = 1
-  if (N == 1) return
+  if (N <= 0 .or. INCX <= 0) return
   if (INCX == 1) then
 !
 !        code for increment equal to 1
 !
-    DMAX = DABS(DX(1))
-    do I = 2, N
-      if (DABS(DX(I)) > DMAX) then
-        IDAMAX = I
-        DMAX = DABS(DX(I))
-      end if
+!
+!        clean-up loop
+!
+    M = MOD(N, 5)
+    if (M /= 0) then
+      do I = 1, M
+        DX(I) = DA * DX(I)
+      end do
+      if (N < 5) return
+    end if
+    MP1 = M + 1
+    do I = MP1, N, 5
+      DX(I) = DA * DX(I)
+      DX(I + 1) = DA * DX(I + 1)
+      DX(I + 2) = DA * DX(I + 2)
+      DX(I + 3) = DA * DX(I + 3)
+      DX(I + 4) = DA * DX(I + 4)
     end do
   else
 !
 !        code for increment not equal to 1
 !
-    IX = 1
-    DMAX = DABS(DX(1))
-    IX = IX + INCX
-    do I = 2, N
-      if (DABS(DX(IX)) > DMAX) then
-        IDAMAX = I
-        DMAX = DABS(DX(IX))
-      end if
-      IX = IX + INCX
+    NINCX = N * INCX
+    do I = 1, NINCX, INCX
+      DX(I) = DA * DX(I)
     end do
   end if
   return
 !
-!     End of IDAMAX
+!     End of DSCAL
 !
-end function IDAMAX
-
+end subroutine DSCAL
