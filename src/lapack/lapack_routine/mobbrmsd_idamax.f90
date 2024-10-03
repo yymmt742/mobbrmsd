@@ -91,7 +91,7 @@ pure function IDAMAX(N, DX, INCX)
   integer :: I, IX
 !     ..
 !     .. Intrinsic Functions ..
-  intrinsic :: DABS
+  intrinsic :: ABS
 !     ..
   IDAMAX = 0
   if (N < 1 .or. INCX <= 0) return
@@ -101,11 +101,11 @@ pure function IDAMAX(N, DX, INCX)
 !
 !        code for increment equal to 1
 !
-    DMAX = DABS(DX(1))
+    DMAX = ABS(DX(1))
     do I = 2, N
-      if (DABS(DX(I)) > DMAX) then
+      if (ABS(DX(I)) > DMAX) then
         IDAMAX = I
-        DMAX = DABS(DX(I))
+        DMAX = ABS(DX(I))
       end if
     end do
   else
@@ -113,12 +113,12 @@ pure function IDAMAX(N, DX, INCX)
 !        code for increment not equal to 1
 !
     IX = 1
-    DMAX = DABS(DX(1))
+    DMAX = ABS(DX(1))
     IX = IX + INCX
     do I = 2, N
-      if (DABS(DX(IX)) > DMAX) then
+      if (ABS(DX(IX)) > DMAX) then
         IDAMAX = I
-        DMAX = DABS(DX(IX))
+        DMAX = ABS(DX(IX))
       end if
       IX = IX + INCX
     end do
