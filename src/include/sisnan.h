@@ -1,4 +1,4 @@
-pure elemental function SISNAN( DIN )
-real, intent(in) :: DIN
+pure elemental function SISNAN( SI )
+real, intent(in) :: SI
 logical          :: SISNAN
 end function SISNAN

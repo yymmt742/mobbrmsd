@@ -1,5 +1,6 @@
 pure subroutine SLASSQ( N, X, INCX, SCL, SUMSQ )
-integer,intent(in) :: INCX, N
-real,intent(inout) :: SCL, SUMSQ
-real,intent(in)    :: X(*)
+use, intrinsic :: ISO_FORTRAN_ENV, only: SP => REAL32
+integer,intent(in)     :: INCX, N
+real(SP),intent(inout) :: SCL, SUMSQ
+real(SP),intent(in)    :: X(*)
 end subroutine SLASSQ
