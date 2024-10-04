@@ -65,27 +65,27 @@ pure subroutine mobbrmsd_DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, &
 !!          bidiagonal matrix orthogonally equivalent to the one given
 !!          as input.
 !!
+  integer, intent(in)   :: LDVT
+!!          The leading dimension of the array VT.
+!!          LDVT >= max(1,N) if NCVT > 0; LDVT >= 1 if NCVT = 0.
   real(RK), intent(inout) :: VT(LDVT, *)
 !!          On entry, an N-by-NCVT matrix VT.
 !!          On exit, VT is overwritten by P**T * VT.
 !!          Not referenced if NCVT = 0.
-  integer, intent(in)   :: LDVT
-!!          The leading dimension of the array VT.
-!!          LDVT >= max(1,N) if NCVT > 0; LDVT >= 1 if NCVT = 0.
+  integer, intent(in)   :: LDU
+!!          The leading dimension of the array U.  LDU >= max(1,NRU).
   real(RK), intent(inout) :: U(LDU, *)
 !!          On entry, an NRU-by-N matrix U.
 !!          On exit, U is overwritten by U * Q.
 !!          Not referenced if NRU = 0.
-  integer, intent(in)   :: LDU
-!!          The leading dimension of the array U.  LDU >= max(1,NRU).
+  integer, intent(in)   :: LDC
+!!          The leading dimension of the array C. <br>
+!!          LDC >= max(1,N) if NCC > 0; LDC >=1 if NCC = 0.
   real(RK), intent(inout) :: C(LDC, *)
 !!          On entry, an N-by-NCC matrix C.
 !!          On exit, C is overwritten by Q**T * C.
 !!          Not referenced if NCC = 0.
 !!
-  integer, intent(in)   :: LDC
-!!          The leading dimension of the array C. <br>
-!!          LDC >= max(1,N) if NCC > 0; LDC >=1 if NCC = 0.
   real(RK), intent(out)   :: WORK(*)
 !!          DOUBLE PRECISION array, dimension (4*(N-1))
   integer, intent(out)  :: INFO

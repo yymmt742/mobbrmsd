@@ -33,6 +33,8 @@ pure subroutine mobbrmsd_SGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !!          The number of rows of the matrix A.  M >= 0.
   integer, intent(in)  :: N
 !!          The number of columns of the matrix A.  N >= 0.
+  integer, intent(in)  :: LDA
+!!          The leading dimension of the array A.  LDA >= max(1,M).
   real(RK), intent(inout) :: A(LDA, *)
 !!          A is REAL array, dimension (LDA,N) <br>
 !!          On entry, the M-by-N matrix A.
@@ -42,8 +44,6 @@ pure subroutine mobbrmsd_SGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !!          with the array TAU, represent the orthogonal matrix Q as a
 !!          product of min(m,n) elementary reflectors (see Further
 !!          Details).
-  integer, intent(in)  :: LDA
-!!          The leading dimension of the array A.  LDA >= max(1,M).
   real(RK), intent(out)   :: TAU(*)
 !!          TAU is REAL array, dimension (min(M,N)) <br>
 !!          The scalar factors of the elementary reflectors (see Further
