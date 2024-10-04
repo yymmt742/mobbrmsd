@@ -2,6 +2,11 @@
 !  and provide optimized functions for dimension.
 module mod_dimspec_functions
   use mod_kinds, only: RK, IK
+#ifdef USE_REAL32
+  use mod_mobbrmsd_lapack, only: SGEMM
+#else
+  use mod_mobbrmsd_lapack, only: DGEMM
+#endif
   implicit none
   private
   public  :: D, DD, ND
@@ -22,11 +27,6 @@ module mod_dimspec_functions
   real(RK), parameter :: HALF = 0.5_RK
   real(RK), parameter :: ONETHIRD = 1.0_RK / 3.0_RK
   real(RK), parameter :: ONE = 1.0_RK
-!
-  interface
-    include 'dgemm.h'
-    include 'sgemm.h'
-  end interface
 !
 contains
 !| Sets the dimensions of the space. <br>

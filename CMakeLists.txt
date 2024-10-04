@@ -28,10 +28,7 @@ foreach(var OpenBLAS)
 endforeach()
 
 set( mobbrmsd_PRECISIONS sp dp )
-set( mobbrmsd_DIMENTIONS 2d 3d )
-if( BLAS_FOUND )
-  list( APPEND mobbrmsd_DIMENTIONS xd )
-endif( BLAS_FOUND )
+set( mobbrmsd_DIMENTIONS 2d 3d xd )
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
   enable_testing()

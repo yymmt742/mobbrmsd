@@ -39,6 +39,8 @@ foreach(dims IN ITEMS ${mobbrmsd_DIMENTIONS})
     set(sources "")
     set(moddir ${CMAKE_CURRENT_BINARY_DIR}/${dims}${prec})
     list(APPEND sources
+      ${CMAKE_CURRENT_SOURCE_DIR}/../lapack/mod_mobbrmsd_lapack_routines.f90
+      ${CMAKE_CURRENT_SOURCE_DIR}/../lapack/mod_mobbrmsd_lapack.f90
       ${CMAKE_CURRENT_SOURCE_DIR}/../mobbrmsd_${dims}/mod_dimspec_functions.f90
       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
