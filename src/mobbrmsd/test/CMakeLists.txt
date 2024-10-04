@@ -1,9 +1,3 @@
-
-set(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-
-function(DIMSPECTESTS post dimspec_dir dims real int)
-endfunction(DIMSPECTESTS)
-
 foreach(prec IN ITEMS ${mobbrmsd_PRECISIONS})
   set(moddir ${CMAKE_CURRENT_BINARY_DIR}/${prec})
   set(sources "")
