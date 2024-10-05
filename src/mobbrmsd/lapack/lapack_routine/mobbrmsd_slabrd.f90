@@ -1,4 +1,4 @@
-!> \brief \b mobbrmsd_SLABRD reduces the first nb rows and columns of a general matrix to a bidiagonal form.
+!| mobbrmsd_SLABRD reduces the first nb rows and columns of a general matrix to a bidiagonal form.
 !
 !  =========== DOCUMENTATION ===========
 !

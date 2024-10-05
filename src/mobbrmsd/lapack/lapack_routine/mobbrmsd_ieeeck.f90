@@ -1,103 +1,43 @@
-!> \brief \b mobbrmsd_IEEECK
+!| mobbrmsd_IEEECK is called from the mobbrmsd_ILAENV to verify that Infinity and
+!  possibly NaN arithmetic is safe (i.e. will not trap).
 !
-!  =========== DOCUMENTATION ===========
+!   RETURN VALUE:  INTEGER
 !
-! Online html documentation available at
-! http://www.netlib.org/lapack/explore-html/
+!           = 0:  Arithmetic failed to produce the correct answers
 !
-!> \htmlonly
-!> Download mobbrmsd_IEEECK + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/ieeeck.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/ieeeck.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/ieeeck.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!           = 1:  Arithmetic produced the correct answers
 !
-!  Definition:
-!  ===========
-!
-!   INTEGER          FUNCTION mobbrmsd_IEEECK( ISPEC, ZERO, ONE )
-!
-!   .. Scalar Arguments ..
-!   INTEGER            ISPEC
-!   REAL               ONE, ZERO
-!   ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_IEEECK is called from the mobbrmsd_ILAENV to verify that Infinity and
-!> possibly NaN arithmetic is safe (i.e. will not trap).
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] ISPEC
-!> \verbatim
-!>          ISPEC is INTEGER
-!>          SPecifies whether to test just for inifinity arithmetic
-!>          or whether to test for infinity and NaN arithmetic.
-!>          = 0: Verify infinity arithmetic only.
-!>          = 1: Verify infinity and NaN arithmetic.
-!> \endverbatim
-!>
-!> \param[in] ZERO
-!> \verbatim
-!>          ZERO is REAL
-!>          Must contain the value 0.0
-!>          This is passed to prevent the compiler from optimizing
-!>          away this code.
-!> \endverbatim
-!>
-!> \param[in] ONE
-!> \verbatim
-!>          ONE is REAL
-!>          Must contain the value 1.0
-!>          This is passed to prevent the compiler from optimizing
-!>          away this code.
-!>
-!>  RETURN VALUE:  INTEGER
-!>          = 0:  Arithmetic failed to produce the correct answers
-!>          = 1:  Arithmetic produced the correct answers
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup OTHERauxiliary
-!
-!  =====================================================================
-pure elemental function mobbrmsd_IEEECK(ISPEC, ZERO, ONE)
-! use LA_CONSTANTS, only: SP
-  implicit none
+!  Reference IEEECK is provided by [netlib.org](http://www.netlib.org/lapack/).
 !
 !  -- LAPACK auxiliary routine --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+!     April 2012
+!     \date April 2012
 !
-! .. Scalar Arguments ..
+pure elemental function mobbrmsd_IEEECK(ISPEC, ZERO, ONE)
+  implicit none
   integer, intent(in)  :: ISPEC
-  real(RK), intent(in) :: ONE, ZERO
+!!          SPecifies whether to test just for inifinity arithmetic
+!!          or whether to test for infinity and NaN arithmetic.
+!!
+!!          = 0: Verify infinity arithmetic only.
+!!
+!!          = 1: Verify infinity and NaN arithmetic.
+!!
+  real(RK), intent(in) ::  ZERO
+!!          Must contain the value 0.0.
+!!          This is passed to prevent the compiler from optimizing
+!!          away this code.
+  real(RK), intent(in) :: ONE
+!!          Must contain the value 1.0.
+!!          This is passed to prevent the compiler from optimizing
+!!          away this code.
   integer              :: mobbrmsd_IEEECK
-! ..
-!
-!  =====================================================================
-!
-! .. Local Scalars ..
   real(RK) :: NAN1, NAN2, NAN3, NAN4, NAN5, NAN6, NEGINF, NEGZRO, NEWZRO, POSINF
-! ..
-! .. Executable Statements ..
+!
   mobbrmsd_IEEECK = 1
 !
   POSINF = ONE / ZERO
@@ -196,3 +136,4 @@ pure elemental function mobbrmsd_IEEECK(ISPEC, ZERO, ONE)
 !
   return
 end function mobbrmsd_IEEECK
+

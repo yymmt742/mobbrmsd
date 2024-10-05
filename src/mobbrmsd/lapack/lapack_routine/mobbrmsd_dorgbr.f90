@@ -1,183 +1,116 @@
-!> \brief \b mobbrmsd_DORGBR
+!| mobbrmsd_DORGBR generates one of the real orthogonal matrices
+!  \(\mathbf{Q}\) or \(\mathbf{P}^\top\).
+!  determined by mobbrmsd_DGEBRD when reducing a real matrix A to bidiagonal
+!  form: \(\mathbf{A}=\mathbf{Q}\mathbf{B}\mathbf{P}^\top\).
+!  \(\mathbf{Q}\) and \(\mathbf{P}^\top\) are defined as products of
+!  elementary reflectors H(i) or G(i) respectively.
 !
-!  =========== DOCUMENTATION ===========
+!  If VECT = 'Q', A is assumed to have been an M-by-K matrix, and Q
+!  is of order M:
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  If m >= k, Q = H(1) H(2) . . . H(k) and mobbrmsd_DORGBR returns the first n
+!  columns of Q, where m >= n >= k.
 !
-!> \htmlonly
-!> Download mobbrmsd_DORGBR + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dorgbr.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dorgbr.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txtfilename=/lapack/lapack_routine/dorgbr.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!  if m < k, Q = H(1) H(2) . . . H(m-1) and mobbrmsd_DORGBR returns Q as an
+!  M-by-M matrix.
 !
-!  Definition:
-!  ===========
+!  If VECT = 'P', A is assumed to have been a K-by-N matrix, and P**T
+!  is of order N:
 !
-!       SUBROUTINE mobbrmsd_DORGBR( VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
+!  if k < n, P**T = G(k) . . . G(2) G(1) and mobbrmsd_DORGBR returns the first m
+!  rows of P**T, where n >= m >= k;
 !
-!       .. Scalar Arguments ..
-!       CHARACTER          VECT
-!       INTEGER            INFO, K, LDA, LWORK, M, N
-!       ..
-!       .. Array Arguments ..
-!       real(RK)           ::   A( LDA, * ), TAU( * ), WORK( * )
-!       ..
+!  if k >= n, P**T = G(n-1) . . . G(2) G(1) and mobbrmsd_DORGBR returns P**T as
+!  an N-by-N matrix.
 !
+!  Reference DORGBR is provided by [netlib.org](http://www.netlib.org/lapack/).
 !
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_DORGBR generates one of the real orthogonal matrices Q or P**T
-!> determined by mobbrmsd_DGEBRD when reducing a real matrix A to bidiagonal
-!> form: A = Q * B * P**T.  Q and P**T are defined as products of
-!> elementary reflectors H(i) or G(i) respectively.
-!>
-!> If VECT = 'Q', A is assumed to have been an M-by-K matrix, and Q
-!> is of order M:
-!> if m >= k, Q = H(1) H(2) . . . H(k) and mobbrmsd_DORGBR returns the first n
-!> columns of Q, where m >= n >= k;
-!> if m < k, Q = H(1) H(2) . . . H(m-1) and mobbrmsd_DORGBR returns Q as an
-!> M-by-M matrix.
-!>
-!> If VECT = 'P', A is assumed to have been a K-by-N matrix, and P**T
-!> is of order N:
-!> if k < n, P**T = G(k) . . . G(2) G(1) and mobbrmsd_DORGBR returns the first m
-!> rows of P**T, where n >= m >= k;
-!> if k >= n, P**T = G(n-1) . . . G(2) G(1) and mobbrmsd_DORGBR returns P**T as
-!> an N-by-N matrix.
-!> \endverbatim
+!  -- LAPACK driver routine (version 3.7.0) --
 !
-!  Arguments:
-!  ==========
+!  -- LAPACK is a software package provided by Univ. of Tennessee,    --
 !
-!> \param[in] VECT
-!> \verbatim
-!>          VECT is CHARACTER*1
-!>          Specifies whether the matrix Q or the matrix P**T is
-!>          required, as defined in the transformation applied by mobbrmsd_DGEBRD:
-!>          = 'Q':  generate Q;
-!>          = 'P':  generate P**T.
-!> \endverbatim
-!>
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>          The number of rows of the matrix Q or P**T to be returned.
-!>          M >= 0.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of columns of the matrix Q or P**T to be returned.
-!>          N >= 0.
-!>          If VECT = 'Q', M >= N >= min(M,K);
-!>          if VECT = 'P', N >= M >= min(N,K).
-!> \endverbatim
-!>
-!> \param[in] K
-!> \verbatim
-!>          K is INTEGER
-!>          If VECT = 'Q', the number of columns in the original M-by-K
-!>          matrix reduced by mobbrmsd_DGEBRD.
-!>          If VECT = 'P', the number of rows in the original K-by-N
-!>          matrix reduced by mobbrmsd_DGEBRD.
-!>          K >= 0.
-!> \endverbatim
-!>
-!> \param[in,out] A
-!> \verbatim
-!>          A is real(RK)           :: array, dimension (LDA,N)
-!>          On entry, the vectors which define the elementary reflectors,
-!>          as returned by mobbrmsd_DGEBRD.
-!>          On exit, the M-by-N matrix Q or P**T.
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>          The leading dimension of the array A. LDA >= max(1,M).
-!> \endverbatim
-!>
-!> \param[in] TAU
-!> \verbatim
-!>          TAU is real(RK)           :: array, dimension
-!>                                (min(M,K)) if VECT = 'Q'
-!>                                (min(N,K)) if VECT = 'P'
-!>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i) or G(i), which determines Q or P**T, as
-!>          returned by mobbrmsd_DGEBRD in its array argument TAUQ or TAUP.
-!> \endverbatim
-!>
-!> \param[out] WORK
-!> \verbatim
-!>          WORK is real(RK)           :: array, dimension (MAX(1,LWORK))
-!>          On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
-!> \endverbatim
-!>
-!> \param[in] LWORK
-!> \verbatim
-!>          LWORK is INTEGER
-!>          The dimension of the array WORK. LWORK >= max(1,min(M,N)).
-!>          For optimum performance LWORK >= min(M,N)*NB, where NB
-!>          is the optimal blocksize.
-!>
-!>          If LWORK = -1, then a workspace query is assumed; the routine
-!>          only calculates the optimal size of the WORK array, returns
-!>          this value as the first entry of the WORK array, and no error
-!>          message related to LWORK is issued by XERBLA.
-!> \endverbatim
-!>
-!> \param[out] INFO
-!> \verbatim
-!>          INFO is INTEGER
-!>          = 0:  successful exit
-!>          < 0:  if INFO = -i, the i-th argument had an illegal value
-!> \endverbatim
+!  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+!     April 2012
+!     \date April 2012
 !
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup doubleGBcomputational
-!
-!  =====================================================================
 pure subroutine mobbrmsd_DORGBR(VECT, M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
-! use LA_CONSTANTS, only: RK => dp
   implicit none
 !
-!  -- LAPACK computational routine --
-!  -- LAPACK is a software package provided by Univ. of Tennessee,    --
-!  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
-!
-!     .. Scalar Arguments ..
-  character(*), intent(in) :: VECT
-  integer, intent(in)      :: K, LDA, LWORK, M, N
-  integer, intent(out)     :: INFO
-!     ..
-!     .. Array Arguments ..
+  character, intent(in) :: VECT
+!!          Specifies whether the matrix \(\mathbf{Q}\) or the matrix \(\mathbf{P}^\top\) is
+!!          required, as defined in the transformation applied by mobbrmsd_DGEBRD:
+!!
+!!          = 'Q':  generate \(\mathbf{Q}\).
+!!
+!!          = 'P':  generate \(\mathbf{P}^\top\).
+!!
+!! \endverbatim
+  integer, intent(in)      :: M
+!!          The number of rows of the matrix \(\mathbf{Q}\) or \(\mathbf{P}^\top\) to be returned.
+!!          M >= 0.
+!!
+  integer, intent(in)      :: N
+!!          The number of columns of the matrix Q or P**T to be returned.
+!!          N >= 0.
+!!
+!!          If VECT = 'Q', M >= N >= min(M,K);
+!!
+!!          if VECT = 'P', N >= M >= min(N,K).
+!!
+  integer, intent(in)      :: K
+!!          If VECT = 'Q', the number of columns in the original M-by-K
+!!          matrix reduced by mobbrmsd_DGEBRD.
+!!
+!!          If VECT = 'P', the number of rows in the original K-by-N
+!!          matrix reduced by mobbrmsd_DGEBRD.
+!!
+!!          K >= 0.
+!!
   real(RK), intent(in)     :: TAU(*)
+!!          TAU is real(RK)           :: array, dimension
+!!
+!!                                (min(M,K)) if VECT = 'Q'
+!!
+!!                                (min(N,K)) if VECT = 'P'
+!!
+!!          TAU(i) must contain the scalar factor of the elementary
+!!          reflector H(i) or G(i), which determines \(\mathbf{Q}\) or \(\mathbf{P}^\top\), as
+!!          returned by mobbrmsd_DGEBRD in its array argument TAUQ or TAUP.
+!!
+  integer, intent(in)      :: LDA
+!!          The leading dimension of the array A. LDA >= max(1,M).
+!!
   real(RK), intent(inout)  :: A(LDA, *)
+!!          A is real(RK)           :: array, dimension (LDA,N)
+!!
+!!          On entry, the vectors which define the elementary reflectors,
+!!          as returned by mobbrmsd_DGEBRD.
+!!
+!!          On exit, the M-by-N matrix \(\mathbf{Q}\) or \(\mathbf{P}^\top\).
+!!
+  integer, intent(in)      :: LWORK
+!!          LWORK is INTEGER
+!!
+!!          The dimension of the array WORK. LWORK >= max(1,min(M,N)).
+!!          For optimum performance LWORK >= min(M,N)*NB, where NB
+!!          is the optimal blocksize.
+!!
+!!          If LWORK = -1, then a workspace query is assumed; the routine
+!!          only calculates the optimal size of the WORK array, returns
+!!          this value as the first entry of the WORK array, and no error
+!!          message related to LWORK is issued by XERBLA.
+!!
   real(RK), intent(out)    :: WORK(*)
-!     ..
-!
-!  =====================================================================
-!     ..
-!     .. Local Scalars ..
+!!          WORK is real(RK)           :: array, dimension (MAX(1,LWORK))
+!!
+!!          On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+  integer, intent(out)     :: INFO
+!!          = 0:  successful exit
+!!
+!!          < 0:  if INFO = -i, the i-th argument had an illegal value
+!!
   logical                 :: LQUERY, WANTQ
   integer                 :: I, IINFO, J, LWKOPT, MN
-!     .. Intrinsic Functions ..
   intrinsic                :: MAX, MIN
 !     .. Parameters ..
 ! real(RK), parameter      :: ZERO = 0.0_RK

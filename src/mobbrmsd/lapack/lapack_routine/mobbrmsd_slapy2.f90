@@ -1,9 +1,12 @@
 !| mobbrmsd_SLAPY2 returns sqrt(x**2+y**2), taking care not to cause unnecessary
 !  overflow.
 !
-!     Reference SLAPY2 is provided by [](http://www.netlib.org/lapack/)
+!     Reference SLAPY2 is provided by [netlib](http://www.netlib.org/lapack/)
+!
 !  -- LAPACK auxiliary routine (version 3.7.1) --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     June 2017
 !
