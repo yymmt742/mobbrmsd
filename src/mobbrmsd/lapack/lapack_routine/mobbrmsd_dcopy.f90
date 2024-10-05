@@ -40,8 +40,6 @@ pure subroutine mobbrmsd_DCOPY(N, DX, INCX, DY, INCY)
         if (N < 7) return
       end if
 !
-      MP1 = M + 1
-!
       do concurrent(I=MP1:N:7)
         DY(I) = DX(I)
         DY(I + 1) = DX(I + 1)

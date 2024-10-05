@@ -31,9 +31,6 @@ pure subroutine mobbrmsd_DGELQ2(M, N, A, LDA, TAU, WORK, INFO)
 !!          The number of rows of the matrix A.  M >= 0.
   integer, intent(in)     :: N
 !!          The number of columns of the matrix A.  N >= 0.
-  integer, intent(out)    :: INFO
-!!          = 0: successful exit <br>
-!!          < 0: if INFO = -i, the i-th argument had an illegal value
   integer, intent(in)     :: LDA
 !!          The leading dimension of the array A.  LDA >= max(1,M).
   real(RK), intent(inout) :: A(LDA, *)
