@@ -45,7 +45,12 @@ pure subroutine mobbrmsd_DGELQ2(M, N, A, LDA, TAU, WORK, INFO)
 !!          Details).
   real(RK), intent(out)   :: WORK(*)
 !!          WORK is real(RK)           :: array, dimension (M)
-!
+!!
+  integer, intent(out)    :: INFO
+!!          = 0: successful exit
+!!
+!!          < 0: if INFO = -i, the i-th argument had an illegal value
+!!
   integer                :: I, K
   real(RK)               :: AII
   intrinsic              :: MAX, MIN

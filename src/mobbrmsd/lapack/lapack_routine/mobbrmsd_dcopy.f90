@@ -23,24 +23,24 @@ pure subroutine mobbrmsd_DCOPY(N, DX, INCX, DY, INCY)
   real(RK), intent(out) :: DY(*)
 !!         DY is DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCY ) )
 !
+  if (N <= 0) return
   if (INCX == 1 .and. INCY == 1) then
 !
-! code for both increments equal to 1
-! clean-up loop
+!      code for both increments equal to 1
+!      clean-up loop
 !
     block
       integer   :: I, M, MP1
       intrinsic :: MOD
-!
       M = MOD(N, 7)
       if (M /= 0) then
-        do concurrent(I=1:M)
+        do I = 1, M
           DY(I) = DX(I)
         end do
         if (N < 7) return
       end if
-!
-      do concurrent(I=MP1:N:7)
+      MP1 = M + 1
+      do I = MP1, N, 7
         DY(I) = DX(I)
         DY(I + 1) = DX(I + 1)
         DY(I + 2) = DX(I + 2)
