@@ -137,9 +137,8 @@ pure subroutine mobbrmsd_DGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
 !
 !           Apply H(i) to A(i:m,i+1:n) from the left
 !
-      if (I < N)&
-&         call mobbrmsd_DLARF('Left', M - I + 1, N - I, A(I, I), 1, TAUQ(I),&
-&                     A(I, I + 1), LDA, WORK)
+      if (I < N) call mobbrmsd_DLARF('Left', M - I + 1, N - I, A(I, I), 1,&
+                &                    TAUQ(I), A(I, I + 1), LDA, WORK)
       A(I, I) = D(I)
 !
       if (I < N) then
@@ -154,7 +153,7 @@ pure subroutine mobbrmsd_DGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
 !              Apply G(i) to A(i+1:m,i+1:n) from the right
 !
         call mobbrmsd_DLARF('Right', M - I, N - I, A(I, I + 1), LDA,&
-&                     TAUP(I), A(I + 1, I + 1), LDA, WORK)
+            &               TAUP(I), A(I + 1, I + 1), LDA, WORK)
         A(I, I + 1) = E(I)
       else
         TAUP(I) = ZERO
@@ -174,9 +173,8 @@ pure subroutine mobbrmsd_DGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
 !
 !           Apply G(i) to A(i+1:m,i:n) from the right
 !
-      if (I < M)&
- &      call mobbrmsd_DLARF('Right', M - I, N - I + 1, A(I, I), LDA,&
- &                 TAUP(I), A(I + 1, I), LDA, WORK)
+      if (I < M) call mobbrmsd_DLARF('Right', M - I, N - I + 1, A(I, I), LDA, &
+                     &               TAUP(I), A(I + 1, I), LDA, WORK)
       A(I, I) = D(I)
 !
       if (I < M) then
@@ -191,7 +189,7 @@ pure subroutine mobbrmsd_DGEBD2(M, N, A, LDA, D, E, TAUQ, TAUP, WORK, INFO)
 !              Apply H(i) to A(i+1:m,i+1:n) from the left
 !
         call mobbrmsd_DLARF('Left', M - I, N - I, A(I + 1, I), 1, TAUQ(I),&
-&                  A(I + 1, I + 1), LDA, WORK)
+            &               A(I + 1, I + 1), LDA, WORK)
         A(I + 1, I) = E(I)
       else
         TAUQ(I) = ZERO
