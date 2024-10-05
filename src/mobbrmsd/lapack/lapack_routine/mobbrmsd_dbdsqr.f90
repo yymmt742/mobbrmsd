@@ -27,13 +27,14 @@
 !  B. Parlett and V. Fernando, Technical Report CPAM-554, Mathematics
 !  Department, University of California at Berkeley, July 1992
 !  for a detailed description of the algorithm.
+!
+!  reference DBDSQR is provided by http://www.netlib.org/lapack/explore-html/
+!  \author Univ. of Tennessee
+!  \author Univ. of California Berkeley
+!  \author Univ. of Colorado Denver
+!  \author NAG Ltd.
 pure subroutine mobbrmsd_DBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, &
      &                          LDVT, U, LDU, C, LDC, WORK, INFO)
-!! reference DBDSQR is provided by http://www.netlib.org/lapack/explore-html/
-!! \author Univ. of Tennessee
-!! \author Univ. of California Berkeley
-!! \author Univ. of Colorado Denver
-!! \author NAG Ltd.
 
   implicit none
 !
