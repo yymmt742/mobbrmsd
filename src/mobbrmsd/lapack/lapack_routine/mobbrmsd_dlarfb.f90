@@ -182,7 +182,7 @@ pure subroutine mobbrmsd_DLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, &
 !            W := W * T**T  or  W * T
 !
         call mobbrmsd_DTRMM('Right', 'Upper', TRANST, 'Non-unit', N, K,&
-       &            ONE, T, LDT, WORK, LDWORK)
+       &                    ONE, T, LDT, WORK, LDWORK)
 !
 !            C := C - V * W**T
 !

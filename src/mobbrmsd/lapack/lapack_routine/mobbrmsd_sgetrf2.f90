@@ -1,156 +1,87 @@
-!> \brief \b mobbrmsd_SGETRF2
+!| mobbrmsd_SGETRF2 computes an LU factorization of a general M-by-N matrix A
+!  using partial pivoting with row interchanges.
 !
-!  =========== DOCUMENTATION ===========
+!  The factorization has the form
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  \[ \mathbf{A} = \mathbf{P} \mathbf{L} \mathbf{U}, \]
 !
-!  Definition:
-!  ===========
+!  where \( \mathbf{P} \) is a permutation matrix,
+!  \( \mathbf{L} \) is lower triangular with unit
+!  diagonal elements (lower trapezoidal if \( m>n \) ),
+!  and \( \mathbf{U} \) is upper triangular (upper trapezoidal if \( m < n \) ).
 !
-!       RECURSIVE SUBROUTINE mobbrmsd_SGETRF2( M, N, A, LDA, IPIV, INFO )
+!  This is the recursive version of the algorithm. It divides
+!  the matrix into four submatrices:
 !
-!       .. Scalar Arguments ..
-!       INTEGER            INFO, LDA, M, N
-!       ..
-!       .. Array Arguments ..
-!       INTEGER            IPIV( * )
-!       REAL               A( LDA, * )
-!       ..
+!        [  A11 | A12  ]  where A11 is n1 by n1 and A22 is n2 by n2
+!    A = [ -----|----- ]  with n1 = min(m,n)/2
+!        [  A21 | A22  ]       n2 = n-n1
 !
+!                                          [ A11 ]
+!    The subroutine calls itself to factor [ --- ],
+!                                          [ A12 ]
+!                    [ A12 ]
+!    do the swaps on [ --- ], solve A12, update A22,
+!                    [ A22 ]
 !
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SGETRF2 computes an LU factorization of a general M-by-N matrix A
-!> using partial pivoting with row interchanges.
-!>
-!> The factorization has the form
-!>    A = P * L * U
-!> where P is a permutation matrix, L is lower triangular with unit
-!> diagonal elements (lower trapezoidal if m > n), and U is upper
-!> triangular (upper trapezoidal if m < n).
-!>
-!> This is the recursive version of the algorithm. It divides
-!> the matrix into four submatrices:
-!>
-!>        [  A11 | A12  ]  where A11 is n1 by n1 and A22 is n2 by n2
-!>    A = [ -----|----- ]  with n1 = min(m,n)/2
-!>        [  A21 | A22  ]       n2 = n-n1
-!>
-!>                                       [ A11 ]
-!> The subroutine calls itself to factor [ --- ],
-!>                                       [ A12 ]
-!>                 [ A12 ]
-!> do the swaps on [ --- ], solve A12, update A22,
-!>                 [ A22 ]
-!>
-!> then calls itself to factor A22 and do the swaps on A21.
-!>
-!> \endverbatim
+!  then calls itself to factor A22 and do the swaps on A21.
 !
-!  Arguments:
-!  ==========
-!
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>          The number of rows of the matrix A.  M >= 0.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of columns of the matrix A.  N >= 0.
-!> \endverbatim
-!>
-!> \param[in,out] A
-!> \verbatim
-!>          A is REAL array, dimension (LDA,N)
-!>          On entry, the M-by-N matrix to be factored.
-!>          On exit, the factors L and U from the factorization
-!>          A = P*L*U; the unit diagonal elements of L are not stored.
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>          The leading dimension of the array A.  LDA >= max(1,M).
-!> \endverbatim
-!>
-!> \param[out] IPIV
-!> \verbatim
-!>          IPIV is INTEGER array, dimension (min(M,N))
-!>          The pivot indices; for 1 <= i <= min(M,N), row i of the
-!>          matrix was interchanged with row IPIV(i).
-!> \endverbatim
-!>
-!> \param[out] INFO
-!> \verbatim
-!>          INFO is INTEGER
-!>          = 0:  successful exit
-!>          < 0:  if INFO = -i, the i-th argument had an illegal value
-!>          > 0:  if INFO = i, U(i,i) is exactly zero. The factorization
-!>                has been completed, but the factor U is exactly
-!>                singular, and division by zero will occur if it is used
-!>                to solve a system of equations.
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \date June 2016
-!
-!> \ingroup realGEcomputational
-!
-!  =====================================================================
-pure recursive subroutine mobbrmsd_SGETRF2(M, N, A, LDA, IPIV, INFO)
+!  Reference SGETRF2 is provided by [netlib](http://www.netlib.org/lapack/).
 !
 !  -- LAPACK computational routine (version 3.7.1) --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     June 2016
 !
-!     .. Scalar Arguments ..
-  integer, intent(in)  :: LDA, M, N
-  integer, intent(out) :: INFO
-!..
-!..Array Arguments..
-  integer, intent(out) :: IPIV(*)
-  real(RK), intent(inout) :: A(LDA, *)
-!..
-!
-!  =====================================================================
-!..
-!..Local Scalars..
-  real(RK) :: SFMIN, TEMP
-  integer :: I, IINFO, n1, n2
-!
-!..Parameters..
+pure recursive subroutine mobbrmsd_SGETRF2(M, N, A, LDA, IPIV, INFO)
+  integer, intent(in)      :: M
+!!  The number of rows of the matrix A.  M >= 0.
+!!
+  integer, intent(in)      :: N
+!!  The number of columns of the matrix A.  N >= 0.
+!!
+  integer, intent(in)      :: LDA
+!!  The leading dimension of the array A.  LDA >= max(1,M).
+!!
+  real(RK), intent(inout)  :: A(LDA, *)
+!!  DOUBLE PRECISION array, dimension (LDA,N)
+!!
+!!  On entry, the M-by-N matrix to be factored.
+!!
+!!  On exit, the factors L and U from the factorization
+!!  A = P*L*U; the unit diagonal elements of L are not stored.
+!!
+  integer, intent(out)     :: IPIV(*)
+!!  INTEGER array, dimension (min(M,N))
+!!
+!!  The pivot indices; for 1 <= i <= min(M,N), row i of the
+!!  matrix was interchanged with row IPIV(i).
+!!
+  integer, intent(out)     :: INFO
+!!  = 0:  successful exit
+!!
+!!  < 0:  if INFO = -i, the i-th argument had an illegal value
+!!
+!!  \> 0:  if INFO = i, U(i,i) is exactly zero. The factorization
+!!        has been completed, but the factor U is exactly
+!!        singular, and division by zero will occur if it is used
+!!        to solve a system of equations.
+!!
+  real(RK)  :: SFMIN, TEMP
+  integer   :: I, IINFO, n1, n2
+  intrinsic :: MAX, MIN
 ! real(RK), parameter:: ONE = 1.0E+0, ZERO = 0.0E+0
-!..
 ! interface
 !..external Functions..
 !   include 'slamch.h'
 !   include 'isamax.h'
-!..external Subroutines..
 !   include 'sgemm.h'
 !   include 'sscal.h'
 !   include 'slaswp.h'
 !   include 'strsm.h'
 ! end interface
-!..
-!..intrinsic Functions..
-  intrinsic :: MAX, MIN
-!..
-!..Executable Statements..
 !
 ! Test the input parameters
 !
@@ -223,17 +154,17 @@ pure recursive subroutine mobbrmsd_SGETRF2(M, N, A, LDA, IPIV, INFO)
     N1 = MIN(M, N) / 2
     N2 = N - N1
 !
-! [A11]
-! Factor[---]
-! [A21]
+!        [A11]
+! Factor [---]
+!        [A21]
 !
     call mobbrmsd_SGETRF2(m, n1, A, lda, ipiv, iinfo)
 
     if (info == 0 .and. iinfo > 0) info = iinfo
 !
-! [A12]
-! Apply interchanges to[---]
-! [A22]
+!                       [A12]
+! Apply interchanges to [---]
+!                       [A22]
 !
     call mobbrmsd_SLASWP(N2, A(1, N1 + 1), LDA, 1, N1, IPIV, 1)
 !
@@ -266,3 +197,4 @@ pure recursive subroutine mobbrmsd_SGETRF2(M, N, A, LDA, IPIV, INFO)
 ! end of mobbrmsd_SGETRF2
 !
 end
+

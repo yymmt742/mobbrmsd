@@ -1,187 +1,94 @@
-!> \brief \b mobbrmsd_DTRMV
+!| mobbrmsd_DTRMV performs one of the matrix-vector operations
 !
-!  =========== DOCUMENTATION ===========
+!     x := A*x,   or   x := A**T*x,
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  where x is an n element vector and  A is an n by n unit, or non-unit,
+!  upper or lower triangular matrix.
 !
-!  Definition:
-!  ===========
+!  reference DTRMV is provided by [netlib.org](http://www.netlib.org/lapack/).
 !
-!       SUBROUTINE mobbrmsd_DTRMV(UPLO,TRANS,DIAG,N,A,LDA,X,INCX)
+!  -- Reference BLAS level2 routine (version 3.7.0) --
 !
-!       .. Scalar Arguments ..
-!       INTEGER INCX,LDA,N
-!       CHARACTER DIAG,TRANS,UPLO
-!       ..
-!       .. Array Arguments ..
-!       real(RK)           :: A(LDA,*),X(*)
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_DTRMV  performs one of the matrix-vector operations
-!>
-!>    x := A*x,   or   x := A**T*x,
-!>
-!> where x is an n element vector and  A is an n by n unit, or non-unit,
-!> upper or lower triangular matrix.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] UPLO
-!> \verbatim
-!>          UPLO is CHARACTER*1
-!>           On entry, UPLO specifies whether the matrix is an upper or
-!>           lower triangular matrix as follows:
-!>
-!>              UPLO = 'U' or 'u'   A is an upper triangular matrix.
-!>
-!>              UPLO = 'L' or 'l'   A is a lower triangular matrix.
-!> \endverbatim
-!>
-!> \param[in] TRANS
-!> \verbatim
-!>          TRANS is CHARACTER*1
-!>           On entry, TRANS specifies the operation to be performed as
-!>           follows:
-!>
-!>              TRANS = 'N' or 'n'   x := A*x.
-!>
-!>              TRANS = 'T' or 't'   x := A**T*x.
-!>
-!>              TRANS = 'C' or 'c'   x := A**T*x.
-!> \endverbatim
-!>
-!> \param[in] DIAG
-!> \verbatim
-!>          DIAG is CHARACTER*1
-!>           On entry, DIAG specifies whether or not A is unit
-!>           triangular as follows:
-!>
-!>              DIAG = 'U' or 'u'   A is assumed to be unit triangular.
-!>
-!>              DIAG = 'N' or 'n'   A is not assumed to be unit
-!>                                  triangular.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>           On entry, N specifies the order of the matrix A.
-!>           N must be at least zero.
-!> \endverbatim
-!>
-!> \param[in] A
-!> \verbatim
-!>          A is real(RK)           :: array, dimension ( LDA, N )
-!>           Before entry with  UPLO = 'U' or 'u', the leading n by n
-!>           upper triangular part of the array A must contain the upper
-!>           triangular matrix and the strictly lower triangular part of
-!>           A is not referenced.
-!>           Before entry with UPLO = 'L' or 'l', the leading n by n
-!>           lower triangular part of the array A must contain the lower
-!>           triangular matrix and the strictly upper triangular part of
-!>           A is not referenced.
-!>           Note that when  DIAG = 'U' or 'u', the diagonal elements of
-!>           A are not referenced either, but are assumed to be unity.
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>           On entry, LDA specifies the first dimension of A as declared
-!>           in the calling (sub) program. LDA must be at least
-!>           max( 1, n ).
-!> \endverbatim
-!>
-!> \param[in,out] X
-!> \verbatim
-!>          X is real(RK)           :: array, dimension at least
-!>           ( 1 + ( n - 1 )*abs( INCX ) ).
-!>           Before entry, the incremented array X must contain the n
-!>           element vector x. On exit, X is overwritten with the
-!>           transformed vector x.
-!> \endverbatim
-!>
-!> \param[in] INCX
-!> \verbatim
-!>          INCX is INTEGER
-!>           On entry, INCX specifies the increment for the elements of
-!>           X. INCX must not be zero.
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup double_blas_level2
-!
-!> \par Further Details:
-!  =====================
-!>
-!> \verbatim
-!>
-!>  Level 2 Blas routine.
-!>  The vector and matrix arguments are not referenced when N = 0, or M = 0
-!>
-!>  -- Written on 22-October-1986.
-!>     Jack Dongarra, Argonne National Lab.
-!>     Jeremy Du Croz, Nag Central Office.
-!>     Sven Hammarling, Nag Central Office.
-!>     Richard Hanson, Sandia National Labs.
-!> \endverbatim
-!>
-!  =====================================================================
-pure subroutine mobbrmsd_DTRMV(UPLO, TRANS, DIAG, N, A, LDA, X, INCX)
-! use LA_CONSTANTS, only: RK => dp
-  implicit none
-!
-!  -- Reference BLAS level2 routine --
 !  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+!     December 2016
 !
-!     .. Scalar Arguments ..
-  integer, intent(in)   :: INCX, LDA, N
-  character, intent(in) :: DIAG, TRANS, UPLO
-!     ..
-!     .. Array Arguments ..
+!  -- Written on 22-October-1986.
+!     Jack Dongarra, Argonne National Lab.
+!     Jeremy Du Croz, Nag Central Office.
+!     Sven Hammarling, Nag Central Office.
+!     Richard Hanson, Sandia National Labs.
+!
+pure subroutine mobbrmsd_DTRMV(UPLO, TRANS, DIAG, N, A, LDA, X, INCX)
+  implicit none
+  character, intent(in) :: UPLO
+!!           On entry, UPLO specifies whether the matrix is an upper or
+!!           lower triangular matrix as follows:
+!!
+!!              UPLO = 'U' or 'u'   A is an upper triangular matrix.
+!!
+!!              UPLO = 'L' or 'l'   A is a lower triangular matrix.
+!!
+  character, intent(in) :: TRANS
+!!           On entry, TRANS specifies the operation to be performed as
+!!           follows:
+!!
+!!              TRANS = 'N' or 'n'   x := A*x.
+!!
+!!              TRANS = 'T' or 't'   x := A**T*x.
+!!
+!!              TRANS = 'C' or 'c'   x := A**T*x.
+!!
+  character, intent(in) :: DIAG
+!!           On entry, DIAG specifies whether or not A is unit
+!!           triangular as follows:
+!!
+!!              DIAG = 'U' or 'u'   A is assumed to be unit triangular.
+!!
+!!              DIAG = 'N' or 'n'   A is not assumed to be unit
+!!                                  triangular.
+!!
+  integer, intent(in)   :: N
+!!           On entry, N specifies the order of the matrix A.
+!!           N must be at least zero.
+  integer, intent(in)   :: LDA
+!!           On entry, LDA specifies the first dimension of A as declared
+!!           in the calling (sub) program. LDA must be at least
+!!           max( 1, n ).
   real(RK), intent(in)    :: A(LDA, *)
+!!          A is REAL array, dimension ( LDA, N )
+!!
+!!           Before entry with  UPLO = "U" or "u", the leading n by n
+!!           upper triangular part of the array A must contain the upper
+!!           triangular matrix and the strictly lower triangular part of
+!!           A is not referenced.
+!!           Before entry with UPLO = "L" or "l", the leading n by n
+!!           lower triangular part of the array A must contain the lower
+!!           triangular matrix and the strictly upper triangular part of
+!!           A is not referenced.
+!!           Note that when  DIAG = "U" or "u", the diagonal elements of
+!!           A are not referenced either, but are assumed to be unity.
+!!
+  integer, intent(in)   :: INCX
+!!           On entry, INCX specifies the increment for the elements of
+!!           X. INCX must not be zero.
   real(RK), intent(inout) :: X(*)
-!     ..
-!
-!  =====================================================================
-!     ..
-!     .. Local Scalars ..
-  real(RK) :: TEMP
-  integer  :: I, INFO, IX, J, JX, KX
-  logical  :: NOUNIT
-!     ..
-!     .. Intrinsic Functions ..
+!!           X is REAL array, dimension at least
+!!           ( 1 + ( n - 1 )*abs( INCX ) ).
+!!           Before entry, the incremented array X must contain the n
+!!           element vector x. On exit, X is overwritten with the
+!!           transformed vector x.
+!!
+  real(RK)  :: TEMP
+  integer   :: I, INFO, IX, J, JX, KX
+  logical   :: NOUNIT
   intrinsic :: MAX
-!     ..
-!     .. Parameters ..
-! real(RK), parameter      :: ZERO = 0.0_RK
-!     ..
-!     .. External Functions ..
 ! interface
-!     .. External Subroutines ..
-!   !include 'xerbla.h'
-!     .. External Functions ..
 !   include 'lsame.h'
 ! end interface
 !
-!     Test the input parameters.
+! Test the input parameters.
 !
   INFO = 0
   if (.not. mobbrmsd_LSAME(UPLO, 'U') .and. .not. mobbrmsd_LSAME(UPLO, 'L')) then
@@ -199,7 +106,6 @@ pure subroutine mobbrmsd_DTRMV(UPLO, TRANS, DIAG, N, A, LDA, X, INCX)
     INFO = 8
   end if
   if (INFO /= 0) then
-    !CALL XERBLA('DTRMV ',INFO)
     return
   end if
 !
@@ -339,3 +245,4 @@ pure subroutine mobbrmsd_DTRMV(UPLO, TRANS, DIAG, N, A, LDA, X, INCX)
 !     End of mobbrmsd_DTRMV
 !
 end subroutine mobbrmsd_DTRMV
+

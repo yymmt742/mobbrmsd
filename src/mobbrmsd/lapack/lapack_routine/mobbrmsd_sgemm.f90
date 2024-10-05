@@ -1,226 +1,118 @@
-!> \brief \b mobbrmsd_SGEMM
+!| mobbrmsd_SGEMM performs one of the matrix-matrix operations
 !
-!  =========== DOCUMENTATION ===========
+!  \[ \mathbf{C} \gets \alpha \text{op}( \mathbf{A} ) \text{op}( \mathbf{B} ) + \beta \mathbf{C}, \]
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  where \( \text{op}( \mathbf{X} ) \) is one of
+!  \( \text{op}( \mathbf{X} ) = \mathbf{X} \) or \( \text{op}( \mathbf{X} ) = \mathbf{X} ^ {\top} \),
+!  \( \alpha \) and \( \beta \) are scalars, and \( \mathbf{A} \), \( \mathbf{B} \) and \( \mathbf{C} \) are matrices,
+!  with \( \text{op}( \mathbf{A} ) \) an \( m \) by \( k \) matrix,
+!  \( \text{op}( \mathbf{B} ) \) a \( k \) by \( n \) matrix,
+!  and \( \mathbf{B} \) an \( m \) by \( n \) matrix.
 !
-!  Definition:
-!  ===========
-!
-!       SUBROUTINE mobbrmsd_SGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
-!
-!       .. Scalar Arguments ..
-!       REAL ALPHA,BETA
-!       INTEGER K,LDA,LDB,LDC,M,N
-!       CHARACTER TRANSA,TRANSB
-!       ..
-!       .. Array Arguments ..
-!       REAL A(LDA,*),B(LDB,*),C(LDC,*)
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SGEMM  performs one of the matrix-matrix operations
-!>
-!>    C := alpha*op( A )*op( B ) + beta*C,
-!>
-!> where  op( X ) is one of
-!>
-!>    op( X ) = X   or   op( X ) = X**T,
-!>
-!> alpha and beta are scalars, and A, B and C are matrices, with op( A )
-!> an m by k matrix,  op( B )  a  k by n matrix and  C an m by n matrix.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] TRANSA
-!> \verbatim
-!>          TRANSA is CHARACTER*1
-!>           On entry, TRANSA specifies the form of op( A ) to be used in
-!>           the matrix multiplication as follows:
-!>
-!>              TRANSA = 'N' or 'n',  op( A ) = A.
-!>
-!>              TRANSA = 'T' or 't',  op( A ) = A**T.
-!>
-!>              TRANSA = 'C' or 'c',  op( A ) = A**T.
-!> \endverbatim
-!>
-!> \param[in] TRANSB
-!> \verbatim
-!>          TRANSB is CHARACTER*1
-!>           On entry, TRANSB specifies the form of op( B ) to be used in
-!>           the matrix multiplication as follows:
-!>
-!>              TRANSB = 'N' or 'n',  op( B ) = B.
-!>
-!>              TRANSB = 'T' or 't',  op( B ) = B**T.
-!>
-!>              TRANSB = 'C' or 'c',  op( B ) = B**T.
-!> \endverbatim
-!>
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>           On entry,  M  specifies  the number  of rows  of the  matrix
-!>           op( A )  and of the  matrix  C.  M  must  be at least  zero.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>           On entry,  N  specifies the number  of columns of the matrix
-!>           op( B ) and the number of columns of the matrix C. N must be
-!>           at least zero.
-!> \endverbatim
-!>
-!> \param[in] K
-!> \verbatim
-!>          K is INTEGER
-!>           On entry,  K  specifies  the number of columns of the matrix
-!>           op( A ) and the number of rows of the matrix op( B ). K must
-!>           be at least  zero.
-!> \endverbatim
-!>
-!> \param[in] ALPHA
-!> \verbatim
-!>          ALPHA is REAL
-!>           On entry, ALPHA specifies the scalar alpha.
-!> \endverbatim
-!>
-!> \param[in] A
-!> \verbatim
-!>          A is REAL array, dimension ( LDA, ka ), where ka is
-!>           k  when  TRANSA = 'N' or 'n',  and is  m  otherwise.
-!>           Before entry with  TRANSA = 'N' or 'n',  the leading  m by k
-!>           part of the array  A  must contain the matrix  A,  otherwise
-!>           the leading  k by m  part of the array  A  must contain  the
-!>           matrix A.
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>           On entry, LDA specifies the first dimension of A as declared
-!>           in the calling (sub) program. When  TRANSA = 'N' or 'n' then
-!>           LDA must be at least  max( 1, m ), otherwise  LDA must be at
-!>           least  max( 1, k ).
-!> \endverbatim
-!>
-!> \param[in] B
-!> \verbatim
-!>          B is REAL array, dimension ( LDB, kb ), where kb is
-!>           n  when  TRANSB = 'N' or 'n',  and is  k  otherwise.
-!>           Before entry with  TRANSB = 'N' or 'n',  the leading  k by n
-!>           part of the array  B  must contain the matrix  B,  otherwise
-!>           the leading  n by k  part of the array  B  must contain  the
-!>           matrix B.
-!> \endverbatim
-!>
-!> \param[in] LDB
-!> \verbatim
-!>          LDB is INTEGER
-!>           On entry, LDB specifies the first dimension of B as declared
-!>           in the calling (sub) program. When  TRANSB = 'N' or 'n' then
-!>           LDB must be at least  max( 1, k ), otherwise  LDB must be at
-!>           least  max( 1, n ).
-!> \endverbatim
-!>
-!> \param[in] BETA
-!> \verbatim
-!>          BETA is REAL
-!>           On entry,  BETA  specifies the scalar  beta.  When  BETA  is
-!>           supplied as zero then C need not be set on input.
-!> \endverbatim
-!>
-!> \param[in,out] C
-!> \verbatim
-!>          C is REAL array, dimension ( LDC, N )
-!>           Before entry, the leading  m by n  part of the array  C must
-!>           contain the matrix  C,  except when  beta  is zero, in which
-!>           case C need not be set on entry.
-!>           On exit, the array  C  is overwritten by the  m by n  matrix
-!>           ( alpha*op( A )*op( B ) + beta*C ).
-!> \endverbatim
-!>
-!> \param[in] LDC
-!> \verbatim
-!>          LDC is INTEGER
-!>           On entry, LDC specifies the first dimension of C as declared
-!>           in  the  calling  (sub)  program.   LDC  must  be  at  least
-!>           max( 1, m ).
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \date December 2016
-!
-!> \ingroup single_blas_level3
-!
-!> \par Further Details:
-!  =====================
-!>
-!> \verbatim
-!>
-!>  Level 3 Blas routine.
-!>
-!>  -- Written on 8-February-1989.
-!>     Jack Dongarra, Argonne National Laboratory.
-!>     Iain Duff, AERE Harwell.
-!>     Jeremy Du Croz, Numerical Algorithms Group Ltd.
-!>     Sven Hammarling, Numerical Algorithms Group Ltd.
-!> \endverbatim
-!>
-!  =====================================================================
-pure subroutine mobbrmsd_SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
-  implicit none
+!  Reference SGEMM is provided by [netlib](http://www.netlib.org/lapack/).
 !
 !  -- Reference BLAS level3 routine (version 3.7.0) --
+!
 !  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     December 2016
 !
-!     .. Scalar Arguments ..
-  real(RK), intent(in)  :: ALPHA, BETA
-  integer, intent(in)   :: K, LDA, LDB, LDC, M, N
-  character, intent(in) ::  TRANSA, TRANSB
-!..
-!..Array Arguments..
-  real(RK), intent(in)    :: A(LDA, *), B(LDB, *)
-  real(RK), intent(inout) :: C(LDC, *)
-!..
+!  -- Written on 8-February-1989.
+!     Jack Dongarra, Argonne National Laboratory.
+!     Iain Duff, AERE Harwell.
+!     Jeremy Du Croz, Numerical Algorithms Group Ltd.
+!     Sven Hammarling, Numerical Algorithms Group Ltd.
 !
-!  =====================================================================
-!
-! interface
-! .. External Functions ..
-!   include 'lsame.h'
-! end interface
-!..
-!..intrinsic Functions..
+pure subroutine mobbrmsd_SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
+  implicit none
+  character, intent(in) :: TRANSA
+!!  On entry, TRANSA specifies the form of op( A ) to be used in
+!!  the matrix multiplication as follows:
+!!
+!!     TRANSA = 'N' or 'n',  op( A ) = A.
+!!
+!!     TRANSA = 'T' or 't',  op( A ) = A**T.
+!!
+!!     TRANSA = 'C' or 'c',  op( A ) = A**T.
+!!
+  character, intent(in) :: TRANSB
+!!  On entry, TRANSB specifies the form of op( B ) to be used in
+!!  the matrix multiplication as follows:
+!!
+!!     TRANSB = 'N' or 'n',  op( B ) = B.
+!!
+!!     TRANSB = 'T' or 't',  op( B ) = B**T.
+!!
+!!     TRANSB = 'C' or 'c',  op( B ) = B**T.
+!!
+  integer, intent(in)      :: M
+!!  On entry,  M  specifies  the number  of rows  of the  matrix
+!!  op( A )  and of the  matrix  C.  M  must  be at least  zero.
+!!
+  integer, intent(in)      :: N
+!!  On entry,  N  specifies the number  of columns of the matrix
+!!  op( B ) and the number of columns of the matrix C. N must be
+!!  at least zero.
+!!
+  integer, intent(in)      :: K
+!!  On entry,  K  specifies  the number of columns of the matrix
+!!  op( A ) and the number of rows of the matrix op( B ). K must
+!!  be at least  zero.
+!!
+  real(RK), intent(in)     :: ALPHA
+!!  On entry, ALPHA specifies the scalar alpha.
+!!
+  integer, intent(in)      :: LDA
+!!  On entry, LDA specifies the first dimension of A as declared
+!!  in the calling (sub) program. When  TRANSA = 'N' or 'n' then
+!!  LDA must be at least  max( 1, m ), otherwise  LDA must be at
+!!  least  max( 1, k ).
+!!
+  real(RK), intent(in)     :: A(LDA, *)
+!!  DOUBLE PRECISION array, dimension ( LDA, ka ), where ka is
+!!  k  when  TRANSA = 'N' or 'n',  and is  m  otherwise.
+!!  Before entry with  TRANSA = 'N' or 'n',  the leading  m by k
+!!  part of the array  A  must contain the matrix  A,  otherwise
+!!  the leading  k by m  part of the array  A  must contain  the
+!!  matrix A.
+!!
+  integer, intent(in)      :: LDB
+!!  On entry, LDB specifies the first dimension of B as declared
+!!  in the calling (sub) program. When  TRANSB = 'N' or 'n' then
+!!  LDB must be at least  max( 1, k ), otherwise  LDB must be at
+!!  least  max( 1, n ).
+!!
+  real(RK), intent(in)     :: B(LDB, *)
+!!  DOUBLE PRECISION array, dimension ( LDB, kb ), where kb is
+!!  n  when  TRANSB = 'N' or 'n',  and is  k  otherwise.
+!!  Before entry with  TRANSB = 'N' or 'n',  the leading  k by n
+!!  part of the array  B  must contain the matrix  B,  otherwise
+!!  the leading  n by k  part of the array  B  must contain  the
+!!  matrix B.
+!!
+  real(RK), intent(in)     :: BETA
+!! BETA is DOUBLE PRECISION.
+!!  On entry,  BETA  specifies the scalar  beta.  When  BETA  is
+!!  supplied as zero then C need not be set on input.
+!!
+  integer, intent(in)      :: LDC
+!!  On entry, LDC specifies the first dimension of C as declared
+!!  in  the  calling  (sub)  program.   LDC  must  be  at  least
+!!  max( 1, m ).
+!!
+  real(RK), intent(inout)  :: C(LDC, *)
+!!  DOUBLE PRECISION array, dimension ( LDC, N )
+!!  Before entry, the leading  m by n  part of the array  C must
+!!  contain the matrix  C,  except when  beta  is zero, in which
+!!  case C need not be set on entry.
+!!  On exit, the array  C  is overwritten by the  m by n  matrix
+!!  ( alpha*op( A )*op( B ) + beta*C ).
+!!
   intrinsic :: MAX
-!..
-!..Local Scalars..
   real(RK) :: TEMP
   integer  :: I, INFO, J, L, NCOLA, NROWA, NROWB
   logical  :: NOTA, NOTB
-!..
-!..Parameters..
-  real, parameter :: ONE = 1.0E+0, ZERO = 0.0E+0
-!..
 !
 ! Set NOTA and NOTB as true if A and B respectively are not
 ! transposed and set NROWA, NCOLA and NROWB as the number of rows
@@ -241,7 +133,7 @@ pure subroutine mobbrmsd_SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, B
     NROWB = N
   end if
 !
-!Test the input parameters.
+! Test the input parameters.
 !
   INFO = 0
   if ((.not. NOTA) .and. (.not. mobbrmsd_LSAME(TRANSA, 'C')) .and. (.not. mobbrmsd_LSAME(TRANSA, 'T'))) then
@@ -262,15 +154,15 @@ pure subroutine mobbrmsd_SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, B
     INFO = 13
   end if
   if (INFO /= 0) then
-    !call XERBLA('SGEMM ', INFO)
+!call XERBLA('SGEMM ', INFO)
     return
   end if
 !
-!Quick return if possible.
+! Quick return if possible.
 !
   if ((M == 0) .or. (N == 0) .or. (((ALPHA == ZERO) .or. (K == 0)) .and. (BETA == ONE))) return
 !
-!And if alpha == zero.
+! And if alpha == zero.
 !
   if (ALPHA == ZERO) then
     if (BETA == ZERO) then
@@ -288,14 +180,14 @@ pure subroutine mobbrmsd_SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, B
     end if
     return
   end if
-  !
-  !Start the operations.
-  !
+!
+!Start the operations.
+!
   if (NOTB) then
     if (NOTA) then
-      !
-      !Form C: = alpha * A * B + beta * C.
-      !
+!
+!Form C: = alpha * A * B + beta * C.
+!
       do J = 1, N
         if (BETA == ZERO) then
           do I = 1, M
@@ -314,9 +206,9 @@ pure subroutine mobbrmsd_SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, B
         end do
       end do
     else
-      !
-      !Form C: = alpha * A**T * B + beta * C
-      !
+!
+!Form C: = alpha * A**T * B + beta * C
+!
       do J = 1, N
         do I = 1, M
           TEMP = ZERO
@@ -333,9 +225,9 @@ pure subroutine mobbrmsd_SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, B
     end if
   else
     if (NOTA) then
-      !
-      !Form C: = alpha * A * B**T + beta * C
-      !
+!
+! Form C: = alpha * A * B**T + beta * C
+!
       do J = 1, N
         if (BETA == ZERO) then
           do I = 1, M
@@ -354,9 +246,9 @@ pure subroutine mobbrmsd_SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, B
         end do
       end do
     else
-      !
-      !Form C: = alpha * A**T * B**T + beta * C
-      !
+!
+! Form C: = alpha * A**T * B**T + beta * C
+!
       do J = 1, N
         do I = 1, M
           TEMP = ZERO
@@ -372,9 +264,10 @@ pure subroutine mobbrmsd_SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, B
       end do
     end if
   end if
-  !
+!
   return
-  !
-  !end of mobbrmsd_SGEMM.
-  !
+!
+! end of mobbrmsd_SGEMM.
+!
 end
+

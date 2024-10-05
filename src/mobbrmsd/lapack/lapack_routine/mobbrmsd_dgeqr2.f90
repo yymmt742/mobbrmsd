@@ -1,169 +1,80 @@
-!> \brief \b mobbrmsd_DGEQR2 computes the QR factorization of a general rectangular matrix using an unblocked algorithm.
+!| mobbrmsd_DGEQR2 computes the QR factorization of a general rectangular matrix using an unblocked algorithm.
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_DGEQR2 computes a QR factorization of a real m-by-n matrix A:
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!     A = Q * ( R ),
+!             ( 0 )
 !
-!> \htmlonly
-!> Download mobbrmsd_DGEQR2 + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dgeqr2.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dgeqr2.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txtfilename=/lapack/lapack_routine/dgeqr2.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!  where:
 !
-!  Definition:
-!  ===========
+!     Q is a m-by-m orthogonal matrix;
+!     R is an upper-triangular n-by-n matrix;
+!     0 is a (m-n)-by-n zero matrix, if m > n.
 !
-!       SUBROUTINE mobbrmsd_DGEQR2( M, N, A, LDA, TAU, WORK, INFO )
+!  The matrix Q is represented as a product of elementary reflectors
 !
-!       .. Scalar Arguments ..
-!       INTEGER            INFO, LDA, M, N
-!       ..
-!       .. Array Arguments ..
-!       real(RK)           ::   A( LDA, * ), TAU( * ), WORK( * )
-!       ..
+!     Q = H(1) H(2) . . . H(k), where k = min(m,n).
 !
+!  Each H(i) has the form
 !
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_DGEQR2 computes a QR factorization of a real m-by-n matrix A:
-!>
-!>    A = Q * ( R ),
-!>            ( 0 )
-!>
-!> where:
-!>
-!>    Q is a m-by-m orthogonal matrix;
-!>    R is an upper-triangular n-by-n matrix;
-!>    0 is a (m-n)-by-n zero matrix, if m > n.
-!>
-!> \endverbatim
+!     H(i) = I - tau * v * v**T
 !
-!  Arguments:
-!  ==========
+!  where tau is a real scalar, and v is a real vector with
+!  v(1:i-1) = 0 and v(i) = 1; v(i+1:m) is stored on exit in A(i+1:m,i),
+!  and tau in TAU(i).
 !
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>          The number of rows of the matrix A.  M >= 0.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of columns of the matrix A.  N >= 0.
-!> \endverbatim
-!>
-!> \param[in,out] A
-!> \verbatim
-!>          A is real(RK)           :: array, dimension (LDA,N)
-!>          On entry, the m by n matrix A.
-!>          On exit, the elements on and above the diagonal of the array
-!>          contain the min(m,n) by n upper trapezoidal matrix R (R is
-!>          upper triangular if m >= n); the elements below the diagonal,
-!>          with the array TAU, represent the orthogonal matrix Q as a
-!>          product of elementary reflectors (see Further Details).
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>          The leading dimension of the array A.  LDA >= max(1,M).
-!> \endverbatim
-!>
-!> \param[out] TAU
-!> \verbatim
-!>          TAU is real(RK)           :: array, dimension (min(M,N))
-!>          The scalar factors of the elementary reflectors (see Further
-!>          Details).
-!> \endverbatim
-!>
-!> \param[out] WORK
-!> \verbatim
-!>          WORK is real(RK)           :: array, dimension (N)
-!> \endverbatim
-!>
-!> \param[out] INFO
-!> \verbatim
-!>          INFO is INTEGER
-!>          = 0: successful exit
-!>          < 0: if INFO = -i, the i-th argument had an illegal value
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup doubleGEcomputational
-!
-!> \par Further Details:
-!  =====================
-!>
-!> \verbatim
-!>
-!>  The matrix Q is represented as a product of elementary reflectors
-!>
-!>     Q = H(1) H(2) . . . H(k), where k = min(m,n).
-!>
-!>  Each H(i) has the form
-!>
-!>     H(i) = I - tau * v * v**T
-!>
-!>  where tau is a real scalar, and v is a real vector with
-!>  v(1:i-1) = 0 and v(i) = 1; v(i+1:m) is stored on exit in A(i+1:m,i),
-!>  and tau in TAU(i).
-!> \endverbatim
-!>
-!  =====================================================================
-pure subroutine mobbrmsd_DGEQR2(M, N, A, LDA, TAU, WORK, INFO)
-! use LA_CONSTANTS, only: RK => dp
-  implicit none
+!  Reference DGEQR2 is provided by [netlib.org](http://www.netlib.org/lapack/).
 !
 !  -- LAPACK computational routine --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
-!     .. Scalar Arguments ..
-  integer, intent(in)     :: LDA, M, N
-  integer, intent(out)    :: INFO
-!     ..
-!     .. Array Arguments ..
+pure subroutine mobbrmsd_DGEQR2(M, N, A, LDA, TAU, WORK, INFO)
+  implicit none
+  integer, intent(in)     :: M
+!!  The number of rows of the matrix A.  M >= 0.
+!!
+  integer, intent(in)     :: N
+!!  The number of columns of the matrix A.  N >= 0.
+!!
+  integer, intent(in)     :: LDA
+!!  The leading dimension of the array A.  LDA >= max(1,M).
+!!
   real(RK), intent(inout) :: A(LDA, *)
-  real(RK), intent(out)   :: TAU(*), WORK(*)
-!     ..
-!
-!  =====================================================================
-!
-!     .. Local Scalars ..
+!!  DOUBLE PRECISION array, dimension (LDA,N)
+!!
+!!  On entry, the m by n matrix A.
+!!
+!!  On exit, the elements on and above the diagonal of the array
+!!  contain the min(m,n) by n upper trapezoidal matrix R (R is
+!!  upper triangular if m >= n); the elements below the diagonal,
+!!  with the array TAU, represent the orthogonal matrix Q as a
+!!  product of elementary reflectors (see Further Details).
+!!
+  real(RK), intent(out)   :: TAU(*)
+!!  DOUBLE PRECISION array, dimension (min(M,N))
+!!  The scalar factors of the elementary reflectors (see Further
+!!  Details).
+!!
+  real(RK), intent(out)   :: WORK(*)
+!!  DOUBLE PRECISION array, dimension (N)
+!!
+  integer, intent(out)    :: INFO
+!!  = 0: successful exit
+!!
+!!  < 0: if INFO = -i, the i-th argument had an illegal value
+!!
   integer                 :: I, K
   real(RK)                :: AII
-!     ..
-!     .. Intrinsic Functions ..
   intrinsic          :: MAX, MIN
-!     ..
-!     .. Parameters ..
-! real(RK), parameter      :: ONE = 1.0_RK
-!     ..
 ! interface
-!     .. External Subroutines ..
 !   include 'dlarf.h'
 !   include 'dlarfg.h'
 ! end interface
-!     ..
-!     .. Executable Statements ..
 !
-!     Test the input arguments
+! Test the input arguments
 !
   INFO = 0
   if (M < 0) then
@@ -174,7 +85,6 @@ pure subroutine mobbrmsd_DGEQR2(M, N, A, LDA, TAU, WORK, INFO)
     INFO = -4
   end if
   if (INFO /= 0) then
-    !CALL XERBLA( 'DGEQR2', -INFO )
     return
   end if
 !
@@ -182,13 +92,13 @@ pure subroutine mobbrmsd_DGEQR2(M, N, A, LDA, TAU, WORK, INFO)
 !
   do I = 1, K
 !
-!        Generate elementary reflector H(i) to annihilate A(i+1:m,i)
+!   Generate elementary reflector H(i) to annihilate A(i+1:m,i)
 !
     call mobbrmsd_DLARFG(M - I + 1, A(I, I), A(MIN(I + 1, M), I), 1, TAU(I))
 !
     if (I < N) then
 !
-!           Apply H(i) to A(i:m,i+1:n) from the left
+!     Apply H(i) to A(i:m,i+1:n) from the left
 !
       AII = A(I, I)
       A(I, I) = ONE
@@ -202,3 +112,4 @@ pure subroutine mobbrmsd_DGEQR2(M, N, A, LDA, TAU, WORK, INFO)
 !     End of mobbrmsd_DGEQR2
 !
 end subroutine mobbrmsd_DGEQR2
+

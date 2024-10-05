@@ -23,7 +23,7 @@
 !
 pure subroutine mobbrmsd_SGEMV(TRANS, M, N, ALPHA, A, LDA, X, INCX, BETA, Y, INCY)
   implicit none
-  character(*), intent(in) :: TRANS
+  character, intent(in) :: TRANS
 !!           On entry, TRANS specifies the operation to be performed as
 !!           follows:
 !!

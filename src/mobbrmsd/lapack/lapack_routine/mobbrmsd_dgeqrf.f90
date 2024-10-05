@@ -1,184 +1,91 @@
-!> \brief \b mobbrmsd_DGEQRF
+!| mobbrmsd_DGEQRF computes a QR factorization of a real M-by-N matrix A:
 !
-!  =========== DOCUMENTATION ===========
+!     A = Q * ( R ),
+!             ( 0 )
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  where:
 !
-!> \htmlonly
-!> Download mobbrmsd_DGEQRF + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dgeqrf.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dgeqrf.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txtfilename=/lapack/lapack_routine/dgeqrf.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!     Q is a M-by-M orthogonal matrix;
+!     R is an upper-triangular N-by-N matrix;
+!     0 is a (M-N)-by-N zero matrix, if M > N.
 !
-!  Definition:
-!  ===========
+!   The matrix Q is represented as a product of elementary reflectors
 !
-!       pure subroutine mobbrmsd_DGEQRF( M, N, A, LDA, TAU, WORK, LWORK, INFO )
+!      Q = H(1) H(2) . . . H(k), where k = min(m,n).
 !
-!       .. Scalar Arguments ..
-!       INTEGER            INFO, LDA, LWORK, M, N
-!       ..
-!       .. Array Arguments ..
-!       real(RK)           ::   A( LDA, * ), TAU( * ), WORK( * )
-!       ..
+!   Each H(i) has the form
 !
+!      H(i) = I - tau * v * v**T
 !
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_DGEQRF computes a QR factorization of a real M-by-N matrix A:
-!>
-!>    A = Q * ( R ),
-!>            ( 0 )
-!>
-!> where:
-!>
-!>    Q is a M-by-M orthogonal matrix;
-!>    R is an upper-triangular N-by-N matrix;
-!>    0 is a (M-N)-by-N zero matrix, if M > N.
-!>
-!> \endverbatim
+!   where \(\tau\) is a real scalar, and \(\mathbf{v}\) is a real vector with
+!   \(v(1:i-1) = 0\) and \(v(i) = 1\); \(v(i+1:m)\) is stored on exit
+!   in A(i+1:m,i), and tau in TAU(i).
 !
-!  Arguments:
-!  ==========
-!
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>          The number of rows of the matrix A.  M >= 0.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of columns of the matrix A.  N >= 0.
-!> \endverbatim
-!>
-!> \param[in,out] A
-!> \verbatim
-!>          A is real(RK)           :: array, dimension (LDA,N)
-!>          On entry, the M-by-N matrix A.
-!>          On exit, the elements on and above the diagonal of the array
-!>          contain the min(M,N)-by-N upper trapezoidal matrix R (R is
-!>          upper triangular if m >= n); the elements below the diagonal,
-!>          with the array TAU, represent the orthogonal matrix Q as a
-!>          product of min(m,n) elementary reflectors (see Further
-!>          Details).
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>          The leading dimension of the array A.  LDA >= max(1,M).
-!> \endverbatim
-!>
-!> \param[out] TAU
-!> \verbatim
-!>          TAU is real(RK)           :: array, dimension (min(M,N))
-!>          The scalar factors of the elementary reflectors (see Further
-!>          Details).
-!> \endverbatim
-!>
-!> \param[out] WORK
-!> \verbatim
-!>          WORK is real(RK)           :: array, dimension (MAX(1,LWORK))
-!>          On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
-!> \endverbatim
-!>
-!> \param[in] LWORK
-!> \verbatim
-!>          LWORK is INTEGER
-!>          The dimension of the array WORK.
-!>          LWORK >= 1, if MIN(M,N) = 0, and LWORK >= N, otherwise.
-!>          For optimum performance LWORK >= N*NB, where NB is
-!>          the optimal blocksize.
-!>
-!>          If LWORK = -1, then a workspace query is assumed; the routine
-!>          only calculates the optimal size of the WORK array, returns
-!>          this value as the first entry of the WORK array, and no error
-!>          message related to LWORK is issued by XERBLA.
-!> \endverbatim
-!>
-!> \param[out] INFO
-!> \verbatim
-!>          INFO is INTEGER
-!>          = 0:  successful exit
-!>          < 0:  if INFO = -i, the i-th argument had an illegal value
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup doubleGEcomputational
-!
-!> \par Further Details:
-!  =====================
-!>
-!> \verbatim
-!>
-!>  The matrix Q is represented as a product of elementary reflectors
-!>
-!>     Q = H(1) H(2) . . . H(k), where k = min(m,n).
-!>
-!>  Each H(i) has the form
-!>
-!>     H(i) = I - tau * v * v**T
-!>
-!>  where tau is a real scalar, and v is a real vector with
-!>  v(1:i-1) = 0 and v(i) = 1; v(i+1:m) is stored on exit in A(i+1:m,i),
-!>  and tau in TAU(i).
-!> \endverbatim
-!>
-!  =====================================================================
-pure subroutine mobbrmsd_DGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
-! use LA_CONSTANTS, only: RK => dp
-  implicit none
+!  Reference DGEQRF is provided by [netlib.org](http://www.netlib.org/lapack/).
 !
 !  -- LAPACK computational routine --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
-!     .. Scalar Arguments ..
-  integer, intent(in)     :: LDA, LWORK, M, N
-  integer, intent(out)    :: INFO
-!     ..
-!     .. Array Arguments ..
+pure subroutine mobbrmsd_DGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
+  implicit none
+  integer, intent(in)     :: M
+!!  The number of rows of the matrix A.  M >= 0.
+!!
+  integer, intent(in)     :: N
+!!  The number of columns of the matrix A.  N >= 0.
+!!
+  integer, intent(in)     :: LDA
+!!  The leading dimension of the array A.  LDA >= max(1,M).
+!!
   real(RK), intent(inout) :: A(LDA, *)
-  real(RK), intent(out)   :: TAU(*), WORK(*)
-!     ..
-!
-!  =====================================================================
-!
-!     .. Local Scalars ..
+!!  DOUBLE PRECISION array, dimension (LDA,N)
+!!
+!!  On entry, the M-by-N matrix A.
+!!
+!!  On exit, the elements on and above the diagonal of the array
+!!  contain the min(M,N)-by-N upper trapezoidal matrix R (R is
+!!  upper triangular if m >= n); the elements below the diagonal,
+!!  with the array TAU, represent the orthogonal matrix Q as a
+!!  product of min(m,n) elementary reflectors (see Further
+!!  Details).
+!!
+  real(RK), intent(out)   :: TAU(*)
+!!  DOUBLE PRECISION array, dimension (min(M,N))
+!!  The scalar factors of the elementary reflectors (see Further
+!!  Details).
+!!
+  real(RK), intent(out)   :: WORK(*)
+!!  DOUBLE PRECISION array, dimension (MAX(1,LWORK))
+!!  On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+!!
+  integer, intent(in)     :: LWORK
+!!  The dimension of the array WORK.
+!!
+!!  LWORK >= 1, if MIN(M,N) = 0, and LWORK >= N, otherwise.
+!!  For optimum performance LWORK >= N*NB, where NB is
+!!  the optimal blocksize.
+!!
+!!  If LWORK = -1, then a workspace query is assumed; the routine
+!!  only calculates the optimal size of the WORK array, returns
+!!  this value as the first entry of the WORK array.
+!!
+  integer, intent(out)    :: INFO
+!!  = 0:  successful exit
+!!
+!!  < 0:  if INFO = -i, the i-th argument had an illegal value
+!!
   logical :: LQUERY
   integer :: I, IB, IINFO, IWS, K, LDWORK, LWKOPT, NB, NBMIN, NX
-!     ..
-!     .. Intrinsic Functions ..
   intrinsic :: MAX, MIN
-!     ..
 ! interface
-!     .. External Subroutines ..
 !   include 'dgeqr2.h'
 !   include 'dlarfb.h'
 !   include 'dlarft.h'
-!   !include 'xerbla.h'
-!     .. External Functions ..
 !   include 'ilaenv.h'
 ! end interface
-!     ..
-!     .. Executable Statements ..
 !
 !     Test the input arguments
 !
@@ -281,3 +188,4 @@ pure subroutine mobbrmsd_DGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !     End of mobbrmsd_DGEQRF
 !
 end subroutine mobbrmsd_DGEQRF
+

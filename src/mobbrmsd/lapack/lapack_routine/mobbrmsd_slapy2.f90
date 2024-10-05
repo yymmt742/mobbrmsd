@@ -1,8 +1,8 @@
-!| mobbrmsd_SLAPY2 returns \( \sqrt{x^2 + y^2} \),
+!| mobbrmsd_SLAPY2 is robust \( \sqrt{x^2 + y^2} \),
 !  taking care not to cause unnecessary overflow
 !  and unnecessary underflow.
 !
-!     Reference SLAPY2 is provided by [netlib](http://www.netlib.org/lapack/)
+!  Reference SLAPY2 is provided by [netlib](http://www.netlib.org/lapack/)
 !
 !  -- LAPACK auxiliary routine (version 3.7.1) --
 !
@@ -14,19 +14,17 @@
 pure elemental function mobbrmsd_SLAPY2(X, Y)
   implicit none
   real(RK), intent(in) :: X
-!!          X specify the value x.
+!!  X specify the value x.
 !!
   real(RK), intent(in) :: Y
-!!          Y specify the value y.
+!!  Y specify the value y.
 !!
   real(RK) :: mobbrmsd_SLAPY2
-!!  \( \sqrt{x^2 + y^2} \)
+!! L2-norm, \( \sqrt{x^2 + y^2} \).
 !!
   real(RK) :: W, XABS, YABS, Z
   logical  :: X_IS_NAN, Y_IS_NAN
   intrinsic :: ABS, MAX, MIN, SQRT
-! real(RK), parameter :: ZERO = 0.0E0
-! real(RK), parameter :: ONE = 1.0E0
 !
   X_IS_NAN = IEEE_IS_NAN(X)
   Y_IS_NAN = IEEE_IS_NAN(Y)

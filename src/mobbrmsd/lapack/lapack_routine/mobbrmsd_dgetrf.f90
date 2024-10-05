@@ -1,149 +1,72 @@
-!> \brief \b mobbrmsd_DGETRF
+!| mobbrmsd_DGETRF computes an LU factorization of a general
+!  \( M \) -by- \( N \) matrix  \( \mathbf{A} \)
+!  using partial pivoting with row interchanges.
 !
-!  =========== DOCUMENTATION ===========
+!  The factorization has the form
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  \[ \mathbf{A} = \mathbf{P L U} \]
 !
-!> \htmlonly
-!> Download mobbrmsd_DGETRF + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dgetrf.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dgetrf.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txtfilename=/lapack/lapack_routine/dgetrf.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!  where \( \mathbf{P} \) is a permutation matrix,
+!  \( \mathbf{L} \) is lower triangular with unit
+!  diagonal elements (lower trapezoidal if \( m > n \) ),
+!  and \( \mathbf{U} \) is upper
+!  triangular (upper trapezoidal if \( m < n \) ).
 !
-!  Definition:
-!  ===========
-!
-!       pure subroutine mobbrmsd_DGETRF( M, N, A, LDA, IPIV, INFO )
-!
-!       .. Scalar Arguments ..
-!       INTEGER            INFO, LDA, M, N
-!       ..
-!       .. Array Arguments ..
-!       INTEGER            IPIV( * )
-!       real(RK)           ::   A( LDA, * )
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_DGETRF computes an LU factorization of a general M-by-N matrix A
-!> using partial pivoting with row interchanges.
-!>
-!> The factorization has the form
-!>    A = P * L * U
-!> where P is a permutation matrix, L is lower triangular with unit
-!> diagonal elements (lower trapezoidal if m > n), and U is upper
-!> triangular (upper trapezoidal if m < n).
-!>
-!> This is the right-looking Level 3 BLAS version of the algorithm.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>          The number of rows of the matrix A.  M >= 0.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of columns of the matrix A.  N >= 0.
-!> \endverbatim
-!>
-!> \param[in,out] A
-!> \verbatim
-!>          A is real(RK)           :: array, dimension (LDA,N)
-!>          On entry, the M-by-N matrix to be factored.
-!>          On exit, the factors L and U from the factorization
-!>          A = P*L*U; the unit diagonal elements of L are not stored.
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>          The leading dimension of the array A.  LDA >= max(1,M).
-!> \endverbatim
-!>
-!> \param[out] IPIV
-!> \verbatim
-!>          IPIV is INTEGER array, dimension (min(M,N))
-!>          The pivot indices; for 1 <= i <= min(M,N), row i of the
-!>          matrix was interchanged with row IPIV(i).
-!> \endverbatim
-!>
-!> \param[out] INFO
-!> \verbatim
-!>          INFO is INTEGER
-!>          = 0:  successful exit
-!>          < 0:  if INFO = -i, the i-th argument had an illegal value
-!>          > 0:  if INFO = i, U(i,i) is exactly zero. The factorization
-!>                has been completed, but the factor U is exactly
-!>                singular, and division by zero will occur if it is used
-!>                to solve a system of equations.
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup doubleGEcomputational
-!
-!  =====================================================================
-pure subroutine mobbrmsd_DGETRF(M, N, A, LDA, IPIV, INFO)
-! use LA_CONSTANTS, only: RK => dp
-  implicit none
+!  This is the right-looking Level 3 BLAS version of the algorithm.
+!  Reference DGETRF is provided by [netlib.org](http://www.netlib.org/lapack/).
 !
 !  -- LAPACK computational routine --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
-!     .. Scalar Arguments ..
-  integer, intent(in)      :: LDA, M, N
-  integer, intent(out)     :: INFO
-!     ..
-!     .. Array Arguments ..
-  integer, intent(out)     :: IPIV(*)
+pure subroutine mobbrmsd_DGETRF(M, N, A, LDA, IPIV, INFO)
+  implicit none
+  integer, intent(in)      :: M
+!!  The number of rows of the matrix A.  M >= 0.
+!!
+  integer, intent(in)      :: N
+!!  The number of columns of the matrix A.  N >= 0.
+!!
+  integer, intent(in)      :: LDA
+!!  The leading dimension of the array A.  LDA >= max(1,M).
+!!
   real(RK), intent(inout)  :: A(LDA, *)
-!     ..
-!  =====================================================================
-!     .. Local Scalars ..
+!!  A is DOUBLE PRECISION array, dimension (LDA,N)
+!!
+!!  On entry, the M-by-N matrix to be factored.
+!!
+!!  On exit, the factors L and U from the factorization
+!!  A = P*L*U; the unit diagonal elements of L are not stored.
+!!
+  integer, intent(out)     :: IPIV(*)
+!!  INTEGER array, dimension (min(M,N))
+!!
+!!  The pivot indices; for 1 <= i <= min(M,N), row i of the
+!!  matrix was interchanged with row IPIV(i).
+!!
+  integer, intent(out)     :: INFO
+!!  = 0:  successful exit
+!!
+!!  < 0:  if INFO = -i, the i-th argument had an illegal value
+!!
+!!  \> 0:  if INFO = i, U(i,i) is exactly zero. The factorization
+!!        has been completed, but the factor U is exactly
+!!        singular, and division by zero will occur if it is used
+!!        to solve a system of equations.
+!!
   integer :: I, IINFO, J, JB, NB
-!     ..
-!     .. Intrinsic Functions ..
   intrinsic :: MAX, MIN
-!
-!     .. Parameters ..
-! real(RK), parameter      :: ONE = 1.0_RK
-!     ..
 ! interface
-!     .. External Subroutines ..
 !   include 'dgemm.h'
 !   include 'dgetrf2.h'
 !   include 'dlaswp.h'
 !   include 'dtrsm.h'
-!   !include 'xerbla.h'
-!     .. External Functions ..
 !   include 'ilaenv.h'
 ! end interface
-!     ..
-!     .. Executable Statements ..
 !
-!     Test the input parameters.
+! Test the input parameters.
 !
   INFO = 0
   if (M < 0) then

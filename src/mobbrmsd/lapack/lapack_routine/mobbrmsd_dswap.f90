@@ -1,106 +1,39 @@
-!> \brief \b mobbrmsd_DSWAP
+!| mobbrmsd_DSWAP interchanges two vectors.
+!  uses unrolled loops for increments equal to 1.
 !
-!  =========== DOCUMENTATION ===========
+!  Level 1 Blas routine.
+!  Reference SSWAP is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  -- Reference BLAS level1 routine (version 3.8.0) --
 !
-!  Definition:
-!  ===========
-!
-!       SUBROUTINE mobbrmsd_DSWAP(N,DX,INCX,DY,INCY)
-!
-!       .. Scalar Arguments ..
-!       INTEGER INCX,INCY,N
-!       ..
-!       .. Array Arguments ..
-!       DOUBLE PRECISION DX(*),DY(*)
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!>    mobbrmsd_DSWAP interchanges two vectors.
-!>    uses unrolled loops for increments equal to 1.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>         number of elements in input vector(s)
-!> \endverbatim
-!>
-!> \param[in,out] DX
-!> \verbatim
-!>          DX is DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
-!> \endverbatim
-!>
-!> \param[in] INCX
-!> \verbatim
-!>          INCX is INTEGER
-!>         storage spacing between elements of DX
-!> \endverbatim
-!>
-!> \param[in,out] DY
-!> \verbatim
-!>          DY is DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCY ) )
-!> \endverbatim
-!>
-!> \param[in] INCY
-!> \verbatim
-!>          INCY is INTEGER
-!>         storage spacing between elements of DY
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup double_blas_level1
-!
-!> \par Further Details:
-!  =====================
-!>
-!> \verbatim
-!>
-!>     jack dongarra, linpack, 3/11/78.
-!>     modified 12/3/93, array(1) declarations changed to array(*)
-!> \endverbatim
-!>
-!  =====================================================================
-pure subroutine mobbrmsd_DSWAP(N, DX, INCX, DY, INCY)
-! use LA_CONSTANTS, only: RK => dp
-  implicit none
-!
-!  -- Reference BLAS level1 routine --
 !  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+!     November 2017
 !
-!     .. Scalar Arguments ..
-  integer, intent(in)     :: INCX, INCY, N
-!     ..
-!     .. Array Arguments ..
-  real(RK), intent(inout) :: DX(*), DY(*)
-!     ..
+!     jack dongarra, linpack, 3/11/78.
+!     modified 12/3/93, array(1) declarations changed to array(*)
 !
-!  =====================================================================
-!
-!     .. Local Scalars ..
+pure subroutine mobbrmsd_DSWAP(N, DX, INCX, DY, INCY)
+  implicit none
+  integer, intent(in)     :: N
+!!  Number of elements in input vector(s)
+!!
+  real(RK), intent(inout) :: DX(*)
+!!  REAL array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
+!!
+  integer, intent(in)     :: INCX
+!!  Storage spacing between elements of SX
+!!
+  real(RK), intent(inout) :: DY(*)
+!!  REAL array, dimension ( 1 + ( N - 1 )*abs( INCY ) )
+!!
+  integer, intent(in)     :: INCY
+!!  INCY is INTEGER
+!!
   integer                :: I, IX, IY, M, MP1
-!     ..
-!     .. Intrinsic Functions ..
   intrinsic              :: MOD
-!     ..
+!
   if (N <= 0) return
   if (INCX == 1 .and. INCY == 1) then
 !
