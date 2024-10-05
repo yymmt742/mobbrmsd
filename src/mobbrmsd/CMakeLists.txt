@@ -52,6 +52,7 @@ foreach(prec IN ITEMS ${mobbrmsd_PRECISIONS})
   endforeach()
 endforeach()
 
+add_subdirectory(lapack)
 option( mobbrmsd_BUILD_SHARED_LIBS "build mylib as a shared library" ${BUILD_SHARED_LIBS})
 
 if( mobbrmsd_BUILD_SHARED_LIBS )
