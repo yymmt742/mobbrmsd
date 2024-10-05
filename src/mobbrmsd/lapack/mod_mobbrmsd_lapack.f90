@@ -14,14 +14,14 @@
 !  The interfaces follow the standard [lapack api](https://www.netlib.org/lapack/).
 module mod_mobbrmsd_lapack
 #ifdef USE_REAL32
-  use mod_mobbrmsd_lapack_routines, only: &
+  use mod_mobbrmsd_lapack_routines_s, only: &
     &   SGEMM => mobbrmsd_SGEMM, &
     &   SGESVD => mobbrmsd_SGESVD, &
     &   SORMQR => mobbrmsd_SORMQR, &
     &   SGEQRF => mobbrmsd_SGEQRF, &
     &   SGETRF => mobbrmsd_SGETRF
 #else
-  use mod_mobbrmsd_lapack_routines, only: &
+  use mod_mobbrmsd_lapack_routines_d, only: &
     &   DGEMM => mobbrmsd_DGEMM, &
     &   DGESVD => mobbrmsd_DGESVD, &
     &   DORMQR => mobbrmsd_DORMQR, &
