@@ -158,7 +158,7 @@ pure subroutine mobbrmsd_DLANGE(NORM, M, N, A, LDA, RES, WORK)
     do J = 1, N
       do I = 1, M
         TEMP = ABS(A(I, J))
-        if (RES < TEMP .or. mobbrmsd_DISNAN(TEMP)) RES = TEMP
+        if (RES < TEMP .or. IEEE_IS_NAN(TEMP)) RES = TEMP
       end do
     end do
   else if ((mobbrmsd_LSAME(NORM, 'O')) .or. (NORM == '1')) then
@@ -171,7 +171,7 @@ pure subroutine mobbrmsd_DLANGE(NORM, M, N, A, LDA, RES, WORK)
       do I = 1, M
         SUM = SUM + ABS(A(I, J))
       end do
-      if (RES < SUM .or. mobbrmsd_DISNAN(SUM)) RES = SUM
+      if (RES < SUM .or. IEEE_IS_NAN(SUM)) RES = SUM
     end do
   else if (mobbrmsd_LSAME(NORM, 'I')) then
 !
@@ -188,7 +188,7 @@ pure subroutine mobbrmsd_DLANGE(NORM, M, N, A, LDA, RES, WORK)
     RES = ZERO
     do I = 1, M
       TEMP = WORK(I)
-      if (RES < TEMP .or. mobbrmsd_DISNAN(TEMP)) RES = TEMP
+      if (RES < TEMP .or. IEEE_IS_NAN(TEMP)) RES = TEMP
     end do
   else if ((mobbrmsd_LSAME(NORM, 'F')) .or. (mobbrmsd_LSAME(NORM, 'E'))) then
 !

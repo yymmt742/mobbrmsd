@@ -11,15 +11,15 @@
 !
 !   The matrix Q is represented as a product of elementary reflectors
 !
-!     Q = H(1) H(2) . . . H(k), where k = min(m,n).
+!     Q = H(1) H(2) . . . H(k), where k = \min(m,n)
 !
 !   Each H(i) has the form
 !
-!     H(i) = I - tau * v * v**T
+!     H(i) = \mathbf{I} - \tau \mathbf{V} \mathbf{V}^T.
 !
-!   where tau is a real scalar, and v is a real vector with
-!   v(1:i-1) = 0 and v(i) = 1; v(i+1:m) is stored on exit in A(i+1:m,i),
-!   and tau in TAU(i).
+!   where \(\tau\) is a real scalar, and \(\mathbf{v}\) is a real vector with
+!   \(v(1:i-1) = 0\) and \(v(i) = 1\); \(v(i+1:m)\) is stored on exit
+!   in A(i+1:m,i), and tau in TAU(i).
 pure subroutine mobbrmsd_SGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !! reference DBDSQR is provided by http://www.netlib.org/lapack/explore-html/
 !! \author Univ. of Tennessee
@@ -61,13 +61,11 @@ pure subroutine mobbrmsd_SGEQRF(M, N, A, LDA, TAU, WORK, LWORK, INFO)
 !!          this value as the first entry of the WORK array, and no error
 !!          message related to LWORK is issued by XERBLA.
   integer, intent(out) :: INFO
-!!          = 0:  successful exit
-!!          < 0:  if INFO = -i, the i-th argument had an illegal value
-!
+!!          = 0:  successful exit <br>
+!!          < 0:  if INFO = -i, the i-th argument had an illegal value <br>
   logical :: LQUERY
   integer :: I, IB, IINFO, IWS, K, LDWORK, LWKOPT, NB, NBMIN, NX
   intrinsic :: MAX, MIN
-
 ! interface
 !..external Functions..
 !   include 'ilaenv.h'

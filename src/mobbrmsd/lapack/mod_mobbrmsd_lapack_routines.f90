@@ -1,11 +1,138 @@
+!| mod_mobbrmsd_lapack_routines is an internal implementation of the lapack routines.
+!  It only supports the routines necessary to compute mo and its dependencies.
+!
+!  The interfaces follow the standard [lapack api](http://www.netlib.org/lapack/explore-html/).
+!
 module mod_mobbrmsd_lapack_routines
+  use, intrinsic :: IEEE_ARITHMETIC, only: IEEE_IS_NAN
   implicit none
-  public
+  private
+  public :: mobbrmsd_ieeeck
+  public :: mobbrmsd_ilaenv
+  public :: mobbrmsd_iparmq
+  public :: mobbrmsd_lsame
 #ifdef USE_REAL32
+  public :: mobbrmsd_slamch
+  public :: mobbrmsd_isamax
+  public :: mobbrmsd_ilaslc
+  public :: mobbrmsd_ilaslr
+  public :: mobbrmsd_sbdsqr
+  public :: mobbrmsd_scombssq
+  public :: mobbrmsd_scopy
+  public :: mobbrmsd_sgebd2
+  public :: mobbrmsd_sgebrd
+  public :: mobbrmsd_sgelq2
+  public :: mobbrmsd_sgelqf
+  public :: mobbrmsd_sgemm
+  public :: mobbrmsd_sgemv
+  public :: mobbrmsd_sgeqr2
+  public :: mobbrmsd_sgeqrf
+  public :: mobbrmsd_sger
+  public :: mobbrmsd_sgesvd
+  public :: mobbrmsd_sgetrf
+  public :: mobbrmsd_sgetrf2
+  public :: mobbrmsd_slabrd
+  public :: mobbrmsd_slacpy
+  public :: mobbrmsd_slange
+  public :: mobbrmsd_slapy2
+  public :: mobbrmsd_slarf
+  public :: mobbrmsd_slarfb
+  public :: mobbrmsd_slarfg
+  public :: mobbrmsd_slarft
+  public :: mobbrmsd_slartg
+  public :: mobbrmsd_slas2
+  public :: mobbrmsd_slascl
+  public :: mobbrmsd_slaset
+  public :: mobbrmsd_slasq1
+  public :: mobbrmsd_slasq2
+  public :: mobbrmsd_slasq3
+  public :: mobbrmsd_slasq4
+  public :: mobbrmsd_slasq5
+  public :: mobbrmsd_slasq6
+  public :: mobbrmsd_slasr
+  public :: mobbrmsd_slasrt
+  public :: mobbrmsd_slassq
+  public :: mobbrmsd_slasv2
+  public :: mobbrmsd_slaswp
+  public :: mobbrmsd_snrm2
+  public :: mobbrmsd_sorg2r
+  public :: mobbrmsd_sorgbr
+  public :: mobbrmsd_sorgl2
+  public :: mobbrmsd_sorglq
+  public :: mobbrmsd_sorgqr
+  public :: mobbrmsd_sorm2r
+  public :: mobbrmsd_sormbr
+  public :: mobbrmsd_sorml2
+  public :: mobbrmsd_sormlq
+  public :: mobbrmsd_sormqr
+  public :: mobbrmsd_srot
+  public :: mobbrmsd_sscal
+  public :: mobbrmsd_sswap
+  public :: mobbrmsd_strmm
+  public :: mobbrmsd_strmv
+  public :: mobbrmsd_strsm
 !| Single precision kind.
   integer, parameter   :: RK = SELECTED_REAL_KIND(6)
   character, parameter :: PREFIX = 'S'
 #else
+  public mobbrmsd_dlamch
+  public mobbrmsd_idamax
+  public mobbrmsd_iladlc
+  public mobbrmsd_iladlr
+  public mobbrmsd_dbdsqr
+  public mobbrmsd_dcopy
+  public mobbrmsd_dgebd2
+  public mobbrmsd_dgebrd
+  public mobbrmsd_dgelq2
+  public mobbrmsd_dgelqf
+  public mobbrmsd_dgemm
+  public mobbrmsd_dgemv
+  public mobbrmsd_dgeqr2
+  public mobbrmsd_dgeqrf
+  public mobbrmsd_dger
+  public mobbrmsd_dgesvd
+  public mobbrmsd_dgetrf
+  public mobbrmsd_dgetrf2
+  public mobbrmsd_dlabrd
+  public mobbrmsd_dlacpy
+  public mobbrmsd_dlange
+  public mobbrmsd_dlapy2
+  public mobbrmsd_dlarf
+  public mobbrmsd_dlarfb
+  public mobbrmsd_dlarfg
+  public mobbrmsd_dlarft
+  public mobbrmsd_dlartg
+  public mobbrmsd_dlas2
+  public mobbrmsd_dlascl
+  public mobbrmsd_dlaset
+  public mobbrmsd_dlasq1
+  public mobbrmsd_dlasq2
+  public mobbrmsd_dlasq3
+  public mobbrmsd_dlasq4
+  public mobbrmsd_dlasq5
+  public mobbrmsd_dlasq6
+  public mobbrmsd_dlasr
+  public mobbrmsd_dlasrt
+  public mobbrmsd_dlassq
+  public mobbrmsd_dlasv2
+  public mobbrmsd_dlaswp
+  public mobbrmsd_dnrm2
+  public mobbrmsd_dorg2r
+  public mobbrmsd_dorgbr
+  public mobbrmsd_dorgl2
+  public mobbrmsd_dorglq
+  public mobbrmsd_dorgqr
+  public mobbrmsd_dorm2r
+  public mobbrmsd_dormbr
+  public mobbrmsd_dorml2
+  public mobbrmsd_dormlq
+  public mobbrmsd_dormqr
+  public mobbrmsd_drot
+  public mobbrmsd_dscal
+  public mobbrmsd_dswap
+  public mobbrmsd_dtrmm
+  public mobbrmsd_dtrmv
+  public mobbrmsd_dtrsm
 !| Double precision kind.
   integer, parameter   :: RK = SELECTED_REAL_KIND(15)
   character, parameter :: PREFIX = 'D'
@@ -52,7 +179,6 @@ contains
   include "lapack_routine/mobbrmsd_ilaenv.f90"
   include "lapack_routine/mobbrmsd_iparmq.f90"
   include "lapack_routine/mobbrmsd_lsame.f90"
-  include "lapack_routine/mobbrmsd_laisnan.f90"
 #ifdef USE_REAL32
   include "lapack_routine/mobbrmsd_slamch.f90"
   include "lapack_routine/mobbrmsd_isamax.f90"
@@ -73,10 +199,8 @@ contains
   include "lapack_routine/mobbrmsd_sgesvd.f90"
   include "lapack_routine/mobbrmsd_sgetrf.f90"
   include "lapack_routine/mobbrmsd_sgetrf2.f90"
-  include "lapack_routine/mobbrmsd_sisnan.f90"
   include "lapack_routine/mobbrmsd_slabrd.f90"
   include "lapack_routine/mobbrmsd_slacpy.f90"
-  include "lapack_routine/mobbrmsd_slaisnan.f90"
   include "lapack_routine/mobbrmsd_slange.f90"
   include "lapack_routine/mobbrmsd_slapy2.f90"
   include "lapack_routine/mobbrmsd_slarf.f90"
@@ -134,10 +258,8 @@ contains
   include "lapack_routine/mobbrmsd_dgesvd.f90"
   include "lapack_routine/mobbrmsd_dgetrf.f90"
   include "lapack_routine/mobbrmsd_dgetrf2.f90"
-  include "lapack_routine/mobbrmsd_disnan.f90"
   include "lapack_routine/mobbrmsd_dlabrd.f90"
   include "lapack_routine/mobbrmsd_dlacpy.f90"
-  include "lapack_routine/mobbrmsd_dlaisnan.f90"
   include "lapack_routine/mobbrmsd_dlange.f90"
   include "lapack_routine/mobbrmsd_dlapy2.f90"
   include "lapack_routine/mobbrmsd_dlarf.f90"
@@ -177,6 +299,5 @@ contains
   include "lapack_routine/mobbrmsd_dtrmv.f90"
   include "lapack_routine/mobbrmsd_dtrsm.f90"
 #endif
-!
 end module mod_mobbrmsd_lapack_routines
 

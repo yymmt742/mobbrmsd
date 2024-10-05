@@ -375,7 +375,7 @@ pure subroutine mobbrmsd_DLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL,&
       TTYPE = TTYPE - 12
     end if
     GO TO 70
-  else if (mobbrmsd_DISNAN(DMIN)) then
+  else if (IEEE_IS_NAN(DMIN)) then
 !
 !        NaN.
 !

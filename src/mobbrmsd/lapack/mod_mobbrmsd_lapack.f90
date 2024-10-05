@@ -1,5 +1,18 @@
+!| mod_mobbrmsd_lapack is lapack interface.
+!  Only routines used for mob calculations are supported.
+!  Here is a list of the routines currently required:
+!
+!  - xGEMM
+!  - xGESVD
+!  - xORMQR
+!  - xGEQRF
+!  - xGETRF
+!
+!  If the EXTERNAL_LAPACK macro is enabled,
+!  the double precision ones will be replaced
+!  with the corresponding routines from the external library.
+!  The interfaces follow the standard [lapack api](https://www.netlib.org/lapack/).
 module mod_mobbrmsd_lapack
-  use mod_mobbrmsd_lapack_routines, only: RK
 #ifdef USE_REAL32
   use mod_mobbrmsd_lapack_routines, only: &
     &   SGEMM => mobbrmsd_SGEMM, &
@@ -18,17 +31,17 @@ module mod_mobbrmsd_lapack
   implicit none
   private
 #ifdef USE_REAL32
-  public :: SGEMM, &
-          & SGESVD, &
-          & SORMQR, &
-          & SGEQRF, &
-          & SGETRF
+  public :: SGEMM
+  public :: SGESVD
+  public :: SORMQR
+  public :: SGEQRF
+  public :: SGETRF
 #else
-  public :: DGEMM, &
-          & DGESVD, &
-          & DORMQR, &
-          & DGEQRF, &
-          & DGETRF
+  public :: DGEMM
+  public :: DGESVD
+  public :: DORMQR
+  public :: DGEQRF
+  public :: DGETRF
 #endif
 end module mod_mobbrmsd_lapack
 

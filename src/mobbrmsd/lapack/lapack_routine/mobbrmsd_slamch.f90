@@ -1,87 +1,43 @@
-!> \brief \b mobbrmsd_SLAMCH
+!| mobbrmsd_SLAMCH determines single precision machine parameters.
 !
-!  =========== DOCUMENTATION ===========
-!
-! Online html documentation available at
-! http://www.netlib.org/lapack/explore-html/
-!
-!  Definition:
-!  ===========
-!
-!  REAL             FUNCTION mobbrmsd_SLAMCH( CMACH )
-!
-! .. Scalar Arguments ..
-!  CHARACTER          CMACH
-! ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SLAMCH determines single precision machine parameters.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] CMACH
-!> \verbatim
-!>          CMACH is CHARACTER*1
-!>          Specifies the value to be returned by mobbrmsd_SLAMCH:
-!>          = 'E' or 'e',   mobbrmsd_SLAMCH := eps
-!>          = 'S' or 's ,   mobbrmsd_SLAMCH := sfmin
-!>          = 'B' or 'b',   mobbrmsd_SLAMCH := base
-!>          = 'P' or 'p',   mobbrmsd_SLAMCH := eps*base
-!>          = 'N' or 'n',   mobbrmsd_SLAMCH := t
-!>          = 'R' or 'r',   mobbrmsd_SLAMCH := rnd
-!>          = 'M' or 'm',   mobbrmsd_SLAMCH := emin
-!>          = 'U' or 'u',   mobbrmsd_SLAMCH := rmin
-!>          = 'L' or 'l',   mobbrmsd_SLAMCH := emax
-!>          = 'O' or 'o',   mobbrmsd_SLAMCH := rmax
-!>          where
-!>          eps   = relative machine precision
-!>          sfmin = safe minimum, such that 1/sfmin does not overflow
-!>          base  = base of the machine
-!>          prec  = eps*base
-!>          t     = number of (base) digits in the mantissa
-!>          rnd   = 1.0 when rounding occurs in addition, 0.0 otherwise
-!>          emin  = minimum exponent before (gradual) underflow
-!>          rmin  = underflow threshold - base**(emin-1)
-!>          emax  = largest exponent before overflow
-!>          rmax  = overflow threshold  - (base**emax)*(1-eps)
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \date December 2016
-!
-!> \ingroup auxOTHERauxiliary
-!
-!  =====================================================================
-pure elemental function mobbrmsd_SLAMCH(CMACH)
-  implicit none
+!  reference SLAMCH is provided by
+!  [](http://www.netlib.org/lapack/explore-html/)
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+!  \author Univ. of Tennessee
+!  \author Univ. of California Berkeley
+!  \author Univ. of Colorado Denver
+!  \author NAG Ltd.
+!  \date December 2016
 ! December 2016
-!
-! .. Scalar Arguments ..
+pure elemental function mobbrmsd_SLAMCH(CMACH)
+  implicit none
   character, intent(in) :: CMACH
+!!          Specifies the value to be returned by mobbrmsd_SLAMCH: <br>
+!!          = 'E' or 'e',   mobbrmsd_SLAMCH := eps <br>
+!!          = 'S' or 's ,   mobbrmsd_SLAMCH := sfmin <br>
+!!          = 'B' or 'b',   mobbrmsd_SLAMCH := base <br>
+!!          = 'P' or 'p',   mobbrmsd_SLAMCH := eps*base <br>
+!!          = 'N' or 'n',   mobbrmsd_SLAMCH := t <br>
+!!          = 'R' or 'r',   mobbrmsd_SLAMCH := rnd <br>
+!!          = 'M' or 'm',   mobbrmsd_SLAMCH := emin <br>
+!!          = 'U' or 'u',   mobbrmsd_SLAMCH := rmin <br>
+!!          = 'L' or 'l',   mobbrmsd_SLAMCH := emax <br>
+!!          = 'O' or 'o',   mobbrmsd_SLAMCH := rmax <br>
+!!          where <br>
+!!          eps   = relative machine precision <br>
+!!          sfmin = safe minimum, such that 1/sfmin does not overflow <br>
+!!          base  = base of the machine <br>
+!!          prec  = eps*base <br>
+!!          t     = number of (base) digits in the mantissa <br>
+!!          rnd   = 1.0 when rounding occurs in addition, 0.0 otherwise <br>
+!!          emin  = minimum exponent before (gradual) underflow <br>
+!!          rmin  = underflow threshold - base**(emin-1) <br>
+!!          emax  = largest exponent before overflow <br>
+!!          rmax  = overflow threshold  - (base**emax)*(1-eps) <br>
   real(RK)              :: mobbrmsd_SLAMCH
-! ..
-!
-! =====================================================================
-!
-! .. Local Scalars ..
   real(RK) :: RND, EPS, SFMIN, SMALL, RMACH
 !
 ! .. Parameters ..
@@ -147,52 +103,5 @@ pure elemental function mobbrmsd_SLAMCH(CMACH)
   return
 !
 ! End of mobbrmsd_SLAMCH
-!
 end
-!***********************************************************************
-!> \brief \b SLAMC3
-!> \details
-!> \b Purpose:
-!> \verbatim
-!> SLAMC3  is intended to force  A  and  B  to be stored prior to doing
-!> the addition of  A  and  B ,  for use in situations where optimizers
-!> might hold one of these in a register.
-!> \endverbatim
-!> \author LAPACK is a software package provided by Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
-!> \date December 2016
-!> \ingroup auxOTHERauxiliary
-!>
-!> \param[in] A
-!> \verbatim
-!> \endverbatim
-!>
-!> \param[in] B
-!> \verbatim
-!>          The values A and B.
-!> \endverbatim
-!>
-!
-pure elemental function SLAMC3(A, B)
-  implicit none
-!
-!  -- LAPACK auxiliary routine (version 3.7.0) --
-! Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
-! November 2010
-!
-! .. Scalar Arguments ..
-  real(RK), intent(in) :: A, B
-  real(RK)             :: SLAMC3
-! ..
-! =====================================================================
-!
-! .. Executable Statements ..
-!
-  SLAMC3 = A + B
-!
-  return
-!
-! End of SLAMC3
-!
-end
-!
-!***********************************************************************
+

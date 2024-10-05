@@ -31,7 +31,7 @@
 !> \verbatim
 !>
 !> This routine is not for general use.  It exists solely to avoid
-!> over-optimization in mobbrmsd_DISNAN.
+!> over-optimization in IEEE_IS_NAN.
 !>
 !> mobbrmsd_Dmobbrmsd_LAISNAN checks for NaNs by comparing its two arguments for
 !> inequality.  NaN is the only floating-point value where NaN != NaN

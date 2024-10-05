@@ -1,234 +1,165 @@
-!> \brief <b> mobbrmsd_DGESVD computes the singular value decomposition (SVD) for GE matrices</b>
+!| mobbrmsd_DGESVD computes the singular value decomposition (SVD) of a real
+!  M-by-N matrix A, optionally computing the left and/or right singular
+!  vectors. The SVD is written
 !
-!  =========== DOCUMENTATION ===========
+!  \begin{equation}
+!     \mathbf{A} = \mathbf{U} \mathbf{\Sigma} \mathbf{V}^{\top}
+!  \end{equation}
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  where \(\mathbf{\Sigma}\) is an M-by-N matrix which is zero except for its
+!  \(\min(m,n)\) diagonal elements, \(\mathbf{U}\) is an M-by-M orthogonal matrix, and
+!  \(\mathbf{V}\) is an N-by-N orthogonal matrix.  The diagonal elements of \(\mathbf{\Sigma}\)
+!  are the singular values of \(\mathbf{A}\); they are real and non-negative, and
+!  are returned in descending order.  The first \(\min(m,n)\) columns of
+!  \(\mathbf{U}\)  and \(\mathbf{V}\) are the left and right singular vectors of \(\mathbf{A}\).
 !
-!> \htmlonly
-!> Download mobbrmsd_DGESVD + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dgesvd.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dgesvd.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/dgesvd.f">
-!> [T!T]</a>
-!> \endhtmlonly
+!  Note that the routine returns \(\mathbf{V}^{\top}\), not \(\mathbf{V}\).
 !
-!  Definition:
-!  ===========
+!  Reference DGESVD is provided by [netlib.org](http://www.netlib.org/lapack/).
 !
-!       SUBROUTINE mobbrmsd_DGESVD( JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT,
-!                          WORK, LWORK, INFO )
+!  -- LAPACK driver routine (version 3.7.0) --
 !
-!       .. Scalar Arguments ..
-!       CHARACTER          JOBU, JOBVT
-!       INTEGER            INFO, LDA, LDU, LDVT, LWORK, M, N
-!       ..
-!       .. Array Arguments ..
-!       DOUBLE PRECISION   A( LDA, * ), S( * ), U( LDU, * ),
-!      $                   VT( LDVT, * ), WORK( * )
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_DGESVD computes the singular value decomposition (SVD) of a real
-!> M-by-N matrix A, optionally computing the left and/or right singular
-!> vectors. The SVD is written
-!>
-!>      A = U * SIGMA * transpose(V)
-!>
-!> where SIGMA is an M-by-N matrix which is zero except for its
-!> min(m,n) diagonal elements, U is an M-by-M orthogonal matrix, and
-!> V is an N-by-N orthogonal matrix.  The diagonal elements of SIGMA
-!> are the singular values of A; they are real and non-negative, and
-!> are returned in descending order.  The first min(m,n) columns of
-!> U and V are the left and right singular vectors of A.
-!>
-!> Note that the routine returns V**T, not V.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] JOBU
-!> \verbatim
-!>          JOBU is CHARACTER*1
-!>          Specifies options for computing all or part of the matrix U:
-!>          = 'A':  all M columns of U are returned in array U:
-!>          = 'S':  the first min(m,n) columns of U (the left singular
-!>                  vectors) are returned in the array U;
-!>          = 'O':  the first min(m,n) columns of U (the left singular
-!>                  vectors) are overwritten on the array A;
-!>          = 'N':  no columns of U (no left singular vectors) are
-!>                  computed.
-!> \endverbatim
-!>
-!> \param[in] JOBVT
-!> \verbatim
-!>          JOBVT is CHARACTER*1
-!>          Specifies options for computing all or part of the matrix
-!>          V**T:
-!>          = 'A':  all N rows of V**T are returned in the array VT;
-!>          = 'S':  the first min(m,n) rows of V**T (the right singular
-!>                  vectors) are returned in the array VT;
-!>          = 'O':  the first min(m,n) rows of V**T (the right singular
-!>                  vectors) are overwritten on the array A;
-!>          = 'N':  no rows of V**T (no right singular vectors) are
-!>                  computed.
-!>
-!>          JOBVT and JOBU cannot both be 'O'.
-!> \endverbatim
-!>
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>          The number of rows of the input matrix A.  M >= 0.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of columns of the input matrix A.  N >= 0.
-!> \endverbatim
-!>
-!> \param[in,out] A
-!> \verbatim
-!>          A is DOUBLE PRECISION array, dimension (LDA,N)
-!>          On entry, the M-by-N matrix A.
-!>          On exit,
-!>          if JOBU = 'O',  A is overwritten with the first min(m,n)
-!>                          columns of U (the left singular vectors,
-!>                          stored columnwise);
-!>          if JOBVT = 'O', A is overwritten with the first min(m,n)
-!>                          rows of V**T (the right singular vectors,
-!>                          stored rowwise);
-!>          if JOBU .ne. 'O' and JOBVT .ne. 'O', the contents of A
-!>                          are destroyed.
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>          The leading dimension of the array A.  LDA >= max(1,M).
-!> \endverbatim
-!>
-!> \param[out] S
-!> \verbatim
-!>          S is DOUBLE PRECISION array, dimension (min(M,N))
-!>          The singular values of A, sorted so that S(i) >= S(i+1).
-!> \endverbatim
-!>
-!> \param[out] U
-!> \verbatim
-!>          U is DOUBLE PRECISION array, dimension (LDU,UCOL)
-!>          (LDU,M) if JOBU = 'A' or (LDU,min(M,N)) if JOBU = 'S'.
-!>          If JOBU = 'A', U contains the M-by-M orthogonal matrix U;
-!>          if JOBU = 'S', U contains the first min(m,n) columns of U
-!>          (the left singular vectors, stored columnwise);
-!>          if JOBU = 'N' or 'O', U is not referenced.
-!> \endverbatim
-!>
-!> \param[in] LDU
-!> \verbatim
-!>          LDU is INTEGER
-!>          The leading dimension of the array U.  LDU >= 1; if
-!>          JOBU = 'S' or 'A', LDU >= M.
-!> \endverbatim
-!>
-!> \param[out] VT
-!> \verbatim
-!>          VT is DOUBLE PRECISION array, dimension (LDVT,N)
-!>          If JOBVT = 'A', VT contains the N-by-N orthogonal matrix
-!>          V**T;
-!>          if JOBVT = 'S', VT contains the first min(m,n) rows of
-!>          V**T (the right singular vectors, stored rowwise);
-!>          if JOBVT = 'N' or 'O', VT is not referenced.
-!> \endverbatim
-!>
-!> \param[in] LDVT
-!> \verbatim
-!>          LDVT is INTEGER
-!>          The leading dimension of the array VT.  LDVT >= 1; if
-!>          JOBVT = 'A', LDVT >= N; if JOBVT = 'S', LDVT >= min(M,N).
-!> \endverbatim
-!>
-!> \param[out] WORK
-!> \verbatim
-!>          WORK is DOUBLE PRECISION array, dimension (MAX(1,LWORK))
-!>          On exit, if INFO = 0, WORK(1) returns the optimal LWORK;
-!>          if INFO > 0, WORK(2:MIN(M,N)) contains the unconverged
-!>          superdiagonal elements of an upper bidiagonal matrix B
-!>          whose diagonal is in S (not necessarily sorted). B
-!>          satisfies A = U * B * VT, so it has the same singular values
-!>          as A, and singular vectors related by U and VT.
-!> \endverbatim
-!>
-!> \param[in] LWORK
-!> \verbatim
-!>          LWORK is INTEGER
-!>          The dimension of the array WORK.
-!>          LWORK >= MAX(1,5*MIN(M,N)) for the paths (see comments inside code):
-!>             - PATH 1  (M much larger than N, JOBU='N')
-!>             - PATH 1t (N much larger than M, JOBVT='N')
-!>          LWORK >= MAX(1,3*MIN(M,N) + MAX(M,N),5*MIN(M,N)) for the other paths
-!>          For good performance, LWORK should generally be larger.
-!>
-!>          If LWORK = -1, then a workspace query is assumed; the routine
-!>          only calculates the optimal size of the WORK array, returns
-!>          this value as the first entry of the WORK array, and no error
-!>          message related to LWORK is issued by !ERBLA.
-!> \endverbatim
-!>
-!> \param[out] INFO
-!> \verbatim
-!>          INFO is INTEGER
-!>          = 0:  successful exit.
-!>          < 0:  if INFO = -i, the i-th argument had an illegal value.
-!>          > 0:  if mobbrmsd_DBDSQR did not converge, INFO specifies how many
-!>                superdiagonals of an intermediate bidiagonal form B
-!>                did not converge to zero. See the description of WORK
-!>                above for details.
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup doubleGEsing
-!
-!  =====================================================================
-pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
-    &                   VT, LDVT, WORK, LWORK, INFO)
-! use LA_CONSTANTS, only: RK => DP, ZERO => DZERO, ONE => DONE
-  implicit none
-!
-!  -- LAPACK driver routine --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+!     April 2012
+!     \date April 2012
 !
-!     .. Scalar Arguments ..
-  character(*), intent(in) :: JOBU, JOBVT
-  integer, intent(in)      :: LDA, LDU, LDVT, LWORK, M, N
-  integer, intent(out)     :: INFO
-!     ..
-!     .. Array Arguments ..
-  real(RK), intent(inout)  :: A(LDA, *)
-  real(RK), intent(out)    :: S(*), U(LDU, *), VT(LDVT, *), WORK(*)
-!     ..
+pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
+    &                           VT, LDVT, WORK, LWORK, INFO)
+  implicit none
+  character, intent(in) :: JOBU
+!!          Specifies options for computing all or part of the matrix \(\mathbf{U}\)
+!!
+!!          = 'A':  all M columns of U are returned in array U
+!!
+!!          = 'S':  the first min(m,n) columns of U (the left singular
+!!                  vectors) are returned in the array U.
+!!
+!!          = 'O':  the first min(m,n) columns of U (the left singular
+!!                  vectors) are overwritten on the array A.
+!!
+!!          = 'N':  no columns of U (no left singular vectors) are
+!!                  computed.
+!!
+  character, intent(in) :: JOBVT
+!!          Specifies options for computing all or part of the matrix
+!!          \(\mathbf{V}^{\top}\)
+!!
+!!          = 'A':  all N rows of \(\mathbf{V}^\top\) are returned in the array VT
+!!
+!!          = 'S':  the first min(m,n) rows of \(\mathbf{V}^\top\) (the right singular
+!!                  vectors) are returned in the array VT
+!!
+!!          = 'O':  the first min(m,n) rows of \(\mathbf{V}^\top\) (the right singular
+!!                  vectors) are overwritten on the array A
+!!
+!!          = 'N':  no rows of \(\mathbf{V}^\top\) (no right singular vectors) are
+!!                  computed
+!!
+!!          JOBVT and JOBU cannot both be 'O'.
+!!
+  integer, intent(in)   :: LDA
+!!          The leading dimension of the array A.  LDA >= max(1,M).
+!!
+  integer, intent(in)   :: LDU
+!!          The leading dimension of the array U.  LDU >= 1; if
+!!          JOBU = 'S' or 'A', LDU >= M.
+!!
+  integer, intent(in)   :: LDVT
+!!          The leading dimension of the array VT.  LDVT >= 1; if
+!!          JOBVT = 'A', LDVT >= N; if JOBVT = 'S', LDVT >= min(M,N).
+!!
+  integer, intent(in)   :: LWORK
+!!          The dimension of the array WORK.
+!!
+!!          LWORK >= MAX(1,5*MIN(M,N)) for the paths (see comments inside code):
+!!             - PATH 1  (M much larger than N, JOBU='N')
+!!             - PATH 1t (N much larger than M, JOBVT='N')
+!!
+!!          LWORK >= MAX(1,3*MIN(M,N)+MAX(M,N),5*MIN(M,N)) for the other paths
+!!
+!!          For good performance, LWORK should generally be larger.
+!!
+!!          If LWORK = -1, then a workspace query is assumed; the routine
+!!          only calculates the optimal size of the WORK array, returns
+!!          this value as the first entry of the WORK array.
+!!
+  integer, intent(in)   :: M
+!!          The number of rows of the input matrix A.  M >= 0.
+!!
+  integer, intent(in)   :: N
+!!          The number of columns of the input matrix A.  N >= 0.
+!!
+  real(RK), intent(inout)   :: A(LDA, *)
+!!          A is REAL array, dimension (LDA,N)
+!!
+!!          On entry, the M-by-N matrix \(\mathbf{A}\).
+!!          On exit,
+!!
+!!          if JOBU = 'O',  \(\mathbf{A}\) is overwritten with the first min(m,n)
+!!                          columns of U (the left singular vectors,
+!!                          stored columnwise).
+!!
+!!          if JOBVT = 'O', \(\mathbf{A}\) is overwritten with the first min(m,n)
+!!                          rows of V**T (the right singular vectors,
+!!                          stored rowwise).
+!!
+!!          if JOBU .ne. 'O' and JOBVT .ne. 'O', the contents of \(\mathbf{A}\)
+!!                          are destroyed.
+!!
+  real(RK), intent(out)     :: S(*)
+!!          S is REAL array, dimension (min(M,N))
+!!
+!!          The singular values of \(\mathbf{A}\), sorted so that S(i) >= S(i+1).
+!!
+  real(RK), intent(out)     :: U(LDU, *)
+!!          U is REAL array, dimension (LDU,UCOL)
+!!
+!!          (LDU,M) if JOBU = 'A' or (LDU,min(M,N)) if JOBU = 'S'.
+!!
+!!          If JOBU = 'A', U contains the M-by-M orthogonal matrix \(\mathbf{U}\).
+!!
+!!          if JOBU = 'S', U contains the first min(m,n) columns of \(\mathbf{U}\)
+!!          (the left singular vectors, stored columnwise).
+!!
+!!          if JOBU = 'N' or 'O', U is not referenced.
+!!
+  real(RK), intent(out)     :: VT(LDVT, *)
+!!          VT is REAL array, dimension (LDVT,N)
+!!
+!!          If JOBVT = 'A', VT contains the N-by-N orthogonal matrix
+!!           \(\mathbf{V}^\top\);
+!!
+!!          if JOBVT = 'S', VT contains the first min(m,n) rows of
+!!           \(\mathbf{V}^\top\)
+!!           (the right singular vectors, stored rowwise);
+!!
+!!          if JOBVT = 'N' or 'O', VT is not referenced.
+!!
+  real(RK), intent(out)     :: WORK(*)
+!!          WORK is REAL array, dimension (MAX(1,LWORK))
+!!
+!!          On exit, if INFO = 0, WORK(1) returns the optimal LWORK;
+!!
+!!          if INFO > 0, WORK(2:MIN(M,N)) contains the unconverged
+!!          superdiagonal elements of an upper bidiagonal matrix \(\mathbf{B}\)
+!!          whose diagonal is in S (not necessarily sorted). \(\mathbf{B}\)
+!!          satisfies \(\mathbf{A} = \mathbf{U} \mathbf{B} \mathbf{V}^{\top}\),
+!!          so it has the same singular values as \(\mathbf{A}\),
+!!          and singular vectors related by \(\mathbf{U}\) and \(\mathbf{V}\).
+!!
+  integer, intent(out)  :: INFO
+!!          =0 :  successful exit.
+!!
+!!          <0 :  if INFO = -i, the i-th argument had an illegal value.
+!!
+!!          \>0 : if mobbrmsd_SBDSQR did not converge, INFO specifies how many
+!!                superdiagonals of an intermediate bidiagonal form \(\mathbf{B}\)
+!!                did not converge to zero. See the description of WORK
+!!                above for details.
+!!
 !
-!  =====================================================================
-!
-!     ..
-!     .. Local Scalars ..
   logical          :: LQUERY, WNTUA, WNTUAS, WNTUN, WNTUO, WNTUS, &
  &                    WNTVA, WNTVAS, WNTVN, WNTVO, WNTVS
   integer          :: BDSPAC, BLK, CHUNK, I, IE, IERR, IR, ISCL, &
@@ -709,7 +640,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !       (Workspace: need BDSPAC)
 !
         call mobbrmsd_DBDSQR('U', N, NCVT, 0, 0, S, WORK(IE), A, LDA, &
-       &             DUM, 1, DUM, 1, WORK(IWORK), INFO)
+       &                     DUM, 1, DUM, 1, WORK(IWORK), INFO)
 !
 !       If right singular vectors desired in VT, copy them there
 !
@@ -780,7 +711,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !                 (Workspace: need N*N + BDSPAC)
 !
           call mobbrmsd_DBDSQR('U', N, 0, N, 0, S, WORK(IE), DUM, 1, WORK(IR), &
-         &             LDWRKR, DUM, 1, WORK(IWORK), INFO)
+         &                     LDWRKR, DUM, 1, WORK(IWORK), INFO)
           IU = IE + N
 !
 !                 Multiply Q in A by left singular vectors of R in
@@ -821,7 +752,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !        (Workspace: need BDSPAC)
 !
           call mobbrmsd_DBDSQR('U', N, 0, M, 0, S, WORK(IE), DUM, 1,&
-         &             A, LDA, DUM, 1, WORK(IWORK), INFO)
+         &                     A, LDA, DUM, 1, WORK(IWORK), INFO)
 !
         end if
 !
@@ -873,14 +804,14 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !         (Workspace: need N*N + 4*N, prefer N*N + 3*N + 2*N*NB)
 !
           call mobbrmsd_DGEBRD(N, N, VT, LDVT, S, WORK(IE), WORK(ITAUQ), WORK(ITAUP), &
-                      WORK(IWORK), LWORK - IWORK + 1, IERR)
+                               WORK(IWORK), LWORK - IWORK + 1, IERR)
           call mobbrmsd_DLACPY('L', N, N, VT, LDVT, WORK(IR), LDWRKR)
 !
 !         Generate left vectors bidiagonalizing R in WORK(IR)
 !         (Workspace: need N*N + 4*N, prefer N*N + 3*N + N*NB)
 !
           call mobbrmsd_DORGBR('Q', N, N, N, WORK(IR), LDWRKR, WORK(ITAUQ), WORK(IWORK), &
-                      LWORK - IWORK + 1, IERR)
+                               LWORK - IWORK + 1, IERR)
 !
 !         Generate right vectors bidiagonalizing R in VT
 !         (Workspace: need N*N + 4*N-1, prefer N*N + 3*N + (N-1)*NB)
@@ -895,7 +826,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !         (Workspace: need N*N + BDSPAC)
 !
           call mobbrmsd_DBDSQR('U', N, N, N, 0, S, WORK(IE), VT, LDVT, WORK(IR), LDWRKR, DUM, 1, &
-         &             WORK(IWORK), INFO)
+         &                     WORK(IWORK), INFO)
           IU = IE + N
 !
 !         Multiply Q in A by left singular vectors of R in
@@ -957,7 +888,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !         (Workspace: need BDSPAC)
 !
           call mobbrmsd_DBDSQR('U', N, N, M, 0, S, WORK(IE), VT, LDVT, &
-         &             A, LDA, DUM, 1, WORK(IWORK), INFO)
+         &                     A, LDA, DUM, 1, WORK(IWORK), INFO)
 !
         end if
 !
@@ -1018,7 +949,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           (Workspace: need N*N + BDSPAC)
 !
             call mobbrmsd_DBDSQR('U', N, 0, N, 0, S, WORK(IE), DUM, 1, WORK(IR), LDWRKR, &
-           &             DUM, 1, WORK(IWORK), INFO)
+           &                     DUM, 1, WORK(IWORK), INFO)
 !
 !           Multiply Q in A by left singular vectors of R in
 !           WORK(IR), storing result in U
@@ -1071,7 +1002,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           (Workspace: need BDSPAC)
 !
             call mobbrmsd_DBDSQR('U', N, 0, M, 0, S, WORK(IE), DUM, &
-           &             1, U, LDU, DUM, 1, WORK(IWORK), INFO)
+           &                     1, U, LDU, DUM, 1, WORK(IWORK), INFO)
 !
           end if
 !
@@ -1154,7 +1085,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           (Workspace: need 2*N*N + BDSPAC)
 !
             call mobbrmsd_DBDSQR('U', N, N, N, 0, S, WORK(IE), WORK(IR), LDWRKR, &
-           &             WORK(IU), LDWRKU, DUM, 1, WORK(IWORK), INFO)
+           &                     WORK(IU), LDWRKU, DUM, 1, WORK(IWORK), INFO)
 !
 !           Multiply Q in A by left singular vectors of R in
 !           WORK(IU), storing result in U
@@ -1212,7 +1143,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           (Workspace: need BDSPAC)
 !
             call mobbrmsd_DBDSQR('U', N, N, M, 0, S, WORK(IE), A, &
-           &             LDA, U, LDU, DUM, 1, WORK(IWORK), INFO)
+           &                     LDA, U, LDU, DUM, 1, WORK(IWORK), INFO)
 !
           end if
 !
@@ -1276,8 +1207,8 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !                    (Workspace: need BDSPAC)
 !
             call mobbrmsd_DBDSQR('U', N, N, M, 0, S, WORK(IE), VT, &
-           &             LDVT, U, LDU, DUM, 1, WORK(IWORK), &
-           &             INFO)
+           &                     LDVT, U, LDU, DUM, 1, WORK(IWORK), &
+           &                     INFO)
 !
           end if
 !
@@ -1352,8 +1283,8 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !                    (Workspace: need N*N + BDSPAC)
 !
             call mobbrmsd_DBDSQR('U', N, 0, N, 0, S, WORK(IE), DUM, &
-           &             1, WORK(IR), LDWRKR, DUM, 1, &
-           &             WORK(IWORK), INFO)
+           &                     1, WORK(IR), LDWRKR, DUM, 1, &
+           &                     WORK(IWORK), INFO)
 !
 !                    Multiply Q in U by left singular vectors of R in
 !                    WORK(IR), storing result in A
@@ -1416,7 +1347,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !                    (Workspace: need BDSPAC)
 !
             call mobbrmsd_DBDSQR('U', N, 0, M, 0, S, WORK(IE), DUM, &
-           &             1, U, LDU, DUM, 1, WORK(IWORK), INFO)
+           &                     1, U, LDU, DUM, 1, WORK(IWORK), INFO)
 !
           end if
 !
@@ -1490,7 +1421,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           right singular vectors of R in WORK(IR)
 !           (Workspace: need 2*N*N + BDSPAC)
             call mobbrmsd_DBDSQR('U', N, N, N, 0, S, WORK(IE), WORK(IR), LDWRKR, &
-           &             WORK(IU), LDWRKU, DUM, 1, WORK(IWORK), INFO)
+           &                     WORK(IU), LDWRKU, DUM, 1, WORK(IWORK), INFO)
 !
 !           Multiply Q in U by left singular vectors of R in
 !           WORK(IU), storing result in A
@@ -1553,7 +1484,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           singular vectors of A in A
 !           (Workspace: need BDSPAC)
             call mobbrmsd_DBDSQR('U', N, N, M, 0, S, WORK(IE), A, &
-           &             LDA, U, LDU, DUM, 1, WORK(IWORK), INFO)
+           &                     LDA, U, LDU, DUM, 1, WORK(IWORK), INFO)
           end if
 !
         else if (WNTVAS) then
@@ -1620,7 +1551,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           right singular vectors of R in VT
 !           (Workspace: need N*N + BDSPAC)
             call mobbrmsd_DBDSQR('U', N, N, N, 0, S, WORK(IE), VT, LDVT, &
-           &             WORK(IU), LDWRKU, DUM, 1, WORK(IWORK), INFO)
+           &                     WORK(IU), LDWRKU, DUM, 1, WORK(IWORK), INFO)
 !
 !           Multiply Q in U by left singular vectors of R in
 !           WORK(IU), storing result in A
@@ -1680,7 +1611,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           singular vectors of A in VT
 !           (Workspace: need BDSPAC)
             call mobbrmsd_DBDSQR('U', N, N, M, 0, S, WORK(IE), VT, &
-           &             LDVT, U, LDU, DUM, 1, WORK(IWORK), INFO)
+           &                     LDVT, U, LDU, DUM, 1, WORK(IWORK), INFO)
 !
           end if
         end if
@@ -1752,7 +1683,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !       (Workspace: need BDSPAC)
 !
         call mobbrmsd_DBDSQR('U', N, NCVT, NRU, 0, S, WORK(IE), VT, &
-       &             LDVT, U, LDU, DUM, 1, WORK(IWORK), INFO)
+       &                     LDVT, U, LDU, DUM, 1, WORK(IWORK), INFO)
       else if ((.not. WNTUO) .and. WNTVO) then
 !
 !       Perform bidiagonal QR iteration, if desired, computing
@@ -1761,14 +1692,14 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !       (Workspace: need BDSPAC)
 !
         call mobbrmsd_DBDSQR('U', N, NCVT, NRU, 0, S, WORK(IE), A, LDA, &
-       &             U, LDU, DUM, 1, WORK(IWORK), INFO)
+       &                     U, LDU, DUM, 1, WORK(IWORK), INFO)
       else
 !
 !       Perform bidiagonal QR iteration, if desired, computing
 !       left singular vectors in A and computing right singular
 !       vectors in VT (Workspace: need BDSPAC)
         call mobbrmsd_DBDSQR('U', N, NCVT, NRU, 0, S, WORK(IE), VT, &
-       &             LDVT, A, LDA, DUM, 1, WORK(IWORK), INFO)
+       &                     LDVT, A, LDA, DUM, 1, WORK(IWORK), INFO)
       end if
 !
     end if
@@ -1821,7 +1752,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !       (Workspace: need BDSPAC)
 !
         call mobbrmsd_DBDSQR('U', M, 0, NRU, 0, S, WORK(IE), DUM, 1, A, &
-       &             LDA, DUM, 1, WORK(IWORK), INFO)
+       &                     LDA, DUM, 1, WORK(IWORK), INFO)
 !
 !       If left singular vectors desired in U, copy them there
 !
@@ -1890,7 +1821,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !         singular vectors of L in WORK(IR)
 !         (Workspace: need M*M + BDSPAC)
           call mobbrmsd_DBDSQR('U', M, M, 0, 0, S, WORK(IE), WORK(IR), &
-         &             LDWRKR, DUM, 1, DUM, 1, WORK(IWORK), INFO)
+         &                     LDWRKR, DUM, 1, DUM, 1, WORK(IWORK), INFO)
           IU = IE + M
 !
 !         Multiply right singular vectors of L in WORK(IR) by Q
@@ -1925,7 +1856,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !         singular vectors of A in A
 !         (Workspace: need BDSPAC)
           call mobbrmsd_DBDSQR('L', M, N, 0, 0, S, WORK(IE), A, LDA, &
-         &             DUM, 1, DUM, 1, WORK(IWORK), INFO)
+         &                     DUM, 1, DUM, 1, WORK(IWORK), INFO)
 !
         end if
 !
@@ -2004,7 +1935,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !         singular vectors of L in WORK(IR)
 !         (Workspace: need M*M + BDSPAC)
           call mobbrmsd_DBDSQR('U', M, M, M, 0, S, WORK(IE), WORK(IR), &
-         &             LDWRKR, U, LDU, DUM, 1, WORK(IWORK), INFO)
+         &                     LDWRKR, U, LDU, DUM, 1, WORK(IWORK), INFO)
           IU = IE + M
 !
 !         Multiply right singular vectors of L in WORK(IR) by Q
@@ -2062,7 +1993,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !         singular vectors of A in A
 !         (Workspace: need BDSPAC)
           call mobbrmsd_DBDSQR('U', M, N, M, 0, S, WORK(IE), A, LDA, &
-         &             U, LDU, DUM, 1, WORK(IWORK), INFO)
+         &                     U, LDU, DUM, 1, WORK(IWORK), INFO)
 !
         end if
 !
@@ -2122,7 +2053,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           singular vectors of L in WORK(IR)
 !           (Workspace: need M*M + BDSPAC)
             call mobbrmsd_DBDSQR('U', M, M, 0, 0, S, WORK(IE), WORK(IR), LDWRKR, DUM, &
-           &             1, DUM, 1, WORK(IWORK), INFO)
+           &                     1, DUM, 1, WORK(IWORK), INFO)
 !
 !           Multiply right singular vectors of L in WORK(IR) by
 !           Q in A, storing result in VT
@@ -2170,7 +2101,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           singular vectors of A in VT
 !           (Workspace: need BDSPAC)
             call mobbrmsd_DBDSQR('U', M, N, 0, 0, S, WORK(IE), VT, &
-           &             LDVT, DUM, 1, DUM, 1, WORK(IWORK), INFO)
+           &                     LDVT, DUM, 1, DUM, 1, WORK(IWORK), INFO)
 !
           end if
 !
@@ -2247,7 +2178,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           right singular vectors of L in WORK(IU)
 !           (Workspace: need 2*M*M + BDSPAC)
             call mobbrmsd_DBDSQR('U', M, M, M, 0, S, WORK(IE), WORK(IU), LDWRKU, WORK(IR), &
-           &             LDWRKR, DUM, 1, WORK(IWORK), INFO)
+           &                     LDWRKR, DUM, 1, WORK(IWORK), INFO)
 !
 !           Multiply right singular vectors of L in WORK(IU) by
 !           Q in A, storing result in VT
@@ -2300,7 +2231,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           singular vectors of A in VT
 !           (Workspace: need BDSPAC)
             call mobbrmsd_DBDSQR('U', M, N, M, 0, S, WORK(IE), VT, &
-           &             LDVT, A, LDA, DUM, 1, WORK(IWORK), INFO)
+           &                     LDVT, A, LDA, DUM, 1, WORK(IWORK), INFO)
 !
           end if
 !
@@ -2366,8 +2297,8 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           (Workspace: need M*M + BDSPAC)
 !
             call mobbrmsd_DBDSQR('U', M, M, M, 0, S, WORK(IE), &
-           &             WORK(IU), LDWRKU, U, LDU, DUM, 1, &
-           &             WORK(IWORK), INFO)
+           &                     WORK(IU), LDWRKU, U, LDU, DUM, 1, &
+           &                     WORK(IWORK), INFO)
 !
 !           Multiply right singular vectors of L in WORK(IU) by
 !           Q in A, storing result in VT
@@ -2430,7 +2361,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           (Workspace: need BDSPAC)
 !
             call mobbrmsd_DBDSQR('U', M, N, M, 0, S, WORK(IE), VT, &
-           &             LDVT, U, LDU, DUM, 1, WORK(IWORK), INFO)
+           &                     LDVT, U, LDU, DUM, 1, WORK(IWORK), INFO)
 !
           end if
 !
@@ -2499,8 +2430,8 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           (Workspace: need M*M + BDSPAC)
 !
             call mobbrmsd_DBDSQR('U', M, M, 0, 0, S, WORK(IE), &
-           &             WORK(IR), LDWRKR, DUM, 1, DUM, 1, &
-           &             WORK(IWORK), INFO)
+           &                     WORK(IR), LDWRKR, DUM, 1, DUM, 1, &
+           &                     WORK(IWORK), INFO)
 !
 !           Multiply right singular vectors of L in WORK(IR) by
 !           Q in VT, storing result in A
@@ -2560,7 +2491,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           (Workspace: need BDSPAC)
 !
             call mobbrmsd_DBDSQR('U', M, N, 0, 0, S, WORK(IE), VT, &
-           &             LDVT, DUM, 1, DUM, 1, WORK(IWORK), INFO)
+           &                     LDVT, DUM, 1, DUM, 1, WORK(IWORK), INFO)
 !
           end if
 !
@@ -2634,7 +2565,7 @@ pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
 !           (Workspace: need 2*M*M + 4*M, prefer 2*M*M + 3*M + M*NB)
 !
             call mobbrmsd_DORGBR('Q', M, M, M, WORK(IR), LDWRKR, WORK(ITAUQ), WORK(IWORK), &
-                        LWORK - IWORK + 1, IERR)
+                                 LWORK - IWORK + 1, IERR)
             IWORK = IE + M
 !
 !           Perform bidiagonal QR iteration, computing left

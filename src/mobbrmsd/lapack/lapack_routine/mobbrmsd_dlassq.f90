@@ -116,33 +116,24 @@
 !> \par Further Details:
 !  =====================
 !>
-!> \verbatim
-!>
-!>  Anderson E. (2017)
-!>  Algorithm 978: Safe Scaling in the Level 1 BLAS
-!>  ACM Trans Math Softw 44:1--28
-!>  https://doi.org/10.1145/3061665
-!>
-!>  Blue, James L. (1978)
-!>  A Portable Fortran Program to Find the Euclidean Norm of a Vector
-!>  ACM Trans Math Softw 4:15--23
-!>  https://doi.org/10.1145/355769.355771
-!>
-!> \endverbatim
-!
-!> \ingroup OTHERauxiliary
-!
-!  =====================================================================
-pure subroutine mobbrmsd_DLASSQ(n, x, incx, scl, sumsq)
-! use LA_CONSTANTS, &
-!   only: RK => dp, zero => dzero, one => done, &
-!         sbig => dsbig, ssml => dssml, tbig => dtbig, tsml => dtsml
-! use LA_XISNAN
-!
 !  -- LAPACK auxiliary routine --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
+!   Anderson E. (2017)
+!   Algorithm 978: Safe Scaling in the Level 1 BLAS
+!   ACM Trans Math Softw 44:1--28
+!   [](https://doi.org/10.1145/3061665)
+!
+!   Blue, James L. (1978)
+!   A Portable Fortran Program to Find the Euclidean Norm of a Vector
+!   ACM Trans Math Softw 4:15--23
+!   [](https://doi.org/10.1145/355769.355771)
+!
+pure subroutine mobbrmsd_DLASSQ(n, x, incx, scl, sumsq)
+! use LA_CONSTANTS, &
+!   only: RK => dp, zero => dzero, one => done, &
+!         sbig => dsbig, ssml => dssml, tbig => dtbig, tsml => dtsml
 !  .. Scalar Arguments ..
   integer, intent(in)     :: incx, n
   real(RK), intent(inout) :: scl, sumsq
@@ -158,7 +149,7 @@ pure subroutine mobbrmsd_DLASSQ(n, x, incx, scl, sumsq)
 !
 !  Quick return if possible
 !
-  if (LA_ISNAN(scl) .or. LA_ISNAN(sumsq)) return
+  if (IEEE_IS_NAN(scl) .or. IEEE_IS_NAN(sumsq)) return
   if (sumsq == zero) scl = one
   if (scl == zero) then
     scl = one
@@ -217,7 +208,7 @@ pure subroutine mobbrmsd_DLASSQ(n, x, incx, scl, sumsq)
 !
 !     Combine abig and amed if abig > 0.
 !
-    if (amed > zero .or. LA_ISNAN(amed)) then
+    if (amed > zero .or. IEEE_IS_NAN(amed)) then
       abig = abig + (amed * SBIG) * SBIG
     end if
     scl = one / SBIG
@@ -226,7 +217,7 @@ pure subroutine mobbrmsd_DLASSQ(n, x, incx, scl, sumsq)
 !
 !     Combine amed and asml if asml > 0.
 !
-    if (amed > zero .or. LA_ISNAN(amed)) then
+    if (amed > zero .or. IEEE_IS_NAN(amed)) then
       amed = SQRT(amed)
       asml = SQRT(asml) / SSML
       if (asml > amed) then
