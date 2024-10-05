@@ -1,27 +1,32 @@
 !|    mobbrmsd_DCOPY copies a vector, x, to a vector, y.
 !     uses unrolled loops for increments equal to 1.
 !
-!  reference DCOPY is provided by http://www.netlib.org/lapack/explore-html/
+!  reference DCOPY is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
+!
 !  \author Univ. of Tennessee
+!
 !  \author Univ. of California Berkeley
+!
 !  \author Univ. of Colorado Denver
+!
 !  \author NAG Ltd.
+!
 pure subroutine mobbrmsd_DCOPY(N, DX, INCX, DY, INCY)
+  integer, intent(in)   :: N
+!!         number of elements in input vector(s)
   integer, intent(in)   :: INCX
 !!         storage spacing between elements of DX
   integer, intent(in)   :: INCY
 !!         storage spacing between elements of DY
-  integer, intent(in)   :: N
-!!         number of elements in input vector(s)
   real(RK), intent(in)  :: DX(*)
-!!         DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
+!!         DX is DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
   real(RK), intent(out) :: DY(*)
-!!         DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCY ) )
-  if (N <= 0) return
+!!         DY is DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCY ) )
+!
   if (INCX == 1 .and. INCY == 1) then
 !
-!  code for both increments equal to 1
-!  clean-up loop
+! code for both increments equal to 1
+! clean-up loop
 !
     block
       integer   :: I, M, MP1
@@ -106,7 +111,7 @@ pure subroutine mobbrmsd_DCOPY(N, DX, INCX, DY, INCY)
 !
   end if
 !
-!     End of mobbrmsd_DCOPY
+! End of mobbrmsd_DCOPY
 !
 end subroutine mobbrmsd_DCOPY
 

@@ -24,7 +24,6 @@
 !     Q = H(1) H(2) . . . H(m-1)  and  P = G(1) G(2) . . . G(m)
 !
 !  Each H(i) and G(i) has the form:
-!
 !     H(i) = I - tauq * v * v**T  and G(i) = I - taup * u * u**T
 !
 !  where tauq and taup are real scalars, and v and u are real vectors;

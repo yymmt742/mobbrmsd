@@ -1,113 +1,51 @@
-!> \brief \b mobbrmsd_DLAPY2 returns sqrt(x2+y2).
+!| mobbrmsd_DLAPY2 returns sqrt(x**2+y**2), taking care not to cause unnecessary
+!  overflow and unnecessary underflow.
 !
-!  =========== DOCUMENTATION ===========
-!
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
-!
-!> \htmlonly
-!> Download mobbrmsd_DLAPY2 + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dlapy2.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dlapy2.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txtfilename=/lapack/lapack_routine/dlapy2.f">
-!> [TXT]</a>
-!> \endhtmlonly
-!
-!  Definition:
-!  ===========
-!
-!       real(RK)           :: FUNCTION mobbrmsd_DLAPY2( X, Y )
-!
-!       .. Scalar Arguments ..
-!       real(RK)           ::   X, Y
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_DLAPY2 returns sqrt(x**2+y**2), taking care not to cause unnecessary
-!> overflow and unnecessary underflow.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] X
-!> \verbatim
-!>          X is real(RK)           ::
-!> \endverbatim
-!>
-!> \param[in] Y
-!> \verbatim
-!>          Y is real(RK)           ::
-!>          X and Y specify the values x and y.
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup OTHERauxiliary
-!
-!  =====================================================================
-pure elemental function mobbrmsd_DLAPY2(X, Y)
-! use LA_CONSTANTS, only: RK => dp
-  implicit none
-!
-!  -- LAPACK auxiliary routine --
+!     Reference DLAPY2 is provided by [](http://www.netlib.org/lapack/)
+!  -- LAPACK driver routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
-!     .. Scalar Arguments ..
-  real(RK), intent(in) :: X, Y
+pure elemental function mobbrmsd_DLAPY2(X, Y)
+  implicit none
+  real(RK), intent(in) :: X
+!!          X specify the value x.
+  real(RK), intent(in) :: Y
+!!          Y specify the value y.
   real(RK)             :: mobbrmsd_DLAPY2
-!     ..
-!  =====================================================================
-!     ..
-!     .. Local Scalars ..
   real(RK)             :: W, XABS, YABS, Z, HUGEVAL
   logical              :: X_IS_NAN, Y_IS_NAN
-!
+  intrinsic            :: ABS, MAX, MIN, SQRT
 !     .. Parameters ..
 ! real(RK), parameter   :: ZERO = 0.0_RK
 ! real(RK), parameter   :: ONE = 1.0_RK
-!     ..
 ! interface
 !     .. External Functions ..
 !   include 'disnan.h'
 !     .. External Subroutines ..
 !   include 'dlamch.h'
 ! end interface
-!     ..
-!     .. Intrinsic Functions ..
-  intrinsic            :: ABS, MAX, MIN, SQRT
-!     ..
 !     .. Executable Statements ..
 !
-  X_IS_NAN = mobbrmsd_DISNAN(X)
-  Y_IS_NAN = mobbrmsd_DISNAN(Y)
-  if (X_IS_NAN) mobbrmsd_DLAPY2 = X
-  if (Y_IS_NAN) mobbrmsd_DLAPY2 = Y
-  HUGEVAL = mobbrmsd_DLAMCH('Overflow')
+  X_IS_NAN = IEEE_IS_NAN(X)
+  Y_IS_NAN = IEEE_IS_NAN(Y)
 !
   if (.not. (X_IS_NAN .or. Y_IS_NAN)) then
     XABS = ABS(X)
     YABS = ABS(Y)
     W = MAX(XABS, YABS)
     Z = MIN(XABS, YABS)
+    HUGEVAL = mobbrmsd_DLAMCH('Overflow')
     if (Z == ZERO .or. W > HUGEVAL) then
       mobbrmsd_DLAPY2 = W
     else
       mobbrmsd_DLAPY2 = W * SQRT(ONE + (Z / W)**2)
+    end if
+  else
+    if (X_IS_NAN) then
+      mobbrmsd_DLAPY2 = X
+    else
+      mobbrmsd_DLAPY2 = Y
     end if
   end if
   return

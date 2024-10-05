@@ -138,7 +138,7 @@ pure subroutine mobbrmsd_SLASSQ(N, X, INCX, SCL, SUMSQ)
   if (N > 0) then
     do IX = 1, 1 + (N - 1) * INCX, INCX
       ABSXI = ABS(X(IX))
-      if (ABSXI > ZERO .or. mobbrmsd_SISNAN(ABSXI)) then
+      if (ABSXI > ZERO .or. IEEE_IS_NAN(ABSXI)) then
         if (SCL < ABSXI) then
           SUMSQ = 1 + SUMSQ * (SCL / ABSXI)**2
           SCL = ABSXI

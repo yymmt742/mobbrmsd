@@ -206,9 +206,9 @@ pure subroutine mobbrmsd_SLASCL(type, KL, KU, CFROM, CTO, M, N, A, LDA, INFO)
 !
   if (ITYPE == -1) then
     INFO = -1
-  else if (CFROM == ZERO .or. mobbrmsd_SISNAN(CFROM)) then
+  else if (CFROM == ZERO .or. IEEE_IS_NAN(CFROM)) then
     INFO = -4
-  else if (mobbrmsd_SISNAN(CTO)) then
+  else if (IEEE_IS_NAN(CTO)) then
     INFO = -5
   else if (M < 0) then
     INFO = -6

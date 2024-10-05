@@ -1,102 +1,35 @@
-!> \brief \b mobbrmsd_SLAPY2 returns sqrt(x2+y2).
+!| mobbrmsd_SLAPY2 returns sqrt(x**2+y**2), taking care not to cause unnecessary
+!  overflow.
 !
-!  =========== DOCUMENTATION ===========
-!
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
-!
-!> \htmlonly
-!> Download mobbrmsd_SLAPY2 + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slapy2.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slapy2.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/slapy2.f">
-!> [TXT]</a>
-!> \endhtmlonly
-!
-!  Definition:
-!  ===========
-!
-!       REAL             FUNCTION mobbrmsd_SLAPY2( X, Y )
-!
-!       .. Scalar Arguments ..
-!       REAL               X, Y
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SLAPY2 returns sqrt(x**2+y**2), taking care not to cause unnecessary
-!> overflow.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] X
-!> \verbatim
-!>          X is REAL
-!> \endverbatim
-!>
-!> \param[in] Y
-!> \verbatim
-!>          Y is REAL
-!>          X and Y specify the values x and y.
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \date June 2017
-!
-!> \ingroup OTHERauxiliary
-!
-!  =====================================================================
-pure elemental function mobbrmsd_SLAPY2(X, Y)
-!
+!     Reference SLAPY2 is provided by [](http://www.netlib.org/lapack/)
 !  -- LAPACK auxiliary routine (version 3.7.1) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     June 2017
 !
+pure elemental function mobbrmsd_SLAPY2(X, Y)
+!
+!
 !     .. Scalar Arguments ..
-  real(RK), intent(in) :: X, Y
+  real(RK), intent(in) :: X
+!!          X is REAL
+  real(RK), intent(in) :: Y
+!!          Y is REAL
+!
   real(RK) :: mobbrmsd_SLAPY2
-!..
-!
-!  =====================================================================
-!
-!..Local Scalars..
   real(RK) :: W, XABS, YABS, Z
-  logical :: X_IS_NAN, Y_IS_NAN
-!..
+  logical  :: X_IS_NAN, Y_IS_NAN
+  intrinsic :: ABS, MAX, MIN, SQRT
 !..Parameters..
 ! real(RK), parameter :: ZERO = 0.0E0
 ! real(RK), parameter :: ONE = 1.0E0
-!..
 ! interface
 ! .. External Functions ..
 !   include 'sisnan.h'
 ! end interface
-!..
-!..intrinsic Functions..
-  intrinsic :: ABS, MAX, MIN, SQRT
-!..
-!..Executable Statements..
 !
-  X_IS_NAN = mobbrmsd_SISNAN(X)
-  Y_IS_NAN = mobbrmsd_SISNAN(Y)
-  if (X_IS_NAN) mobbrmsd_SLAPY2 = X
-  if (Y_IS_NAN) mobbrmsd_SLAPY2 = Y
+  X_IS_NAN = IEEE_IS_NAN(X)
+  Y_IS_NAN = IEEE_IS_NAN(Y)
 !
   if (.not. (X_IS_NAN .or. Y_IS_NAN)) then
     XABS = ABS(X)
@@ -108,9 +41,16 @@ pure elemental function mobbrmsd_SLAPY2(X, Y)
     else
       mobbrmsd_SLAPY2 = W * SQRT(ONE + (Z / W)**2)
     end if
+  else
+    if (X_IS_NAN) then
+      mobbrmsd_SLAPY2 = X
+    else
+      mobbrmsd_SLAPY2 = Y
+    end if
   end if
   return
 !
 !end of mobbrmsd_SLAPY2
 !
 end
+

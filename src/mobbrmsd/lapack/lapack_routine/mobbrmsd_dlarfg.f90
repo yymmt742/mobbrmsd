@@ -1,95 +1,23 @@
-!> \brief \b mobbrmsd_DLARFG generates an elementary reflector (Householder matrix).
+!| mobbrmsd_DLARFG generates an elementary reflector (Householder matrix).
+!  mobbrmsd_DLARFG generates a real elementary reflector H of order n, such
+!  that
 !
-!  =========== DOCUMENTATION ===========
+!        H * ( alpha ) = ( beta ),   H**T * H = I.
+!            (   x   )   (   0  )
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  where alpha and beta are scalars, and x is an (n-1)-element real
+!  vector. H is represented in the form
 !
-!> \htmlonly
-!> Download mobbrmsd_DLARFG + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dlarfg.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dlarfg.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txtfilename=/lapack/lapack_routine/dlarfg.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!        H = I - tau * ( 1 ) * ( 1 v**T ) ,
+!                      ( v )
 !
-!  Definition:
-!  ===========
+!  where tau is a real scalar and v is a real (n-1)-element
+!  vector.
 !
-!       SUBROUTINE mobbrmsd_DLARFG( N, ALPHA, X, INCX, TAU )
+!  If the elements of x are all zero, then tau = 0 and H is taken to be
+!  the unit matrix.
 !
-!       .. Scalar Arguments ..
-!       INTEGER            INCX, N
-!       real(RK)           ::   ALPHA, TAU
-!       ..
-!       .. Array Arguments ..
-!       real(RK)           ::   X( * )
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_DLARFG generates a real elementary reflector H of order n, such
-!> that
-!>
-!>       H * ( alpha ) = ( beta ),   H**T * H = I.
-!>           (   x   )   (   0  )
-!>
-!> where alpha and beta are scalars, and x is an (n-1)-element real
-!> vector. H is represented in the form
-!>
-!>       H = I - tau * ( 1 ) * ( 1 v**T ) ,
-!>                     ( v )
-!>
-!> where tau is a real scalar and v is a real (n-1)-element
-!> vector.
-!>
-!> If the elements of x are all zero, then tau = 0 and H is taken to be
-!> the unit matrix.
-!>
-!> Otherwise  1 <= tau <= 2.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The order of the elementary reflector.
-!> \endverbatim
-!>
-!> \param[in,out] ALPHA
-!> \verbatim
-!>          ALPHA is real(RK)           ::
-!>          On entry, the value alpha.
-!>          On exit, it is overwritten with the value beta.
-!> \endverbatim
-!>
-!> \param[in,out] X
-!> \verbatim
-!>          X is real(RK)           :: array, dimension
-!>                         (1+(N-2)*abs(INCX))
-!>          On entry, the vector x.
-!>          On exit, it is overwritten with the vector v.
-!> \endverbatim
-!>
-!> \param[in] INCX
-!> \verbatim
-!>          INCX is INTEGER
-!>          The increment between elements of X. INCX > 0.
-!> \endverbatim
-!>
-!> \param[out] TAU
-!> \verbatim
-!>          TAU is real(RK)           ::
-!>          The value tau.
-!> \endverbatim
+!  Otherwise  1 <= tau <= 2.
 !
 !  Authors:
 !  ========
@@ -99,32 +27,27 @@
 !> \author Univ. of Colorado Denver
 !> \author NAG Ltd.
 !
-!> \ingroup doubleOTHERauxiliary
-!
-!  =====================================================================
-pure subroutine mobbrmsd_DLARFG(N, ALPHA, X, INCX, TAU)
-! use LA_CONSTANTS, only: RK => dp
-  implicit none
-!
 !  -- LAPACK auxiliary routine --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
-!     .. Scalar Arguments ..
-  integer, intent(in)     :: INCX, N
+pure subroutine mobbrmsd_DLARFG(N, ALPHA, X, INCX, TAU)
+  implicit none
+  integer, intent(in)     :: INCX
+!!          The increment between elements of X. INCX > 0.
+  integer, intent(in)     :: N
+!!          The order of the elementary reflector.
   real(RK), intent(inout) :: ALPHA
+!!          On entry, the value alpha. <br>
+!!          On exit, it is overwritten with the value beta. <br>
   real(RK), intent(out)   :: TAU
-!     ..
-!     .. Array Arguments ..
+!!          The value tau.
   real(RK), intent(inout) :: X(*)
-!     ..
-!
-!  =====================================================================
-!     .. Local Scalars ..
-  integer              :: J, KNT
+!!          X is real(RK)           :: array, dimension (1+(N-2)*abs(INCX))
+!!          On entry, the vector x.
+!!          On exit, it is overwritten with the vector v.
   real(RK)             :: BETA, RSAFMN, SAFMIN, XNORM
-!
-!     .. Intrinsic Functions ..
+  integer              :: J, KNT
   intrinsic            :: ABS, SIGN
 !     ..
 !     .. Parameters ..
@@ -195,3 +118,4 @@ pure subroutine mobbrmsd_DLARFG(N, ALPHA, X, INCX, TAU)
 !     End of mobbrmsd_DLARFG
 !
 end subroutine mobbrmsd_DLARFG
+

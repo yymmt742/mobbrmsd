@@ -1,248 +1,175 @@
-!> \brief <b> mobbrmsd_SGESVD computes the singular value decomposition (SVD) for GE matrices</b>
+!| mobbrmsd_SGESVD computes the singular value decomposition (SVD) of a real
+!  M-by-N matrix A, optionally computing the left and/or right singular
+!  vectors. The SVD is written
 !
-!  =========== DOCUMENTATION ===========
+!  \begin{equation}
+!     \mathbf{A} = \mathbf{U} \mathbf{\Sigma} \mathbf{V}^{\top}
+!  \end{equation}
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  where \(\mathbf{\Sigma}\) is an M-by-N matrix which is zero except for its
+!  \(\min(m,n)\) diagonal elements, \(\mathbf{U}\) is an M-by-M orthogonal matrix, and
+!  \(\mathbf{V}\) is an N-by-N orthogonal matrix.  The diagonal elements of \(\mathbf{\Sigma}\)
+!  are the singular values of \(\mathbf{A}\); they are real and non-negative, and
+!  are returned in descending order.  The first \(\min(m,n)\) columns of
+!  \(\mathbf{U}\)  and \(\mathbf{V}\) are the left and right singular vectors of \(\mathbf{A}\).
 !
-!> \htmlonly
-!> Download mobbrmsd_SGESVD + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sgesvd.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sgesvd.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/sgesvd.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!  Note that the routine returns \(\mathbf{V}^{\top}\), not \(\mathbf{V}\).
 !
-!  Definition:
-!  ===========
-!
-!       SUBROUTINE mobbrmsd_SGESVD( JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT,
-!                          WORK, LWORK, INFO )
-!
-!       .. Scalar Arguments ..
-!       CHARACTER          JOBU, JOBVT
-!       INTEGER            INFO, LDA, LDU, LDVT, LWORK, M, N
-!       ..
-!       .. Array Arguments ..
-!       REAL               A( LDA, * ), S( * ), U( LDU, * ),
-!      $                   VT( LDVT, * ), WORK( * )
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SGESVD computes the singular value decomposition (SVD) of a real
-!> M-by-N matrix A, optionally computing the left and/or right singular
-!> vectors. The SVD is written
-!>
-!>      A = U * SIGMA * transpose(V)
-!>
-!> where SIGMA is an M-by-N matrix which is zero except for its
-!> min(m,n) diagonal elements, U is an M-by-M orthogonal matrix, and
-!> V is an N-by-N orthogonal matrix.  The diagonal elements of SIGMA
-!> are the singular values of A; they are real and non-negative, and
-!> are returned in descending order.  The first min(m,n) columns of
-!> U and V are the left and right singular vectors of A.
-!>
-!> Note that the routine returns V**T, not V.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] JOBU
-!> \verbatim
-!>          JOBU is CHARACTER*1
-!>          Specifies options for computing all or part of the matrix U:
-!>          = 'A':  all M columns of U are returned in array U:
-!>          = 'S':  the first min(m,n) columns of U (the left singular
-!>                  vectors) are returned in the array U;
-!>          = 'O':  the first min(m,n) columns of U (the left singular
-!>                  vectors) are overwritten on the array A;
-!>          = 'N':  no columns of U (no left singular vectors) are
-!>                  computed.
-!> \endverbatim
-!>
-!> \param[in] JOBVT
-!> \verbatim
-!>          JOBVT is CHARACTER*1
-!>          Specifies options for computing all or part of the matrix
-!>          V**T:
-!>          = 'A':  all N rows of V**T are returned in the array VT;
-!>          = 'S':  the first min(m,n) rows of V**T (the right singular
-!>                  vectors) are returned in the array VT;
-!>          = 'O':  the first min(m,n) rows of V**T (the right singular
-!>                  vectors) are overwritten on the array A;
-!>          = 'N':  no rows of V**T (no right singular vectors) are
-!>                  computed.
-!>
-!>          JOBVT and JOBU cannot both be 'O'.
-!> \endverbatim
-!>
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>          The number of rows of the input matrix A.  M >= 0.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of columns of the input matrix A.  N >= 0.
-!> \endverbatim
-!>
-!> \param[in,out] A
-!> \verbatim
-!>          A is REAL array, dimension (LDA,N)
-!>          On entry, the M-by-N matrix A.
-!>          On exit,
-!>          if JOBU = 'O',  A is overwritten with the first min(m,n)
-!>                          columns of U (the left singular vectors,
-!>                          stored columnwise);
-!>          if JOBVT = 'O', A is overwritten with the first min(m,n)
-!>                          rows of V**T (the right singular vectors,
-!>                          stored rowwise);
-!>          if JOBU .ne. 'O' and JOBVT .ne. 'O', the contents of A
-!>                          are destroyed.
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>          The leading dimension of the array A.  LDA >= max(1,M).
-!> \endverbatim
-!>
-!> \param[out] S
-!> \verbatim
-!>          S is REAL array, dimension (min(M,N))
-!>          The singular values of A, sorted so that S(i) >= S(i+1).
-!> \endverbatim
-!>
-!> \param[out] U
-!> \verbatim
-!>          U is REAL array, dimension (LDU,UCOL)
-!>          (LDU,M) if JOBU = 'A' or (LDU,min(M,N)) if JOBU = 'S'.
-!>          If JOBU = 'A', U contains the M-by-M orthogonal matrix U;
-!>          if JOBU = 'S', U contains the first min(m,n) columns of U
-!>          (the left singular vectors, stored columnwise);
-!>          if JOBU = 'N' or 'O', U is not referenced.
-!> \endverbatim
-!>
-!> \param[in] LDU
-!> \verbatim
-!>          LDU is INTEGER
-!>          The leading dimension of the array U.  LDU >= 1; if
-!>          JOBU = 'S' or 'A', LDU >= M.
-!> \endverbatim
-!>
-!> \param[out] VT
-!> \verbatim
-!>          VT is REAL array, dimension (LDVT,N)
-!>          If JOBVT = 'A', VT contains the N-by-N orthogonal matrix
-!>          V**T;
-!>          if JOBVT = 'S', VT contains the first min(m,n) rows of
-!>          V**T (the right singular vectors, stored rowwise);
-!>          if JOBVT = 'N' or 'O', VT is not referenced.
-!> \endverbatim
-!>
-!> \param[in] LDVT
-!> \verbatim
-!>          LDVT is INTEGER
-!>          The leading dimension of the array VT.  LDVT >= 1; if
-!>          JOBVT = 'A', LDVT >= N; if JOBVT = 'S', LDVT >= min(M,N).
-!> \endverbatim
-!>
-!> \param[out] WORK
-!> \verbatim
-!>          WORK is REAL array, dimension (MAX(1,LWORK))
-!>          On exit, if INFO = 0, WORK(1) returns the optimal LWORK;
-!>          if INFO > 0, WORK(2:MIN(M,N)) contains the unconverged
-!>          superdiagonal elements of an upper bidiagonal matrix B
-!>          whose diagonal is in S (not necessarily sorted). B
-!>          satisfies A = U * B * VT, so it has the same singular values
-!>          as A, and singular vectors related by U and VT.
-!> \endverbatim
-!>
-!> \param[in] LWORK
-!> \verbatim
-!>          LWORK is INTEGER
-!>          The dimension of the array WORK.
-!>          LWORK >= MAX(1,5*MIN(M,N)) for the paths (see comments inside code):
-!>             - PATH 1  (M much larger than N, JOBU='N')
-!>             - PATH 1t (N much larger than M, JOBVT='N')
-!>          LWORK >= MAX(1,3*MIN(M,N)+MAX(M,N),5*MIN(M,N)) for the other paths
-!>          For good performance, LWORK should generally be larger.
-!>
-!>          If LWORK = -1, then a workspace query is assumed; the routine
-!>          only calculates the optimal size of the WORK array, returns
-!>          this value as the first entry of the WORK array, and no error
-!>          message related to LWORK is issued by XERBLA.
-!> \endverbatim
-!>
-!> \param[out] INFO
-!> \verbatim
-!>          INFO is INTEGER
-!>          = 0:  successful exit.
-!>          < 0:  if INFO = -i, the i-th argument had an illegal value.
-!>          > 0:  if mobbrmsd_SBDSQR did not converge, INFO specifies how many
-!>                superdiagonals of an intermediate bidiagonal form B
-!>                did not converge to zero. See the description of WORK
-!>                above for details.
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \date April 2012
-!
-!> \ingroup realGEsing
-!
-!  =====================================================================
-pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, WORK, LWORK, INFO)
-  implicit none
+!  Reference SGESVD is provided by [netlib.org](http://www.netlib.org/lapack/).
 !
 !  -- LAPACK driver routine (version 3.7.0) --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     April 2012
+!     \date April 2012
 !
-!     .. Scalar Arguments ..
-  character, intent(in) :: JOBU, JOBVT
-  integer, intent(in)   :: LDA, LDU, LDVT, LWORK, M, N
-  integer, intent(out)  :: INFO
-!..
-!..Array Arguments..
+pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, WORK, LWORK, INFO)
+  implicit none
+  character, intent(in) :: JOBU
+!!          Specifies options for computing all or part of the matrix \(\mathbf{U}\)
+!!
+!!          = 'A':  all M columns of U are returned in array U
+!!
+!!          = 'S':  the first min(m,n) columns of U (the left singular
+!!                  vectors) are returned in the array U.
+!!
+!!          = 'O':  the first min(m,n) columns of U (the left singular
+!!                  vectors) are overwritten on the array A.
+!!
+!!          = 'N':  no columns of U (no left singular vectors) are
+!!                  computed.
+!!
+  character, intent(in) :: JOBVT
+!!          Specifies options for computing all or part of the matrix
+!!          \(\mathbf{V}^{\top}\)
+!!
+!!          = 'A':  all N rows of \(\mathbf{V}^\top\) are returned in the array VT
+!!
+!!          = 'S':  the first min(m,n) rows of \(\mathbf{V}^\top\) (the right singular
+!!                  vectors) are returned in the array VT
+!!
+!!          = 'O':  the first min(m,n) rows of \(\mathbf{V}^\top\) (the right singular
+!!                  vectors) are overwritten on the array A
+!!
+!!          = 'N':  no rows of \(\mathbf{V}^\top\) (no right singular vectors) are
+!!                  computed
+!!
+!!          JOBVT and JOBU cannot both be 'O'.
+!!
+  integer, intent(in)   :: LDA
+!!          The leading dimension of the array A.  LDA >= max(1,M).
+!!
+  integer, intent(in)   :: LDU
+!!          The leading dimension of the array U.  LDU >= 1; if
+!!          JOBU = 'S' or 'A', LDU >= M.
+!!
+  integer, intent(in)   :: LDVT
+!!          The leading dimension of the array VT.  LDVT >= 1; if
+!!          JOBVT = 'A', LDVT >= N; if JOBVT = 'S', LDVT >= min(M,N).
+!!
+  integer, intent(in)   :: LWORK
+!!          The dimension of the array WORK.
+!!
+!!          LWORK >= MAX(1,5*MIN(M,N)) for the paths (see comments inside code):
+!!             - PATH 1  (M much larger than N, JOBU='N')
+!!             - PATH 1t (N much larger than M, JOBVT='N')
+!!
+!!          LWORK >= MAX(1,3*MIN(M,N)+MAX(M,N),5*MIN(M,N)) for the other paths
+!!
+!!          For good performance, LWORK should generally be larger.
+!!
+!!          If LWORK = -1, then a workspace query is assumed; the routine
+!!          only calculates the optimal size of the WORK array, returns
+!!          this value as the first entry of the WORK array.
+!!
+  integer, intent(in)   :: M
+!!          The number of rows of the input matrix A.  M >= 0.
+!!
+  integer, intent(in)   :: N
+!!          The number of columns of the input matrix A.  N >= 0.
+!!
   real(RK), intent(inout)   :: A(LDA, *)
-  real(RK), intent(out)     :: S(*), U(LDU, *), VT(LDVT, *), WORK(*)
-!..
-!
-!  =====================================================================
-!..
-!..Local Scalars..
-  logical :: LQUERY, WNTUA, WNTUAS, WNTUN, WNTUO, WNTUS
-  logical :: WNTVA, WNTVAS, WNTVN, WNTVO, WNTVS
-  integer :: BDSPAC, BLK, CHUNK, I, IE, IERR, IR, ISCL
-  integer :: ITAU, ITAUP, ITAUQ, IU, IWORK, LDWRKR, LDWRKU
-  integer :: MAXWRK, MINMN, MINWRK, MNTHR, NCU, NCVT, NRU
-  integer :: NRVT, WRKBL
-  integer :: LWORK_mobbrmsd_SGEQRF, LWORK_mobbrmsd_SORGQR_N, LWORK_mobbrmsd_SORGQR_M
-  integer :: LWORK_mobbrmsd_SGEBRD, LWORK_mobbrmsd_SORGBR_P, LWORK_mobbrmsd_SORGBR_Q
-  integer :: LWORK_mobbrmsd_SGELQF, LWORK_mobbrmsd_SORGLQ_N, LWORK_mobbrmsd_SORGLQ_M
+!!          A is REAL array, dimension (LDA,N)
+!!
+!!          On entry, the M-by-N matrix \(\mathbf{A}\).
+!!          On exit,
+!!
+!!          if JOBU = 'O',  \(\mathbf{A}\) is overwritten with the first min(m,n)
+!!                          columns of U (the left singular vectors,
+!!                          stored columnwise).
+!!
+!!          if JOBVT = 'O', \(\mathbf{A}\) is overwritten with the first min(m,n)
+!!                          rows of V**T (the right singular vectors,
+!!                          stored rowwise).
+!!
+!!          if JOBU .ne. 'O' and JOBVT .ne. 'O', the contents of \(\mathbf{A}\)
+!!                          are destroyed.
+!!
+  real(RK), intent(out)     :: S(*)
+!!          S is REAL array, dimension (min(M,N))
+!!
+!!          The singular values of \(\mathbf{A}\), sorted so that S(i) >= S(i+1).
+!!
+  real(RK), intent(out)     :: U(LDU, *)
+!!          U is REAL array, dimension (LDU,UCOL)
+!!
+!!          (LDU,M) if JOBU = 'A' or (LDU,min(M,N)) if JOBU = 'S'.
+!!
+!!          If JOBU = 'A', U contains the M-by-M orthogonal matrix \(\mathbf{U}\).
+!!
+!!          if JOBU = 'S', U contains the first min(m,n) columns of \(\mathbf{U}\)
+!!          (the left singular vectors, stored columnwise).
+!!
+!!          if JOBU = 'N' or 'O', U is not referenced.
+!!
+  real(RK), intent(out)     :: VT(LDVT, *)
+!!          VT is REAL array, dimension (LDVT,N)
+!!
+!!          If JOBVT = 'A', VT contains the N-by-N orthogonal matrix
+!!           \(\mathbf{V}^\top\);
+!!
+!!          if JOBVT = 'S', VT contains the first min(m,n) rows of
+!!           \(\mathbf{V}^\top\)
+!!           (the right singular vectors, stored rowwise);
+!!
+!!          if JOBVT = 'N' or 'O', VT is not referenced.
+!!
+  real(RK), intent(out)     :: WORK(*)
+!!          WORK is REAL array, dimension (MAX(1,LWORK))
+!!
+!!          On exit, if INFO = 0, WORK(1) returns the optimal LWORK;
+!!
+!!          if INFO > 0, WORK(2:MIN(M,N)) contains the unconverged
+!!          superdiagonal elements of an upper bidiagonal matrix \(\mathbf{B}\)
+!!          whose diagonal is in S (not necessarily sorted). \(\mathbf{B}\)
+!!          satisfies \(\mathbf{A} = \mathbf{U} \mathbf{B} \mathbf{V}^{\top}\),
+!!          so it has the same singular values as \(\mathbf{A}\),
+!!          and singular vectors related by \(\mathbf{U}\) and \(\mathbf{V}\).
+!!
+  integer, intent(out)  :: INFO
+!!          =0 :  successful exit.
+!!
+!!          <0 :  if INFO = -i, the i-th argument had an illegal value.
+!!
+!!          \>0 : if mobbrmsd_SBDSQR did not converge, INFO specifies how many
+!!                superdiagonals of an intermediate bidiagonal form \(\mathbf{B}\)
+!!                did not converge to zero. See the description of WORK
+!!                above for details.
+!!
+  logical  :: LQUERY, WNTUA, WNTUAS, WNTUN, WNTUO, WNTUS
+  logical  :: WNTVA, WNTVAS, WNTVN, WNTVO, WNTVS
+  integer  :: BDSPAC, BLK, CHUNK, I, IE, IERR, IR, ISCL
+  integer  :: ITAU, ITAUP, ITAUQ, IU, IWORK, LDWRKR, LDWRKU
+  integer  :: MAXWRK, MINMN, MINWRK, MNTHR, NCU, NCVT, NRU
+  integer  :: NRVT, WRKBL
+  integer  :: LWORK_SGEQRF, LWORK_SORGQR_N, LWORK_SORGQR_M
+  integer  :: LWORK_SGEBRD, LWORK_SORGBR_P, LWORK_SORGBR_Q
+  integer  :: LWORK_SGELQF, LWORK_SORGLQ_N, LWORK_SORGLQ_M
   real(RK) :: ANRM, BIGNUM, EPS, SMLNUM
-!..
-!..Local Arrays..
   real(RK) :: DUM(1)
-!
+  intrinsic :: MAX, MIN, SQRT
 !..Parameters..
 ! real(RK), parameter :: ZERO = 0.0E0, ONE = 1.0E0
 !..
@@ -267,15 +194,14 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
 !   include 'sormbr.h'
 ! end interface
 !..
-!..
-!..intrinsic Functions..
-  intrinsic :: MAX, MIN, SQRT
-!..
 !..Executable Statements..
 !
 !Test the input arguments
 !
+  IE = 0
   INFO = 0
+  MNTHR = 0
+  BDSPAC = 0
   MINMN = MIN(M, N)
   WNTUA = mobbrmsd_LSAME(JOBU, 'A')
   WNTUS = mobbrmsd_LSAME(JOBU, 'S')
@@ -305,322 +231,317 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
     INFO = -11
   end if
 !
-!Compute workspace
-!(Note:Comments in the code beginning "Workspace:"describe the
-!minimal amount of workspace needed at that point in the code,
-!as well as the preferred amount for good performance.
-!NB refers to the optimal block size for the immediately
-!following subroutine, as returned by mobbrmsd_ILAENV.)
+! Compute workspace
+! (Note:Comments in the code beginning "Workspace:"describe the
+! minimal amount of workspace needed at that point in the code,
+! as well as the preferred amount for good performance.
+! NB refers to the optimal block size for the immediately
+! following subroutine, as returned by mobbrmsd_ILAENV.)
 !
   if (INFO == 0) then
+    WRKBL = 0
     MINWRK = 1
     MAXWRK = 1
     if (M >= N .and. MINMN > 0) then
 !
-!Compute space needed for mobbrmsd_SBDSQR
+! Compute space needed for mobbrmsd_SBDSQR
 !
       MNTHR = mobbrmsd_ILAENV(6, 'SGESVD', JOBU//JOBVT, M, N, 0, 0)
       BDSPAC = 5 * N
-!Compute space needed for mobbrmsd_SGEQRF
+! Compute space needed for mobbrmsd_SGEQRF
       call mobbrmsd_SGEQRF(M, N, A, LDA, DUM(1), DUM(1), -1, IERR)
-      LWORK_mobbrmsd_SGEQRF = INT(DUM(1))
-!Compute space needed for mobbrmsd_SORGQR
+      LWORK_SGEQRF = INT(DUM(1))
+! Compute space needed for mobbrmsd_SORGQR
       call mobbrmsd_SORGQR(M, N, N, A, LDA, DUM(1), DUM(1), -1, IERR)
-      LWORK_mobbrmsd_SORGQR_N = INT(DUM(1))
+      LWORK_SORGQR_N = INT(DUM(1))
       call mobbrmsd_SORGQR(M, M, N, A, LDA, DUM(1), DUM(1), -1, IERR)
-      LWORK_mobbrmsd_SORGQR_M = INT(DUM(1))
-!Compute space needed for mobbrmsd_SGEBRD
+      LWORK_SORGQR_M = INT(DUM(1))
+! Compute space needed for mobbrmsd_SGEBRD
       call mobbrmsd_SGEBRD(N, N, A, LDA, S, DUM(1), DUM(1), DUM(1), DUM(1), -1, IERR)
-      LWORK_mobbrmsd_SGEBRD = INT(DUM(1))
-!Compute space needed for mobbrmsd_SORGBR P
+      LWORK_SGEBRD = INT(DUM(1))
+! Compute space needed for mobbrmsd_SORGBR P
       call mobbrmsd_SORGBR('P', N, N, N, A, LDA, DUM(1), DUM(1), -1, IERR)
-      LWORK_mobbrmsd_SORGBR_P = INT(DUM(1))
-!Compute space needed for mobbrmsd_SORGBR Q
+      LWORK_SORGBR_P = INT(DUM(1))
+! Compute space needed for mobbrmsd_SORGBR Q
       call mobbrmsd_SORGBR('Q', N, N, N, A, LDA, DUM(1), DUM(1), -1, IERR)
-      LWORK_mobbrmsd_SORGBR_Q = INT(DUM(1))
+      LWORK_SORGBR_Q = INT(DUM(1))
 !
       if (M >= MNTHR) then
         if (WNTUN) then
 !
-!Path 1(M much larger than N, JOBU='N')
+! Path 1(M much larger than N, JOBU='N')
 !
-          MAXWRK = N + LWORK_mobbrmsd_SGEQRF
-          MAXWRK = MAX(MAXWRK, 3 * N + LWORK_mobbrmsd_SGEBRD)
-          if (WNTVO .or. WNTVAS) MAXWRK = MAX(MAXWRK, 3 * N + LWORK_mobbrmsd_SORGBR_P)
+          MAXWRK = N + LWORK_SGEQRF
+          MAXWRK = MAX(MAXWRK, 3 * N + LWORK_SGEBRD)
+          if (WNTVO .or. WNTVAS) MAXWRK = MAX(MAXWRK, 3 * N + LWORK_SORGBR_P)
           MAXWRK = MAX(MAXWRK, BDSPAC)
           MINWRK = MAX(4 * N, BDSPAC)
         else if (WNTUO .and. WNTVN) then
 !
-!Path 2(M much larger than N, JOBU='O', JOBVT='N')
+! Path 2(M much larger than N, JOBU='O', JOBVT='N')
 !
-          WRKBL = N + LWORK_mobbrmsd_SGEQRF
-          WRKBL = MAX(WRKBL, N + LWORK_mobbrmsd_SORGQR_N)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SORGBR_Q)
+          WRKBL = N + LWORK_SGEQRF
+          WRKBL = MAX(WRKBL, N + LWORK_SORGQR_N)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SORGBR_Q)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = MAX(N * N + WRKBL, N * N + M * N + N)
           MINWRK = MAX(3 * N + M, BDSPAC)
         else if (WNTUO .and. WNTVAS) then
 !
-!Path 3(M much larger than N, JOBU='O', JOBVT='S'or
-!'A')
+! Path 3(M much larger than N, JOBU='O', JOBVT='S' or 'A')
 !
-          WRKBL = N + LWORK_mobbrmsd_SGEQRF
-          WRKBL = MAX(WRKBL, N + LWORK_mobbrmsd_SORGQR_N)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SORGBR_Q)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SORGBR_P)
+          WRKBL = N + LWORK_SGEQRF
+          WRKBL = MAX(WRKBL, N + LWORK_SORGQR_N)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SORGBR_Q)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SORGBR_P)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = MAX(N * N + WRKBL, N * N + M * N + N)
           MINWRK = MAX(3 * N + M, BDSPAC)
         else if (WNTUS .and. WNTVN) then
 !
-!Path 4(M much larger than N, JOBU='S', JOBVT='N')
+! Path 4(M much larger than N, JOBU='S', JOBVT='N')
 !
-          WRKBL = N + LWORK_mobbrmsd_SGEQRF
-          WRKBL = MAX(WRKBL, N + LWORK_mobbrmsd_SORGQR_N)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SORGBR_Q)
+          WRKBL = N + LWORK_SGEQRF
+          WRKBL = MAX(WRKBL, N + LWORK_SORGQR_N)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SORGBR_Q)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = N * N + WRKBL
           MINWRK = MAX(3 * N + M, BDSPAC)
         else if (WNTUS .and. WNTVO) then
 !
-!Path 5(M much larger than N, JOBU='S', JOBVT='O')
+! Path 5(M much larger than N, JOBU='S', JOBVT='O')
 !
-          WRKBL = N + LWORK_mobbrmsd_SGEQRF
-          WRKBL = MAX(WRKBL, N + LWORK_mobbrmsd_SORGQR_N)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SORGBR_Q)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SORGBR_P)
+          WRKBL = N + LWORK_SGEQRF
+          WRKBL = MAX(WRKBL, N + LWORK_SORGQR_N)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SORGBR_Q)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SORGBR_P)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = 2 * N * N + WRKBL
           MINWRK = MAX(3 * N + M, BDSPAC)
         else if (WNTUS .and. WNTVAS) then
 !
-!Path 6(M much larger than N, JOBU='S', JOBVT='S'or
-!'A')
+! Path 6(M much larger than N, JOBU='S', JOBVT='S'or'A')
 !
-          WRKBL = N + LWORK_mobbrmsd_SGEQRF
-          WRKBL = MAX(WRKBL, N + LWORK_mobbrmsd_SORGQR_N)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SORGBR_Q)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SORGBR_P)
+          WRKBL = N + LWORK_SGEQRF
+          WRKBL = MAX(WRKBL, N + LWORK_SORGQR_N)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SORGBR_Q)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SORGBR_P)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = N * N + WRKBL
           MINWRK = MAX(3 * N + M, BDSPAC)
         else if (WNTUA .and. WNTVN) then
 !
-!Path 7(M much larger than N, JOBU='A', JOBVT='N')
+! Path 7(M much larger than N, JOBU='A', JOBVT='N')
 !
-          WRKBL = N + LWORK_mobbrmsd_SGEQRF
-          WRKBL = MAX(WRKBL, N + LWORK_mobbrmsd_SORGQR_M)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SORGBR_Q)
+          WRKBL = N + LWORK_SGEQRF
+          WRKBL = MAX(WRKBL, N + LWORK_SORGQR_M)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SORGBR_Q)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = N * N + WRKBL
           MINWRK = MAX(3 * N + M, BDSPAC)
         else if (WNTUA .and. WNTVO) then
 !
-!Path 8(M much larger than N, JOBU='A', JOBVT='O')
+! Path 8(M much larger than N, JOBU='A', JOBVT='O')
 !
-          WRKBL = N + LWORK_mobbrmsd_SGEQRF
-          WRKBL = MAX(WRKBL, N + LWORK_mobbrmsd_SORGQR_M)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SORGBR_Q)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SORGBR_P)
+          WRKBL = N + LWORK_SGEQRF
+          WRKBL = MAX(WRKBL, N + LWORK_SORGQR_M)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SORGBR_Q)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SORGBR_P)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = 2 * N * N + WRKBL
           MINWRK = MAX(3 * N + M, BDSPAC)
         else if (WNTUA .and. WNTVAS) then
 !
-!Path 9(M much larger than N, JOBU='A', JOBVT='S'or
-!'A')
+! Path 9(M much larger than N, JOBU='A', JOBVT='S'or'A')
 !
-          WRKBL = N + LWORK_mobbrmsd_SGEQRF
-          WRKBL = MAX(WRKBL, N + LWORK_mobbrmsd_SORGQR_M)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SORGBR_Q)
-          WRKBL = MAX(WRKBL, 3 * N + LWORK_mobbrmsd_SORGBR_P)
+          WRKBL = N + LWORK_SGEQRF
+          WRKBL = MAX(WRKBL, N + LWORK_SORGQR_M)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SORGBR_Q)
+          WRKBL = MAX(WRKBL, 3 * N + LWORK_SORGBR_P)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = N * N + WRKBL
           MINWRK = MAX(3 * N + M, BDSPAC)
         end if
       else
 !
-!Path 10(M at least N, but not much larger)
+! Path 10(M at least N, but not much larger)
 !
         call mobbrmsd_SGEBRD(M, N, A, LDA, S, DUM(1), DUM(1), DUM(1), DUM(1), -1, IERR)
-        LWORK_mobbrmsd_SGEBRD = INT(DUM(1))
-        MAXWRK = 3 * N + LWORK_mobbrmsd_SGEBRD
+        LWORK_SGEBRD = INT(DUM(1))
+        MAXWRK = 3 * N + LWORK_SGEBRD
         if (WNTUS .or. WNTUO) then
           call mobbrmsd_SORGBR('Q', M, N, N, A, LDA, DUM(1), DUM(1), -1, IERR)
-          LWORK_mobbrmsd_SORGBR_Q = INT(DUM(1))
-          MAXWRK = MAX(MAXWRK, 3 * N + LWORK_mobbrmsd_SORGBR_Q)
+          LWORK_SORGBR_Q = INT(DUM(1))
+          MAXWRK = MAX(MAXWRK, 3 * N + LWORK_SORGBR_Q)
         end if
         if (WNTUA) then
           call mobbrmsd_SORGBR('Q', M, M, N, A, LDA, DUM(1), DUM(1), -1, IERR)
-          LWORK_mobbrmsd_SORGBR_Q = INT(DUM(1))
-          MAXWRK = MAX(MAXWRK, 3 * N + LWORK_mobbrmsd_SORGBR_Q)
+          LWORK_SORGBR_Q = INT(DUM(1))
+          MAXWRK = MAX(MAXWRK, 3 * N + LWORK_SORGBR_Q)
         end if
         if (.not. WNTVN) then
-          MAXWRK = MAX(MAXWRK, 3 * N + LWORK_mobbrmsd_SORGBR_P)
+          MAXWRK = MAX(MAXWRK, 3 * N + LWORK_SORGBR_P)
         end if
         MAXWRK = MAX(MAXWRK, BDSPAC)
         MINWRK = MAX(3 * N + M, BDSPAC)
       end if
     else if (MINMN > 0) then
 !
-!Compute space needed for mobbrmsd_SBDSQR
+! Compute space needed for mobbrmsd_SBDSQR
 !
       MNTHR = mobbrmsd_ILAENV(6, 'SGESVD', JOBU//JOBVT, M, N, 0, 0)
       BDSPAC = 5 * M
-!Compute space needed for mobbrmsd_SGELQF
+! Compute space needed for mobbrmsd_SGELQF
       call mobbrmsd_SGELQF(M, N, A, LDA, DUM(1), DUM(1), -1, IERR)
-      LWORK_mobbrmsd_SGELQF = INT(DUM(1))
-!Compute space needed for mobbrmsd_SORGLQ
+      LWORK_SGELQF = INT(DUM(1))
+! Compute space needed for mobbrmsd_SORGLQ
       call mobbrmsd_SORGLQ(N, N, M, DUM(1), N, DUM(1), DUM(1), -1, IERR)
-      LWORK_mobbrmsd_SORGLQ_N = INT(DUM(1))
+      LWORK_SORGLQ_N = INT(DUM(1))
       call mobbrmsd_SORGLQ(M, N, M, A, LDA, DUM(1), DUM(1), -1, IERR)
-      LWORK_mobbrmsd_SORGLQ_M = INT(DUM(1))
-!Compute space needed for mobbrmsd_SGEBRD
+      LWORK_SORGLQ_M = INT(DUM(1))
+! Compute space needed for mobbrmsd_SGEBRD
       call mobbrmsd_SGEBRD(M, M, A, LDA, S, DUM(1), DUM(1), DUM(1), DUM(1), -1, IERR)
-      LWORK_mobbrmsd_SGEBRD = INT(DUM(1))
-!Compute space needed for mobbrmsd_SORGBR P
+      LWORK_SGEBRD = INT(DUM(1))
+! Compute space needed for mobbrmsd_SORGBR P
       call mobbrmsd_SORGBR('P', M, M, M, A, N, DUM(1), DUM(1), -1, IERR)
-      LWORK_mobbrmsd_SORGBR_P = INT(DUM(1))
-!Compute space needed for mobbrmsd_SORGBR Q
+      LWORK_SORGBR_P = INT(DUM(1))
+! Compute space needed for mobbrmsd_SORGBR Q
       call mobbrmsd_SORGBR('Q', M, M, M, A, N, DUM(1), DUM(1), -1, IERR)
-      LWORK_mobbrmsd_SORGBR_Q = INT(DUM(1))
+      LWORK_SORGBR_Q = INT(DUM(1))
+!
       if (N >= MNTHR) then
         if (WNTVN) then
 !
-!Path 1T(N much larger than M, JOBVT='N')
+! Path 1T(N much larger than M, JOBVT='N')
 !
-          MAXWRK = M + LWORK_mobbrmsd_SGELQF
-          MAXWRK = MAX(MAXWRK, 3 * M + LWORK_mobbrmsd_SGEBRD)
-          if (WNTUO .or. WNTUAS) MAXWRK = MAX(MAXWRK, 3 * M + LWORK_mobbrmsd_SORGBR_Q)
+          MAXWRK = M + LWORK_SGELQF
+          MAXWRK = MAX(MAXWRK, 3 * M + LWORK_SGEBRD)
+          if (WNTUO .or. WNTUAS) MAXWRK = MAX(MAXWRK, 3 * M + LWORK_SORGBR_Q)
           MAXWRK = MAX(MAXWRK, BDSPAC)
           MINWRK = MAX(4 * M, BDSPAC)
         else if (WNTVO .and. WNTUN) then
 !
-!Path 2T(N much larger than M, JOBU='N', JOBVT='O')
+! Path 2T(N much larger than M, JOBU='N', JOBVT='O')
 !
-          WRKBL = M + LWORK_mobbrmsd_SGELQF
-          WRKBL = MAX(WRKBL, M + LWORK_mobbrmsd_SORGLQ_M)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SORGBR_P)
+          WRKBL = M + LWORK_SGELQF
+          WRKBL = MAX(WRKBL, M + LWORK_SORGLQ_M)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SORGBR_P)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = MAX(M * M + WRKBL, M * M + M * N + M)
           MINWRK = MAX(3 * M + N, BDSPAC)
         else if (WNTVO .and. WNTUAS) then
 !
-!Path 3T(N much larger than M, JOBU='S'or 'A',
-!JOBVT = 'O')
+! Path 3T(N much larger than M, JOBU='S'or 'A',JOBVT = 'O')
 !
-          WRKBL = M + LWORK_mobbrmsd_SGELQF
-          WRKBL = MAX(WRKBL, M + LWORK_mobbrmsd_SORGLQ_M)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SORGBR_P)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SORGBR_Q)
+          WRKBL = M + LWORK_SGELQF
+          WRKBL = MAX(WRKBL, M + LWORK_SORGLQ_M)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SORGBR_P)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SORGBR_Q)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = MAX(M * M + WRKBL, M * M + M * N + M)
           MINWRK = MAX(3 * M + N, BDSPAC)
         else if (WNTVS .and. WNTUN) then
 !
-!Path 4T(N much larger than M, JOBU='N', JOBVT='S')
+! Path 4T(N much larger than M, JOBU='N', JOBVT='S')
 !
-          WRKBL = M + LWORK_mobbrmsd_SGELQF
-          WRKBL = MAX(WRKBL, M + LWORK_mobbrmsd_SORGLQ_M)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SORGBR_P)
+          WRKBL = M + LWORK_SGELQF
+          WRKBL = MAX(WRKBL, M + LWORK_SORGLQ_M)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SORGBR_P)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = M * M + WRKBL
           MINWRK = MAX(3 * M + N, BDSPAC)
         else if (WNTVS .and. WNTUO) then
 !
-!Path 5T(N much larger than M, JOBU='O', JOBVT='S')
+! Path 5T(N much larger than M, JOBU='O', JOBVT='S')
 !
-          WRKBL = M + LWORK_mobbrmsd_SGELQF
-          WRKBL = MAX(WRKBL, M + LWORK_mobbrmsd_SORGLQ_M)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SORGBR_P)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SORGBR_Q)
+          WRKBL = M + LWORK_SGELQF
+          WRKBL = MAX(WRKBL, M + LWORK_SORGLQ_M)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SORGBR_P)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SORGBR_Q)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = 2 * M * M + WRKBL
           MINWRK = MAX(3 * M + N, BDSPAC)
           MAXWRK = MAX(MAXWRK, MINWRK)
         else if (WNTVS .and. WNTUAS) then
 !
-!Path 6T(N much larger than M, JOBU='S'or 'A',
-!JOBVT = 'S')
+! Path 6T(N much larger than M, JOBU='S'or 'A', JOBVT = 'S')
 !
-          WRKBL = M + LWORK_mobbrmsd_SGELQF
-          WRKBL = MAX(WRKBL, M + LWORK_mobbrmsd_SORGLQ_M)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SORGBR_P)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SORGBR_Q)
+          WRKBL = M + LWORK_SGELQF
+          WRKBL = MAX(WRKBL, M + LWORK_SORGLQ_M)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SORGBR_P)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SORGBR_Q)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = M * M + WRKBL
           MINWRK = MAX(3 * M + N, BDSPAC)
         else if (WNTVA .and. WNTUN) then
 !
-!Path 7T(N much larger than M, JOBU='N', JOBVT='A')
+! Path 7T(N much larger than M, JOBU='N', JOBVT='A')
 !
-          WRKBL = M + LWORK_mobbrmsd_SGELQF
-          WRKBL = MAX(WRKBL, M + LWORK_mobbrmsd_SORGLQ_N)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SORGBR_P)
+          WRKBL = M + LWORK_SGELQF
+          WRKBL = MAX(WRKBL, M + LWORK_SORGLQ_N)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SORGBR_P)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = M * M + WRKBL
           MINWRK = MAX(3 * M + N, BDSPAC)
         else if (WNTVA .and. WNTUO) then
 !
-!Path 8T(N much larger than M, JOBU='O', JOBVT='A')
+! Path 8T(N much larger than M, JOBU='O', JOBVT='A')
 !
-          WRKBL = M + LWORK_mobbrmsd_SGELQF
-          WRKBL = MAX(WRKBL, M + LWORK_mobbrmsd_SORGLQ_N)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SORGBR_P)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SORGBR_Q)
+          WRKBL = M + LWORK_SGELQF
+          WRKBL = MAX(WRKBL, M + LWORK_SORGLQ_N)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SORGBR_P)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SORGBR_Q)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = 2 * M * M + WRKBL
           MINWRK = MAX(3 * M + N, BDSPAC)
         else if (WNTVA .and. WNTUAS) then
 !
-!Path 9T(N much larger than M, JOBU='S'or 'A',
-!JOBVT = 'A')
+! Path 9T(N much larger than M, JOBU='S'or 'A', JOBVT = 'A')
 !
-          WRKBL = M + LWORK_mobbrmsd_SGELQF
-          WRKBL = MAX(WRKBL, M + LWORK_mobbrmsd_SORGLQ_N)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SGEBRD)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SORGBR_P)
-          WRKBL = MAX(WRKBL, 3 * M + LWORK_mobbrmsd_SORGBR_Q)
+          WRKBL = M + LWORK_SGELQF
+          WRKBL = MAX(WRKBL, M + LWORK_SORGLQ_N)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SGEBRD)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SORGBR_P)
+          WRKBL = MAX(WRKBL, 3 * M + LWORK_SORGBR_Q)
           WRKBL = MAX(WRKBL, BDSPAC)
           MAXWRK = M * M + WRKBL
           MINWRK = MAX(3 * M + N, BDSPAC)
         end if
       else
 !
-!Path 10T(N greater than M, but not much larger)
+! Path 10T(N greater than M, but not much larger)
 !
         call mobbrmsd_SGEBRD(M, N, A, LDA, S, DUM(1), DUM(1), DUM(1), DUM(1), -1, IERR)
-        LWORK_mobbrmsd_SGEBRD = INT(DUM(1))
-        MAXWRK = 3 * M + LWORK_mobbrmsd_SGEBRD
+        LWORK_SGEBRD = INT(DUM(1))
+        MAXWRK = 3 * M + LWORK_SGEBRD
         if (WNTVS .or. WNTVO) then
-!Compute space needed for mobbrmsd_SORGBR P
+! Compute space needed for mobbrmsd_SORGBR P
           call mobbrmsd_SORGBR('P', M, N, M, A, N, DUM(1), DUM(1), -1, IERR)
-          LWORK_mobbrmsd_SORGBR_P = INT(DUM(1))
-          MAXWRK = MAX(MAXWRK, 3 * M + LWORK_mobbrmsd_SORGBR_P)
+          LWORK_SORGBR_P = INT(DUM(1))
+          MAXWRK = MAX(MAXWRK, 3 * M + LWORK_SORGBR_P)
         end if
         if (WNTVA) then
-          call mobbrmsd_SORGBR('P', N, N, M, A, N, DUM(1), &
-          &DUM(1), -1, IERR)
-          LWORK_mobbrmsd_SORGBR_P = INT(DUM(1))
-          MAXWRK = MAX(MAXWRK, 3 * M + LWORK_mobbrmsd_SORGBR_P)
+          call mobbrmsd_SORGBR('P', N, N, M, A, N, DUM(1), DUM(1), -1, IERR)
+          LWORK_SORGBR_P = INT(DUM(1))
+          MAXWRK = MAX(MAXWRK, 3 * M + LWORK_SORGBR_P)
         end if
         if (.not. WNTUN) then
-          MAXWRK = MAX(MAXWRK, 3 * M + LWORK_mobbrmsd_SORGBR_Q)
+          MAXWRK = MAX(MAXWRK, 3 * M + LWORK_SORGBR_Q)
         end if
         MAXWRK = MAX(MAXWRK, BDSPAC)
         MINWRK = MAX(3 * M + N, BDSPAC)
@@ -641,19 +562,19 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
     return
   end if
 !
-!Quick return if possible
+! Quick return if possible
 !
   if (M == 0 .or. N == 0) then
     return
   end if
 !
-!Get machine constants
+! Get machine constants
 !
   EPS = mobbrmsd_SLAMCH('P')
   SMLNUM = SQRT(mobbrmsd_SLAMCH('S')) / EPS
   BIGNUM = ONE / SMLNUM
 !
-!Scale A if max element outside range[SMLNUM, BIGNUM]
+! Scale A if max element outside range[SMLNUM, BIGNUM]
 !
   call mobbrmsd_SLANGE('M', M, N, A, LDA, ANRM, DUM)
 ! ANRM = mobbrmsd_SLANGE('M', M, N, A, LDA, DUM)
@@ -668,27 +589,27 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
 !
   if (M >= N) then
 !
-!A has at least as many rows as columns.if A has sufficiently
-!more rows than columns, first reduce using the QR
-!decomposition(if sufficient workspace available)
+! A has at least as many rows as columns.if A has sufficiently
+! more rows than columns, first reduce using the QR
+! decomposition(if sufficient workspace available)
 !
     if (M >= MNTHR) then
 !
       if (WNTUN) then
 !
-!Path 1(M much larger than N, JOBU='N')
-!No left singular vectors to be computed
+! Path 1(M much larger than N, JOBU='N')
+! No left singular vectors to be computed
 !
         ITAU = 1
         IWORK = ITAU + N
 !
-!Compute A = Q * R
-!(Workspace:need 2 * N, prefer N + N * NB)
+! Compute A = Q * R
+! (Workspace:need 2 * N, prefer N + N * NB)
 !
         call mobbrmsd_SGEQRF(M, N, A, LDA, WORK(ITAU), WORK(IWORK), &
-        &LWORK - IWORK + 1, IERR)
+       &                     LWORK - IWORK + 1, IERR)
 !
-!Zero out below R
+! Zero out below R
 !
         if (N > 1) then
           call mobbrmsd_SLASET('L', N - 1, N - 1, ZERO, ZERO, A(2, 1), LDA)
@@ -702,7 +623,7 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
 !(Workspace:need 4 * N, prefer 3 * N + 2 * N * NB)
 !
         call mobbrmsd_SGEBRD(N, N, A, LDA, S, WORK(IE), WORK(ITAUQ), &
-        &WORK(ITAUP), WORK(IWORK), LWORK - IWORK + 1, IERR)
+            &                WORK(ITAUP), WORK(IWORK), LWORK - IWORK + 1, IERR)
         NCVT = 0
         if (WNTVO .or. WNTVAS) then
 !
@@ -710,17 +631,17 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
 !(Workspace:need 4 * N - 1, prefer 3 * N + (N - 1) * NB)
 !
           call mobbrmsd_SORGBR('P', N, N, N, A, LDA, WORK(ITAUP), &
-          &WORK(IWORK), LWORK - IWORK + 1, IERR)
+              &                WORK(IWORK), LWORK - IWORK + 1, IERR)
           NCVT = N
         end if
         IWORK = IE + N
 !
-!Perform bidiagonal QR iteration, computing right
-!singular vectors of A in A if desired
-!(Workspace:need BDSPAC)
+! Perform bidiagonal QR iteration, computing right
+! singular vectors of A in A if desired
+! (Workspace:need BDSPAC)
 !
         call mobbrmsd_SBDSQR('U', N, NCVT, 0, 0, S, WORK(IE), A, LDA, &
-        &DUM, 1, DUM, 1, WORK(IWORK), INFO)
+            &                DUM, 1, DUM, 1, WORK(IWORK), INFO)
 !
 !if right singular vectors desired in VT, copy them there
 !
@@ -811,8 +732,8 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
           do I = 1, M, LDWRKU
             CHUNK = MIN(M - I + 1, LDWRKU)
             call mobbrmsd_SGEMM('N', 'N', CHUNK, N, N, ONE, A(I, 1),&
-            &LDA, WORK(IR), LDWRKR, ZERO,&
-            &WORK(IU), LDWRKU)
+                &               LDA, WORK(IR), LDWRKR, ZERO,&
+                &               WORK(IU), LDWRKU)
             call mobbrmsd_SLACPY('F', CHUNK, N, WORK(IU), LDWRKU, A(I, 1), LDA)
           end do
 !
@@ -2570,164 +2491,163 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
             ITAUP = ITAUQ + M
             IWORK = ITAUP + M
 !
-!Bidiagonalize L in WORK(IU), copying result to
-!WORK(IR)
-!(Workspace:need 2 * M * M + 4 * M,
-!prefer 2 * M * M + 3 * M + 2 * M * NB)
+! Bidiagonalize L in WORK(IU), copying result to
+! WORK(IR)
+! (Workspace:need 2 * M * M + 4 * M,
+! prefer 2 * M * M + 3 * M + 2 * M * NB)
 !
             call mobbrmsd_SGEBRD(M, M, WORK(IU), LDWRKU, S,&
-            &WORK(IE), WORK(ITAUQ),&
-            &WORK(ITAUP), WORK(IWORK),&
-            &LWORK - IWORK + 1, IERR)
+                &                WORK(IE), WORK(ITAUQ),&
+                &                WORK(ITAUP), WORK(IWORK),&
+                &                LWORK - IWORK + 1, IERR)
             call mobbrmsd_SLACPY('L', M, M, WORK(IU), LDWRKU,&
-            &WORK(IR), LDWRKR)
+                &                WORK(IR), LDWRKR)
 !
-!Generate right bidiagonalizing vectors in WORK(IU)
-!(Workspace:need 2 * M * M + 4 * M - 1,
-!prefer 2 * M * M + 3 * M + (M - 1) * NB)
+! Generate right bidiagonalizing vectors in WORK(IU)
+! (Workspace:need 2 * M * M + 4 * M - 1,
+! prefer 2 * M * M + 3 * M + (M - 1) * NB)
 !
             call mobbrmsd_SORGBR('P', M, M, M, WORK(IU), LDWRKU,&
-            &WORK(ITAUP), WORK(IWORK),&
-            &LWORK - IWORK + 1, IERR)
+                &                WORK(ITAUP), WORK(IWORK),&
+                &                LWORK - IWORK + 1, IERR)
 !
-!Generate left bidiagonalizing vectors in WORK(IR)
-!(Workspace:need 2 * M * M + 4 * M, prefer 2 * M * M + 3 * M + M * NB)
+! Generate left bidiagonalizing vectors in WORK(IR)
+! (Workspace:need 2 * M * M + 4 * M, prefer 2 * M * M + 3 * M + M * NB)
 !
             call mobbrmsd_SORGBR('Q', M, M, M, WORK(IR), LDWRKR,&
-            &WORK(ITAUQ), WORK(IWORK),&
-            &LWORK - IWORK + 1, IERR)
+                &                WORK(ITAUQ), WORK(IWORK),&
+                &                LWORK - IWORK + 1, IERR)
             IWORK = IE + M
 !
-!Perform bidiagonal QR iteration, computing left
-!singular vectors of L in WORK(IR) and computing
-!right singular vectors of L in WORK(IU)
-!(Workspace:need 2 * M * M + BDSPAC)
+! Perform bidiagonal QR iteration, computing left
+! singular vectors of L in WORK(IR) and computing
+! right singular vectors of L in WORK(IU)
+! (Workspace:need 2 * M * M + BDSPAC)
 !
             call mobbrmsd_SBDSQR('U', M, M, M, 0, S, WORK(IE),&
-            &WORK(IU), LDWRKU, WORK(IR),&
-            &LDWRKR, DUM, 1, WORK(IWORK), INFO)
+                &                WORK(IU), LDWRKU, WORK(IR),&
+                &                LDWRKR, DUM, 1, WORK(IWORK), INFO)
 !
-!Multiply right singular vectors of L in WORK(IU) by
-!Q in A, storing result in VT
-!(Workspace:need M * M)
+! Multiply right singular vectors of L in WORK(IU) by
+! Q in A, storing result in VT
+! (Workspace:need M * M)
 !
             call mobbrmsd_SGEMM('N', 'N', M, N, M, ONE, WORK(IU),&
-            &LDWRKU, A, LDA, ZERO, VT, LDVT)
+                &               LDWRKU, A, LDA, ZERO, VT, LDVT)
 !
-!Copy left singular vectors of L to A
-!(Workspace:need M * M)
+! Copy left singular vectors of L to A
+! (Workspace:need M * M)
 !
             call mobbrmsd_SLACPY('F', M, M, WORK(IR), LDWRKR, A, LDA)
 !
           else
 !
-!Insufficient workspace for a fast algorithm
+! Insufficient workspace for a fast algorithm
 !
             ITAU = 1
             IWORK = ITAU + M
 !
-!Compute A = L * Q, copying result to VT
-!(Workspace:need 2 * M, prefer M + M * NB)
+! Compute A = L * Q, copying result to VT
+! (Workspace:need 2 * M, prefer M + M * NB)
 !
             call mobbrmsd_SGELQF(M, N, A, LDA, WORK(ITAU), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
             call mobbrmsd_SLACPY('U', M, N, A, LDA, VT, LDVT)
 !
-!Generate Q in VT
-!(Workspace:need 2 * M, prefer M + M * NB)
+! Generate Q in VT
+! (Workspace:need 2 * M, prefer M + M * NB)
 !
             call mobbrmsd_SORGLQ(M, N, M, VT, LDVT, WORK(ITAU), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
             IE = ITAU
             ITAUQ = IE + M
             ITAUP = ITAUQ + M
             IWORK = ITAUP + M
 !
-!Zero out above L in A
+! Zero out above L in A
 !
             call mobbrmsd_SLASET('U', M - 1, M - 1, ZERO, ZERO, A(1, 2), LDA)
 !
-!Bidiagonalize L in A
-!(Workspace:need 4 * M, prefer 3 * M + 2 * M * NB)
+! Bidiagonalize L in A
+! (Workspace:need 4 * M, prefer 3 * M + 2 * M * NB)
 !
             call mobbrmsd_SGEBRD(M, M, A, LDA, S, WORK(IE), &
-                &       WORK(ITAUQ), WORK(ITAUP), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(ITAUQ), WORK(ITAUP), &
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Multiply right vectors bidiagonalizing L by Q in VT
-!(Workspace:need 3 * M + N, prefer 3 * M + N * NB)
+! Multiply right vectors bidiagonalizing L by Q in VT
+! (Workspace:need 3 * M + N, prefer 3 * M + N * NB)
 !
             call mobbrmsd_SORMBR('P', 'L', 'T', M, N, M, A, LDA, &
-                &       WORK(ITAUP), VT, LDVT, &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(ITAUP), VT, LDVT, &
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Generate left bidiagonalizing vectors of L in A
-!(Workspace:need 4 * M, prefer 3 * M + M * NB)
+! Generate left bidiagonalizing vectors of L in A
+! (Workspace:need 4 * M, prefer 3 * M + M * NB)
 !
             call mobbrmsd_SORGBR('Q', M, M, M, A, LDA, WORK(ITAUQ), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
             IWORK = IE + M
 !
-!Perform bidiagonal QR iteration, compute left
-!singular vectors of A in A and compute right
-!singular vectors of A in VT
-!(Workspace:need BDSPAC)
+! Perform bidiagonal QR iteration, compute left
+! singular vectors of A in A and compute right
+! singular vectors of A in VT
+! (Workspace:need BDSPAC)
 !
             call mobbrmsd_SBDSQR('U', M, N, M, 0, S, WORK(IE), VT, &
-                &       LDVT, A, LDA, DUM, 1, WORK(IWORK), INFO)
+                &                LDVT, A, LDA, DUM, 1, WORK(IWORK), INFO)
 !
           end if
 !
         else if (WNTUAS) then
 !
-!Path 6T(N much larger than M, JOBU='S'or 'A',
-!JOBVT = 'S')
-!M right singular vectors to be computed in VT and
-!M left singular vectors to be computed in U
+! Path 6T(N much larger than M, JOBU='S'or 'A', JOBVT = 'S')
+! M right singular vectors to be computed in VT and
+! M left singular vectors to be computed in U
 !
           if (LWORK >= M * M + MAX(4 * M, BDSPAC)) then
 !
-!Sufficient workspace for a fast algorithm
+! Sufficient workspace for a fast algorithm
 !
             IU = 1
             if (LWORK >= WRKBL + LDA * M) then
 !
-!WORK(IU) is LDA by N
+! WORK(IU) is LDA by N
 !
               LDWRKU = LDA
             else
 !
-!WORK(IU) is LDA by M
+! WORK(IU) is LDA by M
 !
               LDWRKU = M
             end if
             ITAU = IU + LDWRKU * M
             IWORK = ITAU + M
 !
-!Compute A = L * Q
-!(Workspace:need M * M + 2 * M, prefer M * M + M + M * NB)
+! Compute A = L * Q
+! (Workspace:need M * M + 2 * M, prefer M * M + M + M * NB)
 !
             call mobbrmsd_SGELQF(M, N, A, LDA, WORK(ITAU), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Copy L to WORK(IU), zeroing out above it
+! Copy L to WORK(IU), zeroing out above it
 !
             call mobbrmsd_SLACPY('L', M, M, A, LDA, WORK(IU), LDWRKU)
             call mobbrmsd_SLASET('U', M - 1, M - 1, ZERO, ZERO, &
-                &       WORK(IU + LDWRKU), LDWRKU)
+                &                WORK(IU + LDWRKU), LDWRKU)
 !
-!Generate Q in A
-!(Workspace:need M * M + 2 * M, prefer M * M + M + M * NB)
+! Generate Q in A
+! (Workspace:need M * M + 2 * M, prefer M * M + M + M * NB)
 !
             call mobbrmsd_SORGLQ(M, N, M, A, LDA, WORK(ITAU), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
             IE = ITAU
             ITAUQ = IE + M
             ITAUP = ITAUQ + M
             IWORK = ITAUP + M
 !
-!Bidiagonalize L in WORK(IU), copying result to U
-!(Workspace:need M * M + 4 * M, prefer M * M + 3 * M + 2 * M * NB)
+! Bidiagonalize L in WORK(IU), copying result to U
+! (Workspace:need M * M + 4 * M, prefer M * M + 3 * M + 2 * M * NB)
 !
             call mobbrmsd_SGEBRD(M, M, WORK(IU), LDWRKU, S, &
                 &       WORK(IE), WORK(ITAUQ), &
@@ -2735,58 +2655,58 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
                 &       LWORK - IWORK + 1, IERR)
             call mobbrmsd_SLACPY('L', M, M, WORK(IU), LDWRKU, U, LDU)
 !
-!Generate right bidiagonalizing vectors in WORK(IU)
-!(Workspace:need M * M + 4 * M - 1,
-!prefer M * M + 3 * M + (M - 1) * NB)
+! Generate right bidiagonalizing vectors in WORK(IU)
+! (Workspace:need M * M + 4 * M - 1,
+! prefer M * M + 3 * M + (M - 1) * NB)
 !
             call mobbrmsd_SORGBR('P', M, M, M, WORK(IU), LDWRKU, &
-                &       WORK(ITAUP), WORK(IWORK), &
-                &       LWORK - IWORK + 1, IERR)
+                &                WORK(ITAUP), WORK(IWORK), &
+                &                LWORK - IWORK + 1, IERR)
 !
-!Generate left bidiagonalizing vectors in U
-!(Workspace:need M * M + 4 * M, prefer M * M + 3 * M + M * NB)
+! Generate left bidiagonalizing vectors in U
+! (Workspace:need M * M + 4 * M, prefer M * M + 3 * M + M * NB)
 !
             call mobbrmsd_SORGBR('Q', M, M, M, U, LDU, WORK(ITAUQ), &
-                &        WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
             IWORK = IE + M
 !
-!Perform bidiagonal QR iteration, computing left
-!singular vectors of L in U and computing right
-!singular vectors of L in WORK(IU)
-!(Workspace:need M * M + BDSPAC)
+! Perform bidiagonal QR iteration, computing left
+! singular vectors of L in U and computing right
+! singular vectors of L in WORK(IU)
+! (Workspace:need M * M + BDSPAC)
 !
             call mobbrmsd_SBDSQR('U', M, M, M, 0, S, WORK(IE), &
-                &       WORK(IU), LDWRKU, U, LDU, DUM, 1, &
-                &       WORK(IWORK), INFO)
+                &                WORK(IU), LDWRKU, U, LDU, DUM, 1, &
+                &                WORK(IWORK), INFO)
 !
-!Multiply right singular vectors of L in WORK(IU) by
-!Q in A, storing result in VT
-!(Workspace:need M * M)
+! Multiply right singular vectors of L in WORK(IU) by
+! Q in A, storing result in VT
+! (Workspace:need M * M)
 !
             call mobbrmsd_SGEMM('N', 'N', M, N, M, ONE, WORK(IU), &
-                &      LDWRKU, A, LDA, ZERO, VT, LDVT)
+                &               LDWRKU, A, LDA, ZERO, VT, LDVT)
 !
           else
 !
-!Insufficient workspace for a fast algorithm
+! Insufficient workspace for a fast algorithm
 !
             ITAU = 1
             IWORK = ITAU + M
 !
-!Compute A = L * Q, copying result to VT
-!(Workspace:need 2 * M, prefer M + M * NB)
+! Compute A = L * Q, copying result to VT
+! (Workspace:need 2 * M, prefer M + M * NB)
 !
             call mobbrmsd_SGELQF(M, N, A, LDA, WORK(ITAU), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
             call mobbrmsd_SLACPY('U', M, N, A, LDA, VT, LDVT)
 !
-!Generate Q in VT
-!(Workspace:need 2 * M, prefer M + M * NB)
+! Generate Q in VT
+! (Workspace:need 2 * M, prefer M + M * NB)
 !
             call mobbrmsd_SORGLQ(M, N, M, VT, LDVT, WORK(ITAU), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Copy L to U, zeroing out above it
+! Copy L to U, zeroing out above it
 !
             call mobbrmsd_SLACPY('L', M, M, A, LDA, U, LDU)
             call mobbrmsd_SLASET('U', M - 1, M - 1, ZERO, ZERO, U(1, 2), LDU)
@@ -2795,35 +2715,34 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
             ITAUP = ITAUQ + M
             IWORK = ITAUP + M
 !
-!Bidiagonalize L in U
-!(Workspace:need 4 * M, prefer 3 * M + 2 * M * NB)
+! Bidiagonalize L in U
+! (Workspace:need 4 * M, prefer 3 * M + 2 * M * NB)
 !
             call mobbrmsd_SGEBRD(M, M, U, LDU, S, WORK(IE), &
-                &       WORK(ITAUQ), WORK(ITAUP), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(ITAUQ), WORK(ITAUP), &
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Multiply right bidiagonalizing vectors in U by Q
-!in VT
-!(Workspace:need 3 * M + N, prefer 3 * M + N * NB)
+! Multiply right bidiagonalizing vectors in U by Q in VT
+! (Workspace:need 3 * M + N, prefer 3 * M + N * NB)
 !
             call mobbrmsd_SORMBR('P', 'L', 'T', M, N, M, U, LDU, &
-                &       WORK(ITAUP), VT, LDVT, &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(ITAUP), VT, LDVT, &
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Generate left bidiagonalizing vectors in U
-!(Workspace:need 4 * M, prefer 3 * M + M * NB)
+! Generate left bidiagonalizing vectors in U
+! (Workspace:need 4 * M, prefer 3 * M + M * NB)
 !
             call mobbrmsd_SORGBR('Q', M, M, M, U, LDU, WORK(ITAUQ), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
             IWORK = IE + M
 !
-!Perform bidiagonal QR iteration, computing left
-!singular vectors of A in U and computing right
-!singular vectors of A in VT
-!(Workspace:need BDSPAC)
+! Perform bidiagonal QR iteration, computing left
+! singular vectors of A in U and computing right
+! singular vectors of A in VT
+! (Workspace:need BDSPAC)
 !
             call mobbrmsd_SBDSQR('U', M, N, M, 0, S, WORK(IE), VT, &
-                &       LDVT, U, LDU, DUM, 1, WORK(IWORK), INFO)
+                &                LDVT, U, LDU, DUM, 1, WORK(IWORK), INFO)
 !
           end if
 !
@@ -2833,166 +2752,165 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
 !
         if (WNTUN) then
 !
-!Path 7T(N much larger than M, JOBU='N', JOBVT='A')
-!N right singular vectors to be computed in VT and
-!no left singular vectors to be computed
+! Path 7T(N much larger than M, JOBU='N', JOBVT='A')
+! N right singular vectors to be computed in VT and
+! no left singular vectors to be computed
 !
           if (LWORK >= M * M + MAX(N + M, 4 * M, BDSPAC)) then
 !
-!Sufficient workspace for a fast algorithm
+! Sufficient workspace for a fast algorithm
 !
             IR = 1
             if (LWORK >= WRKBL + LDA * M) then
 !
-!WORK(IR) is LDA by M
+! WORK(IR) is LDA by M
 !
               LDWRKR = LDA
             else
 !
-!WORK(IR) is M by M
+! WORK(IR) is M by M
 !
               LDWRKR = M
             end if
             ITAU = IR + LDWRKR * M
             IWORK = ITAU + M
 !
-!Compute A = L * Q, copying result to VT
-!(Workspace:need M * M + 2 * M, prefer M * M + M + M * NB)
+! Compute A = L * Q, copying result to VT
+! (Workspace:need M * M + 2 * M, prefer M * M + M + M * NB)
 !
             call mobbrmsd_SGELQF(M, N, A, LDA, WORK(ITAU), WORK(IWORK), LWORK - IWORK + 1, IERR)
             call mobbrmsd_SLACPY('U', M, N, A, LDA, VT, LDVT)
 !
-!Copy L to WORK(IR), zeroing out above it
+! Copy L to WORK(IR), zeroing out above it
 !
             call mobbrmsd_SLACPY('L', M, M, A, LDA, WORK(IR), LDWRKR)
             call mobbrmsd_SLASET('U', M - 1, M - 1, ZERO, ZERO, WORK(IR + LDWRKR), LDWRKR)
 !
-!Generate Q in VT
-!(Workspace:need M * M + M + N, prefer M * M + M + N * NB)
+! Generate Q in VT
+! (Workspace:need M * M + M + N, prefer M * M + M + N * NB)
 !
             call mobbrmsd_SORGLQ(N, N, M, VT, LDVT, WORK(ITAU), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
             IE = ITAU
             ITAUQ = IE + M
             ITAUP = ITAUQ + M
             IWORK = ITAUP + M
 !
-!Bidiagonalize L in WORK(IR)
-!(Workspace:need M * M + 4 * M, prefer M * M + 3 * M + 2 * M * NB)
+! Bidiagonalize L in WORK(IR)
+! (Workspace:need M * M + 4 * M, prefer M * M + 3 * M + 2 * M * NB)
 !
             call mobbrmsd_SGEBRD(M, M, WORK(IR), LDWRKR, S, &
-                &       WORK(IE), WORK(ITAUQ), &
-                &       WORK(ITAUP), WORK(IWORK), &
-                &       LWORK - IWORK + 1, IERR)
+                &                WORK(IE), WORK(ITAUQ), &
+                &                WORK(ITAUP), WORK(IWORK), &
+                &                LWORK - IWORK + 1, IERR)
 !
-!Generate right bidiagonalizing vectors in WORK(IR)
-!(Workspace:need M * M + 4 * M - 1,
-!prefer M * M + 3 * M + (M - 1) * NB)
+! Generate right bidiagonalizing vectors in WORK(IR)
+! (Workspace:need M * M + 4 * M - 1,
+! prefer M * M + 3 * M + (M - 1) * NB)
 !
             call mobbrmsd_SORGBR('P', M, M, M, WORK(IR), LDWRKR, &
-                &       WORK(ITAUP), WORK(IWORK), &
-                &       LWORK - IWORK + 1, IERR)
+                &                WORK(ITAUP), WORK(IWORK), &
+                &                LWORK - IWORK + 1, IERR)
             IWORK = IE + M
 !
-!Perform bidiagonal QR iteration, computing right
-!singular vectors of L in WORK(IR)
-!(Workspace:need M * M + BDSPAC)
+! Perform bidiagonal QR iteration, computing right
+! singular vectors of L in WORK(IR)
+! (Workspace:need M * M + BDSPAC)
 !
             call mobbrmsd_SBDSQR('U', M, M, 0, 0, S, WORK(IE), &
-                &       WORK(IR), LDWRKR, DUM, 1, DUM, 1, &
-                &       WORK(IWORK), INFO)
+                &                WORK(IR), LDWRKR, DUM, 1, DUM, 1, &
+                &                WORK(IWORK), INFO)
 !
-!Multiply right singular vectors of L in WORK(IR) by
-!Q in VT, storing result in A
-!(Workspace:need M * M)
+! Multiply right singular vectors of L in WORK(IR) by
+! Q in VT, storing result in A
+! (Workspace:need M * M)
 !
             call mobbrmsd_SGEMM('N', 'N', M, N, M, ONE, WORK(IR), &
-                &      LDWRKR, VT, LDVT, ZERO, A, LDA)
+                &               LDWRKR, VT, LDVT, ZERO, A, LDA)
 !
-!Copy right singular vectors of A from A to VT
+! Copy right singular vectors of A from A to VT
 !
             call mobbrmsd_SLACPY('F', M, N, A, LDA, VT, LDVT)
 !
           else
 !
-!Insufficient workspace for a fast algorithm
+! Insufficient workspace for a fast algorithm
 !
             ITAU = 1
             IWORK = ITAU + M
 !
-!Compute A = L * Q, copying result to VT
-!(Workspace:need 2 * M, prefer M + M * NB)
+! Compute A = L * Q, copying result to VT
+! (Workspace:need 2 * M, prefer M + M * NB)
 !
             call mobbrmsd_SGELQF(M, N, A, LDA, WORK(ITAU), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
             call mobbrmsd_SLACPY('U', M, N, A, LDA, VT, LDVT)
 !
-!Generate Q in VT
-!(Workspace:need M + N, prefer M + N * NB)
+! Generate Q in VT
+! (Workspace:need M + N, prefer M + N * NB)
 !
             call mobbrmsd_SORGLQ(N, N, M, VT, LDVT, WORK(ITAU), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
             IE = ITAU
             ITAUQ = IE + M
             ITAUP = ITAUQ + M
             IWORK = ITAUP + M
 !
-!Zero out above L in A
+! Zero out above L in A
 !
             call mobbrmsd_SLASET('U', M - 1, M - 1, ZERO, ZERO, A(1, 2), LDA)
 !
-!Bidiagonalize L in A
-!(Workspace:need 4 * M, prefer 3 * M + 2 * M * NB)
+! Bidiagonalize L in A
+! (Workspace:need 4 * M, prefer 3 * M + 2 * M * NB)
 !
             call mobbrmsd_SGEBRD(M, M, A, LDA, S, WORK(IE), WORK(ITAUQ), WORK(ITAUP), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Multiply right bidiagonalizing vectors in A by Q
-!in VT
-!(Workspace:need 3 * M + N, prefer 3 * M + N * NB)
+! Multiply right bidiagonalizing vectors in A by Q in VT
+! (Workspace:need 3 * M + N, prefer 3 * M + N * NB)
 !
             call mobbrmsd_SORMBR('P', 'L', 'T', M, N, M, A, LDA, &
-                &       WORK(ITAUP), VT, LDVT, &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(ITAUP), VT, LDVT, &
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
             IWORK = IE + M
 !
-!Perform bidiagonal QR iteration, computing right
-!singular vectors of A in VT
-!(Workspace:need BDSPAC)
+! Perform bidiagonal QR iteration, computing right
+! singular vectors of A in VT
+! (Workspace:need BDSPAC)
 !
             call mobbrmsd_SBDSQR('U', M, N, 0, 0, S, WORK(IE), VT, &
-                &       LDVT, DUM, 1, DUM, 1, WORK(IWORK), INFO)
+                &                LDVT, DUM, 1, DUM, 1, WORK(IWORK), INFO)
 !
           end if
 !
         else if (WNTUO) then
 !
-!Path 8T(N much larger than M, JOBU='O', JOBVT='A')
-!N right singular vectors to be computed in VT and
-!M left singular vectors to be overwritten on A
+! Path 8T(N much larger than M, JOBU='O', JOBVT='A')
+! N right singular vectors to be computed in VT and
+! M left singular vectors to be overwritten on A
 !
           if (LWORK >= 2 * M * M + MAX(N + M, 4 * M, BDSPAC)) then
 !
-!Sufficient workspace for a fast algorithm
+! Sufficient workspace for a fast algorithm
 !
             IU = 1
             if (LWORK >= WRKBL + 2 * LDA * M) then
 !
-!WORK(IU) is LDA by M and WORK(IR) is LDA by M
+! WORK(IU) is LDA by M and WORK(IR) is LDA by M
 !
               LDWRKU = LDA
               IR = IU + LDWRKU * M
               LDWRKR = LDA
             else if (LWORK >= WRKBL + (LDA + M) * M) then
 !
-!WORK(IU) is LDA by M and WORK(IR) is M by M
+! WORK(IU) is LDA by M and WORK(IR) is M by M
 !
               LDWRKU = LDA
               IR = IU + LDWRKU * M
               LDWRKR = M
             else
 !
-!WORK(IU) is M by M and WORK(IR) is M by M
+! WORK(IU) is M by M and WORK(IR) is M by M
 !
               LDWRKU = M
               IR = IU + LDWRKU * M
@@ -3001,18 +2919,18 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
             ITAU = IR + LDWRKR * M
             IWORK = ITAU + M
 !
-!Compute A = L * Q, copying result to VT
-!(Workspace:need 2 * M * M + 2 * M, prefer 2 * M * M + M + M * NB)
+! Compute A = L * Q, copying result to VT
+! (Workspace:need 2 * M * M + 2 * M, prefer 2 * M * M + M + M * NB)
 !
             call mobbrmsd_SGELQF(M, N, A, LDA, WORK(ITAU), WORK(IWORK), LWORK - IWORK + 1, IERR)
             call mobbrmsd_SLACPY('U', M, N, A, LDA, VT, LDVT)
 !
-!Generate Q in VT
-!(Workspace:need 2 * M * M + M + N, prefer 2 * M * M + M + N * NB)
+! Generate Q in VT
+! (Workspace:need 2 * M * M + M + N, prefer 2 * M * M + M + N * NB)
 !
             call mobbrmsd_SORGLQ(N, N, M, VT, LDVT, WORK(ITAU), WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Copy L to WORK(IU), zeroing out above it
+! Copy L to WORK(IU), zeroing out above it
 !
             call mobbrmsd_SLACPY('L', M, M, A, LDA, WORK(IU), LDWRKU)
             call mobbrmsd_SLASET('U', M - 1, M - 1, ZERO, ZERO, WORK(IU + LDWRKU), LDWRKU)
@@ -3021,66 +2939,64 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
             ITAUP = ITAUQ + M
             IWORK = ITAUP + M
 !
-!Bidiagonalize L in WORK(IU), copying result to
-!WORK(IR)
-!(Workspace:need 2 * M * M + 4 * M,
-!prefer 2 * M * M + 3 * M + 2 * M * NB)
+! Bidiagonalize L in WORK(IU), copying result to WORK(IR)
+! (Workspace:need 2 * M * M + 4 * M,
+! prefer 2 * M * M + 3 * M + 2 * M * NB)
 !
             call mobbrmsd_SGEBRD(M, M, WORK(IU), LDWRKU, S, WORK(IE), WORK(ITAUQ), &
-                &       WORK(ITAUP), WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(ITAUP), WORK(IWORK), LWORK - IWORK + 1, IERR)
             call mobbrmsd_SLACPY('L', M, M, WORK(IU), LDWRKU, WORK(IR), LDWRKR)
 !
-!Generate right bidiagonalizing vectors in WORK(IU)
-!(Workspace:need 2 * M * M + 4 * M - 1,
-!prefer 2 * M * M + 3 * M + (M - 1) * NB)
+! Generate right bidiagonalizing vectors in WORK(IU)
+! (Workspace:need 2 * M * M + 4 * M - 1,
+! prefer 2 * M * M + 3 * M + (M - 1) * NB)
 !
             call mobbrmsd_SORGBR('P', M, M, M, WORK(IU), LDWRKU, WORK(ITAUP), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Generate left bidiagonalizing vectors in WORK(IR)
-!(Workspace:need 2 * M * M + 4 * M, prefer 2 * M * M + 3 * M + M * NB)
+! Generate left bidiagonalizing vectors in WORK(IR)
+! (Workspace:need 2 * M * M + 4 * M, prefer 2 * M * M + 3 * M + M * NB)
 !
             call mobbrmsd_SORGBR('Q', M, M, M, WORK(IR), LDWRKR, WORK(ITAUQ), &
-                &       WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(IWORK), LWORK - IWORK + 1, IERR)
             IWORK = IE + M
 !
-!Perform bidiagonal QR iteration, computing left
-!singular vectors of L in WORK(IR) and computing
-!right singular vectors of L in WORK(IU)
-!(Workspace:need 2 * M * M + BDSPAC)
+! Perform bidiagonal QR iteration, computing left
+! singular vectors of L in WORK(IR) and computing
+! right singular vectors of L in WORK(IU)
+! (Workspace:need 2 * M * M + BDSPAC)
 !
             call mobbrmsd_SBDSQR('U', M, M, M, 0, S, WORK(IE), WORK(IU), LDWRKU, &
-                &       WORK(IR), LDWRKR, DUM, 1, WORK(IWORK), INFO)
+                &                WORK(IR), LDWRKR, DUM, 1, WORK(IWORK), INFO)
 !
-!Multiply right singular vectors of L in WORK(IU) by
-!Q in VT, storing result in A
-!(Workspace:need M * M)
+! Multiply right singular vectors of L in WORK(IU) by Q in VT, storing result in A
+! (Workspace:need M * M)
 !
             call mobbrmsd_SGEMM('N', 'N', M, N, M, ONE, WORK(IU), LDWRKU, VT, LDVT, ZERO, A, LDA)
 !
-!Copy right singular vectors of A from A to VT
+! Copy right singular vectors of A from A to VT
 !
             call mobbrmsd_SLACPY('F', M, N, A, LDA, VT, LDVT)
 !
-!Copy left singular vectors of A from WORK(IR) to A
+! Copy left singular vectors of A from WORK(IR) to A
 !
             call mobbrmsd_SLACPY('F', M, M, WORK(IR), LDWRKR, A, LDA)
 !
           else
 !
-!Insufficient workspace for a fast algorithm
+! Insufficient workspace for a fast algorithm
 !
             ITAU = 1
             IWORK = ITAU + M
 !
-!Compute A = L * Q, copying result to VT
-!(Workspace:need 2 * M, prefer M + M * NB)
+! Compute A = L * Q, copying result to VT
+! (Workspace:need 2 * M, prefer M + M * NB)
 !
             call mobbrmsd_SGELQF(M, N, A, LDA, WORK(ITAU), WORK(IWORK), LWORK - IWORK + 1, IERR)
             call mobbrmsd_SLACPY('U', M, N, A, LDA, VT, LDVT)
 !
-!Generate Q in VT
-!(Workspace:need M + N, prefer M + N * NB)
+! Generate Q in VT
+! (Workspace:need M + N, prefer M + N * NB)
 !
             call mobbrmsd_SORGLQ(N, N, M, VT, LDVT, WORK(ITAU), WORK(IWORK), LWORK - IWORK + 1, IERR)
             IE = ITAU
@@ -3088,31 +3004,30 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
             ITAUP = ITAUQ + M
             IWORK = ITAUP + M
 !
-!Zero out above L in A
+! Zero out above L in A
 !
             call mobbrmsd_SLASET('U', M - 1, M - 1, ZERO, ZERO, A(1, 2), LDA)
 !
-!Bidiagonalize L in A
-!(Workspace:need 4 * M, prefer 3 * M + 2 * M * NB)
+! Bidiagonalize L in A
+! (Workspace:need 4 * M, prefer 3 * M + 2 * M * NB)
 !
             call mobbrmsd_SGEBRD(M, M, A, LDA, S, WORK(IE), WORK(ITAUQ), WORK(ITAUP), WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Multiply right bidiagonalizing vectors in A by Q
-!in VT
-!(Workspace:need 3 * M + N, prefer 3 * M + N * NB)
+! Multiply right bidiagonalizing vectors in A by Q in VT
+! (Workspace:need 3 * M + N, prefer 3 * M + N * NB)
 !
             call mobbrmsd_SORMBR('P', 'L', 'T', M, N, M, A, LDA, WORK(ITAUP), VT, LDVT, WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Generate left bidiagonalizing vectors in A
-!(Workspace:need 4 * M, prefer 3 * M + M * NB)
+! Generate left bidiagonalizing vectors in A
+! (Workspace:need 4 * M, prefer 3 * M + M * NB)
 !
             call mobbrmsd_SORGBR('Q', M, M, M, A, LDA, WORK(ITAUQ), WORK(IWORK), LWORK - IWORK + 1, IERR)
             IWORK = IE + M
 !
-!Perform bidiagonal QR iteration, computing left
-!singular vectors of A in A and computing right
-!singular vectors of A in VT
-!(Workspace:need BDSPAC)
+! Perform bidiagonal QR iteration, computing left
+! singular vectors of A in A and computing right
+! singular vectors of A in VT
+! (Workspace:need BDSPAC)
 !
             call mobbrmsd_SBDSQR('U', M, N, M, 0, S, WORK(IE), VT, LDVT, A, LDA, DUM, 1, WORK(IWORK), INFO)
 !
@@ -3120,42 +3035,41 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
 !
         else if (WNTUAS) then
 !
-!Path 9T(N much larger than M, JOBU='S'or 'A',
-!JOBVT = 'A')
-!N right singular vectors to be computed in VT and
-!M left singular vectors to be computed in U
+! Path 9T(N much larger than M, JOBU='S'or 'A', JOBVT = 'A')
+! N right singular vectors to be computed in VT and
+! M left singular vectors to be computed in U
 !
           if (LWORK >= M * M + MAX(N + M, 4 * M, BDSPAC)) then
 !
-!Sufficient workspace for a fast algorithm
+! Sufficient workspace for a fast algorithm
 !
             IU = 1
             if (LWORK >= WRKBL + LDA * M) then
 !
-!WORK(IU) is LDA by M
+! WORK(IU) is LDA by M
 !
               LDWRKU = LDA
             else
 !
-!WORK(IU) is M by M
+! WORK(IU) is M by M
 !
               LDWRKU = M
             end if
             ITAU = IU + LDWRKU * M
             IWORK = ITAU + M
 !
-!Compute A = L * Q, copying result to VT
-!(Workspace:need M * M + 2 * M, prefer M * M + M + M * NB)
+! Compute A = L * Q, copying result to VT
+! (Workspace:need M * M + 2 * M, prefer M * M + M + M * NB)
 !
             call mobbrmsd_SGELQF(M, N, A, LDA, WORK(ITAU), WORK(IWORK), LWORK - IWORK + 1, IERR)
             call mobbrmsd_SLACPY('U', M, N, A, LDA, VT, LDVT)
 !
-!Generate Q in VT
-!(Workspace:need M * M + M + N, prefer M * M + M + N * NB)
+! Generate Q in VT
+! (Workspace:need M * M + M + N, prefer M * M + M + N * NB)
 !
             call mobbrmsd_SORGLQ(N, N, M, VT, LDVT, WORK(ITAU), WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Copy L to WORK(IU), zeroing out above it
+! Copy L to WORK(IU), zeroing out above it
 !
             call mobbrmsd_SLACPY('L', M, M, A, LDA, WORK(IU), LDWRKU)
             call mobbrmsd_SLASET('U', M - 1, M - 1, ZERO, ZERO, WORK(IU + LDWRKU), LDWRKU)
@@ -3164,60 +3078,60 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
             ITAUP = ITAUQ + M
             IWORK = ITAUP + M
 !
-!Bidiagonalize L in WORK(IU), copying result to U
-!(Workspace:need M * M + 4 * M, prefer M * M + 3 * M + 2 * M * NB)
+! Bidiagonalize L in WORK(IU), copying result to U
+! (Workspace:need M * M + 4 * M, prefer M * M + 3 * M + 2 * M * NB)
 !
             call mobbrmsd_SGEBRD(M, M, WORK(IU), LDWRKU, S, WORK(IE), WORK(ITAUQ), &
-                &       WORK(ITAUP), WORK(IWORK), LWORK - IWORK + 1, IERR)
+                &                WORK(ITAUP), WORK(IWORK), LWORK - IWORK + 1, IERR)
             call mobbrmsd_SLACPY('L', M, M, WORK(IU), LDWRKU, U, LDU)
 !
-!Generate right bidiagonalizing vectors in WORK(IU)
-!(Workspace:need M * M + 4 * M, prefer M * M + 3 * M + (M - 1) * NB)
+! Generate right bidiagonalizing vectors in WORK(IU)
+! (Workspace:need M * M + 4 * M, prefer M * M + 3 * M + (M - 1) * NB)
 !
             call mobbrmsd_SORGBR('P', M, M, M, WORK(IU), LDWRKU, WORK(ITAUP), WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Generate left bidiagonalizing vectors in U
-!(Workspace:need M * M + 4 * M, prefer M * M + 3 * M + M * NB)
+! Generate left bidiagonalizing vectors in U
+! (Workspace:need M * M + 4 * M, prefer M * M + 3 * M + M * NB)
 !
             call mobbrmsd_SORGBR('Q', M, M, M, U, LDU, WORK(ITAUQ), WORK(IWORK), LWORK - IWORK + 1, IERR)
             IWORK = IE + M
 !
-!Perform bidiagonal QR iteration, computing left
-!singular vectors of L in U and computing right
-!singular vectors of L in WORK(IU)
-!(Workspace:need M * M + BDSPAC)
+! Perform bidiagonal QR iteration, computing left
+! singular vectors of L in U and computing right
+! singular vectors of L in WORK(IU)
+! (Workspace:need M * M + BDSPAC)
 !
             call mobbrmsd_SBDSQR('U', M, M, M, 0, S, WORK(IE), WORK(IU), LDWRKU, U, LDU, DUM, 1, WORK(IWORK), INFO)
 !
-!Multiply right singular vectors of L in WORK(IU) by
-!Q in VT, storing result in A
-!(Workspace:need M * M)
+! Multiply right singular vectors of L in WORK(IU) by
+! Q in VT, storing result in A
+! (Workspace:need M * M)
 !
             call mobbrmsd_SGEMM('N', 'N', M, N, M, ONE, WORK(IU), LDWRKU, VT, LDVT, ZERO, A, LDA)
 !
-!Copy right singular vectors of A from A to VT
+! Copy right singular vectors of A from A to VT
 !
             call mobbrmsd_SLACPY('F', M, N, A, LDA, VT, LDVT)
 !
           else
 !
-!Insufficient workspace for a fast algorithm
+! Insufficient workspace for a fast algorithm
 !
             ITAU = 1
             IWORK = ITAU + M
 !
-!Compute A = L * Q, copying result to VT
-!(Workspace:need 2 * M, prefer M + M * NB)
+! Compute A = L * Q, copying result to VT
+! (Workspace:need 2 * M, prefer M + M * NB)
 !
             call mobbrmsd_SGELQF(M, N, A, LDA, WORK(ITAU), WORK(IWORK), LWORK - IWORK + 1, IERR)
             call mobbrmsd_SLACPY('U', M, N, A, LDA, VT, LDVT)
 !
-!Generate Q in VT
-!(Workspace:need M + N, prefer M + N * NB)
+! Generate Q in VT
+! (Workspace:need M + N, prefer M + N * NB)
 !
             call mobbrmsd_SORGLQ(N, N, M, VT, LDVT, WORK(ITAU), WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Copy L to U, zeroing out above it
+! Copy L to U, zeroing out above it
 !
             call mobbrmsd_SLACPY('L', M, M, A, LDA, U, LDU)
             call mobbrmsd_SLASET('U', M - 1, M - 1, ZERO, ZERO, U(1, 2), LDU)
@@ -3226,27 +3140,26 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
             ITAUP = ITAUQ + M
             IWORK = ITAUP + M
 !
-!Bidiagonalize L in U
-!(Workspace:need 4 * M, prefer 3 * M + 2 * M * NB)
+! Bidiagonalize L in U
+! (Workspace:need 4 * M, prefer 3 * M + 2 * M * NB)
 !
             call mobbrmsd_SGEBRD(M, M, U, LDU, S, WORK(IE), WORK(ITAUQ), WORK(ITAUP), WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Multiply right bidiagonalizing vectors in U by Q
-!in VT
-!(Workspace:need 3 * M + N, prefer 3 * M + N * NB)
+! Multiply right bidiagonalizing vectors in U by Q in VT
+! (Workspace:need 3 * M + N, prefer 3 * M + N * NB)
 !
             call mobbrmsd_SORMBR('P', 'L', 'T', M, N, M, U, LDU, WORK(ITAUP), VT, LDVT, WORK(IWORK), LWORK - IWORK + 1, IERR)
 !
-!Generate left bidiagonalizing vectors in U
-!(Workspace:need 4 * M, prefer 3 * M + M * NB)
+! Generate left bidiagonalizing vectors in U
+! (Workspace:need 4 * M, prefer 3 * M + M * NB)
 !
             call mobbrmsd_SORGBR('Q', M, M, M, U, LDU, WORK(ITAUQ), WORK(IWORK), LWORK - IWORK + 1, IERR)
             IWORK = IE + M
 !
-!Perform bidiagonal QR iteration, computing left
-!singular vectors of A in U and computing right
-!singular vectors of A in VT
-!(Workspace:need BDSPAC)
+! Perform bidiagonal QR iteration, computing left
+! singular vectors of A in U and computing right
+! singular vectors of A in VT
+! (Workspace:need BDSPAC)
 !
             call mobbrmsd_SBDSQR('U', M, N, M, 0, S, WORK(IE), VT, LDVT, U, LDU, DUM, 1, WORK(IWORK), INFO)
 !
@@ -3258,55 +3171,57 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
 !
     else
 !
-!N < MNTHR
+! N < MNTHR
 !
-!Path 10T(N greater than M, but not much larger)
-!Reduce to bidiagonal form without LQ decomposition
+! Path 10T(N greater than M, but not much larger)
+! Reduce to bidiagonal form without LQ decomposition
 !
       IE = 1
       ITAUQ = IE + M
       ITAUP = ITAUQ + M
       IWORK = ITAUP + M
 !
-!Bidiagonalize A
-!(Workspace:need 3 * M + N, prefer 3 * M + (M + N) * NB)
+! Bidiagonalize A
+! (Workspace:need 3 * M + N, prefer 3 * M + (M + N) * NB)
 !
-      call mobbrmsd_SGEBRD(M, N, A, LDA, S, WORK(IE), WORK(ITAUQ), WORK(ITAUP), WORK(IWORK), LWORK - IWORK + 1, IERR)
+      call mobbrmsd_SGEBRD(M, N, A, LDA, S, WORK(IE), WORK(ITAUQ), WORK(ITAUP), &
+          &                WORK(IWORK), LWORK - IWORK + 1, IERR)
       if (WNTUAS) then
 !
-!if left singular vectors desired in U, copy result to U
-!and generate left bidiagonalizing vectors in U
-!(Workspace:need 4 * M - 1, prefer 3 * M + (M - 1) * NB)
+! if left singular vectors desired in U, copy result to U
+! and generate left bidiagonalizing vectors in U
+! (Workspace:need 4 * M - 1, prefer 3 * M + (M - 1) * NB)
 !
         call mobbrmsd_SLACPY('L', M, M, A, LDA, U, LDU)
-        call mobbrmsd_SORGBR('Q', M, M, N, U, LDU, WORK(ITAUQ), WORK(IWORK), LWORK - IWORK + 1, IERR)
+        call mobbrmsd_SORGBR('Q', M, M, N, U, LDU, WORK(ITAUQ), &
+            &                WORK(IWORK), LWORK - IWORK + 1, IERR)
       end if
       if (WNTVAS) then
 !
-!if right singular vectors desired in VT, copy result to
-!VT and generate right bidiagonalizing vectors in VT
-!(Workspace:need 3 * M + NRVT, prefer 3 * M + NRVT * NB)
+! if right singular vectors desired in VT, copy result to
+! VT and generate right bidiagonalizing vectors in VT
+! (Workspace:need 3 * M + NRVT, prefer 3 * M + NRVT * NB)
 !
         call mobbrmsd_SLACPY('U', M, N, A, LDA, VT, LDVT)
         if (WNTVA) NRVT = N
         if (WNTVS) NRVT = M
         call mobbrmsd_SORGBR('P', NRVT, N, M, VT, LDVT, WORK(ITAUP), &
-       & WORK(IWORK), LWORK - IWORK + 1, IERR)
+            &                WORK(IWORK), LWORK - IWORK + 1, IERR)
       end if
       if (WNTUO) then
 !
-!if left singular vectors desired in A, generate left
-!bidiagonalizing vectors in A
-!(Workspace:need 4 * M - 1, prefer 3 * M + (M - 1) * NB)
+! if left singular vectors desired in A, generate left
+! bidiagonalizing vectors in A
+! (Workspace:need 4 * M - 1, prefer 3 * M + (M - 1) * NB)
 !
         call mobbrmsd_SORGBR('Q', M, M, N, A, LDA, WORK(ITAUQ), &
-        & WORK(IWORK), LWORK - IWORK + 1, IERR)
+            &                WORK(IWORK), LWORK - IWORK + 1, IERR)
       end if
       if (WNTVO) then
 !
-!if right singular vectors desired in A, generate right
-!bidiagonalizing vectors in A
-!(Workspace:need 4 * M, prefer 3 * M + M * NB)
+! if right singular vectors desired in A, generate right
+! bidiagonalizing vectors in A
+! (Workspace:need 4 * M, prefer 3 * M + M * NB)
 !
         call mobbrmsd_SORGBR('P', M, N, M, A, LDA, WORK(ITAUP), WORK(IWORK), LWORK - IWORK + 1, IERR)
       end if
@@ -3323,7 +3238,7 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
 ! (Workspace:need BDSPAC)
 !
         call mobbrmsd_SBDSQR('L', M, NCVT, NRU, 0, S, WORK(IE), VT, &
-        & LDVT, U, LDU, DUM, 1, WORK(IWORK), INFO)
+            &                LDVT, U, LDU, DUM, 1, WORK(IWORK), INFO)
       else if ((.not. WNTUO) .and. WNTVO) then
 !
 ! Perform bidiagonal QR iteration, if desired, computing
@@ -3332,7 +3247,7 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
 ! (Workspace:need BDSPAC)
 !
         call mobbrmsd_SBDSQR('L', M, NCVT, NRU, 0, S, WORK(IE), A, LDA, &
-        & U, LDU, DUM, 1, WORK(IWORK), INFO)
+            &                U, LDU, DUM, 1, WORK(IWORK), INFO)
       else
 !
 ! Perform bidiagonal QR iteration, if desired, computing
@@ -3340,7 +3255,8 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
 ! vectors in VT
 ! (Workspace:need BDSPAC)
 !
-        call mobbrmsd_SBDSQR('L', M, NCVT, NRU, 0, S, WORK(IE), VT, LDVT, A, LDA, DUM, 1, WORK(IWORK), INFO)
+        call mobbrmsd_SBDSQR('L', M, NCVT, NRU, 0, S, WORK(IE), &
+            &                VT, LDVT, A, LDA, DUM, 1, WORK(IWORK), INFO)
       end if
 !
     end if
@@ -3381,3 +3297,4 @@ pure subroutine mobbrmsd_SGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, 
 ! end of mobbrmsd_SGESVD
 !
 end
+
