@@ -1,76 +1,28 @@
-!> \brief \b mobbrmsd_LSAME
+!| mobbrmsd_LSAME returns .TRUE. if CA is the same letter as CB regardless of case.
 !
-!  =========== DOCUMENTATION ===========
-!
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
-!
-!  Definition:
-!  ===========
-!
-!       LOGICAL FUNCTION mobbrmsd_LSAME(CA,CB)
-!
-!       .. Scalar Arguments ..
-!       CHARACTER CA,CB
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_LSAME returns .TRUE. if CA is the same letter as CB regardless of
-!> case.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] CA
-!> \verbatim
-!>          CA is CHARACTER!1
-!> \endverbatim
-!>
-!> \param[in] CB
-!> \verbatim
-!>          CB is CHARACTER!1
-!>          CA and CB specify the single characters to be compared.
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup aux_blas
-!
-!  =====================================================================
-pure elemental function mobbrmsd_LSAME(CA, CB)
-  implicit none
+!  Reference LSAME is provided by [netlib](http://www.netlib.org/lapack/).
 !
 !  -- Reference BLAS level1 routine --
 !  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
+pure elemental function mobbrmsd_LSAME(CA, CB)
+  implicit none
+!
 !     .. Scalar Arguments ..
-  character, intent(in) :: CA, CB
+  character, intent(in) :: CA
+!! CA specifies the single characters to be compared.
+!!
+  character, intent(in) :: CB
+!! CB specifies the single characters to be compared.
+!!
   logical               :: mobbrmsd_LSAME
-!     ..
-!
-! =====================================================================
-!
-!     .. Intrinsic Functions ..
+!! Returns .TRUE. if CA is the same letter as CB regardless of case.
+!!
   intrinsic :: ICHAR
-!     ..
-!     .. Local Scalars ..
   integer :: INTA, INTB, ZCODE
-!     ..
 !
-!     Test if the characters are equal
+! Test if the characters are equal
 !
   mobbrmsd_LSAME = CA == CB
   if (mobbrmsd_LSAME) return
@@ -101,11 +53,11 @@ pure elemental function mobbrmsd_LSAME(CA, CB)
 !        upper case 'Z'.
 !
     if (INTA >= 129 .and. INTA <= 137 .or. &
-&        INTA >= 145 .and. INTA <= 153 .or. &
-&        INTA >= 162 .and. INTA <= 169) INTA = INTA + 64
+      & INTA >= 145 .and. INTA <= 153 .or. &
+      & INTA >= 162 .and. INTA <= 169) INTA = INTA + 64
     if (INTB >= 129 .and. INTB <= 137 .or. &
-&        INTB >= 145 .and. INTB <= 153 .or. &
-&        INTB >= 162 .and. INTB <= 169) INTB = INTB + 64
+      & INTB >= 145 .and. INTB <= 153 .or. &
+      & INTB >= 162 .and. INTB <= 169) INTB = INTB + 64
 !
   else if (ZCODE == 218 .or. ZCODE == 250) then
 !
@@ -122,3 +74,4 @@ pure elemental function mobbrmsd_LSAME(CA, CB)
 !     End of mobbrmsd_LSAME
 !
 end function mobbrmsd_LSAME
+

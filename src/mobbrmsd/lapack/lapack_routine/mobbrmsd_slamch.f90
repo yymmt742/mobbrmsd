@@ -1,7 +1,7 @@
 !| mobbrmsd_SLAMCH determines single precision machine parameters.
+!  Assume rounding, not chopping. Always.
 !
-!  reference SLAMCH is provided by
-!  [netlib](http://www.netlib.org/lapack/explore-html/)
+!  reference SLAMCH is provided by [netlib](http://www.netlib.org/lapack/explore-html/)
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
 !
@@ -19,48 +19,60 @@
 pure elemental function mobbrmsd_SLAMCH(CMACH)
   implicit none
   character, intent(in) :: CMACH
-!!          Specifies the value to be returned by mobbrmsd_SLAMCH: <br>
-!!          = 'E' or 'e',   mobbrmsd_SLAMCH := eps <br>
-!!          = 'S' or 's ,   mobbrmsd_SLAMCH := sfmin <br>
-!!          = 'B' or 'b',   mobbrmsd_SLAMCH := base <br>
-!!          = 'P' or 'p',   mobbrmsd_SLAMCH := eps*base <br>
-!!          = 'N' or 'n',   mobbrmsd_SLAMCH := t <br>
-!!          = 'R' or 'r',   mobbrmsd_SLAMCH := rnd <br>
-!!          = 'M' or 'm',   mobbrmsd_SLAMCH := emin <br>
-!!          = 'U' or 'u',   mobbrmsd_SLAMCH := rmin <br>
-!!          = 'L' or 'l',   mobbrmsd_SLAMCH := emax <br>
-!!          = 'O' or 'o',   mobbrmsd_SLAMCH := rmax <br>
-!!          where <br>
-!!          eps   = relative machine precision <br>
+!!          Specifies the value to be returned by mobbrmsd_SLAMCH:
+!!
+!!          = 'E' or 'e',   mobbrmsd_SLAMCH := eps
+!!
+!!          = 'S' or 's ,   mobbrmsd_SLAMCH := sfmin
+!!
+!!          = 'B' or 'b',   mobbrmsd_SLAMCH := base
+!!
+!!          = 'P' or 'p',   mobbrmsd_SLAMCH := eps*base
+!!
+!!          = 'N' or 'n',   mobbrmsd_SLAMCH := t
+!!
+!!          = 'R' or 'r',   mobbrmsd_SLAMCH := rnd
+!!
+!!          = 'M' or 'm',   mobbrmsd_SLAMCH := emin
+!!
+!!          = 'U' or 'u',   mobbrmsd_SLAMCH := rmin
+!!
+!!          = 'L' or 'l',   mobbrmsd_SLAMCH := emax
+!!
+!!          = 'O' or 'o',   mobbrmsd_SLAMCH := rmax
+!!
+!!          where
+!!
+!!          eps   = relative machine precision
+!!
 !!          sfmin = safe minimum, such that 1/sfmin does not overflow <br>
-!!          base  = base of the machine <br>
+!!
+!!          base  = base of the machine
+!!
 !!          prec  = eps*base <br>
-!!          t     = number of (base) digits in the mantissa <br>
-!!          rnd   = 1.0 when rounding occurs in addition, 0.0 otherwise <br>
-!!          emin  = minimum exponent before (gradual) underflow <br>
-!!          rmin  = underflow threshold - base**(emin-1) <br>
-!!          emax  = largest exponent before overflow <br>
-!!          rmax  = overflow threshold  - (base**emax)*(1-eps) <br>
-  real(RK)              :: mobbrmsd_SLAMCH
-  real(RK) :: RND, EPS, SFMIN, SMALL, RMACH
-!
-! .. Parameters ..
+!!
+!!          t     = number of (base) digits in the mantissa
+!!
+!!          rnd   = 1.0 when rounding occurs in addition, 0.0 otherwise
+!!
+!!          emin  = minimum exponent before (gradual) underflow
+!!
+!!          rmin  = underflow threshold - base**(emin-1)
+!!
+!!          emax  = largest exponent before overflow
+!!
+!!          rmax  = overflow threshold  - (base**emax)*(1-eps)
+!!
+  real(RK)  :: mobbrmsd_SLAMCH
+!! machine parameter.
+!!
+  intrinsic :: DIGITS, EPSILON, HUGE, MAXEXPONENT, MINEXPONENT, RADIX, TINY
+  real(RK)  :: RND, EPS, SFMIN, SMALL, RMACH
 ! real(RK), parameter :: ZERO = 0.0E+0
 ! real(RK), parameter :: ONE = 1.0E+0
-! ..
-! .. External Functions ..
 ! interface
 !   include 'lsame.h'
 ! end interface
-! ..
-! ..
-! .. Intrinsic Functions ..
-  intrinsic :: DIGITS, EPSILON, HUGE, MAXEXPONENT, MINEXPONENT, RADIX, TINY
-! ..
-! .. Executable Statements ..
-!
-!
-! Assume rounding, not chopping. Always.
 !
   RND = ONE
 !

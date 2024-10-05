@@ -15,7 +15,7 @@
 !
 !  Note that the routine returns \(\mathbf{V}^{\top}\), not \(\mathbf{V}\).
 !
-!  Reference DGESVD is provided by [netlib.org](http://www.netlib.org/lapack/).
+!  Reference DGESVD is provided by [netlib](http://www.netlib.org/lapack/).
 !
 !  -- LAPACK driver routine (version 3.7.0) --
 !

@@ -1,9 +1,11 @@
 !| mod_mobbrmsd_lapack_routines is an internal implementation of the lapack routines.
-!  It only supports the routines necessary to compute mo and its dependencies.
+!  It only supports the routines necessary to compute mobbrmsd and its dependencies.
+!
+!  Reference lapack is provided by [netlib](http://www.netlib.org/lapack/).
 !
 !  The interfaces follow the standard [lapack api](http://www.netlib.org/lapack/explore-html/).
 !
-module mod_mobbrmsd_lapack_routines_d
+module mod_mobbrmsd_lapack_routines_dp
   use, intrinsic :: IEEE_ARITHMETIC, only: IEEE_IS_NAN
   implicit none
   private
@@ -87,6 +89,7 @@ module mod_mobbrmsd_lapack_routines_d
   real(RK), parameter  :: HUNDRD  = 100.0_RK
 !
 !  Scaling constants
+!
   real(RK), parameter  :: ULP    = EPSILON(ZERO)
   real(RK), parameter  :: EPS    = ULP * HALF
   real(RK), parameter  :: SAFMIN = real(RADIX(ZERO), RK)**MAX( MINEXPONENT(ZERO) - 1, &
@@ -96,7 +99,9 @@ module mod_mobbrmsd_lapack_routines_d
   real(RK), parameter  :: BIGNUM = SAFMAX * ULP
   real(RK), parameter  :: RTMIN  = SQRT(SMLNUM)
   real(RK), parameter  :: RTMAX  = SQRT(BIGNUM)
+!
 !  Blue's scaling constants
+!
   real(RK), parameter  :: TSML   = real(RADIX(ZERO), RK)**CEILING( &
                                  & (MINEXPONENT(ZERO) - 1) * HALF)
   real(RK), parameter  :: TBIG   = real(RADIX(ZERO), RK)**FLOOR( &
@@ -173,5 +178,5 @@ contains
   include "lapack_routine/mobbrmsd_dtrmm.f90"
   include "lapack_routine/mobbrmsd_dtrmv.f90"
   include "lapack_routine/mobbrmsd_dtrsm.f90"
-end module mod_mobbrmsd_lapack_routines_d
+end module mod_mobbrmsd_lapack_routines_dp
 

@@ -1,5 +1,6 @@
-!| mobbrmsd_SLAPY2 returns sqrt(x**2+y**2), taking care not to cause unnecessary
-!  overflow.
+!| mobbrmsd_SLAPY2 returns \( \sqrt{x^2 + y^2} \),
+!  taking care not to cause unnecessary overflow
+!  and unnecessary underflow.
 !
 !     Reference SLAPY2 is provided by [netlib](http://www.netlib.org/lapack/)
 !
@@ -11,25 +12,21 @@
 !     June 2017
 !
 pure elemental function mobbrmsd_SLAPY2(X, Y)
-!
-!
-!     .. Scalar Arguments ..
+  implicit none
   real(RK), intent(in) :: X
-!!          X is REAL
+!!          X specify the value x.
+!!
   real(RK), intent(in) :: Y
-!!          Y is REAL
-!
+!!          Y specify the value y.
+!!
   real(RK) :: mobbrmsd_SLAPY2
+!!  \( \sqrt{x^2 + y^2} \)
+!!
   real(RK) :: W, XABS, YABS, Z
   logical  :: X_IS_NAN, Y_IS_NAN
   intrinsic :: ABS, MAX, MIN, SQRT
-!..Parameters..
 ! real(RK), parameter :: ZERO = 0.0E0
 ! real(RK), parameter :: ONE = 1.0E0
-! interface
-! .. External Functions ..
-!   include 'sisnan.h'
-! end interface
 !
   X_IS_NAN = IEEE_IS_NAN(X)
   Y_IS_NAN = IEEE_IS_NAN(Y)

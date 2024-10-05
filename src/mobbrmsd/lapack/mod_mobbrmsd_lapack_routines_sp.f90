@@ -1,9 +1,11 @@
 !| mod_mobbrmsd_lapack_routines is an internal implementation of the lapack routines.
-!  It only supports the routines necessary to compute mo and its dependencies.
+!  It only supports the routines necessary to compute mobbrmsd and its dependencies.
+!
+!  Reference lapack is provided by [netlib](http://www.netlib.org/lapack/).
 !
 !  The interfaces follow the standard [lapack api](http://www.netlib.org/lapack/explore-html/).
 !
-module mod_mobbrmsd_lapack_routines_s
+module mod_mobbrmsd_lapack_routines_sp
   use, intrinsic :: IEEE_ARITHMETIC, only: IEEE_IS_NAN
   implicit none
   private
@@ -175,5 +177,5 @@ contains
   include "lapack_routine/mobbrmsd_strmm.f90"
   include "lapack_routine/mobbrmsd_strmv.f90"
   include "lapack_routine/mobbrmsd_strsm.f90"
-end module mod_mobbrmsd_lapack_routines_s
+end module mod_mobbrmsd_lapack_routines_sp
 

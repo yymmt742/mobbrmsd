@@ -1,102 +1,31 @@
-! > \brief\b mobbrmsd_ILASLC scans a matrix for its last non - zero column.
+!| mobbrmsd_ILASLC scans a matrix A for its last non-zero column.
 !
-!  =========== DOCUMENTATION ===========
-!
-! Online html documentation available at
-! http://www.netlib.org/lapack/explore-html/
-!
-! > \htmlonly
-! > Download mobbrmsd_ILASLC + dependencies
-! >  < a href = "http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/ilaslc.f" >
-! > [TGZ] < /a >
-! >  < a href = "http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/ilaslc.f" >
-! > [ZIP] < /a >
-! >  < a href = "http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/ilaslc.f" >
-! > [TXT] < /a >
-! > \endhtmlonly
-!
-!  Definition:
-!  ===========
-!
-!   INTEGER FUNCTION mobbrmsd_ILASLC( M, N, A, LDA )
-!
-!   .. Scalar Arguments ..
-!   INTEGER            M, N, LDA
-!   ..
-!   .. Array Arguments ..
-!   REAL               A( LDA, ! )
-!   ..
-!
-!
-! > \par Purpose:
-!  =============
-! >
-! > \verbatim
-! >
-! > mobbrmsd_ILASLC scans A for its last non - zero column.
-! > \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-! > \param[in] M
-! > \verbatim
-! > M is integer
-! > The number of rows of the matrix A.
-! > \endverbatim
-! >
-! > \param[in] N
-! > \verbatim
-! > N is integer
-! > The number of columns of the matrix A.
-! > \endverbatim
-! >
-! > \param[in] A
-! > \verbatim
-! > A is real array, dimension(LDA, N)
-! > The m by n matrix A.
-! > \endverbatim
-! >
-! > \param[in] LDA
-! > \verbatim
-! > LDA is integer
-! > The leading dimension of the array A.LDA >= MAX(1, M) .
-! > \endverbatim
-!
-!  Authors:
-!  ========
-!
-! > \author Univ.of Tennessee
-! > \author Univ.of California Berkeley
-! > \author Univ.of Colorado Denver
-! > \author NAG Ltd.
-!
-! > \date June 2017
-!
-! > \ingroup realOTHERauxiliary
-!
-!  =====================================================================
-pure function mobbrmsd_ILASLC(M, N, A, LDA)
-  implicit none
+!  Reference ILASLC is provided by [netlib](http://www.netlib.org/lapack/).
 !
 !  -- LAPACK auxiliary routine (version 3.7.1) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 ! June 2017
 !
-! .. Scalar Arguments ..
-  integer, intent(in)  :: M, N, LDA
-! ..
-! .. Array Arguments ..
+pure function mobbrmsd_ILASLC(M, N, A, LDA)
+  implicit none
+  integer, intent(in)  :: M
+!! The number of rows of the matrix A.
+!!
+  integer, intent(in)  :: N
+!! The number of columns of the matrix A.
+!!
+  integer, intent(in)  :: LDA
+!! The leading dimension of the array A. LDA >= max(1,M).
+!!
   real(RK), intent(in) :: A(LDA, *)
+!! A is DOUBLE PRECISION array, dimension (LDA,N)
+!! The m by n matrix A.
+!!
   integer              :: mobbrmsd_ILASLC
-! ..
-!  =====================================================================
-!
-! .. Local Scalars ..
+!! The last non-zero column of A.
+!!
   integer :: I
-! ..
-! .. Executable Statements ..
 !
 ! Quick test for the common case where one corner is non-zero.
   if (N == 0) then
@@ -113,3 +42,4 @@ pure function mobbrmsd_ILASLC(M, N, A, LDA)
   end if
   return
 end
+

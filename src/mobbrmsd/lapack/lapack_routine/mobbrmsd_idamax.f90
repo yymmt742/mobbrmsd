@@ -1,8 +1,8 @@
-!|    mobbrmsd_IDAMAX finds the index of the first element having maximum absolute value.
+!| mobbrmsd_IDAMAX finds the index of the first element having maximum absolute value.
 !
-!     reference IDAMAX is provided by [](http://www.netlib.org/lapack/)
-!  -- LAPACK driver routine (version 3.7.0) --
-!  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!  reference IDAMAX is provided by [netlib](http://www.netlib.org/lapack/)
+!  -- Reference BLAS level1 routine --
+!  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !      jack dongarra, linpack, 3/11/78.
 !      modified 3/93 to return if incx .le. 0.
@@ -10,19 +10,18 @@
 !
 pure function mobbrmsd_IDAMAX(N, DX, INCX)
   implicit none
-!
-!  -- Reference BLAS level1 routine --
-!  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
-!  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
-!
-!     .. Scalar Arguments ..
   integer, intent(in)  :: N
-!!         number of elements in input vector(s)
-  integer, intent(in)  :: INCX
-!!         storage spacing between elements of DX
+!! number of elements in input vector(s)
+!!
   real(RK), intent(in) :: DX(*)
-!!          DX is DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
+!! DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
+!!
+  integer, intent(in)  :: INCX
+!! storage spacing between elements of DX
+!!
   integer :: mobbrmsd_IDAMAX
+!! The index of the first element having maximum absolute value.
+!!
   real(RK) :: DMAX
   integer :: I, IX
   intrinsic :: ABS

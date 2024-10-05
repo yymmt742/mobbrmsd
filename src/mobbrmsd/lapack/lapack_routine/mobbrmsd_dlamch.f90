@@ -1,6 +1,8 @@
 !| mobbrmsd_DLAMCH determines double precision machine parameters.
 !  Assume rounding, not chopping. Always.
 !
+!  Reference DLAMCH is provided by [netlib](http://www.netlib.org/lapack/).
+!
 !  -- LAPACK auxiliary routine (version 3.3.0) --
 !
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
@@ -16,51 +18,52 @@
 pure elemental function mobbrmsd_DLAMCH(CMACH)
   character, intent(in) :: CMACH
 !!          Specifies the value to be returned by mobbrmsd_DLAMCH:
-!1
+!!
 !!          = 'E' or 'e',   mobbrmsd_DLAMCH := eps
-!1
+!!
 !!          = 'S' or 's ,   mobbrmsd_DLAMCH := sfmin
-!1
+!!
 !!          = 'B' or 'b',   mobbrmsd_DLAMCH := base
-!1
+!!
 !!          = 'P' or 'p',   mobbrmsd_DLAMCH := eps!base
-!1
+!!
 !!          = 'N' or 'n',   mobbrmsd_DLAMCH := t
-!1
+!!
 !!          = 'R' or 'r',   mobbrmsd_DLAMCH := rnd
-!1
+!!
 !!          = 'M' or 'm',   mobbrmsd_DLAMCH := emin
-!1
+!!
 !!          = 'U' or 'u',   mobbrmsd_DLAMCH := rmin
-!1
+!!
 !!          = 'L' or 'l',   mobbrmsd_DLAMCH := emax
-!1
+!!
 !!          = 'O' or 'o',   mobbrmsd_DLAMCH := rmax
 !!
 !!          where
 !!
 !!          eps   = relative machine precision
-!1
+!!
 !!          sfmin = safe minimum, such that 1/sfmin does not overflow
-!1
+!!
 !!          base  = base of the machine
-!1
+!!
 !!          prec  = eps!base
-!1
+!!
 !!          t     = number of (base) digits in the mantissa
-!1
+!!
 !!          rnd   = 1.0 when rounding occurs in addition, 0.0 otherwise
-!1
+!!
 !!          emin  = minimum exponent before (gradual) underflow
-!1
+!!
 !!          rmin  = underflow threshold - base!!(emin-1)
-!1
+!!
 !!          emax  = largest exponent before overflow
-!1
+!!
 !!          rmax  = overflow threshold  - (base!!emax)!(1-eps)
-!1
+!!
   real(RK)                 :: mobbrmsd_DLAMCH
-!
+!! machine parameter.
+!!
   real(RK) :: RND, SFMIN, SMALL, RMACH
   intrinsic :: DIGITS, EPSILON, HUGE, MAXEXPONENT, MINEXPONENT, RADIX, TINY
 ! interface

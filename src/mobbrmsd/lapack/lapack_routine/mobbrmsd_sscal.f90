@@ -1,114 +1,41 @@
-!> \brief \b mobbrmsd_SSCAL
+!|    mobbrmsd_SSCAL scales a vector by a constant.
+!     uses unrolled loops for increment equal to 1.
 !
-!  =========== DOCUMENTATION ===========
-!
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
-!
-!  Definition:
-!  ===========
-!
-!       SUBROUTINE mobbrmsd_SSCAL(N,SA,SX,INCX)
-!
-!       .. Scalar Arguments ..
-!       REAL SA
-!       INTEGER INCX,N
-!       ..
-!       .. Array Arguments ..
-!       REAL SX(*)
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!>    mobbrmsd_SSCAL scales a vector by a constant.
-!>    uses unrolled loops for increment equal to 1.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>         number of elements in input vector(s)
-!> \endverbatim
-!>
-!> \param[in] SA
-!> \verbatim
-!>          SA is REAL
-!>           On entry, SA specifies the scalar alpha.
-!> \endverbatim
-!>
-!> \param[in,out] SX
-!> \verbatim
-!>          SX is REAL array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
-!> \endverbatim
-!>
-!> \param[in] INCX
-!> \verbatim
-!>          INCX is INTEGER
-!>         storage spacing between elements of SX
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \date November 2017
-!
-!> \ingroup single_blas_level1
-!
-!> \par Further Details:
-!  =====================
-!>
-!> \verbatim
-!>
-!>     jack dongarra, linpack, 3/11/78.
-!>     modified 3/93 to return if incx .le. 0.
-!>     modified 12/3/93, array(1) declarations changed to array(*)
-!> \endverbatim
-!>
-!  =====================================================================
-pure subroutine mobbrmsd_SSCAL(N, SA, SX, INCX)
-  implicit none
+!  Reference SSCAL is provided by [netlib.org](http://www.netlib.org/lapack/).
 !
 !  -- Reference BLAS level1 routine (version 3.8.0) --
+!
 !  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
-!     November 2017
+!      jack dongarra, linpack, 3/11/78.
+!      modified 3/93 to return if incx .le. 0.
+!      modified 12/3/93, array(1) declarations changed to array(*)
 !
-!     .. Scalar Arguments ..
-  integer, intent(in)  :: INCX, N
+pure subroutine mobbrmsd_SSCAL(N, SA, SX, INCX)
+  implicit none
+  integer, intent(in)  :: N
+!!         number of elements in input vector(s)
+!!
+  integer, intent(in)  :: INCX
+!!         storage spacing between elements of SX
+!!
   real(RK), intent(in) :: SA
-!..
-!..Array Arguments..
+!!           On entry, SA specifies the scalar alpha.
+!!
   real(RK), intent(inout) :: SX(*)
-!..
-!
-!  =====================================================================
-!
-!..Local Scalars..
+!!          SX is REAL array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
   integer :: I, M, MP1, NINCX
-!..
-!..intrinsic Functions..
   intrinsic :: MOD
-!..
+!
   if (N <= 0 .or. INCX <= 0) return
   if (INCX == 1) then
-    !
-    !code for increment equal to 1
-    !
-    !
-    !clean - up loop
-    !
+!
+! code for increment equal to 1
+!
+!
+! clean - up loop
+!
     M = MOD(N, 5)
     if (M /= 0) then
       do I = 1, M
@@ -125,9 +52,9 @@ pure subroutine mobbrmsd_SSCAL(N, SA, SX, INCX)
       SX(I + 4) = SA * SX(I + 4)
     end do
   else
-    !
-    !code for increment not equal to 1
-    !
+!
+! code for increment not equal to 1
+!
     NINCX = N * INCX
     do I = 1, NINCX, INCX
       SX(I) = SA * SX(I)
@@ -135,3 +62,4 @@ pure subroutine mobbrmsd_SSCAL(N, SA, SX, INCX)
   end if
   return
 end
+

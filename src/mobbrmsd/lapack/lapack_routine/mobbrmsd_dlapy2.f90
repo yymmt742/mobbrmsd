@@ -1,31 +1,34 @@
-!| mobbrmsd_DLAPY2 returns sqrt(x**2+y**2), taking care not to cause unnecessary
-!  overflow and unnecessary underflow.
+!| mobbrmsd_DLAPY2 returns \( \sqrt{x^2 + y^2} \),
+!  taking care not to cause unnecessary overflow
+!  and unnecessary underflow.
 !
-!     Reference DLAPY2 is provided by [](http://www.netlib.org/lapack/)
+!     Reference DLAPY2 is provided by [netlib](http://www.netlib.org/lapack/).
+!
 !  -- LAPACK driver routine (version 3.7.0) --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
 pure elemental function mobbrmsd_DLAPY2(X, Y)
   implicit none
   real(RK), intent(in) :: X
 !!          X specify the value x.
+!!
   real(RK), intent(in) :: Y
 !!          Y specify the value y.
+!!
   real(RK)             :: mobbrmsd_DLAPY2
+!!  \( \sqrt{x^2 + y^2} \)
+!!
   real(RK)             :: W, XABS, YABS, Z, HUGEVAL
   logical              :: X_IS_NAN, Y_IS_NAN
   intrinsic            :: ABS, MAX, MIN, SQRT
-!     .. Parameters ..
-! real(RK), parameter   :: ZERO = 0.0_RK
-! real(RK), parameter   :: ONE = 1.0_RK
+! real(RK), parameter  :: ZERO = 0.0_RK
+! real(RK), parameter  :: ONE = 1.0_RK
 ! interface
-!     .. External Functions ..
-!   include 'disnan.h'
-!     .. External Subroutines ..
 !   include 'dlamch.h'
 ! end interface
-!     .. Executable Statements ..
 !
   X_IS_NAN = IEEE_IS_NAN(X)
   Y_IS_NAN = IEEE_IS_NAN(Y)

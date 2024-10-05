@@ -1,4 +1,4 @@
-!! mobbrmsd_DGELQ2 computes an LQ factorization of a real m-by-n matrix A:
+!| mobbrmsd_DGELQ2 computes an LQ factorization of a real m-by-n matrix A:
 !
 !    A = ( L 0 ) *  Q
 !
@@ -20,31 +20,41 @@
 !  v(1:i-1) = 0 and v(i) = 1; v(i+1:n) is stored on exit in A(i,i+1:n),
 !  and tau in TAU(i).
 !
-!  reference DGELQ2 is provided by http://www.netlib.org/lapack/explore-html/
-!  \author Univ. of Tennessee
-!  \author Univ. of California Berkeley
-!  \author Univ. of Colorado Denver
-!  \author NAG Ltd.
+!  Reference DGELQ2 is provided by [netlib](http://www.netlib.org/lapack/).
+!
+!  -- LAPACK driver routine --
+!
+!  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
+!  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+!     April 2012
+!
 pure subroutine mobbrmsd_DGELQ2(M, N, A, LDA, TAU, WORK, INFO)
   implicit none
   integer, intent(in)     :: M
 !!          The number of rows of the matrix A.  M >= 0.
+!!
   integer, intent(in)     :: N
 !!          The number of columns of the matrix A.  N >= 0.
+!!
   integer, intent(in)     :: LDA
 !!          The leading dimension of the array A.  LDA >= max(1,M).
+!!
   real(RK), intent(inout) :: A(LDA, *)
 !!          On entry, the m by n matrix A.
+!!
 !!          On exit, the elements on and below the diagonal of the array
 !!          contain the m by min(m,n) lower trapezoidal matrix L (L is
 !!          lower triangular if m <= n); the elements above the diagonal,
 !!          with the array TAU, represent the orthogonal matrix Q as a
 !!          product of elementary reflectors (see Further Details).
+!!
   real(RK), intent(out)   :: TAU(*)
 !!          The scalar factors of the elementary reflectors (see Further
 !!          Details).
+!!
   real(RK), intent(out)   :: WORK(*)
-!!          WORK is real(RK)           :: array, dimension (M)
+!!          WORK is DOUBLE PRECISION array, dimension (M)
 !!
   integer, intent(out)    :: INFO
 !!          = 0: successful exit
@@ -55,11 +65,8 @@ pure subroutine mobbrmsd_DGELQ2(M, N, A, LDA, TAU, WORK, INFO)
   real(RK)               :: AII
   intrinsic              :: MAX, MIN
 !
-!     .. Parameters ..
 ! real(RK), parameter     :: ONE = 1.0_RK
-!     ..
 ! interface
-!     .. External Subroutines ..
 !   include 'dlarf.h'
 !   include 'dlarfg.h'
 !   !include 'xerbla.h'

@@ -1,30 +1,32 @@
 !| mobbrmsd_ISAMAX finds the index of the first element having maximum absolute value.
 !
+!  reference ISAMAX is provided by [netlib](http://www.netlib.org/lapack/)
 !  -- Reference BLAS level1 routine (version 3.8.0) --
 !  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
-!     jack dongarra, linpack, 3 / 11 / 78.
-!     modified 3 / 93 to return if incx <= 0.
-!     modified 12 / 3 / 93, array(1) declarations changed to array(*)
-!     November 2017
+!      jack dongarra, linpack, 3/11/78.
+!      modified 3/93 to return if incx .le. 0.
+!      modified 12/3/93, array(1) declarations changed to array(*)
+!      November 2017
+!
 pure function mobbrmsd_ISAMAX(N, SX, INCX)
   implicit none
   integer, intent(in)  :: N
 !! number of elements in input vector(s)
-  integer, intent(in)  :: INCX
-!! storage spacing between elements of SX
+!!
   real(RK), intent(in) :: SX(*)
-!! SX is real array, dimension(1 + (N - 1)! ABS(INCX))
-! ..
+!! DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
+!!
+  integer, intent(in)  :: INCX
+!! storage spacing between elements of DX
+!!
   integer :: mobbrmsd_ISAMAX
-!
-! .. Local Scalars ..
+!! The index of the first element having maximum absolute value.
+!!
   real(RK) :: SMAX
   integer  :: I, IX
-! ..
-! .. Intrinsic Functions ..
   intrinsic :: ABS
-! ..
+!
   mobbrmsd_ISAMAX = 0
   if (N < 1 .or. INCX <= 0) return
   mobbrmsd_ISAMAX = 1

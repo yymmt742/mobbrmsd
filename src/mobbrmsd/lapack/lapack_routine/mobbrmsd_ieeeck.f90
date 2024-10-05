@@ -1,13 +1,7 @@
 !| mobbrmsd_IEEECK is called from the mobbrmsd_ILAENV to verify that Infinity and
 !  possibly NaN arithmetic is safe (i.e. will not trap).
 !
-!   RETURN VALUE:  INTEGER
-!
-!           = 0:  Arithmetic failed to produce the correct answers
-!
-!           = 1:  Arithmetic produced the correct answers
-!
-!  Reference IEEECK is provided by [netlib.org](http://www.netlib.org/lapack/).
+!  Reference IEEECK is provided by [netlib](http://www.netlib.org/lapack/).
 !
 !  -- LAPACK auxiliary routine --
 !
@@ -20,22 +14,26 @@
 pure elemental function mobbrmsd_IEEECK(ISPEC, ZERO, ONE)
   implicit none
   integer, intent(in)  :: ISPEC
-!!          SPecifies whether to test just for inifinity arithmetic
-!!          or whether to test for infinity and NaN arithmetic.
+!! SPecifies whether to test just for inifinity arithmetic
+!! or whether to test for infinity and NaN arithmetic.
 !!
-!!          = 0: Verify infinity arithmetic only.
+!! = 0: Verify infinity arithmetic only.
 !!
-!!          = 1: Verify infinity and NaN arithmetic.
+!! = 1: Verify infinity and NaN arithmetic.
 !!
   real(RK), intent(in) ::  ZERO
-!!          Must contain the value 0.0.
-!!          This is passed to prevent the compiler from optimizing
-!!          away this code.
+!! Must contain the value 0.0.
+!! This is passed to prevent the compiler from optimizing
+!! away this code.
   real(RK), intent(in) :: ONE
-!!          Must contain the value 1.0.
-!!          This is passed to prevent the compiler from optimizing
-!!          away this code.
+!! Must contain the value 1.0.
+!! This is passed to prevent the compiler from optimizing
+!! away this code.
   integer              :: mobbrmsd_IEEECK
+!! = 0:  Arithmetic failed to produce the correct answers
+!!
+!! = 1:  Arithmetic produced the correct answers
+!!
   real(RK) :: NAN1, NAN2, NAN3, NAN4, NAN5, NAN6, NEGINF, NEGZRO, NEWZRO, POSINF
 !
   mobbrmsd_IEEECK = 1

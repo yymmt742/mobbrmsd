@@ -1,201 +1,130 @@
-!> \brief \b mobbrmsd_DNRM2
+!| mobbrmsd_DNRM2 returns the euclidean norm of a vector via the function
+!  name, so that
 !
-!  =========== DOCUMENTATION ===========
+!  \( \text{mobbrmsd_DNRM2} := \sqrt{X X^{\top}} \)
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  COMPUTE THE SUM OF SQUARES IN 3 ACCUMULATORS:
 !
-!  Definition:
-!  ===========
+!      ABIG -- SUMS OF SQUARES SCALED DOWN TO AVOID OVERFLOW
+!      ASML -- SUMS OF SQUARES SCALED UP TO AVOID UNDERFLOW
+!      AMED -- SUMS OF SQUARES THAT DO NOT REQUIRE SCALING
 !
-!       DOUBLE PRECISION FUNCTION mobbrmsd_DNRM2(N,X,INCX)
+!  THE THRESHOLDS AND MULTIPLIERS ARE
 !
-!       .. Scalar Arguments ..
-!       INTEGER INCX,N
-!       ..
-!       .. Array Arguments ..
-!       DOUBLE PRECISION X(*)
-!       ..
+!      TBIG -- VALUES BIGGER THAN THIS ARE SCALED DOWN BY SBIG
+!      TSML -- VALUES SMALLER THAN THIS ARE SCALED UP BY SSML
 !
+!  See details
 !
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_DNRM2 returns the euclidean norm of a vector via the function
-!> name, so that
-!>
-!>    mobbrmsd_DNRM2 := sqrt( x'*x )
-!> \endverbatim
+!      Anderson E. (2017)
+!      Algorithm 978: Safe Scaling in the Level 1 BLAS
+!      [ACM Trans Math Softw 44:1--28](https://doi.org/10.1145/3061665),
 !
-!  Arguments:
-!  ==========
+!      Blue, James L. (1978)
+!      A Portable Fortran Program to Find the Euclidean Norm of a Vector
+!      [ACM Trans Math Softw 4:15--23](https://doi.org/10.1145/355769.355771)
 !
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>         number of elements in input vector(s)
-!> \endverbatim
-!>
-!> \param[in] X
-!> \verbatim
-!>          X is DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
-!> \endverbatim
-!>
-!> \param[in] INCX
-!> \verbatim
-!>          INCX is INTEGER, storage spacing between elements of X
-!>          If INCX > 0, X(1+(i-1)*INCX) = x(i) for 1 <= i <= n
-!>          If INCX < 0, X(1-(n-i)*INCX) = x(i) for 1 <= i <= n
-!>          If INCX = 0, x isn't a vector so there is no need to call
-!>          this subroutine.  If you call it anyway, it will count x(1)
-!>          in the vector norm N times.
-!> \endverbatim
+! > Reference DNRM2 is provided by [netlib.org](http://www.netlib.org/lapack/).
+! > Reference BLAS level1 routine (version 3.9.1)
+! > Reference BLAS is a software package provided by Univ. of Tennessee,
+! > Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd.
+! > March 2021
+! > Weslley Pereira, University of Colorado Denver, USA
+! > Edward Anderson, Lockheed Martin
 !
-!  Authors:
-!  ========
-!
-!> \author Edward Anderson, Lockheed Martin
-!
-!> \date August 2016
-!
-!> \ingroup single_blas_level1
-!
-!> \par Contributors:
-!  ==================
-!>
-!> Weslley Pereira, University of Colorado Denver, USA
-!
-!> \par Further Details:
-!  =====================
-!>
-!> \verbatim
-!>
-!>  Anderson E. (2017)
-!>  Algorithm 978: Safe Scaling in the Level 1 BLAS
-!>  ACM Trans Math Softw 44:1--28
-!>  https://doi.org/10.1145/3061665
-!>
-!>  Blue, James L. (1978)
-!>  A Portable Fortran Program to Find the Euclidean Norm of a Vector
-!>  ACM Trans Math Softw 4:15--23
-!>  https://doi.org/10.1145/355769.355771
-!>
-!> \endverbatim
-!>
-!  =====================================================================
-pure function mobbrmsd_DNRM2(n, x, incx)
-! use LA_CONSTANTS, only: RK => dp
-!  ..
-!  .. Scalar Arguments ..
-  integer, intent(in)  :: incx, n
-!  ..
-!  .. Array Arguments ..
-  real(RK), intent(in) :: x(*)
-!
+pure function mobbrmsd_DNRM2(N, X, INCX)
+  integer, intent(in)  :: N
+!!         number of elements in input vector(s)
+!!
+  real(RK), intent(in) :: X(*)
+!!          DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
+!!
+  integer, intent(in)  :: INCX
+!!          INCX is INTEGER, storage spacing between elements of X
+!!
+!!          If INCX > 0, X(1+(i-1)*INCX) = x(i) for 1 <= i <= n
+!!
+!!          If INCX < 0, X(1-(n-i)*INCX) = x(i) for 1 <= i <= n
+!!
+!!          If INCX = 0, x isn't a vector so there is no need to call
+!!          this subroutine.  If you call it anyway, it will count x(1)
+!!          in the vector norm N times.
+!!
   real(RK) :: mobbrmsd_DNRM2
-!
-!  -- Reference BLAS level1 routine (version 3.9.1) --
-!  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
-!  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
-!     March 2021
-!
-!  .. Constants ..
-! real(RK), parameter :: ZERO = 0.0_RK
-! real(RK), parameter :: ONE = 1.0_RK
+!! Euclidean norm, \( \sqrt{X X^{\top}} \).
+!!
   real(RK), parameter :: MAXN = HUGE(0.0_RK)
-!  ..
-!  .. Blue's scaling constants ..
-! real(RK), parameter :: TSML = real(RADIX(0._RK), RK)**CEILING( &
-!                      & (MINEXPONENT(0._RK) - 1) * 0.5_RK)
-! real(RK), parameter :: TBIG = real(RADIX(0._RK), RK)**FLOOR( &
-!                      & (MAXEXPONENT(0._RK) - DIGITS(0._RK) + 1) * 0.5_RK)
-! real(RK), parameter :: SSML = real(RADIX(0._RK), RK)**(-FLOOR( &
-!                      & (MINEXPONENT(0._RK) - DIGITS(0._RK)) * 0.5_RK))
-! real(RK), parameter :: SBIG = real(RADIX(0._RK), RK)**(-CEILING( &
-!                      & (MAXEXPONENT(0._RK) + DIGITS(0._RK) - 1) * 0.5_RK))
-!  ..
-!  .. Local Scalars ..
-  integer :: i, ix
-  logical :: notbig
-  real(RK) :: abig, amed, asml, ax, scl, sumsq, ymax, ymin
+  integer  :: I, IX
+  logical  :: NOTBIG
+  real(RK) :: ABIG, AMED, ASML, AX, SCL, SUMSQ, YMAX, YMIN
 !
-!  Quick return if possible
+!  QUICK RETURN IF POSSIBLE
 !
   mobbrmsd_DNRM2 = ZERO
-  if (n <= 0) return
+  if (N <= 0) return
 !
-  scl = ONE
-  sumsq = ZERO
+  SCL = ONE
+  SUMSQ = ZERO
 !
-!  Compute the sum of squares in 3 accumulators:
-!     abig -- sums of squares scaled down to avoid overflow
-!     asml -- sums of squares scaled up to avoid underflow
-!     amed -- sums of squares that do not require scaling
-!  The thresholds and multipliers are
-!     tbig -- values bigger than this are scaled down by sbig
-!     tsml -- values smaller than this are scaled up by ssml
-!
-  notbig = .true.
-  asml = zero
-  amed = zero
-  abig = zero
-  ix = 1
-  if (incx < 0) ix = 1 - (n - 1) * incx
-  do i = 1, n
-    ax = ABS(x(ix))
-    if (ax > tbig) then
-      abig = abig + (ax * sbig)**2
-      notbig = .false.
-    else if (ax < tsml) then
-      if (notbig) asml = asml + (ax * ssml)**2
+  NOTBIG = .true.
+  ASML = ZERO
+  AMED = ZERO
+  ABIG = ZERO
+  IX = 1
+  if (INCX < 0) IX = 1 - (N - 1) * INCX
+  do I = 1, N
+    AX = ABS(X(IX))
+    if (AX > TBIG) then
+      ABIG = ABIG + (AX * SBIG)**2
+      NOTBIG = .false.
+    else if (AX < TSML) then
+      if (NOTBIG) ASML = ASML + (AX * SSML)**2
     else
-      amed = amed + ax**2
+      AMED = AMED + AX**2
     end if
-    ix = ix + incx
+    IX = IX + INCX
   end do
 !
-!  Combine abig and amed or amed and asml if more than one
-!  accumulator was used.
+!  COMBINE ABIG AND AMED OR AMED AND ASML IF MORE THAN ONE
+!  ACCUMULATOR WAS USED.
 !
-  if (abig > zero) then
+  if (ABIG > ZERO) then
 !
-!     Combine abig and amed if abig > 0.
+!     COMBINE ABIG AND AMED IF ABIG > 0.
 !
-    if ((amed > zero) .or. (amed > maxN) .or. (amed /= amed)) then
-      abig = abig + (amed * sbig) * sbig
+    if ((AMED > ZERO) .or. (AMED > MAXN) .or. (AMED /= AMED)) then
+      ABIG = ABIG + (AMED * SBIG) * SBIG
     end if
-    scl = one / sbig
-    sumsq = abig
-  else if (asml > zero) then
+    SCL = ONE / SBIG
+    SUMSQ = ABIG
+  else if (ASML > ZERO) then
 !
-!     Combine amed and asml if asml > 0.
+!     COMBINE AMED AND ASML IF ASML > 0.
 !
-    if ((amed > zero) .or. (amed > maxN) .or. (amed /= amed)) then
-      amed = SQRT(amed)
-      asml = SQRT(asml) / ssml
-      if (asml > amed) then
-        ymin = amed
-        ymax = asml
+    if ((AMED > ZERO) .or. (AMED > MAXN) .or. (AMED /= AMED)) then
+      AMED = SQRT(AMED)
+      ASML = SQRT(ASML) / SSML
+      if (ASML > AMED) then
+        YMIN = AMED
+        YMAX = ASML
       else
-        ymin = asml
-        ymax = amed
+        YMIN = ASML
+        YMAX = AMED
       end if
-      scl = one
-      sumsq = ymax**2 * (one + (ymin / ymax)**2)
+      SCL = ONE
+      SUMSQ = YMAX**2 * (ONE + (YMIN / YMAX)**2)
     else
-      scl = one / ssml
-      sumsq = asml
+      SCL = ONE / SSML
+      SUMSQ = ASML
     end if
   else
 !
-!     Otherwise all values are mid-range
+!     OTHERWISE ALL VALUES ARE MID-RANGE
 !
-    scl = one
-    sumsq = amed
+    SCL = ONE
+    SUMSQ = AMED
   end if
-  mobbrmsd_DNRM2 = scl * SQRT(sumsq)
+  mobbrmsd_DNRM2 = SCL * SQRT(SUMSQ)
   return
-end function
+end
 

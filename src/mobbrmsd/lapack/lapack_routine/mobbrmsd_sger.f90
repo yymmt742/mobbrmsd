@@ -1,161 +1,68 @@
-!> \brief \b mobbrmsd_SGER
+!| mobbrmsd_SGER performs the rank 1 operation
 !
-!  =========== DOCUMENTATION ===========
+!  \[ A \gets \alpha x y ^ {\top} + A \],
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
-!
-!  Definition:
-!  ===========
-!
-!       SUBROUTINE mobbrmsd_SGER(M,N,ALPHA,X,INCX,Y,INCY,A,LDA)
-!
-!       .. Scalar Arguments ..
-!       REAL ALPHA
-!       INTEGER INCX,INCY,LDA,M,N
-!       ..
-!       .. Array Arguments ..
-!       REAL A(LDA,*),X(*),Y(*)
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SGER   performs the rank 1 operation
-!>
-!>    A := alpha*x*y**T + A,
-!>
-!> where alpha is a scalar, x is an m element vector, y is an n element
-!> vector and A is an m by n matrix.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>           On entry, M specifies the number of rows of the matrix A.
-!>           M must be at least zero.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>           On entry, N specifies the number of columns of the matrix A.
-!>           N must be at least zero.
-!> \endverbatim
-!>
-!> \param[in] ALPHA
-!> \verbatim
-!>          ALPHA is REAL
-!>           On entry, ALPHA specifies the scalar alpha.
-!> \endverbatim
-!>
-!> \param[in] X
-!> \verbatim
-!>          X is REAL array, dimension at least
-!>           ( 1 + ( m - 1 )*abs( INCX ) ).
-!>           Before entry, the incremented array X must contain the m
-!>           element vector x.
-!> \endverbatim
-!>
-!> \param[in] INCX
-!> \verbatim
-!>          INCX is INTEGER
-!>           On entry, INCX specifies the increment for the elements of
-!>           X. INCX must not be zero.
-!> \endverbatim
-!>
-!> \param[in] Y
-!> \verbatim
-!>          Y is REAL array, dimension at least
-!>           ( 1 + ( n - 1 )*abs( INCY ) ).
-!>           Before entry, the incremented array Y must contain the n
-!>           element vector y.
-!> \endverbatim
-!>
-!> \param[in] INCY
-!> \verbatim
-!>          INCY is INTEGER
-!>           On entry, INCY specifies the increment for the elements of
-!>           Y. INCY must not be zero.
-!> \endverbatim
-!>
-!> \param[in,out] A
-!> \verbatim
-!>          A is REAL array, dimension ( LDA, N )
-!>           Before entry, the leading m by n part of the array A must
-!>           contain the matrix of coefficients. On exit, A is
-!>           overwritten by the updated matrix.
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>           On entry, LDA specifies the first dimension of A as declared
-!>           in the calling (sub) program. LDA must be at least
-!>           max( 1, m ).
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \date December 2016
-!
-!> \ingroup single_blas_level2
-!
-!> \par Further Details:
-!  =====================
-!>
-!> \verbatim
-!>
-!>  Level 2 Blas routine.
-!>
-!>  -- Written on 22-October-1986.
-!>     Jack Dongarra, Argonne National Lab.
-!>     Jeremy Du Croz, Nag Central Office.
-!>     Sven Hammarling, Nag Central Office.
-!>     Richard Hanson, Sandia National Labs.
-!> \endverbatim
-!>
-!  =====================================================================
-pure subroutine mobbrmsd_SGER(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
+!  where \( \alpha \) is a scalar,  \( x \) is an  \( m \) element vector,
+!  \( y \) is an \( n \) element vector,
+!  and \( A \) is an \( m \) by \( n \) matrix.
 !
 !  -- Reference BLAS level2 routine (version 3.7.0) --
 !  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     December 2016
+!  -- Written on 22-October-1986.
+!     Jack Dongarra, Argonne National Lab.
+!     Jeremy Du Croz, Nag Central Office.
+!     Sven Hammarling, Nag Central Office.
+!     Richard Hanson, Sandia National Labs.
 !
-!     .. Scalar Arguments ..
+pure subroutine mobbrmsd_SGER(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
+  implicit none
+  integer, intent(in)     :: M
+!!           On entry, M specifies the number of rows of the matrix A.
+!!           M must be at least zero.
+!!
+  integer, intent(in)     :: N
+!!           On entry, N specifies the number of columns of the matrix A.
+!!           N must be at least zero.
+!!
   real(RK), intent(in)    :: ALPHA
-  integer, intent(in) :: INCX, INCY, LDA, M, N
-!..
-!..Array Arguments..
-  real(RK), intent(in)    :: X(*), Y(*)
+!!           On entry, ALPHA specifies the scalar alpha.
+!!
+  real(RK), intent(in)    :: X(*)
+!!          DOUBLE PRECISION array, dimension at least
+!!           ( 1 + ( m - 1 )*abs( INCX ) ).
+!!           Before entry, the incremented array X must contain the m
+!!           element vector x.
+!!
+  integer, intent(in)     :: INCX
+!!           On entry, INCX specifies the increment for the elements of
+!!           X. INCX must not be zero.
+!!
+  real(RK), intent(in)    :: Y(*)
+!!          DOUBLE PRECISION array, dimension at least
+!!           ( 1 + ( n - 1 )*abs( INCY ) ).
+!!           Before entry, the incremented array Y must contain the n
+!!           element vector y.
+!!
+  integer, intent(in)     :: INCY
+!!           On entry, INCY specifies the increment for the elements of
+!!           Y. INCY must not be zero.
+!!
+  integer, intent(in)     :: LDA
+!!           On entry, LDA specifies the first dimension of A as declared
+!!           in the calling (sub) program. LDA must be at least
+!!           max( 1, m ).
+!!
   real(RK), intent(inout) :: A(LDA, *)
-!..
-!
-!  =====================================================================
-!
-!..Parameters..
-! real(RK), parameter :: ZERO = 0.0E+0
-!..
-!..Local Scalars..
-  real(RK) :: TEMP
-  integer :: I, INFO, IX, J, JY, KX
-!..
-!..intrinsic Functions..
+!!           DOUBLE PRECISION array, dimension ( LDA, N )
+!!           Before entry, the leading m by n part of the array A must
+!!           contain the matrix of coefficients. On exit, A is
+!!           overwritten by the updated matrix.
+!!
+  real(RK)  :: TEMP
+  integer   :: I, INFO, IX, J, JY, KX
   intrinsic :: MAX
-!..
 !
 !Test the input parameters.
 !
@@ -176,12 +83,12 @@ pure subroutine mobbrmsd_SGER(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
     return
   end if
 !
-!Quick return if possible.
+! Quick return if possible.
 !
   if ((M == 0) .or. (N == 0) .or. (ALPHA == ZERO)) return
 !
-!Start the operations.In this version the elements of A are
-!accessed sequentially with one pass through A.
+! Start the operations.In this version the elements of A are
+! accessed sequentially with one pass through A.
 !
   if (INCY > 0) then
     JY = 1
@@ -216,9 +123,10 @@ pure subroutine mobbrmsd_SGER(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
       JY = JY + INCY
     end do
   end if
-  !
+!
   return
-  !
-  !end of mobbrmsd_SGER.
-  !
+!
+!end of mobbrmsd_SGER.
+!
 end
+
