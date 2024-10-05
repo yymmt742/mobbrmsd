@@ -1,17 +1,21 @@
 !| mobbrmsd_SLAMCH determines single precision machine parameters.
 !
 !  reference SLAMCH is provided by
-!  [](http://www.netlib.org/lapack/explore-html/)
+!  [netlib](http://www.netlib.org/lapack/explore-html/)
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+!
 !  \author Univ. of Tennessee
 !  \author Univ. of California Berkeley
 !  \author Univ. of Colorado Denver
 !  \author NAG Ltd.
 !  \date December 2016
 ! December 2016
+!
 pure elemental function mobbrmsd_SLAMCH(CMACH)
   implicit none
   character, intent(in) :: CMACH

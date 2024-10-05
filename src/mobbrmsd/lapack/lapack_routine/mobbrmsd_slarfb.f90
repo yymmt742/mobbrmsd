@@ -1,227 +1,137 @@
-!> \brief \b mobbrmsd_SLARFB applies a block reflector or its transpose to a general rectangular matrix.
+!| mobbrmsd_SLARFB applies a block reflector or its transpose to a general rectangular matrix.
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_SLARFB applies a real block reflector H or its transpose H**T to a
+!  real m by n matrix C, from either the left or the right.
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!   The shape of the matrix V and the storage of the vectors which define
+!   the H(i) is best illustrated by the following example with n = 5 and
+!   k = 3. The elements equal to 1 are not stored; the corresponding
+!   array elements are modified but restored on exit. The rest of the
+!   array is not used.
 !
-!> \htmlonly
-!> Download mobbrmsd_SLARFB + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slarfb.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slarfb.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/slarfb.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!   DIRECT = 'F' and STOREV = 'C':         DIRECT = 'F' and STOREV = 'R':
 !
-!  Definition:
-!  ===========
+!                V = (  1       )                 V = (  1 v1 v1 v1 v1 )
+!                    ( v1  1    )                     (     1 v2 v2 v2 )
+!                    ( v1 v2  1 )                     (        1 v3 v3 )
+!                    ( v1 v2 v3 )
+!                    ( v1 v2 v3 )
 !
-!       SUBROUTINE mobbrmsd_SLARFB( SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV,
-!                          T, LDT, C, LDC, WORK, LDWORK )
+!   DIRECT = 'B' and STOREV = 'C':         DIRECT = 'B' and STOREV = 'R':
 !
-!       .. Scalar Arguments ..
-!       CHARACTER          DIRECT, SIDE, STOREV, TRANS
-!       INTEGER            K, LDC, LDT, LDV, LDWORK, M, N
-!       ..
-!       .. Array Arguments ..
-!       REAL               C( LDC, * ), T( LDT, * ), V( LDV, * ),
-!      $                   WORK( LDWORK, * )
-!       ..
+!                V = ( v1 v2 v3 )                 V = ( v1 v1  1       )
+!                    ( v1 v2 v3 )                     ( v2 v2 v2  1    )
+!                    (  1 v2 v3 )                     ( v3 v3 v3 v3  1 )
+!                    (     1 v3 )
+!                    (        1 )
 !
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SLARFB applies a real block reflector H or its transpose H**T to a
-!> real m by n matrix C, from either the left or the right.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] SIDE
-!> \verbatim
-!>          SIDE is CHARACTER*1
-!>          = 'L': apply H or H**T from the Left
-!>          = 'R': apply H or H**T from the Right
-!> \endverbatim
-!>
-!> \param[in] TRANS
-!> \verbatim
-!>          TRANS is CHARACTER*1
-!>          = 'N': apply H (No transpose)
-!>          = 'T': apply H**T (Transpose)
-!> \endverbatim
-!>
-!> \param[in] DIRECT
-!> \verbatim
-!>          DIRECT is CHARACTER*1
-!>          Indicates how H is formed from a product of elementary
-!>          reflectors
-!>          = 'F': H = H(1) H(2) . . . H(k) (Forward)
-!>          = 'B': H = H(k) . . . H(2) H(1) (Backward)
-!> \endverbatim
-!>
-!> \param[in] STOREV
-!> \verbatim
-!>          STOREV is CHARACTER*1
-!>          Indicates how the vectors which define the elementary
-!>          reflectors are stored:
-!>          = 'C': Columnwise
-!>          = 'R': Rowwise
-!> \endverbatim
-!>
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>          The number of rows of the matrix C.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of columns of the matrix C.
-!> \endverbatim
-!>
-!> \param[in] K
-!> \verbatim
-!>          K is INTEGER
-!>          The order of the matrix T (= the number of elementary
-!>          reflectors whose product defines the block reflector).
-!>          If SIDE = 'L', M >= K >= 0;
-!>          if SIDE = 'R', N >= K >= 0.
-!> \endverbatim
-!>
-!> \param[in] V
-!> \verbatim
-!>          V is REAL array, dimension
-!>                                (LDV,K) if STOREV = 'C'
-!>                                (LDV,M) if STOREV = 'R' and SIDE = 'L'
-!>                                (LDV,N) if STOREV = 'R' and SIDE = 'R'
-!>          The matrix V. See Further Details.
-!> \endverbatim
-!>
-!> \param[in] LDV
-!> \verbatim
-!>          LDV is INTEGER
-!>          The leading dimension of the array V.
-!>          If STOREV = 'C' and SIDE = 'L', LDV >= max(1,M);
-!>          if STOREV = 'C' and SIDE = 'R', LDV >= max(1,N);
-!>          if STOREV = 'R', LDV >= K.
-!> \endverbatim
-!>
-!> \param[in] T
-!> \verbatim
-!>          T is REAL array, dimension (LDT,K)
-!>          The triangular k by k matrix T in the representation of the
-!>          block reflector.
-!> \endverbatim
-!>
-!> \param[in] LDT
-!> \verbatim
-!>          LDT is INTEGER
-!>          The leading dimension of the array T. LDT >= K.
-!> \endverbatim
-!>
-!> \param[in,out] C
-!> \verbatim
-!>          C is REAL array, dimension (LDC,N)
-!>          On entry, the m by n matrix C.
-!>          On exit, C is overwritten by H*C or H**T*C or C*H or C*H**T.
-!> \endverbatim
-!>
-!> \param[in] LDC
-!> \verbatim
-!>          LDC is INTEGER
-!>          The leading dimension of the array C. LDC >= max(1,M).
-!> \endverbatim
-!>
-!> \param[out] WORK
-!> \verbatim
-!>          WORK is REAL array, dimension (LDWORK,K)
-!> \endverbatim
-!>
-!> \param[in] LDWORK
-!> \verbatim
-!>          LDWORK is INTEGER
-!>          The leading dimension of the array WORK.
-!>          If SIDE = 'L', LDWORK >= max(1,N);
-!>          if SIDE = 'R', LDWORK >= max(1,M).
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \date June 2013
-!
-!> \ingroup realOTHERauxiliary
-!
-!> \par Further Details:
-!  =====================
-!>
-!> \verbatim
-!>
-!>  The shape of the matrix V and the storage of the vectors which define
-!>  the H(i) is best illustrated by the following example with n = 5 and
-!>  k = 3. The elements equal to 1 are not stored; the corresponding
-!>  array elements are modified but restored on exit. The rest of the
-!>  array is not used.
-!>
-!>  DIRECT = 'F' and STOREV = 'C':         DIRECT = 'F' and STOREV = 'R':
-!>
-!>               V = (  1       )                 V = (  1 v1 v1 v1 v1 )
-!>                   ( v1  1    )                     (     1 v2 v2 v2 )
-!>                   ( v1 v2  1 )                     (        1 v3 v3 )
-!>                   ( v1 v2 v3 )
-!>                   ( v1 v2 v3 )
-!>
-!>  DIRECT = 'B' and STOREV = 'C':         DIRECT = 'B' and STOREV = 'R':
-!>
-!>               V = ( v1 v2 v3 )                 V = ( v1 v1  1       )
-!>                   ( v1 v2 v3 )                     ( v2 v2 v2  1    )
-!>                   (  1 v2 v3 )                     ( v3 v3 v3 v3  1 )
-!>                   (     1 v3 )
-!>                   (        1 )
-!> \endverbatim
-!>
-!  =====================================================================
-pure subroutine mobbrmsd_SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
-     &                   T, LDT, C, LDC, WORK, LDWORK)
-  implicit none
+!  Reference SLARFB is provided by [netlib.org](http://www.netlib.org/lapack/).
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     June 2013
 !
-!     .. Scalar Arguments ..
-  character, intent(in) :: DIRECT, SIDE, STOREV, TRANS
-  integer, intent(in)   :: K, LDC, LDT, LDV, LDWORK, M, N
-!     ..
-!     .. Array Arguments ..
-  real(RK), intent(inout) :: C(LDC, *)
-  real(RK), intent(in)    :: T(LDT, *), V(LDV, *)
-  real(RK), intent(out)   :: WORK(LDWORK, *)
-!     ..
+!  -- LAPACK auxiliary routine --
 !
-!  =====================================================================
+pure subroutine mobbrmsd_SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
+     &                          T, LDT, C, LDC, WORK, LDWORK)
+  implicit none
+  character, intent(in)    :: SIDE
+!!          = 'L': apply H or H**T from the Left
+!!
+!!          = 'R': apply H or H**T from the Right
+!!
+  character, intent(in)    :: TRANS
+!!          = 'N': apply H (No transpose)
+!!
+!!          = 'T': apply H**T (Transpose)
+!!
+  character, intent(in)    :: DIRECT
+!!          Indicates how H is formed from a product of elementary
+!!          reflectors
+!!
+!!          = 'F': H = H(1) H(2) . . . H(k) (Forward)
+!!
+!!          = 'B': H = H(k) . . . H(2) H(1) (Backward)
+!!
+  character, intent(in)    :: STOREV
+!!          Indicates how the vectors which define the elementary
+!!          reflectors are stored:
+!!
+!!          = 'C': Columnwise
+!!
+!!          = 'R': Rowwise
+!!
+  integer, intent(in)      :: M
+!!          The number of rows of the matrix C.
+!!
+  integer, intent(in)      :: N
+!!          The number of columns of the matrix C.
+!!
+  integer, intent(in)      :: K
+!!          The order of the matrix T (= the number of elementary
+!!          reflectors whose product defines the block reflector).
+!!
+!!          If SIDE = 'L', M >= K >= 0.
+!!
+!!          If SIDE = 'R', N >= K >= 0.
+!!
+  integer, intent(in)      :: LDV
+!!          The leading dimension of the array V.
+!!
+!!          If STOREV = 'C' and SIDE = 'L', LDV >= max(1,M).
+!!
+!!          if STOREV = 'C' and SIDE = 'R', LDV >= max(1,N).
+!!
+!!          if STOREV = 'R', LDV >= K.
+!!
+  real(RK), intent(in)     :: V(LDV, *)
+!!          V is real(RK)           :: array, dimension
+!!
+!!          The matrix V. See Further Details.
+!!
+!!                                (LDV,K) if STOREV = 'C'
+!!
+!!                                (LDV,M) if STOREV = 'R' and SIDE = 'L'
+!!
+!!                                (LDV,N) if STOREV = 'R' and SIDE = 'R'
+!!
+  integer, intent(in)      :: LDT
+!!          The leading dimension of the array T. LDT >= K.
+!!
+  real(RK), intent(in)     :: T(LDT, *)
+!!          T is real(RK)           :: array, dimension (LDT,K)
+!!
+!!          The triangular k by k matrix T in the representation of the
+!!          block reflector.
+!!
+  integer, intent(in)      :: LDC
+!!          The leading dimension of the array C. LDC >= max(1,M).
+!!
+  real(RK), intent(inout)  :: C(LDC, *)
+!!          C is real(RK)           :: array, dimension (LDC,N)
+!!
+!!          On entry, the m by n matrix C.
+!!
+!!          On exit, C is overwritten by H*C or H**T*C or C*H or C*H**T.
+!!
+  integer, intent(in)      :: LDWORK
+!!          The leading dimension of the array WORK.
+!!
+!!          If SIDE = 'L', LDWORK >= max(1,N);
+!!
+!!          if SIDE = 'R', LDWORK >= max(1,M).
+!!
+  real(RK), intent(out)    :: WORK(LDWORK, *)
+!!          WORK is real(RK)           :: array, dimension (LDWORK,K)
+!!
 !     ..
-!     .. Local Scalars ..
   character :: TRANST
   integer   :: I, J
-!
-!     .. Parameters ..
 ! real(RK), parameter :: ONE = 1.0E+0
-!..
 ! interface
 ! .. External Functions ..
 !   include 'lsame.h'
@@ -230,10 +140,8 @@ pure subroutine mobbrmsd_SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !   include 'sgemm.h'
 !   include 'strmm.h'
 ! end interface
-!     ..
-!     .. Executable Statements ..
 !
-!     Quick return if possible
+! Quick return if possible
 !
   if (M <= 0 .or. N <= 0) return
 !
@@ -300,10 +208,8 @@ pure subroutine mobbrmsd_SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
 !              C1 := C1 - W**T
 !
-        do J = 1, K
-          do I = 1, N
-            C(J, I) = C(J, I) - WORK(I, J)
-          end do
+        do concurrent(I=1:N, J=1:K)
+          C(J, I) = C(J, I) - WORK(I, J)
         end do
 !
       else if (mobbrmsd_LSAME(SIDE, 'R')) then
@@ -354,10 +260,8 @@ pure subroutine mobbrmsd_SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
 !              C1 := C1 - W
 !
-        do J = 1, K
-          do I = 1, M
-            C(I, J) = C(I, J) - WORK(I, J)
-          end do
+        do concurrent(I=1:M, J=1:K)
+          C(I, J) = C(I, J) - WORK(I, J)
         end do
       end if
 !
@@ -414,10 +318,8 @@ pure subroutine mobbrmsd_SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
 !              C2 := C2 - W**T
 !
-        do J = 1, K
-          do I = 1, N
-            C(M - K + J, I) = C(M - K + J, I) - WORK(I, J)
-          end do
+        do concurrent(I=1:N, J=1:K)
+          C(M - K + J, I) = C(M - K + J, I) - WORK(I, J)
         end do
 !
       else if (mobbrmsd_LSAME(SIDE, 'R')) then
@@ -466,10 +368,8 @@ pure subroutine mobbrmsd_SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
 !              C2 := C2 - W
 !
-        do J = 1, K
-          do I = 1, M
-            C(I, N - K + J) = C(I, N - K + J) - WORK(I, J)
-          end do
+        do concurrent(I=1:M, J=1:K)
+          C(I, N - K + J) = C(I, N - K + J) - WORK(I, J)
         end do
       end if
     end if
@@ -530,10 +430,8 @@ pure subroutine mobbrmsd_SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
 !              C1 := C1 - W**T
 !
-        do J = 1, K
-          do I = 1, N
-            C(J, I) = C(J, I) - WORK(I, J)
-          end do
+        do concurrent(I=1:N, J=1:K)
+          C(J, I) = C(J, I) - WORK(I, J)
         end do
 !
       else if (mobbrmsd_LSAME(SIDE, 'R')) then
@@ -580,14 +478,12 @@ pure subroutine mobbrmsd_SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !              W := W * V1
 !
         call mobbrmsd_STRMM('Right', 'Upper', 'No transpose', 'Unit', M, &
-&                     K, ONE, V, LDV, WORK, LDWORK)
+            &               K, ONE, V, LDV, WORK, LDWORK)
 !
 !              C1 := C1 - W
 !
-        do J = 1, K
-          do I = 1, M
-            C(I, J) = C(I, J) - WORK(I, J)
-          end do
+        do concurrent(I=1:M, J=1:K)
+          C(I, J) = C(I, J) - WORK(I, J)
         end do
 !
       end if
@@ -644,10 +540,8 @@ pure subroutine mobbrmsd_SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
 !              C2 := C2 - W**T
 !
-        do J = 1, K
-          do I = 1, N
-            C(M - K + J, I) = C(M - K + J, I) - WORK(I, J)
-          end do
+        do concurrent(I=1:N, J=1:K)
+          C(M - K + J, I) = C(M - K + J, I) - WORK(I, J)
         end do
 !
       else if (mobbrmsd_LSAME(SIDE, 'R')) then
@@ -696,10 +590,8 @@ pure subroutine mobbrmsd_SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !
 !              C1 := C1 - W
 !
-        do J = 1, K
-          do I = 1, M
-            C(I, N - K + J) = C(I, N - K + J) - WORK(I, J)
-          end do
+        do concurrent(I=1:M, J=1:K)
+          C(I, N - K + J) = C(I, N - K + J) - WORK(I, J)
         end do
       end if
     end if
@@ -710,3 +602,4 @@ pure subroutine mobbrmsd_SLARFB(SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV, &
 !     End of mobbrmsd_SLARFB
 !
 end
+

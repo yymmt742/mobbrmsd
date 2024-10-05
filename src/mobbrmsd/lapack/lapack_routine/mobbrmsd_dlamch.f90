@@ -1,71 +1,71 @@
-pure elemental function mobbrmsd_DLAMCH(CMACH)
-! use LA_CONSTANTS, only: wp => DP, ONE=>DONE, ZERO=>DZERO, EPS => ULP
+!| mobbrmsd_DLAMCH determines double precision machine parameters.
+!  Assume rounding, not chopping. Always.
 !
 !  -- LAPACK auxiliary routine (version 3.3.0) --
+!
+!  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     Based on LAPACK mobbrmsd_DLAMCH but with Fortran 95 query functions
-!     See: http://www.cs.utk.edu/~luszczek/lapack/lamch.html
-!     and  http://www.netlib.org/lapack-dev/lapack-coding/program-style.html#id2537289
+!     See [documentation](http://www.cs.utk.edu/~luszczek/lapack/lamch.html)
+!     and [netlib](http://www.netlib.org/lapack-dev/lapack-coding/program-style.html#id2537289).
 !     July 2010
 !
-!     .. Scalar Arguments ..
-  character(*), intent(in) :: CMACH
+pure elemental function mobbrmsd_DLAMCH(CMACH)
+  character, intent(in) :: CMACH
+!!          Specifies the value to be returned by mobbrmsd_DLAMCH:
+!1
+!!          = 'E' or 'e',   mobbrmsd_DLAMCH := eps
+!1
+!!          = 'S' or 's ,   mobbrmsd_DLAMCH := sfmin
+!1
+!!          = 'B' or 'b',   mobbrmsd_DLAMCH := base
+!1
+!!          = 'P' or 'p',   mobbrmsd_DLAMCH := eps!base
+!1
+!!          = 'N' or 'n',   mobbrmsd_DLAMCH := t
+!1
+!!          = 'R' or 'r',   mobbrmsd_DLAMCH := rnd
+!1
+!!          = 'M' or 'm',   mobbrmsd_DLAMCH := emin
+!1
+!!          = 'U' or 'u',   mobbrmsd_DLAMCH := rmin
+!1
+!!          = 'L' or 'l',   mobbrmsd_DLAMCH := emax
+!1
+!!          = 'O' or 'o',   mobbrmsd_DLAMCH := rmax
+!!
+!!          where
+!!
+!!          eps   = relative machine precision
+!1
+!!          sfmin = safe minimum, such that 1/sfmin does not overflow
+!1
+!!          base  = base of the machine
+!1
+!!          prec  = eps!base
+!1
+!!          t     = number of (base) digits in the mantissa
+!1
+!!          rnd   = 1.0 when rounding occurs in addition, 0.0 otherwise
+!1
+!!          emin  = minimum exponent before (gradual) underflow
+!1
+!!          rmin  = underflow threshold - base!!(emin-1)
+!1
+!!          emax  = largest exponent before overflow
+!1
+!!          rmax  = overflow threshold  - (base!!emax)!(1-eps)
+!1
   real(RK)                 :: mobbrmsd_DLAMCH
-!     ..
 !
-!  Purpose
-!  =======
-!
-!  mobbrmsd_DLAMCH determines double precision machine parameters.
-!
-!  Arguments
-!  =========
-!
-!  CMACH   (input) CHARACTER!1
-!          Specifies the value to be returned by mobbrmsd_DLAMCH:
-!          = 'E' or 'e',   mobbrmsd_DLAMCH := eps
-!          = 'S' or 's ,   mobbrmsd_DLAMCH := sfmin
-!          = 'B' or 'b',   mobbrmsd_DLAMCH := base
-!          = 'P' or 'p',   mobbrmsd_DLAMCH := eps!base
-!          = 'N' or 'n',   mobbrmsd_DLAMCH := t
-!          = 'R' or 'r',   mobbrmsd_DLAMCH := rnd
-!          = 'M' or 'm',   mobbrmsd_DLAMCH := emin
-!          = 'U' or 'u',   mobbrmsd_DLAMCH := rmin
-!          = 'L' or 'l',   mobbrmsd_DLAMCH := emax
-!          = 'O' or 'o',   mobbrmsd_DLAMCH := rmax
-!
-!          where
-!
-!          eps   = relative machine precision
-!          sfmin = safe minimum, such that 1/sfmin does not overflow
-!          base  = base of the machine
-!          prec  = eps!base
-!          t     = number of (base) digits in the mantissa
-!          rnd   = 1.0 when rounding occurs in addition, 0.0 otherwise
-!          emin  = minimum exponent before (gradual) underflow
-!          rmin  = underflow threshold - base!!(emin-1)
-!          emax  = largest exponent before overflow
-!          rmax  = overflow threshold  - (base!!emax)!(1-eps)
-!
-! =====================================================================
-!     ..
-!     .. Local Scalars ..
   real(RK) :: RND, SFMIN, SMALL, RMACH
-!     ..
-!     .. External Functions ..
+  intrinsic :: DIGITS, EPSILON, HUGE, MAXEXPONENT, MINEXPONENT, RADIX, TINY
 ! interface
 !   include 'lsame.h'
 ! end interface
-!     ..
-!     .. Intrinsic Functions ..
-  intrinsic :: DIGITS, EPSILON, HUGE, MAXEXPONENT, &
- &             MINEXPONENT, RADIX, TINY
-!     ..
-!     .. Executable Statements ..
-!
-!
-!     Assume rounding, not chopping. Always.
 !
   RND = ONE
 !
@@ -114,44 +114,4 @@ pure elemental function mobbrmsd_DLAMCH(CMACH)
 !     End of mobbrmsd_DLAMCH
 !
 end function mobbrmsd_DLAMCH
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-pure elemental function DLAMC3(A, B)
-! use LA_CONSTANTS, only: wp => DP
-!
-!  -- LAPACK auxiliary routine (version 3.3.0) --
-!     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
-!     November 2010
-!
-!     .. Scalar Arguments ..
-  real(RK), intent(in) :: A, B
-  real(RK)             :: DLAMC3
-!     ..
-!
-!  Purpose
-!  =======
-!
-!  DLAMC3  is intended to force  A  and  B  to be stored prior to doing
-!  the addition of  A  and  B ,  for use in situations where optimizers
-!  might hold one of these in a register.
-!
-!  Arguments
-!  =========
-!
-!  A       (input) DOUBLE PRECISION
-!  B       (input) DOUBLE PRECISION
-!          The values A and B.
-!
-! =====================================================================
-!
-!     .. Executable Statements ..
-!
-  DLAMC3 = A + B
-!
-  return
-!
-!     End of DLAMC3
-!
-end function DLAMC3
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+

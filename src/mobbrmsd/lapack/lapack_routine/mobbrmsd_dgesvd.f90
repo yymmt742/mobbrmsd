@@ -23,7 +23,6 @@
 !
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     April 2012
-!     \date April 2012
 !
 pure subroutine mobbrmsd_DGESVD(JOBU, JOBVT, M, N, A, LDA, S, U, LDU, &
     &                           VT, LDVT, WORK, LWORK, INFO)

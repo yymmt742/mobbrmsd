@@ -62,8 +62,6 @@ pure subroutine mobbrmsd_DGELQ2(M, N, A, LDA, TAU, WORK, INFO)
 !   include 'dlarfg.h'
 !   !include 'xerbla.h'
 ! end interface
-!     ..
-!     .. Executable Statements ..
 !
 !     Test the input arguments
 !
@@ -102,3 +100,4 @@ pure subroutine mobbrmsd_DGELQ2(M, N, A, LDA, TAU, WORK, INFO)
 !     End of mobbrmsd_DGELQ2
 !
 end subroutine mobbrmsd_DGELQ2
+
