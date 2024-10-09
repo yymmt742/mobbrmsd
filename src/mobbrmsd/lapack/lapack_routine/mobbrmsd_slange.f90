@@ -1,104 +1,69 @@
-!> \brief \b
+!| mobbrmsd_SLANGE returns the value of the 1-norm, Frobenius norm,
+!  infinity-norm, or the largest absolute value of
+!  any element of a general rectangular matrix.
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_SLANGE returns the value of the one norm,
+!  or the Frobenius norm, or the  infinity norm,
+!  or the  element of  largest absolute value  of a
+!  real matrix \( A \).
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  \[
+!    RES =
+!    \left \{
+!      \begin{array}{}
+!        \max( \lvert A _ {i,j} \rvert ) & \text{if NORM} = \text{'M' or 'm'} \\
+!        \text{norm1}( A )               & \text{if NORM} = \text{'1', 'O' or 'o'} \\
+!        \text{normI}( A )               & \text{if NORM} = \text{'I' or 'i'} \\
+!        \text{normF}( A )               & \text{if NORM} = \text{'F', 'f', 'E' or 'e'} \\
+!      \end{array}
+!    \right .
+!  \]
 !
-!> \htmlonly
-!> Download mobbrmsd_SLANGE + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slange.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slange.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/slange.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!  where  norm1  denotes the  one norm of a matrix (maximum column sum),
+!  normI  denotes the  infinity norm  of a matrix  (maximum row sum) and
+!  normF  denotes the  Frobenius norm of a matrix (square root of sum of
+!  squares).  Note that  max(abs(A(i,j)))  is not a consistent matrix norm.
 !
-!  Definition:
-!  ===========
+!  -- LAPACK auxiliary routine --
 !
-!       REAL             FUNCTION mobbrmsd_SLANGE( NORM, M, N, A, LDA, WORK )
+!  -- LAPACK is a software package provided by Univ. of Tennessee,    --
 !
-!       .. Scalar Arguments ..
-!       CHARACTER          NORM
-!       INTEGER            LDA, M, N
-!       ..
-!       .. Array Arguments ..
-!       REAL               A( LDA, * ), WORK( * )
-!       ..
+!  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!| mobbrmsd_SLANGE returns the value of the 1-norm, Frobenius norm, infinity-norm, or the largest absolute valie of any element of a general rectangular matrix.
-! mobbrmsd_SLANGE  returns the value of the one norm,  or the Frobenius norm, or
-! the infinity norm,  or the  element of  largest absolute value  of a
-! real matrix A.
-!
-! \return mobbrmsd_SLANGE
-! \verbatim
-!
-!    mobbrmsd_SLANGE = ( max(abs(A(i,j))), NORM = 'M' or 'm'
-!             (
-!             ( norm1(A),         NORM = '1', 'O' or 'o'
-!             (
-!             ( normI(A),         NORM = 'I' or 'i'
-!             (
-!             ( normF(A),         NORM = 'F', 'f', 'E' or 'e'
-!
-! where  norm1  denotes the  one norm of a matrix (maximum column sum),
-! normI  denotes the  infinity norm  of a matrix  (maximum row sum) and
-! normF  denotes the  Frobenius norm of a matrix (square root of sum of
-! squares).  Note that  max(abs(A(i,j)))  is not a consistent matrix norm.
-!
-!  reference SLANGE is provided by http://www.netlib.org/lapack/explore-html/
-!  \author Univ. of Tennessee
-!  \author Univ. of California Berkeley
-!  \author Univ. of Colorado Denver
-!  \author NAG Ltd.
-!  \date December 2016
 pure subroutine mobbrmsd_SLANGE(NORM, M, N, A, LDA, RES, WORK)
-!
-  implicit none
-!..Scalar Arguments..
-  character, intent(in) :: NORM
-!!          Specifies the value to be returned in mobbrmsd_SLANGE as described
-!!          above.
-  integer, intent(in)   :: M
-!!          The number of rows of the matrix A.  M >= 0.  When M = 0,
-!!          mobbrmsd_SLANGE is set to zero.
-  integer, intent(in)   :: N
-!!          The number of columns of the matrix A.  N >= 0.  When N = 0,
-!!          mobbrmsd_SLANGE is set to zero.
-  integer, intent(in)   :: LDA
-!!          The leading dimension of the array A.  LDA >= max(M,1).
-  real(RK), intent(inout) :: A(LDA, *)
-!!          A is REAL array, dimension (LDA,N)
-!!          The m by n matrix A.
-  real(RK), intent(out)   :: RES
-!!          Return value.
-  real(RK), intent(out)   :: WORK(*)
-!!          WORK is REAL array, dimension (MAX(1,LWORK)),
-!!          where LWORK >= M when NORM = 'I'; otherwise, WORK is not
-!!          referenced.
-! =====================================================================
-!..
+  character, intent(in)    :: NORM
+!!   Specifies the value to be returned in mobbrmsd_DLANGE as described
+!!   above.
+!!
+  integer, intent(in)      :: M
+!!   The number of rows of the matrix A.  M >= 0.  When M = 0,
+!!   mobbrmsd_DLANGE is set to zero.
+!!
+  integer, intent(in)      :: N
+!!   The number of columns of the matrix A.  N >= 0.  When N = 0,
+!!   mobbrmsd_DLANGE is set to zero.
+!!
+  integer, intent(in)      :: LDA
+!!   The leading dimension of the array A.  LDA >= max(M,1).
+!!
+  real(RK), intent(inout)  :: A(LDA, *)
+!!   DOUBLE PRECISION array, dimension (LDA,N)
+!!   The m by n matrix A.
+!!
+  real(RK), intent(out)    :: RES
+!!   Return value
+!!
+  real(RK), intent(out)    :: WORK(*)
+!!   WORK is DOUBLE PRECISION array, dimension (MAX(1,LWORK)),
+!!   where LWORK >= M when NORM = 'I'; otherwise, WORK is not
+!!   referenced.
+!!
   integer   :: I, J
   real(RK)  :: TEMP
   intrinsic :: ABS, MIN, SQRT
-!
-!..Parameters..
-! real(RK), parameter :: ONE = 1.0E+0, ZERO = 0.0E+0
-!..
 ! interface
-! .. External Functions ..
 !   include 'lsame.h'
 !   include 'sisnan.h'
-! .. External Subroutines ..
 !   include 'slassq.h'
 !   include 'scombssq.h'
 ! end interface
@@ -170,7 +135,7 @@ pure subroutine mobbrmsd_SLANGE(NORM, M, N, A, LDA, RES, WORK)
 !
   return
 !
-!end of mobbrmsd_SLANGE
+! end of mobbrmsd_SLANGE
 !
 end
 

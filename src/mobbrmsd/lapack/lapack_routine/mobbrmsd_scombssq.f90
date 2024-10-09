@@ -1,83 +1,29 @@
-!> \brief \b mobbrmsd_SCOMBSSQ adds two scaled sum of squares quantities
+!| mobbrmsd_SCOMBSSQ adds two scaled sum of squares quantities, V1 := V1 + V2.
+!  That is,
 !
-!  =========== DOCUMENTATION ===========
+!     V1_scale**2 * V1_sumsq := V1_scale**2 * V1_sumsq
+!                             + V2_scale**2 * V2_sumsq
 !
-! Online html documentation available at
-!        http://www.netlib.org/lapack/explore-html/
-!
-!
-!  Definition:
-!  ===========
-!
-!   SUBROUTINE mobbrmsd_SCOMBSSQ( V1, V2 )
-!
-!   .. Array Arguments ..
-!   REAL               V1( 2 ), V2( 2 )
-!   ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SCOMBSSQ adds two scaled sum of squares quantities, V1 := V1 + V2.
-!> That is,
-!>
-!>    V1_scale!!2 ! V1_sumsq := V1_scale!!2 ! V1_sumsq
-!>                            + V2_scale!!2 ! V2_sumsq
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in,out] V1
-!> \verbatim
-!>          V1 is REAL array, dimension (2).
-!>          The first scaled sum.
-!>          V1(1) = V1_scale, V1(2) = V1_sumsq.
-!> \endverbatim
-!>
-!> \param[in] V2
-!> \verbatim
-!>          V2 is REAL array, dimension (2).
-!>          The second scaled sum.
-!>          V2(1) = V2_scale, V2(2) = V2_sumsq.
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \date November 2018
-!
-!> \ingroup OTHERauxiliary
-!
-!  =====================================================================
-pure subroutine mobbrmsd_SCOMBSSQ(V1, V2)
-  implicit none
+!  Reference SCOMBSSQ is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
-! November 2018
+!     November 2018
 !
-! .. Array Arguments ..
+pure subroutine mobbrmsd_SCOMBSSQ(V1, V2)
+  implicit none
   real, intent(inout) :: V1(2)
+!!  REAL array, dimension (2).
+!!  The first scaled sum.
+!!  V1(1) = V1_scale, V1(2) = V1_sumsq.
+!!
   real, intent(in)    :: V2(2)
-! ..
-!
-! =====================================================================
-!
-! .. Parameters ..
-  real ZERO
-  parameter(ZERO=0.0E+0)
-! ..
-! .. Executable Statements ..
+!!  REAL array, dimension (2).
+!!  The second scaled sum.
+!!  V2(1) = V2_scale, V2(2) = V2_sumsq.
 !
   if (V1(1) >= V2(1)) then
     if (V1(1) /= ZERO) then
@@ -94,3 +40,4 @@ pure subroutine mobbrmsd_SCOMBSSQ(V1, V2)
 ! End of mobbrmsd_SCOMBSSQ
 !
 end
+

@@ -1,151 +1,94 @@
-!> \brief \b mobbrmsd_DLASSQ updates a sum of squares represented in scaled form.
+!| mobbrmsd_DLASSQ updates a sum of squares represented in scaled form.
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_DLASSQ  returns the values  scl  and  smsq  such that
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!    ( scl**2 )*smsq = x( 1 )**2 +...+ x( n )**2 + ( scale**2 )*sumsq,
 !
-!> \htmlonly
-!> Download mobbrmsd_DLASSQ + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlassq.f90">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlassq.f90">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/dlassq.f90">
-!> [TXT]</a>
-!> \endhtmlonly
+!  where  x( i ) = X( 1 + ( i - 1 )*INCX ). The value of  sumsq  is
+!  assumed to be non-negative.
 !
-!  Definition:
-!  ===========
+!  scale and sumsq must be supplied in SCALE and SUMSQ and
+!  scl and smsq are overwritten on SCALE and SUMSQ respectively.
 !
-!       SUBROUTINE mobbrmsd_DLASSQ( N, X, INCX, SCALE, SUMSQ )
+!  If scale * sqrt( sumsq ) > tbig then
 !
-!       .. Scalar Arguments ..
-!       INTEGER            INCX, N
-!       DOUBLE PRECISION   SCALE, SUMSQ
-!       ..
-!       .. Array Arguments ..
-!       DOUBLE PRECISION   X( * )
-!       ..
+!     we require:   scale >= sqrt( TINY*EPS ) / sbig   on entry,
 !
+!  and if 0 < scale * sqrt( sumsq ) < tsml then
 !
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_DLASSQ  returns the values  scl  and  smsq  such that
-!>
-!>    ( scl**2 )*smsq = x( 1 )**2 +...+ x( n )**2 + ( scale**2 )*sumsq,
-!>
-!> where  x( i ) = X( 1 + ( i - 1 )*INCX ). The value of  sumsq  is
-!> assumed to be non-negative.
-!>
-!> scale and sumsq must be supplied in SCALE and SUMSQ and
-!> scl and smsq are overwritten on SCALE and SUMSQ respectively.
-!>
-!> If scale * sqrt( sumsq ) > tbig then
-!>    we require:   scale >= sqrt( TINY*EPS ) / sbig   on entry,
-!> and if 0 < scale * sqrt( sumsq ) < tsml then
-!>    we require:   scale <= sqrt( HUGE ) / ssml       on entry,
-!> where
-!>    tbig -- upper threshold for values whose square is representable;
-!>    sbig -- scaling constant for big numbers; \see la_constants.f90
-!>    tsml -- lower threshold for values whose square is representable;
-!>    ssml -- scaling constant for small numbers; \see la_constants.f90
-!> and
-!>    TINY*EPS -- tiniest representable number;
-!>    HUGE     -- biggest representable number.
-!>
-!> \endverbatim
+!     we require:   scale <= sqrt( HUGE ) / ssml       on entry,
 !
-!  Arguments:
-!  ==========
+!  where
 !
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of elements to be used from the vector x.
-!> \endverbatim
-!>
-!> \param[in] X
-!> \verbatim
-!>          X is DOUBLE PRECISION array, dimension (1+(N-1)*abs(INCX))
-!>          The vector for which a scaled sum of squares is computed.
-!>             x( i )  = X( 1 + ( i - 1 )*INCX ), 1 <= i <= n.
-!> \endverbatim
-!>
-!> \param[in] INCX
-!> \verbatim
-!>          INCX is INTEGER
-!>          The increment between successive values of the vector x.
-!>          If INCX > 0, X(1+(i-1)*INCX) = x(i) for 1 <= i <= n
-!>          If INCX < 0, X(1-(n-i)*INCX) = x(i) for 1 <= i <= n
-!>          If INCX = 0, x isn't a vector so there is no need to call
-!>          this subroutine.  If you call it anyway, it will count x(1)
-!>          in the vector norm N times.
-!> \endverbatim
-!>
-!> \param[in,out] SCALE
-!> \verbatim
-!>          SCALE is DOUBLE PRECISION
-!>          On entry, the value  scale  in the equation above.
-!>          On exit, SCALE is overwritten with  scl , the scaling factor
-!>          for the sum of squares.
-!> \endverbatim
-!>
-!> \param[in,out] SUMSQ
-!> \verbatim
-!>          SUMSQ is DOUBLE PRECISION
-!>          On entry, the value  sumsq  in the equation above.
-!>          On exit, SUMSQ is overwritten with  smsq , the basic sum of
-!>          squares from which  scl  has been factored out.
-!> \endverbatim
+!     tbig -- upper threshold for values whose square is representable;
 !
-!  Authors:
-!  ========
+!     sbig -- scaling constant for big numbers; \see la_constants.f90
 !
-!> \author Edward Anderson, Lockheed Martin
+!     tsml -- lower threshold for values whose square is representable;
 !
-!> \par Contributors:
-!  ==================
-!>
-!> Weslley Pereira, University of Colorado Denver, USA
-!> Nick Papior, Technical University of Denmark, DK
+!     ssml -- scaling constant for small numbers; \see la_constants.f90
 !
-!> \par Further Details:
-!  =====================
-!>
-!  -- LAPACK auxiliary routine --
-!  -- LAPACK is a software package provided by Univ. of Tennessee,    --
-!  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+!  and
+!
+!     TINY*EPS -- tiniest representable number;
+!
+!     HUGE     -- biggest representable number.
 !
 !   Anderson E. (2017)
 !   Algorithm 978: Safe Scaling in the Level 1 BLAS
-!   ACM Trans Math Softw 44:1--28
-!   [](https://doi.org/10.1145/3061665)
+!   [ACM Trans Math Softw 44:1--28](https://doi.org/10.1145/3061665)
 !
 !   Blue, James L. (1978)
 !   A Portable Fortran Program to Find the Euclidean Norm of a Vector
-!   ACM Trans Math Softw 4:15--23
-!   [](https://doi.org/10.1145/355769.355771)
+!   [ACM Trans Math Softw 4:15--23](https://doi.org/10.1145/355769.355771)
+!
+!  Reference DLASSQ is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
+!
+!  -- LAPACK auxiliary routine --
+!
+!  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
+!  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+!
+!     Edward Anderson, Lockheed Martin
+!     Weslley Pereira, University of Colorado Denver, USA
+!     Nick Papior, Technical University of Denmark, DK
 !
 pure subroutine mobbrmsd_DLASSQ(n, x, incx, scl, sumsq)
-! use LA_CONSTANTS, &
-!   only: RK => dp, zero => dzero, one => done, &
-!         sbig => dsbig, ssml => dssml, tbig => dtbig, tsml => dtsml
-!  .. Scalar Arguments ..
-  integer, intent(in)     :: incx, n
-  real(RK), intent(inout) :: scl, sumsq
-!  ..
-!  .. Array Arguments ..
-  real(RK), intent(in)    :: x(*)
-!  ..
-!  .. Local Scalars ..
-  integer                :: i, ix
-  logical                :: notbig
-  real(RK)               :: abig, amed, asml, ax, ymax, ymin
-!  ..
+  integer, intent(IN)     :: N
+!!   The number of elements to be used from the vector x.
+!!
+  real(RK), intent(IN)    :: X(*)
+!!   DOUBLE PRECISION array, dimension (1+(N-1)*abs(INCX))
+!!   The vector for which a scaled sum of squares is computed.
+!!      x( i )  = X( 1 + ( i - 1 )*INCX ), 1 <= i <= n.
+!!
+  integer, intent(IN)     :: INCX
+!!   The increment between successive values of the vector x.
+!!
+!!   If INCX > 0, X(1+(i-1)*INCX) = x(i) for 1 <= i <= n
+!!
+!!   If INCX < 0, X(1-(n-i)*INCX) = x(i) for 1 <= i <= n
+!!
+!!   If INCX = 0, x isn't a vector so there is no need to call
+!!   this subroutine.  If you call it anyway, it will count x(1)
+!!   in the vector norm N times.
+!!
+  real(RK), intent(INOUT) :: SCL
+!!   On entry, the value  scale  in the equation above.
+!!
+!!   On exit, SCALE is overwritten with  scl , the scaling factor
+!!   for the sum of squares.
+!!
+  real(RK), intent(INOUT) :: SUMSQ
+!!   On entry, the value  sumsq  in the equation above.
+!!
+!!   On exit, SUMSQ is overwritten with  smsq , the basic sum of
+!!   squares from which  scl  has been factored out.
+!!
+  integer                :: I, IX
+  logical                :: NOTBIG
+  real(RK)               :: ABIG, AMED, ASML, AX, YMAX, YMIN
 !
 !  Quick return if possible
 !

@@ -1,239 +1,193 @@
-!> \brief \b mobbrmsd_SLASR applies a sequence of plane rotations to a general rectangular matrix.
+!| mobbrmsd_SLASR applies a sequence of plane rotations to a general rectangular matrix.
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_SLASR applies a sequence of plane rotations to
+!  a real matrix \( A \), from either the left or the right.
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  When SIDE = 'L', the transformation takes the form
 !
-!> \htmlonly
-!> Download mobbrmsd_SLASR + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slasr.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slasr.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/slasr.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!  \[
+!     A \gets PA
+!  \]
 !
-!  Definition:
-!  ===========
+!  and when SIDE = 'R', the transformation takes the form
 !
-!       SUBROUTINE mobbrmsd_SLASR( SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA )
+!  \[
+!     A \gets AP ^ \top
+!  \]
 !
-!       .. Scalar Arguments ..
-!       CHARACTER          DIRECT, PIVOT, SIDE
-!       INTEGER            LDA, M, N
-!       ..
-!       .. Array Arguments ..
-!       REAL               A( LDA, * ), C( * ), S( * )
-!       ..
+!  where \( P \) is an orthogonal matrix consisting of
+!  a sequence of z plane rotations,
+!  with \( z = M \) when SIDE = 'L' and \( z = N \)
+!  when SIDE = 'R', and \( P ^ \top \) is the transpose of \( P \).
 !
+!  When DIRECT = 'F' (Forward sequence), then
 !
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SLASR applies a sequence of plane rotations to a real matrix A,
-!> from either the left or the right.
-!>
-!> When SIDE = 'L', the transformation takes the form
-!>
-!>    A := P*A
-!>
-!> and when SIDE = 'R', the transformation takes the form
-!>
-!>    A := A*P**T
-!>
-!> where P is an orthogonal matrix consisting of a sequence of z plane
-!> rotations, with z = M when SIDE = 'L' and z = N when SIDE = 'R',
-!> and P**T is the transpose of P.
-!>
-!> When DIRECT = 'F' (Forward sequence), then
-!>
-!>    P = P(z-1) * ... * P(2) * P(1)
-!>
-!> and when DIRECT = 'B' (Backward sequence), then
-!>
-!>    P = P(1) * P(2) * ... * P(z-1)
-!>
-!> where P(k) is a plane rotation matrix defined by the 2-by-2 rotation
-!>
-!>    R(k) = (  c(k)  s(k) )
-!>         = ( -s(k)  c(k) ).
-!>
-!> When PIVOT = 'V' (Variable pivot), the rotation is performed
-!> for the plane (k,k+1), i.e., P(k) has the form
-!>
-!>    P(k) = (  1                                            )
-!>           (       ...                                     )
-!>           (              1                                )
-!>           (                   c(k)  s(k)                  )
-!>           (                  -s(k)  c(k)                  )
-!>           (                                1              )
-!>           (                                     ...       )
-!>           (                                            1  )
-!>
-!> where R(k) appears as a rank-2 modification to the identity matrix in
-!> rows and columns k and k+1.
-!>
-!> When PIVOT = 'T' (Top pivot), the rotation is performed for the
-!> plane (1,k+1), so P(k) has the form
-!>
-!>    P(k) = (  c(k)                    s(k)                 )
-!>           (         1                                     )
-!>           (              ...                              )
-!>           (                     1                         )
-!>           ( -s(k)                    c(k)                 )
-!>           (                                 1             )
-!>           (                                      ...      )
-!>           (                                             1 )
-!>
-!> where R(k) appears in rows and columns 1 and k+1.
-!>
-!> Similarly, when PIVOT = 'B' (Bottom pivot), the rotation is
-!> performed for the plane (k,z), giving P(k) the form
-!>
-!>    P(k) = ( 1                                             )
-!>           (      ...                                      )
-!>           (             1                                 )
-!>           (                  c(k)                    s(k) )
-!>           (                         1                     )
-!>           (                              ...              )
-!>           (                                     1         )
-!>           (                 -s(k)                    c(k) )
-!>
-!> where R(k) appears in rows and columns k and z.  The rotations are
-!> performed without ever forming P(k) explicitly.
-!> \endverbatim
+!  \[
+!     P = P _ {z-1} \cdots P _ 2 P _ 1
+!  \]
 !
-!  Arguments:
-!  ==========
+!  and when DIRECT = 'B' (Backward sequence), then
 !
-!> \param[in] SIDE
-!> \verbatim
-!>          SIDE is CHARACTER*1
-!>          Specifies whether the plane rotation matrix P is applied to
-!>          A on the left or the right.
-!>          = 'L':  Left, compute A := P*A
-!>          = 'R':  Right, compute A:= A*P**T
-!> \endverbatim
-!>
-!> \param[in] PIVOT
-!> \verbatim
-!>          PIVOT is CHARACTER*1
-!>          Specifies the plane for which P(k) is a plane rotation
-!>          matrix.
-!>          = 'V':  Variable pivot, the plane (k,k+1)
-!>          = 'T':  Top pivot, the plane (1,k+1)
-!>          = 'B':  Bottom pivot, the plane (k,z)
-!> \endverbatim
-!>
-!> \param[in] DIRECT
-!> \verbatim
-!>          DIRECT is CHARACTER*1
-!>          Specifies whether P is a forward or backward sequence of
-!>          plane rotations.
-!>          = 'F':  Forward, P = P(z-1)*...*P(2)*P(1)
-!>          = 'B':  Backward, P = P(1)*P(2)*...*P(z-1)
-!> \endverbatim
-!>
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>          The number of rows of the matrix A.  If m <= 1, an immediate
-!>          return is effected.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of columns of the matrix A.  If n <= 1, an
-!>          immediate return is effected.
-!> \endverbatim
-!>
-!> \param[in] C
-!> \verbatim
-!>          C is REAL array, dimension
-!>                  (M-1) if SIDE = 'L'
-!>                  (N-1) if SIDE = 'R'
-!>          The cosines c(k) of the plane rotations.
-!> \endverbatim
-!>
-!> \param[in] S
-!> \verbatim
-!>          S is REAL array, dimension
-!>                  (M-1) if SIDE = 'L'
-!>                  (N-1) if SIDE = 'R'
-!>          The sines s(k) of the plane rotations.  The 2-by-2 plane
-!>          rotation part of the matrix P(k), R(k), has the form
-!>          R(k) = (  c(k)  s(k) )
-!>                 ( -s(k)  c(k) ).
-!> \endverbatim
-!>
-!> \param[in,out] A
-!> \verbatim
-!>          A is REAL array, dimension (LDA,N)
-!>          The M-by-N matrix A.  On exit, A is overwritten by P*A if
-!>          SIDE = 'R' or by A*P**T if SIDE = 'L'.
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>          The leading dimension of the array A.  LDA >= max(1,M).
-!> \endverbatim
+!  \[
+!     P = P _ 1 P _ 2 \cdots  P _ {z-1}
+!  \]
 !
-!  Authors:
-!  ========
+!  where \( P _ k \) is a plane rotation matrix defined by the 2-by-2 rotation
 !
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
+!  \[
+!     R_k =
+!     \left (
+!     \begin{array}{}
+!       c _ k &  s _ k \\
+!      -s _ k &  c _ k \\
+!     \end{array}
+!     \right )
+!  \]
 !
-!> \date December 2016
+!  When PIVOT = 'V' (Variable pivot), the rotation is performed
+!  for the plane \( (k,k+1) \), so \( P _ k \) has the form
 !
-!> \ingroup OTHERauxiliary
+!  \[
+!     P_k =
+!     \left (
+!     \begin{array}{}
+!        1   &        &     &        &        &     &        &    \\
+!            & \ddots &     &        &        &     &        &    \\
+!            &        &  1  &        &        &     &        &    \\
+!            &        &     &  c _ k &  s _ k &     &        &    \\
+!            &        &     & -s _ k &  c _ k &     &        &    \\
+!            &        &     &        &        &  1  &        &    \\
+!            &        &     &        &        &     & \ddots &    \\
+!            &        &     &        &        &     &        &  1 \\
+!     \end{array}
+!     \right )
+!  \]
 !
-!  =====================================================================
-pure subroutine mobbrmsd_SLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
-  implicit none
+!  where \( R _ k  \) appears as a rank-2 modification to
+!  the identity matrix in rows and columns \( k \) and \( k + 1 \).
+!
+!  When PIVOT = 'T' (Top pivot), the rotation is performed
+!  for the plane \( (1,k+1) \), so \( P _ k \) has the form
+!
+!  \[
+!     P_k =
+!     \left (
+!     \begin{array}{}
+!      c _ k &     &        &     & s _ k &     &        &    \\
+!            &  1  &        &     &       &     &        &    \\
+!            &     & \ddots &     &       &     &        &    \\
+!            &     &        &  1  &       &     &        &    \\
+!     -s _ k &     &        &     & c _ k &     &        &    \\
+!            &     &        &     &       &  1  &        &    \\
+!            &     &        &     &       &     & \ddots &    \\
+!            &     &        &     &       &     &        &  1 \\
+!     \end{array}
+!     \right )
+!  \]
+!
+!  where \( R_k \) appears in rows and columns 1 and k+1.
+!
+!  Similarly, when PIVOT = 'B' (Bottom pivot), the rotation is
+!  performed for the plane \( (k,z) \), giving \( P _ k \) the form
+!
+!  \[
+!     P_k =
+!     \left (
+!     \begin{array}{}
+!       1  &        &     &        &     &        &     &       \\
+!          & \ddots &     &        &     &        &     &       \\
+!          &        &  1  &        &     &        &     &       \\
+!          &        &     &  c _ k &     &        &     & s _ k \\
+!          &        &     &        &  1  &        &     &       \\
+!          &        &     &        &     & \ddots &     &       \\
+!          &        &     &        &     &        &  1  &       \\
+!          &        &     & -s _ k &     &        &     & c _ k \\
+!     \end{array}
+!     \right )
+!  \]
+!
+!  where \( R _ k \) appears in rows and columns \( k \) and \( z \).
+!  The rotations are performed without ever forming \( P _ k \) explicitly.
+!
+!  Reference SLASR is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     December 2016
 !
-!     .. Scalar Arguments ..
-  character, intent(in) :: DIRECT, PIVOT, SIDE
-  integer, intent(in)   :: LDA, M, N
-!..
-!..Array Arguments..
-  real(RK), intent(in)    :: C(*), S(*)
+!
+pure subroutine mobbrmsd_SLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
+  implicit none
+  character, intent(in) :: SIDE
+!!   Specifies whether the plane rotation matrix P is applied to
+!!   A on the left or the right.
+!!
+!!   = 'L':  Left, compute A := P*A
+!!
+!!   = 'R':  Right, compute A:= A*P**T
+!!
+  character, intent(in) :: PIVOT
+!!   Specifies the plane for which P(k) is a plane rotation
+!!   matrix.
+!!
+!!   = 'V':  Variable pivot, the plane (k,k+1)
+!!
+!!   = 'T':  Top pivot, the plane (1,k+1)
+!!
+!!   = 'B':  Bottom pivot, the plane (k,z)
+!!
+  character, intent(in) :: DIRECT
+!!   Specifies whether P is a forward or backward sequence of
+!!   plane rotations.
+!!
+!!   = 'F':  Forward, P = P(z-1)*...*P(2)*P(1)
+!!
+!!   = 'B':  Backward, P = P(1)*P(2)*...*P(z-1)
+!!
+  integer, intent(in)     :: M
+!!  The number of rows of the matrix A.  If m <= 1, an immediate
+!!  return is effected.
+!!
+  integer, intent(in)     :: N
+!!    The number of columns of the matrix A.  If n <= 1, an
+!!    immediate return is effected.
+!!
+  real(RK), intent(in)    :: C(*)
+!!   DOUBLE PRECISION array, dimension
+!!           (M-1) if SIDE = 'L'
+!!           (N-1) if SIDE = 'R'
+!!
+!!   The cosines c(k) of the plane rotations.
+!!
+  real(RK), intent(in)    :: S(*)
+!!   DOUBLE PRECISION array, dimension
+!!           (M-1) if SIDE = 'L'
+!!           (N-1) if SIDE = 'R'
+!!   The sines s(k) of the plane rotations.  The 2-by-2 plane
+!!   rotation part of the matrix P(k), R(k), has the form
+!!   R(k) = (  c(k)  s(k) )
+!!          ( -s(k)  c(k) ).
+!!
+  integer, intent(in)     :: LDA
+!!   The leading dimension of the array A.  LDA >= max(1,M).
+!!
   real(RK), intent(inout) :: A(LDA, *)
-!..
-!
-!  =====================================================================
-!
-!..Parameters..
-! real, parameter :: ZERO = 0.0E0
-! real, parameter :: ONE = 1.0E+0
-!..
-! interface
-!..external Functions..
-!   include 'lsame.h'
-! end interface
-!..Local Scalars..
+!!   DOUBLE PRECISION array, dimension (LDA,N)
+!!
+!!   The M-by-N matrix A.  On exit, A is overwritten by P*A if
+!!   SIDE = 'L' or by A*P**T if SIDE = 'R'.
+!!
   integer :: I, INFO, J
   real(RK) :: CTEMP, STEMP, TEMP
-!..
-!..intrinsic Functions..
   intrinsic :: MAX
-!..
-!..Executable Statements..
+! interface
+!   include 'lsame.h'
+! end interface
 !
-!Test the input parameters
+! Test the input parameters
 !
   INFO = 0
   if (.not. (mobbrmsd_LSAME(SIDE, 'L') .or. mobbrmsd_LSAME(SIDE, 'R'))) then
@@ -250,17 +204,16 @@ pure subroutine mobbrmsd_SLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
     INFO = 9
   end if
   if (INFO /= 0) then
-!   call XERBLA('SLASR ', INFO)
     return
   end if
 !
-!Quick return if possible
+! Quick return if possible
 !
   if ((M == 0) .or. (N == 0)) return
   if (mobbrmsd_LSAME(SIDE, 'L')) then
-    !
-    !Form P * A
-    !
+!
+! Form P * A
+!
     if (mobbrmsd_LSAME(PIVOT, 'V')) then
       if (mobbrmsd_LSAME(DIRECT, 'F')) then
         do J = 1, M - 1
@@ -341,9 +294,9 @@ pure subroutine mobbrmsd_SLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
       end if
     end if
   else if (mobbrmsd_LSAME(SIDE, 'R')) then
-    !
-    !Form A * P**T
-    !
+!
+! Form A * P**T
+!
     if (mobbrmsd_LSAME(PIVOT, 'V')) then
       if (mobbrmsd_LSAME(DIRECT, 'F')) then
         do J = 1, N - 1
@@ -424,9 +377,10 @@ pure subroutine mobbrmsd_SLASR(SIDE, PIVOT, DIRECT, M, N, C, S, A, LDA)
       end if
     end if
   end if
-  !
+!
   return
-  !
-  !end of mobbrmsd_SLASR
-  !
+!
+! end of mobbrmsd_SLASR
+!
 end
+

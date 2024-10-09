@@ -1,200 +1,162 @@
-!> \brief \b mobbrmsd_SLARFT forms the triangular factor T of a block reflector H = I - vtvH
+!| mobbrmsd_SLARFT forms the triangular factor \( T \)
+!  of a block reflector \( H = I - v ^ \top v H \).
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_SLARFT forms the triangular factor \( T \)
+!  of a real block reflector \( H \) of order \( n \),
+!  which is defined as a product of \( k \) elementary reflectors.
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  If DIRECT = 'F', \( H = H _ 1 H _ 2 \cdots  H _ k \) and
+!  \( T \) is upper triangular;
 !
-!> \htmlonly
-!> Download mobbrmsd_SLARFT + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slarft.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slarft.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/slarft.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!  If DIRECT = 'B', \( H = H _ k \cdots H _ 2 H _ 1 \) and
+!  \( T \) is lower triangular;
 !
-!  Definition:
-!  ===========
+!  If STOREV = 'C', the vector which defines the elementary reflector
+!  \( H _ i \) is stored in the \( i \)-th column of the array \( V \), and
 !
-!       SUBROUTINE mobbrmsd_SLARFT( DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT )
+!  \[
+!     H  =  I - V T V ^ {\top}
+!  \]
 !
-!       .. Scalar Arguments ..
-!       CHARACTER          DIRECT, STOREV
-!       INTEGER            K, LDT, LDV, N
-!       ..
-!       .. Array Arguments ..
-!       REAL               T( LDT, * ), TAU( * ), V( LDV, * )
-!       ..
+!  If STOREV = 'R', the vector which defines the elementary reflector
+!  H(i) is stored in the \( i \)-th row of the array \( V \), and
 !
+!  \[
+!     H  =  I - V ^ {\top} T V
+!  \]
 !
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SLARFT forms the triangular factor T of a real block reflector H
-!> of order n, which is defined as a product of k elementary reflectors.
-!>
-!> If DIRECT = 'F', H = H(1) H(2) . . . H(k) and T is upper triangular;
-!>
-!> If DIRECT = 'B', H = H(k) . . . H(2) H(1) and T is lower triangular.
-!>
-!> If STOREV = 'C', the vector which defines the elementary reflector
-!> H(i) is stored in the i-th column of the array V, and
-!>
-!>    H  =  I - V * T * V**T
-!>
-!> If STOREV = 'R', the vector which defines the elementary reflector
-!> H(i) is stored in the i-th row of the array V, and
-!>
-!>    H  =  I - V**T * T * V
-!> \endverbatim
+!  The shape of the matrix \( V \) and the storage of the vectors which
+!  define the \( H _ i \) is best illustrated by the following example
+!  with \( n = 5 \) and \( k = 3 \).
+!  The elements equal to 1 are not stored.
 !
-!  Arguments:
-!  ==========
+!   DIRECT = 'F' and STOREV = 'C':
 !
-!> \param[in] DIRECT
-!> \verbatim
-!>          DIRECT is CHARACTER*1
-!>          Specifies the order in which the elementary reflectors are
-!>          multiplied to form the block reflector:
-!>          = 'F': H = H(1) H(2) . . . H(k) (Forward)
-!>          = 'B': H = H(k) . . . H(2) H(1) (Backward)
-!> \endverbatim
-!>
-!> \param[in] STOREV
-!> \verbatim
-!>          STOREV is CHARACTER*1
-!>          Specifies how the vectors which define the elementary
-!>          reflectors are stored (see also Further Details):
-!>          = 'C': columnwise
-!>          = 'R': rowwise
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The order of the block reflector H. N >= 0.
-!> \endverbatim
-!>
-!> \param[in] K
-!> \verbatim
-!>          K is INTEGER
-!>          The order of the triangular factor T (= the number of
-!>          elementary reflectors). K >= 1.
-!> \endverbatim
-!>
-!> \param[in] V
-!> \verbatim
-!>          V is REAL array, dimension
-!>                               (LDV,K) if STOREV = 'C'
-!>                               (LDV,N) if STOREV = 'R'
-!>          The matrix V. See further details.
-!> \endverbatim
-!>
-!> \param[in] LDV
-!> \verbatim
-!>          LDV is INTEGER
-!>          The leading dimension of the array V.
-!>          If STOREV = 'C', LDV >= max(1,N); if STOREV = 'R', LDV >= K.
-!> \endverbatim
-!>
-!> \param[in] TAU
-!> \verbatim
-!>          TAU is REAL array, dimension (K)
-!>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i).
-!> \endverbatim
-!>
-!> \param[out] T
-!> \verbatim
-!>          T is REAL array, dimension (LDT,K)
-!>          The k by k triangular factor T of the block reflector.
-!>          If DIRECT = 'F', T is upper triangular; if DIRECT = 'B', T is
-!>          lower triangular. The rest of the array is not used.
-!> \endverbatim
-!>
-!> \param[in] LDT
-!> \verbatim
-!>          LDT is INTEGER
-!>          The leading dimension of the array T. LDT >= K.
-!> \endverbatim
+!  \[
+!     V  =
+!     \left (
+!       \begin{array}{}
+!          1     &       &       \\
+!          v _ 1 & 1     &       \\
+!          v _ 1 & v _ 2 & 1     \\
+!          v _ 1 & v _ 2 & v _ 3 \\
+!          v _ 1 & v _ 2 & v _ 3 \\
+!       \end{array}
+!     \right)
+!  \]
 !
-!  Authors:
-!  ========
+!   DIRECT = 'F' and STOREV = 'R':
 !
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
+!  \[
+!     V  =
+!     \left (
+!       \begin{array}{}
+!          1     & v _ 1 & v _ 1 & v _ 1 & v _ 1 \\
+!                & 1     & v _ 2 & v _ 2 & v _ 2 \\
+!                &       & 1     & v _ 3 & v _ 3 \\
+!       \end{array}
+!     \right)
+!  \]
 !
-!> \date December 2016
+!   DIRECT = 'B' and STOREV = 'C':
 !
-!> \ingroup realOTHERauxiliary
+!  \[
+!     V  =
+!     \left (
+!       \begin{array}{}
+!          v _ 1 & v _ 2 & v _ 3 \\
+!          v _ 1 & v _ 2 & v _ 3 \\
+!          1     & v _ 2 & v _ 3 \\
+!                & 1     & v _ 3 \\
+!                &       & 1     \\
+!       \end{array}
+!     \right)
+!  \]
 !
-!> \par Further Details:
-!  =====================
-!>
-!> \verbatim
-!>
-!>  The shape of the matrix V and the storage of the vectors which define
-!>  the H(i) is best illustrated by the following example with n = 5 and
-!>  k = 3. The elements equal to 1 are not stored.
-!>
-!>  DIRECT = 'F' and STOREV = 'C':         DIRECT = 'F' and STOREV = 'R':
-!>
-!>               V = (  1       )                 V = (  1 v1 v1 v1 v1 )
-!>                   ( v1  1    )                     (     1 v2 v2 v2 )
-!>                   ( v1 v2  1 )                     (        1 v3 v3 )
-!>                   ( v1 v2 v3 )
-!>                   ( v1 v2 v3 )
-!>
-!>  DIRECT = 'B' and STOREV = 'C':         DIRECT = 'B' and STOREV = 'R':
-!>
-!>               V = ( v1 v2 v3 )                 V = ( v1 v1  1       )
-!>                   ( v1 v2 v3 )                     ( v2 v2 v2  1    )
-!>                   (  1 v2 v3 )                     ( v3 v3 v3 v3  1 )
-!>                   (     1 v3 )
-!>                   (        1 )
-!> \endverbatim
-!>
-!  =====================================================================
-pure subroutine mobbrmsd_SLARFT(DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT)
+!   DIRECT = 'B' and STOREV = 'R':
+!
+!  \[
+!     V  =
+!     \left (
+!       \begin{array}{}
+!          v _ 1 & v _ 1 & 1     &       &       \\
+!          v _ 2 & v _ 2 & v _ 2 & 1     &       \\
+!          v _ 3 & v _ 3 & v _ 3 & v _ 3 & 1     \\
+!       \end{array}
+!     \right)
+!  \]
+!
+!  Reference SLARFT is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     December 2016
 !
-!     .. Scalar Arguments ..
-  character, intent(in) :: DIRECT, STOREV
-  integer, intent(in)   :: K, LDT, LDV, N
-!..
-!..Array Arguments..
-  real(RK), intent(in)  :: TAU(*), V(LDV, *)
-  real(RK), intent(out) :: T(LDT, *)
-!..
 !
-!  =====================================================================
-!
-!..Local Scalars..
+pure subroutine mobbrmsd_SLARFT(DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT)
+  implicit none
+  character, intent(in)    :: DIRECT
+!!  Specifies the order in which the elementary reflectors are
+!!  multiplied to form the block reflector:
+!!
+!!  = 'F': H = H(1) H(2) . . . H(k) (Forward)
+!!
+!!  = 'B': H = H(k) . . . H(2) H(1) (Backward)
+!!
+  character, intent(in)    :: STOREV
+!!  Specifies how the vectors which define the elementary
+!!  reflectors are stored:
+!!
+!!  = 'C': columnwise
+!!
+!!  = 'R': rowwise
+!!
+  integer, intent(in)      :: N
+!!  The order of the block reflector H. N >= 0.
+!!
+  integer, intent(in)      :: K
+!!  The order of the triangular factor T (= the number of
+!!  elementary reflectors). K >= 1.
+!!
+  integer, intent(in)      :: LDV
+!!  The leading dimension of the array V.
+!!
+!!  If STOREV = 'C', LDV >= max(1,N); if STOREV = 'R', LDV >= K.
+!!
+  real(RK), intent(in)     :: V(LDV, *)
+!!  DOUBLE PRECISION array, dimension
+!!
+!!  (LDV,K) if STOREV = 'C'
+!!
+!!  (LDV,N) if STOREV = 'R'
+!!
+!!  The matrix V.
+!!
+  real(RK), intent(in)     :: TAU(*)
+!!  DOUBLE PRECISION array, dimension (K)
+!!
+!!  TAU(i) must contain the scalar factor of the elementary
+!!  reflector H(i).
+!!
+  integer, intent(in)      :: LDT
+!!  The leading dimension of the array T. LDT >= K.
+!!
+  real(RK), intent(out)    :: T(LDT, *)
+!!  DOUBLE PRECISION array, dimension (LDT,K)
+!!
+!!  The k by k triangular factor T of the block reflector.
+!!  If DIRECT = 'F', T is upper triangular; if DIRECT = 'B', T is
+!!  lower triangular. The rest of the array is not used.
+!!
   integer :: I, J, PREVLASTV, LASTV
-!..
-!..Parameters..
-! real(RK), parameter :: ZERO = 0.0E0
-! real(RK), parameter :: ONE = 1.0E0
-!..
 ! interface
-! .. External Functions ..
 !   include 'lsame.h'
-!..external Subroutines..
 !   include 'sgemv.h'
 !   include 'strmv.h'
 ! end interface
-!..
-!..Executable Statements..
 !
 ! Quick return if possible
 !
@@ -324,3 +286,4 @@ pure subroutine mobbrmsd_SLARFT(DIRECT, STOREV, N, K, V, LDV, TAU, T, LDT)
 ! end of mobbrmsd_SLARFT
 !
 end
+

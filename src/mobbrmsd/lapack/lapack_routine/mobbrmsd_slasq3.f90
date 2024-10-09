@@ -1,234 +1,100 @@
-!> \brief \b mobbrmsd_SLASQ3 checks for deflation, computes a shift and calls dqds. Used by sbdsqr.
+!| mobbrmsd_SLASQ3 checks for deflation, computes a shift and calls dqds. Used by sbdsqr.
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_SLASQ3 checks for deflation, computes a shift (TAU) and calls dqds.
+!  In case of failure it changes shifts, and tries again until output
+!  is positive.
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  These are passed as arguments in order to save their values
+!  between calls to mobbrmsd_SLASQ3.
 !
-!> \htmlonly
-!> Download mobbrmsd_SLASQ3 + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slasq3.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slasq3.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/slasq3.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!  Reference SLASQ3 is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
-!  Definition:
-!  ===========
+!  -- LAPACK computational routine --
 !
-!       SUBROUTINE mobbrmsd_SLASQ3( I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL,
-!                          ITER, NDIV, IEEE, TTYPE, DMIN1, DMIN2, DN, DN1,
-!                          DN2, G, TAU )
-!
-!       .. Scalar Arguments ..
-!       LOGICAL            IEEE
-!       INTEGER            I0, ITER, N0, NDIV, NFAIL, PP
-!       REAL               DESIG, DMIN, DMIN1, DMIN2, DN, DN1, DN2, G,
-!      $                   QMAX, SIGMA, TAU
-!       ..
-!       .. Array Arguments ..
-!       REAL               Z( * )
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SLASQ3 checks for deflation, computes a shift (TAU) and calls dqds.
-!> In case of failure it changes shifts, and tries again until output
-!> is positive.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] I0
-!> \verbatim
-!>          I0 is INTEGER
-!>         First index.
-!> \endverbatim
-!>
-!> \param[in,out] N0
-!> \verbatim
-!>          N0 is INTEGER
-!>         Last index.
-!> \endverbatim
-!>
-!> \param[in,out] Z
-!> \verbatim
-!>          Z is REAL array, dimension ( 4*N0 )
-!>         Z holds the qd array.
-!> \endverbatim
-!>
-!> \param[in,out] PP
-!> \verbatim
-!>          PP is INTEGER
-!>         PP=0 for ping, PP=1 for pong.
-!>         PP=2 indicates that flipping was applied to the Z array
-!>         and that the initial tests for deflation should not be
-!>         performed.
-!> \endverbatim
-!>
-!> \param[out] DMIN
-!> \verbatim
-!>          DMIN is REAL
-!>         Minimum value of d.
-!> \endverbatim
-!>
-!> \param[out] SIGMA
-!> \verbatim
-!>          SIGMA is REAL
-!>         Sum of shifts used in current segment.
-!> \endverbatim
-!>
-!> \param[in,out] DESIG
-!> \verbatim
-!>          DESIG is REAL
-!>         Lower order part of SIGMA
-!> \endverbatim
-!>
-!> \param[in] QMAX
-!> \verbatim
-!>          QMAX is REAL
-!>         Maximum value of q.
-!> \endverbatim
-!>
-!> \param[in,out] NFAIL
-!> \verbatim
-!>          NFAIL is INTEGER
-!>         Increment NFAIL by 1 each time the shift was too big.
-!> \endverbatim
-!>
-!> \param[in,out] ITER
-!> \verbatim
-!>          ITER is INTEGER
-!>         Increment ITER by 1 for each iteration.
-!> \endverbatim
-!>
-!> \param[in,out] NDIV
-!> \verbatim
-!>          NDIV is INTEGER
-!>         Increment NDIV by 1 for each division.
-!> \endverbatim
-!>
-!> \param[in] IEEE
-!> \verbatim
-!>          IEEE is LOGICAL
-!>         Flag for IEEE or non IEEE arithmetic (passed to mobbrmsd_SLASQ5).
-!> \endverbatim
-!>
-!> \param[in,out] TTYPE
-!> \verbatim
-!>          TTYPE is INTEGER
-!>         Shift type.
-!> \endverbatim
-!>
-!> \param[in,out] DMIN1
-!> \verbatim
-!>          DMIN1 is REAL
-!> \endverbatim
-!>
-!> \param[in,out] DMIN2
-!> \verbatim
-!>          DMIN2 is REAL
-!> \endverbatim
-!>
-!> \param[in,out] DN
-!> \verbatim
-!>          DN is REAL
-!> \endverbatim
-!>
-!> \param[in,out] DN1
-!> \verbatim
-!>          DN1 is REAL
-!> \endverbatim
-!>
-!> \param[in,out] DN2
-!> \verbatim
-!>          DN2 is REAL
-!> \endverbatim
-!>
-!> \param[in,out] G
-!> \verbatim
-!>          G is REAL
-!> \endverbatim
-!>
-!> \param[in,out] TAU
-!> \verbatim
-!>          TAU is REAL
-!>
-!>         These are passed as arguments in order to save their values
-!>         between calls to mobbrmsd_SLASQ3.
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \date June 2016
-!
-!> \ingroup auxOTHERcomputational
-!
-!  =====================================================================
-pure subroutine mobbrmsd_SLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, NFAIL, &
-                &        ITER, NDIV, IEEE, TTYPE, DMIN1, DMIN2, DN, DN1, &
-                &        DN2, G, TAU)
-  implicit none
-!
-!  -- LAPACK computational routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
-!     June 2016
 !
-!     .. Scalar Arguments ..
-  logical, intent(in)     :: IEEE
+pure subroutine mobbrmsd_SLASQ3(I0, N0, Z, PP, DMIN, SIGMA, DESIG, QMAX, &
+               &                NFAIL, ITER, NDIV, IEEE, TTYPE, DMIN1, &
+               &                DMIN2, DN, DN1, DN2, G, TAU)
+  implicit none
   integer, intent(in)     :: I0
-  integer, intent(inout)  :: N0, PP, NFAIL, ITER, NDIV, TTYPE
-  real(RK), intent(inout) :: DESIG, DMIN1, DMIN2, DN, DN1, DN2, G, QMAX, TAU
-  real(RK), intent(out)   :: DMIN, SIGMA
-!..
-!..Array Arguments..
+!!  First index.
+!!
+  integer, intent(inout)  :: N0
+!!  Last index.
+!!
   real(RK), intent(inout) :: Z(*)
-!..
-!
-!  =====================================================================
-!
-!..Parameters..
+!!  REAL array, dimension ( 4*N0 )
+!!  Z holds the qd array.
+!!
+  integer, intent(inout)  :: PP
+!!  PP=0 for ping, PP=1 for pong.
+!!  PP=2 indicates that flipping was applied to the Z array
+!!  and that the initial tests for deflation should not be
+!!  performed.
+!!
+  real(RK), intent(out)   :: DMIN
+!!  Minimum value of d.
+!!
+  real(RK), intent(out)   :: SIGMA
+!!  Sum of shifts used in current segment.
+!!
+  real(RK), intent(inout) :: DESIG
+!!  Lower order part of SIGMA
+!!
+  real(RK), intent(inout) :: QMAX
+!!  Maximum value of q.
+!!
+  integer, intent(inout)  :: NFAIL
+!!  Increment NFAIL by 1 each time the shift was too big.
+!!
+  integer, intent(inout)  :: ITER
+!!  Increment ITER by 1 for each iteration.
+!!
+  integer, intent(inout)  :: NDIV
+!!  Increment NDIV by 1 for each division.
+!!
+  logical, intent(in)     :: IEEE
+!!   IEEE is LOGICAL
+!!  Flag for IEEE or non IEEE arithmetic (passed to mobbrmsd_DLASQ5).
+!!
+  integer, intent(inout)  :: TTYPE
+!!  Shift type.
+!!
+  real(RK), intent(inout) :: DMIN1
+!!  REAL
+!!
+  real(RK), intent(inout) :: DMIN2
+!!  REAL
+!!
+  real(RK), intent(inout) :: DN
+!!  REAL
+!!
+  real(RK), intent(inout) :: DN1
+!!  REAL
+!!
+  real(RK), intent(inout) :: DN2
+!!  REAL
+!!
+  real(RK), intent(inout) :: G
+!!  REAL
+!!
+  real(RK), intent(inout) :: TAU
+!!  REAL
+!!
   real(RK), parameter :: CBIAS = 1.50E0
-! real(RK), parameter :: ZERO = 0.0E0
-! real(RK), parameter :: QURTR = 0.250E0
-! real(RK), parameter :: HALF = 0.5E0
-! real(RK), parameter :: ONE = 1.0E+0
-! real(RK), parameter :: TWO = 2.0E0
-! real(RK), parameter :: HUNDRD = 100.0E0
-!..
+  integer :: IPN4, J4, N0IN, NN
+  real    :: EPS, S, T, TEMP, TOL, TOL2
+  intrinsic :: ABS, MAX, MIN, SQRT
 ! interface
-!..external Functions..
 !   include 'sisnan.h'
 !   include 'slamch.h'
-!..external Subroutines..
 !   include 'slasq4.h'
 !   include 'slasq5.h'
 !   include 'slasq6.h'
 ! end interface
-!..
-!..
-!..Local Scalars..
-  integer :: IPN4, J4, N0IN, NN
-  real    :: EPS, S, T, TEMP, TOL, TOL2
-!..
-!..intrinsic Functions..
-  intrinsic :: ABS, MAX, MIN, SQRT
-!..
-!..Executable Statements..
 !
   N0IN = N0
   EPS = mobbrmsd_SLAMCH('Precision')

@@ -1,137 +1,67 @@
-!> \brief \b mobbrmsd_SLASQ1 computes the singular values of a real square bidiagonal matrix. Used by sbdsqr.
+!| mobbrmsd_SLASQ1 computes the singular values of a real square bidiagonal matrix. Used by sbdsqr.
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_SLASQ1 computes the singular values of a real N-by-N bidiagonal
+!  matrix with diagonal D and off-diagonal E. The singular values
+!  are computed to high relative accuracy, in the absence of
+!  denormalization, underflow and overflow. The algorithm was first
+!  presented in
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  "Accurate singular values and differential qd algorithms" by K. V.
+!  Fernando and B. N. Parlett, Numer. Math., Vol-67, No. 2, pp. 191-230,
+!  1994,
 !
-!> \htmlonly
-!> Download mobbrmsd_SLASQ1 + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slasq1.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slasq1.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/slasq1.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!  and the present implementation is described in "An implementation of
+!  the dqds Algorithm (Positive Case)", LAPACK Working Note.
 !
-!  Definition:
-!  ===========
-!
-!       SUBROUTINE mobbrmsd_SLASQ1( N, D, E, WORK, INFO )
-!
-!       .. Scalar Arguments ..
-!       INTEGER            INFO, N
-!       ..
-!       .. Array Arguments ..
-!       REAL               D( * ), E( * ), WORK( * )
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SLASQ1 computes the singular values of a real N-by-N bidiagonal
-!> matrix with diagonal D and off-diagonal E. The singular values
-!> are computed to high relative accuracy, in the absence of
-!> denormalization, underflow and overflow. The algorithm was first
-!> presented in
-!>
-!> "Accurate singular values and differential qd algorithms" by K. V.
-!> Fernando and B. N. Parlett, Numer. Math., Vol-67, No. 2, pp. 191-230,
-!> 1994,
-!>
-!> and the present implementation is described in "An implementation of
-!> the dqds Algorithm (Positive Case)", LAPACK Working Note.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>        The number of rows and columns in the matrix. N >= 0.
-!> \endverbatim
-!>
-!> \param[in,out] D
-!> \verbatim
-!>          D is REAL array, dimension (N)
-!>        On entry, D contains the diagonal elements of the
-!>        bidiagonal matrix whose SVD is desired. On normal exit,
-!>        D contains the singular values in decreasing order.
-!> \endverbatim
-!>
-!> \param[in,out] E
-!> \verbatim
-!>          E is REAL array, dimension (N)
-!>        On entry, elements E(1:N-1) contain the off-diagonal elements
-!>        of the bidiagonal matrix whose SVD is desired.
-!>        On exit, E is overwritten.
-!> \endverbatim
-!>
-!> \param[out] WORK
-!> \verbatim
-!>          WORK is REAL array, dimension (4*N)
-!> \endverbatim
-!>
-!> \param[out] INFO
-!> \verbatim
-!>          INFO is INTEGER
-!>        = 0: successful exit
-!>        < 0: if INFO = -i, the i-th argument had an illegal value
-!>        > 0: the algorithm failed
-!>             = 1, a split was marked by a positive value in E
-!>             = 2, current block of Z not diagonalized after 100*N
-!>                  iterations (in inner while loop)  On exit D and E
-!>                  represent a matrix with the same singular values
-!>                  which the calling subroutine could use to finish the
-!>                  computation, or even feed back into mobbrmsd_SLASQ1
-!>             = 3, termination criterion of outer while loop not met
-!>                  (program created more than N unreduced blocks)
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \date December 2016
-!
-!> \ingroup auxOTHERcomputational
-!
-!  =====================================================================
-pure subroutine mobbrmsd_SLASQ1(N, D, E, WORK, INFO)
-  implicit none
+!  Reference SLASQ1 is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
 !  -- LAPACK computational routine (version 3.7.0) --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     December 2016
 !
-!     .. Scalar Arguments ..
-  integer, intent(in)  :: N
-  integer, intent(out) :: INFO
-!..
-!..Array Arguments..
-  real(RK), intent(inout)  :: D(*), E(*)
-  real(RK), intent(out)    :: WORK(*)
-!..
-!
-!  =====================================================================
-!..
-!..Local Scalars..
-  integer :: I, IINFO
-  real(RK) :: EPS, SCL, SAFMIN, SIGMN, SIGMX
-!
-!..Parameters..
-! real(RK), parameter :: ZERO = 0.0E0
-!..
+pure subroutine mobbrmsd_SLASQ1(N, D, E, WORK, INFO)
+  implicit none
+  integer, intent(in)     :: N
+!!  The number of rows and columns in the matrix. N >= 0.
+!!
+  real(RK), intent(inout) :: D(*)
+!!  DOUBLE PRECISION array, dimension (N)
+!!
+!!  On entry, D contains the diagonal elements of the
+!!  bidiagonal matrix whose SVD is desired. On normal exit,
+!!  D contains the singular values in decreasing order.
+!!
+  real(RK), intent(inout) :: E(*)
+!!  REAL array, dimension (N)
+!!
+!!  On entry, elements E(1:N-1) contain the off-diagonal elements
+!!  of the bidiagonal matrix whose SVD is desired.
+!!  On exit, E is overwritten.
+!!
+  real(RK), intent(out)   :: WORK(*)
+!!  REAL array, dimension (4*N)
+!!
+  integer, intent(out)    :: INFO
+!!  = 0: successful exit
+!!
+!!  < 0: if INFO = -i, the i-th argument had an illegal value
+!!
+!!  \> 0: the algorithm failed
+!!       = 1, a split was marked by a positive value in E
+!!       = 2, current block of Z not diagonalized after 100*N
+!!            iterations (in inner while loop)  On exit D and E
+!!            represent a matrix with the same singular values
+!!            which the calling subroutine could use to finish the
+!!            computation, or even feed back into mobbrmsd_DLASQ1
+!!       = 3, termination criterion of outer while loop not met
+!!            (program created more than N unreduced blocks)
+!!
+  integer   :: I, IINFO
+  real(RK)  :: EPS, SCL, SAFMIN, SIGMN, SIGMX
+  intrinsic :: ABS, MAX, SQRT
 ! interface
 ! .. External Functions ..
 !   include 'slamch.h'
@@ -142,12 +72,6 @@ pure subroutine mobbrmsd_SLASQ1(N, D, E, WORK, INFO)
 !   include 'slasq2.h'
 !   include 'slasrt.h'
 ! end interface
-!..
-!..
-!..intrinsic Functions..
-  intrinsic :: ABS, MAX, SQRT
-!..
-!..Executable Statements..
 !
   INFO = 0
   if (N < 0) then
@@ -228,3 +152,4 @@ pure subroutine mobbrmsd_SLASQ1(N, D, E, WORK, INFO)
 !end of mobbrmsd_SLASQ1
 !
 end
+

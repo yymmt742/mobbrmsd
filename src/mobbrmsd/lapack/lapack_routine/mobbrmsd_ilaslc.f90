@@ -19,7 +19,7 @@ pure function mobbrmsd_ILASLC(M, N, A, LDA)
 !! The leading dimension of the array A. LDA >= max(1,M).
 !!
   real(RK), intent(in) :: A(LDA, *)
-!! A is DOUBLE PRECISION array, dimension (LDA,N)
+!! REAL array, dimension (LDA,N)
 !! The m by n matrix A.
 !!
   integer              :: mobbrmsd_ILASLC

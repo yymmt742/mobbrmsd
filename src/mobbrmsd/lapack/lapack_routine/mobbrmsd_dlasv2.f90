@@ -1,175 +1,118 @@
-!> \brief \b mobbrmsd_DLASV2 computes the singular value decomposition of a 2-by-2 triangular matrix.
+!| mobbrmsd_DLASV2 computes the singular value decomposition of a 2-by-2 triangular matrix.
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_DLASV2 computes the singular value decomposition of a 2-by-2
+!  triangular matrix
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  \[
+!     \left(
+!       \begin{array}{}
+!          F & G \\
+!          0 & H \\
+!       \end{array}
+!     \right)
+!  \]
 !
-!> \htmlonly
-!> Download mobbrmsd_DLASV2 + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlasv2.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlasv2.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/dlasv2.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!  On return, abs(SSMAX) is the larger singular value,
+!  abs(SSMIN) is the smaller singular value,
+!  and (CSL,SNL) and (CSR,SNR) are the left and
+!  right singular vectors for abs(SSMAX),
+!  giving the decomposition
 !
-!  Definition:
-!  ===========
+!  \[
+!     \left(
+!       \begin{array}{}
+!           \cos(L) & \sin(L) \\
+!          -\sin(L) & \cos(L) \\
+!       \end{array}
+!     \right)
+!     \left(
+!       \begin{array}{}
+!          F & G \\
+!          0 & H \\
+!       \end{array}
+!     \right)
+!     \left(
+!       \begin{array}{}
+!           \cos(L) & -\sin(L) \\
+!           \sin(L) &  \cos(L) \\
+!       \end{array}
+!     \right)
+!     =
+!     \left(
+!       \begin{array}{}
+!           \text{SSMAX} &     0     \\
+!                 0      &  t{SSMIN} \\
+!       \end{array}
+!     \right)
+!  \]
 !
-!       SUBROUTINE mobbrmsd_DLASV2( F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL )
+!  Any input parameter may be aliased with any output parameter.
 !
-!       .. Scalar Arguments ..
-!       DOUBLE PRECISION   CSL, CSR, F, G, H, SNL, SNR, SSMAX, SSMIN
-!       ..
+!  Barring over/underflow and assuming a guard digit in subtraction, all
+!  output quantities are correct to within a few units in the last
+!  place (ulps).
 !
+!  In IEEE arithmetic, the code works correctly if one matrix element is
+!  infinite.
 !
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_DLASV2 computes the singular value decomposition of a 2-by-2
-!> triangular matrix
-!>    [  F   G  ]
-!>    [  0   H  ].
-!> On return, abs(SSMAX) is the larger singular value, abs(SSMIN) is the
-!> smaller singular value, and (CSL,SNL) and (CSR,SNR) are the left and
-!> right singular vectors for abs(SSMAX), giving the decomposition
-!>
-!>    [ CSL  SNL ] [  F   G  ] [ CSR -SNR ]  =  [ SSMAX   0   ]
-!>    [-SNL  CSL ] [  0   H  ] [ SNR  CSR ]     [  0    SSMIN ].
-!> \endverbatim
+!  Overflow will not occur unless the largest singular value itself
+!  overflows or is within a few ulps of overflow. (On machines with
+!  partial overflow, like the Cray, overflow may occur if the largest
+!  singular value is within a factor of 2 of overflow.)
 !
-!  Arguments:
-!  ==========
+!  Underflow is harmless if underflow is gradual. Otherwise, results
+!  may correspond to a matrix modified by perturbations of size near
+!  the underflow threshold.
 !
-!> \param[in] F
-!> \verbatim
-!>          F is DOUBLE PRECISION
-!>          The (1,1) element of the 2-by-2 matrix.
-!> \endverbatim
-!>
-!> \param[in] G
-!> \verbatim
-!>          G is DOUBLE PRECISION
-!>          The (1,2) element of the 2-by-2 matrix.
-!> \endverbatim
-!>
-!> \param[in] H
-!> \verbatim
-!>          H is DOUBLE PRECISION
-!>          The (2,2) element of the 2-by-2 matrix.
-!> \endverbatim
-!>
-!> \param[out] SSMIN
-!> \verbatim
-!>          SSMIN is DOUBLE PRECISION
-!>          abs(SSMIN) is the smaller singular value.
-!> \endverbatim
-!>
-!> \param[out] SSMAX
-!> \verbatim
-!>          SSMAX is DOUBLE PRECISION
-!>          abs(SSMAX) is the larger singular value.
-!> \endverbatim
-!>
-!> \param[out] SNL
-!> \verbatim
-!>          SNL is DOUBLE PRECISION
-!> \endverbatim
-!>
-!> \param[out] CSL
-!> \verbatim
-!>          CSL is DOUBLE PRECISION
-!>          The vector (CSL, SNL) is a unit left singular vector for the
-!>          singular value abs(SSMAX).
-!> \endverbatim
-!>
-!> \param[out] SNR
-!> \verbatim
-!>          SNR is DOUBLE PRECISION
-!> \endverbatim
-!>
-!> \param[out] CSR
-!> \verbatim
-!>          CSR is DOUBLE PRECISION
-!>          The vector (CSR, SNR) is a unit right singular vector for the
-!>          singular value abs(SSMAX).
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup OTHERauxiliary
-!
-!> \par Further Details:
-!  =====================
-!>
-!> \verbatim
-!>
-!>  Any input parameter may be aliased with any output parameter.
-!>
-!>  Barring over/underflow and assuming a guard digit in subtraction, all
-!>  output quantities are correct to within a few units in the last
-!>  place (ulps).
-!>
-!>  In IEEE arithmetic, the code works correctly if one matrix element is
-!>  infinite.
-!>
-!>  Overflow will not occur unless the largest singular value itself
-!>  overflows or is within a few ulps of overflow. (On machines with
-!>  partial overflow, like the Cray, overflow may occur if the largest
-!>  singular value is within a factor of 2 of overflow.)
-!>
-!>  Underflow is harmless if underflow is gradual. Otherwise, results
-!>  may correspond to a matrix modified by perturbations of size near
-!>  the underflow threshold.
-!> \endverbatim
-!>
-!  =====================================================================
-pure subroutine mobbrmsd_DLASV2(F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL)
-! use LA_CONSTANTS, only: RK => dp
+!  Reference DLASV2 is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
 !  -- LAPACK auxiliary routine --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
-!     .. Scalar Arguments ..
-  real(RK), intent(in)  :: F, G, H
-  real(RK), intent(out) :: SSMAX, SSMIN, SNL, SNR, CSL, CSR
-!     ..
-!
-! =====================================================================
-!     ..
-!     .. Local Scalars ..
+pure elemental subroutine mobbrmsd_DLASV2(F, G, H, SSMIN, SSMAX, SNR, CSR, SNL, CSL)
+  implicit none
+  real(RK), intent(in)  :: F
+!!  The (1,1) element of the 2-by-2 matrix.
+!!
+  real(RK), intent(in)  :: G
+!!  The (1,2) element of the 2-by-2 matrix.
+!!
+  real(RK), intent(in)  :: H
+!!  The (2,2) element of the 2-by-2 matrix.
+!!
+  real(RK), intent(out) :: SSMIN
+!!  abs(SSMIN) is the smaller singular value.
+!!
+  real(RK), intent(out) :: SSMAX
+!!  abs(SSMAX) is the larger singular value.
+!!
+  real(RK), intent(out) :: SNR
+!!  The vector (CSR, SNR) is a unit right singular vector for the
+!!  singular value abs(SSMAX).
+!!
+  real(RK), intent(out) :: CSR
+!!  The vector (CSR, SNR) is a unit right singular vector for the
+!!  singular value abs(SSMAX).
+!!
+  real(RK), intent(out) :: SNL
+!!  The vector (CSL, SNL) is a unit left singular vector for the
+!!  singular value abs(SSMAX).
+!!
+  real(RK), intent(out) :: CSL
+!!  The vector (CSL, SNL) is a unit left singular vector for the
+!!  singular value abs(SSMAX).
+!!
   logical              :: GASMAL, SWAP
   integer              :: PMAX
   real(RK)             :: A, CLT, CRT, D, FA, FT, GA, GT, HA, HT, L, M, &
  &                        MM, R, S, SLT, SRT, T, TEMP, TSIGN, TT
-!     ..
-!     .. Intrinsic Functions ..
   intrinsic            :: ABS, SIGN, SQRT
-!
-!     .. Parameters ..
-! real(RK), parameter   :: ZERO = 0.0_RK
-! real(RK), parameter   :: HALF = 0.5_RK
-! real(RK), parameter   :: ONE = 1.0_RK
-! real(RK), parameter   :: TWO = 2.0_RK
-! real(RK), parameter   :: FOUR = 4.0_RK
-!     ..
-!     .. External Functions ..
 ! interface
 !   include "dlamch.h"
 ! end interface
-!     ..
-!     .. Executable Statements ..
 !
   FT = F
   FA = ABS(FT)

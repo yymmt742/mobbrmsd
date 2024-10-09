@@ -1,193 +1,74 @@
-!> \brief \b mobbrmsd_DLASQ4 computes an approximation to the smallest eigenvalue using values of d from the previous transform. Used by sbdsqr.
+!| mobbrmsd_DLASQ4 computes an approximation to the smallest eigenvalue using values of d from the previous transform. Used by sbdsqr.
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_DLASQ4 computes an approximation TAU to the smallest eigenvalue
+!  using values of d from the previous transform.
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  CNST1 = 9/16
 !
-!> \htmlonly
-!> Download mobbrmsd_DLASQ4 + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlasq4.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlasq4.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/dlasq4.f">
-!> [TXT]</a>
-!> \endhtmlonly
-!
-!  Definition:
-!  ===========
-!
-!       SUBROUTINE mobbrmsd_DLASQ4( I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN,
-!                          DN1, DN2, TAU, TTYPE, G )
-!
-!       .. Scalar Arguments ..
-!       INTEGER            I0, N0, N0IN, PP, TTYPE
-!       DOUBLE PRECISION   DMIN, DMIN1, DMIN2, DN, DN1, DN2, G, TAU
-!       ..
-!       .. Array Arguments ..
-!       DOUBLE PRECISION   Z( * )
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_DLASQ4 computes an approximation TAU to the smallest eigenvalue
-!> using values of d from the previous transform.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] I0
-!> \verbatim
-!>          I0 is INTEGER
-!>        First index.
-!> \endverbatim
-!>
-!> \param[in] N0
-!> \verbatim
-!>          N0 is INTEGER
-!>        Last index.
-!> \endverbatim
-!>
-!> \param[in] Z
-!> \verbatim
-!>          Z is DOUBLE PRECISION array, dimension ( 4*N0 )
-!>        Z holds the qd array.
-!> \endverbatim
-!>
-!> \param[in] PP
-!> \verbatim
-!>          PP is INTEGER
-!>        PP=0 for ping, PP=1 for pong.
-!> \endverbatim
-!>
-!> \param[in] N0IN
-!> \verbatim
-!>          N0IN is INTEGER
-!>        The value of N0 at start of EIGTEST.
-!> \endverbatim
-!>
-!> \param[in] DMIN
-!> \verbatim
-!>          DMIN is DOUBLE PRECISION
-!>        Minimum value of d.
-!> \endverbatim
-!>
-!> \param[in] DMIN1
-!> \verbatim
-!>          DMIN1 is DOUBLE PRECISION
-!>        Minimum value of d, excluding D( N0 ).
-!> \endverbatim
-!>
-!> \param[in] DMIN2
-!> \verbatim
-!>          DMIN2 is DOUBLE PRECISION
-!>        Minimum value of d, excluding D( N0 ) and D( N0-1 ).
-!> \endverbatim
-!>
-!> \param[in] DN
-!> \verbatim
-!>          DN is DOUBLE PRECISION
-!>        d(N)
-!> \endverbatim
-!>
-!> \param[in] DN1
-!> \verbatim
-!>          DN1 is DOUBLE PRECISION
-!>        d(N-1)
-!> \endverbatim
-!>
-!> \param[in] DN2
-!> \verbatim
-!>          DN2 is DOUBLE PRECISION
-!>        d(N-2)
-!> \endverbatim
-!>
-!> \param[out] TAU
-!> \verbatim
-!>          TAU is DOUBLE PRECISION
-!>        This is the shift.
-!> \endverbatim
-!>
-!> \param[out] TTYPE
-!> \verbatim
-!>          TTYPE is INTEGER
-!>        Shift type.
-!> \endverbatim
-!>
-!> \param[in,out] G
-!> \verbatim
-!>          G is DOUBLE PRECISION
-!>        G is passed as an argument in order to save its value between
-!>        calls to mobbrmsd_DLASQ4.
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup auxOTHERcomputational
-!
-!> \par Further Details:
-!  =====================
-!>
-!> \verbatim
-!>
-!>  CNST1 = 9/16
-!> \endverbatim
-!>
-!  =====================================================================
-pure subroutine mobbrmsd_DLASQ4(I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN, &
-               &        DN1, DN2, TAU, TTYPE, G)
-! use LA_CONSTANTS, only: RK => dp
+!  Reference DLASQ4 is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
 !  -- LAPACK computational routine --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
-!     .. Scalar Arguments ..
-  integer, intent(in)     :: I0, N0, PP, N0IN
-  integer, intent(out)    :: TTYPE
-  real(RK), intent(in)    :: DMIN, DMIN1, DMIN2, DN, DN1, DN2
-  real(RK), intent(out)   :: TAU
-  real(RK), intent(inout) :: G
-!     ..
-!     .. Array Arguments ..
+pure subroutine mobbrmsd_DLASQ4(I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, &
+             &                   DN, &
+               &        DN1, DN2, TAU, TTYPE, G)
+  integer, intent(in)     :: I0
+!!  First index.
+!!
+  integer, intent(in)     :: N0
+!!  Last index.
+!!
   real(RK), intent(in)    :: Z(*)
-!     ..
-!  =====================================================================
-!     ..
-!     .. Local Scalars ..
+!!  Z holds the qd array.
+!!
+  integer, intent(in)     :: PP
+!!  PP=0 for ping, PP=1 for pong.
+!!
+  integer, intent(in)     :: N0IN
+!!  The value of N0 at start of EIGTEST.
+!!
+  real(RK), intent(in)    :: DMIN
+!!  Minimum value of d.
+!!
+  real(RK), intent(in)    :: DMIN1
+!!  Minimum value of d, excluding D( N0 ).
+!!
+  real(RK), intent(in)    :: DMIN2
+!!  Minimum value of d, excluding D( N0 ) and D( N0-1 ).
+!!
+  real(RK), intent(in)    :: DN
+!!  d(N)
+!!
+  real(RK), intent(in)    :: DN1
+!!  d(N-1)
+!!
+  real(RK), intent(in)    :: DN2
+!!  d(N-2)
+!!
+  real(RK), intent(out)   :: TAU
+!!  TAU is DOUBLE PRECISION
+!!  This is the shift.
+!!
+  integer, intent(out)    :: TTYPE
+!!  Shift type.
+!!
+  real(RK), intent(inout) :: G
+!!  G is passed as an argument in order to save its value between
+!!  calls to mobbrmsd_DLASQ4.
+!!
   integer                :: I4, NN, NP
   real(RK)               :: A2, B1, B2, GAM, GAP1, GAP2, S
-!     ..
-!     .. Intrinsic Functions ..
   intrinsic              :: MAX, MIN, SQRT
-!     .. Parameters ..
   real(RK), parameter     :: CNST1 = 0.5630_RK
   real(RK), parameter     :: CNST2 = 1.010_RK
   real(RK), parameter     :: CNST3 = 1.050_RK
-! real(RK), parameter     :: THIRD = 0.3330_RK
-! real(RK), parameter     :: QURTR = 0.250_RK
-! real(RK), parameter     :: HALF = 0.50_RK
-! real(RK), parameter     :: ZERO = 0.0_RK
-! real(RK), parameter     :: ONE = 1.0_RK
-! real(RK), parameter     :: TWO = 2.0_RK
-! real(RK), parameter     :: HUNDRD = 100.0_RK
-!     ..
-!     .. Executable Statements ..
 !
-!     A negative DMIN forces the shift to take that absolute value
-!     TTYPE records the type of shift.
+!  A negative DMIN forces the shift to take that absolute value
+!  TTYPE records the type of shift.
 !
   if (DMIN <= ZERO) then
     TAU = -DMIN
@@ -198,7 +79,7 @@ pure subroutine mobbrmsd_DLASQ4(I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, DN, &
   NN = 4 * N0 + PP
   if (N0IN == N0) then
 !
-!        No eigenvalues deflated.
+!   No eigenvalues deflated.
 !
     if (DMIN == DN .or. DMIN == DN1) then
 !

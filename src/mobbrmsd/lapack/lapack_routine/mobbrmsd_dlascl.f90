@@ -1,181 +1,100 @@
-!> \brief \b mobbrmsd_DLASCL multiplies a general rectangular matrix by a real scalar defined as cto/cfrom.
+!| mobbrmsd_DLASCL multiplies a general rectangular matrix by a real scalar defined as cto/cfrom.
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_DLASCL multiplies the M by N real matrix A by the real scalar
+!  CTO/CFROM.  This is done without over/underflow as long as the final
+!  result CTO*A(I,J)/CFROM does not over/underflow. TYPE specifies that
+!  A may be full, upper triangular, lower triangular, upper Hessenberg,
+!  or banded.
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
-!
-!> \htmlonly
-!> Download mobbrmsd_DLASCL + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlascl.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlascl.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/dlascl.f">
-!> [TXT]</a>
-!> \endhtmlonly
-!
-!  Definition:
-!  ===========
-!
-!       SUBROUTINE mobbrmsd_DLASCL( TYPE, KL, KU, CFROM, CTO, M, N, A, LDA, INFO )
-!
-!       .. Scalar Arguments ..
-!       CHARACTER          TYPE
-!       INTEGER            INFO, KL, KU, LDA, M, N
-!       DOUBLE PRECISION   CFROM, CTO
-!       ..
-!       .. Array Arguments ..
-!       DOUBLE PRECISION   A( LDA, * )
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_DLASCL multiplies the M by N real matrix A by the real scalar
-!> CTO/CFROM.  This is done without over/underflow as long as the final
-!> result CTO*A(I,J)/CFROM does not over/underflow. TYPE specifies that
-!> A may be full, upper triangular, lower triangular, upper Hessenberg,
-!> or banded.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] TYPE
-!> \verbatim
-!>          TYPE is CHARACTER*1
-!>          TYPE indices the storage type of the input matrix.
-!>          = 'G':  A is a full matrix.
-!>          = 'L':  A is a lower triangular matrix.
-!>          = 'U':  A is an upper triangular matrix.
-!>          = 'H':  A is an upper Hessenberg matrix.
-!>          = 'B':  A is a symmetric band matrix with lower bandwidth KL
-!>                  and upper bandwidth KU and with the only the lower
-!>                  half stored.
-!>          = 'Q':  A is a symmetric band matrix with lower bandwidth KL
-!>                  and upper bandwidth KU and with the only the upper
-!>                  half stored.
-!>          = 'Z':  A is a band matrix with lower bandwidth KL and upper
-!>                  bandwidth KU. See DGBTRF for storage details.
-!> \endverbatim
-!>
-!> \param[in] KL
-!> \verbatim
-!>          KL is INTEGER
-!>          The lower bandwidth of A.  Referenced only if TYPE = 'B',
-!>          'Q' or 'Z'.
-!> \endverbatim
-!>
-!> \param[in] KU
-!> \verbatim
-!>          KU is INTEGER
-!>          The upper bandwidth of A.  Referenced only if TYPE = 'B',
-!>          'Q' or 'Z'.
-!> \endverbatim
-!>
-!> \param[in] CFROM
-!> \verbatim
-!>          CFROM is DOUBLE PRECISION
-!> \endverbatim
-!>
-!> \param[in] CTO
-!> \verbatim
-!>          CTO is DOUBLE PRECISION
-!>
-!>          The matrix A is multiplied by CTO/CFROM. A(I,J) is computed
-!>          without over/underflow if the final result CTO*A(I,J)/CFROM
-!>          can be represented without over/underflow.  CFROM must be
-!>          nonzero.
-!> \endverbatim
-!>
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>          The number of rows of the matrix A.  M >= 0.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of columns of the matrix A.  N >= 0.
-!> \endverbatim
-!>
-!> \param[in,out] A
-!> \verbatim
-!>          A is DOUBLE PRECISION array, dimension (LDA,N)
-!>          The matrix to be multiplied by CTO/CFROM.  See TYPE for the
-!>          storage type.
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>          The leading dimension of the array A.
-!>          If TYPE = 'G', 'L', 'U', 'H', LDA >= max(1,M);
-!>             TYPE = 'B', LDA >= KL+1;
-!>             TYPE = 'Q', LDA >= KU+1;
-!>             TYPE = 'Z', LDA >= 2*KL+KU+1.
-!> \endverbatim
-!>
-!> \param[out] INFO
-!> \verbatim
-!>          INFO is INTEGER
-!>          0  - successful exit
-!>          <0 - if INFO = -i, the i-th argument had an illegal value.
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup OTHERauxiliary
-!
-!  =====================================================================
-pure subroutine mobbrmsd_DLASCL(type, KL, KU, CFROM, CTO, M, N, A, LDA, INFO)
-! use LA_CONSTANTS, only: RK => dp
+!  Reference DLASCL is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
 !  -- LAPACK auxiliary routine --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
-!     .. Scalar Arguments ..
-  character(*), intent(in) :: type
-  integer, intent(in)      :: KL, KU, LDA, M, N
-  integer, intent(out)     :: INFO
-  real(RK), intent(in)     :: CFROM, CTO
-!     ..
-!     .. Array Arguments ..
+pure subroutine mobbrmsd_DLASCL(type, KL, KU, CFROM, CTO, M, N, A, LDA, INFO)
+  implicit none
+  character, intent(in)    :: type
+!!  indices the storage type of the input matrix.
+!!
+!!  = 'G':  A is a full matrix.
+!!
+!!  = 'L':  A is a lower triangular matrix.
+!!
+!!  = 'U':  A is an upper triangular matrix.
+!!
+!!  = 'H':  A is an upper Hessenberg matrix.
+!!
+!!  = 'B':  A is a symmetric band matrix with lower bandwidth KL
+!!          and upper bandwidth KU and with the only the lower
+!!          half stored.
+!!
+!!  = 'Q':  A is a symmetric band matrix with lower bandwidth KL
+!!          and upper bandwidth KU and with the only the upper
+!!          half stored.
+!!
+!!  = 'Z':  A is a band matrix with lower bandwidth KL and upper
+!!          bandwidth KU. See DGBTRF for storage details.
+!!
+  integer, intent(in)      :: KL
+!!  The lower bandwidth of A.  Referenced only if TYPE = 'B',
+!!  'Q' or 'Z'.
+!!
+  integer, intent(in)      :: KU
+!!  The upper bandwidth of A.  Referenced only if TYPE = 'B',
+!!  'Q' or 'Z'.
+!!
+  real(RK), intent(in)     :: CFROM
+!!  The matrix A is multiplied by CTO/CFROM. A(I,J) is computed
+!!  without over/underflow if the final result CTO*A(I,J)/CFROM
+!!  can be represented without over/underflow.  CFROM must be
+!!  nonzero.
+!!
+  real(RK), intent(in)     :: CTO
+!!  The matrix A is multiplied by CTO/CFROM. A(I,J) is computed
+!!  without over/underflow if the final result CTO*A(I,J)/CFROM
+!!  can be represented without over/underflow.
+!!
+  integer, intent(in)      :: M
+!!  The number of rows of the matrix A.  M >= 0.
+!!
+  integer, intent(in)      :: N
+!!  The number of columns of the matrix A.  N >= 0.
+!!
+  integer, intent(in)      :: LDA
+!!  The leading dimension of the array A.
+!!
+!!  If TYPE = 'G', 'L', 'U', 'H', LDA >= max(1,M);
+!!
+!!     TYPE = 'B', LDA >= KL+1;
+!!
+!!     TYPE = 'Q', LDA >= KU+1;
+!!
+!!     TYPE = 'Z', LDA >= 2*KL+KU+1.
+!!
   real(RK), intent(inout)  :: A(LDA, *)
-!     ..
-!     .. Local Scalars ..
+!!  A is DOUBLE PRECISION array, dimension (LDA,N)
+!!  The matrix to be multiplied by CTO/CFROM.  See TYPE for the
+!!  storage type.
+!!
+  integer, intent(out)     :: INFO
+!!  0  - successful exit
+!!
+!!  <0 - if INFO = -i, the i-th argument had an illegal value.
+!!
   logical                 :: DONE
   integer                 :: I, ITYPE, J, K1, K2, K3, K4
   real(RK)                :: BIGNUM, CFROM1, CFROMC, CTO1, CTOC, MUL, SMLNUM
-!     ..
-!     .. Intrinsic Functions ..
   intrinsic               :: ABS, MAX, MIN
-!     .. Parameters ..
-! real(RK), parameter      :: ZERO = 0.0_RK
-! real(RK), parameter      :: ONE = 1.0_RK
-!     ..
 ! interface
 !   include 'lsame.h'
 !   include 'disnan.h'
 !   include 'dlamch.h'
-!   !include 'xerbla.h'
 ! end interface
-!     ..
-!     .. Executable Statements ..
 !
-!     Test the input arguments
+! Test the input arguments
 !
   INFO = 0
 !
@@ -362,3 +281,4 @@ pure subroutine mobbrmsd_DLASCL(type, KL, KU, CFROM, CTO, M, N, A, LDA, INFO)
 ! End of mobbrmsd_DLASCL
 !
 end subroutine mobbrmsd_DLASCL
+

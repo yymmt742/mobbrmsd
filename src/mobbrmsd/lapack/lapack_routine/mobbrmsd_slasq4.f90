@@ -3,6 +3,7 @@
 !
 !     CNST1 = 9/16
 !
+!
 !  reference SLASQ4 is provided by http://www.netlib.org/lapack/explore-html/
 !  -- LAPACK computational routine (version 3.7.1) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -12,50 +13,54 @@ pure subroutine mobbrmsd_SLASQ4(I0, N0, Z, PP, N0IN, DMIN, DMIN1, DMIN2, &
                &                DN, DN1, DN2, TAU, TTYPE, G)
   implicit none
   integer, intent(in)     :: I0
-!!        First index.
+!!  First index.
+!!
   integer, intent(in)     :: N0
-!!        Last index.
+!!  Last index.
+!!
   integer, intent(in)     :: N0IN
-!!        The value of N0 at start of EIGTEST.
+!!  The value of N0 at start of EIGTEST.
+!!
   integer, intent(in)     :: PP
-!!        PP=0 for ping, PP=1 for pong.
+!!  PP=0 for ping, PP=1 for pong.
+!!
   integer, intent(out)    :: TTYPE
-!!        Shift type. <br>
+!!  Shift type.
   real(RK), intent(in)    :: DMIN
-!!        Minimum value of d.
+!!
+!!  Minimum value of d.
+!!
   real(RK), intent(in)    :: DMIN1
-!!        Minimum value of d, excluding D( N0 ).
+!!  Minimum value of d, excluding D( N0 ).
+!!
   real(RK), intent(in)    :: DMIN2
-!!        Minimum value of d, excluding D( N0 ) and D( N0-1 ).
+!!  Minimum value of d, excluding D( N0 ) and D( N0-1 ).
+!!
   real(RK), intent(in)    :: DN
-!!        d(N)
+!!  d(N)
   real(RK), intent(in)    :: DN1
-!!        d(N-1)
+!!  d(N-1)
+!!
   real(RK), intent(in)    :: DN2
-!!        d(N-2)
+!!  d(N-2)
+!!
   real(RK), intent(inout) :: G
-!!        G is passed as an argument in order to save its value between
-!!        calls to mobbrmsd_SLASQ4.
+!!  G is passed as an argument in order to save its value between
+!!  calls to mobbrmsd_SLASQ4.
+!!
   real(RK), intent(out)   :: TAU
-!!        This is the shift.
+!!  This is the shift.
+!!
   real(RK), intent(in)    :: Z(*)
-!!        Z is REAL array, dimension ( 4*N0 )
-!!        Z holds the qd array.
+!!  REAL array, dimension ( 4*N0 )
+!!  Z holds the qd array.
+!!
   integer   :: I4, NN, NP
   real(RK)  :: A2, B1, B2, GAM, GAP1, GAP2, S
   intrinsic :: MAX, MIN, SQRT
   real(RK), parameter :: CNST1 = 0.5630_RK
   real(RK), parameter :: CNST2 = 1.010_RK
   real(RK), parameter :: CNST3 = 1.050_RK
-! real(RK), parameter :: ZERO = 0.0E0
-! real(RK), parameter :: QURTR = 0.250E0
-! real(RK), parameter :: HALF = 0.5E0
-! real(RK), parameter :: THIRD = 0.3330E0
-! real(RK), parameter :: ONE = 1.0E+0
-! real(RK), parameter :: TWO = 2.0E0
-! real(RK), parameter :: HUNDRD = 100.0E0
-!..
-!..Executable Statements..
 !
 ! A negative DMIN forces the shift to take that absolute value
 ! TTYPE records the type of shift.

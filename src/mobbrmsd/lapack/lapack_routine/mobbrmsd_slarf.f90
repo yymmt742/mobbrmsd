@@ -1,166 +1,74 @@
-!> \brief \b mobbrmsd_SLARF applies an elementary reflector to a general rectangular matrix.
+!| mobbrmsd_SLARF applies an elementary reflector to a general rectangular matrix.
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_SLARF applies a real elementary reflector H to a real m by n matrix
+!  C, from either the left or the right. H is represented in the form
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!        H = I - tau * v * v**T
 !
-!> \htmlonly
-!> Download mobbrmsd_SLARF + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slarf.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slarf.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/slarf.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!  where tau is a real scalar and v is a real vector.
 !
-!  Definition:
-!  ===========
+!  If tau = 0, then H is taken to be the unit matrix.
 !
-!       SUBROUTINE mobbrmsd_SLARF( SIDE, M, N, V, INCV, TAU, C, LDC, WORK )
-!
-!       .. Scalar Arguments ..
-!       CHARACTER          SIDE
-!       INTEGER            INCV, LDC, M, N
-!       REAL               TAU
-!       ..
-!       .. Array Arguments ..
-!       REAL               C( LDC, * ), V( * ), WORK( * )
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SLARF applies a real elementary reflector H to a real m by n matrix
-!> C, from either the left or the right. H is represented in the form
-!>
-!>       H = I - tau * v * v**T
-!>
-!> where tau is a real scalar and v is a real vector.
-!>
-!> If tau = 0, then H is taken to be the unit matrix.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] SIDE
-!> \verbatim
-!>          SIDE is CHARACTER*1
-!>          = 'L': form  H * C
-!>          = 'R': form  C * H
-!> \endverbatim
-!>
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>          The number of rows of the matrix C.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of columns of the matrix C.
-!> \endverbatim
-!>
-!> \param[in] V
-!> \verbatim
-!>          V is REAL array, dimension
-!>                     (1 + (M-1)*abs(INCV)) if SIDE = 'L'
-!>                  or (1 + (N-1)*abs(INCV)) if SIDE = 'R'
-!>          The vector v in the representation of H. V is not used if
-!>          TAU = 0.
-!> \endverbatim
-!>
-!> \param[in] INCV
-!> \verbatim
-!>          INCV is INTEGER
-!>          The increment between elements of v. INCV <> 0.
-!> \endverbatim
-!>
-!> \param[in] TAU
-!> \verbatim
-!>          TAU is REAL
-!>          The value tau in the representation of H.
-!> \endverbatim
-!>
-!> \param[in,out] C
-!> \verbatim
-!>          C is REAL array, dimension (LDC,N)
-!>          On entry, the m by n matrix C.
-!>          On exit, C is overwritten by the matrix H * C if SIDE = 'L',
-!>          or C * H if SIDE = 'R'.
-!> \endverbatim
-!>
-!> \param[in] LDC
-!> \verbatim
-!>          LDC is INTEGER
-!>          The leading dimension of the array C. LDC >= max(1,M).
-!> \endverbatim
-!>
-!> \param[out] WORK
-!> \verbatim
-!>          WORK is REAL array, dimension
-!>                         (N) if SIDE = 'L'
-!>                      or (M) if SIDE = 'R'
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \date December 2016
-!
-!> \ingroup realOTHERauxiliary
-!
-!  =====================================================================
-pure subroutine mobbrmsd_SLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
-  implicit none
+!  Reference SLARF is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
 !  -- LAPACK auxiliary routine (version 3.7.0) --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     December 2016
 !
-!     .. Scalar Arguments ..
+pure subroutine mobbrmsd_SLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
+  implicit none
   character, intent(in) :: SIDE
-  integer, intent(in)   :: INCV, LDC, M, N
-  real(RK), intent(in)      :: TAU
-!..
-!..Array Arguments..
+!!  = 'L': form  H * C
+!!
+!!  = 'R': form  C * H
+!!
+  integer, intent(in)     :: M
+!!  The number of rows of the matrix C.
+!!
+  integer, intent(in)     :: N
+!!  The number of columns of the matrix C.
+!!
   real(RK), intent(in)    :: V(*)
+!!  REAL array, dimension
+!!             (1 + (M-1)*abs(INCV)) if SIDE = 'L'
+!!          or (1 + (N-1)*abs(INCV)) if SIDE = 'R'
+!!
+!!  The vector v in the representation of H. V is not used if
+!!  TAU = 0.
+!!
+  integer, intent(in)     :: INCV
+!!  The increment between elements of v. INCV <> 0.
+!!
+  real(RK), intent(in)    :: TAU
+!!  The value tau in the representation of H.
+!!
+  integer, intent(in)     :: LDC
+!!  The leading dimension of the array C. LDC >= max(1,M).
+!!
   real(RK), intent(inout) :: C(LDC, *)
-  real(RK), intent(out)   :: WORK(*)
-!..
-!
-!  =====================================================================
-!
-!..Local Scalars..
+!!  REAL array, dimension (LDC,N)
+!!
+!!  On entry, the m by n matrix C.
+!!
+!!  On exit, C is overwritten by the matrix H * C if SIDE = 'L',
+!!  or C * H if SIDE = 'R'.
+!!
+  real(RK), intent(out)   :: WORK(LDC, *)
+!!  REAL array, dimension
+!!                 (N) if SIDE = 'L'
+!!              or (M) if SIDE = 'R'
   logical :: APPLYLEFT
   integer :: I, LASTV, LASTC
-!..
-!..Parameters..
-! real(RK), parameter :: ONE = 1.0E+0, ZERO = 0.0E+0
-!..
 ! interface
-! .. External Functions ..
 !   include 'lsame.h'
 !   include 'ilaslr.h'
 !   include 'ilaslc.h'
-! .. External Subroutines ..
 !   include 'sgemv.h'
 !   include 'sger.h'
 ! end interface
-!..
-!..Executable Statements..
 !
   APPLYLEFT = mobbrmsd_LSAME(SIDE, 'L')
   LASTV = 0
@@ -229,3 +137,4 @@ pure subroutine mobbrmsd_SLARF(SIDE, M, N, V, INCV, TAU, C, LDC, WORK)
 !end of mobbrmsd_SLARF
 !
 end
+

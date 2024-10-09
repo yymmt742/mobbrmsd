@@ -1,156 +1,53 @@
-!> \brief \b mobbrmsd_DLASQ6 computes one dqd transform in ping-pong form. Used by sbdsqr and sstegr.
+!| mobbrmsd_DLASQ6 computes one dqd transform in ping-pong form.
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_DLASQ6 computes one dqd (shift equal to zero) transform
+!  in ping-pong form, with protection against underflow and overflow.
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
-!
-!> \htmlonly
-!> Download mobbrmsd_DLASQ6 + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlasq6.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlasq6.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/dlasq6.f">
-!> [TXT]</a>
-!> \endhtmlonly
-!
-!  Definition:
-!  ===========
-!
-!       SUBROUTINE mobbrmsd_DLASQ6( I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN,
-!                          DNM1, DNM2 )
-!
-!       .. Scalar Arguments ..
-!       INTEGER            I0, N0, PP
-!       DOUBLE PRECISION   DMIN, DMIN1, DMIN2, DN, DNM1, DNM2
-!       ..
-!       .. Array Arguments ..
-!       DOUBLE PRECISION   Z( * )
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_DLASQ6 computes one dqd (shift equal to zero) transform in
-!> ping-pong form, with protection against underflow and overflow.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] I0
-!> \verbatim
-!>          I0 is INTEGER
-!>        First index.
-!> \endverbatim
-!>
-!> \param[in] N0
-!> \verbatim
-!>          N0 is INTEGER
-!>        Last index.
-!> \endverbatim
-!>
-!> \param[in] Z
-!> \verbatim
-!>          Z is DOUBLE PRECISION array, dimension ( 4*N )
-!>        Z holds the qd array. EMIN is stored in Z(4*N0) to avoid
-!>        an extra argument.
-!> \endverbatim
-!>
-!> \param[in] PP
-!> \verbatim
-!>          PP is INTEGER
-!>        PP=0 for ping, PP=1 for pong.
-!> \endverbatim
-!>
-!> \param[out] DMIN
-!> \verbatim
-!>          DMIN is DOUBLE PRECISION
-!>        Minimum value of d.
-!> \endverbatim
-!>
-!> \param[out] DMIN1
-!> \verbatim
-!>          DMIN1 is DOUBLE PRECISION
-!>        Minimum value of d, excluding D( N0 ).
-!> \endverbatim
-!>
-!> \param[out] DMIN2
-!> \verbatim
-!>          DMIN2 is DOUBLE PRECISION
-!>        Minimum value of d, excluding D( N0 ) and D( N0-1 ).
-!> \endverbatim
-!>
-!> \param[out] DN
-!> \verbatim
-!>          DN is DOUBLE PRECISION
-!>        d(N0), the last value of d.
-!> \endverbatim
-!>
-!> \param[out] DNM1
-!> \verbatim
-!>          DNM1 is DOUBLE PRECISION
-!>        d(N0-1).
-!> \endverbatim
-!>
-!> \param[out] DNM2
-!> \verbatim
-!>          DNM2 is DOUBLE PRECISION
-!>        d(N0-2).
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup auxOTHERcomputational
-!
-!  =====================================================================
-pure subroutine mobbrmsd_DLASQ6(I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN, DNM1, DNM2)
-! use LA_CONSTANTS, only: RK => dp
+!  Reference DLASQ6 is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
 !  -- LAPACK computational routine --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
-!     .. Scalar Arguments ..
-  integer, intent(in)     :: I0, N0, PP
-  real(RK), intent(out)   :: DMIN, DMIN1, DMIN2, DN, DNM1, DNM2
-!     ..
-!     .. Array Arguments ..
+pure subroutine mobbrmsd_DLASQ6(I0, N0, Z, PP, DMIN, DMIN1, DMIN2, DN, DNM1, DNM2)
+  implicit none
+  integer, intent(in)     :: I0
+!!  First index.
+!!
+  integer, intent(in)     :: N0
+!!  Last index.
+!!
   real(RK), intent(inout) :: Z(*)
-!     ..
-!
-!  =====================================================================
-!     ..
-!     .. Local Scalars ..
+!!  DOUBLE PRECISION array, dimension ( 4*N )
+!!  Z holds the qd array. EMIN is stored in Z(4*N0) to avoid
+!!  an extra argument.
+!!
+  integer, intent(in)     :: PP
+!!  PP=0 for ping, PP=1 for pong.
+!!
+  real(RK), intent(out)   :: DMIN
+!!  Minimum value of d.
+!!
+  real(RK), intent(out)   :: DMIN1
+!!  Minimum value of d, excluding D( N0 ).
+!!
+  real(RK), intent(out)   :: DMIN2
+!!  Minimum value of d, excluding D( N0 ) and D( N0-1 ).
+!!
+  real(RK), intent(out)   :: DN
+!!  d(N0), the last value of d.
+!!
+  real(RK), intent(out)   :: DNM1
+!!  d(N0-1).
+!!
+  real(RK), intent(out)   :: DNM2
+!!  d(N0-2).
+!!
   integer  :: J4, J4P2
   real(RK) :: D, EMIN, SAFMIN, TEMP
-!     ..
-!     .. Intrinsic Functions ..
   intrinsic :: MIN
-!
-!     .. Parameter ..
-! real(RK), parameter     :: ZERO = 0.0_RK
-!     ..
-!     .. External Function ..
-! interface
-!   pure elemental function mobbrmsd_DLAMCH(CMACH)
-!     use LA_CONSTANTS, only: RK => dp
-!     character(*), intent(in) :: CMACH
-!     real(RK)                :: mobbrmsd_DLAMCH
-!   end function mobbrmsd_DLAMCH
-! end interface
-!     ..
-!     .. Executable Statements ..
 !
   if ((N0 - I0 - 1) <= 0) return
 !

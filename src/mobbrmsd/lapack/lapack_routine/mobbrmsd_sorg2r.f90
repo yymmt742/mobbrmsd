@@ -1,156 +1,67 @@
-!> \brief \b mobbrmsd_SORG2R generates all or part of the orthogonal matrix Q from a QR factorization determined by sgeqrf (unblocked algorithm).
+!| mobbrmsd_SORG2R generates all or part of the orthogonal matrix Q from a QR factorization determined by sgeqrf (unblocked algorithm).
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_SORG2R generates an \( m \)by\( n \) real matrix \( Q \) with orthonormal columns,
+!  which is defined as the first \( n \) columns of a product of \( k \) elementary
+!  reflectors of order \( m \)
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  \[
+!        Q  =  H _ 1 H _ 2 \cdots H _ k
+!  \]
 !
-!> \htmlonly
-!> Download mobbrmsd_SORG2R + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sorg2r.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sorg2r.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/sorg2r.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!  as returned by mobbrmsd_SGEQRF.
 !
-!  Definition:
-!  ===========
-!
-!       SUBROUTINE mobbrmsd_SORG2R( M, N, K, A, LDA, TAU, WORK, INFO )
-!
-!       .. Scalar Arguments ..
-!       INTEGER            INFO, K, LDA, M, N
-!       ..
-!       .. Array Arguments ..
-!       REAL               A( LDA, * ), TAU( * ), WORK( * )
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SORG2R generates an m by n real matrix Q with orthonormal columns,
-!> which is defined as the first n columns of a product of k elementary
-!> reflectors of order m
-!>
-!>       Q  =  H(1) H(2) . . . H(k)
-!>
-!> as returned by mobbrmsd_SGEQRF.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>          The number of rows of the matrix Q. M >= 0.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of columns of the matrix Q. M >= N >= 0.
-!> \endverbatim
-!>
-!> \param[in] K
-!> \verbatim
-!>          K is INTEGER
-!>          The number of elementary reflectors whose product defines the
-!>          matrix Q. N >= K >= 0.
-!> \endverbatim
-!>
-!> \param[in,out] A
-!> \verbatim
-!>          A is REAL array, dimension (LDA,N)
-!>          On entry, the i-th column must contain the vector which
-!>          defines the elementary reflector H(i), for i = 1,2,...,k, as
-!>          returned by mobbrmsd_SGEQRF in the first k columns of its array
-!>          argument A.
-!>          On exit, the m-by-n matrix Q.
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>          The first dimension of the array A. LDA >= max(1,M).
-!> \endverbatim
-!>
-!> \param[in] TAU
-!> \verbatim
-!>          TAU is REAL array, dimension (K)
-!>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i), as returned by mobbrmsd_SGEQRF.
-!> \endverbatim
-!>
-!> \param[out] WORK
-!> \verbatim
-!>          WORK is REAL array, dimension (N)
-!> \endverbatim
-!>
-!> \param[out] INFO
-!> \verbatim
-!>          INFO is INTEGER
-!>          = 0: successful exit
-!>          < 0: if INFO = -i, the i-th argument has an illegal value
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \date December 2016
-!
-!> \ingroup realOTHERcomputational
-!
-!  =====================================================================
-pure subroutine mobbrmsd_SORG2R(M, N, K, A, LDA, TAU, WORK, INFO)
-  implicit none
+!  Reference SORG2R is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
 !  -- LAPACK computational routine (version 3.7.0) --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     December 2016
 !
-!     .. Scalar Arguments ..
-  integer, intent(in)  :: K, LDA, M, N
-  integer, intent(out) :: INFO
-!..
-!..Array Arguments..
-  real(RK), intent(in)     :: TAU(*)
-  real(RK), intent(inout)  :: A(LDA, *)
-  real(RK), intent(out)    :: WORK(*)
-!..
-!
-!  =====================================================================
-!..
-!..Local Scalars..
+pure subroutine mobbrmsd_SORG2R(M, N, K, A, LDA, TAU, WORK, INFO)
+  implicit none
+  integer, intent(in)  :: M
+!!  The number of rows of the matrix Q. M >= 0.
+!!
+  integer, intent(in)  :: N
+!!  The number of columns of the matrix Q. M >= N >= 0.
+!!
+  integer, intent(in)  :: K
+!!  The number of elementary reflectors whose product defines the
+!!  matrix Q. N >= K >= 0.
+!!
+  integer, intent(in)  :: LDA
+!!  The first dimension of the array A. LDA >= max(1,M).
+!!
+  real(RK), intent(inout) :: A(LDA, *)
+!!  DOUBLE PRECISION array, dimension (LDA,N)
+!!
+!!  On entry, the i-th column must contain the vector which
+!!  defines the elementary reflector H(i), for i = 1,2,...,k, as
+!!  returned by mobbrmsd_DGEQRF in the first k columns of its array
+!!  argument A.
+!!
+!!  On exit, the m-by-n matrix Q.
+!!
+  real(RK), intent(in)    :: TAU(*)
+!!  DOUBLE PRECISION array, dimension (K)
+!!
+!!  TAU(i) must contain the scalar factor of the elementary
+!!  reflector H(i), as returned by mobbrmsd_DGEQRF.
+!!
+  real(RK), intent(out)   :: WORK(*)
+!!  DOUBLE PRECISION array, dimension (N)
+!!
+  integer, intent(out)    :: INFO
+!!    = 0: successful exit
+!!
+!!    < 0: if INFO = -i, the i-th argument has an illegal value
+!!
   integer :: I, J, L
-!
-!..Parameters..
-! real(RK), parameter :: ONE = 1.0E+0
-! real(RK), parameter :: ZERO = 0.0E+0
-!..
-! interface
-!..external Subroutines..
-!   include 'slarf.h'
-!   include 'sscal.h'
-! end interface
-!..
-!..intrinsic Functions..
   intrinsic :: MAX
-!..
-!..Executable Statements..
 !
-!Test the input arguments
+! Test the input arguments
 !
   INFO = 0
   if (M < 0) then

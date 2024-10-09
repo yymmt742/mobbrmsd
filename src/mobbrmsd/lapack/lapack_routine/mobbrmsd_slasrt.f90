@@ -1,126 +1,53 @@
-!> \brief \b mobbrmsd_SLASRT sorts numbers in increasing or decreasing order.
+!| mobbrmsd_SLASRT sorts numbers in increasing or decreasing order.
 !
-!  =========== DOCUMENTATION ===========
+!  Sort the numbers in \( D \) in increasing order (if ID = 'I') or
+!  in decreasing order (if ID = 'D' ).
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  Use Quick Sort, reverting to Insertion sort on arrays of
+!  size <= 20. Dimension of STACK limits \( N \) to about 2**32.
 !
-!> \htmlonly
-!> Download mobbrmsd_SLASRT + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slasrt.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slasrt.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/slasrt.f">
-!> [TXT]</a>
-!> \endhtmlonly
-!
-!  Definition:
-!  ===========
-!
-!       SUBROUTINE mobbrmsd_SLASRT( ID, N, D, INFO )
-!
-!       .. Scalar Arguments ..
-!       CHARACTER          ID
-!       INTEGER            INFO, N
-!       ..
-!       .. Array Arguments ..
-!       REAL               D( * )
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> Sort the numbers in D in increasing order (if ID = 'I') or
-!> in decreasing order (if ID = 'D' ).
-!>
-!> Use Quick Sort, reverting to Insertion sort on arrays of
-!> size <= 20. Dimension of STACK limits N to about 2**32.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] ID
-!> \verbatim
-!>          ID is CHARACTER*1
-!>          = 'I': sort D in increasing order;
-!>          = 'D': sort D in decreasing order.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The length of the array D.
-!> \endverbatim
-!>
-!> \param[in,out] D
-!> \verbatim
-!>          D is REAL array, dimension (N)
-!>          On entry, the array to be sorted.
-!>          On exit, D has been sorted into increasing order
-!>          (D(1) <= ... <= D(N) ) or into decreasing order
-!>          (D(1) >= ... >= D(N) ), depending on ID.
-!> \endverbatim
-!>
-!> \param[out] INFO
-!> \verbatim
-!>          INFO is INTEGER
-!>          = 0:  successful exit
-!>          < 0:  if INFO = -i, the i-th argument had an illegal value
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \date June 2016
-!
-!> \ingroup auxOTHERcomputational
-!
-!  =====================================================================
-pure subroutine mobbrmsd_SLASRT(ID, N, D, INFO)
-  implicit none
+!  Reference SLASRT is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
 !  -- LAPACK computational routine (version 3.7.0) --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !     June 2016
 !
-!     .. Scalar Arguments ..
-  character, intent(in) :: ID
-  integer, intent(in)   :: N
-  integer, intent(out)  :: INFO
-!..
-!..Array Arguments..
-  real(RK), intent(inout)   :: D(*)
-!..
-!
-!  =====================================================================
-!..
-!..Local Scalars..
+pure subroutine mobbrmsd_SLASRT(ID, N, D, INFO)
+  implicit none
+  character, intent(in)   :: ID
+!!  = 'I': sort D in increasing order;
+!!
+!!  = 'D': sort D in decreasing order.
+!!
+  integer, intent(in)     :: N
+!!  The length of the array D.
+!!
+  real(RK), intent(inout) :: D(*)
+!!  DOUBLE PRECISION array, dimension (N)
+!!
+!!  On entry, the array to be sorted.
+!!
+!!  On exit, D has been sorted into increasing order
+!!  (D(1) <= ... <= D(N) ) or into decreasing order
+!!  (D(1) >= ... >= D(N) ), depending on ID.
+!!
+  integer, intent(out)    :: INFO
+!!  = 0:  successful exit
+!!
+!!  < 0:  if INFO = -i, the i-th argument had an illegal value
+!!
   integer :: DIR, ENDD, I, J, START, STKPNT
   real(RK) :: D1, D2, D3, DMNMX, TMP
-!..
-!..Local Arrays..
   integer :: STACK(2, 32)
-!
-!..Parameters..
   integer, parameter :: SELCT = 20
 !..
 ! interface
 !..external Functions..
 !   include 'lsame.h'
 ! end interface
-!..
-!..Executable Statements..
 !
 ! Test the input parameters.
 !
@@ -294,3 +221,4 @@ pure subroutine mobbrmsd_SLASRT(ID, N, D, INFO)
 ! end of mobbrmsd_SLASRT
 !
 end
+

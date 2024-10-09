@@ -1,202 +1,101 @@
-!> \brief \b mobbrmsd_SLARTG generates a plane rotation with real cosine and real sine.
+!| mobbrmsd_SLARTG generates a plane rotation with real cosine and real sine.
 !
-!  =========== DOCUMENTATION ===========
+! mobbrmsd_SLARTG generates a plane rotation so that
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!    [  C  S  ]  .  [ F ]  =  [ R ]
+!    [ -S  C  ]     [ G ]     [ 0 ]
 !
-!> \htmlonly
-!> Download mobbrmsd_SLARTG + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/slartg.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/slartg.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/slartg.f">
-!> [TXT]</a>
-!> \endhtmlonly
+! where C**2 + S**2 = 1.
 !
-!  Definition:
-!  ===========
+! The mathematical formulas used for C and S are
+!    R = sign(F) * sqrt(F**2 + G**2)
+!    C = F / R
+!    S = G / R
+! Hence C >= 0. The algorithm used to compute these quantities
+! incorporates scaling to avoid overflow or underflow in computing the
+! square root of the sum of squares.
 !
-!       SUBROUTINE mobbrmsd_SLARTG( F, G, CS, SN, R )
+! This version is discontinuous in R at F = 0 but it returns the same
+! C and S as ZLARTG for complex inputs (F,0) and (G,0).
 !
-!       .. Scalar Arguments ..
-!       REAL               CS, F, G, R, SN
-!       ..
+! This is a more accurate version of the BLAS1 routine mobbrmsd_DROTG,
+! with the following other differences:
+!    F and G are unchanged on return.
+!    If G=0, then C=1 and S=0.
+!    If F=0 and (G .ne. 0), then C=0 and S=sign(1,G) without doing any
+!       floating point operations (saves work in mobbrmsd_DBDSQR when
+!       there are zeros on the diagonal).
 !
+! If F exceeds G in magnitude, C will be positive.
 !
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SLARTG generate a plane rotation so that
-!>
-!>    [  CS  SN  ]  .  [ F ]  =  [ R ]   where CS**2 + SN**2 = 1.
-!>    [ -SN  CS  ]     [ G ]     [ 0 ]
-!>
-!> This is a slower, more accurate version of the BLAS1 routine mobbrmsd_SROTG,
-!> with the following other differences:
-!>    F and G are unchanged on return.
-!>    If G=0, then CS=1 and SN=0.
-!>    If F=0 and (G .ne. 0), then CS=0 and SN=1 without doing any
-!>       floating point operations (saves work in mobbrmsd_SBDSQR when
-!>       there are zeros on the diagonal).
-!>
-!> If F exceeds G in magnitude, CS will be positive.
-!> \endverbatim
+! Below, RK=>dp stands for double precision from LA_CONSTANTS module.
 !
-!  Arguments:
-!  ==========
+! Further Details:
 !
-!> \param[in] F
-!> \verbatim
-!>          F is REAL
-!>          The first component of vector to be rotated.
-!> \endverbatim
-!>
-!> \param[in] G
-!> \verbatim
-!>          G is REAL
-!>          The second component of vector to be rotated.
-!> \endverbatim
-!>
-!> \param[out] CS
-!> \verbatim
-!>          CS is REAL
-!>          The cosine of the rotation.
-!> \endverbatim
-!>
-!> \param[out] SN
-!> \verbatim
-!>          SN is REAL
-!>          The sine of the rotation.
-!> \endverbatim
-!>
-!> \param[out] R
-!> \verbatim
-!>          R is REAL
-!>          The nonzero component of the rotated vector.
-!>
-!>  This version has a few statements commented out for thread safety
-!>  (machine parameters are computed on each entry). 10 feb 03, SJH.
-!> \endverbatim
+!  Anderson E. (2017)
+!  Algorithm 978: Safe Scaling in the Level 1 BLAS
+!  [ACM Trans Math Softw 44:1--28](https://doi.org/10.1145/3061665)
 !
-!  Authors:
-!  ========
+!  Reference SLARTG is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
+!  -- LAPACK auxiliary routine --
 !
-!> \date December 2016
-!
-!> \ingroup OTHERauxiliary
-!
-!  =====================================================================
-pure elemental subroutine mobbrmsd_SLARTG(F, G, CS, SN, R)
-  implicit none
-!
-!  -- LAPACK auxiliary routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
-!     December 2016
+!     February 2021
 !
-!     .. Scalar Arguments ..
-  real(RK), intent(in)  :: F, G
-  real(RK), intent(out) :: CS, R, SN
-!..
+! Weslley Pereira, University of Colorado Denver, USA
 !
-!  =====================================================================
+pure elemental subroutine mobbrmsd_SLARTG(f, g, c, s, r)
+  implicit none
+  real(RK), intent(in)  :: f
+!!  The first component of vector to be rotated.
+!!
+  real(RK), intent(in)  :: g
+!!  The second component of vector to be rotated.
+!!
+  real(RK), intent(out) :: c
+!!  The cosine of the rotation.
+!!
+  real(RK), intent(out) :: s
+!!  The sine of the rotation.
+!!
+  real(RK), intent(out) :: r
+!!  The nonzero component of the rotated vector.
+!!
+  real(RK)  :: D, F1, FS, G1, GS, U, RTMIN, RTMAX
+  intrinsic :: ABS, SIGN, SQRT
+!  ..
+  RTMIN = SQRT(SAFMIN)
+  RTMAX = SQRT(SAFMAX / 2)
 !
-!..Local Scalars..
-! logical FIRST
-  integer :: CNT, I
-  real(RK) :: F1, G1, SAFMN2, SAFMX2, SCL
-!..
-!..Parameters..
-! real(RK), parameter :: ZERO = 0.0E0
-! real(RK), parameter :: ONE = 1.0E0
-! real(RK), parameter :: TWO = 2.0E0
-!..
-! interface
-! .. External Functions ..
-!   include 'slamch.h'
-! end interface
-!..
-!..intrinsic Functions..
-  intrinsic :: ABS, INT, LOG, MAX, SQRT
-!..
-!..save statement..
-! save FIRST, SAFMX2, SAFMN2
-!..
-!..data statements..
-! data FIRST/.true./
-!..
-!..Executable Statements..
-!
-! if(FIRST) then
-  SAFMN2 = mobbrmsd_SLAMCH('B')**INT(LOG(mobbrmsd_SLAMCH('S') / mobbrmsd_SLAMCH('E')) / LOG(mobbrmsd_SLAMCH('B')) / TWO)
-  SAFMX2 = ONE / SAFMN2
-! FIRST = .false.
-! end if
+  F1 = ABS(F)
+  G1 = ABS(G)
   if (G == ZERO) then
-    CS = ONE
-    SN = ZERO
+    C = ONE
+    S = ZERO
     R = F
   else if (F == ZERO) then
-    CS = ZERO
-    SN = ONE
-    R = G
+    C = ZERO
+    S = SIGN(ONE, G)
+    R = G1
+  else if (F1 > RTMIN .and. F1 < RTMAX .and. &
+           G1 > RTMIN .and. G1 < RTMAX) then
+    D = SQRT(F * F + G * G)
+    C = F1 / D
+    R = SIGN(D, F)
+    S = G / R
   else
-    F1 = F
-    G1 = G
-    SCL = MAX(ABS(F1), ABS(G1))
-    if (SCL >= SAFMX2) then
-      CNT = 0
-      do
-        CNT = CNT + 1
-        F1 = F1 * SAFMN2
-        G1 = G1 * SAFMN2
-        SCL = MAX(ABS(F1), ABS(G1))
-        if (SCL < SAFMX2) exit
-      end do
-      R = SQRT(F1**2 + G1**2)
-      CS = F1 / R
-      SN = G1 / R
-      do I = 1, CNT
-        R = R * SAFMX2
-      end do
-    else if (SCL <= SAFMN2) then
-      CNT = 0
-      do
-        CNT = CNT + 1
-        F1 = F1 * SAFMX2
-        G1 = G1 * SAFMX2
-        SCL = MAX(ABS(F1), ABS(G1))
-        if (SCL > SAFMN2) exit
-      end do
-      R = SQRT(F1**2 + G1**2)
-      CS = F1 / R
-      SN = G1 / R
-      do I = 1, CNT
-        R = R * SAFMN2
-      end do
-    else
-      R = SQRT(F1**2 + G1**2)
-      CS = F1 / R
-      SN = G1 / R
-    end if
-    if (ABS(F) > ABS(G) .and. CS < ZERO) then
-      CS = -CS
-      SN = -SN
-      R = -R
-    end if
+    U = MIN(SAFMAX, MAX(SAFMIN, F1, G1))
+    FS = F / U
+    GS = G / U
+    D = SQRT(FS * FS + GS * GS)
+    C = ABS(FS) / D
+    R = SIGN(D, F)
+    S = GS / R
+    R = R * U
   end if
   return
-  !
-  !end of mobbrmsd_SLARTG
-  !
 end
 

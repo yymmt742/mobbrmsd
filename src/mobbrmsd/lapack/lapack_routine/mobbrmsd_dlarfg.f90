@@ -1,4 +1,5 @@
 !| mobbrmsd_DLARFG generates an elementary reflector (Householder matrix).
+!
 !  mobbrmsd_DLARFG generates a real elementary reflector H of order n, such
 !  that
 !
@@ -19,52 +20,45 @@
 !
 !  Otherwise  1 <= tau <= 2.
 !
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
+!  Reference DLARFG is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
 !  -- LAPACK auxiliary routine --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
 pure subroutine mobbrmsd_DLARFG(N, ALPHA, X, INCX, TAU)
   implicit none
   integer, intent(in)     :: INCX
 !!          The increment between elements of X. INCX > 0.
+!!
   integer, intent(in)     :: N
 !!          The order of the elementary reflector.
+!!
   real(RK), intent(inout) :: ALPHA
 !!          On entry, the value alpha. <br>
 !!          On exit, it is overwritten with the value beta. <br>
+!!
   real(RK), intent(out)   :: TAU
 !!          The value tau.
+!!
   real(RK), intent(inout) :: X(*)
-!!          X is real(RK)           :: array, dimension (1+(N-2)*abs(INCX))
+!!          DOUBLE PRECISION array, dimension (1+(N-2)*abs(INCX))
+!!
 !!          On entry, the vector x.
+!!
 !!          On exit, it is overwritten with the vector v.
+!!
   real(RK)             :: BETA, RSAFMN, SAFMIN, XNORM
   integer              :: J, KNT
   intrinsic            :: ABS, SIGN
-!     ..
-!     .. Parameters ..
-! real(RK), parameter   :: ZERO = 0.0_RK
-! real(RK), parameter   :: ONE = 1.0_RK
-!     ..
-!     ..
 ! interface
-!     .. External Functions ..
 !   include 'dlamch.h'
 !   include 'dlapy2.h'
 !   include 'dnrm2.h'
-!     .. External Subroutines ..
 !   include 'dscal.h'
 ! end interface
-!     ..
-!     .. Executable Statements ..
 !
   if (N <= 1) then
     TAU = ZERO
