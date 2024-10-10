@@ -1,5 +1,3 @@
-set(mobbrmsd_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
 function(ADDOPTS name dims prec int blas openmp)
   target_compile_options(
     ${name} PRIVATE
@@ -67,7 +65,6 @@ function(ADDOPTS name dims prec int blas openmp)
     target_compile_definitions(${name} PRIVATE -DUSE_REAL64)
   endif()
   target_compile_definitions(${name} PRIVATE -DUSE_INT32)
-  target_include_directories(${name} PRIVATE ${mobbrmsd_INCLUDE_DIR})
 # if(blas)
 #   target_compile_options(${name} PRIVATE ${BLAS_LINKER_FLAGS} ${LAPACK_LINKER_FLAGS})
 #   target_link_libraries(${name} PRIVATE ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})

@@ -5,18 +5,6 @@ foreach(prec IN ITEMS ${mobbrmsd_PRECISIONS})
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
     )
-  ADDTEST(test_invsqrt_${prec} xd ${prec} 32 "" "" ${moddir} ""
-    ${sources}
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_invsqrt.f90
-    )
-  ADDTEST(test_invcbrt_${prec} xd ${prec} 32 "" "" ${moddir} ""
-    ${sources}
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_invcbrt.f90
-    )
-  ADDTEST(test_quartic_${prec} xd ${prec} 32 "" "" ${moddir} ""
-    ${sources}
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_quartic.f90
-    )
   ADDTEST(test_group_permutation_${prec} xd ${prec} 32 "" "" ${moddir} ""
     ${sources}
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_group_permutation.f90

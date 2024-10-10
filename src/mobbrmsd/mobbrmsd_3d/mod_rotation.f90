@@ -52,7 +52,6 @@ contains
 !
 !| Compute \(\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]\).
   pure subroutine estimate_rcmax(g, cov, w)
-    !pure subroutine estimate_rcmax(g, cov, w)
     real(RK), intent(in)    :: g
     !! sum of auto covariance matrix
     real(RK), intent(in)    :: cov(*)
@@ -64,7 +63,6 @@ contains
 !
 !| Compute the least-squares sum_i^n |x_i-Ry_i|^2 from cov = YX^T and g = tr[XX^T] + tr[YY^T].
   pure subroutine estimate_sdmin(g, cov, w)
-    !pure subroutine estimate_sdmin(g, cov, w)
     real(RK), intent(in)    :: g
     !! sum of auto covariance matrix
     real(RK), intent(in)    :: cov(*)
@@ -85,7 +83,6 @@ contains
 !| Compute the transpose rotation matrix for minimize tr[CR] from cov = YX^T and g = tr[XX^T] + tr[YY^T].
 !  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
   pure subroutine estimate_rotation(g, cov, rot, w)
-    !pure subroutine estimate_rotation(g, cov, rot, w)
     real(RK), intent(in)    :: g
     !! g = tr[XX^T] + tr[YY^T]
     real(RK), intent(in)    :: cov(*)
@@ -235,7 +232,6 @@ contains
 !| Compute maximum eigen value of S. <br>
 !  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
   pure subroutine find_lambda_max(g, cov, w)
-    !pure subroutine find_lambda_max(g, cov, w)
     real(RK), intent(in)    :: g
     !! sum of auto covariance matrix
     real(RK), intent(in)    :: cov(*)
@@ -554,7 +550,7 @@ contains
     end if
   end subroutine det3
 !
-! find a positive root of monic cubic equation, x^3 - 2 * x^2 + k1 * x + k0 = 0
+!| find a positive root of monic cubic equation, x^3 - 2 * x^2 + k1 * x + k0 = 0
   pure subroutine find_a_cubic_root(k1, k0, x, r, q, h, s)
     real(RK), intent(in)    :: k1, k0
     real(RK), intent(inout) :: x, r, q, h, s
@@ -600,7 +596,7 @@ contains
 #include "cosh_acosh.f90"
 #include "sinh_asinh.f90"
 !
-! https://www.mdpi.com/1996-1073/14/4/1058
+!| https://www.mdpi.com/1996-1073/14/4/1058
   pure elemental subroutine invcbrt(x, res, c)
     use mod_kinds, only: I4, R4
     implicit none
