@@ -95,11 +95,24 @@ if(SKBUILD)
     endforeach()
   endforeach()
 
+  add_custom_command(
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/_mobbrmsd.py
+      COMMAND ${Python_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.py
+      ${CMAKE_CURRENT_SOURCE_DIR}/_mobbrmsd.py
+      > ${CMAKE_CURRENT_BINARY_DIR}/_mobbrmsd.py 2>&1
+      )
+  add_custom_target(_mobbrmsd_py ALL
+    DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.py
+    ${CMAKE_CURRENT_SOURCE_DIR}/_mobbrmsd.py
+    ${CMAKE_CURRENT_BINARY_DIR}/_mobbrmsd.py
+    )
   install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/_mobbrmsd.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/__main__.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/_demo.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/_mobbrmsd.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/coord_generator.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_cogen.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_bb.py"

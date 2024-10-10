@@ -20,7 +20,7 @@ class __demo__(_demo._demo):
                 6,
                 check=lambda n_mol: (n_mol > 0) if isinstance(n_mol, int) else False,
             )
-            if n_mol > 8:
+            if n_mol > 12:
                 if not self.yes_or_no(
                     "This parameter may take time to compute. May this be run?"
                 ):
@@ -61,37 +61,20 @@ class __demo__(_demo._demo):
 
         return {"n_apm": n_apm, "n_mol": n_mol, "n_sym": n_sym}
 
-    def demo(self, n_apm=3, n_mol=8, n_sym=2, a=0.9, b=1.0, **kwargs):
-        import pprint
-
-        def print_ret(ret, post="", end="\n", to_console: bool = False):
-            ev, er, ub, lb, sd = (
-                ret.n_eval,
-                ret.eval_ratio,
-                2 * ret.bounds[0] + ret.autocorr,
-                2 * ret.bounds[1] + ret.autocorr,
-                ret.rmsd,
-            )
-            if sys.stdout.isatty():
-                print(
-                    f"\r  {ev:12d} {er:12.8f}{ub:16.6f}{lb:16.6f}{sd:12.6f}  ",
-                    post,
-                    end=end,
-                )
-            else:
-                if to_console:
-                    return
-                print(f"  {ev:12d} {er:12.8f}{ub:16.6f}{lb:16.6f}{sd:12.6f}")
+    def demo(self, n_apm=3, n_mol=8, n_sym=2, alpha=0.9, beta=1.0, r=0.0, **kwargs):
 
         n_mol_ = int(n_mol)
         n_apm_ = int(n_apm)
         sym = _demo.generate_sym_indices(n_apm_, int(n_sym))
-        a_ = float(a)
-        b_ = float(b)
+        a_ = float(alpha)
+        b_ = float(beta)
+        r_ = float(r)
 
         cogen = coord_generator(d=2)
         x = cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape([-1, 2])
-        y = cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape([-1, 2])
+        y = r_ * x + (1.0 - r_) * cogen.generate(
+            n_apm_, n_mol_, a_, b_, dtype=self.prec
+        ).reshape([-1, 2])
         x -= numpy.mean(x, 0)
         y -= numpy.mean(y, 0)
         z = y.copy()
@@ -106,32 +89,28 @@ class __demo__(_demo._demo):
         ub, lb = numpy.inf, -numpy.inf
         ret = mrmsd.run(x, y, maxeval=0, get_rotation=True)
 
-        sep1 = "  ------------------------------------------------------------------------------"
-        sep2 = "  ---------------------------------------|--------|-------------------|---------"
-        print("        N_eval   Eval_ratio      Upperbound      Lowerbound      RMSD")
-        print(sep1)
-        i = 0
         xtra = ["__-¯¯", "-__-¯", "¯-__-", "¯¯-__", "-¯¯-_", "_-¯¯-"]
         erace = "     "
-        while not ret.is_finished:
-            print_ret(ret, post=xtra[int(i / 5000) % 6], end="", to_console=True)
-            if ub > ret.bounds[0] or lb < ret.bounds[1]:
-                print_ret(ret, post=erace)
-            ub, lb = ret.bounds[0], ret.bounds[1]
-            ret.restart(maxeval=0, get_rotation=True)
-            i += 1
 
-        print_ret(ret, post=erace)
+        _demo.print_ret(ret, end="", header=True)
+
+        i = 0
+        while not ret.is_finished():
+            _demo.print_ret(ret, post=xtra[int(i / 5000) % 6], end="", to_console=True)
+            if ub > ret.upperbound() or lb < ret.lowerbound():
+                _demo.print_ret(ret, post=erace)
+            ub, lb = ret.upperbound(), ret.lowerbound()
+            ret.restart(maxeval=0)
+            i += 1
+        ret.restart(maxeval=0, get_rotation=True)
+        _demo.print_ret(ret, post=erace, header=True, footer=True)
+
         y = ret.rotate_y(y)
+
+        sep1 = "  ------------------------------------------------------------------"
+        sep2 = "  -------------------------------|--------|---------------|---------"
         print(sep1)
-        print("      -- Final results --")
-        print("        N_eval   Eval_ratio      Upperbound      Lowerbound      RMSD")
-        print_ret(ret)
-        print(sep1, "\n")
-        print(sep1)
-        print(
-            "       Reference     | Target (original) |  disp. |  Target (rotate)  |  disp."
-        )
+        print("     Reference   | Target (orig) |  disp. | Target (rot)  |  disp.")
         d1, d2 = 0.0, 0.0
         for xi, yi, zi in zip(
             x.reshape([n_mol_, n_apm_, 2]),
@@ -145,20 +124,16 @@ class __demo__(_demo._demo):
                 d1 += d1_
                 d2 += d2_
                 print(
-                    f"  {xij[0]:9.2f}{xij[1]:9.2f}",
-                    f"|{yij[0]:9.2f}{yij[1]:9.2f} |{d1_:7.2f}",
-                    f"|{zij[0]:9.2f}{zij[1]:9.2f} |{d2_:7.2f}",
+                    f"  {xij[0]:7.2f}{xij[1]:7.2f}",
+                    f"|{yij[0]:7.2f}{yij[1]:7.2f} |{d1_:7.3f}",
+                    f"|{zij[0]:7.2f}{zij[1]:7.2f} |{d2_:7.3f}",
                 )
         print(sep2)
         d1 *= 1.0 / (n_mol_ * n_apm_)
         d2 *= 1.0 / (n_mol_ * n_apm_)
-        print(
-            f"          mean squared deviation         |{d1:7.2f} |                   |{d2:7.2f}"
-        )
+        print(f"      mean squared deviation     |{d1:7.3f} |               |{d2:7.3f}")
         d1, d2 = numpy.sqrt(d1), numpy.sqrt(d2)
-        print(
-            f"        root mean squared deviation      |{d1:7.2f} |                   |{d2:7.2f}"
-        )
+        print(f"    root mean squared deviation  |{d1:7.3f} |               |{d2:7.3f}")
         print(sep1)
 
         return {
@@ -172,6 +147,7 @@ class __demo__(_demo._demo):
         if self.yes_or_no("Show samples? (Open matplotlib window)"):
             import matplotlib.pyplot as plt
 
+            vmax = 1.2 * numpy.max(numpy.abs([x, y, z]))
             cmap = plt.get_cmap("tab20")
             fig, axes = plt.subplots(ncols=2, figsize=(8, 8 / 1.618))
             for ax, ref, tgt in zip(axes, [x, x], [z, y]):
@@ -198,11 +174,10 @@ class __demo__(_demo._demo):
                         )
                 ax.set_xlabel("X")
                 ax.set_ylabel("Y")
-                ax.set_xlim([-3, 3])
-                ax.set_ylim([-3, 3])
+                ax.set_xlim([-vmax, vmax])
+                ax.set_ylim([-vmax, vmax])
                 ax.set_box_aspect(1)
             plt.tight_layout()
             plt.show()
             plt.clf()
             plt.close()
-        print()

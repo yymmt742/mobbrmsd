@@ -1,6 +1,11 @@
 program main
   use mod_dimspec_functions, only: D, setup_dimension
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
+#ifdef USE_REAL32
+  use mod_mobbrmsd_lapack, only: SGESVD, SGETRF
+#else
+  use mod_mobbrmsd_lapack, only: DGESVD, DGETRF
+#endif
   use mod_rotation
   use mod_testutil
   use mod_unittest
@@ -11,19 +16,6 @@ program main
 #else
   integer, parameter :: place = 6
 #endif
-!
-  interface
-#ifdef USE_REAL32
-    include 'sgesvd.h'
-    include 'sgetrf.h'
-#elif USE_REAL64
-    include 'dgesvd.h'
-    include 'dgetrf.h'
-#else
-    include 'dgesvd.h'
-    include 'dgetrf.h'
-#endif
-  end interface
 !
   call setup_dimension(4) ! for xd
   call z%init('test rotation')

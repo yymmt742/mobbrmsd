@@ -23,7 +23,6 @@ module mod_mobbrmsd
   public :: mobbrmsd_init
   public :: mobbrmsd_run
   public :: mobbrmsd_restart
-  public :: mobbrmsd_is_finished
   public :: mobbrmsd_n_dims
   public :: mobbrmsd_n_block
   public :: mobbrmsd_n_atoms
@@ -195,7 +194,7 @@ contains
     call bb_list_init(bblst, nblock, bbblk)
     this%d = D
     this%q = bblst%q
-    this%s = bblst%s
+    this%s = [bblst%s, mobbrmsd_state_NOT_YET_RUN_FLAG]
     call bb_block_destroy(bbblk)
     call bb_list_destroy(bblst)
   end subroutine mobbrmsd_init_block
@@ -322,6 +321,7 @@ contains
     !! The search ends when ncount exceeds maxiter.
     logical, intent(in), optional        :: difflim_absolute
     !! if true, use absolute difflim. default [.false.]
+    integer(IK)                          :: ss
     call bb_list_run( &
       &    this%q, &
       &    state%s, &
@@ -350,19 +350,15 @@ contains
       lb = bblb
       ne = bbne
       lr = LOG(bbne) - bbln
+      ss = SIZE(state%s)
+      if (bb_list_is_finished(this%q, state%s)) then
+        state%s(ss) = mobbrmsd_state_IS_FINISHED_FLAG
+      else
+        state%s(ss) = mobbrmsd_state_ISNOT_FINISHED_FLAG
+      end if
       if (mobbrmsd_state_has_rotation_matrix(state)) call bb_list_rotation_matrix(this%q, state%s, W, state%z(rt))
     end associate
   end subroutine mobbrmsd_restart
-!
-!| Returns bb process is finished.
-  pure function mobbrmsd_is_finished(this, state) result(res)
-    type(mobbrmsd), intent(in)        :: this
-    !! mobbrmsd
-    type(mobbrmsd_state), intent(in)  :: state
-    !! mobbrmsd_state
-    logical                           :: res
-    res = bb_list_is_finished(this%q, state%s)
-  end function mobbrmsd_is_finished
 !
 !| Returns spatial dimension
   pure elemental function mobbrmsd_n_dims(this) result(res)

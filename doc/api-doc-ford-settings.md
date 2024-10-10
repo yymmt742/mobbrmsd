@@ -1,12 +1,18 @@
 output_dir: ./api-doc
 project: mobbrmsd
-summary: molecular orientation corrected RMSD
+summary: Molecular Oriented RMSD with Branch and Bound
 author: yymmt742
 license: MIT
-src_dir: ./../src/mobbrmsd
-include: ./../src/mobbrmsd/include
+exclude_dir: ./../src/mobbrmsd/lapack/test
+exclude_dir: ./../src/mobbrmsd/lapack/lapack_routine
 exclude_dir: ./../src/mobbrmsd/test
-exclude_dir: ./../src/mobbrmsd/forbar
+src_dir: ./../src/mobbrmsd
 favicon: ./../images/favicon.png
-
+graph: true
+coloured_edges: true
+show_proc_parent: false
+sort: permission-alpha
+display: public
+         protected
+project_github:https://github.com/yymmt742/mobbrmsd
 {!./api-doc-index.md!}

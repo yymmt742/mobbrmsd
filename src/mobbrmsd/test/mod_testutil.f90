@@ -120,6 +120,11 @@ end module mod_permutation
 !| Utility functions for testing.
 module mod_testutil
   use mod_dimspec_functions, only: D, DD
+#ifdef USE_REAL32
+  use mod_mobbrmsd_lapack, only: SGEMM, SGESVD, SGETRF, SGEQRF, SORMQR
+#else
+  use mod_mobbrmsd_lapack, only: DGEMM, DGESVD, DGETRF, DGEQRF, DORMQR
+#endif
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, PI => RPI, RHUGE
   use mod_permutation
   implicit none
@@ -144,22 +149,6 @@ module mod_testutil
   interface centering
     module procedure :: centering_2, centering_3
   end interface centering
-!
-  interface
-#ifdef USE_REAL32
-    include 'sgemm.h'
-    include 'sgesvd.h'
-    include 'sgetrf.h'
-    include 'sgeqrf.h'
-    include 'sormqr.h'
-#else
-    include 'dgemm.h'
-    include 'dgesvd.h'
-    include 'dgetrf.h'
-    include 'dgeqrf.h'
-    include 'dormqr.h'
-#endif
-  end interface
 !
 contains
 !

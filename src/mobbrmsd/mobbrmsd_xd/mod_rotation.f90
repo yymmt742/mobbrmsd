@@ -4,6 +4,11 @@
 !  doi : [10.1107/S0567739476001873](https://scripts.iucr.org/cgi-bin/paper?S0567739476001873)
 module mod_rotation
   use mod_kinds, only: IK, RK
+#ifdef USE_REAL32
+  use mod_mobbrmsd_lapack, only: SGEMM, SGESVD, SGETRF
+#else
+  use mod_mobbrmsd_lapack, only: DGEMM, DGESVD, DGETRF
+#endif
   use mod_dimspec_functions, only: D, DD
   implicit none
   private
@@ -13,20 +18,8 @@ module mod_rotation
   public :: rotation_worksize
   public :: estimate_rotation
 !
-  interface
-#ifdef USE_REAL32
-    include 'sgemm.h'
-    include 'sgesvd.h'
-    include 'sgetrf.h'
-#else
-    include 'dgemm.h'
-    include 'dgesvd.h'
-    include 'dgetrf.h'
-#endif
-  end interface
-!
-  real(RK), parameter    :: ZERO = 0.0_RK
-  real(RK), parameter    :: ONE = 1.0_RK
+  real(RK), parameter :: ZERO = 0.0_RK
+  real(RK), parameter :: ONE = 1.0_RK
 !
 contains
 !

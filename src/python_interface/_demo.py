@@ -2,6 +2,7 @@ from . import __version__
 import time
 import numpy
 import pprint
+import sys
 
 bar1 = (
     "  ------------------------------------------------------------------------------"
@@ -19,7 +20,7 @@ def generate_sym_indices(n_apm: int, n_sym: int = 1):
     per = itertools.permutations(range(n_apm))
     next(per)
     sym = []
-    i = 0
+    i = 1
     for iper in per:
         i += 1
         if i > n_sym:
@@ -87,6 +88,38 @@ def readinp(msg, default, check=None):
         inp = input(
             f"    | [{ret}] is invalid. \033[1F\033[0K    {msg} (default : {default})   >> "
         )
+
+
+def print_ret(
+    ret, post="", end="\n", to_console: bool = False, header=False, footer=False
+):
+    sep1 = "  ------------------------------------------------------------------------"
+    if footer or header:
+        print(sep1)
+        if footer:
+            print("      -- Final results --")
+        print(
+            "    N_eval  Eval_ratio  Lowerbound  Upperbound RMSD(LB) RMSD(UB) RMSD_Gap"
+        )
+    ev = ret.n_eval()
+    er = ret.eval_ratio()
+    sb = ret.bounds()
+    rb = ret.bounds_as_rmsd()
+    gap = rb[1] - rb[0]
+    if sys.stdout.isatty():
+        print(
+            f"\r{ev:10d}{er:12.8f}{sb[0]:12.4f}{sb[1]:12.4f}{rb[0]:9.3f}{rb[1]:9.3f}{gap:9.3f}",
+            post,
+            end=end,
+        )
+    else:
+        if to_console:
+            return
+        print(
+            f"{ev:10d}{er:12.8f}{sb[0]:12.4f}{sb[1]:12.4f}{rb[0]:9.3f}{rb[1]:9.3f}{gap:9.3f}"
+        )
+    if footer:
+        print(sep1, "\n")
 
 
 class _demo:

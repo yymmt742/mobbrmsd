@@ -25,6 +25,8 @@ function( BUILD_LIB dims prec )
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_mobbrmsd.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_mobbrmsd_batch_run.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mod_mobbrmsd_mst.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/lapack/mod_mobbrmsd_lapack_routines_${prec}.f90
+    ${CMAKE_CURRENT_SOURCE_DIR}/lapack/mod_mobbrmsd_lapack.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mobbrmsd_${dims}/mod_dimspec_functions.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/mobbrmsd_${dims}/mod_rotation.f90
   )
@@ -50,6 +52,7 @@ foreach(prec IN ITEMS ${mobbrmsd_PRECISIONS})
   endforeach()
 endforeach()
 
+add_subdirectory(lapack)
 option( mobbrmsd_BUILD_SHARED_LIBS "build mylib as a shared library" ${BUILD_SHARED_LIBS})
 
 if( mobbrmsd_BUILD_SHARED_LIBS )
