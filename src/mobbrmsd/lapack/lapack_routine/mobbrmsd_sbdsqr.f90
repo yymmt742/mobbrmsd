@@ -1,32 +1,36 @@
-!| mobbrmsd_SBDSQR computes the singular values and, optionally, the right and/or
-!  left singular vectors from the singular value decomposition (SVD) of
-!  a real \( N \) -by- \( N \) (upper or lower)
-!  bidiagonal matrix \( \mathbf{B} \) using the implicit
+!| computes SVD using zero-shift QR algorithm.
+!
+!  mobbrmsd_SBDSQR computes the singular values and,
+!  optionally, the right and/or left singular vectors
+!  from the singular value decomposition (SVD) of
+!  a real \( n \) -by- \( n \) (upper or lower)
+!  bidiagonal matrix \( B \) using the implicit
 !  zero-shift QR algorithm.
 !
-!  The SVD of \( \mathbf{B} \) has the form
+!  The SVD of \( B \) has the form
 !
-!  \[ \mathbf{B} = \mathbf{Q} \mathbf{S} \mathbf{P} ^ {\top} \]
+!  \[ B = Q S P ^ {\top} \]
 !
-!  where \( \mathbf{S} \) is the diagonal matrix of singular values,
-!  \( \mathbf{Q} \) is an orthogonal matrix of left singular vectors,
-!  and \( \mathbf{P} \) is an orthogonal matrix of
-!  right singular vectors.  If left singular vectors are requested, this
-!  subroutine actually returns \( \mathbf{UQ} \) instead of \( \mathbf{Q} \),
+!  where \( S \) is the diagonal matrix of singular values,
+!  \( Q \) is an orthogonal matrix of left singular vectors,
+!  and \( P \) is an orthogonal matrix of
+!  right singular vectors.
+!  If left singular vectors are requested, this
+!  subroutine actually returns \( UQ \) instead of \( Q \),
 !  and, if right singular vectors are requested,
-!  this subroutine returns \( \mathbf{P} ^ {\top} \mathbf{V} ^ {\top} \)
-!  instead of \( \mathbf{P} ^ {\top} \),
-!  for given real input matrices \( \mathbf{U} \) and \( \mathbf{V} ^ {\top} \).
-!  When \( \mathbf{U} \) and \( \mathbf{V} ^ {\top} \) are the
-!  orthogonal matrices that reduce a general matrix \( \mathbf{A} \) to bidiagonal
-!  form:  \( \mathbf{A} = \mathbf{UBV} ^ {\top} \),
-!  as computed by mobbrmsd_SGEBRD, then
+!  this subroutine returns \( P ^ {\top} V ^ {\top} \)
+!  instead of \( P ^ {\top} \),
+!  for given real input matrices \( U \) and \( V ^ {\top} \).
+!  When \( U \) and \( V ^ {\top} \) are the
+!  orthogonal matrices that reduce a general matrix \( A \)
+!  to bidiagonal form:  \( A = U B V ^ {\top} \),
+!  as computed by mobbrmsd_DGEBRD, then
 !
-!  \[ \mathbf{A} = (\mathbf{U} \mathbf{Q}) \mathbf{S} (\mathbf{P} ^ {\top} \mathbf{V}) ^ {\top} \]
+!  \[ A = (U Q) S (P ^ {\top} V) ^ {\top} \]
 !
-!  is the SVD of \( \mathbf{A} \).
-!  Optionally, the subroutine may also compute \( \mathbf{Q} ^ {\top} \mathbf{C} \)
-!  for a given real input matrix \( \mathbf{C} \).
+!  is the SVD of \( A \).
+!  Optionally, the subroutine may also compute \( Q ^ {\top} C \)
+!  for a given real input matrix \( C \).
 !
 !  See "Computing  Small Singular Values of Bidiagonal Matrices With
 !  Guaranteed High Relative Accuracy," by J. Demmel and W. Kahan,
@@ -36,38 +40,6 @@
 !  B. Parlett and V. Fernando, Technical Report CPAM-554, Mathematics
 !  Department, University of California at Berkeley, July 1992
 !  for a detailed description of the algorithm.
-!
-!  Internal parameters:
-!
-!    TOLMUL
-!
-!    REAL, default = max(10,min(100,EPS**(-1/8)))
-!    TOLMUL controls the convergence criterion of the QR loop.
-!
-!    If it is positive, TOLMUL*EPS is the desired relative
-!       precision in the computed singular values.
-!
-!    If it is negative, abs(TOLMUL*EPS*sigma_max) is the
-!       desired absolute accuracy in the computed singular
-!       values (corresponds to relative accuracy
-!       abs(TOLMUL*EPS) in the largest singular value.
-!
-!    abs(TOLMUL) should be between 1 and 1/EPS, and preferably
-!       between 10 (for fast convergence) and .1/EPS
-!       (for there to be some accuracy in the results).
-!
-!    Default is to lose at either one eighth or 2 of the
-!       available decimal digits in each computed singular value
-!       (whichever is smaller).
-!
-!    MAXITR
-!
-!    INTEGER, default = 6
-!
-!    MAXITR controls the maximum number of passes of the
-!    algorithm through its inner loop. The algorithms stops
-!    (and so fails to converge) if the number of passes
-!    through the inner loop exceeds MAXITR*N**2.
 !
 !  reference SBDSQR is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
@@ -86,31 +58,29 @@ pure subroutine mobbrmsd_SBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, &
      &                          LDVT, U, LDU, C, LDC, WORK, INFO)
   implicit none
   character, intent(in) :: UPLO
-!!          UPLO is CHARACTER*1 <br>
+!!  = 'U':  B is upper bidiagonal.
 !!
-!!          = 'U':  B is upper bidiagonal. <br>
-!!
-!!          = 'L':  B is lower bidiagonal. <br>
+!!  = 'L':  B is lower bidiagonal.
 !!
   integer, intent(in)   :: N
-!!          The order of the matrix B.  N >= 0.
+!!  The order of the matrix B.  N >= 0.
 !!
   integer, intent(in)   :: NCVT
-!!          The number of columns of the matrix VT. NCVT >= 0.
+!!  The number of columns of the matrix VT. NCVT >= 0.
 !!
   integer, intent(in)   :: NRU
-!!          The number of rows of the matrix U. NRU >= 0.
+!!  The number of rows of the matrix U. NRU >= 0.
 !!
   integer, intent(in)   :: NCC
-!!          The number of columns of the matrix C. NCC >= 0.
+!!  The number of columns of the matrix C. NCC >= 0.
 !!
   real(RK), intent(inout) :: D(*)
-!!          REAL array, dimension (N)
+!!  REAL array, dimension (N)
 !!
-!!          On entry, the n diagonal elements of the bidiagonal matrix B.
+!!  On entry, the n diagonal elements of the bidiagonal matrix B.
 !!
-!!          On exit, if INFO=0, the singular values of B in decreasing
-!!          order.
+!!  On exit, if INFO=0, the singular values of B in decreasing
+!!  order.
 !!
   real(RK), intent(inout) :: E(*)
 !!  REAL array, dimension (N-1)
@@ -162,18 +132,20 @@ pure subroutine mobbrmsd_SBDSQR(UPLO, N, NCVT, NRU, NCC, D, E, VT, &
 !!
 !!  \> 0: if NCVT = NRU = NCC = 0,
 !!
-!!        = 1, a split was marked by a positive value in E <br>
-!!        = 2, current block of Z not diagonalized after 30*N
-!!             iterations (in inner while loop) <br>
-!!        = 3, termination criterion of outer while loop not met
-!!             (program created more than N unreduced blocks) <br>
+!!  = 1, a split was marked by a positive value in E <br>
 !!
-!!     else NCVT = NRU = NCC = 0,
+!!  = 2, current block of Z not diagonalized after 30*N
+!!       iterations (in inner while loop) <br>
 !!
-!!           the algorithm did not converge; D and E contain the
-!!           elements of a bidiagonal matrix which is orthogonally
-!!           similar to the input matrix B;  if INFO = i, i
-!!           elements of E have not converged to zero.
+!!  = 3, termination criterion of outer while loop not met
+!!       (program created more than N unreduced blocks) <br>
+!!
+!!   else NCVT = NRU = NCC = 0,
+!!
+!!   the algorithm did not converge; D and E contain the
+!!   elements of a bidiagonal matrix which is orthogonally
+!!   similar to the input matrix B;  if INFO = i, i
+!!   elements of E have not converged to zero.
 !!
   real(RK), parameter :: NEGONE = -1.0E0
   real(RK), parameter :: HNDRTH = 0.01E0

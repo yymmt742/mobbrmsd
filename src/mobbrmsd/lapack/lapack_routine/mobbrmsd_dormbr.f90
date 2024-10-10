@@ -1,238 +1,155 @@
-!> \brief \b mobbrmsd_DORMBR
+!| multiply an orthogonal matrix to C.
 !
-!  =========== DOCUMENTATION ===========
+!  If VECT = 'Q', mobbrmsd_DORMBR overwrites
+!  the general real M-by-N matrix C with
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  |             | SIDE = 'L'       | SIDE = 'R'       |
+!  | :---:       | :---:            | :---:            |
+!  | TRANS = 'N' | \( Q  C \)       | \( C Q \)        |
+!  | TRANS = 'T' | \( Q ^ \top C \) | \( C Q ^ \top \) |
 !
-!> \htmlonly
-!> Download mobbrmsd_DORMBR + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dormbr.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dormbr.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txtfilename=/lapack/lapack_routine/dormbr.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!  If VECT = 'P', mobbrmsd_DORMBR overwrites
+!  the general real M-by-N matrix C with
 !
-!  Definition:
-!  ===========
+!  |             | SIDE = 'L'       | SIDE = 'R'       |
+!  | :---:       | :---:            | :---:            |
+!  | TRANS = 'N' | \( P  C \)       | \( C P \)        |
+!  | TRANS = 'T' | \( P ^ \top C \) | \( C P ^ \top \) |
 !
-!       pure subroutine mobbrmsd_DORMBR( VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, C,
-!                          LDC, WORK, LWORK, INFO )
+!  Here \( Q \) and \( P ^ \top \) are the orthogonal matrices determined
+!  by mobbrmsd_DGEBRD when reducing
+!  a real matrix \( A \) to bidiagonal form:
+!  \( A = Q B P ^ \top \).
+!  \( Q \) and \( P ^ \top \) are defined as products of
+!  elementary reflectors \( H _ i \) and \( G _ i \) respectively.
 !
-!       .. Scalar Arguments ..
-!       CHARACTER          SIDE, TRANS, VECT
-!       INTEGER            INFO, K, LDA, LDC, LWORK, M, N
-!       ..
-!       .. Array Arguments ..
-!       real(RK)           ::   A( LDA, * ), C( LDC, * ), TAU( * ), WORK( * )
-!       ..
+!  Let \( n _ q = m \) if SIDE = 'L'
+!  and \( n _ q = n \) if SIDE = 'R'.
+!  Thus \( n _ q \)is the order of the orthogonal matrix
+!  \( Q \) or \( P ^ \top \) that is applied.
 !
+!  If VECT = 'Q', \( A \) is assumed to have been
+!  an \( n _ q \)-by-\( k \) matrix:
+!  if \( n _ q \ge k \), \( Q = H _ 1 H _ 2 \cdots H _ k \);
+!  if \( n _ q < k \), \( Q = H _ 1 H _ 2 \cdots H _ {n _ q - 1} \).
 !
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> If VECT = 'Q', mobbrmsd_DORMBR overwrites the general real M-by-N matrix C
-!> with
-!>                 SIDE = 'L'     SIDE = 'R'
-!> TRANS = 'N':      Q * C          C * Q
-!> TRANS = 'T':      Q**T * C       C * Q**T
-!>
-!> If VECT = 'P', mobbrmsd_DORMBR overwrites the general real M-by-N matrix C
-!> with
-!>                 SIDE = 'L'     SIDE = 'R'
-!> TRANS = 'N':      P * C          C * P
-!> TRANS = 'T':      P**T * C       C * P**T
-!>
-!> Here Q and P**T are the orthogonal matrices determined by mobbrmsd_DGEBRD when
-!> reducing a real matrix A to bidiagonal form: A = Q * B * P**T. Q and
-!> P**T are defined as products of elementary reflectors H(i) and G(i)
-!> respectively.
-!>
-!> Let nq = m if SIDE = 'L' and nq = n if SIDE = 'R'. Thus nq is the
-!> order of the orthogonal matrix Q or P**T that is applied.
-!>
-!> If VECT = 'Q', A is assumed to have been an NQ-by-K matrix:
-!> if nq >= k, Q = H(1) H(2) . . . H(k);
-!> if nq < k, Q = H(1) H(2) . . . H(nq-1).
-!>
-!> If VECT = 'P', A is assumed to have been a K-by-NQ matrix:
-!> if k < nq, P = G(1) G(2) . . . G(k);
-!> if k >= nq, P = G(1) G(2) . . . G(nq-1).
-!> \endverbatim
+!  If VECT = 'P', \( A \) is assumed to have been
+!  an \( k \)-by-\( n _ q \) matrix:
+!  if \( n _ q < k \), \( P = G _ 1 G _ 2 \cdots G _ k \);
+!  if \( n _ q \ge k \), \( P = G _ 1 G _ 2 \cdots G _ {n _ q - 1} \).
 !
-!  Arguments:
-!  ==========
-!
-!> \param[in] VECT
-!> \verbatim
-!>          VECT is CHARACTER*1
-!>          = 'Q': apply Q or Q**T;
-!>          = 'P': apply P or P**T.
-!> \endverbatim
-!>
-!> \param[in] SIDE
-!> \verbatim
-!>          SIDE is CHARACTER*1
-!>          = 'L': apply Q, Q**T, P or P**T from the Left;
-!>          = 'R': apply Q, Q**T, P or P**T from the Right.
-!> \endverbatim
-!>
-!> \param[in] TRANS
-!> \verbatim
-!>          TRANS is CHARACTER*1
-!>          = 'N':  No transpose, apply Q  or P;
-!>          = 'T':  Transpose, apply Q**T or P**T.
-!> \endverbatim
-!>
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>          The number of rows of the matrix C. M >= 0.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of columns of the matrix C. N >= 0.
-!> \endverbatim
-!>
-!> \param[in] K
-!> \verbatim
-!>          K is INTEGER
-!>          If VECT = 'Q', the number of columns in the original
-!>          matrix reduced by mobbrmsd_DGEBRD.
-!>          If VECT = 'P', the number of rows in the original
-!>          matrix reduced by mobbrmsd_DGEBRD.
-!>          K >= 0.
-!> \endverbatim
-!>
-!> \param[in] A
-!> \verbatim
-!>          A is real(RK)           :: array, dimension
-!>                                (LDA,min(nq,K)) if VECT = 'Q'
-!>                                (LDA,nq)        if VECT = 'P'
-!>          The vectors which define the elementary reflectors H(i) and
-!>          G(i), whose products determine the matrices Q and P, as
-!>          returned by mobbrmsd_DGEBRD.
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>          The leading dimension of the array A.
-!>          If VECT = 'Q', LDA >= max(1,nq);
-!>          if VECT = 'P', LDA >= max(1,min(nq,K)).
-!> \endverbatim
-!>
-!> \param[in] TAU
-!> \verbatim
-!>          TAU is real(RK)           :: array, dimension (min(nq,K))
-!>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i) or G(i) which determines Q or P, as returned
-!>          by mobbrmsd_DGEBRD in the array argument TAUQ or TAUP.
-!> \endverbatim
-!>
-!> \param[in,out] C
-!> \verbatim
-!>          C is real(RK)           :: array, dimension (LDC,N)
-!>          On entry, the M-by-N matrix C.
-!>          On exit, C is overwritten by Q*C or Q**T*C or C*Q**T or C*Q
-!>          or P*C or P**T*C or C*P or C*P**T.
-!> \endverbatim
-!>
-!> \param[in] LDC
-!> \verbatim
-!>          LDC is INTEGER
-!>          The leading dimension of the array C. LDC >= max(1,M).
-!> \endverbatim
-!>
-!> \param[out] WORK
-!> \verbatim
-!>          WORK is real(RK)           :: array, dimension (MAX(1,LWORK))
-!>          On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
-!> \endverbatim
-!>
-!> \param[in] LWORK
-!> \verbatim
-!>          LWORK is INTEGER
-!>          The dimension of the array WORK.
-!>          If SIDE = 'L', LWORK >= max(1,N);
-!>          if SIDE = 'R', LWORK >= max(1,M).
-!>          For optimum performance LWORK >= N*NB if SIDE = 'L', and
-!>          LWORK >= M*NB if SIDE = 'R', where NB is the optimal
-!>          blocksize.
-!>
-!>          If LWORK = -1, then a workspace query is assumed; the routine
-!>          only calculates the optimal size of the WORK array, returns
-!>          this value as the first entry of the WORK array, and no error
-!>          message related to LWORK is issued by XERBLA.
-!> \endverbatim
-!>
-!> \param[out] INFO
-!> \verbatim
-!>          INFO is INTEGER
-!>          = 0:  successful exit
-!>          < 0:  if INFO = -i, the i-th argument had an illegal value
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup doubleOTHERcomputational
-!
-!  =====================================================================
-pure subroutine mobbrmsd_DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
-               &       C, LDC, WORK, LWORK, INFO)
-! use LA_CONSTANTS, only: RK => dp
-  implicit none
+!  Reference DORMBR is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
 !  -- LAPACK computational routine --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
-!     .. Scalar Arguments ..
-  character, intent(in) :: SIDE, TRANS, VECT
-  integer, intent(in)   :: K, LDA, LDC, LWORK, M, N
-  integer, intent(out)  :: INFO
-!     ..
-!     .. Array Arguments ..
+pure subroutine mobbrmsd_DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, &
+               &                TAU, C, LDC, WORK, LWORK, INFO)
+  implicit none
+  character, intent(in) :: VECT
+!!  = 'Q': apply Q or Q**T;
+!!  = 'P': apply P or P**T.
+!!
+  character, intent(in) :: SIDE
+!!  = 'L': apply Q, Q**T, P or P**T from the Left;
+!!  = 'R': apply Q, Q**T, P or P**T from the Right.
+!!
+  character, intent(in) :: TRANS
+!!  = 'N':  No transpose, apply Q  or P;
+!!
+!!  = 'T':  Transpose, apply Q**T or P**T.
+!!
+  integer, intent(in)     :: M
+!!  The number of rows of the matrix C. M >= 0.
+!!
+  integer, intent(in)     :: N
+!!  The number of columns of the matrix C. N >= 0.
+!!
+  integer, intent(in)     :: K
+!!  If VECT = 'Q', the number of columns in the original
+!!  matrix reduced by mobbrmsd_DGEBRD.
+!!
+!!  If VECT = 'P', the number of rows in the original
+!!  matrix reduced by mobbrmsd_DGEBRD.
+!!  K >= 0.
+!!
+  integer, intent(in)     :: LDA
+!!  The leading dimension of the array A.
+!!
+!!  If VECT = 'Q', LDA >= max(1,nq);
+!!
+!!  if VECT = 'P', LDA >= max(1,min(nq,K)).
+!!
+  real(RK), intent(inout) :: A(LDA, *)
+!!  DOUBLE PRECISION array, dimension
+!!
+!!  (LDA,min(nq,K)) if VECT = 'Q'
+!!
+!!  (LDA,nq)        if VECT = 'P'
+!!
+!!  The vectors which define the elementary reflectors
+!!  H(i) and G(i), whose products determine
+!!  the matrices Q and P,
+!!  as returned by mobbrmsd_DGEBRD.
+!!
   real(RK), intent(in)    :: TAU(*)
-  real(RK), intent(inout) :: A(LDA, *), C(LDC, *)
+!!  DOUBLE PRECISION array, dimension (min(nq,K))
+!!
+!!  TAU(i) must contain the scalar factor of the elementary
+!!  reflector H(i) or G(i) which determines Q or P, as returned
+!!  by mobbrmsd_DGEBRD in the array argument TAUQ or TAUP.
+!!
+  integer, intent(in)     :: LDC
+!!  The leading dimension of the array C. LDC >= max(1,M).
+!!
+  real(RK), intent(inout) :: C(LDC, *)
+!!  DOUBLE PRECISION array, dimension (LDC,N)
+!!
+!!  On entry, the M-by-N matrix C.
+!!
+!!  On exit, C is overwritten by Q*C or Q**T*C or C*Q**T or C*Q
+!!  or P*C or P**T*C or C*P or C*P**T.
+!!
+  integer, intent(in)     :: LWORK
+!!  The dimension of the array WORK.
+!!
+!!  If SIDE = 'L', LWORK >= max(1,N);
+!!
+!!  if SIDE = 'R', LWORK >= max(1,M).
+!!
+!!  For optimum performance LWORK >= N*NB if SIDE = 'L', and
+!!  LWORK >= M*NB if SIDE = 'R', where NB is the optimal
+!!  blocksize.
+!!
+!!  If LWORK = -1, then a workspace query is assumed; the routine
+!!  only calculates the optimal size of the WORK array, returns
+!!  this value as the first entry of the WORK array.
+!!
   real(RK), intent(out)   :: WORK(*)
-!     ..
-!
-!  =====================================================================
-!
-!     .. Local Scalars ..
+!!  DOUBLE PRECISION array, dimension (MAX(1,LWORK))
+!!
+!!  On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+!!
+  integer, intent(out)    :: INFO
+!!  = 0:  successful exit
+!!
+!!  < 0:  if INFO = -i, the i-th argument had an illegal value
+!!
   logical                 :: APPLYQ, LEFT, LQUERY, NOTRAN
   character(1)            :: TRANST
   integer                 :: I1, I2, IINFO, LWKOPT, MI, NB, NI, NQ, NW
-!     ..
-!     .. Intrinsic Functions ..
   intrinsic               :: MAX, MIN
-!     ..
 ! interface
-!     .. External Subroutines ..
 !   include 'dormlq.h'
 !   include 'dormqr.h'
-!   !include 'xerbla.h'
-!     .. External Functions ..
 !   include 'lsame.h'
 !   include 'ilaenv.h'
 ! end interface
-!     ..
-!     .. Executable Statements ..
 !
-!     Test the input arguments
+! Test the input arguments
 !
   INFO = 0
   APPLYQ = mobbrmsd_LSAME(VECT, 'Q')
@@ -240,7 +157,7 @@ pure subroutine mobbrmsd_DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
   NOTRAN = mobbrmsd_LSAME(TRANS, 'N')
   LQUERY = (LWORK == -1)
 !
-!     NQ is the order of Q or P and NW is the minimum dimension of WORK
+! NQ is the order of Q or P and NW is the minimum dimension of WORK
 !
   if (LEFT) then
     NQ = M
@@ -290,30 +207,29 @@ pure subroutine mobbrmsd_DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
   end if
 !
   if (INFO /= 0) then
-    !CALL XERBLA( 'DORMBR', -INFO )
     return
   else if (LQUERY) then
     return
   end if
 !
-!     Quick return if possible
+! Quick return if possible
 !
   WORK(1) = 1
   if (M == 0 .or. N == 0) return
 !
   if (APPLYQ) then
 !
-!        Apply Q
+!   Apply Q
 !
     if (NQ >= K) then
 !
-!           Q was determined by a call to mobbrmsd_DGEBRD with nq >= k
+!     Q was determined by a call to mobbrmsd_DGEBRD with nq >= k
 !
       call mobbrmsd_DORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, C, &
      &            LDC, WORK, LWORK, IINFO)
     else if (NQ > 1) then
 !
-!           Q was determined by a call to mobbrmsd_DGEBRD with nq < k
+!     Q was determined by a call to mobbrmsd_DGEBRD with nq < k
 !
       if (LEFT) then
         MI = M - 1
@@ -331,7 +247,7 @@ pure subroutine mobbrmsd_DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
     end if
   else
 !
-!        Apply P
+!   Apply P
 !
     if (NOTRAN) then
       TRANST = 'T'
@@ -340,13 +256,13 @@ pure subroutine mobbrmsd_DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
     end if
     if (NQ > K) then
 !
-!           P was determined by a call to mobbrmsd_DGEBRD with nq > k
+!     P was determined by a call to mobbrmsd_DGEBRD with nq > k
 !
       call mobbrmsd_DORMLQ(SIDE, TRANST, M, N, K, A, LDA, TAU, C, LDC, &
      &            WORK, LWORK, IINFO)
     else if (NQ > 1) then
 !
-!           P was determined by a call to mobbrmsd_DGEBRD with nq <= k
+!     P was determined by a call to mobbrmsd_DGEBRD with nq <= k
 !
       if (LEFT) then
         MI = M - 1
@@ -366,6 +282,7 @@ pure subroutine mobbrmsd_DORMBR(VECT, SIDE, TRANS, M, N, K, A, LDA, TAU, &
   WORK(1) = LWKOPT
   return
 !
-!     End of mobbrmsd_DORMBR
+! End of mobbrmsd_DORMBR
 !
 end subroutine mobbrmsd_DORMBR
+

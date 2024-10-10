@@ -1,172 +1,85 @@
-!> \brief \b mobbrmsd_SORGQR
+!| generates a product of \( k \) elementary reflectors
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_SORGQR generates an \( m \)-by-\( n \) real matrix \( Q \)
+!  with orthonormal columns,
+!  which is defined as the first \( n \) columns of a product of
+!  \( k \) K elementary reflectors of order \( m \)
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  \[
+!     Q  =  H _ 1 H _ 2 \cdots H _ k
+!  \]
 !
-!> \htmlonly
-!> Download mobbrmsd_SORGQR + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/sorgqr.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/sorgqr.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/sorgqr.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!  as returned by mobbrmsd_SGEQRF.
 !
-!  Definition:
-!  ===========
+!  Reference SORGQR is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
-!       SUBROUTINE mobbrmsd_SORGQR( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
+!  -- LAPACK computational routine --
 !
-!       .. Scalar Arguments ..
-!       INTEGER            INFO, K, LDA, LWORK, M, N
-!       ..
-!       .. Array Arguments ..
-!       REAL               A( LDA, * ), TAU( * ), WORK( * )
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_SORGQR generates an M-by-N real matrix Q with orthonormal columns,
-!> which is defined as the first N columns of a product of K elementary
-!> reflectors of order M
-!>
-!>       Q  =  H(1) H(2) . . . H(k)
-!>
-!> as returned by mobbrmsd_SGEQRF.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>          The number of rows of the matrix Q. M >= 0.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of columns of the matrix Q. M >= N >= 0.
-!> \endverbatim
-!>
-!> \param[in] K
-!> \verbatim
-!>          K is INTEGER
-!>          The number of elementary reflectors whose product defines the
-!>          matrix Q. N >= K >= 0.
-!> \endverbatim
-!>
-!> \param[in,out] A
-!> \verbatim
-!>          A is REAL array, dimension (LDA,N)
-!>          On entry, the i-th column must contain the vector which
-!>          defines the elementary reflector H(i), for i = 1,2,...,k, as
-!>          returned by mobbrmsd_SGEQRF in the first k columns of its array
-!>          argument A.
-!>          On exit, the M-by-N matrix Q.
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>          The first dimension of the array A. LDA >= max(1,M).
-!> \endverbatim
-!>
-!> \param[in] TAU
-!> \verbatim
-!>          TAU is REAL array, dimension (K)
-!>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i), as returned by mobbrmsd_SGEQRF.
-!> \endverbatim
-!>
-!> \param[out] WORK
-!> \verbatim
-!>          WORK is REAL array, dimension (MAX(1,LWORK))
-!>          On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
-!> \endverbatim
-!>
-!> \param[in] LWORK
-!> \verbatim
-!>          LWORK is INTEGER
-!>          The dimension of the array WORK. LWORK >= max(1,N).
-!>          For optimum performance LWORK >= N*NB, where NB is the
-!>          optimal blocksize.
-!>
-!>          If LWORK = -1, then a workspace query is assumed; the routine
-!>          only calculates the optimal size of the WORK array, returns
-!>          this value as the first entry of the WORK array, and no error
-!>          message related to LWORK is issued by XERBLA.
-!> \endverbatim
-!>
-!> \param[out] INFO
-!> \verbatim
-!>          INFO is INTEGER
-!>          = 0:  successful exit
-!>          < 0:  if INFO = -i, the i-th argument has an illegal value
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \date December 2016
-!
-!> \ingroup realOTHERcomputational
-!
-!  =====================================================================
-pure subroutine mobbrmsd_SORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
-!
-!  -- LAPACK computational routine (version 3.7.0) --
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
-!     December 2016
 !
-!     .. Scalar Arguments ..
-!     .. Scalar Arguments ..
-  integer, intent(in)  :: K, LDA, LWORK, M, N
-  integer, intent(out) :: INFO
-!..
-!..Array Arguments..
-  real(RK), intent(inout)  :: A(LDA, *), TAU(*)
-  real(RK), intent(out)    :: WORK(*)
-!..
-!
-!  =====================================================================
-!..
-!..Local Scalars..
+pure subroutine mobbrmsd_SORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
+  implicit none
+  integer, intent(in)     :: M
+!!  The number of rows of the matrix Q. M >= 0.
+!!
+  integer, intent(in)     :: N
+!!  The number of columns of the matrix Q. M >= N >= 0.
+!!
+  integer, intent(in)     :: K
+!!  The number of elementary reflectors whose product defines the
+!!  matrix Q. N >= K >= 0.
+!!
+  integer, intent(in)     :: LDA
+!!  The first dimension of the array A. LDA >= max(1,M).
+!!
+  real(RK), intent(inout) :: A(LDA, *)
+!!  DOUBLE PRECISION array, dimension (LDA,N)
+!!
+!!  On entry, the i-th column must contain the vector which
+!!  defines the elementary reflector H(i), for i = 1,2,...,k, as
+!!  returned by mobbrmsd_DGEQRF in the first k columns of its array
+!!  argument A.
+!!
+!!  On exit, the M-by-N matrix Q.
+!!
+  real(RK), intent(in)    :: TAU(*)
+!!  DOUBLE PRECISION array, dimension (K)
+!!
+!!  TAU(i) must contain the scalar factor of the elementary
+!!  reflector H(i), as returned by mobbrmsd_DGEQRF.
+!!
+  real(RK), intent(out)   :: WORK(*)
+!!  DOUBLE PRECISION array, dimension (MAX(1,LWORK))
+!!  On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+!!
+  integer, intent(in)     :: LWORK
+!!  The dimension of the array WORK. LWORK >= max(1,N).
+!!
+!!  For optimum performance LWORK >= N*NB, where NB is the
+!!  optimal blocksize.
+!!
+  integer, intent(out)    :: INFO
+!!  If LWORK = -1, then a workspace query is assumed; the routine
+!!  only calculates the optimal size of the WORK array, returns
+!!  this value as the first entry of the WORK array.
+!!
+!!  = 0:  successful exit
+!!
+!!  < 0:  if INFO = -i, the i-th argument has an illegal value
+!!
   logical :: LQUERY
   integer :: I, IB, IINFO, IWS, J, KI, KK, L, LDWORK, LWKOPT, NB, NBMIN, NX
-!..
-!..intrinsic Functions..
   intrinsic :: MAX, MIN
-!
-!..Parameters..
-! real(RK), parameter :: ZERO = 0.0E+0
-!..
 ! interface
-!..external Functions..
 !   include 'ilaenv.h'
-!..External Subroutines ..
 !   include 'slarfb.h'
 !   include 'slarft.h'
 !   include 'sorg2r.h'
 ! end interface
-!..
-!..Executable Statements..
 !
-!Test the input arguments
+! Test the input arguments
 !
   INFO = 0
   NB = mobbrmsd_ILAENV(1, 'SORGQR', ' ', M, N, K, -1)
@@ -185,13 +98,12 @@ pure subroutine mobbrmsd_SORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
     INFO = -8
   end if
   if (INFO /= 0) then
-!   call XERBLA('SORGQR', -INFO)
     return
   else if (LQUERY) then
     return
   end if
 !
-!Quick return if possible
+! Quick return if possible
 !
   if (N <= 0) then
     WORK(1) = 1
@@ -202,21 +114,21 @@ pure subroutine mobbrmsd_SORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
   NX = 0
   IWS = N
   if (NB > 1 .and. NB < K) then
-    !
-    !Determine when to cross over from blocked to unblocked code.
-    !
+!
+! Determine when to cross over from blocked to unblocked code.
+!
     NX = MAX(0, mobbrmsd_ILAENV(3, 'SORGQR', ' ', M, N, K, -1))
     if (NX < K) then
-      !
-      !Determine if workspace is large enough for blocked code.
-      !
+!
+! Determine if workspace is large enough for blocked code.
+!
       LDWORK = N
       IWS = LDWORK * NB
       if (LWORK < IWS) then
-        !
-        !Not enough workspace to use optimal NB:reduce NB and
-        !determine the minimum value of NB.
-        !
+!
+! Not enough workspace to use optimal NB:reduce NB and
+! determine the minimum value of NB.
+!
         NB = LWORK / LDWORK
         NBMIN = MAX(2, mobbrmsd_ILAENV(2, 'SORGQR', ' ', M, N, K, -1))
       end if
@@ -241,39 +153,39 @@ pure subroutine mobbrmsd_SORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
   else
     KK = 0
   end if
-  !
-  !use unblocked code for the last or only block.
-  !
+!
+! use unblocked code for the last or only block.
+!
   if (KK < N) call mobbrmsd_SORG2R(M - KK, N - KK, K - KK, A(KK + 1, KK + 1), LDA, TAU(KK + 1), WORK, IINFO)
-  !
+!
   if (KK > 0) then
-    !
-    !use blocked code
-    !
+!
+! use blocked code
+!
     do I = KI + 1, 1, -NB
       IB = MIN(NB, K - I + 1)
       if (I + IB <= N) then
-        !
-        !Form the triangular factor of the block reflector
-        !H = H(i) H(i + 1) ...H(i + ib - 1)
-        !
+!
+! Form the triangular factor of the block reflector
+! H = H(i) H(i + 1) ...H(i + ib - 1)
+!
         call mobbrmsd_SLARFT('Forward', 'Columnwise', M - I + 1, IB, &
             &       A(I, I), LDA, TAU(I), WORK, LDWORK)
-        !
-        !Apply H to A(i:m, i + ib:n) from the left
-        !
+!
+! Apply H to A(i:m, i + ib:n) from the left
+!
         call mobbrmsd_SLARFB('Left', 'No transpose', 'Forward', &
             &       'Columnwise', M - I + 1, N - I - IB + 1, IB, &
             &       A(I, I), LDA, WORK, LDWORK, A(I, I + IB), &
             &       LDA, WORK(IB + 1), LDWORK)
       end if
-      !
-      !Apply H to rows i:m of current block
-      !
+!
+! Apply H to rows i:m of current block
+!
       call mobbrmsd_SORG2R(M - I + 1, IB, IB, A(I, I), LDA, TAU(I), WORK, IINFO)
-      !
-      !Set rows 1:i - 1 of current block to zero
-      !
+!
+! Set rows 1:i - 1 of current block to zero
+!
       do J = I, I + IB - 1
         do L = 1, I - 1
           A(L, J) = ZERO
@@ -284,7 +196,8 @@ pure subroutine mobbrmsd_SORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
   !
   WORK(1) = IWS
   return
-  !
-  !end of mobbrmsd_SORGQR
-  !
+!
+! end of mobbrmsd_SORGQR
+!
 end
+

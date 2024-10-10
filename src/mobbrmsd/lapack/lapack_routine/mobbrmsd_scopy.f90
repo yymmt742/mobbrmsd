@@ -1,7 +1,9 @@
-!| mobbrmsd_SCOPY copies a vector, x, to a vector, y.
-!  uses unrolled loops for increments equal to 1.
+!| copies \( x \) to \( y \)
 !
-!  reference SCOPY is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
+!  mobbrmsd_DCOPY copies a vector, \( x \), to a vector, \( y \),
+!  and uses unrolled loops for increments equal to 1.
+!
+!  reference DCOPY is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
 !  -- Reference BLAS level1 routine (version 3.8.0) --
 !
@@ -10,25 +12,25 @@
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !   November 2017
 !
-!      jack dongarra, linpack, 3/11/78.
-!      modified 12/3/93, array(1) declarations changed to array(*)
+!  jack dongarra, linpack, 3/11/78.
+!  modified 12/3/93, array(1) declarations changed to array(*)
 !
 pure subroutine mobbrmsd_SCOPY(N, SX, INCX, SY, INCY)
   implicit none
   integer, intent(in) :: N
-!!         number of elements in input vector(s)
+!!  number of elements in input vector(s)
 !!
   real(RK), intent(in)  :: SX(*)
-!!          SX is REAL array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
+!!  REAL array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
 !!
   integer, intent(in) :: INCX
-!!         storage spacing between elements of SX
+!!  storage spacing between elements of SX
 !!
   real(RK), intent(out) :: SY(*)
-!!          SY is REAL array, dimension ( 1 + ( N - 1 )*abs( INCY ) )
+!!  REAL array, dimension ( 1 + ( N - 1 )*abs( INCY ) )
 !!
   integer, intent(in) :: INCY
-!!         storage spacing between elements of SY
+!!  storage spacing between elements of SY
 !!
   integer :: I, IX, IY, M, MP1
   intrinsic :: MOD

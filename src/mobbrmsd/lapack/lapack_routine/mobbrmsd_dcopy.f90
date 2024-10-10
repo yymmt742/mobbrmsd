@@ -1,26 +1,27 @@
-!|    mobbrmsd_DCOPY copies a vector, x, to a vector, y.
-!     uses unrolled loops for increments equal to 1.
+!| copies \( x \) to \( y \)
+!
+!  mobbrmsd_DCOPY copies a vector, \( x \), to a vector, \( y \),
+!  and uses unrolled loops for increments equal to 1.
 !
 !  reference DCOPY is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
-!  \author Univ. of Tennessee
+!  -- LAPACK computational routine --
 !
-!  \author Univ. of California Berkeley
-!  \author Univ. of Colorado Denver
+!  -- LAPACK is a software package provided by Univ. of Tennessee,    --
 !
-!  \author NAG Ltd.
+!  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
 pure subroutine mobbrmsd_DCOPY(N, DX, INCX, DY, INCY)
   integer, intent(in)   :: N
-!!         number of elements in input vector(s)
-  integer, intent(in)   :: INCX
-!!         storage spacing between elements of DX
-  integer, intent(in)   :: INCY
-!!         storage spacing between elements of DY
+!!  number of elements in input vector(s)
   real(RK), intent(in)  :: DX(*)
-!!         DX is DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
+!!  DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCX ) )
+  integer, intent(in)   :: INCX
+!!  storage spacing between elements of DX
   real(RK), intent(out) :: DY(*)
-!!         DY is DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCY ) )
+!!  DOUBLE PRECISION array, dimension ( 1 + ( N - 1 )*abs( INCY ) )
+  integer, intent(in)   :: INCY
+!!  storage spacing between elements of DY
 !
   if (N <= 0) return
   if (INCX == 1 .and. INCY == 1) then

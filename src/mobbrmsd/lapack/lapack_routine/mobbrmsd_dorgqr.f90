@@ -1,172 +1,86 @@
-!> \brief \b mobbrmsd_DORGQR
+!| generates a product of \( k \) elementary reflectors
 !
-!  =========== DOCUMENTATION ===========
+!  mobbrmsd_DORGQR generates an \( m \)-by-\( n \) real matrix \( Q \)
+!  with orthonormal columns,
+!  which is defined as the first \( n \) columns of a product of
+!  \( k \) K elementary reflectors of order \( m \)
 !
-! Online html documentation available at
-!            http://www.netlib.org/lapack/explore-html/
+!  \[
+!     Q  =  H _ 1 H _ 2 \cdots H _ k
+!  \]
 !
-!> \htmlonly
-!> Download mobbrmsd_DORGQR + dependencies
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgzfilename=/lapack/lapack_routine/dorgqr.f">
-!> [TGZ]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zipfilename=/lapack/lapack_routine/dorgqr.f">
-!> [ZIP]</a>
-!> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txtfilename=/lapack/lapack_routine/dorgqr.f">
-!> [TXT]</a>
-!> \endhtmlonly
+!  as returned by mobbrmsd_DGEQRF.
 !
-!  Definition:
-!  ===========
-!
-!       SUBROUTINE mobbrmsd_DORGQR( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
-!
-!       .. Scalar Arguments ..
-!       INTEGER            INFO, K, LDA, LWORK, M, N
-!       ..
-!       .. Array Arguments ..
-!       real(RK)           ::   A( LDA, * ), TAU( * ), WORK( * )
-!       ..
-!
-!
-!> \par Purpose:
-!  =============
-!>
-!> \verbatim
-!>
-!> mobbrmsd_DORGQR generates an M-by-N real matrix Q with orthonormal columns,
-!> which is defined as the first N columns of a product of K elementary
-!> reflectors of order M
-!>
-!>       Q  =  H(1) H(2) . . . H(k)
-!>
-!> as returned by mobbrmsd_DGEQRF.
-!> \endverbatim
-!
-!  Arguments:
-!  ==========
-!
-!> \param[in] M
-!> \verbatim
-!>          M is INTEGER
-!>          The number of rows of the matrix Q. M >= 0.
-!> \endverbatim
-!>
-!> \param[in] N
-!> \verbatim
-!>          N is INTEGER
-!>          The number of columns of the matrix Q. M >= N >= 0.
-!> \endverbatim
-!>
-!> \param[in] K
-!> \verbatim
-!>          K is INTEGER
-!>          The number of elementary reflectors whose product defines the
-!>          matrix Q. N >= K >= 0.
-!> \endverbatim
-!>
-!> \param[in,out] A
-!> \verbatim
-!>          A is real(RK)           :: array, dimension (LDA,N)
-!>          On entry, the i-th column must contain the vector which
-!>          defines the elementary reflector H(i), for i = 1,2,...,k, as
-!>          returned by mobbrmsd_DGEQRF in the first k columns of its array
-!>          argument A.
-!>          On exit, the M-by-N matrix Q.
-!> \endverbatim
-!>
-!> \param[in] LDA
-!> \verbatim
-!>          LDA is INTEGER
-!>          The first dimension of the array A. LDA >= max(1,M).
-!> \endverbatim
-!>
-!> \param[in] TAU
-!> \verbatim
-!>          TAU is real(RK)           :: array, dimension (K)
-!>          TAU(i) must contain the scalar factor of the elementary
-!>          reflector H(i), as returned by mobbrmsd_DGEQRF.
-!> \endverbatim
-!>
-!> \param[out] WORK
-!> \verbatim
-!>          WORK is real(RK)           :: array, dimension (MAX(1,LWORK))
-!>          On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
-!> \endverbatim
-!>
-!> \param[in] LWORK
-!> \verbatim
-!>          LWORK is INTEGER
-!>          The dimension of the array WORK. LWORK >= max(1,N).
-!>          For optimum performance LWORK >= N*NB, where NB is the
-!>          optimal blocksize.
-!>
-!>          If LWORK = -1, then a workspace query is assumed; the routine
-!>          only calculates the optimal size of the WORK array, returns
-!>          this value as the first entry of the WORK array, and no error
-!>          message related to LWORK is issued by XERBLA.
-!> \endverbatim
-!>
-!> \param[out] INFO
-!> \verbatim
-!>          INFO is INTEGER
-!>          = 0:  successful exit
-!>          < 0:  if INFO = -i, the i-th argument has an illegal value
-!> \endverbatim
-!
-!  Authors:
-!  ========
-!
-!> \author Univ. of Tennessee
-!> \author Univ. of California Berkeley
-!> \author Univ. of Colorado Denver
-!> \author NAG Ltd.
-!
-!> \ingroup doubleOTHERcomputational
-!
-!  =====================================================================
-pure subroutine mobbrmsd_DORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
-! use LA_CONSTANTS, only: RK => dp
-  implicit none
+!  Reference DORGQR is provided by [netlib](http://www.netlib.org/lapack/explore-html/).
 !
 !  -- LAPACK computational routine --
+!
 !  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+!
 !  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 !
-!     .. Scalar Arguments ..
-  integer, intent(in)     :: K, LDA, LWORK, M, N
-  integer, intent(out)    :: INFO
-!     ..
-!     .. Array Arguments ..
-  real(RK), intent(in)    :: TAU(*)
+pure subroutine mobbrmsd_DORGQR(M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
+  implicit none
+  integer, intent(in)     :: M
+!!  The number of rows of the matrix Q. M >= 0.
+!!
+  integer, intent(in)     :: N
+!!  The number of columns of the matrix Q. M >= N >= 0.
+!!
+  integer, intent(in)     :: K
+!!  The number of elementary reflectors whose product defines the
+!!  matrix Q. N >= K >= 0.
+!!
+  integer, intent(in)     :: LDA
+!!  The first dimension of the array A. LDA >= max(1,M).
+!!
   real(RK), intent(inout) :: A(LDA, *)
+!!  DOUBLE PRECISION array, dimension (LDA,N)
+!!
+!!  On entry, the i-th column must contain the vector which
+!!  defines the elementary reflector H(i), for i = 1,2,...,k, as
+!!  returned by mobbrmsd_DGEQRF in the first k columns of its array
+!!  argument A.
+!!
+!!  On exit, the M-by-N matrix Q.
+!!
+  real(RK), intent(in)    :: TAU(*)
+!!  DOUBLE PRECISION array, dimension (K)
+!!
+!!  TAU(i) must contain the scalar factor of the elementary
+!!  reflector H(i), as returned by mobbrmsd_DGEQRF.
+!!
   real(RK), intent(out)   :: WORK(*)
-!     ..
-!
-!  =====================================================================
-!     ..
-!     .. Local Scalars ..
+!!  DOUBLE PRECISION array, dimension (MAX(1,LWORK))
+!!  On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+!!
+  integer, intent(in)     :: LWORK
+!!  The dimension of the array WORK. LWORK >= max(1,N).
+!!
+!!  For optimum performance LWORK >= N*NB, where NB is the
+!!  optimal blocksize.
+!!
+  integer, intent(out)    :: INFO
+!!  If LWORK = -1, then a workspace query is assumed; the routine
+!!  only calculates the optimal size of the WORK array, returns
+!!  this value as the first entry of the WORK array.
+!!
+!!  = 0:  successful exit
+!!
+!!  < 0:  if INFO = -i, the i-th argument has an illegal value
+!!
   logical                 :: LQUERY
   integer                 :: I, IB, IINFO, IWS, J, KI, KK, L, &
  &                           LDWORK, LWKOPT, NB, NBMIN, NX
-!     .. Intrinsic Functions ..
   intrinsic               :: MAX, MIN
-!
-!     .. Parameters ..
-! real(RK), parameter      :: ZERO = 0.0_RK
-!     ..
 ! interface
-!     .. External Subroutines ..
 !   include 'dlarfb.h'
 !   include 'dlarft.h'
 !   include 'dorg2r.h'
-!   !include 'xerbla.h'
-!     .. External Functions ..
 !   include 'ilaenv.h'
 ! end interface
-!     ..
-!     .. Executable Statements ..
 !
-!     Test the input arguments
+! Test the input arguments
 !
   INFO = 0
   NB = mobbrmsd_ILAENV(1, 'DORGQR', ' ', M, N, K, -1)
