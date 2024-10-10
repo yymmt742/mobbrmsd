@@ -103,8 +103,8 @@ To use the Python interface, you additionally need the following:
 - [ ] Add detail documentation
 - [ ] Add detail documentation (Python interface)
 - [ ] Add benchmarks
-- [ ] Make dimensions selectable in build options
-- [ ] Internalize lapack
+- [x] Make dimensions selectable in build options
+- [x] Internalize lapack
 
 See the [open issues](https://github.com/yymmt742/mobbrmsd/issues) for a full list of proposed features (and known issues).
 
