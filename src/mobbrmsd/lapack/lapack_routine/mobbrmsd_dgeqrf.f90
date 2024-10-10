@@ -1,25 +1,40 @@
-!| mobbrmsd_DGEQRF computes a QR factorization of a real M-by-N matrix A:
+!| computes a QR factorization of a real \( m \)-by-\( n \) matrix \( A \):
 !
-!     A = Q * ( R ),
-!             ( 0 )
+!  mobbrmsd_DGEQRF computes a QR factorization
+!  of a real \( m \)-by-\( n \) matrix \( A \):
 !
+!  \[
+!    A = Q
+!    \left(
+!      \begin{array}{}
+!        R \\
+!        0 \\
+!      \end{array}
+!    \right)
+!  \]
 !  where:
 !
-!     Q is a M-by-M orthogonal matrix;
-!     R is an upper-triangular N-by-N matrix;
-!     0 is a (M-N)-by-N zero matrix, if M > N.
+!  \( Q \) is a \( m \)-by-\( m \) orthogonal matrix;
+!  \( R \) is an upper-triangular \( n \)-by-\( n \) matrix;
+!  \( 0 \) is a \( (m-n) \)-by-\( n \) zero matrix, if \( m > n \).
 !
-!   The matrix Q is represented as a product of elementary reflectors
+!  The matrix \( Q \) is represented as a product of elementary reflectors
 !
-!      Q = H(1) H(2) . . . H(k), where k = min(m,n).
+!  \[
+!     Q = H _ 1 H _ 2 \cdots H _ k,
+!  \]
 !
-!   Each H(i) has the form
+!   where \( k = \min(m,n) \).
+!   Each  \( H _ i \) has the form
 !
-!      H(i) = I - tau * v * v**T
+!  \[
+!     H _ i = I - \tau v v ^ \top,
+!  \]
 !
-!   where \(\tau\) is a real scalar, and \(\mathbf{v}\) is a real vector with
-!   \(v(1:i-1) = 0\) and \(v(i) = 1\); \(v(i+1:m)\) is stored on exit
-!   in A(i+1:m,i), and tau in TAU(i).
+!   where \( \tau \) is a real scalar,
+!   and \( v \) is a real vector with
+!   \( v _ j = 0, 1 \le j \le i-1) \) and \( v _ i = 1 \);
+!   v(i+1:m) is stored on exit in A(i+1:m,i), and \( \tau \) in TAU(i).
 !
 !  Reference DGEQRF is provided by [netlib.org](http://www.netlib.org/lapack/).
 !

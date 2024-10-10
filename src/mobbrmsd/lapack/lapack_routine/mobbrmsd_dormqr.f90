@@ -1,6 +1,6 @@
 !| multiply an orthogonal matrix \( Q = H _ 1 H _ 2 \cdots H _ k \).
 !
-!  mobbrmsd_DGELQF overwrites the general real
+!  mobbrmsd_DORMQR overwrites the general real
 !  \( m \)-by-\( n \) matrix \( C \) with
 !
 !  | SIDE  | TRANS |                  |
@@ -17,7 +17,7 @@
 !     Q = H _ 1 H _ 2 \cdots H _ k
 !  \]
 !
-!  as returned by mobbrmsd_DGELQF.
+!  as returned by mobbrmsd_DORMQR.
 !  \( Q \) is of order \( m \) if SIDE = 'L'
 !  and of order \( n \) if SIDE = 'R'.
 !
@@ -34,10 +34,12 @@ pure subroutine mobbrmsd_DORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, &
   implicit none
   character, intent(in) :: SIDE
 !!  = 'L': apply Q or Q**T from the Left;
+!!
 !!  = 'R': apply Q or Q**T from the Right.
 !!
   character, intent(in) :: TRANS
 !!  = 'N':  No transpose, apply Q;
+!!
 !!  = 'T':  Transpose, apply Q**T.
 !!
   integer, intent(in)   :: M
@@ -73,11 +75,13 @@ pure subroutine mobbrmsd_DORMQR(SIDE, TRANS, M, N, K, A, LDA, TAU, &
 !!
   real(RK), intent(in)     :: TAU(*)
 !!  DOUBLE PRECISION array, dimension (K)
+!!
 !!  TAU(i) must contain the scalar factor of the elementary
 !!  reflector H(i), as returned by mobbrmsd_DGEQRF.
 !!
   real(RK), intent(inout)  :: C(LDC, *)
 !!  DOUBLE PRECISION array, dimension (LDC,N)
+!!
 !!  On entry, the M-by-N matrix C.
 !!
 !!  On exit, C is overwritten by Q*C or Q**T*C or C*Q**T or C*Q.

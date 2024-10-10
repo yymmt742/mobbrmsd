@@ -1,16 +1,18 @@
-!| mobbrmsd_DGETRF computes an LU factorization of a general
-!  \( M \) -by- \( N \) matrix  \( \mathbf{A} \)
+!| computes an LU factorization using partial pivoting.
+!
+!  mobbrmsd_DGETRF computes an LU factorization of a general
+!  \( m \)-by-\( n \) matrix \( A \)
 !  using partial pivoting with row interchanges.
 !
 !  The factorization has the form
 !
-!  \[ \mathbf{A} = \mathbf{P L U} \]
+!  \[ A = P L U \]
 !
-!  where \( \mathbf{P} \) is a permutation matrix,
-!  \( \mathbf{L} \) is lower triangular with unit
-!  diagonal elements (lower trapezoidal if \( m > n \) ),
-!  and \( \mathbf{U} \) is upper
-!  triangular (upper trapezoidal if \( m < n \) ).
+!  where \( P \) is a permutation matrix,
+!  \( L \) is lower triangular with unit diagonal elements
+!  (lower trapezoidal if \( m > n \) ),
+!  and \( U \) is upper triangular
+!  (upper trapezoidal if \( m < n \) ).
 !
 !  This is the right-looking Level 3 BLAS version of the algorithm.
 !  Reference DGETRF is provided by [netlib.org](http://www.netlib.org/lapack/).

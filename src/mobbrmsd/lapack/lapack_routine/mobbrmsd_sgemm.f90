@@ -1,13 +1,16 @@
-!| mobbrmsd_SGEMM performs one of the matrix-matrix operations
+!| performs \( C \gets \alpha \text{op}( A ) \text{op}( B ) + \beta C \)
 !
-!  \[ \mathbf{C} \gets \alpha \text{op}( \mathbf{A} ) \text{op}( \mathbf{B} ) + \beta \mathbf{C}, \]
+!  mobbrmsd_SGEMM performs one of the matrix-matrix operations
 !
-!  where \( \text{op}( \mathbf{X} ) \) is one of
-!  \( \text{op}( \mathbf{X} ) = \mathbf{X} \) or \( \text{op}( \mathbf{X} ) = \mathbf{X} ^ {\top} \),
-!  \( \alpha \) and \( \beta \) are scalars, and \( \mathbf{A} \), \( \mathbf{B} \) and \( \mathbf{C} \) are matrices,
-!  with \( \text{op}( \mathbf{A} ) \) an \( m \) by \( k \) matrix,
-!  \( \text{op}( \mathbf{B} ) \) a \( k \) by \( n \) matrix,
-!  and \( \mathbf{B} \) an \( m \) by \( n \) matrix.
+!  \[ C \gets \alpha \text{op}( A ) \text{op}( B ) + \beta C, \]
+!
+!  where \( \text{op}( X ) \) is one of
+!  \( \text{op}( X ) = X \) or \( \text{op}( X ) = X ^ {\top} \),
+!  \( \alpha \) and \( \beta \) are scalars,
+!  and \( A \), \( B \) and \( C \) are matrices,
+!  with \( \text{op}( A ) \in \mathbb{R} ^ { m \times k } \),
+!  \( \text{op}( B ) \in \mathbb{R} ^ { k \times n } \),
+!  and \( C \in \mathbb{R} ^ { m \times n } \).
 !
 !  Reference SGEMM is provided by [netlib](http://www.netlib.org/lapack/).
 !
