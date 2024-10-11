@@ -1,15 +1,21 @@
 program main
+  use ISO_FORTRAN_ENV, only: OUTPUT_UNIT
   use mod_dimspec_functions, only: D, DD
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_unittest
+#ifdef USE_REAL32
+  use mod_mobbrmsd_lapack, only: SGEMM
+#else
+  use mod_mobbrmsd_lapack, only: DGEMM
+#endif
   implicit none
   type(unittest) :: u
   integer        :: i
-!
-  interface
-    include 'dgemm.h'
-    include 'sgemm.h'
-  end interface
+#ifdef USE_REAL32
+  integer(IK), parameter :: place = 3
+#else
+  integer(IK), parameter :: place = 7
+#endif
 !
   call u%init('test gemm')
   do i = 1, 10
@@ -41,33 +47,34 @@ contains
     call RANDOM_NUMBER(B)
 !
 #ifdef USE_REAL32
-    call sgemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
+    call SGEMM('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
 #else
-    call dgemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
+    call DGEMM('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
 #endif
     C2 = MATMUL(A, TRANSPOSE(B))
-    call u%assert_almost_equal([C1 - C2], ZERO, ' A @ TB = C')
+    call u%assert_almost_equal([C1 - C2], ZERO, ' A @ TB = C', place=place)
 !
   end subroutine test1
 !
   subroutine test2(K)
     integer(IK), intent(in) :: K
-    integer(IK), parameter  :: N = 5000000 / DD
     real(RK)                :: A0(D, K), A(D, K), B(D, K), C1(D, D), C2(D, D)
     real(RK)                :: time_begin_s, time_end_s, time_gemm, time_matmul
+    integer(IK)             :: N
     integer(IK)             :: i
 !
     call RANDOM_NUMBER(A)
     call RANDOM_NUMBER(B)
 !
     A0 = A
+    N = 5000000 / DD
 !
     call CPU_TIME(time_begin_s)
     do i = 1, N
-#ifdef REAL32
-      call sgemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
+#ifdef USE_REAL32
+      call SGEMM('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
 #else
-      call dgemm('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
+      call DGEMM('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
 #endif
       A = SUM(C1) / N + B
     end do
@@ -85,8 +92,10 @@ contains
     call CPU_TIME(time_end_s)
 !
     time_matmul = 1000 * (time_end_s - time_begin_s)
-    print'(I8,2f16.3,F16.9)', K, time_gemm, time_matmul, SUM(C1 - C2)
+    print'(i8,2f16.3,f16.9)', k, time_gemm, time_matmul, SUM(c1 - c2)
+    FLUSH (OUTPUT_UNIT)
 !
   end subroutine test2
 !
 end program main
+

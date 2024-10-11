@@ -33,9 +33,13 @@ foreach(dims IN ITEMS ${mobbrmsd_DIMENTIONS})
       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_kinds.f90
       ${CMAKE_CURRENT_SOURCE_DIR}/../mod_params.f90
       )
-    ADDTEST(test_covdot_${dims}${prec} ${dims} ${prec} 32 1 "" ${moddir} ""
+    ADDTEST(test_covdot_${dims}${prec} ${dims} ${prec} 32 "" "" ${moddir} ""
       ${sources}
       ${CMAKE_CURRENT_SOURCE_DIR}/test_covdot.f90
+      )
+    ADDTEST(test_gemm_${dims}${prec} ${dims} ${prec} 32 1 "" ${moddir} ""
+      ${sources}
+      ${CMAKE_CURRENT_SOURCE_DIR}/test_gemm.f90
       )
     list(APPEND sources
       ${CMAKE_CURRENT_SOURCE_DIR}/mod_testutil.f90
