@@ -92,7 +92,14 @@ class __demo__(_demo._demo):
         }
 
     def after(
-        self, cogen=coord_generator(), n_apm=3, n_mol=8, alpha=0.5, beta=1.0, **kwargs
+        self,
+        cogen=coord_generator(),
+        n_apm=3,
+        n_mol=8,
+        alpha=0.5,
+        beta=1.0,
+        path=None,
+        **kwargs,
     ):
 
         import matplotlib.pyplot as plt
@@ -127,7 +134,11 @@ class __demo__(_demo._demo):
             ax.set_ylabel("Y")
             ax.set_zlabel("Z")
             ax.set_box_aspect([1, 1, 1])
-            plt.show()
+            if path is None:
+                plt.show()
+            else:
+                for p in path.split(","):
+                    plt.savefig(p)
             plt.clf()
             plt.close()
 

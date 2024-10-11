@@ -209,6 +209,7 @@ class __demo__(_demo._demo):
                 )
                 plt.show()
             else:
-                plt.savefig(path)
+                for p in path.split(","):
+                    plt.savefig(p)
             plt.clf()
             plt.close()
