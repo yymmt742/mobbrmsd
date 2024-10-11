@@ -137,18 +137,18 @@ class _demo:
     def read_input(self):
         return
 
-    def demo(self, **kwarg):
+    def demo(self, **kwargs):
         return
 
-    def after(self, **kwarg):
+    def after(self, **kwargs):
         return
 
-    def run_demo(self, **kwarg):
+    def run_demo(self, **kwargs):
         print(bar2)
         if self.cli:
-            prms = {**kwarg, **self.read_input()}
+            prms = {**kwargs, **self.read_input()}
         else:
-            prms = kwarg
+            prms = kwargs
 
         start_wallclock_time = time.time()
         start_cpu_time = time.process_time()
@@ -167,7 +167,10 @@ class _demo:
         )
         print(bar2, "\n")
 
-        self.after(**{**kwarg, **ret})
+        if ret is None:
+            self.after(**kwargs)
+        else:
+            self.after(**{**kwargs, **ret})
 
     def yes_or_no(self, msg):
         if not self.cli:

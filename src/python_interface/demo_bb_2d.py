@@ -61,22 +61,37 @@ class __demo__(_demo._demo):
 
         return {"n_apm": n_apm, "n_mol": n_mol, "n_sym": n_sym}
 
-    def demo(self, n_apm=3, n_mol=8, n_sym=2, alpha=0.9, beta=1.0, r=0.0, **kwargs):
+    def demo(
+        self,
+        n_apm=3,
+        n_mol=8,
+        n_sym=2,
+        alpha=0.9,
+        beta=1.0,
+        gamma=1.0,
+        zeta=0.0,
+        **kwargs,
+    ):
 
         n_mol_ = int(n_mol)
         n_apm_ = int(n_apm)
         sym = _demo.generate_sym_indices(n_apm_, int(n_sym))
         a_ = float(alpha)
         b_ = float(beta)
-        r_ = float(r)
+        g_ = float(gamma)
+        z_ = float(zeta)
 
         cogen = coord_generator(d=2)
-        x = cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape([-1, 2])
-        y = r_ * x + (1.0 - r_) * cogen.generate(
-            n_apm_, n_mol_, a_, b_, dtype=self.prec
-        ).reshape([-1, 2])
-        x -= numpy.mean(x, 0)
-        y -= numpy.mean(y, 0)
+        x, y = cogen.generate_pair(
+            n_apm_,
+            n_mol_,
+            alpha=a_,
+            beta=b_,
+            gamma=g_,
+            zeta=z_,
+            dtype=self.prec,
+            remove_com=True,
+        )
         z = y.copy()
 
         molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)

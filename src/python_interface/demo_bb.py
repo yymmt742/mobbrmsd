@@ -93,7 +93,6 @@ class __demo__(_demo._demo):
             dtype=self.prec,
             remove_com=True,
         )
-        print(x, y)
         z = y.copy()
 
         molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)

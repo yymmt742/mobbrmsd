@@ -147,8 +147,8 @@ class coord_generator:
 
     def generate_pair(
         self,
-        n_apm: int,
-        n_mol: int,
+        n_apm: int | Iterable[int],
+        n_mol: int | Iterable[int],
         alpha: float | Iterable[float],
         beta: float | Iterable[float],
         gamma: float = 1.0,
@@ -164,33 +164,58 @@ class coord_generator:
         sz = numpy.sin(zeta)
         cz = numpy.cos(zeta)
 
-        def shuffle(x):
+        def shuffle(x, n_mol, n_apm):
             p = self.rng.permutation(n_mol)
             return x.reshape([n_mol, n_apm, self.d])[p, :, :].reshape(-1, self.d)
 
-        if temp is None:
-            temp1 = self.rng.standard_normal((n_apm, self.d))
-            temp2 = sg * temp1 + cg * self.rng.standard_normal((n_apm, self.d))
-        else:
-            temp1 = sg * temp + cg * self.rng.standard_normal((n_apm, self.d))
-            temp2 = sg * temp + cg * self.rng.standard_normal((n_apm, self.d))
+        def gen_pair(n_mol, n_apm, remove_com):
 
-        x = self.generate(
-            n_apm=n_apm,
-            n_mol=n_mol,
-            a=alpha,
-            b=beta,
-            n_sample=n_sample,
-            temp=temp1,
-            dtype=dtype,
-        )
-        y = self.generate(
-            n_apm=n_apm,
-            n_mol=n_mol,
-            a=alpha,
-            b=beta,
-            n_sample=n_sample,
-            temp=temp2,
-            dtype=dtype,
-        )
-        return x, shuffle((cz * x + sz * y)) @ self.sog.generate()
+            if temp is None:
+                temp1 = self.rng.standard_normal((n_apm, self.d))
+                temp2 = sg * temp1 + cg * self.rng.standard_normal((n_apm, self.d))
+            else:
+                temp1 = sg * temp + cg * self.rng.standard_normal((n_apm, self.d))
+                temp2 = sg * temp + cg * self.rng.standard_normal((n_apm, self.d))
+
+            x = self.generate(
+                n_apm=n_apm,
+                n_mol=n_mol,
+                a=alpha,
+                b=beta,
+                n_sample=n_sample,
+                temp=temp1,
+                dtype=dtype,
+                remove_com=remove_com,
+            )
+            y = shuffle(
+                cz * x
+                + sz
+                * self.generate(
+                    n_apm=n_apm,
+                    n_mol=n_mol,
+                    a=alpha,
+                    b=beta,
+                    n_sample=n_sample,
+                    temp=temp2,
+                    dtype=dtype,
+                    remove_com=remove_com,
+                ),
+                n_mol,
+                n_apm,
+            )
+            return x, y
+
+        if isinstance(n_apm, Iterable) or isinstance(n_mol, Iterable):
+            xy = [
+                gen_pair(n_mol=n_mol_, n_apm=n_apm_, remove_com=False)
+                for n_apm_, n_mol_ in zip(n_apm, n_mol)
+            ]
+            x = numpy.vstack([x[0] for x in xy])
+            y = numpy.vstack([x[1] for x in xy])
+            if remove_com:
+                x -= numpy.mean(x, 0)
+                y -= numpy.mean(y, 0)
+        else:
+            x, y = gen_pair(n_apm=n_apm, n_mol=n_mol, remove_com=remove_com)
+
+        return x, y @ self.sog.generate()
