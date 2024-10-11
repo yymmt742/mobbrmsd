@@ -91,7 +91,7 @@ class coord_generator:
         remove_com: bool = True,
     ) -> numpy.ndarray:
 
-        if temp == None:
+        if temp is None:
             temp = self.rng.standard_normal((n_apm, self.d))
 
         def x_sample(
@@ -152,6 +152,7 @@ class coord_generator:
         alpha: float | Iterable[float],
         beta: float | Iterable[float],
         gamma: float = 1.0,
+        zeta: float = 1.0,
         n_sample: int = 1,
         temp: None | numpy.ndarray = None,
         dtype=numpy.float64,
@@ -160,7 +161,14 @@ class coord_generator:
 
         sg = numpy.sin(gamma)
         cg = numpy.cos(gamma)
-        if temp == None:
+        sz = numpy.sin(zeta)
+        cz = numpy.cos(zeta)
+
+        def shuffle(x):
+            p = self.rng.permutation(n_mol)
+            return x.reshape([n_mol, n_apm, self.d])[p, :, :].reshape(-1, self.d)
+
+        if temp is None:
             temp1 = self.rng.standard_normal((n_apm, self.d))
             temp2 = sg * temp1 + cg * self.rng.standard_normal((n_apm, self.d))
         else:
@@ -185,4 +193,4 @@ class coord_generator:
             temp=temp2,
             dtype=dtype,
         )
-        return x, y
+        return x, shuffle((cz * x + sz * y)) @ self.sog.generate()
