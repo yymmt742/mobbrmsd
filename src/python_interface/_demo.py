@@ -146,7 +146,7 @@ class _demo:
     def run_demo(self, **kwarg):
         print(bar2)
         if self.cli:
-            prms = {**self.read_input(), **kwarg}
+            prms = {**kwarg, **self.read_input()}
         else:
             prms = kwarg
 
@@ -167,8 +167,7 @@ class _demo:
         )
         print(bar2, "\n")
 
-        if ret is not None:
-            self.after(**ret)
+        self.after(**{**kwarg, **ret})
 
     def yes_or_no(self, msg):
         if not self.cli:

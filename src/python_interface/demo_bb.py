@@ -145,7 +145,14 @@ class __demo__(_demo._demo):
             "z": z.reshape([n_mol_, n_apm_, 3]),
         }
 
-    def after(self, x, y, z, **kwarg):
+    def after(
+        self,
+        x=[[[0.0, 0.0, 0.0]]],
+        y=[[[0.0, 0.0, 0.0]]],
+        z=[[[0.0, 0.0, 0.0]]],
+        path=None,
+        **kwargs,
+    ):
         ang = 0
 
         if self.yes_or_no("Show samples ? (Open matplotlib window)"):
@@ -188,7 +195,7 @@ class __demo__(_demo._demo):
                 ax.set_xlim([-2.5, 2.5])
                 ax.set_ylim([-2.5, 2.5])
                 ax.set_zlim([-2.5, 2.5])
-                ax.view_init(azim=0)
+                ax.view_init(azim=15)
                 ax.set_box_aspect([1, 1, 1])
             plt.tight_layout()
 
@@ -196,9 +203,12 @@ class __demo__(_demo._demo):
                 axes[0].view_init(azim=frame)
                 axes[1].view_init(azim=frame)
 
-            ani = animation.FuncAnimation(
-                fig, rot, frames=numpy.arange(0, 359, 2), interval=1
-            )
-            plt.show()
+            if path is None:
+                ani = animation.FuncAnimation(
+                    fig, rot, frames=numpy.arange(15, 374, 2), interval=1
+                )
+                plt.show()
+            else:
+                plt.savefig(path)
             plt.clf()
             plt.close()

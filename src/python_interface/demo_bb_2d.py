@@ -142,7 +142,14 @@ class __demo__(_demo._demo):
             "z": z.reshape([n_mol_, n_apm_, 2]),
         }
 
-    def after(self, x, y, z, *kwargs):
+    def after(
+        self,
+        x=[[[0.0, 0.0]]],
+        y=[[[0.0, 0.0]]],
+        z=[[[0.0, 0.0]]],
+        path=None,
+        **kwargs,
+    ):
 
         if self.yes_or_no("Show samples? (Open matplotlib window)"):
             import matplotlib.pyplot as plt
@@ -178,6 +185,9 @@ class __demo__(_demo._demo):
                 ax.set_ylim([-vmax, vmax])
                 ax.set_box_aspect(1)
             plt.tight_layout()
-            plt.show()
+            if path is None:
+                plt.show()
+            else:
+                plt.savefig(path)
             plt.clf()
             plt.close()

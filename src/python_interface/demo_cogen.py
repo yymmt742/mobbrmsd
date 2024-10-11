@@ -91,7 +91,9 @@ class __demo__(_demo._demo):
             "beta": beta_,
         }
 
-    def after(self, cogen, n_apm, n_mol, alpha, beta, **kwargs):
+    def after(
+        self, cogen=coord_generator(), n_apm=3, n_mol=8, alpha=0.5, beta=1.0, **kwargs
+    ):
 
         import matplotlib.pyplot as plt
 

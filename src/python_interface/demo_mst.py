@@ -109,8 +109,10 @@ class __demo__(_demo._demo):
         del mrmsd
         return {"g": g}
 
-    def after(self, g, path=None, **kwargs):
+    def after(self, g=None, path=None, **kwargs):
 
+        if g is None:
+            return
         if self.yes_or_no("Show graph? (Open matplotlib window)"):
             n_target = len(g.nodes())
 

@@ -112,7 +112,7 @@ class __demo__(_demo._demo):
         print(sep1)
         return {"mat": rmsds}
 
-    def after(self, mat):
+    def after(self, mat=[[0.0]], **kwargs):
 
         if self.yes_or_no("Show graph ? (Open matplotlib window)"):
             plt.imshow(mat)
