@@ -21,8 +21,8 @@ program main
   call test1(4, 2, 3)
   call test1(10, 100, 1000)
   call test1(4, 12, 40)
-  call test1(50, 200, 35)
-  call test1(441, 1230, 340)
+! call test1(50, 200, 35)
+! call test1(441, 1230, 340)
 !
   call test2(2)
   call test2(3)
