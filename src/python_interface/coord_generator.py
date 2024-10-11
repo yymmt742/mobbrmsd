@@ -88,6 +88,7 @@ class coord_generator:
         n_sample: int = 1,
         temp: None | numpy.ndarray = None,
         dtype=numpy.float64,
+        remove_com: bool = True,
     ) -> numpy.ndarray:
 
         if temp == None:
@@ -103,7 +104,10 @@ class coord_generator:
             Xstr = self.rng.standard_normal((n_mol, n_apm, self.d))
             Xtem = numpy.array([temp @ self.sog.generate() for i in range(n_mol)])
             Xvar = self.rng.standard_normal((n_mol, 1, self.d))
-            return ca * (cb * Xstr + sb * Xtem) + sa * Xvar
+            X = (ca * (cb * Xstr + sb * Xtem) + sa * Xvar).reshape([-1, self.d])
+            if remove_com:
+                X -= numpy.mean(X, 0)
+            return X
 
         def x_samples(
             a: float,
@@ -151,6 +155,7 @@ class coord_generator:
         n_sample: int = 1,
         temp: None | numpy.ndarray = None,
         dtype=numpy.float64,
+        remove_com: bool = True,
     ) -> tuple:
 
         sg = numpy.sin(gamma)

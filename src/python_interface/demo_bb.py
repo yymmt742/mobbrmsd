@@ -61,20 +61,21 @@ class __demo__(_demo._demo):
 
         return {"n_apm": n_apm, "n_mol": n_mol, "n_sym": n_sym}
 
-    def demo(self, n_apm=3, n_mol=8, n_sym=2, a=0.8, b=1.0, **kwarg):
+    def demo(self, n_apm=3, n_mol=8, n_sym=2, alpha=0.8, beta=1.0, gamma=1.0, **kwarg):
         import pprint
 
         n_mol_ = int(n_mol)
         n_apm_ = int(n_apm)
         sym = _demo.generate_sym_indices(n_apm_, int(n_sym))
-        a_ = float(a)
-        b_ = float(b)
+        a_ = float(alpha)
+        b_ = float(beta)
+        g_ = float(gamma)
 
         cogen = coord_generator()
-        x = cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape([-1, 3])
+        x, y = cogen.generate_pair(n_apm_, n_mol_, alpha=a_, beta=b_, gamma=g_ dtype=self.prec)
         y = cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape([-1, 3])
-        x -= numpy.mean(x, 0)
-        y -= numpy.mean(y, 0)
+        x = x.reshape([-1, 3])
+        y = y.reshape([-1, 3])
         z = y.copy()
 
         molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
@@ -213,3 +214,4 @@ class __demo__(_demo._demo):
                     plt.savefig(p)
             plt.clf()
             plt.close()
+error: cannot format -: Cannot parse: 75:79:         x, y = cogen.generate_pair(n_apm_, n_mol_, alpha=a_, beta=b_, gamma=g_ dtype=self.prec)
