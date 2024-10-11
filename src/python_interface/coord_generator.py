@@ -83,8 +83,8 @@ class coord_generator:
         self,
         n_apm: int,
         n_mol: int,
-        a: float | Iterable[float],
-        b: float | Iterable[float],
+        a: float | Iterable[float] = 0.0,
+        b: float | Iterable[float] = 0.0,
         n_sample: int = 1,
         temp: None | numpy.ndarray = None,
         dtype=numpy.float64,
@@ -140,3 +140,44 @@ class coord_generator:
                     return numpy.array(
                         [[x_samples(ai, bi, n_sample, temp) for bi in b] for ai in a]
                     ).astype(dtype=dtype)
+
+    def generate_pair(
+        self,
+        n_apm: int,
+        n_mol: int,
+        alpha: float | Iterable[float],
+        beta: float | Iterable[float],
+        gamma: float = 1.0,
+        n_sample: int = 1,
+        temp: None | numpy.ndarray = None,
+        dtype=numpy.float64,
+    ) -> tuple:
+
+        sg = numpy.sin(gamma)
+        cg = numpy.cos(gamma)
+        if temp == None:
+            temp1 = self.rng.standard_normal((n_apm, self.d))
+            temp2 = sg * temp1 + cg * self.rng.standard_normal((n_apm, self.d))
+        else:
+            temp1 = sg * temp + cg * self.rng.standard_normal((n_apm, self.d))
+            temp2 = sg * temp + cg * self.rng.standard_normal((n_apm, self.d))
+
+        x = self.generate(
+            n_apm=n_apm,
+            n_mol=n_mol,
+            a=alpha,
+            b=beta,
+            n_sample=n_sample,
+            temp=temp1,
+            dtype=dtype,
+        )
+        y = self.generate(
+            n_apm=n_apm,
+            n_mol=n_mol,
+            a=alpha,
+            b=beta,
+            n_sample=n_sample,
+            temp=temp2,
+            dtype=dtype,
+        )
+        return x, y
