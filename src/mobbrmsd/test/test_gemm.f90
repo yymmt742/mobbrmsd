@@ -23,7 +23,7 @@ program main
   end do
 !
   call u%init('test gemm time')
-  print'(A)', '       K     mygemm (ms)     matmul (ms)        error'
+  print'(A)', '       K     mygemm (ms)     matmul (ms)      error     ratio'
   call test2(1)
   call test2(2)
   call test2(5)
@@ -52,7 +52,7 @@ contains
     call DGEMM('N', 'T', D, D, K, ONE, A, D, B, D, ZERO, C1, D)
 #endif
     C2 = MATMUL(A, TRANSPOSE(B))
-    call u%assert_almost_equal([C1 - C2], ZERO, ' A @ TB = C', place=place)
+    call u%assert_almost_equal(C1 - C2, ZERO, ' A @ TB = C', place=place)
 !
   end subroutine test1
 !
@@ -92,7 +92,7 @@ contains
     call CPU_TIME(time_end_s)
 !
     time_matmul = 1000 * (time_end_s - time_begin_s)
-    print'(i8,2f16.3,f16.9)', k, time_gemm, time_matmul, SUM(c1 - c2)
+    print'(i8,2f16.3,f12.9,f9.3)', k, time_gemm, time_matmul, SUM(c1 - c2), time_gemm / time_matmul
     FLUSH (OUTPUT_UNIT)
 !
   end subroutine test2
