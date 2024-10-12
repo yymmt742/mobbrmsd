@@ -1,4 +1,6 @@
-!| mobbrmsd_SGETRF computes an LU factorization of a general
+!| computes an LU factorization using partial pivoting.
+!
+!  mobbrmsd_SGETRF computes an LU factorization of a general
 !  \( M \) -by- \( N \) matrix  \( \mathbf{A} \)
 !  using partial pivoting with row interchanges.
 !

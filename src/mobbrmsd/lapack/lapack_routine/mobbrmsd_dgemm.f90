@@ -187,6 +187,20 @@ pure subroutine mobbrmsd_DGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, B
       do concurrent(I=1:M, J=1:N)
         C(I, J) = ZERO
       end do
+    elseif (ALPHA == ONE) then
+      if (NOTB) then
+        if (NOTA) then
+          C(:M, :N) = MATMUL(A(:M, :K), B(:K, :N))
+        else
+          C(:M, :N) = MATMUL(TRANSPOSE(A(:K, :M)), B(:K, :N))
+        end if
+      else
+        if (NOTA) then
+          C(:M, :N) = MATMUL(A(:M, :K), TRANSPOSE(B(:N, :K)))
+        else
+          C(:M, :N) = MATMUL(TRANSPOSE(A(:K, :M)), TRANSPOSE(B(:N, :K)))
+        end if
+      end if
     else
       if (NOTB) then
         if (NOTA) then
@@ -207,18 +221,19 @@ pure subroutine mobbrmsd_DGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, B
     do concurrent(I=1:M, J=1:N)
       C(I, J) = BETA * C(I, J)
     end do
-  end if
-  if (NOTB) then
-    if (NOTA) then
-      C(:M, :N) = C(:M, :N) + MATMUL(A(:M, :K), B(:K, :N))
-    else
-      C(:M, :N) = C(:M, :N) + MATMUL(TRANSPOSE(A(:K, :M)), B(:K, :N))
-    end if
   else
-    if (NOTA) then
-      C(:M, :N) = C(:M, :N) + MATMUL(A(:M, :K), TRANSPOSE(B(:N, :K)))
+    if (NOTB) then
+      if (NOTA) then
+        C(:M, :N) = BETA * C(:M, :N) + ALPHA * MATMUL(A(:M, :K), B(:K, :N))
+      else
+        C(:M, :N) = BETA * C(:M, :N) + ALPHA * MATMUL(TRANSPOSE(A(:K, :M)), B(:K, :N))
+      end if
     else
-      C(:M, :N) = C(:M, :N) + MATMUL(TRANSPOSE(A(:K, :M)), TRANSPOSE(B(:N, :K)))
+      if (NOTA) then
+        C(:M, :N) = BETA * C(:M, :N) + ALPHA * MATMUL(A(:M, :K), TRANSPOSE(B(:N, :K)))
+      else
+        C(:M, :N) = BETA * C(:M, :N) + ALPHA * MATMUL(TRANSPOSE(A(:K, :M)), TRANSPOSE(B(:N, :K)))
+      end if
     end if
   end if
 !
