@@ -109,8 +109,10 @@ class __demo__(_demo._demo):
         del mrmsd
         return {"g": g}
 
-    def after(self, g, path=None, **kwargs):
+    def after(self, g=None, path=None, **kwargs):
 
+        if g is None:
+            return
         if self.yes_or_no("Show graph? (Open matplotlib window)"):
             n_target = len(g.nodes())
 
@@ -143,18 +145,11 @@ class __demo__(_demo._demo):
             networkx.draw_networkx_labels(g, pos, font_size=int(50 / n_target) + 5)
             networkx.draw_networkx_edges(g, pos, width=weights, edge_color="tab:red")
 
-            plt.show()
-
-            if path is not None:
-                if path == "":
-                    path = _demo.readinp(
-                        "Enter a file name",
-                        "",
-                        check=lambda path: (
-                            (path != "") if isinstance(path, str) else False
-                        ),
-                    )
-                plt.savefig(path)
+            if path is None:
+                plt.show()
+            else:
+                for p in path.split(","):
+                    plt.savefig(p)
 
             plt.clf()
             plt.close()

@@ -83,14 +83,15 @@ class coord_generator:
         self,
         n_apm: int,
         n_mol: int,
-        a: float | Iterable[float],
-        b: float | Iterable[float],
+        a: float | Iterable[float] = 0.0,
+        b: float | Iterable[float] = 0.0,
         n_sample: int = 1,
         temp: None | numpy.ndarray = None,
         dtype=numpy.float64,
+        remove_com: bool = True,
     ) -> numpy.ndarray:
 
-        if temp == None:
+        if temp is None:
             temp = self.rng.standard_normal((n_apm, self.d))
 
         def x_sample(
@@ -103,7 +104,10 @@ class coord_generator:
             Xstr = self.rng.standard_normal((n_mol, n_apm, self.d))
             Xtem = numpy.array([temp @ self.sog.generate() for i in range(n_mol)])
             Xvar = self.rng.standard_normal((n_mol, 1, self.d))
-            return ca * (cb * Xstr + sb * Xtem) + sa * Xvar
+            X = (ca * (cb * Xstr + sb * Xtem) + sa * Xvar).reshape([-1, self.d])
+            if remove_com:
+                X -= numpy.mean(X, 0)
+            return X
 
         def x_samples(
             a: float,
@@ -140,3 +144,78 @@ class coord_generator:
                     return numpy.array(
                         [[x_samples(ai, bi, n_sample, temp) for bi in b] for ai in a]
                     ).astype(dtype=dtype)
+
+    def generate_pair(
+        self,
+        n_apm: int | Iterable[int],
+        n_mol: int | Iterable[int],
+        alpha: float | Iterable[float],
+        beta: float | Iterable[float],
+        gamma: float = 1.0,
+        zeta: float = 1.0,
+        n_sample: int = 1,
+        temp: None | numpy.ndarray = None,
+        dtype=numpy.float64,
+        remove_com: bool = True,
+    ) -> tuple:
+
+        sg = numpy.sin(gamma)
+        cg = numpy.cos(gamma)
+        sz = numpy.sin(zeta)
+        cz = numpy.cos(zeta)
+
+        def shuffle(x, n_mol, n_apm):
+            p = self.rng.permutation(n_mol)
+            return x.reshape([n_mol, n_apm, self.d])[p, :, :].reshape(-1, self.d)
+
+        def gen_pair(n_mol, n_apm, remove_com):
+
+            if temp is None:
+                temp1 = self.rng.standard_normal((n_apm, self.d))
+                temp2 = sg * temp1 + cg * self.rng.standard_normal((n_apm, self.d))
+            else:
+                temp1 = sg * temp + cg * self.rng.standard_normal((n_apm, self.d))
+                temp2 = sg * temp + cg * self.rng.standard_normal((n_apm, self.d))
+
+            x = self.generate(
+                n_apm=n_apm,
+                n_mol=n_mol,
+                a=alpha,
+                b=beta,
+                n_sample=n_sample,
+                temp=temp1,
+                dtype=dtype,
+                remove_com=remove_com,
+            )
+            y = shuffle(
+                cz * x
+                + sz
+                * self.generate(
+                    n_apm=n_apm,
+                    n_mol=n_mol,
+                    a=alpha,
+                    b=beta,
+                    n_sample=n_sample,
+                    temp=temp2,
+                    dtype=dtype,
+                    remove_com=remove_com,
+                ),
+                n_mol,
+                n_apm,
+            )
+            return x, y
+
+        if isinstance(n_apm, Iterable) or isinstance(n_mol, Iterable):
+            xy = [
+                gen_pair(n_mol=n_mol_, n_apm=n_apm_, remove_com=False)
+                for n_apm_, n_mol_ in zip(n_apm, n_mol)
+            ]
+            x = numpy.vstack([x[0] for x in xy])
+            y = numpy.vstack([x[1] for x in xy])
+            if remove_com:
+                x -= numpy.mean(x, 0)
+                y -= numpy.mean(y, 0)
+        else:
+            x, y = gen_pair(n_apm=n_apm, n_mol=n_mol, remove_com=remove_com)
+
+        return x, y @ self.sog.generate()

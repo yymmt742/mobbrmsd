@@ -61,20 +61,38 @@ class __demo__(_demo._demo):
 
         return {"n_apm": n_apm, "n_mol": n_mol, "n_sym": n_sym}
 
-    def demo(self, n_apm=3, n_mol=8, n_sym=2, a=0.8, b=1.0, **kwarg):
+    def demo(
+        self,
+        n_apm=3,
+        n_mol=8,
+        n_sym=2,
+        alpha=0.8,
+        beta=1.0,
+        gamma=1.0,
+        zeta=0.0,
+        **kwarg,
+    ):
         import pprint
 
         n_mol_ = int(n_mol)
         n_apm_ = int(n_apm)
         sym = _demo.generate_sym_indices(n_apm_, int(n_sym))
-        a_ = float(a)
-        b_ = float(b)
+        a_ = float(alpha)
+        b_ = float(beta)
+        g_ = float(gamma)
+        z_ = float(zeta)
 
         cogen = coord_generator()
-        x = cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape([-1, 3])
-        y = cogen.generate(n_apm_, n_mol_, a_, b_, dtype=self.prec).reshape([-1, 3])
-        x -= numpy.mean(x, 0)
-        y -= numpy.mean(y, 0)
+        x, y = cogen.generate_pair(
+            n_apm_,
+            n_mol_,
+            alpha=a_,
+            beta=b_,
+            gamma=g_,
+            zeta=z_,
+            dtype=self.prec,
+            remove_com=True,
+        )
         z = y.copy()
 
         molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
@@ -145,7 +163,14 @@ class __demo__(_demo._demo):
             "z": z.reshape([n_mol_, n_apm_, 3]),
         }
 
-    def after(self, x, y, z, **kwarg):
+    def after(
+        self,
+        x=[[[0.0, 0.0, 0.0]]],
+        y=[[[0.0, 0.0, 0.0]]],
+        z=[[[0.0, 0.0, 0.0]]],
+        path=None,
+        **kwargs,
+    ):
         ang = 0
 
         if self.yes_or_no("Show samples ? (Open matplotlib window)"):
@@ -188,7 +213,7 @@ class __demo__(_demo._demo):
                 ax.set_xlim([-2.5, 2.5])
                 ax.set_ylim([-2.5, 2.5])
                 ax.set_zlim([-2.5, 2.5])
-                ax.view_init(azim=0)
+                ax.view_init(azim=15)
                 ax.set_box_aspect([1, 1, 1])
             plt.tight_layout()
 
@@ -196,9 +221,13 @@ class __demo__(_demo._demo):
                 axes[0].view_init(azim=frame)
                 axes[1].view_init(azim=frame)
 
-            ani = animation.FuncAnimation(
-                fig, rot, frames=numpy.arange(0, 359, 2), interval=1
-            )
-            plt.show()
+            if path is None:
+                ani = animation.FuncAnimation(
+                    fig, rot, frames=numpy.arange(15, 374, 2), interval=1
+                )
+                plt.show()
+            else:
+                for p in path.split(","):
+                    plt.savefig(p)
             plt.clf()
             plt.close()

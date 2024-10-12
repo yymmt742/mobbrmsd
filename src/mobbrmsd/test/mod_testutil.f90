@@ -1,6 +1,6 @@
 module mod_permutation
   use mod_params, only: IK, RK
-  use, intrinsic :: ISO_FORTRAN_ENV, only: I8 => INT64
+  use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT, I8 => INT64
   implicit none
   private
   public :: permutation

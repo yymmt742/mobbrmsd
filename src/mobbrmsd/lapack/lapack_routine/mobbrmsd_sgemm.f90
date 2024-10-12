@@ -113,9 +113,8 @@ pure subroutine mobbrmsd_SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, B
 !!  ( alpha*op( A )*op( B ) + beta*C ).
 !!
   intrinsic :: MAX
-  real(RK) :: TEMP
-  integer  :: I, INFO, J, L, NCOLA, NROWA, NROWB
-  logical  :: NOTA, NOTB
+  integer   :: I, INFO, J, NCOLA, NROWA, NROWB
+  logical   :: NOTA, NOTB
 !
 ! Set NOTA and NOTB as true if A and B respectively are not
 ! transposed and set NROWA, NCOLA and NROWB as the number of rows
@@ -167,104 +166,174 @@ pure subroutine mobbrmsd_SGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, B
 !
 ! And if alpha == zero.
 !
-  if (ALPHA == ZERO) then
-    if (BETA == ZERO) then
-      do J = 1, N
-        do I = 1, M
-          C(I, J) = ZERO
-        end do
-      end do
-    else
-      do J = 1, N
-        do I = 1, M
-          C(I, J) = BETA * C(I, J)
-        end do
-      end do
-    end if
-    return
-  end if
+! if (ALPHA == ZERO) then
+!   if (BETA == ZERO) then
+!     do J = 1, N
+!       do I = 1, M
+!         C(I, J) = ZERO
+!       end do
+!     end do
+!   else
+!     do J = 1, N
+!       do I = 1, M
+!         C(I, J) = BETA * C(I, J)
+!       end do
+!     end do
+!   end if
+!   return
+! end if
 !
 !Start the operations.
 !
-  if (NOTB) then
-    if (NOTA) then
+! if (NOTB) then
+!   if (NOTA) then
 !
 !Form C: = alpha * A * B + beta * C.
 !
-      do J = 1, N
-        if (BETA == ZERO) then
-          do I = 1, M
-            C(I, J) = ZERO
-          end do
-        else if (BETA /= ONE) then
-          do I = 1, M
-            C(I, J) = BETA * C(I, J)
-          end do
-        end if
-        do L = 1, K
-          TEMP = ALPHA * B(L, J)
-          do I = 1, M
-            C(I, J) = C(I, J) + TEMP * A(I, L)
-          end do
-        end do
-      end do
-    else
+!     do J = 1, N
+!       if (BETA == ZERO) then
+!         do I = 1, M
+!           C(I, J) = ZERO
+!         end do
+!       else if (BETA /= ONE) then
+!         do I = 1, M
+!           C(I, J) = BETA * C(I, J)
+!         end do
+!       end if
+!       do L = 1, K
+!         TEMP = ALPHA * B(L, J)
+!         do I = 1, M
+!           C(I, J) = C(I, J) + TEMP * A(I, L)
+!         end do
+!       end do
+!     end do
+!   else
 !
 !Form C: = alpha * A**T * B + beta * C
 !
-      do J = 1, N
-        do I = 1, M
-          TEMP = ZERO
-          do L = 1, K
-            TEMP = TEMP + A(L, I) * B(L, J)
-          end do
-          if (BETA == ZERO) then
-            C(I, J) = ALPHA * TEMP
-          else
-            C(I, J) = ALPHA * TEMP + BETA * C(I, J)
-          end if
-        end do
-      end do
-    end if
-  else
-    if (NOTA) then
+!     do J = 1, N
+!       do I = 1, M
+!         TEMP = ZERO
+!         do L = 1, K
+!           TEMP = TEMP + A(L, I) * B(L, J)
+!         end do
+!         if (BETA == ZERO) then
+!           C(I, J) = ALPHA * TEMP
+!         else
+!           C(I, J) = ALPHA * TEMP + BETA * C(I, J)
+!         end if
+!       end do
+!     end do
+!   end if
+! else
+!   if (NOTA) then
 !
 ! Form C: = alpha * A * B**T + beta * C
 !
-      do J = 1, N
-        if (BETA == ZERO) then
-          do I = 1, M
-            C(I, J) = ZERO
-          end do
-        else if (BETA /= ONE) then
-          do I = 1, M
-            C(I, J) = BETA * C(I, J)
-          end do
-        end if
-        do L = 1, K
-          TEMP = ALPHA * B(J, L)
-          do I = 1, M
-            C(I, J) = C(I, J) + TEMP * A(I, L)
-          end do
-        end do
-      end do
-    else
+!     do J = 1, N
+!       if (BETA == ZERO) then
+!         do I = 1, M
+!           C(I, J) = ZERO
+!         end do
+!       else if (BETA /= ONE) then
+!         do I = 1, M
+!           C(I, J) = BETA * C(I, J)
+!         end do
+!       end if
+!       do L = 1, K
+!         TEMP = ALPHA * B(J, L)
+!         do I = 1, M
+!           C(I, J) = C(I, J) + TEMP * A(I, L)
+!         end do
+!       end do
+!     end do
+!   else
 !
 ! Form C: = alpha * A**T * B**T + beta * C
 !
-      do J = 1, N
-        do I = 1, M
-          TEMP = ZERO
-          do L = 1, K
-            TEMP = TEMP + A(L, I) * B(J, L)
-          end do
-          if (BETA == ZERO) then
-            C(I, J) = ALPHA * TEMP
-          else
-            C(I, J) = ALPHA * TEMP + BETA * C(I, J)
-          end if
-        end do
+!     do J = 1, N
+!       do I = 1, M
+!         TEMP = ZERO
+!         do L = 1, K
+!           TEMP = TEMP + A(L, I) * B(J, L)
+!         end do
+!         if (BETA == ZERO) then
+!           C(I, J) = ALPHA * TEMP
+!         else
+!           C(I, J) = ALPHA * TEMP + BETA * C(I, J)
+!         end if
+!       end do
+!     end do
+!   end if
+! end if
+!
+! if (ALPHA == ZERO) then
+!   if (BETA == ZERO) then
+!     do concurrent(I=1:M, J=1:N)
+!       C(I, J) = ZERO
+!     end do
+!   else
+!     do concurrent(I=1:M, J=1:N)
+!       C(I, J) = BETA * C(I, J)
+!     end do
+!   end if
+!   return
+! end if
+!
+! Start the operations.
+!
+  if (BETA == ZERO) then
+    if (ALPHA == ZERO) then
+      do concurrent(I=1:M, J=1:N)
+        C(I, J) = ZERO
       end do
+    elseif (ALPHA == ONE) then
+      if (NOTB) then
+        if (NOTA) then
+          C(:M, :N) = MATMUL(A(:M, :K), B(:K, :N))
+        else
+          C(:M, :N) = MATMUL(TRANSPOSE(A(:K, :M)), B(:K, :N))
+        end if
+      else
+        if (NOTA) then
+          C(:M, :N) = MATMUL(A(:M, :K), TRANSPOSE(B(:N, :K)))
+        else
+          C(:M, :N) = MATMUL(TRANSPOSE(A(:K, :M)), TRANSPOSE(B(:N, :K)))
+        end if
+      end if
+    else
+      if (NOTB) then
+        if (NOTA) then
+          C(:M, :N) = MATMUL(A(:M, :K), B(:K, :N))
+        else
+          C(:M, :N) = MATMUL(TRANSPOSE(A(:K, :M)), B(:K, :N))
+        end if
+      else
+        if (NOTA) then
+          C(:M, :N) = MATMUL(A(:M, :K), TRANSPOSE(B(:N, :K)))
+        else
+          C(:M, :N) = MATMUL(TRANSPOSE(A(:K, :M)), TRANSPOSE(B(:N, :K)))
+        end if
+      end if
+    end if
+    return
+  else if (BETA /= ONE) then
+    do concurrent(I=1:M, J=1:N)
+      C(I, J) = BETA * C(I, J)
+    end do
+  else
+    if (NOTB) then
+      if (NOTA) then
+        C(:M, :N) = BETA * C(:M, :N) + ALPHA * MATMUL(A(:M, :K), B(:K, :N))
+      else
+        C(:M, :N) = BETA * C(:M, :N) + ALPHA * MATMUL(TRANSPOSE(A(:K, :M)), B(:K, :N))
+      end if
+    else
+      if (NOTA) then
+        C(:M, :N) = BETA * C(:M, :N) + ALPHA * MATMUL(A(:M, :K), TRANSPOSE(B(:N, :K)))
+      else
+        C(:M, :N) = BETA * C(:M, :N) + ALPHA * MATMUL(TRANSPOSE(A(:K, :M)), TRANSPOSE(B(:N, :K)))
+      end if
     end if
   end if
 !

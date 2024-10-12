@@ -548,6 +548,7 @@ module mod_mobbrmsd_lapack
     &   DGEQRF => mobbrmsd_DGEQRF, &
     &   DGETRF => mobbrmsd_DGETRF
 #endif
+  private
   public :: DGEMM
   public :: DGESVD
   public :: DORMQR

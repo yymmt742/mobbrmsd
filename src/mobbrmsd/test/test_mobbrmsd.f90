@@ -1,4 +1,5 @@
 program main
+  use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT
   use mod_dimspec_functions, only: D, setup_dimension
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mobbrmsd
@@ -218,6 +219,8 @@ contains
    &                       mobbrmsd_state_lowerbound(stat)
     call u%assert_almost_equal(sd, brute, 'minrmsd value', place=place)
     call u%assert_almost_equal(sd, sd2, 'vs at once   ', place=place)
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
 !
   end subroutine test3
 !
@@ -290,6 +293,8 @@ contains
    &  mobbrmsd_state_lowerbound(stat), &
    &  mobbrmsd_state_bbgap(stat), &
    &  mobbrmsd_state_rmsd(stat)
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
 !
   end subroutine test4
 !
@@ -362,6 +367,8 @@ contains
    &  mobbrmsd_state_lowerbound(stat), &
    &  SQRT(mobbrmsd_state_bbgap(stat) / (n * m)), &
    &  mobbrmsd_state_rmsd(stat)
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
 !
   end subroutine test5
 !
@@ -430,6 +437,8 @@ contains
    &  mobbrmsd_state_lowerbound(stat), &
    &  mobbrmsd_state_bbgap(stat), &
    &  mobbrmsd_state_rmsd(stat)
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
 !
   end subroutine test6
 !
@@ -501,6 +510,8 @@ contains
         print *, edges(:, i), redges(:, i)
       end do
     end if
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
 !
   end subroutine test7
 !

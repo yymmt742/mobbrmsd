@@ -57,12 +57,17 @@ class __demo__(_demo._demo):
         n_sample_ = int(n_sample)
 
         cogen = coord_generator()
-        x = cogen.generate(n_apm_, n_mol_, alpha_, beta_, n_sample=n_sample_)
-        m = numpy.mean(x.reshape((-1, 3)), 0)
-        s = numpy.std(x.reshape((-1, 3)), 0)
-        cx = numpy.cov(x.reshape((-1, n_apm_, 3))[:, :, 0].T)
-        cy = numpy.cov(x.reshape((-1, n_apm_, 3))[:, :, 1].T)
-        cz = numpy.cov(x.reshape((-1, n_apm_, 3))[:, :, 2].T)
+        x = cogen.generate(
+            n_apm_,
+            n_mol_,
+            alpha_,
+            beta_,
+            n_sample=n_sample_,
+            remove_com=False,
+        )
+        m = numpy.mean(x.reshape([-1, 3]), 0)
+        s = numpy.std(x.reshape([-1, 3]), 0)
+        c = numpy.cov(x.reshape([-1, 3]).T)
         sep = "  ------------------------------------------------------------------------------"
 
         print(sep)
@@ -70,17 +75,11 @@ class __demo__(_demo._demo):
         print(
             f"        n_apm = {n_apm_:4d}  n_mol = {n_mol_:4d}  alpha = {alpha_:6.2f}  beta = {beta_:6.2f}"
         )
-        print()
-        print(f"                              X               Y               Z")
-        print(f"        mean vector {m[0]:16.9f}{m[1]:16.9f}{m[2]:16.9f}")
-        print(f"        std vector  {s[0]:16.9f}{s[1]:16.9f}{s[2]:16.9f}")
-        print(f"        covariance matrices")
-        for i in range(n_apm_):
-            for j in range(n_apm_):
-                print(
-                    f"                 {i+1:3d}-{j+1:3d}{cx[i,j]:16.9f}{cy[i,j]:16.9f}{cz[i,j]:16.9f}"
-                )
-            print()
+        print(f"                           X           Y           Z")
+        print(f"        mean vector {m[0]:12.6f}{m[1]:12.6f}{m[2]:12.6f}")
+        print(f"        std vector  {s[0]:12.6f}{s[1]:12.6f}{s[2]:12.6f}")
+        for i, a in zip(range(3), ["X", "Y", "Z"]):
+            print(f"                  {a} {c[i,0]:12.6f}{c[i,1]:12.6f}{c[i,2]:12.6f}")
         print(sep)
 
         return {
@@ -91,13 +90,22 @@ class __demo__(_demo._demo):
             "beta": beta_,
         }
 
-    def after(self, cogen, n_apm, n_mol, alpha, beta, **kwargs):
+    def after(
+        self,
+        cogen=coord_generator(),
+        n_apm=3,
+        n_mol=8,
+        alpha=0.5,
+        beta=1.0,
+        path=None,
+        **kwargs,
+    ):
 
         import matplotlib.pyplot as plt
 
         def onclick(event):
             ax.cla()
-            x = cogen.generate(n_apm, n_mol, alpha, beta)
+            x = cogen.generate(n_apm, n_mol, alpha, beta).reshape([n_mol, n_apm, 3])
             for xi in x:
                 ax.plot(xi[:, 0], xi[:, 1], xi[:, 2])
                 ax.scatter(xi[:, 0], xi[:, 1], xi[:, 2])
@@ -108,13 +116,12 @@ class __demo__(_demo._demo):
             ax.set_ylabel("Y")
             ax.set_zlabel("Z")
             plt.draw()
-            pass
 
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
         fig.canvas.mpl_connect("key_press_event", onclick)
         if self.yes_or_no("Show samples ? (Open matplotlib window)"):
-            x = cogen.generate(n_apm, n_mol, alpha, beta)
+            x = cogen.generate(n_apm, n_mol, alpha, beta).reshape([n_mol, n_apm, 3])
             for xi in x:
                 ax.plot(xi[:, 0], xi[:, 1], xi[:, 2])
                 ax.scatter(xi[:, 0], xi[:, 1], xi[:, 2])
@@ -125,7 +132,11 @@ class __demo__(_demo._demo):
             ax.set_ylabel("Y")
             ax.set_zlabel("Z")
             ax.set_box_aspect([1, 1, 1])
-            plt.show()
+            if path is None:
+                plt.show()
+            else:
+                for p in path.split(","):
+                    plt.savefig(p)
             plt.clf()
             plt.close()
 
