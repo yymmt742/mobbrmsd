@@ -20,6 +20,7 @@ module mod_c_matrix
   implicit none
   private
   public :: c_matrix
+  public :: c_matrix_init
   public :: c_matrix_memsize
   public :: c_matrix_worksize
   public :: c_matrix_blocksize
@@ -51,26 +52,45 @@ module mod_c_matrix
   end type c_matrix
 !
 !| Constructer
-  interface c_matrix
-    module procedure c_matrix_new
-  end interface c_matrix
+! interface c_matrix
+!   module procedure c_matrix_new
+! end interface c_matrix
 !
 contains
 !
-!| Constructer
-  pure function c_matrix_new(b) result(res)
-    integer(IK), intent(in) :: b(*)
+!| Initialize header and state
+  pure subroutine c_matrix_init(c, b)
+    type(c_matrix), intent(inout) :: c
+    !! c_matrix header
+    integer(IK), intent(in)       :: b(*)
     !! mol_block header, must be initialized.
-    type(c_matrix)          :: res
-    res%q(cb) = 1 + DD * mol_block_nsym(b)
-    res%q(nl) = mol_block_nmol(b)
-    res%q(cl) = res%q(cb) * res%q(nl)
-    res%q(nw) = MAX( &
+    integer(IK), allocatable      :: s_(:)
+    c%q(cb) = 1 + DD * mol_block_nsym(b)
+    c%q(nl) = mol_block_nmol(b)
+    c%q(cl) = c%q(cb) * c%q(nl)
+    c%q(nw) = MAX( &
               &  mol_block_total_size(b) + mol_block_each_size(b), &
-              &  2 * res%q(nl) &
+              &  2 * c%q(nl) &
               & )
-    allocate (res%s(res%q(nl)))
-  end function c_matrix_new
+    allocate (s_(c%q(nl)))
+    s_(:) = 0
+    call MOVE_ALLOC(from=s_, to=c%s)
+  end subroutine c_matrix_init
+!
+!| Constructer
+! pure function c_matrix_new(b) result(res)
+!   integer(IK), intent(in) :: b(*)
+!   !! mol_block header, must be initialized.
+!   type(c_matrix)          :: res
+!   res%q(cb) = 1 + DD * mol_block_nsym(b)
+!   res%q(nl) = mol_block_nmol(b)
+!   res%q(cl) = res%q(cb) * res%q(nl)
+!   res%q(nw) = MAX( &
+!             &  mol_block_total_size(b) + mol_block_each_size(b), &
+!             &  2 * res%q(nl) &
+!             & )
+!   allocate (res%s(res%q(nl)))
+! end function c_matrix_new
 !
 !| Inquire blocksize of c_matrix.
   pure function c_matrix_blocksize(q) result(res)
