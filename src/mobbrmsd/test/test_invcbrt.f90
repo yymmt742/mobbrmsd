@@ -1,4 +1,5 @@
 program main
+  use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT
   use mod_kinds
   use mod_params, only: RK, IK
   use mod_unittest
@@ -77,6 +78,8 @@ contains
     print'(12X,2f16.3)', tot1, tot2
     print'(A,2f16.9)', "  mean error", merr1 / M, merr2 / M
     print'(A,2f16.9)', "  norm error", nerr1 / M, nerr2 / M
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
   end subroutine test2
 !
   subroutine test3()
@@ -107,6 +110,8 @@ contains
     end do
     print'(A)', "            --------------------------------"
     print'(12X,2f16.3)', tot1, tot2
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
   end subroutine test3
 !
   pure function mean_error(n, X, Y) result(res)

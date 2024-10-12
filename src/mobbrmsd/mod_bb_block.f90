@@ -162,7 +162,7 @@ contains
    &  )
       b = mol_block(n_apm, n_mol, sym)
       call c_matrix_init(c, b%q)
-      f = f_matrix(b%q)
+      call f_matrix_init(f, b%q)
       t = tree(mol_block_nmol(b%q), mol_block_nsym(b%q))
 !
       qcov = qmol + SIZE(b%q)

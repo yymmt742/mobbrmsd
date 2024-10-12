@@ -251,6 +251,7 @@ contains
 end module mod_quatic
 
 program main
+  use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT
   use mod_kinds
   use mod_params, only: RK, IK
   use mod_quatic
@@ -302,6 +303,8 @@ contains
     print'(A,2f16.9)', "  mean error", merr1 / M, merr2 / M
     print'(A,2f16.9)', "  norm error", nerr1 / M, nerr2 / M
     print *
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
   end subroutine test2
 !
   subroutine test3()
@@ -344,6 +347,8 @@ contains
     print'(A,2f16.9)', "  mean error", merr1 / M, merr2 / M
     print'(A,2f16.9)', "  norm error", nerr1 / M, nerr2 / M
     print *
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
   end subroutine test3
 !
   subroutine test4()
@@ -386,6 +391,8 @@ contains
     print'(A,2f16.9)', "  mean error", merr1 / M, merr2 / M
     print'(A,2f16.9)', "  norm error", nerr1 / M, nerr2 / M
     print *
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
   end subroutine test4
 !
   subroutine test5()
@@ -400,7 +407,7 @@ contains
     merr2 = 0.0_RK
     nerr1 = 0.0_RK
     nerr2 = 0.0_RK
-    print'(A)', " solve_quartic     implement       intrinsic"
+    print'(A)', " solve_quartic     implement          newton"
     print'(A)', "            --------------------------------"
     K2 = -2.0_RK
     do i = 1, M
@@ -432,6 +439,8 @@ contains
     print'(A,2f16.9)', "  mean error", merr1 / M, merr2 / M
     print'(A,2f16.9)', "  norm error", nerr1 / M, nerr2 / M
     print *
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
   end subroutine test5
 !
   subroutine test6()
@@ -455,7 +464,10 @@ contains
 #endif
       end do
     end do
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
   end subroutine test6
+!
   pure function mean_error(e) result(res)
     real(RK), intent(in) :: e(:)
     real(RK)             :: res

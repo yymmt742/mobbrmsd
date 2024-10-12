@@ -1,5 +1,5 @@
 program main
-  use ISO_FORTRAN_ENV, only: OUTPUT_UNIT
+  use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT
   use mod_dimspec_functions, only: D, compute_com
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_unittest
@@ -83,6 +83,7 @@ contains
     time_ref = 1000 * (time_end_s - time_begin_s)
     print'(I8,3f12.3)', K, time_covdot, time_ref, time_covdot / time_ref
     FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
 !
   end subroutine test2
 !

@@ -1,5 +1,5 @@
 program main
-  use ISO_FORTRAN_ENV, only: OUTPUT_UNIT
+  use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT
   use mod_dimspec_functions, only: D, DD
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_unittest
@@ -94,6 +94,7 @@ contains
     time_matmul = 1000 * (time_end_s - time_begin_s)
     print'(i8,2f16.3,f12.9,f9.3)', k, time_gemm, time_matmul, SUM(c1 - c2), time_gemm / time_matmul
     FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
 !
   end subroutine test2
 !

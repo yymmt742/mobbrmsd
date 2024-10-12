@@ -1,5 +1,5 @@
 program main
-  use ISO_FORTRAN_ENV, only: OUTPUT_UNIT
+  use ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT
   use mod_dimspec_functions, only: D, DD
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
@@ -123,6 +123,7 @@ contains
     print'(10f5.1)', W(p3:p3 + c_matrix_memsize(c(3)%q) - 1)
     print *
     FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
 !
   end subroutine test1
 !

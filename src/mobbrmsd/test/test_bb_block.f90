@@ -1,4 +1,5 @@
 program main
+  use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT
   use mod_dimspec_functions, only: D
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block

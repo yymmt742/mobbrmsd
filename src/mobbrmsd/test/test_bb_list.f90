@@ -1,4 +1,5 @@
 program main
+  use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT
   use mod_dimspec_functions, only: D, setup_dimension
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_bb_block
@@ -182,6 +183,8 @@ contains
       rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
       call u%assert_almost_equal(nrm * sd, nrm * rxz, 'swaped sd vs rotmat', place=place)
     end block
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
   end subroutine test3
 end program main
 

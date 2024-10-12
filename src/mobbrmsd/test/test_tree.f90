@@ -1,4 +1,5 @@
 program main
+  use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_unittest
   use mod_tree
@@ -201,6 +202,9 @@ contains
       end do
       if (tree_queue_is_empty(t%q, t%s) .and. tree_queue_is_root(t%q, t%s)) exit
     end do
+!
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
 !
   end subroutine test2
 !
