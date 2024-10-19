@@ -101,7 +101,7 @@ class __demo__(_demo._demo):
             dtype=self.prec,
             remove_com=False,
             shuffle=shuffle_,
-            shuffle=shuffle_**kwargs,
+            **kwargs,
         )
         z = y.copy()
 
