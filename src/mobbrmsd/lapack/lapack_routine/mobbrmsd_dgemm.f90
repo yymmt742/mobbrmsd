@@ -112,8 +112,8 @@ pure subroutine mobbrmsd_DGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, B
 !!  ( alpha*op( A )*op( B ) + beta*C ).
 !!
   intrinsic :: MAX
-  real(RK)  :: TEMP
-  integer   :: I, INFO, J, L, NROWA, NROWB
+! real(RK)  :: TEMP
+  integer   :: I, INFO, J, NROWA, NROWB!, L
   logical   :: NOTA, NOTB
 !
 !  Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
@@ -135,8 +135,8 @@ pure subroutine mobbrmsd_DGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, B
 !
 ! Test the input parameters.
 !
-  INFO = 0
-  if ((.not. NOTA) .and. (.not. mobbrmsd_LSAME(TRANSA, 'C')) .and. &
+  if ((.not. NOTA) .and. &
+ &    (.not. mobbrmsd_LSAME(TRANSA, 'C')) .and. &
  &    (.not. mobbrmsd_LSAME(TRANSA, 'T'))) then
     INFO = 1
   else if ((.not. NOTB) .and. (.not. mobbrmsd_LSAME(TRANSB, 'C')) .and. &
@@ -154,123 +154,177 @@ pure subroutine mobbrmsd_DGEMM(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, B
     INFO = 10
   else if (LDC < MAX(1, M)) then
     INFO = 13
+  else
+    INFO = 0
   end if
-  if (INFO /= 0) then
-    !CALL XERBLA('DGEMM ',INFO)
-    return
-  end if
+  if (INFO /= 0) return
 !
-!     Quick return if possible.
+! Quick return if possible.
 !
-  if ((M == 0) .or. (N == 0) .or. &
+  if ((M == 0) .or. &
+ &    (N == 0) .or. &
  &    (((ALPHA == ZERO) .or. (K == 0)) .and. (BETA == ONE))) return
 !
-!     And if  alpha.eq.zero.
+! And if  alpha.eq.zero.
 !
   if (ALPHA == ZERO) then
     if (BETA == ZERO) then
-      do J = 1, N
-        do I = 1, M
-          C(I, J) = ZERO
-        end do
+      do concurrent(I=1:M, J=1:N)
+        C(I, J) = ZERO
       end do
     else
-      do J = 1, N
-        do I = 1, M
-          C(I, J) = BETA * C(I, J)
-        end do
+      do concurrent(I=1:M, J=1:N)
+        C(I, J) = BETA * C(I, J)
       end do
     end if
     return
   end if
 !
-!     Start the operations.
+! Start the operations.
 !
-  if (NOTB) then
-    if (NOTA) then
-!
-!         Form  C := alpha*A*B + beta*C.
-!
-      do J = 1, N
-        if (BETA == ZERO) then
-          do I = 1, M
-            C(I, J) = ZERO
-          end do
-        else if (BETA /= ONE) then
-          do I = 1, M
-            C(I, J) = BETA * C(I, J)
-          end do
+  if (BETA == ZERO) then
+    if (ALPHA == ZERO) then
+      do concurrent(I=1:M, J=1:N)
+        C(I, J) = ZERO
+      end do
+    elseif (ALPHA == ONE) then
+      if (NOTB) then
+        if (NOTA) then
+          C(:M, :N) = MATMUL(A(:M, :K), B(:K, :N))
+        else
+          C(:M, :N) = MATMUL(TRANSPOSE(A(:K, :M)), B(:K, :N))
         end if
-        do L = 1, K
-          TEMP = ALPHA * B(L, J)
-          do I = 1, M
-            C(I, J) = C(I, J) + TEMP * A(I, L)
-          end do
-        end do
-      end do
+      else
+        if (NOTA) then
+          C(:M, :N) = MATMUL(A(:M, :K), TRANSPOSE(B(:N, :K)))
+        else
+          C(:M, :N) = MATMUL(TRANSPOSE(A(:K, :M)), TRANSPOSE(B(:N, :K)))
+        end if
+      end if
     else
-!
-!           Form  C := alpha*A**T*B + beta*C
-!
-      do J = 1, N
-        do I = 1, M
-          TEMP = ZERO
-          do L = 1, K
-            TEMP = TEMP + A(L, I) * B(L, J)
-          end do
-          if (BETA == ZERO) then
-            C(I, J) = ALPHA * TEMP
-          else
-            C(I, J) = ALPHA * TEMP + BETA * C(I, J)
-          end if
-        end do
-      end do
+      if (NOTB) then
+        if (NOTA) then
+          C(:M, :N) = MATMUL(A(:M, :K), B(:K, :N))
+        else
+          C(:M, :N) = MATMUL(TRANSPOSE(A(:K, :M)), B(:K, :N))
+        end if
+      else
+        if (NOTA) then
+          C(:M, :N) = MATMUL(A(:M, :K), TRANSPOSE(B(:N, :K)))
+        else
+          C(:M, :N) = MATMUL(TRANSPOSE(A(:K, :M)), TRANSPOSE(B(:N, :K)))
+        end if
+      end if
     end if
+    return
+  else if (BETA /= ONE) then
+    do concurrent(I=1:M, J=1:N)
+      C(I, J) = BETA * C(I, J)
+    end do
   else
-    if (NOTA) then
-!
-!           Form  C := alpha*A*B**T + beta*C
-!
-      do J = 1, N
-        if (BETA == ZERO) then
-          do I = 1, M
-            C(I, J) = ZERO
-          end do
-        else if (BETA /= ONE) then
-          do I = 1, M
-            C(I, J) = BETA * C(I, J)
-          end do
-        end if
-        do L = 1, K
-          TEMP = ALPHA * B(J, L)
-          do I = 1, M
-            C(I, J) = C(I, J) + TEMP * A(I, L)
-          end do
-        end do
-      end do
+    if (NOTB) then
+      if (NOTA) then
+        C(:M, :N) = BETA * C(:M, :N) + ALPHA * MATMUL(A(:M, :K), B(:K, :N))
+      else
+        C(:M, :N) = BETA * C(:M, :N) + ALPHA * MATMUL(TRANSPOSE(A(:K, :M)), B(:K, :N))
+      end if
     else
-!
-!           Form  C := alpha*A**T*B**T + beta*C
-!
-      do J = 1, N
-        do I = 1, M
-          TEMP = ZERO
-          do L = 1, K
-            TEMP = TEMP + A(L, I) * B(J, L)
-          end do
-          if (BETA == ZERO) then
-            C(I, J) = ALPHA * TEMP
-          else
-            C(I, J) = ALPHA * TEMP + BETA * C(I, J)
-          end if
-        end do
-      end do
+      if (NOTA) then
+        C(:M, :N) = BETA * C(:M, :N) + ALPHA * MATMUL(A(:M, :K), TRANSPOSE(B(:N, :K)))
+      else
+        C(:M, :N) = BETA * C(:M, :N) + ALPHA * MATMUL(TRANSPOSE(A(:K, :M)), TRANSPOSE(B(:N, :K)))
+      end if
     end if
   end if
 !
-  return
+! if (NOTB) then
+!   if (NOTA) then
 !
-!     End of mobbrmsd_DGEMM
+!     Form  C := alpha*A*B + beta*C.
+!
+!     C(:M, :N) = C(:M, :N) + MATMUL(A(:M, :K), B(:K, :N))
+!     do J = 1, N
+!       do L = 1, K
+!         TEMP = ALPHA * B(L, J)
+!         do I = 1, M
+!           C(I, J) = C(I, J) + TEMP * A(I, L)
+!         end do
+!       end do
+!     end do
+!   else
+!
+!     Form  C := alpha*A**T*B + beta*C
+!
+!     if (BETA == ZERO) then
+!       do concurrent(I=1:M, J=1:N)
+!         C(I, J) = ZERO
+!       end do
+!     else if (BETA /= ONE) then
+!       do concurrent(I=1:M, J=1:N)
+!         C(I, J) = BETA * C(I, J)
+!       end do
+!     end if
+!     C(:M, :N) = C(:M, :N) + MATMUL(A(:M, :K), B(:K, :N))
+!
+!     do J = 1, N
+!       do I = 1, M
+!         TEMP = ZERO
+!         do L = 1, K
+!           TEMP = TEMP + A(L, I) * B(L, J)
+!         end do
+!         if (BETA == ZERO) then
+!           C(I, J) = ALPHA * TEMP
+!         else
+!           C(I, J) = ALPHA * TEMP + BETA * C(I, J)
+!         end if
+!       end do
+!     end do
+!   end if
+! else
+!   if (NOTA) then
+!
+!           Form  C := alpha*A*B**T + beta*C
+!
+!     do J = 1, N
+!       if (BETA == ZERO) then
+!         do I = 1, M
+!           C(I, J) = ZERO
+!         end do
+!       else if (BETA /= ONE) then
+!         do I = 1, M
+!           C(I, J) = BETA * C(I, J)
+!         end do
+!       end if
+!       do L = 1, K
+!         TEMP = ALPHA * B(J, L)
+!         do I = 1, M
+!           C(I, J) = C(I, J) + TEMP * A(I, L)
+!         end do
+!       end do
+!     end do
+!   else
+!
+!           Form  C := alpha*A**T*B**T + beta*C
+!
+!     do J = 1, N
+!       do I = 1, M
+!         TEMP = ZERO
+!         do L = 1, K
+!           TEMP = TEMP + A(L, I) * B(J, L)
+!         end do
+!         if (BETA == ZERO) then
+!           C(I, J) = ALPHA * TEMP
+!         else
+!           C(I, J) = ALPHA * TEMP + BETA * C(I, J)
+!         end if
+!       end do
+!     end do
+!   end if
+! end if
+!
+! return
+!
+! End of mobbrmsd_DGEMM
 !
 end subroutine mobbrmsd_DGEMM
 

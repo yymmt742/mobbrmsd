@@ -1,4 +1,5 @@
 program main
+  use ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT
   use mod_dimspec_functions, only: D
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
@@ -36,8 +37,8 @@ contains
     X = sample(m, n)
     MX = SUM(RESHAPE(X, [D, m * n]), 2) / (m * n)
     b = mol_block(m, n)
-    c = c_matrix(b%q)
-    f = f_matrix(b%q)
+    call c_matrix_init(c, b%q)
+    call f_matrix_init(f, b%q)
 !
     allocate (CX(c_matrix_memsize(c%q)))
     allocate (CW(c_matrix_worksize(c%q)))
@@ -54,6 +55,8 @@ contains
     print'(4f9.3)', FX
     print *
 !   print'(4f9.3)', FW
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
 !
   end subroutine test0
 !
@@ -82,12 +85,12 @@ contains
     b(2) = mol_block(3, 2, sym=RESHAPE([2, 3, 1, 3, 1, 2], [3, 2]))
     b(3) = mol_block(8, 3, sym=RESHAPE([1, 2, 3, 4, 5, 6, 7, 8], [8, 1]))
 !
-    c(1) = c_matrix(b(1)%q)
-    c(2) = c_matrix(b(2)%q)
-    c(3) = c_matrix(b(3)%q)
-    f(1) = f_matrix(b(1)%q)
-    f(2) = f_matrix(b(2)%q)
-    f(3) = f_matrix(b(3)%q)
+    call c_matrix_init(c(1), b(1)%q)
+    call c_matrix_init(c(2), b(2)%q)
+    call c_matrix_init(c(3), b(3)%q)
+    call f_matrix_init(f(1), b(1)%q)
+    call f_matrix_init(f(2), b(2)%q)
+    call f_matrix_init(f(3), b(3)%q)
 !
     print *, c_matrix_memsize(c(1)%q), c_matrix_memsize(c(2)%q), c_matrix_memsize(c(3)%q)
     print *, c_matrix_worksize(c(1)%q), c_matrix_worksize(c(2)%q), c_matrix_worksize(c(3)%q)
@@ -132,6 +135,8 @@ contains
     print'(2f9.3)', W(f2:f2 + f_matrix_memsize(f(2)%q) - 1)
     print'(3f9.3)', W(f3:f3 + f_matrix_memsize(f(3)%q) - 1)
     print *
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
 !
   end subroutine test1
 !

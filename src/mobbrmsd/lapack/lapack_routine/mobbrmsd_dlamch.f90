@@ -1,4 +1,6 @@
-!| mobbrmsd_DLAMCH determines double precision machine parameters.
+!| determines double precision machine parameters.
+!
+!  mobbrmsd_DLAMCH determines double precision machine parameters.
 !  Assume rounding, not chopping. Always.
 !
 !  Reference DLAMCH is provided by [netlib](http://www.netlib.org/lapack/).
@@ -17,104 +19,82 @@
 !
 pure elemental function mobbrmsd_DLAMCH(CMACH)
   character, intent(in) :: CMACH
-!!          Specifies the value to be returned by mobbrmsd_DLAMCH:
+!!  Specifies the value to be returned by mobbrmsd_DLAMCH:
 !!
-!!          = 'E' or 'e',   mobbrmsd_DLAMCH := eps
+!!   = 'E' or 'e',   mobbrmsd_SLAMCH := EPS;
+!!   relative machine precision.
 !!
-!!          = 'S' or 's ,   mobbrmsd_DLAMCH := sfmin
+!!   = 'S' or 's ,   mobbrmsd_SLAMCH := SFMIN;
+!!   safe minimum, such that 1/sfmin does not overflow.
 !!
-!!          = 'B' or 'b',   mobbrmsd_DLAMCH := base
+!!   = 'B' or 'b',   mobbrmsd_SLAMCH := BASE;
+!!   base of the machine.
 !!
-!!          = 'P' or 'p',   mobbrmsd_DLAMCH := eps!base
+!!   = 'P' or 'p',   mobbrmsd_SLAMCH := EPS * BASE;
+!!   PREC  = EPS * BASE.
 !!
-!!          = 'N' or 'n',   mobbrmsd_DLAMCH := t
+!!   = 'N' or 'n',   mobbrmsd_SLAMCH := T;
+!!   number of (base) digits in the mantissa.
 !!
-!!          = 'R' or 'r',   mobbrmsd_DLAMCH := rnd
+!!   = 'R' or 'r',   mobbrmsd_SLAMCH := RND;
+!!   1.0 when rounding occurs in addition, 0.0 otherwise.
 !!
-!!          = 'M' or 'm',   mobbrmsd_DLAMCH := emin
+!!   = 'M' or 'm',   mobbrmsd_SLAMCH := EMIN;
+!!   minimum exponent before (gradual) underflow
 !!
-!!          = 'U' or 'u',   mobbrmsd_DLAMCH := rmin
+!!   = 'U' or 'u',   mobbrmsd_SLAMCH := RMIN;
+!!   underflow threshold - base**(emin-1)
 !!
-!!          = 'L' or 'l',   mobbrmsd_DLAMCH := emax
+!!   = 'L' or 'l',   mobbrmsd_SLAMCH := EMAX;
+!!   largest exponent before overflow
 !!
-!!          = 'O' or 'o',   mobbrmsd_DLAMCH := rmax
+!!   = 'O' or 'o',   mobbrmsd_SLAMCH := RMAX;
+!!   overflow threshold  - (base**emax)*(1-eps)
 !!
-!!          where
-!!
-!!          eps   = relative machine precision
-!!
-!!          sfmin = safe minimum, such that 1/sfmin does not overflow
-!!
-!!          base  = base of the machine
-!!
-!!          prec  = eps!base
-!!
-!!          t     = number of (base) digits in the mantissa
-!!
-!!          rnd   = 1.0 when rounding occurs in addition, 0.0 otherwise
-!!
-!!          emin  = minimum exponent before (gradual) underflow
-!!
-!!          rmin  = underflow threshold - base!!(emin-1)
-!!
-!!          emax  = largest exponent before overflow
-!!
-!!          rmax  = overflow threshold  - (base!!emax)!(1-eps)
-!!
-  real(RK)                 :: mobbrmsd_DLAMCH
+  real(RK)            :: mobbrmsd_DLAMCH
 !! machine parameter.
 !!
-  real(RK) :: RND, SFMIN, SMALL, RMACH
   intrinsic :: DIGITS, EPSILON, HUGE, MAXEXPONENT, MINEXPONENT, RADIX, TINY
-! interface
-!   include 'lsame.h'
-! end interface
+  real(RK), parameter :: RADIX_ZERO = RADIX(ZERO)
+  real(RK), parameter :: TINY_ZERO = TINY(ZERO)
+  real(RK), parameter :: DIGITS_ZERO = DIGITS(ZERO)
+  real(RK), parameter :: MINEXPONENT_ZERO = MINEXPONENT(ZERO)
+  real(RK), parameter :: MAXEXPONENT_ZERO = MAXEXPONENT(ZERO)
+  real(RK), parameter :: HUGE_ZERO = HUGE(ZERO)
+  real(RK), parameter :: SMALL = ONE / HUGE_ZERO
 !
-  RND = ONE
+!     Use SMALL plus a bit, to avoid the possibility of rounding
+!     causing overflow when computing  1/SFMIN.
 !
-! if (ONE == RND) then
-!   EPS = EPSILON(ZERO) ! 0.5
-! else
-!   EPS = EPSILON(ZERO)
-! end if
+  real(RK), parameter :: SFMIN = MERGE(SMALL, TINY_ZERO, SMALL >= TINY_ZERO)
 !
   if (mobbrmsd_LSAME(CMACH, 'E')) then
-    RMACH = ULP
+    mobbrmsd_DLAMCH = ULP
   else if (mobbrmsd_LSAME(CMACH, 'S')) then
-    SFMIN = TINY(ZERO)
-    SMALL = ONE / HUGE(ZERO)
-    if (SMALL >= SFMIN) then
-!
-!           Use SMALL plus a bit, to avoid the possibility of rounding
-!           causing overflow when computing  1/sfmin.
-!
-      SFMIN = SMALL!( ONE+EPS )
-    end if
-    RMACH = SFMIN
+    mobbrmsd_DLAMCH = SFMIN
   else if (mobbrmsd_LSAME(CMACH, 'B')) then
-    RMACH = RADIX(ZERO)
+    mobbrmsd_DLAMCH = RADIX_ZERO
   else if (mobbrmsd_LSAME(CMACH, 'P')) then
-    RMACH = ULP ! RADIX(ZERO)
+    mobbrmsd_DLAMCH = ULP ! RADIX(ZERO)
   else if (mobbrmsd_LSAME(CMACH, 'N')) then
-    RMACH = DIGITS(ZERO)
+    mobbrmsd_DLAMCH = DIGITS_ZERO
   else if (mobbrmsd_LSAME(CMACH, 'R')) then
-    RMACH = RND
+    mobbrmsd_DLAMCH = ONE
   else if (mobbrmsd_LSAME(CMACH, 'M')) then
-    RMACH = MINEXPONENT(ZERO)
+    mobbrmsd_DLAMCH = MINEXPONENT_ZERO
   else if (mobbrmsd_LSAME(CMACH, 'U')) then
-    RMACH = TINY(zero)
+    mobbrmsd_DLAMCH = TINY_ZERO
   else if (mobbrmsd_LSAME(CMACH, 'L')) then
-    RMACH = MAXEXPONENT(ZERO)
+    mobbrmsd_DLAMCH = MAXEXPONENT_ZERO
   else if (mobbrmsd_LSAME(CMACH, 'O')) then
-    RMACH = HUGE(ZERO)
+    mobbrmsd_DLAMCH = HUGE_ZERO
   else
-    RMACH = ZERO
+    mobbrmsd_DLAMCH = ZERO
   end if
 !
-  mobbrmsd_DLAMCH = RMACH
   return
 !
-!     End of mobbrmsd_DLAMCH
+! End of mobbrmsd_DLAMCH
 !
 end function mobbrmsd_DLAMCH
 

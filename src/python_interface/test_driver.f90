@@ -1,4 +1,5 @@
 program main
+  use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO, RHUGE
   use driver
   use mod_unittest
@@ -79,6 +80,8 @@ contains
       end do
       print *
     end do
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
 !
   end subroutine test0
 !
@@ -149,6 +152,8 @@ contains
       end do
       print *
     end do
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
 !
   end subroutine test1
 !
@@ -194,6 +199,8 @@ contains
     do i = 1, n_target - 1
       print *, "# ", edges(:, i), weights(i)
     end do
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
 !
   end subroutine test2
 !

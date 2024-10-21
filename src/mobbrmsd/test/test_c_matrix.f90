@@ -1,4 +1,5 @@
 program main
+  use ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT
   use mod_dimspec_functions, only: D, DD
   use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mol_block
@@ -46,7 +47,8 @@ contains
     CY = SUM(RESHAPE(Y, [D, n_apm * n_mol]), 2) / (n_apm * n_mol)
 !
     b = mol_block(n_apm, n_mol, sym=RESHAPE(sym, [n_apm, n_sym - 1]))
-    c = c_matrix(b%q)
+    call c_matrix_init(c, b%q)
+!   c = c_matrix(b%q)
     allocate (Z(c_matrix_memsize(c%q)))
     allocate (W(c_matrix_worksize(c%q)))
     Z(:) = 999
@@ -90,9 +92,9 @@ contains
     x3 = x2 + mol_block_natm(b(2)%q)
 !
     print *, mol_block_nsym(b(1)%q), mol_block_nsym(b(2)%q), mol_block_nsym(b(3)%q)
-    c(1) = c_matrix(b(1)%q)
-    c(2) = c_matrix(b(2)%q)
-    c(3) = c_matrix(b(3)%q)
+    call c_matrix_init(c(1), b(1)%q)
+    call c_matrix_init(c(2), b(2)%q)
+    call c_matrix_init(c(3), b(3)%q)
 !
     print *, c_matrix_memsize(c(1)%q), c_matrix_memsize(c(2)%q), c_matrix_memsize(c(3)%q)
     print *, c_matrix_worksize(c(1)%q), c_matrix_worksize(c(2)%q), c_matrix_worksize(c(3)%q)
@@ -120,6 +122,8 @@ contains
     print *
     print'(10f5.1)', W(p3:p3 + c_matrix_memsize(c(3)%q) - 1)
     print *
+    FLUSH (OUTPUT_UNIT)
+    FLUSH (ERROR_UNIT)
 !
   end subroutine test1
 !
@@ -137,7 +141,8 @@ contains
     call u%assert_almost_equal(C(1), SUM(X_ * X_) + SUM(Y_ * Y_), 'auto variance', place=place)
     call u%assert_almost_equal(C(2:1 + DD), [MATMUL(Y_, TRANSPOSE(X_))], 'covariance 1 ', place=place)
     do i = 1, nsym - 1
- call u%assert_almost_equal(C(2 + DD * i:1 + DD * (i + 1)), [MATMUL(Y_(:, sym(:, i)), TRANSPOSE(X_))], 'covariance i ', place=place)
+      call u%assert_almost_equal(C(2 + DD * i:1 + DD * (i + 1)), [MATMUL(Y_(:, sym(:, i)), TRANSPOSE(X_))], &
+   & 'covariance i ', place=place)
     end do
   end subroutine check_gcov
 !

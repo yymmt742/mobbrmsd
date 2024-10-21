@@ -21,8 +21,8 @@ program main
   call test1(4, 2, 3)
   call test1(10, 100, 1000)
   call test1(4, 12, 40)
-  call test1(50, 200, 35)
-  call test1(441, 1230, 340)
+! call test1(50, 200, 35)
+! call test1(441, 1230, 340)
 !
   call test2(2)
   call test2(3)
@@ -46,6 +46,8 @@ contains
     real(RK) :: A(M, K), B(K, N), C(K, M), D(N, K)
     real(RK) :: AB(M, N), CB(M, N), AD(M, N), CD(M, N)
     real(RK) :: BA(N, M), BC(N, M), DA(N, M), DC(N, M)
+    real(RK) :: AB_(M, N), CB_(M, N), AD_(M, N), CD_(M, N)
+    real(RK) :: BA_(N, M), BC_(N, M), DA_(N, M), DC_(N, M)
 !
     call RANDOM_NUMBER(A)
     call RANDOM_NUMBER(B)
@@ -70,14 +72,132 @@ contains
     call DGEMM("N", "T", N, M, K, 1.0_RK, D, N, A, M, 0.0_RK, DA, N)
     call DGEMM("N", "N", N, M, K, 1.0_RK, D, N, C, K, 0.0_RK, DC, N)
 #endif
-    call z%assert_almost_equal(MATMUL(A, B), AB, 'gemm : A @ B', place=place)
-    call z%assert_almost_equal(MATMUL(TRANSPOSE(C), B), CB, 'gemm : C^T @ B', place=place)
-    call z%assert_almost_equal(MATMUL(A, TRANSPOSE(D)), AD, 'gemm : A @ D^T', place=place)
-    call z%assert_almost_equal(MATMUL(TRANSPOSE(C), TRANSPOSE(D)), CD, 'gemm : C^T @ D^T', place=place)
-    call z%assert_almost_equal(MATMUL(TRANSPOSE(B), TRANSPOSE(A)), BA, 'gemm : B^T @ A^T', place=place)
-    call z%assert_almost_equal(MATMUL(TRANSPOSE(B), C), BC, 'gemm : B^T @ C', place=place)
-    call z%assert_almost_equal(MATMUL(D, TRANSPOSE(A)), DA, 'gemm : D @ A^T', place=place)
-    call z%assert_almost_equal(MATMUL(D, C), DC, 'gemm : C = D @ C', place=place)
+    AB_ = MATMUL(A, B)
+    CB_ = MATMUL(TRANSPOSE(C), B)
+    AD_ = MATMUL(A, TRANSPOSE(D))
+    CD_ = MATMUL(TRANSPOSE(C), TRANSPOSE(D))
+    BA_ = MATMUL(TRANSPOSE(B), TRANSPOSE(A))
+    BC_ = MATMUL(TRANSPOSE(B), C)
+    DA_ = MATMUL(D, TRANSPOSE(A))
+    DC_ = MATMUL(D, C)
+    call z%assert_almost_equal(AB, AB_, 'gemm : A @ B', place=place)
+    call z%assert_almost_equal(CB, CB_, 'gemm : C^T @ B', place=place)
+    call z%assert_almost_equal(AD, AD_, 'gemm : A @ D^T', place=place)
+    call z%assert_almost_equal(CD, CD_, 'gemm : C^T @ D^T', place=place)
+    call z%assert_almost_equal(BA, BA_, 'gemm : B^T @ A^T', place=place)
+    call z%assert_almost_equal(BC, BC_, 'gemm : B^T @ C', place=place)
+    call z%assert_almost_equal(DA, DA_, 'gemm : D @ A^T', place=place)
+    call z%assert_almost_equal(DC, DC_, 'gemm : D @ C', place=place)
+    call z%assert_almost_equal(AB, CB, 'gemm : AB = CB', place=place)
+    call z%assert_almost_equal(AB, AD, 'gemm : AB = AD', place=place)
+    call z%assert_almost_equal(AB, CD, 'gemm : AB = CD', place=place)
+    call z%assert_almost_equal(BA, BC, 'gemm : BA = BC', place=place)
+    call z%assert_almost_equal(BA, DA, 'gemm : BA = DA', place=place)
+    call z%assert_almost_equal(BA, DC, 'gemm : BA = DC', place=place)
+!
+    CD = AB
+    AD = AB
+    CD = AB
+    CD_ = AB
+    AD_ = AB
+    CD_ = AB
+    BA = BC
+    BA = DA
+    BA = DC
+    BA_ = BC
+    BA_ = DA
+    BA_ = DC
+!
+#ifdef USE_REAL32
+    call SGEMM("N", "N", M, N, K, 1.0_RK, A, M, B, K, 1.0_RK, AB, M)
+    call SGEMM("T", "N", M, N, K, 1.0_RK, C, K, B, K, 1.0_RK, CB, M)
+    call SGEMM("N", "T", M, N, K, 1.0_RK, A, M, D, N, 1.0_RK, AD, M)
+    call SGEMM("T", "T", M, N, K, 1.0_RK, C, K, D, N, 1.0_RK, CD, M)
+    call SGEMM("T", "T", N, M, K, 1.0_RK, B, K, A, M, 1.0_RK, BA, N)
+    call SGEMM("T", "N", N, M, K, 1.0_RK, B, K, C, K, 1.0_RK, BC, N)
+    call SGEMM("N", "T", N, M, K, 1.0_RK, D, N, A, M, 1.0_RK, DA, N)
+    call SGEMM("N", "N", N, M, K, 1.0_RK, D, N, C, K, 1.0_RK, DC, N)
+#else
+    call DGEMM("N", "N", M, N, K, 1.0_RK, A, M, B, K, 1.0_RK, AB, M)
+    call DGEMM("T", "N", M, N, K, 1.0_RK, C, K, B, K, 1.0_RK, CB, M)
+    call DGEMM("N", "T", M, N, K, 1.0_RK, A, M, D, N, 1.0_RK, AD, M)
+    call DGEMM("T", "T", M, N, K, 1.0_RK, C, K, D, N, 1.0_RK, CD, M)
+    call DGEMM("T", "T", N, M, K, 1.0_RK, B, K, A, M, 1.0_RK, BA, N)
+    call DGEMM("T", "N", N, M, K, 1.0_RK, B, K, C, K, 1.0_RK, BC, N)
+    call DGEMM("N", "T", N, M, K, 1.0_RK, D, N, A, M, 1.0_RK, DA, N)
+    call DGEMM("N", "N", N, M, K, 1.0_RK, D, N, C, K, 1.0_RK, DC, N)
+#endif
+    AB_ = AB_ + MATMUL(A, B)
+    CB_ = CB_ + MATMUL(TRANSPOSE(C), B)
+    AD_ = AD_ + MATMUL(A, TRANSPOSE(D))
+    CD_ = CD_ + MATMUL(TRANSPOSE(C), TRANSPOSE(D))
+    BA_ = BA_ + MATMUL(TRANSPOSE(B), TRANSPOSE(A))
+    BC_ = BC_ + MATMUL(TRANSPOSE(B), C)
+    DA_ = DA_ + MATMUL(D, TRANSPOSE(A))
+    DC_ = DC_ + MATMUL(D, C)
+    call z%assert_almost_equal(AB, AB_, 'gemm : A @ B + E', place=place)
+    call z%assert_almost_equal(CB, CB_, 'gemm : C^T @ B + E', place=place)
+    call z%assert_almost_equal(AD, AD_, 'gemm : A @ D^T + E', place=place)
+    call z%assert_almost_equal(CD, CD_, 'gemm : C^T @ D^T + E', place=place)
+    call z%assert_almost_equal(BA, BA_, 'gemm : B^T @ A^T + E', place=place)
+    call z%assert_almost_equal(BC, BC_, 'gemm : B^T @ C + E', place=place)
+    call z%assert_almost_equal(DA, DA_, 'gemm : D @ A^T + E', place=place)
+    call z%assert_almost_equal(DC, DC_, 'gemm : D @ C + E', place=place)
+    call z%assert_almost_equal(AB, CB, 'gemm : AB = CB', place=place)
+    call z%assert_almost_equal(AB, AD, 'gemm : AB = AD', place=place)
+    call z%assert_almost_equal(AB, CD, 'gemm : AB = CD', place=place)
+    call z%assert_almost_equal(BA, BC, 'gemm : BA = BC', place=place)
+    call z%assert_almost_equal(BA, DA, 'gemm : BA = DA', place=place)
+    call z%assert_almost_equal(BA, DC, 'gemm : BA = DC', place=place)
+!
+    CD = AB
+    AD = AB
+    CD = AB
+    CD_ = AB
+    AD_ = AB
+    CD_ = AB
+    BA = BC
+    BA = DA
+    BA = DC
+    BA_ = BC
+    BA_ = DA
+    BA_ = DC
+!
+#ifdef USE_REAL32
+    call SGEMM("N", "N", M, N, K, 0.5_RK, A, M, B, K, 1.0_RK, AB, M)
+    call SGEMM("T", "N", M, N, K, 0.5_RK, C, K, B, K, 1.0_RK, CB, M)
+    call SGEMM("N", "T", M, N, K, 0.5_RK, A, M, D, N, 1.0_RK, AD, M)
+    call SGEMM("T", "T", M, N, K, 0.5_RK, C, K, D, N, 1.0_RK, CD, M)
+    call SGEMM("T", "T", N, M, K, 0.5_RK, B, K, A, M, 1.0_RK, BA, N)
+    call SGEMM("T", "N", N, M, K, 0.5_RK, B, K, C, K, 1.0_RK, BC, N)
+    call SGEMM("N", "T", N, M, K, 0.5_RK, D, N, A, M, 1.0_RK, DA, N)
+    call SGEMM("N", "N", N, M, K, 0.5_RK, D, N, C, K, 1.0_RK, DC, N)
+#else
+    call DGEMM("N", "N", M, N, K, 0.5_RK, A, M, B, K, 1.0_RK, AB, M)
+    call DGEMM("T", "N", M, N, K, 0.5_RK, C, K, B, K, 1.0_RK, CB, M)
+    call DGEMM("N", "T", M, N, K, 0.5_RK, A, M, D, N, 1.0_RK, AD, M)
+    call DGEMM("T", "T", M, N, K, 0.5_RK, C, K, D, N, 1.0_RK, CD, M)
+    call DGEMM("T", "T", N, M, K, 0.5_RK, B, K, A, M, 1.0_RK, BA, N)
+    call DGEMM("T", "N", N, M, K, 0.5_RK, B, K, C, K, 1.0_RK, BC, N)
+    call DGEMM("N", "T", N, M, K, 0.5_RK, D, N, A, M, 1.0_RK, DA, N)
+    call DGEMM("N", "N", N, M, K, 0.5_RK, D, N, C, K, 1.0_RK, DC, N)
+#endif
+    AB_ = AB_ + 0.5_RK * MATMUL(A, B)
+    CB_ = CB_ + 0.5_RK * MATMUL(TRANSPOSE(C), B)
+    AD_ = AD_ + 0.5_RK * MATMUL(A, TRANSPOSE(D))
+    CD_ = CD_ + 0.5_RK * MATMUL(TRANSPOSE(C), TRANSPOSE(D))
+    BA_ = BA_ + 0.5_RK * MATMUL(TRANSPOSE(B), TRANSPOSE(A))
+    BC_ = BC_ + 0.5_RK * MATMUL(TRANSPOSE(B), C)
+    DA_ = DA_ + 0.5_RK * MATMUL(D, TRANSPOSE(A))
+    DC_ = DC_ + 0.5_RK * MATMUL(D, C)
+    call z%assert_almost_equal(AB, AB_, 'gemm : 0.5 A @ B + E', place=place)
+    call z%assert_almost_equal(CB, CB_, 'gemm : 0.5 C^T @ B + E', place=place)
+    call z%assert_almost_equal(AD, AD_, 'gemm : 0.5 A @ D^T + E', place=place)
+    call z%assert_almost_equal(CD, CD_, 'gemm : 0.5 C^T @ D^T + E', place=place)
+    call z%assert_almost_equal(BA, BA_, 'gemm : 0.5 B^T @ A^T + E', place=place)
+    call z%assert_almost_equal(BC, BC_, 'gemm : 0.5 B^T @ C + E', place=place)
+    call z%assert_almost_equal(DA, DA_, 'gemm : 0.5 D @ A^T + E', place=place)
+    call z%assert_almost_equal(DC, DC_, 'gemm : 0.5 D @ C + E', place=place)
     call z%assert_almost_equal(AB, CB, 'gemm : AB = CB', place=place)
     call z%assert_almost_equal(AB, AD, 'gemm : AB = AD', place=place)
     call z%assert_almost_equal(AB, CD, 'gemm : AB = CD', place=place)

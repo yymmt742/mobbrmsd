@@ -1,6 +1,6 @@
 foreach(prec IN ITEMS ${mobbrmsd_PRECISIONS})
   set(moddir ${CMAKE_CURRENT_BINARY_DIR}/${prec})
-  ADDTEST(test_mobbrmsd_lapack_${prec} xd ${prec} 32 "" "" ${moddir} ""
+  ADDTEST(test_mobbrmsd_lapack_${prec} xd ${prec} 32 1 "" ${moddir} ""
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_lapack_routines_${prec}.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/../mod_mobbrmsd_lapack.f90
     ${CMAKE_CURRENT_SOURCE_DIR}/test_mobbrmsd_lapack.f90

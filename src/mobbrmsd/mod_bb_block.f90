@@ -1,8 +1,12 @@
-!| Module for handling \( \{\mathbf{C}\}_{IJs}, \mathbf{F} \) and the factrial tree. <br>
+!| handling \( \{\mathbf{C}\}_{IJs}, \mathbf{F} \) and the factrial tree.
+!
+!  Module for handling \( \{\mathbf{C}\}_{IJs}, \mathbf{F} \) and the factrial tree.
+!
 !  This module provides procedures for performing branch-and-bound algorithms (BB)
-!  on assemblies consisting of homologous molecules. <br>
+!  on assemblies consisting of homologous molecules.
 !  Since the BB procedure is implemented for multi-component systems,
-!  this module does not provide the BB itself. <br>
+!  this module does not provide the BB itself.
+!
 !  @note
 !    Node data block is defined by \( [l_p, G_p, \mathbf{C}_p]\), here <br>
 !    \( l_p \)          : scalar, lowerbound.<br>
@@ -12,6 +16,7 @@
 !    \( \mathbf{C}_p \) : partial sum of covariance. <br>
 !    \[ \mathbf{C}_p = \sum_{I=1}^p \mathbf{C}_{I\nu(I)\sigma(I)} \]
 !  @endnote
+!
 module mod_bb_block
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
   use mod_dimspec_functions, only: D, ND
@@ -156,8 +161,8 @@ contains
    &  stree => s_POINTER_TO_S_TREE &
    &  )
       b = mol_block(n_apm, n_mol, sym)
-      c = c_matrix(b%q)
-      f = f_matrix(b%q)
+      call c_matrix_init(c, b%q)
+      call f_matrix_init(f, b%q)
       t = tree(mol_block_nmol(b%q), mol_block_nsym(b%q))
 !
       qcov = qmol + SIZE(b%q)

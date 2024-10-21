@@ -1,7 +1,11 @@
-!| Module for managing free rotation cost matrix, \(\mathbf{F}\). <br>
+!| managing free rotation cost matrix, \(\mathbf{F}\).
+!
+!  Module for managing free rotation cost matrix, \(\mathbf{F}\).
+!
 !  \[ \mathbf{F}_{IJ} = \min_{\mathbf{R},s}\text{Tr}\left[\mathbf{C}_{IJs} \mathbf{R} \right] \]
 !  \( \mathbf{C}_{IJs} \) :: Covariance matrix of \( \mathbf{X}_I \) and \( \mathbf{Y}_I \) with \( s \)-th molecular permutation.<br>
 !  \( \mathbf{R} \) :: Rotation matrix on \( \mathbb{R}^{d} \).<br>
+!
 module mod_f_matrix
   use mod_dimspec_functions, only: D, DD
   use mod_params, only: IK, RK, ONE => RONE, ZERO => RZERO, RHUGE
@@ -12,6 +16,7 @@ module mod_f_matrix
   implicit none
   private
   public :: f_matrix
+  public :: f_matrix_init
   public :: f_matrix_memsize
   public :: f_matrix_worksize
   public :: f_matrix_eval
@@ -26,22 +31,18 @@ module mod_f_matrix
     !! header
   end type f_matrix
 !
-!| Constructer
-  interface f_matrix
-    module procedure f_matrix_new
-  end interface f_matrix
-!
 contains
 !
-!| Constructer
-  pure function f_matrix_new(b) result(res)
-    integer(IK), intent(in) :: b(*)
+!| Initializer
+  pure subroutine f_matrix_init(f, b)
+    type(f_matrix), intent(inout) :: f
+    !! f_matrix header
+    integer(IK), intent(in)       :: b(*)
     !! mol_block, must be initialized
-    type(f_matrix)          :: res
 !
-    res%q(nn) = mol_block_nmol(b)**2
+    f%q(nn) = mol_block_nmol(b)**2
 !
-  end function f_matrix_new
+  end subroutine f_matrix_init
 !
 !| Inquire memsize of f_matrix
   pure function f_matrix_memsize(q) result(res)
