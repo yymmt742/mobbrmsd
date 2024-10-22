@@ -395,7 +395,8 @@ contains
       w(2) = ABS(cov(3))
       if (w(1) > w(2)) then
 ! |cov(1)| > |cov(2)| .and. |cov(1)| > |cov(3)|
-        if (w(1) < w(2)) then
+        if (w(1) < w(3)) then
+! |cov(2)|, |cov(3)|, |cov(1)| < threshold
           w(1) = ZERO
           return
         end if
@@ -431,9 +432,6 @@ contains
         end if
       else
 ! |cov(3)| > |cov(1)| > |cov(2)|
-!   369
-!   147
-!   258, pivot = 2
         if (w(2) < w(3)) then
           w(1) = ZERO
           return
@@ -471,10 +469,7 @@ contains
     else
       w(1) = ABS(cov(3))
       if (w(1) > w(2)) then
-! |cov(3)| > |cov(2)| => |cov(1)|
-!   369
-!   147
-!   258, pivot = 2
+! |cov(3)| > |cov(2)| >= |cov(1)|
         if (w(1) < w(3)) then
           w(1) = ZERO
           return
@@ -509,10 +504,7 @@ contains
           end if
         end if
       else
-! |cov(2)| => |cov(1)| .and. |cov(2)| => |cov(3)|
-!   258
-!   147
-!   369, pivot = 1
+! |cov(2)| >= |cov(1)| .and. |cov(2)| >= |cov(3)|
         if (w(2) < w(3)) then
           w(1) = ZERO
           return
@@ -582,13 +574,13 @@ contains
         h = ABS(q / r)
         s = SIGN(ONE, r) * s
         call cosh_acosh(H, q, r, x) ! q = cosh(arccosh(1/h)/3)
-        X = TWOTHIRD + s * q
+        x = TWOTHIRD + s * q
       end if
     else
       s = SQRT(-q)
       h = -r / (q * s)
       call sinh_asinh(h, q, r)
-      x = x + s * q
+      x = TWOTHIRD + s * q
     end if
   end subroutine find_a_cubic_root
 !

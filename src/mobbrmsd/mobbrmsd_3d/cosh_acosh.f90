@@ -1,6 +1,7 @@
   pure elemental subroutine cosh_acosh(x, res, yy, df)
     real(RK), intent(in)    :: x
     real(RK), intent(inout) :: res, yy, df
+    integer(IK)             :: i
     if (x < ZERO) return
     if (x > ONE) return
     if (x < 5.0000000000000000E-01_RK) then
@@ -31,10 +32,13 @@
     ! res = 2**(-2/3) * x**(1/3) - 2**(-4/3) * x**(-1/3)
     call invcbrt(x, yy, df)
     res = res + 0.6299605249474366_RK / yy + 0.3968502629920499_RK * yy
-    yy = res * res
-    df = 12.0_RK * yy - 3.0_RK
-    if (ABS(df) < 1E-18_RK) return
-    df = ((4.0_RK * yy - 3.0_RK) * res - ONE / x) / df
-    res = res - df
+    do i = 1, 5
+      yy = res * res
+      df = 12.0_RK * yy - 3.0_RK
+      if (ABS(df) < 1E-18_RK) return
+      df = ((4.0_RK * yy - 3.0_RK) * res - ONE / x) / df
+      res = res - df
+      if (ABS(df) < 1E-18_RK) return
+    end do
   end subroutine cosh_acosh
 
