@@ -542,6 +542,52 @@ contains
     end if
   end subroutine det3
 !
+!| find a positive root of cubic equation x^3 + p x + q = 0, using Viete's solution.
+  pure subroutine find_a_cubic_root_(p, q, x, w1, w2, w3, w4)
+    real(RK), intent(in)    :: p, q
+    real(RK), intent(inout) :: x, w1, w2, w3, w4
+    if (ABS(p) < THRESHOLD) then
+      if (ABS(q) < THRESHOLD) then
+        x = ZERO ! X^3 = 0.
+      else
+        ! x^3 = -q
+        call invcbrt(q, x, w1)
+        x = -ONE / x
+      end if
+      return
+    elseif (ABS(q) < THRESHOLD) then
+      ! q = r**(-1/3)
+      if (p < ZERO) then
+        x = SQRT(-p)
+      else
+        x = SQRT(p)
+      end if
+    elseif (p < ZERO) then
+      w1 = TWO * SQRT(p * (-ONETHIRD))
+      w2 = -ONETHIRD * p * w1
+      if (w2 < ABS(q)) then
+        if (q < ZERO) then
+          w2 = -w2 / q
+          call cosh_acosh(w2, x, w3, w4) ! q = cos(arccos(h)/3)
+          x = w1 * x
+        else
+          w2 = w2 / q
+          call cosh_acosh(w2, x, w3, w4) ! q = cos(arccos(h)/3)
+          x = -w1 * x
+        end if
+      else
+        w2 = -q / w2
+        call cos_acos(w2, x, w3, w4) ! q = cos(arccos(h)/3)
+        x = w1 * x
+      end if
+    else
+      w1 = TWO * SQRT(ONETHIRD * p)
+      w2 = THREE * q / (p * w1)
+      call sinh_asinh(w2, x, w3)
+      x = -w1 * x
+    end if
+  end subroutine find_a_cubic_root_
+!
 !| find a positive root of monic cubic equation, x^3 - 2 * x^2 + k1 * x + k0 = 0
   pure subroutine find_a_cubic_root(k1, k0, x, r, q, h, s)
     real(RK), intent(in)    :: k1, k0
