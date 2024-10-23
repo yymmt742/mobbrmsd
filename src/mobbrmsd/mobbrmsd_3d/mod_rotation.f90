@@ -13,11 +13,13 @@ module mod_rotation
   public :: estimate_rotation
 !
   real(RK), parameter    :: ZERO = 0.0_RK
+  real(RK), parameter    :: QUARTER = 0.25_RK
   real(RK), parameter    :: HALF = 0.5_RK
   real(RK), parameter    :: ONE = 1.0_RK
   real(RK), parameter    :: TWO = 2.0_RK
   real(RK), parameter    :: THREE = 3.0_RK
   real(RK), parameter    :: FOUR = 4.0_RK
+  real(RK), parameter    :: SIX = 6.0_RK
   real(RK), parameter    :: EIGHT = 8.0_RK
   real(RK), parameter    :: SIXTEEN = 16.0_RK
   real(RK), parameter    :: ONETHIRD = 1.0_RK / 3.0_RK
@@ -237,21 +239,25 @@ contains
     real(RK), intent(in)    :: cov(*)
     !! target d*n array
     real(RK), intent(inout) :: w(*)
-    integer(IK), parameter  :: xk = 1, k1 = 2, k0 = 3, sa = 4
-    integer(IK), parameter  :: d11 = 3, d22 = 4, d33 = 5, d21 = 6, d31 = 7, d32 = 8
-    integer(IK), parameter  :: a1 = 6, a2 = 5
-    integer(IK), parameter  :: m0 = 5
-    integer(IK), parameter  :: r = 5, q = 6, h = 7, s = 8
-    integer(IK), parameter  :: xx = 5, f = 6, df = 7
+    integer(IK), parameter  :: x = 1, a = 2, b = 3
+    integer(IK), parameter  :: w1 = 5, w2 = 6, w3 = 7, w4 = 8, w5 = 9
+    integer(IK), parameter  :: d11 = 4, d22 = 5, d33 = 6, d21 = 7, d31 = 8, d32 = 9
+    integer(IK), parameter  :: p = 1, r = 2, q = 3, sr = 4, rr = 5
+!   integer(IK), parameter  :: xk = 1, k1 = 2, k0 = 3, sa = 4
+!   integer(IK), parameter  :: a1 = 6, a2 = 5
+!   integer(IK), parameter  :: m0 = 5
+!   integer(IK), parameter  :: r = 5, q = 6, h = 7, s = 8
+!   integer(IK), parameter  :: xx = 5, f = 6, df = 7
 !
     if (g < THRESHOLD) then
-      w(1) = ZERO
+      w(x) = ZERO
       return
     end if
 !
 !   K1 = - 8 det|R|
-    call det3(g, cov, w)
-    w(k1) = -EIGHT * w(1)
+!   A2 = tr[D]
+    call det3(g, cov, w(q))
+!    w(k1) = -EIGHT * w(1)
 !
 !   D = RR^T
 !
@@ -264,12 +270,24 @@ contains
 !
 !   A1 = D11 * (D22+D33) + D22 * D33 - D12**2 - D13**2 - D23**2
 !
-    w(a1) = w(d11) * (w(d22) + w(d33)) + w(d22) * w(d33) - w(d21)**2 - w(d31)**2 - w(d32)**2
-    w(a1) = FOUR * w(a1)
+    w(p) = (w(d22) + w(d33))
+    w(r) = w(d11) + w(p)
+    if (w(r) < THRESHOLD) then
+      w(x) = ZERO
+      return
+    end if
+    w(p) = w(p) * w(d11) + w(d22) * w(d33) - w(d21)**2 - w(d31)**2 - w(d32)**2
+    w(sr) = SQRT(w(r))
+    w(rr) = FOUR / (w(r) * w(r))
+    w(a) = -TWO * w(q) * w(rr) * w(sr)
+    w(b) = ONE - w(p) * w(rr)
+    call find_a_quartic_root(w(a), w(b), w(x), w(w1), w(w2), w(w3), w(w4), w(w5))
+    w(x) = w(x) * w(sr)
 !
-!   A2 = tr[D]
+!   w(a1) = w(d11) * (w(d22) + w(d33)) + w(d22) * w(d33) - w(d21)**2 - w(d31)**2 - w(d32)**2
+!   w(a1) = FOUR * w(a1)
 !
-    w(a2) = w(d11) + w(d22) + w(d33)
+!   w(a2) = w(d11) + w(d22) + w(d33)
 !
 !   K2 = -2 * A2
 !   K1 = -8 det|R|
@@ -280,51 +298,140 @@ contains
 !              K1_ = SQRT(A2) * K1 / (A2**2) = - 8 * det|R| / (A2**(3/2))
 !              K0_ = K0 / A2**2              = 1 - 4 * A1 / A2**2
 !
-    w(sa) = SQRT(w(a2))
-    w(k0) = ONE / (w(a2) * w(a2))
+!   w(sa) = SQRT(w(a2))
+!   w(k0) = ONE / (w(a2) * w(a2))
 !
-    w(k1) = w(k0) * w(sa) * w(k1)
-    w(k0) = ONE - w(k0) * w(a1)
+!   w(k1) = w(k0) * w(sa) * w(k1)
+!   w(k0) = ONE - w(k0) * w(a1)
 !
 !   normalize
 !
-    w(m0) = w(k1)**2
-    w(m0) = (-27._RK * w(m0) - 288._RK * w(k0) * 32._RK) * w(m0) + 256._RK * w(k0) * (w(k0) - ONE)**2
-    if (ABS(w(m0)) < DEGENERACY1) then
-      ! Third order Taylor expansion around x=1.
-      ! f3(x) / 4 = x**3 - 2 * x**2 + (1 + k1/4) * x + (k0 - 1)/4
-      if (ABS(w(k0) - ONE) < DEGENERACY2) then
-        ! Solve x**3 - 2 * x**2 + (1 + k1/4) * x = 0
-        w(xk) = ONE + HALF * SQRT(MAX(-w(k1), ZERO))
-      else
-        ! Solve f3(x) = 0
-        w(k1) = ONE + ONEQUARTER * w(k1)
-        w(k0) = w(k0) * ONEQUARTER - ONEQUARTER
-        call find_a_cubic_root(w(k1), w(k0), w(xk), w(r), w(q), w(h), w(s))
-      end if
-    else
-      w(xk) = HALF * g / w(sa)
-      call newton_quartic(w(k1), w(k0), w(xk), w(xx), w(f), w(df))
-    end if
-    w(xk) = w(xk) * w(sa)
+!   w(m0) = w(k1)**2
+!   w(m0) = (-27._RK * w(m0) - 288._RK * w(k0) * 32._RK) * w(m0) + 256._RK * w(k0) * (w(k0) - ONE)**2
+!   if (ABS(w(m0)) < DEGENERACY1) then
+!     ! Third order Taylor expansion around x=1.
+!     ! f3(x) / 4 = x**3 - 2 * x**2 + (1 + k1/4) * x + (k0 - 1)/4
+!     if (ABS(w(k0) - ONE) < DEGENERACY2) then
+!       ! Solve x**3 - 2 * x**2 + (1 + k1/4) * x = 0
+!       w(xk) = ONE + HALF * SQRT(MAX(-w(k1), ZERO))
+!     else
+!       ! Solve f3(x) = 0
+!       w(k1) = ONE + ONEQUARTER * w(k1)
+!       w(k0) = w(k0) * ONEQUARTER - ONEQUARTER
+!       call find_a_cubic_root(w(k1), w(k0), w(xk), w(r), w(q), w(h), w(s))
+!     end if
+!   else
+!     w(xk) = HALF * g / w(sa)
+!     call newton_quartic(w(k1), w(k0), w(xk), w(xx), w(f), w(df))
+!   end if
+!   w(xk) = w(xk) * w(sa)
   end subroutine find_lambda_max
 !
-  pure elemental subroutine newton_quartic(k1, k0, x, xx, f, df)
-    real(RK), intent(in)    :: k1, k0
-    real(RK), intent(inout) :: x, xx, f, df
+  pure elemental subroutine find_a_quartic_root(a, b, x, w1, w2, w3, w4, w5)
+    real(RK), intent(in)    :: a, b
+    real(RK), intent(inout) :: x, w1, w2, w3, w4, w5
+    real(RK), parameter     :: ONESQRT3 = ONE / SQRT3
+    real(RK), parameter     :: ONESIX = ONE / SIX
+    real(RK), parameter     :: QUARTERSQRT3 = QUARTER * SQRT3
+    real(RK), parameter     :: TWOTHIRD = TWO / THREE
+    real(RK), parameter     :: CONST = 5.0_RK * SQRT3 / 36.0_RK
     integer                 :: i
+    if (ABS(a) < THRESHOLD) then
+      x = SQRT(ONE + SQRT(MAX(ONE - b, ZERO)))
+      return
+    end if
+    call find_a_cubic_root_(-ONE, QUARTER * a, x, w1, w2, w3, w4)
+
+    w5 = x * x
+    w5 = w1 * (w1 - TWO) + a * x + b
+
+    if (x < ONESQRT3) then
+      call find_a_cubic_root_(QUARTERSQRT3 * a - TWOTHIRD, QUARTER * (a + SQRT3 * b) - CONST, x, w1, w2, w3, w4)
+    else
+      w1 = ONE / x                               ! 1/x0
+      w2 = HALF * x - ONESIX * w1                ! g = x0/2 - (6 x0)**(-1)
+      w3 = w2 * w2                               ! g**2
+      call find_a_cubic_root_(-THREE * w3, QUARTER * (w5 * w1 + EIGHT * w2 * w3), x, w1, w2, w3, w4)
+    end if
+!
+    if (THRESHOLD + w5 > ZERO) return
+!
     do i = 1, MAXITER
-      xx = x * x
-      df = -TWO + xx
-      f = df * xx + k1 * x + k0
-      df = (k1 + (x + x) * (df + xx))
-      if (ABS(f) < THRESHOLD) exit
-      if (ABS(df) < THRESHOLD) exit
-      f = f / df
-      x = x - f
-      if (ABS(f) < THRESHOLD) exit
+      w1 = x * x
+      w2 = -TWO + w1
+      w3 = w2 * w1 + a * x + b
+      w2 = (a + TWO * x * (w2 + w1))
+      if (ABS(w3) < THRESHOLD) exit
+      if (ABS(w2) < THRESHOLD) exit
+      w1 = w1 / w2
+      x = x - w1
+      if (ABS(w1) < THRESHOLD) exit
     end do
-  end subroutine newton_quartic
+!
+  end subroutine find_a_quartic_root
+!
+! pure elemental subroutine newton_quartic(k1, k0, x, xx, f, df)
+!   real(RK), intent(in)    :: k1, k0
+!   real(RK), intent(inout) :: x, xx, f, df
+!   integer                 :: i
+!   do i = 1, MAXITER
+!     xx = x * x
+!     df = -TWO + xx
+!     f = df * xx + k1 * x + k0
+!     df = (k1 + (x + x) * (df + xx))
+!     if (ABS(f) < THRESHOLD) exit
+!     if (ABS(df) < THRESHOLD) exit
+!     f = f / df
+!     x = x - f
+!     if (ABS(f) < THRESHOLD) exit
+!   end do
+! end subroutine newton_quartic
+!
+!| find a positive root of cubic equation x^3 + p x + q = 0, using Viete's solution.
+  pure subroutine find_a_cubic_root_(p, q, x, w1, w2, w3, w4)
+    real(RK), intent(in)    :: p, q
+    real(RK), intent(inout) :: x, w1, w2, w3, w4
+    if (ABS(p) < THRESHOLD) then
+      if (ABS(q) < THRESHOLD) then
+        x = ZERO ! X^3 = 0.
+      else
+        ! x^3 = -q
+        call invcbrt(q, x, w1)
+        x = -ONE / x
+      end if
+      return
+    elseif (ABS(q) < THRESHOLD) then
+      ! q = r**(-1/3)
+      if (p < ZERO) then
+        x = SQRT(-p)
+      else
+        x = SQRT(p)
+      end if
+    elseif (p < ZERO) then
+      w1 = TWO * SQRT(p * (-ONETHIRD))
+      w2 = -ONETHIRD * p * w1
+      if (w2 < ABS(q)) then
+        if (q < ZERO) then
+          w2 = -w2 / q
+          call cosh_acosh(w2, x, w3, w4) ! q = cos(arccos(h)/3)
+          x = w1 * x
+        else
+          w2 = w2 / q
+          call cosh_acosh(w2, x, w3, w4) ! q = cos(arccos(h)/3)
+          x = -w1 * x
+        end if
+      else
+        w2 = -q / w2
+        call cos_acos(w2, x, w3, w4) ! q = cos(arccos(h)/3)
+        x = w1 * x
+      end if
+    else
+      w1 = TWO * SQRT(ONETHIRD * p)
+      w2 = THREE * q / (p * w1)
+      call sinh_asinh(w2, x, w3)
+      x = -w1 * x
+    end if
+  end subroutine find_a_cubic_root_
 !
 !| Find null vector of S. <br>
 !  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
@@ -550,93 +657,47 @@ contains
     end if
   end subroutine det3
 !
-!| find a positive root of cubic equation x^3 + p x + q = 0, using Viete's solution.
-  pure subroutine find_a_cubic_root_(p, q, x, w1, w2, w3, w4)
-    real(RK), intent(in)    :: p, q
-    real(RK), intent(inout) :: x, w1, w2, w3, w4
-    if (ABS(p) < THRESHOLD) then
-      if (ABS(q) < THRESHOLD) then
-        x = ZERO ! X^3 = 0.
-      else
-        ! x^3 = -q
-        call invcbrt(q, x, w1)
-        x = -ONE / x
-      end if
-      return
-    elseif (ABS(q) < THRESHOLD) then
-      ! q = r**(-1/3)
-      if (p < ZERO) then
-        x = SQRT(-p)
-      else
-        x = SQRT(p)
-      end if
-    elseif (p < ZERO) then
-      w1 = TWO * SQRT(p * (-ONETHIRD))
-      w2 = -ONETHIRD * p * w1
-      if (w2 < ABS(q)) then
-        if (q < ZERO) then
-          w2 = -w2 / q
-          call cosh_acosh(w2, x, w3, w4) ! q = cos(arccos(h)/3)
-          x = w1 * x
-        else
-          w2 = w2 / q
-          call cosh_acosh(w2, x, w3, w4) ! q = cos(arccos(h)/3)
-          x = -w1 * x
-        end if
-      else
-        w2 = -q / w2
-        call cos_acos(w2, x, w3, w4) ! q = cos(arccos(h)/3)
-        x = w1 * x
-      end if
-    else
-      w1 = TWO * SQRT(ONETHIRD * p)
-      w2 = THREE * q / (p * w1)
-      call sinh_asinh(w2, x, w3)
-      x = -w1 * x
-    end if
-  end subroutine find_a_cubic_root_
-!
 !| find a positive root of monic cubic equation, x^3 - 2 * x^2 + k1 * x + k0 = 0
-  pure subroutine find_a_cubic_root(k1, k0, x, r, q, h, s)
-    real(RK), intent(in)    :: k1, k0
-    real(RK), intent(inout) :: x, r, q, h, s
-    R = -FOUR * ((k1 - EIGHTNINE) * TWOTHIRD + k0)
-    Q = FOURTHIRD * (FOURTHIRD - k1)
-    if (ABS(Q) < THRESHOLD) then
-      if (ABS(R) < THRESHOLD) then
-        x = TWOTHIRD
-      else
-        r = ONEQUARTER * r
-        call invcbrt(r, q, s) ! q = r**(-1/3)
-        x = TWOTHIRD + q
-      end if
-      return
-    elseif (ABS(r) < THRESHOLD) then
-      if (q > ZERO) then
-        x = TWOTHIRD + HALFSQRT3 * SQRT(q)
-      else
-        x = TWOTHIRD - HALFSQRT3 * SQRT(-q)
-      end if
-    elseif (Q > ZERO) then
-      s = SQRT(q)
-      q = s * q
-      if (ABS(R) <= Q) then
-        h = r / q
-        call cos_acos(h, q, r, x) ! q = cos(arccos(h)/3)
-        X = TWOTHIRD + s * q
-      else
-        h = ABS(q / r)
-        s = SIGN(ONE, r) * s
-        call cosh_acosh(H, q, r, x) ! q = cosh(arccosh(1/h)/3)
-        X = TWOTHIRD + s * q
-      end if
-    else
-      s = SQRT(-q)
-      h = -r / (q * s)
-      call sinh_asinh(h, q, r)
-      x = x + s * q
-    end if
-  end subroutine find_a_cubic_root
+! pure subroutine find_a_cubic_root(k1, k0, x, r, q, h, s)
+!   real(RK), intent(in)    :: k1, k0
+!   real(RK), intent(inout) :: x, r, q, h, s
+!   R = -FOUR * ((k1 - EIGHTNINE) * TWOTHIRD + k0)
+!   Q = FOURTHIRD * (FOURTHIRD - k1)
+!   if (ABS(Q) < THRESHOLD) then
+!     if (ABS(R) < THRESHOLD) then
+!       x = TWOTHIRD
+!     else
+!       r = ONEQUARTER * r
+!       call invcbrt(r, q, s) ! q = r**(-1/3)
+!       x = TWOTHIRD + q
+!     end if
+!     return
+!   elseif (ABS(r) < THRESHOLD) then
+!     if (q > ZERO) then
+!       x = TWOTHIRD + HALFSQRT3 * SQRT(q)
+!     else
+!       x = TWOTHIRD - HALFSQRT3 * SQRT(-q)
+!     end if
+!   elseif (Q > ZERO) then
+!     s = SQRT(q)
+!     q = s * q
+!     if (ABS(R) <= Q) then
+!       h = r / q
+!       call cos_acos(h, q, r, x) ! q = cos(arccos(h)/3)
+!       X = TWOTHIRD + s * q
+!     else
+!       h = ABS(q / r)
+!       s = SIGN(ONE, r) * s
+!       call cosh_acosh(H, q, r, x) ! q = cosh(arccosh(1/h)/3)
+!       X = TWOTHIRD + s * q
+!     end if
+!   else
+!     s = SQRT(-q)
+!     h = -r / (q * s)
+!     call sinh_asinh(h, q, r)
+!     x = x + s * q
+!   end if
+! end subroutine find_a_cubic_root
 !
 #include "cos_acos.f90"
 #include "cosh_acosh.f90"
