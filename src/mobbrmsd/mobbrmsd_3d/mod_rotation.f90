@@ -502,7 +502,8 @@ contains
       w(2) = ABS(cov(3))
       if (w(1) > w(2)) then
 ! |cov(1)| > |cov(2)| .and. |cov(1)| > |cov(3)|
-        if (w(1) < w(2)) then
+        if (w(1) < w(3)) then
+! |cov(2)|, |cov(3)|, |cov(1)| < threshold
           w(1) = ZERO
           return
         end if
@@ -538,9 +539,6 @@ contains
         end if
       else
 ! |cov(3)| > |cov(1)| > |cov(2)|
-!   369
-!   147
-!   258, pivot = 2
         if (w(2) < w(3)) then
           w(1) = ZERO
           return
@@ -578,10 +576,7 @@ contains
     else
       w(1) = ABS(cov(3))
       if (w(1) > w(2)) then
-! |cov(3)| > |cov(2)| => |cov(1)|
-!   369
-!   147
-!   258, pivot = 2
+! |cov(3)| > |cov(2)| >= |cov(1)|
         if (w(1) < w(3)) then
           w(1) = ZERO
           return
@@ -616,10 +611,7 @@ contains
           end if
         end if
       else
-! |cov(2)| => |cov(1)| .and. |cov(2)| => |cov(3)|
-!   258
-!   147
-!   369, pivot = 1
+! |cov(2)| >= |cov(1)| .and. |cov(2)| >= |cov(3)|
         if (w(2) < w(3)) then
           w(1) = ZERO
           return
