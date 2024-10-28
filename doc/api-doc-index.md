@@ -2,17 +2,11 @@ molecular oriented RMSD with branch and bound
 
 @todo
 
-- Testing for degenerate cases <br>
+- 3dsp の失敗する座標を調べる <br>
 
 - Add Usage <br>
 
-- Compatible with compilers other than gnu <br>
-
-- Add detail documentation <br>
-
 - Add benchmark results <br>
-
-- Separate spatial rotation routines for developer tool<br>
 
 @endtodo
 

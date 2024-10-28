@@ -99,7 +99,7 @@ To use the Python interface, you additionally need the following:
 - [ ] Add Usage
 - [x] Enable autovariance sorting
 - [ ] Compatible with compilers (intel)
-- [ ] Compatible with compilers (nv)
+- [x] Compatible with compilers (nv)
 - [ ] Add detail documentation
 - [ ] Add detail documentation (Python interface)
 - [ ] Add benchmarks
