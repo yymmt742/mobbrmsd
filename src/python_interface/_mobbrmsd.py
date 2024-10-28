@@ -70,14 +70,18 @@ class mobbrmsd_result:
 
     def lowerbound_as_rmsd(self) -> float:
         rn = self.rstate["""RECIPROCAL_OF_N"""]
-        return float(rn * (2 * self.lowerbound() + self.autocorr()))
+        return numpy.sqrt(
+            numpy.max([0.0, rn * (2 * self.lowerbound() + self.autocorr())])
+        )
 
     def upperbound_as_rmsd(self) -> float:
         rn = self.rstate["""RECIPROCAL_OF_N"""]
-        return float(rn * (2 * self.upperbound() + self.autocorr()))
+        return numpy.sqrt(
+            numpy.max([0.0, rn * (2 * self.upperbound() + self.autocorr())])
+        )
 
     def sd(self) -> float:
-        return float(2 * self.upperbound() + self.autocorr())
+        return float(numpy.max([0.0, (2 * self.upperbound() + self.autocorr())]))
 
     def msd(self) -> float:
         rn = self.rstate["""RECIPROCAL_OF_N"""]

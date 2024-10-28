@@ -7,8 +7,8 @@ import numpy
 
 
 class __demo__(_demo._demo):
-    def __init__(self, **kwarg):
-        super().__init__(title="mobbRMSD basic", **kwarg)
+    def __init__(self, **kwargs):
+        super().__init__(title="mobbRMSD basic", **kwargs)
 
     def read_input(self):
         import itertools
@@ -70,7 +70,8 @@ class __demo__(_demo._demo):
         beta=1.0,
         gamma=1.0,
         zeta=0.0,
-        **kwarg,
+        shuffle=True,
+        **kwargs,
     ):
         import pprint
 
@@ -81,6 +82,7 @@ class __demo__(_demo._demo):
         b_ = float(beta)
         g_ = float(gamma)
         z_ = float(zeta)
+        shuffle_ = bool(shuffle)
 
         cogen = coord_generator()
         x, y = cogen.generate_pair(
@@ -92,6 +94,7 @@ class __demo__(_demo._demo):
             zeta=z_,
             dtype=self.prec,
             remove_com=True,
+            shuffle=shuffle_,
         )
         z = y.copy()
 

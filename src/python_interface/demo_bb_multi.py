@@ -7,8 +7,8 @@ import numpy
 
 
 class __demo__(_demo._demo):
-    def __init__(self, **kwarg):
-        super().__init__(title="Multi component system", **kwarg)
+    def __init__(self, **kwargs):
+        super().__init__(title="Multi component system", **kwargs)
 
     def read_input(self):
         import itertools
@@ -59,7 +59,14 @@ class __demo__(_demo._demo):
         return {"n_mols": n_mols, "n_apms": n_apms, "n_syms": n_syms}
 
     def demo(
-        self, n_mols=[2, 4], n_apms=[8, 3], n_syms=[1, 2], alpha=0.5, beta=1.0, **kwargs
+        self,
+        n_mols=[2, 4],
+        n_apms=[8, 3],
+        n_syms=[1, 2],
+        alpha=0.5,
+        beta=1.0,
+        shuffle=True,
+        **kwargs,
     ):
 
         molecules = []
@@ -83,10 +90,18 @@ class __demo__(_demo._demo):
             molecules += [DataclassMolecule(n_apm=n_apm, n_mol=n_mol, sym=sym)]
         a_ = float(alpha)
         b_ = float(beta)
+        shuffle_ = bool(shuffle)
 
         cogen = coord_generator()
         x, y = cogen.generate_pair(
-            n_apms_, n_mols_, alpha=a_, beta=b_, dtype=self.prec, remove_com=False
+            n_apms_,
+            n_mols_,
+            alpha=a_,
+            beta=b_,
+            dtype=self.prec,
+            remove_com=False,
+            shuffle=shuffle_,
+            **kwargs,
         )
         z = y.copy()
 

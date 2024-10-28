@@ -28,9 +28,9 @@ program main
   call test2(3)
   call test2(4)
 !
-! call test3(2)
-! call test3(3)
-! call test3(4)
+  call test3(2)
+  call test3(3)
+  call test3(4)
 !
   call test4(2)
   call test4(3)
@@ -87,13 +87,26 @@ contains
     call z%assert_almost_equal(BA, BA_, 'gemm : B^T @ A^T', place=place)
     call z%assert_almost_equal(BC, BC_, 'gemm : B^T @ C', place=place)
     call z%assert_almost_equal(DA, DA_, 'gemm : D @ A^T', place=place)
-    call z%assert_almost_equal(DC, DC_, 'gemm : C = D @ C', place=place)
+    call z%assert_almost_equal(DC, DC_, 'gemm : D @ C', place=place)
     call z%assert_almost_equal(AB, CB, 'gemm : AB = CB', place=place)
     call z%assert_almost_equal(AB, AD, 'gemm : AB = AD', place=place)
     call z%assert_almost_equal(AB, CD, 'gemm : AB = CD', place=place)
     call z%assert_almost_equal(BA, BC, 'gemm : BA = BC', place=place)
     call z%assert_almost_equal(BA, DA, 'gemm : BA = DA', place=place)
     call z%assert_almost_equal(BA, DC, 'gemm : BA = DC', place=place)
+!
+    CD = AB
+    AD = AB
+    CD = AB
+    CD_ = AB
+    AD_ = AB
+    CD_ = AB
+    BA = BC
+    BA = DA
+    BA = DC
+    BA_ = BC
+    BA_ = DA
+    BA_ = DC
 !
 #ifdef USE_REAL32
     call SGEMM("N", "N", M, N, K, 1.0_RK, A, M, B, K, 1.0_RK, AB, M)
@@ -129,13 +142,26 @@ contains
     call z%assert_almost_equal(BA, BA_, 'gemm : B^T @ A^T + E', place=place)
     call z%assert_almost_equal(BC, BC_, 'gemm : B^T @ C + E', place=place)
     call z%assert_almost_equal(DA, DA_, 'gemm : D @ A^T + E', place=place)
-    call z%assert_almost_equal(DC, DC_, 'gemm : C = D @ C + E', place=place)
+    call z%assert_almost_equal(DC, DC_, 'gemm : D @ C + E', place=place)
     call z%assert_almost_equal(AB, CB, 'gemm : AB = CB', place=place)
     call z%assert_almost_equal(AB, AD, 'gemm : AB = AD', place=place)
     call z%assert_almost_equal(AB, CD, 'gemm : AB = CD', place=place)
     call z%assert_almost_equal(BA, BC, 'gemm : BA = BC', place=place)
     call z%assert_almost_equal(BA, DA, 'gemm : BA = DA', place=place)
     call z%assert_almost_equal(BA, DC, 'gemm : BA = DC', place=place)
+!
+    CD = AB
+    AD = AB
+    CD = AB
+    CD_ = AB
+    AD_ = AB
+    CD_ = AB
+    BA = BC
+    BA = DA
+    BA = DC
+    BA_ = BC
+    BA_ = DA
+    BA_ = DC
 !
 #ifdef USE_REAL32
     call SGEMM("N", "N", M, N, K, 0.5_RK, A, M, B, K, 1.0_RK, AB, M)
@@ -171,7 +197,7 @@ contains
     call z%assert_almost_equal(BA, BA_, 'gemm : 0.5 B^T @ A^T + E', place=place)
     call z%assert_almost_equal(BC, BC_, 'gemm : 0.5 B^T @ C + E', place=place)
     call z%assert_almost_equal(DA, DA_, 'gemm : 0.5 D @ A^T + E', place=place)
-    call z%assert_almost_equal(DC, DC_, 'gemm : 0.5 C = D @ C + E', place=place)
+    call z%assert_almost_equal(DC, DC_, 'gemm : 0.5 D @ C + E', place=place)
     call z%assert_almost_equal(AB, CB, 'gemm : AB = CB', place=place)
     call z%assert_almost_equal(AB, AD, 'gemm : AB = AD', place=place)
     call z%assert_almost_equal(AB, CD, 'gemm : AB = CD', place=place)
