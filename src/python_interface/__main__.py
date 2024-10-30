@@ -8,46 +8,60 @@ def command_run(args):
     import numpy
     import json
     import mdtraj
+    from pathlib import Path
     from ._mobbrmsd import DataclassMolecule, mobbrmsd
 
     prms = {**args.params}
-    try:
-        with open(args.inp[0], "r") as f:
+    if args.inp is not None:
+        try:
+            with open(args.inp[0], "r") as f:
+                try:
+                    prms = {**json.load(f), **prms}
+                except:
+                    print(f"Warning : load json [{args.inp[0]}] is failed.")
+                    pass
+        except:
+            print(f"Warning : open json [{args.inp[0]}] is failed.")
+            pass
+
+    if "molecules" in prms:
+        if isinstance(prms["molecules"], str):
+            molecules = [
+                DataclassMolecule(**mol) for mol in json.loads(prms["molecules"])
+            ]
+        else:
+            molecules = [DataclassMolecule(**mol) for mol in prms["molecules"]]
+    else:
+        molecules = [DataclassMolecule(n_mol=1, n_apm=-1)]
+
+    def parse_coordinate(obj, top, dtype):
+
+        if obj is None:
+            return None
+
+        if isinstance(obj, str):
             try:
-                prms = {**json.load(f), **prms}
+                ref = mdtraj.load(obj, topology=top).xyz * 10.0
+                if dtype != numpy.float32:
+                    ref = numpy.array(ref, dtype=dtype)
             except:
-                print(f"Warning : load json [{args.inp[0]}] is failed.")
-                pass
-    except:
-        print(f"Warning : open json [{args.inp[0]}] is failed.")
-        pass
-
-    molecules = (
-        [DataclassMolecule(**mol) for mol in prms["molecules"]]
-        if ("molecules" in prms)
-        else [DataclassMolecule(n_mol=1, n_apm=-1)]
-    )
-
-    if "coordinates" in prms:
-        if "top" in prms:
-            ref = mdtraj.load(prms["coordinates"], topology=prms["top"]).xyz * 10.0
+                try:
+                    ref = numpy.array(json.loads(obj), dtype=dtype)
+                except:
+                    raise IOError
         else:
-            ref = mdtraj.load(prms["coordinates"]).xyz * 10.0
-    else:
+            try:
+                ref = numpy.array(obj, dtype=dtype)
+            except:
+                raise IOError
+        return ref
+
+    top = prms.get("top")
+    dtype = numpy.float32 if prms.get("precision") == "single" else numpy.float64
+    ref = parse_coordinate(prms.get("reference"), top, dtype)
+    trg = parse_coordinate(prms.get("target"), top, dtype)
+    if ref is None:
         raise IOError
-
-    if "target" in prms:
-        if "top" in prms:
-            trg = mdtraj.load(prms["target"], topology=prms["top"]).xyz * 10.0
-        else:
-            trg = mdtraj.load(prms["target"]).xyz * 10.0
-    else:
-        trg = None
-
-    if prms["precision"] == "double" if "precision" in prms else False:
-        ref = numpy.array(ref, dtype=numpy.float64)
-        if trg is not None:
-            trg = numpy.array(trg, dtype=numpy.float64)
 
     mrmsd = mobbrmsd(molecules=molecules)
     if trg is None:
@@ -132,8 +146,10 @@ def main():
 
     parser_run = sub.add_parser("run", help="run mobbrmsd")
     parser_run.add_argument(
-        "inp",
+        "-i",
+        "--inp",
         nargs=1,
+        default=None,
         help="Input file (json)",
     )
     parser_run.add_argument(

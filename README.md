@@ -76,6 +76,11 @@ Calculate molecular-oriented RMSD with branch-and-bound.
    python -m mobbrmsd demo
    ```
 
+   Running demonstrations via
+   ```sh
+   python -m mobbrmsd run
+   ```
+
 ### Prerequisites
 
 * gfortran >= 9.4.0
@@ -98,6 +103,7 @@ To use the Python interface, you additionally need the following:
 
 - [ ] Add Usage
 - [x] Enable autovariance sorting
+- [ ] Enable block tree
 - [ ] Compatible with compilers (intel)
 - [x] Compatible with compilers (nv)
 - [ ] Add detail documentation
