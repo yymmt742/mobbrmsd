@@ -1,5 +1,5 @@
 import argparse
-from .dataclass import molecules, molecular_system
+from .dataclass import molecules, molecular_system, load
 from ._mobbrmsd import mobbrmsd
 from importlib.metadata import version
 
@@ -24,16 +24,6 @@ def command_run(args):
         except:
             print(f"Warning : open json [{args.inp[0]}] is failed.")
             pass
-
-    if "molecules" in prms:
-        if isinstance(prms["molecules"], str):
-            mols = molecular_system(
-                mols=[molecules(**mol) for mol in json.loads(prms["molecules"])]
-            )
-        else:
-            mols = [molecules(**mol) for mol in prms["molecules"]]
-    else:
-        mols = [molecules(n_mol=1, n_apm=-1)]
 
     def parse_coordinate(obj, top, dtype):
 
@@ -64,7 +54,9 @@ def command_run(args):
     if ref is None:
         raise IOError
 
-    mrmsd = mobbrmsd(molecules=molecules)
+    mols = load(prms.get("molecules"))
+
+    mrmsd = mobbrmsd(mols=mols)
     if trg is None:
         ret = mrmsd.batch_run(ref, **prms)
     else:
