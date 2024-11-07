@@ -95,34 +95,44 @@ if(SKBUILD)
     endforeach()
   endforeach()
 
-  add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/_mobbrmsd.py
-      COMMAND ${Python_EXECUTABLE}
-      ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.py
-      ${CMAKE_CURRENT_SOURCE_DIR}/_mobbrmsd.py
-      > ${CMAKE_CURRENT_BINARY_DIR}/_mobbrmsd.py 2>&1
+  function(PREPROC_PYTHON list newlist py)
+    add_custom_command(
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${py}.py
+        COMMAND ${Python_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.py
+        ${CMAKE_CURRENT_SOURCE_DIR}/${py}.py
+        > ${CMAKE_CURRENT_BINARY_DIR}/${py}.py 2>&1
       )
-  add_custom_target(_mobbrmsd_py ALL
-    DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.py
-    ${CMAKE_CURRENT_SOURCE_DIR}/_mobbrmsd.py
-    ${CMAKE_CURRENT_BINARY_DIR}/_mobbrmsd.py
-    )
+    add_custom_target(${py} ALL
+      DEPENDS
+      ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.py
+      ${CMAKE_CURRENT_SOURCE_DIR}/${py}.py
+      ${CMAKE_CURRENT_BINARY_DIR}/${py}.py
+      )
+    set(list_)
+    foreach(t IN LISTS list)
+      list(APPEND list_ ${t})
+    endforeach()
+    list(APPEND list_ ${CMAKE_CURRENT_BINARY_DIR}/${py}.py)
+    set(${newlist} ${list_} PARENT_SCOPE)
+  endfunction(PREPROC_PYTHON)
+
+  PREPROC_PYTHON("${python_files}" python_files _mobbrmsd)
+  PREPROC_PYTHON("${python_files}" python_files _demo.py)
+  PREPROC_PYTHON("${python_files}" python_files coord_generator)
+  PREPROC_PYTHON("${python_files}" python_files demo_cogen)
+  PREPROC_PYTHON("${python_files}" python_files demo_bb)
+  PREPROC_PYTHON("${python_files}" python_files demo_bb_2d)
+  PREPROC_PYTHON("${python_files}" python_files demo_bb_multi)
+  PREPROC_PYTHON("${python_files}" python_files demo_mst)
+  PREPROC_PYTHON("${python_files}" python_files demo_batch)
+  PREPROC_PYTHON("${python_files}" python_files demo_batch_tri)
+  PREPROC_PYTHON("${python_files}" python_files __init__)
+  PREPROC_PYTHON("${python_files}" python_files __main__)
   install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/_mobbrmsd.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/__main__.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/_demo.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/coord_generator.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/demo_cogen.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/demo_bb.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/demo_bb_2d.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/demo_bb_multi.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/demo_mst.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/demo_batch.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/demo_batch_tri.py"
+    ${python_files}
     DESTINATION ${SKBUILD_PLATLIB_DIR}/mobbrmsd
-    )
+  )
 endif()
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
