@@ -1,6 +1,5 @@
 import argparse
 from .dataclass import molecules, molecular_system, load
-from ._mobbrmsd import mobbrmsd
 from importlib.metadata import version
 
 __version__ = version(__package__)
@@ -10,6 +9,7 @@ def command_run(args):
     import numpy
     import json
     import mdtraj
+    from .mobbrmsd import mobbrmsd
     from pathlib import Path
 
     prms = {**args.params}
@@ -54,7 +54,7 @@ def command_run(args):
     if ref is None:
         raise IOError
 
-    mols = load(prms.get("molecules"))
+    mols = load(prms)
 
     mrmsd = mobbrmsd(mols=mols)
     if trg is None:

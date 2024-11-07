@@ -119,7 +119,7 @@ if(SKBUILD)
     set(${newlist} ${list_} PARENT_SCOPE)
   endfunction(PREPROC_PYTHON)
 
-  PREPROC_PYTHON("${python_files}" python_files _mobbrmsd)
+  PREPROC_PYTHON("${python_files}" python_files mobbrmsd)
   PREPROC_PYTHON("${python_files}" python_files dataclass)
   PREPROC_PYTHON("${python_files}" python_files __init__)
   PREPROC_PYTHON("${python_files}" python_files __main__)

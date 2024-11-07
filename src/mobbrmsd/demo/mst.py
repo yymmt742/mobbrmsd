@@ -1,7 +1,7 @@
 from . import _demo
 from ._coord_generator import coord_generator
 from ..dataclass import molecules, molecular_system
-from .._mobbrmsd import mobbrmsd
+from ..mobbrmsd import mobbrmsd
 import sys
 import numpy
 import networkx
