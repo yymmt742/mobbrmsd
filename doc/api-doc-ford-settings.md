@@ -7,6 +7,7 @@ exclude_dir: ./../src/mobbrmsd/lapack/test
 exclude_dir: ./../src/mobbrmsd/lapack/lapack_routine
 exclude_dir: ./../src/mobbrmsd/test
 src_dir: ./../src/mobbrmsd
+src_dir: ./../src/python_interface
 favicon: ./../images/favicon.png
 graph: true
 coloured_edges: true
