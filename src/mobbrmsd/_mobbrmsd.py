@@ -122,7 +122,7 @@ class mobbrmsd_result:
     #                  maxeval < 0 のとき、無制限。
     #                  default -1
     #   difflim_absolute (bool): True なら difflim を RMSD 換算の絶対値で用いる。 default False
-    # @return mobbrmsd_result
+    # @return None
     def restart(
         self,
         cutoff: float = float("inf"),
@@ -320,13 +320,13 @@ class mobbrmsd:
         del driver
 
     ##
-    # @brief mobbRMSD
-    # @details mobbRMSD を計算する。
+    # @brief rmsd
+    # @details RMSD を計算する。
     # @param
     #   x (numpy.ndarray): 参照構造
     #   y (numpy.ndarray): 対照構造
     # @return float
-    def mobbrmsd(
+    def rmsd(
         self,
         x: npt.NDArray,
         y: npt.NDArray,
@@ -362,7 +362,7 @@ class mobbrmsd:
 
     ##
     # @brief general runner
-    # @details mobbRMSD を計算する。
+    # @details RMSD を計算する。
     #   RMSD の他に自己相関、BBの上下限、分子の置換インデックス、回転行列、再計算用情報を返す。
     # @param
     #   x (numpy.ndarray): 参照構造
