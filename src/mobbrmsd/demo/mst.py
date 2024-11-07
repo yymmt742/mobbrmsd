@@ -1,15 +1,13 @@
-from . import __version__
-from . import coord_generator
-from . import mobbrmsd
 from . import _demo
-from ._mobbrmsd import *
+from .._mobbrmsd import mobbrmsd, DataclassMolecule
+from .coord_generator import coord_generator
 import sys
 import numpy
 import networkx
 import matplotlib.pyplot as plt
 
 
-class __demo__(_demo._demo):
+class __demo(_demo._demo):
     def __init__(self, **kwarg):
         super().__init__(title="Minimum spanning tree", **kwarg)
 
@@ -48,8 +46,6 @@ class __demo__(_demo._demo):
         b=1.0,
         **kwargs,
     ):
-        import pprint
-
         def print_ret(i, j, ret, g):
             ev, er, ub, lb, df = (
                 ret.n_eval,

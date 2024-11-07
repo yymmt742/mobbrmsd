@@ -1,12 +1,11 @@
-from . import __version__
 from . import _demo
 from .coord_generator import coord_generator
-from ._mobbrmsd import *
+from .._mobbrmsd import mobbrmsd, DataclassMolecule
 import sys
 import numpy
 
 
-class __demo__(_demo._demo):
+class __demo(_demo._demo):
     def __init__(self, **kwargs):
         super().__init__(title="mobbRMSD basic", **kwargs)
 

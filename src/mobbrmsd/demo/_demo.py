@@ -1,7 +1,9 @@
+from . import __version__
 import time
 import numpy
 import pprint
 import sys
+import pick
 
 bar1 = (
     "  ------------------------------------------------------------------------------"

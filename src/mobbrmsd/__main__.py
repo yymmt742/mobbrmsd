@@ -1,4 +1,5 @@
 import argparse
+from ._mobbrmsd import DataclassMolecule, mobbrmsd
 from importlib.metadata import version
 
 __version__ = version(__package__)
@@ -9,7 +10,6 @@ def command_run(args):
     import json
     import mdtraj
     from pathlib import Path
-    from ._mobbrmsd import DataclassMolecule, mobbrmsd
 
     prms = {**args.params}
     if args.inp is not None:
@@ -76,28 +76,28 @@ def command_run(args):
 
 
 def command_demo(args):
-    from . import demo_cogen
-    from . import demo_bb
-    from . import demo_bb_2d
-    from . import demo_bb_multi
-    from . import demo_batch
-    from . import demo_batch_tri
-    from . import demo_mst
     import numpy
     import pick
+    from .demo import cogen
+    from .demo import bb
+    from .demo import bb_2d
+    from .demo import bb_multi
+    from .demo import batch
+    from .demo import batch_tri
+    from .demo import mst
 
     no = -1 if (args.no is None) else args.no - 1
     prec = numpy.float32 if args.single else numpy.float64
     cli = args.cli
 
     demo_list = [
-        demo_cogen.__demo__(cli=cli, prec=prec),
-        demo_bb.__demo__(cli=cli, prec=prec),
-        demo_bb_2d.__demo__(cli=cli, prec=prec),
-        demo_bb_multi.__demo__(cli=cli, prec=prec),
-        demo_batch.__demo__(cli=cli, prec=prec),
-        demo_batch_tri.__demo__(cli=cli, prec=prec),
-        demo_mst.__demo__(cli=cli, prec=prec),
+        cogen.__demo(cli=cli, prec=prec),
+        bb.__demo(cli=cli, prec=prec),
+        bb_2d.__demo(cli=cli, prec=prec),
+        bb_multi.__demo(cli=cli, prec=prec),
+        batch.__demo(cli=cli, prec=prec),
+        batch_tri.__demo(cli=cli, prec=prec),
+        mst.__demo(cli=cli, prec=prec),
     ]
 
     if (no < 0) or len(demo_list) <= no:

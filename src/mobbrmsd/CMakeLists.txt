@@ -95,17 +95,19 @@ if(SKBUILD)
     endforeach()
   endforeach()
 
+  set(preprocessor ${CMAKE_CURRENT_SOURCE_DIR}/../preprocessor.py)
+
   function(PREPROC_PYTHON list newlist py)
     add_custom_command(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${py}.py
         COMMAND ${Python_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.py
+        ${preprocessor}
         ${CMAKE_CURRENT_SOURCE_DIR}/${py}.py
         > ${CMAKE_CURRENT_BINARY_DIR}/${py}.py 2>&1
       )
     add_custom_target(${py} ALL
       DEPENDS
-      ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.py
+      ${preprocessor}
       ${CMAKE_CURRENT_SOURCE_DIR}/${py}.py
       ${CMAKE_CURRENT_BINARY_DIR}/${py}.py
       )
@@ -118,21 +120,14 @@ if(SKBUILD)
   endfunction(PREPROC_PYTHON)
 
   PREPROC_PYTHON("${python_files}" python_files _mobbrmsd)
-  PREPROC_PYTHON("${python_files}" python_files _demo)
   PREPROC_PYTHON("${python_files}" python_files coord_generator)
-  PREPROC_PYTHON("${python_files}" python_files demo_cogen)
-  PREPROC_PYTHON("${python_files}" python_files demo_bb)
-  PREPROC_PYTHON("${python_files}" python_files demo_bb_2d)
-  PREPROC_PYTHON("${python_files}" python_files demo_bb_multi)
-  PREPROC_PYTHON("${python_files}" python_files demo_mst)
-  PREPROC_PYTHON("${python_files}" python_files demo_batch)
-  PREPROC_PYTHON("${python_files}" python_files demo_batch_tri)
   PREPROC_PYTHON("${python_files}" python_files __init__)
   PREPROC_PYTHON("${python_files}" python_files __main__)
   install(FILES
     ${python_files}
     DESTINATION ${SKBUILD_PLATLIB_DIR}/mobbrmsd
   )
+  add_subdirectory(demo)
 endif()
 
 if( CMAKE_BUILD_TYPE MATCHES "Debug" )
