@@ -1,6 +1,7 @@
 from . import _demo
-from .coord_generator import coord_generator
-from .._mobbrmsd import mobbrmsd, DataclassMolecule
+from ._coord_generator import coord_generator
+from ..dataclass import molecules, molecular_system
+from .._mobbrmsd import mobbrmsd
 import sys
 import numpy
 
@@ -68,12 +69,10 @@ class __demo(_demo._demo):
         alpha=0.8,
         beta=1.0,
         gamma=1.0,
-        zeta=0.0,
+        zeta=0.2,
         shuffle=True,
         **kwargs,
     ):
-        import pprint
-
         n_mol_ = int(n_mol)
         n_apm_ = int(n_apm)
         sym = _demo.generate_sym_indices(n_apm_, int(n_sym))
@@ -97,11 +96,12 @@ class __demo(_demo._demo):
         )
         z = y.copy()
 
-        molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
+        mols = molecules(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
         _demo.print_system(
-            [molecules], title="Demonstration of mobbRMSD with random coordinates"
+            molecular_system([mols]),
+            title="Demonstration of mobbRMSD with random coordinates",
         )
-        mrmsd = mobbrmsd(molecules=molecules)
+        mrmsd = mobbrmsd(mols=mols)
 
         ub, lb = numpy.inf, -numpy.inf
         ret = mrmsd.run(x, y, maxeval=0, get_rotation=True)

@@ -120,6 +120,7 @@ if(SKBUILD)
   endfunction(PREPROC_PYTHON)
 
   PREPROC_PYTHON("${python_files}" python_files _mobbrmsd)
+  PREPROC_PYTHON("${python_files}" python_files dataclass)
   PREPROC_PYTHON("${python_files}" python_files __init__)
   PREPROC_PYTHON("${python_files}" python_files __main__)
   install(FILES

@@ -2,24 +2,7 @@ import numpy
 import numpy.typing as npt
 import networkx
 from tqdm import trange
-import dataclasses
-
-
-##
-# @class DataclassMolecule
-# @brief 分子集合体のデータクラス
-# @details n_apm : number of atoms per molecule.
-#          n_mol : number of molecules.
-#          sym : intramolecular atomic permutation. (optional)
-#          name : name of chemical species. (optional)
-
-
-@dataclasses.dataclass(frozen=True)
-class DataclassMolecule:
-    n_apm: int
-    n_mol: int
-    sym: None | list = None
-    name: str = ""
+from .dataclass import molecules, molecular_system
 
 
 ##
@@ -45,8 +28,8 @@ class mobbrmsd_result:
         self.d = d
 
         if (istate is None) or (rstate is None):
-            self.istate = numpy.array(["""DEFAULT_ISTATE"""])
-            self.rstate = numpy.array(["""DEFAULT_RSTATE"""])
+            self.istate = numpy.array([0])
+            self.rstate = numpy.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         else:
             self.istate = istate.copy()
             self.rstate = rstate.copy()
@@ -60,22 +43,22 @@ class mobbrmsd_result:
             self.w = w.copy()
 
     def autocorr(self) -> float:
-        return float(self.rstate["""INDEX_TO_AUTOCORR"""])
+        return float(self.rstate[1])
 
     def lowerbound(self) -> float:
-        return float(self.rstate["""INDEX_TO_LOWERBOUND"""])
+        return float(self.rstate[3])
 
     def upperbound(self) -> float:
-        return float(self.rstate["""INDEX_TO_UPPERBOUND"""])
+        return float(self.rstate[2])
 
     def lowerbound_as_rmsd(self) -> float:
-        rn = self.rstate["""RECIPROCAL_OF_N"""]
+        rn = self.rstate[0]
         return numpy.sqrt(
             numpy.max([0.0, rn * (2 * self.lowerbound() + self.autocorr())])
         )
 
     def upperbound_as_rmsd(self) -> float:
-        rn = self.rstate["""RECIPROCAL_OF_N"""]
+        rn = self.rstate[0]
         return numpy.sqrt(
             numpy.max([0.0, rn * (2 * self.upperbound() + self.autocorr())])
         )
@@ -84,7 +67,7 @@ class mobbrmsd_result:
         return float(numpy.max([0.0, (2 * self.upperbound() + self.autocorr())]))
 
     def msd(self) -> float:
-        rn = self.rstate["""RECIPROCAL_OF_N"""]
+        rn = self.rstate[0]
         return float(rn * self.sd())
 
     def rmsd(self) -> float:
@@ -94,20 +77,20 @@ class mobbrmsd_result:
         return numpy.array([self.lowerbound(), self.upperbound()])
 
     def bounds_as_rmsd(self) -> npt.NDArray:
-        rn = self.rstate["""RECIPROCAL_OF_N"""]
+        rn = self.rstate[0]
         return rn * (2 * self.bounds() + self.autocorr())
 
     def n_eval(self) -> int:
-        return int(self.rstate["""INDEX_TO_N_EVAL"""])
+        return int(self.rstate[4])
 
     def log_eval_ratio(self) -> float:
-        return self.rstate["""INDEX_TO_LOG_RATIO"""]
+        return self.rstate[5]
 
     def eval_ratio(self) -> float:
         return numpy.exp(self.log_eval_ratio())
 
     def is_finished(self) -> bool:
-        return self.istate[-1] == ("""IS_FINISHED_FLAG""")
+        return self.istate[-1] == (0)
 
     def __repr__(self):
         kws = [f"{key}={value!r}" for key, value in self.__dict__.items()]
@@ -288,46 +271,43 @@ class mobbrmsd:
     ##
     # @brief initializer
     # @details initializer
-    # @param molecules (DataclassMolecule か DataclassMolecule のリスト): 系の分子
+    # @param mols (molecules | molecular_system): 系の分子
     #        d(int): Spatial dimension. default=3.
     # @return None
     def __init__(
         self,
-        molecules: DataclassMolecule | list[DataclassMolecule] = DataclassMolecule(
-            1, 1
-        ),
+        mols: molecules | molecular_system = molecules(1, 1),
         d: int = 3,
     ) -> None:
 
-        self.molecules = molecules
-        molecular_sequence = []
+        self.mols = mols
 
-        def add_molecule(mol: DataclassMolecule):
-            ret = [mol.n_apm, mol.n_mol]
-            if mol.sym is None:
+        def add_molecule(m: molecules):
+            ret = [m.n_apm, m.n_mol]
+            if m.sym is None:
                 ret += [1]
             else:
-                sym = numpy.array(mol.sym, dtype=numpy.int32) + 1
+                sym = numpy.array(m.sym, dtype=numpy.int32) + 1
                 if sym.ndim == 1:
-                    if sym.shape[0] != 0 and sym.shape[0] != mol.n_apm:
+                    if sym.shape[0] != 0 and sym.shape[0] != m.n_apm:
                         raise ValueError
                 elif sym.ndim == 2:
-                    if sym.shape[1] != mol.n_apm:
+                    if sym.shape[1] != m.n_apm:
                         raise ValueError
                 ret += [sym.shape[0] + 1] + sym.flatten().tolist()
             return ret
 
-        if type(molecules) is list:
-            for mol in molecules:
-                molecular_sequence += add_molecule(mol)
-        elif type(molecules) is DataclassMolecule:
-            molecular_sequence += add_molecule(molecules)
+        ms = []
+        if type(mols) is molecular_system:
+            for m in mols.mols:
+                ms += add_molecule(m)
+        elif type(mols) is molecules:
+            ms += add_molecule(mols)
         else:
             raise ValueError
 
         driver = select_driver(d, dtype=None)
-
-        att = driver.decode_attributes(molecular_sequence)
+        att = driver.decode_attributes(ms)
         self.d = att[0]
         self.natom = att[1]
         self.n_header = att[2]
@@ -336,7 +316,7 @@ class mobbrmsd:
         self.n_rot = att[5]
         self.memsize = att[6]
         self.njob = att[7]
-        self.header = driver.decode_header(molecular_sequence, self.n_header)
+        self.header = driver.decode_header(ms, self.n_header)
         del driver
 
     ##

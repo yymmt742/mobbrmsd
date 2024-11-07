@@ -1,5 +1,6 @@
 import argparse
-from ._mobbrmsd import DataclassMolecule, mobbrmsd
+from .dataclass import molecules, molecular_system
+from ._mobbrmsd import mobbrmsd
 from importlib.metadata import version
 
 __version__ = version(__package__)
@@ -26,13 +27,13 @@ def command_run(args):
 
     if "molecules" in prms:
         if isinstance(prms["molecules"], str):
-            molecules = [
-                DataclassMolecule(**mol) for mol in json.loads(prms["molecules"])
-            ]
+            mols = molecular_system(
+                mols=[molecules(**mol) for mol in json.loads(prms["molecules"])]
+            )
         else:
-            molecules = [DataclassMolecule(**mol) for mol in prms["molecules"]]
+            mols = [molecules(**mol) for mol in prms["molecules"]]
     else:
-        molecules = [DataclassMolecule(n_mol=1, n_apm=-1)]
+        mols = [molecules(n_mol=1, n_apm=-1)]
 
     def parse_coordinate(obj, top, dtype):
 

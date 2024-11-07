@@ -1,6 +1,7 @@
 from . import _demo
-from .._mobbrmsd import mobbrmsd, DataclassMolecule
-from .coord_generator import coord_generator
+from ._coord_generator import coord_generator
+from ..dataclass import molecules, molecular_system
+from .._mobbrmsd import mobbrmsd
 import sys
 import numpy
 import pprint
@@ -96,13 +97,13 @@ class __demo(_demo._demo):
         for i in range(n_target_ - 1):
             x[i + 1] = (1.0 - r_) * x[i + 1] + r_ * x[i]
 
-        molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
+        mols = molecules(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
         _demo.print_system(
-            [molecules],
+            molecular_system([mols]),
             title="Demonstration of batch mobbrmsd triangle run (with OpenMP)",
         )
 
-        mrmsd = mobbrmsd(molecules=molecules)
+        mrmsd = mobbrmsd(mols=mols)
         rmsds = mrmsd.batch_run(x)
         del mrmsd
 

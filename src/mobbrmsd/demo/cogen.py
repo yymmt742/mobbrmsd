@@ -1,5 +1,5 @@
 from . import _demo
-from .coord_generator import coord_generator
+from ._coord_generator import coord_generator
 import sys
 import numpy
 import pprint
