@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""mobbrmsd ドライバールーチン
+
+   class mobbrmsd_result:
+
+"""
+
 import numpy
 import numpy.typing as npt
 import networkx
@@ -5,13 +12,12 @@ from tqdm import trange
 from .dataclass import molecules, molecular_system
 
 
-##
-# @class mobbrmsd_result
-# @brief mobbrmsd の状態と結果を管理するクラス
-# @details X.
-
-
 class mobbrmsd_result:
+    """mobbrmsd の計算結果と再計算用のメモリを管理するクラス
+
+    mobbrmsd の計算結果、再計算用のメモリを管理するクラス
+
+    """
 
     def __init__(
         self,
@@ -23,6 +29,25 @@ class mobbrmsd_result:
         rot: None | npt.NDArray,
         w: None | npt.NDArray = None,
     ) -> None:
+        """initializer
+
+        initializer
+
+        :param driver: fortran driver
+        :param d: spatial dimension
+        :type d: int
+        :param header: header array
+        :type header: npt.NDArray
+        :param istate: state array 1
+        :type istate: None | npt.NDArray
+        :param rstate: state array 2
+        :type rstate: None | npt.NDArray (float32/float64)
+        :param rot: rotation matrix
+        :type rot: None | npt.NDArray, shape[d,d] (float32/float64)
+        :param w: working memory
+        :type w: None | npt.NDArray (float32/float64)
+        :return None
+        """
 
         self.header = header.copy()
         self.d = d
