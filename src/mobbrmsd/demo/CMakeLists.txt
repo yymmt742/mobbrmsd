@@ -1,5 +1,6 @@
 set(python_files)
 PREPROC_PYTHON("${python_files}" python_files _demo)
+PREPROC_PYTHON("${python_files}" python_files coord_generator)
 PREPROC_PYTHON("${python_files}" python_files cogen)
 PREPROC_PYTHON("${python_files}" python_files bb)
 PREPROC_PYTHON("${python_files}" python_files bb_2d)
