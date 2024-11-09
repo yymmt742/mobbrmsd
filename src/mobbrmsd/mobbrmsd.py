@@ -44,8 +44,8 @@ class mobbrmsd_result:
         self.d = d
 
         if (istate is None) or (rstate is None):
-            self.istate = numpy.array([0])
-            self.rstate = numpy.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+            self.istate = numpy.array(["""DEFAULT_ISTATE"""])
+            self.rstate = numpy.array(["""DEFAULT_RSTATE"""])
         else:
             self.istate = istate.copy()
             self.rstate = rstate.copy()
@@ -64,7 +64,7 @@ class mobbrmsd_result:
         :return: 自己相関項.
         :rtype: float
         """
-        return float(self.rstate[1])
+        return float(self.rstate["""INDEX_TO_AUTOCORR"""])
 
     def lowerbound(self) -> float:
         """目的関数の変分下限.
@@ -72,7 +72,7 @@ class mobbrmsd_result:
         :return: 変分下限.
         :rtype: float
         """
-        return float(self.rstate[3])
+        return float(self.rstate["""INDEX_TO_LOWERBOUND"""])
 
     def upperbound(self) -> float:
         """目的関数の上限.
@@ -80,7 +80,7 @@ class mobbrmsd_result:
         :return: 変分上限.
         :rtype: float
         """
-        return float(self.rstate[2])
+        return float(self.rstate["""INDEX_TO_UPPERBOUND"""])
 
     def lowerbound_as_rmsd(self) -> float:
         """RMSD 換算された変分下限.
@@ -88,7 +88,7 @@ class mobbrmsd_result:
         :return: RMSD 換算された変分下限.
         :rtype: float
         """
-        rn = self.rstate[0]
+        rn = self.rstate["""RECIPROCAL_OF_N"""]
         return numpy.sqrt(
             numpy.max([0.0, rn * (2 * self.lowerbound() + self.autocorr())])
         )
@@ -99,7 +99,7 @@ class mobbrmsd_result:
         :return: RMSD 換算された上限.
         :rtype: float
         """
-        rn = self.rstate[0]
+        rn = self.rstate["""RECIPROCAL_OF_N"""]
         return numpy.sqrt(
             numpy.max([0.0, rn * (2 * self.upperbound() + self.autocorr())])
         )
@@ -120,7 +120,7 @@ class mobbrmsd_result:
         :return: 平均二乗変位.
         :rtype: float
         """
-        rn = self.rstate[0]
+        rn = self.rstate["""RECIPROCAL_OF_N"""]
         return float(rn * self.sd())
 
     def rmsd(self) -> float:
@@ -146,7 +146,7 @@ class mobbrmsd_result:
         :return: lowerbound, upperbound
         :rtype: npt.NDArray
         """
-        rn = self.rstate[0]
+        rn = self.rstate["""RECIPROCAL_OF_N"""]
         return rn * (2 * self.bounds() + self.autocorr())
 
     def n_eval(self) -> int:
@@ -155,7 +155,7 @@ class mobbrmsd_result:
         :return: 計算回数.
         :rtype: int
         """
-        return int(self.rstate[4])
+        return int(self.rstate["""INDEX_TO_N_EVAL"""])
 
     def log_eval_ratio(self) -> float:
         """全探索に対する、計算回数の割合の対数.
@@ -163,7 +163,7 @@ class mobbrmsd_result:
         :return: 計算回数の割合の対数.
         :rtype: float
         """
-        return self.rstate[5]
+        return self.rstate["""INDEX_TO_LOG_RATIO"""]
 
     def eval_ratio(self) -> float:
         """全探索に対する、計算回数の割合.
@@ -179,7 +179,7 @@ class mobbrmsd_result:
         :return: 探索が完了しているならTrue.
         :rtype: bool
         """
-        return self.istate[-1] == (0)
+        return self.istate[-1] == ("""IS_FINISHED_FLAG""")
 
     def restart(
         self,
@@ -374,12 +374,12 @@ class mobbrmsd:
         driver = _select_driver(d, dtype=None)
         att = driver.decode_attributes(ms)
         self.d = att[0]
-        self.natom = att[1]
-        self.n_header = att[2]
-        self.n_int = att[3]
-        self.n_float = att[4]
-        self.n_rot = att[5]
-        self.memsize = att[6]
+        self.natom = att["""INDEX_TO_AUTOCORR"""]
+        self.n_header = att["""INDEX_TO_UPPERBOUND"""]
+        self.n_int = att["""INDEX_TO_LOWERBOUND"""]
+        self.n_float = att["""INDEX_TO_N_EVAL"""]
+        self.n_rot = att["""INDEX_TO_LOG_RATIO"""]
+        self.memsize = att["""INDEX_TO_ROTMAT"""]
         self.njob = att[7]
         self.header = driver.decode_header(ms, self.n_header)
         del driver
@@ -424,7 +424,18 @@ class mobbrmsd:
             False,  # get_rotation
         )  # returns (int_states, float_states, rotation)
 
-        ret = driver.rmsd(rret)
+        ret = numpy.sqrt(
+            rret["""RECIPROCAL_OF_N"""]
+            * numpy.max(
+                [
+                    0.0,
+                    (
+                        rret["""INDEX_TO_AUTOCORR"""]
+                        + 2 * rret["""INDEX_TO_UPPERBOUND"""]
+                    ),
+                ]
+            )
+        )
         del driver, w, ropts, iopts
         return ret
 
