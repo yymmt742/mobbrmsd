@@ -111,7 +111,11 @@ class mobbrmsd_result:
         :return: 二乗変位.
         :rtype: float
         """
-        return float(numpy.max([0.0, (2 * self.upperbound() + self.autocorr())]))
+        ret = float(2 * self.upperbound() + self.autocorr())
+        if ret < 0.0:
+            return 0.0
+        else:
+            return ret
 
     def msd(self) -> float:
         """平均二乗変位.
@@ -374,12 +378,12 @@ class mobbrmsd:
         driver = _select_driver(d, dtype=None)
         att = driver.decode_attributes(ms)
         self.d = att[0]
-        self.natom = att["""INDEX_TO_AUTOCORR"""]
-        self.n_header = att["""INDEX_TO_UPPERBOUND"""]
-        self.n_int = att["""INDEX_TO_LOWERBOUND"""]
-        self.n_float = att["""INDEX_TO_N_EVAL"""]
-        self.n_rot = att["""INDEX_TO_LOG_RATIO"""]
-        self.memsize = att["""INDEX_TO_ROTMAT"""]
+        self.natom = att[1]
+        self.n_header = att[2]
+        self.n_int = att[3]
+        self.n_float = att[4]
+        self.n_rot = att[5]
+        self.memsize = att[6]
         self.njob = att[7]
         self.header = driver.decode_header(ms, self.n_header)
         del driver
@@ -400,23 +404,19 @@ class mobbrmsd:
         :rtype: float
         """
         dt = _select_dtype(x, y)
-        x_ = self.to_rank2_coordinates(x, dtype=dt)
-        y_ = self.to_rank2_coordinates(y, dtype=dt)
         driver = _select_driver(self.d, dtype=dt)
         w = numpy.empty(self.memsize, dtype=dt)
-        ropts = numpy.array([float("inf"), 0.0], dtype=dt)
-        iopts = numpy.array([-1], dtype=numpy.int32)
 
         _, rret, _ = driver.run(
             self.n_int,  # n_int
             self.n_float,  # n_float
             self.n_rot,  # n_rot
             self.header,  # header
-            x_,  # X
-            y_,  # Y
+            self.to_rank2_coordinates(x, dtype=dt),  # X
+            self.to_rank2_coordinates(y, dtype=dt),  # Y
             w,  # W
-            ropts,  # ropts
-            iopts,  # iopts
+            numpy.array([float("inf"), float("inf"), 0.0], dtype=dt),  # ropts
+            numpy.array([-1], dtype=numpy.int32),  # iopts
             True,  # remove_com
             True,  # sort_by_g
             False,  # difflim_absolute
@@ -424,19 +424,12 @@ class mobbrmsd:
             False,  # get_rotation
         )  # returns (int_states, float_states, rotation)
 
-        ret = numpy.sqrt(
-            rret["""RECIPROCAL_OF_N"""]
-            * numpy.max(
-                [
-                    0.0,
-                    (
-                        rret["""INDEX_TO_AUTOCORR"""]
-                        + 2 * rret["""INDEX_TO_UPPERBOUND"""]
-                    ),
-                ]
-            )
-        )
-        del driver, w, ropts, iopts
+        ret = rret["""INDEX_TO_AUTOCORR"""] + 2 * rret["""INDEX_TO_UPPERBOUND"""]
+        if ret < 0.0:
+            ret = 0.0
+        else:
+            ret = numpy.sqrt(rret["""RECIPROCAL_OF_N"""] * ret)
+        del driver, w
         return ret
 
     def run(
@@ -807,14 +800,14 @@ class mobbrmsd:
         return numpy.asfortranarray(x, dtype=dtype).flatten()
 
     def __del__(self):
-        if hasattr(self, "molecules"):
-            del self.molecules
+        if hasattr(self, "mols"):
+            del self.mols
         if hasattr(self, "att"):
             del self.att
 
     def __str__(self):
         kws = [
-            f"molecules={self.molecules}",
+            f"mols={self.mols}",
             f"d={self.d}",
         ]
         return "{}({})".format(type(self).__name__, ", ".join(kws))
