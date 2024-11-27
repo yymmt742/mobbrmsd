@@ -1,15 +1,14 @@
-from . import __version__
-from . import coord_generator
-from . import mobbrmsd
 from . import _demo
-from ._mobbrmsd import *
+from ._coord_generator import coord_generator
+from ..dataclass import molecules, molecular_system
+from ..mobbrmsd import mobbrmsd
 import sys
 import numpy
 import networkx
 import matplotlib.pyplot as plt
 
 
-class __demo__(_demo._demo):
+class __demo(_demo._demo):
     def __init__(self, **kwarg):
         super().__init__(title="Minimum spanning tree", **kwarg)
 
@@ -48,8 +47,6 @@ class __demo__(_demo._demo):
         b=1.0,
         **kwargs,
     ):
-        import pprint
-
         def print_ret(i, j, ret, g):
             ev, er, ub, lb, df = (
                 ret.n_eval,
@@ -99,12 +96,12 @@ class __demo__(_demo._demo):
             ]
         )
 
-        molecules = DataclassMolecule(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
+        mols = molecules(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
         _demo.print_system(
-            [molecules],
+            molecular_system([mols]),
             "Demonstration of minimum spanning tree construction with mobbrmsd",
         )
-        mrmsd = mobbrmsd(molecules=molecules)
+        mrmsd = mobbrmsd(mols=mols)
         g = mrmsd.min_span_tree(x, verbose=True)
         del mrmsd
         return {"g": g}

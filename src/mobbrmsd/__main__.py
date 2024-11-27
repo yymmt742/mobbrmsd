@@ -1,4 +1,5 @@
 import argparse
+from .dataclass import molecules, molecular_system, load
 from importlib.metadata import version
 
 __version__ = version(__package__)
@@ -8,48 +9,54 @@ def command_run(args):
     import numpy
     import json
     import mdtraj
-    from ._mobbrmsd import DataclassMolecule, mobbrmsd
+    from .mobbrmsd import mobbrmsd
+    from pathlib import Path
 
     prms = {**args.params}
-    try:
-        with open(args.inp[0], "r") as f:
+    if args.inp is not None:
+        try:
+            with open(args.inp[0], "r") as f:
+                try:
+                    prms = {**json.load(f), **prms}
+                except:
+                    print(f"Warning : load json [{args.inp[0]}] is failed.")
+                    pass
+        except:
+            print(f"Warning : open json [{args.inp[0]}] is failed.")
+            pass
+
+    def parse_coordinate(obj, top, dtype):
+
+        if obj is None:
+            return None
+
+        if isinstance(obj, str):
             try:
-                prms = {**json.load(f), **prms}
+                ref = mdtraj.load(obj, topology=top).xyz * 10.0
+                if dtype != numpy.float32:
+                    ref = numpy.array(ref, dtype=dtype)
             except:
-                print(f"Warning : load json [{args.inp[0]}] is failed.")
-                pass
-    except:
-        print(f"Warning : open json [{args.inp[0]}] is failed.")
-        pass
-
-    molecules = (
-        [DataclassMolecule(**mol) for mol in prms["molecules"]]
-        if ("molecules" in prms)
-        else [DataclassMolecule(n_mol=1, n_apm=-1)]
-    )
-
-    if "coordinates" in prms:
-        if "top" in prms:
-            ref = mdtraj.load(prms["coordinates"], topology=prms["top"]).xyz * 10.0
+                try:
+                    ref = numpy.array(json.loads(obj), dtype=dtype)
+                except:
+                    raise IOError
         else:
-            ref = mdtraj.load(prms["coordinates"]).xyz * 10.0
-    else:
+            try:
+                ref = numpy.array(obj, dtype=dtype)
+            except:
+                raise IOError
+        return ref
+
+    top = prms.get("top")
+    dtype = numpy.float32 if prms.get("precision") == "single" else numpy.float64
+    ref = parse_coordinate(prms.get("reference"), top, dtype)
+    trg = parse_coordinate(prms.get("target"), top, dtype)
+    if ref is None:
         raise IOError
 
-    if "target" in prms:
-        if "top" in prms:
-            trg = mdtraj.load(prms["target"], topology=prms["top"]).xyz * 10.0
-        else:
-            trg = mdtraj.load(prms["target"]).xyz * 10.0
-    else:
-        trg = None
+    mols = load(prms)
 
-    if prms["precision"] == "double" if "precision" in prms else False:
-        ref = numpy.array(ref, dtype=numpy.float64)
-        if trg is not None:
-            trg = numpy.array(trg, dtype=numpy.float64)
-
-    mrmsd = mobbrmsd(molecules=molecules)
+    mrmsd = mobbrmsd(mols=mols)
     if trg is None:
         ret = mrmsd.batch_run(ref, **prms)
     else:
@@ -62,28 +69,28 @@ def command_run(args):
 
 
 def command_demo(args):
-    from . import demo_cogen
-    from . import demo_bb
-    from . import demo_bb_2d
-    from . import demo_bb_multi
-    from . import demo_batch
-    from . import demo_batch_tri
-    from . import demo_mst
     import numpy
     import pick
+    from .demo import cogen
+    from .demo import bb
+    from .demo import bb_2d
+    from .demo import bb_multi
+    from .demo import batch
+    from .demo import batch_tri
+    from .demo import mst
 
     no = -1 if (args.no is None) else args.no - 1
     prec = numpy.float32 if args.single else numpy.float64
     cli = args.cli
 
     demo_list = [
-        demo_cogen.__demo__(cli=cli, prec=prec),
-        demo_bb.__demo__(cli=cli, prec=prec),
-        demo_bb_2d.__demo__(cli=cli, prec=prec),
-        demo_bb_multi.__demo__(cli=cli, prec=prec),
-        demo_batch.__demo__(cli=cli, prec=prec),
-        demo_batch_tri.__demo__(cli=cli, prec=prec),
-        demo_mst.__demo__(cli=cli, prec=prec),
+        cogen.__demo(cli=cli, prec=prec),
+        bb.__demo(cli=cli, prec=prec),
+        bb_2d.__demo(cli=cli, prec=prec),
+        bb_multi.__demo(cli=cli, prec=prec),
+        batch.__demo(cli=cli, prec=prec),
+        batch_tri.__demo(cli=cli, prec=prec),
+        mst.__demo(cli=cli, prec=prec),
     ]
 
     if (no < 0) or len(demo_list) <= no:
@@ -132,8 +139,10 @@ def main():
 
     parser_run = sub.add_parser("run", help="run mobbrmsd")
     parser_run.add_argument(
-        "inp",
+        "-i",
+        "--inp",
         nargs=1,
+        default=None,
         help="Input file (json)",
     )
     parser_run.add_argument(

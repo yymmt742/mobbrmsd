@@ -1,6 +1,5 @@
-from . import __version__
 from . import _demo
-from . import coord_generator
+from ._coord_generator import coord_generator
 import sys
 import numpy
 import pprint
@@ -8,7 +7,7 @@ import pprint
 title = "coord_generator demo"
 
 
-class __demo__(_demo._demo):
+class __demo(_demo._demo):
     def __init__(self, **kwarg):
         super().__init__(title="coord_generator demo", **kwarg)
 
@@ -56,8 +55,8 @@ class __demo__(_demo._demo):
         beta_ = float(beta)
         n_sample_ = int(n_sample)
 
-        cogen = coord_generator()
-        x = cogen.generate(
+        cog = coord_generator()
+        x = cog.generate(
             n_apm_,
             n_mol_,
             alpha_,
@@ -83,7 +82,7 @@ class __demo__(_demo._demo):
         print(sep)
 
         return {
-            "cogen": cogen,
+            "cog": cog,
             "n_apm": n_apm_,
             "n_mol": n_mol_,
             "alpha": alpha_,
@@ -92,7 +91,7 @@ class __demo__(_demo._demo):
 
     def after(
         self,
-        cogen=coord_generator(),
+        cog=coord_generator(),
         n_apm=3,
         n_mol=8,
         alpha=0.5,
@@ -105,7 +104,7 @@ class __demo__(_demo._demo):
 
         def onclick(event):
             ax.cla()
-            x = cogen.generate(n_apm, n_mol, alpha, beta).reshape([n_mol, n_apm, 3])
+            x = cog.generate(n_apm, n_mol, alpha, beta).reshape([n_mol, n_apm, 3])
             for xi in x:
                 ax.plot(xi[:, 0], xi[:, 1], xi[:, 2])
                 ax.scatter(xi[:, 0], xi[:, 1], xi[:, 2])
@@ -121,7 +120,7 @@ class __demo__(_demo._demo):
         ax = fig.add_subplot(111, projection="3d")
         fig.canvas.mpl_connect("key_press_event", onclick)
         if self.yes_or_no("Show samples ? (Open matplotlib window)"):
-            x = cogen.generate(n_apm, n_mol, alpha, beta).reshape([n_mol, n_apm, 3])
+            x = cog.generate(n_apm, n_mol, alpha, beta).reshape([n_mol, n_apm, 3])
             for xi in x:
                 ax.plot(xi[:, 0], xi[:, 1], xi[:, 2])
                 ax.scatter(xi[:, 0], xi[:, 1], xi[:, 2])

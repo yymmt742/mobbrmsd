@@ -1,12 +1,12 @@
-from . import __version__
 from . import _demo
-from .coord_generator import coord_generator
-from ._mobbrmsd import *
+from ._coord_generator import coord_generator
+from ..dataclass import molecules, molecular_system
+from ..mobbrmsd import mobbrmsd
 import sys
 import numpy
 
 
-class __demo__(_demo._demo):
+class __demo(_demo._demo):
     def __init__(self, **kwargs):
         super().__init__(title="Multi component system", **kwargs)
 
@@ -69,7 +69,7 @@ class __demo__(_demo._demo):
         **kwargs,
     ):
 
-        molecules = []
+        ms = []
         n_mols_ = (
             [int(n_mol) for n_mol in n_mols.split(",")]
             if isinstance(n_mols, str)
@@ -87,7 +87,8 @@ class __demo__(_demo._demo):
         )
         for n_mol, n_apm, n_sym in zip(n_mols_, n_apms_, n_syms_):
             sym = _demo.generate_sym_indices(n_apm, n_sym)
-            molecules += [DataclassMolecule(n_apm=n_apm, n_mol=n_mol, sym=sym)]
+            ms += [molecules(n_apm=n_apm, n_mol=n_mol, sym=sym)]
+        mols = molecular_system(ms)
         a_ = float(alpha)
         b_ = float(beta)
         shuffle_ = bool(shuffle)
@@ -106,10 +107,10 @@ class __demo__(_demo._demo):
         z = y.copy()
 
         _demo.print_system(
-            molecules,
+            mols,
             title="Demonstration of mobbRMSD with multi component system",
         )
-        mrmsd = mobbrmsd(molecules=molecules)
+        mrmsd = mobbrmsd(mols=mols)
 
         ub, lb = numpy.inf, -numpy.inf
         ret = mrmsd.run(x, y, maxeval=0)

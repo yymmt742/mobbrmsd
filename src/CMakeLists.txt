@@ -90,6 +90,6 @@ function(ADDTEST name dims prec int blas openmp moddir testarg)
   add_test(NAME ${name} COMMAND ${name} ${testarg})
 endfunction(ADDTEST)
 
+add_subdirectory( mobbrmsd_fortran )
 add_subdirectory( mobbrmsd )
-add_subdirectory( python_interface )
 

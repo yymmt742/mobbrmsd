@@ -1,4 +1,3 @@
-from . import __version__
 import time
 import numpy
 import pprint
@@ -29,13 +28,13 @@ def generate_sym_indices(n_apm: int, n_sym: int = 1):
     return sym
 
 
-def print_system(molecules, title):
+def print_system(molsys, title):
 
     print(bar1)
     print(" " * ((len(bar1) - len(title)) // 2) + title)
     print(bar1)
     print("      --System settings--")
-    for mol in molecules:
+    for mol in molsys.mols:
 
         print(
             f"    Atoms per molecule :{mol.n_apm:6d}",
