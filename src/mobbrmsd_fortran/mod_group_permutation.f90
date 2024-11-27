@@ -50,7 +50,7 @@ contains
     !! codomains, [[a1,a2,...,am],[b1,b2,...,bm],...].
     type(group_permutation)  :: res
     !! return value.
-    integer(IK), allocatable :: t(:), c(:,:)
+    integer(IK), allocatable :: t(:), c(:, :)
     integer(IK)              :: i, m, p, s
 !
     if (PRESENT(perm)) then
@@ -60,6 +60,8 @@ contains
       s = SIZE(c, 2)
     else
       s = 0
+      res%q = [1]
+      return
     end if
 !
     if (s < 1) then
@@ -83,9 +85,9 @@ contains
       integer(IK), intent(in)  :: m, s, perm(m, s)
       integer(IK), allocatable :: res(:)
       integer(IK)              :: i, j
-      allocate(res(0))
+      allocate (res(0))
       do i = 1, s
-        if(is_not_permutation(m, perm)) cycle
+        if (is_not_permutation(m, perm)) cycle
         if (ALL(perm(:, i) == [(j, j=1, m)])) cycle
         if (ANY([(ALL(perm(:, i) == perm(:, j)), j=1, i - 1)])) cycle
         res = [res, i]
@@ -102,7 +104,7 @@ contains
 !   early return
 !
     n = SIZE(perm)
-    ALLOCATE(res, source=[0])
+    allocate (res, source=[0])
 !
     if (n < 2) then
       return
@@ -170,7 +172,7 @@ contains
       if (k < 1) return
 !
 !     count array size
-      j = 3 * k + SUM([(w(n + l + i) * w(n + l + k + i), i=1,k)])
+      j = 3 * k + SUM([(w(n + l + i) * w(n + l + k + i), i=1, k)])
 !
 !     pack w to array.
       res = proc_w(n, j, k, l, w(1), w(n + 1), w(n + l + k + 1), w(n + l + 1))
@@ -185,18 +187,18 @@ contains
     integer(IK)             :: res(nj)
     integer(IK)             :: i, j
 !
-      res(1) = nk + 1
-      res(nk + 1) = n(1)
-      res(nk + 2) = t(1)
-      call proc(nd, nl, t(1), b, s(1), res(nk + 3))
-      j = nk + 1
-      do i = 2, nk
-        j = j + 2 + t(i - 1) * n(i - 1)
-        res(i) = j
-        res(j) = n(i)
-        res(j + 1) = t(i)
-        call proc(nd, nl, t(i), b, s, res(j + 2))
-      end do
+    res(1) = nk + 1
+    res(nk + 1) = n(1)
+    res(nk + 2) = t(1)
+    call proc(nd, nl, t(1), b, s(1), res(nk + 3))
+    j = nk + 1
+    do i = 2, nk
+      j = j + 2 + t(i - 1) * n(i - 1)
+      res(i) = j
+      res(j) = n(i)
+      res(j + 1) = t(i)
+      call proc(nd, nl, t(i), b, s, res(j + 2))
+    end do
 !
   end function proc_w
 !
@@ -209,10 +211,10 @@ contains
     k = 1
 !
     do i = 1, l
-      if (t==s(i))then
+      if (t == s(i)) then
         res(j:j + t - 1) = b(k:k + t - 1)
         j = j + s(i)
-      endif
+      end if
       k = k + s(i)
     end do
 !
@@ -225,7 +227,7 @@ contains
     integer(IK)             :: i
     do i = 1, n - 1
       res = perm(i) < 1 .or. n < perm(i) .or. ANY(perm(i) == perm(i + 1:n))
-      if(res) return
+      if (res) return
     end do
     res = perm(n) < 1 .or. n < perm(n)
   end function is_not_permutation
@@ -250,7 +252,7 @@ contains
       c = c + 1
       l(c) = e
       e = perm(e)
-      perm(l(c)) = - perm(l(c))
+      perm(l(c)) = -perm(l(c))
     end do
 !
   end subroutine count_permutation
@@ -263,7 +265,7 @@ contains
 !
     u = 0
     if (n > 1) call qsi(n, res)
-    if(res(1) > 1) u = 1
+    if (res(1) > 1) u = 1
 !
     do concurrent(i=n + 1 + u:n + n + 1)
       res(i) = 0
@@ -466,7 +468,7 @@ contains
 !
   pure elemental subroutine group_permutation_destroy(this)
     type(group_permutation), intent(inout) :: this
-    if(ALLOCATED(this%q)) deallocate(this%q)
+    if (ALLOCATED(this%q)) deallocate (this%q)
   end subroutine group_permutation_destroy
 !
 end module mod_group_permutation
