@@ -49,12 +49,30 @@
   </ol>
 </details>
 
-
-
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
 Calculate molecular-oriented RMSD with branch-and-bound.
+
+Root mean squared deviation (RMSD) is one of the most common metrics
+for comparing the similarity of three-dimensional chemical structures.
+The chemical structuresimilarity plays an important role in data chemistry
+because it is closely related tochemical reactivity, physical property, and bioactivity.
+Despite the wide use of RMSD,
+the simultaneous determination of atomic mapping and spatial superposition of RMSD is a hard problem.
+That is, the generalized RMSD is expressed as follows:
+\[
+  \text{RMSD}\left(\mathbf{X},\mathbf{X}'\right)
+  =
+  \min_{\mathbf{R},\bm{c},\nu}
+  \sqrt{\frac{1}{N} \sum_{i=1}^N \left\|\bm{x}_{i}-\mathbf{R}\bm{x}'_{\nu(i)}-\bm{c}\right\|^2}
+\]
+
+We introduce an algorithm called mobbRMSD,
+which is for-mulated in molecular-oriented coordinates and uses the branch-and-bound method toobtain an exact solution for RMSD.
+Since mobbRMSD uses molecular topologies,
+it can handle large and complex chemical systems such as molecular liquids, solvationsof solute, and self-assembly of large molecules,
+which are difficult to handle using conventional methods.
 
 <!--
 [![CI](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml/badge.svg)](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml)
@@ -76,10 +94,11 @@ Calculate molecular-oriented RMSD with branch-and-bound.
    python -m mobbrmsd demo
    ```
 
-   Running demonstrations via
+   Running via
    ```sh
-   python -m mobbrmsd run
+   python -m mobbrmsd run input
    ```
+   Input format is ...
 
 ### Prerequisites
 
@@ -103,13 +122,12 @@ To use the Python interface, you additionally need the following:
 
 - [ ] Add Usage
 - [x] Enable autovariance sorting
-- [ ] Enable block tree
+- [ ] Enable skip tree
 - [ ] Compatible with compilers (intel)
 - [x] Compatible with compilers (nv)
 - [ ] Add detail documentation
 - [ ] Add detail documentation (Python interface)
 - [ ] Add benchmarks
-- [x] Make dimensions selectable in build options
 - [x] Internalize lapack
 
 See the [open issues](https://github.com/yymmt742/mobbrmsd/issues) for a full list of proposed features (and known issues).
@@ -143,8 +161,6 @@ See `LICENSE.txt` for more information.
 ## Contact
 
 YYMMT742 - yymmt@kuchem.kyoto-u.ac.jp
-
-Project Link: [https://github.com/yymmt742/mobbrmsd](https://github.com/yymmt742/mobbrmsd)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
