@@ -26,6 +26,7 @@
 </div>
 
 
+
 <!-- TABLE OF CONTENTS -->
 <details>
   <summary>Table of Contents</summary>
@@ -41,48 +42,70 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
+    <li><a href="#background">Background</a></li>
+    <li><a href="#benchmark">Benchmark</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
+    <li><a href="#contributing">Contributing</a></li>
     <li><a href="#contact">Contact</a></li>
-    <li><a href="#Reference">Reference</a></li>
+    <li><a href="#reference">Reference</a></li>
   </ol>
 </details>
 
+
 <!-- ABOUT THE PROJECT -->
-## About The Project
-
-Calculate molecular-oriented RMSD with branch-and-bound.
-
-Root mean squared deviation (RMSD) is one of the most common metrics
-for comparing the similarity of three-dimensional chemical structures.
-The chemical structuresimilarity plays an important role in data chemistry
-because it is closely related tochemical reactivity, physical property, and bioactivity.
-Despite the wide use of RMSD,
-the simultaneous determination of atomic mapping and spatial superposition of RMSD is a hard problem.
-That is, the generalized RMSD is expressed as follows:
-\[
-  \text{RMSD}\left(\mathbf{X},\mathbf{X}'\right)
-  =
-  \min_{\mathbf{R},\bm{c},\nu}
-  \sqrt{\frac{1}{N} \sum_{i=1}^N \left\|\bm{x}_{i}-\mathbf{R}\bm{x}'_{\nu(i)}-\bm{c}\right\|^2}
-\]
-
-We introduce an algorithm called mobbRMSD,
-which is for-mulated in molecular-oriented coordinates and uses the branch-and-bound method toobtain an exact solution for RMSD.
-Since mobbRMSD uses molecular topologies,
-it can handle large and complex chemical systems such as molecular liquids, solvationsof solute, and self-assembly of large molecules,
-which are difficult to handle using conventional methods.
+# About The Project
 
 <!--
 [![CI](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml/badge.svg)](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml)
 -->
 [![Create Release Branch](https://github.com/yymmt742/mobbrmsd/actions/workflows/create_release.yml/badge.svg)](https://github.com/yymmt742/mobbrmsd/actions/workflows/create_release.yml)
 
+Root mean squared deviation (RMSD) is one of the most common metrics
+for comparing the similarity of three-dimensional chemical structures.
+The chemical structuresimilarity plays an important role in data chemistry
+because it is closely related tochemical reactivity, physical property, and bioactivity.
+
+The molecular-oriented RMSD with branch-and-bound (mobbRMSD) is an RMSD-based metric for 3D chemical structure similarity.
+mobbRMSD is formulated in molecular-oriented coordinates
+and uses the branch-and-bound method to obtain an exact solution.
+It can handle large and complex chemical systems such as molecular liquids, solvationsof solute, and self-assembly of large molecules,
+which are difficult to handle using conventional methods.
+
+For a molecular coordinate pair $\mathbf{X}$ and $\mathbf{X}'$ that consisting of $M$ molecules of $n$ atoms,
+the moRMSD is deﬁned as follows:
+```math
+  \text{moRMSD}\left(\mathbf{X},\mathbf{X}'\right)
+  =
+  \min_{\mathbf{R},c,\mu,\nu_{1},\nu_{2},\ldots,\nu_{M}}
+  \sqrt{\frac{1}{Mn} \sum_{I=1}^{M} \sum_{j=1}^{n} \left\|{x}_{j,I}-\mathbf{R}{x}'_{\nu_{I}(j),\mu(I)}-{c}\right\|^2},
+```
+where, $x_{j,I}$ and ${x'}_{j,I}$ are the Cartesian coordinates corresponding to $j$-th atom of $I$-th molecule, respectively,
+$c$ is a translation vecotor, and $\mathbf{R}$ is a rotation matrix.
+$\nu\_{I}$ and $\mu$ are permutations on $\\{1,\ldots,n\\}$ and $\\{1,\ldots, M\\}$, respectively.
+$\nu\_{I}$ takes the appropriate domain of definition corresponding to the molecular topology.
+Since $\nu\_{I}$ and $\mu$ expand the solution space by factorial and exponential costs with respect to $M$, respectively,
+it becomes more difficult to find a solution by brute force when $M$ is large.
+
+mobbRMSD practically eliminates this difficulty by using the branch-and-bound method.
+See Back Ground and Benchmark for details.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- GETTING STARTED -->
 ## Getting Started
+
+### Prerequisites
+
+* gfortran >= 9.4.0
+* OpenBLAS (optional)
+* OpenMP (optional)
+
+To use the Python interface, you additionally need the following:
+* python >= 3.8
+* pip
+
+### Installation
 
    You can use package build via
    ```sh
@@ -100,24 +123,22 @@ which are difficult to handle using conventional methods.
    ```
    Input format is ...
 
-### Prerequisites
-
-* gfortran >= 9.4.0
-* OpenBLAS (optional)
-* OpenMP (optional)
-
-To use the Python interface, you additionally need the following:
-* python >= 3.8
-* pip
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-<!-- USAGE EXAMPLES -->
 ## Usage
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-<!-- ROADMAP -->
+
+## Background
+
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Benchmark
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Roadmap
 
 - [ ] Add Usage
