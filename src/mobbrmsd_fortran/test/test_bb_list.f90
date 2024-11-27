@@ -58,7 +58,7 @@ program main
   call u%init('test bb_list iterative for {(n,M,S)}={(24,3,1), (24,4,1)}')
   call test3(24, 3, 1, [0], 24, 4, 1, [0])
 !
-  call u%finish_and_terminate()
+  call u%finish_and_terminate(passing_score=0.99_RK)
 !
 contains
 !

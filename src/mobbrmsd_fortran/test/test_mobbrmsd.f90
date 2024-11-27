@@ -78,7 +78,7 @@ program main
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
   call test7(4, 4, 1, [0], 100)
 !
-  call u%finish_and_terminate()
+  call u%finish_and_terminate(passing_score=0.99_RK)
 !
 contains
 !
