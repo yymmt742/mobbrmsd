@@ -35,8 +35,15 @@ jobs:
             toolchain: {compiler: intel, version: '2023.2'}
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4 # コードを取得
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5 # Python環境のセットアップ
+        with:
+          python-version: "3.*"
 
       - name: Setup fortran
         uses: fortran-lang/setup-fortran@v1
@@ -44,11 +51,6 @@ jobs:
         with:
           compiler: ${{ matrix.toolchain.compiler }}
           version: ${{ matrix.toolchain.version }}
-
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.x
 
       - name: Install cmake and fypp
         run: pip install --upgrade cmake fypp
@@ -71,11 +73,11 @@ jobs:
           -S . -B build
 
       - name: Build and compile
-        run: cmake --build build --parallel
+        run: cmake --build build
 
       - name: catch build fail
         if: ${{ failure() }}
-        run: cmake --build build --verbose --parallel 1
+        run: cmake --build build --verbose
 
       - name: test
         run: >-
@@ -87,4 +89,3 @@ jobs:
 
       - name: Install project
         run: cmake --install build
-

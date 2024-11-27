@@ -12,7 +12,7 @@
 <h3 align="center">mobbrmsd</h3>
 
   <p align="center">
-    molecular-oriented branch-and-bound for RMSD.
+    molecular-oriented RMSD with the branch-and-bound.
     <br />
 <!--
     <a href="https://github.com/yymmt742/mobbrmsd"><strong>Explore the docs »</strong></a>
@@ -56,9 +56,7 @@
 <!-- ABOUT THE PROJECT -->
 # About The Project
 
-<!--
 [![CI](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml/badge.svg)](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml)
--->
 [![Create Release Branch](https://github.com/yymmt742/mobbrmsd/actions/workflows/create_release.yml/badge.svg)](https://github.com/yymmt742/mobbrmsd/actions/workflows/create_release.yml)
 
 Root mean squared deviation (RMSD) is one of the most common metrics
