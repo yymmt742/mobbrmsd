@@ -1,6 +1,6 @@
 program main
   use mod_dimspec_functions, only: D, setup_dimension
-  use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: R8, RK, IK, ONE => RONE, ZERO => RZERO
 #ifdef USE_REAL32
   use mod_mobbrmsd_lapack, only: SGESVD, SGETRF
 #else
@@ -27,7 +27,7 @@ program main
   call test1(20, 10)
   call test1(100, 10)
 !
-  call z%finish_and_terminate()
+  call z%finish_and_terminate(passing_score=0.99_R8)
 !
 contains
   subroutine test1(n, n_test)

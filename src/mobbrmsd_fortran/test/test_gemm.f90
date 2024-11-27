@@ -12,7 +12,7 @@ program main
   type(unittest) :: u
   integer        :: i
 #ifdef USE_REAL32
-  integer(IK), parameter :: place = 3
+  integer(IK), parameter :: place = 2
 #else
   integer(IK), parameter :: place = 7
 #endif

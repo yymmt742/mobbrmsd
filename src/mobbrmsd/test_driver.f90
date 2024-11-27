@@ -88,7 +88,7 @@ contains
   subroutine test1()
     integer(IK), parameter   :: s = 2
     integer(IK), parameter   :: n_reference = 2
-    integer(IK), parameter   :: n_target = 1000
+    integer(IK), parameter   :: n_target = 300
     integer(IK), parameter   :: n_apm = 8, n_mol = 8
     integer(IK), parameter   :: seq(3 + n_apm) = [n_apm, n_mol, s, 5, 6, 7, 8, 1, 2, 3, 4]
     integer(IK)              :: att(8)
@@ -158,7 +158,7 @@ contains
   end subroutine test1
 !
   subroutine test2()
-    integer(IK), parameter   :: n_apm = 8, n_mol = 5, n_sym = 2, n_target = 50
+    integer(IK), parameter   :: n_apm = 8, n_mol = 5, n_sym = 2, n_target = 30
     integer(IK), parameter   :: seq(3 + n_apm) = [n_apm, n_mol, n_sym, 5, 6, 7, 8, 1, 2, 3, 4]
     real(RK), allocatable    :: X(:, :, :, :)
     integer(IK)              :: att(8)

@@ -1,7 +1,7 @@
 program main
   use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT
   use mod_dimspec_functions, only: D, setup_dimension
-  use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: R8, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_bb_block
   use mod_rotation
   use mod_bb_list
@@ -12,7 +12,7 @@ program main
   character(32)  :: carg
   integer(IK)    :: d_
 #ifdef USE_REAL32
-  integer, parameter :: place = 1
+  integer, parameter :: place = 2
 #else
   integer, parameter :: place = 7
 #endif
@@ -58,7 +58,7 @@ program main
   call u%init('test bb_list iterative for {(n,M,S)}={(24,3,1), (24,4,1)}')
   call test3(24, 3, 1, [0], 24, 4, 1, [0])
 !
-  call u%finish_and_terminate(passing_score=0.99_RK)
+  call u%finish_and_terminate(passing_score=0.99_R8)
 !
 contains
 !

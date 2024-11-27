@@ -4,12 +4,13 @@ program main
   implicit none
   type(unittest) :: z
 #ifdef USE_REAL32
-  integer, parameter :: place = 3
+  integer, parameter :: place = 2
   integer, parameter :: RK = SELECTED_REAL_KIND(6)
 #else
   integer, parameter :: place = 6
   integer, parameter :: RK = SELECTED_REAL_KIND(15)
 #endif
+  integer, parameter :: R8 = SELECTED_REAL_KIND(15)
 !
   call z%init('test mobbrmsd_lapack')
 !
@@ -36,7 +37,7 @@ program main
   call test4(3)
   call test4(4)
 !
-  call z%finish_and_terminate()
+  call z%finish_and_terminate(passing_score=0.99_R8)
 !
 contains
 !

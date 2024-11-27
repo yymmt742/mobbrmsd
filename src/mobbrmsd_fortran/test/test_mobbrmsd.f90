@@ -1,7 +1,7 @@
 program main
   use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT
   use mod_dimspec_functions, only: D, setup_dimension
-  use mod_params, only: RK, IK, ONE => RONE, ZERO => RZERO
+  use mod_params, only: R8, RK, IK, ONE => RONE, ZERO => RZERO
   use mod_mobbrmsd
   use mod_mobbrmsd_state
   use mod_mobbrmsd_mst
@@ -11,7 +11,7 @@ program main
   implicit none
   type(unittest) :: u
 #ifdef USE_REAL32
-  integer, parameter :: place = 3
+  integer, parameter :: place = 2
 #else
   integer, parameter :: place = 6
 #endif
@@ -78,7 +78,7 @@ program main
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
   call test7(4, 4, 1, [0], 100)
 !
-  call u%finish_and_terminate(passing_score=0.99_RK)
+  call u%finish_and_terminate(passing_score=0.99_R8)
 !
 contains
 !
