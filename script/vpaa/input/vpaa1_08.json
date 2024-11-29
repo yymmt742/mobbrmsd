@@ -1,0 +1,10 @@
+{"top": "prmtop/anth_hyd1_27st.prmtop",
+ "mask": "residue < 8 and (name C21 C22 C20 C19 C18 C17 C16 C15 C14 C13 C12 C11 C10 C09 C03 C04 C02 C01 C06 C05 C32 C33 C34 C35 C36 C37 C38 C39 C40 C41 C42 C43 C44 C45)",
+ "n_mol": 8,
+ "sys": "vpaa1",
+ "trj": "traj/vpaa1_08.nc",
+ "n_apm": 34,
+ "sym": [[22, 21, 23, 24, 25, 26, 27, 28, 29, 30,
+          31, 32, 33, 20, 19, 15, 18, 17, 16, 14,
+          13,  1,  0,  2,  3,  4,  5,  6,  7,  8,
+           9, 10, 11, 12]]}
