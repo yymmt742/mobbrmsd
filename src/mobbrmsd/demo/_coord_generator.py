@@ -1,4 +1,6 @@
-from typing import Any, Iterable
+# -*- coding: utf-8 -*-
+
+from typing import Any, Iterable, Union
 import numpy
 
 
@@ -83,10 +85,13 @@ class coord_generator:
         self,
         n_apm: int,
         n_mol: int,
-        a: float | Iterable[float] = 0.0,
-        b: float | Iterable[float] = 0.0,
+        a: Union[float, Iterable[float]] = 0.0,
+        b: Union[float, Iterable[float]] = 0.0,
+        # a: float | Iterable[float] = 0.0,
+        # b: float | Iterable[float] = 0.0,
         n_sample: int = 1,
-        temp: None | numpy.ndarray = None,
+        temp: Union[None, numpy.ndarray] = None,
+        # temp: None | numpy.ndarray = None,
         dtype=numpy.float64,
         remove_com: bool = True,
     ) -> numpy.ndarray:
@@ -147,14 +152,19 @@ class coord_generator:
 
     def generate_pair(
         self,
-        n_apm: int | Iterable[int],
-        n_mol: int | Iterable[int],
-        alpha: float | Iterable[float],
-        beta: float | Iterable[float],
+        n_apm: Union[int, Iterable[int]],
+        n_mol: Union[int, Iterable[int]],
+        alpha: Union[float, Iterable[float]],
+        beta: Union[float, Iterable[float]],
+        # n_apm: int | Iterable[int],
+        # n_mol: int | Iterable[int],
+        # alpha: float | Iterable[float],
+        # beta: float | Iterable[float],
         gamma: float = 1.0,
         zeta: float = 1.0,
         n_sample: int = 1,
-        temp: None | numpy.ndarray = None,
+        temp: Union[None, numpy.ndarray] = None,
+        # temp: None | numpy.ndarray = None,
         dtype=numpy.float64,
         remove_com: bool = True,
         shuffle: bool = True,
