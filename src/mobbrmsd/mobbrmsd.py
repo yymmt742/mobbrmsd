@@ -6,6 +6,7 @@
 import numpy
 import numpy.typing as npt
 import networkx
+from typing import Union
 from tqdm import trange
 from .dataclass import molecules, molecular_system
 
@@ -34,10 +35,14 @@ class mobbrmsd_result:
         driver,
         d: int,
         header: npt.NDArray,
-        istate: None | npt.NDArray,
-        rstate: None | npt.NDArray,
-        rot: None | npt.NDArray,
-        w: None | npt.NDArray = None,
+        istate: Union[None, npt.NDArray],
+        rstate: Union[None, npt.NDArray],
+        rot: Union[None, npt.NDArray],
+        w: Union[None, npt.NDArray] = None,
+        # istate: None | npt.NDArray,
+        # rstate: None | npt.NDArray,
+        # rot: None | npt.NDArray,
+        # w: None | npt.NDArray = None,
     ) -> None:
 
         self.header = header.copy()
@@ -345,7 +350,8 @@ class mobbrmsd:
 
     def __init__(
         self,
-        mols: molecules | molecular_system = molecules(1, 1),
+        mols: Union[molecules, molecular_system] = molecules(1, 1),
+        # mols: molecules | molecular_system = molecules(1, 1),
         d: int = 3,
     ) -> None:
 
@@ -517,7 +523,8 @@ class mobbrmsd:
     def batch_run(
         self,
         x: npt.NDArray,
-        y: None | npt.NDArray = None,
+        y: Union[None, npt.NDArray] = None,
+        # y: None | npt.NDArray = None,
         cutoff: float = float("inf"),
         ub_cutoff: float = float("inf"),
         difflim: float = 0.0,

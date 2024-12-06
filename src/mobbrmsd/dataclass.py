@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+from typing import Union
 import dataclasses
 
 
@@ -14,8 +17,10 @@ import dataclasses
 class molecules:
     n_apm: int
     n_mol: int
-    sym: None | list = None
-    name: None | str = None
+    sym: Union[None, list] = None
+    name: Union[None, str] = None
+    # sym: None | list = None
+    # name: None | str = None
 
 
 ##
@@ -27,8 +32,10 @@ class molecules:
 
 @dataclasses.dataclass(frozen=True)
 class molecular_system:
-    mols: list[molecules]
-    name: None | str = None
+    mols: list
+    name: Union[None, str] = None
+    # mols: list[molecules]
+    # name: None | str = None
 
 
 ##
