@@ -19,26 +19,7 @@ module driver
   public min_span_tree
 
 contains
-
-  pure subroutine decode_input(l, seq, mobb)
-    integer(kind=ik), intent(in)  :: l
-    integer(kind=ik), intent(in)  :: seq(l)
-    type(mobbrmsd), intent(inout) :: mobb
-    type(mobbrmsd_input)          :: inp
-    integer                       :: i, n, m, s, ns
-    i = 1
-    do while (i < l)
-      n = MAX(seq(i), 1)
-      m = MAX(seq(i + 1), 1)
-      s = MAX(seq(i + 2), 1)
-      ns = n * (s - 1)
-      call mobbrmsd_input_add_molecule(inp, n, m, RESHAPE(seq(i + 3:i + 2 + ns), [n, s - 1]))
-      i = i + 3 + ns
-    end do
-    call mobbrmsd_init(mobb, inp)
-  end subroutine decode_input
-
-!|  return attributes
+!   return attributes
 !   1 : n_dim
 !   2 : n_atom
 !   3 : n_header
@@ -51,8 +32,21 @@ contains
     integer(kind=ik), intent(in)  :: l
     integer(kind=ik), intent(in)  :: seq(l)
     integer(kind=ik), intent(out) :: att(8)
+    type(mobbrmsd_input)          :: inp
     type(mobbrmsd)                :: mobb
-    call decode_input(l, seq, mobb)
+    integer                       :: i, n, m, s, ns
+
+    i = 1
+    do while (i < l)
+      n = MAX(seq(i), 1)
+      m = MAX(seq(i + 1), 1)
+      s = MAX(seq(i + 2), 1)
+      ns = n * (s - 1)
+      call mobbrmsd_input_add_molecule(inp, n, m, RESHAPE(seq(i + 3:i + 2 + ns), [n, s - 1]))
+      i = i + 3 + ns
+    end do
+    call mobbrmsd_init(mobb, inp)
+
     call mobbrmsd_attributes( &
    &       mobb, &
    &       n_dim=att(1), &
@@ -75,13 +69,24 @@ contains
     integer(kind=ik), intent(in)  :: n_header
     integer(kind=ik), intent(out) :: header(n_header)
     type(mobbrmsd)                :: mobb
+    type(mobbrmsd_input)          :: inp
+    integer                       :: i, n, m, s, ns
 
-    call decode_input(l, seq, mobb)
+    i = 1
+    do while (i < l)
+      n = MAX(seq(i), 1)
+      m = MAX(seq(i + 1), 1)
+      s = MAX(seq(i + 2), 1)
+      ns = n * (s - 1)
+      call mobbrmsd_input_add_molecule(inp, n, m, RESHAPE(seq(i + 3:i + 2 + ns), [n, s - 1]))
+      i = i + 3 + ns
+    end do
+    call mobbrmsd_init(mobb, inp)
+
     header = mobbrmsd_dump(mobb)
 
   end subroutine decode_header
 
-  !| setup dimension
   subroutine setup_dimension_(d)
     integer(kind=ik), intent(in) :: d
 
@@ -89,7 +94,6 @@ contains
 
   end subroutine setup_dimension_
 
-  !| single run with working memory
   pure subroutine run( &
  &                  n_header, &
  &                  n_int, &
@@ -111,17 +115,13 @@ contains
  &                  rotation &
  &                 )
     integer(kind=ik), intent(in)  :: n_header
-    !! header length
     integer(kind=ik), intent(in)  :: n_int
     integer(kind=ik), intent(in)  :: n_float
     integer(kind=ik), intent(in)  :: n_rot
     integer(kind=ik), intent(in)  :: header(n_header)
     real(kind=rk), intent(in)     :: X(*)
-    !! reference coordinate
     real(kind=rk), intent(inout)  :: Y(*)
-    !! target coordinate
     real(kind=rk), intent(inout)  :: W(*)
-    !! work memory
     real(kind=rk), intent(in)     :: ropts(*) ! 1 cutoff 2 ub_cutoff 3 difflim
     integer(kind=ik), intent(in)  :: iopts(*) ! 1 maxeval
     logical, intent(in)           :: remove_com
@@ -161,9 +161,7 @@ contains
     end if
   end subroutine run
 
-  !| restart with working memory
-  !pure subroutine restart( &
-  subroutine restart( &
+  pure subroutine restart( &
  &             n_header, &
  &             n_int, &
  &             n_float, &
@@ -185,11 +183,8 @@ contains
     integer(kind=ik), intent(in)    :: header(n_header)
     integer(kind=ik), intent(inout) :: int_states(n_int)
     real(kind=rk), intent(inout)    :: float_states(n_float)
-    !! work memory
     real(kind=rk), intent(inout)    :: W(*)
-    !! work memory
     real(kind=rk), intent(inout)    :: rotation(n_rot)
-    !! rotation matrix
     real(kind=rk), intent(in)       :: ropts(*) ! 1 cutoff 2 ub_cutoff 3 difflim
     integer(kind=ik), intent(in)    :: iopts(*) ! 1 maxeval
     logical, intent(in)             :: difflim_absolute
@@ -217,7 +212,6 @@ contains
     if (get_rotation) rotation = mobbrmsd_state_dump_rotation(s)
   end subroutine restart
 
-  !| compute rotration respect to state.
   pure subroutine rotate_y( &
  &                  n_header, &
  &                  n_int, &
@@ -247,7 +241,6 @@ contains
 
   end subroutine rotate_y
 
-  !| batch parallel run
   subroutine batch_run( &
  &             n_reference, &
  &             n_target, &
@@ -272,11 +265,8 @@ contains
     integer(kind=ik), intent(in)  :: n_header
     integer(kind=ik), intent(in)  :: header(n_header)
     real(kind=rk), intent(in)     :: X(*)
-   !! reference coordinate
     real(kind=rk), intent(inout)  :: Y(*)
-   !! target coordinate
     real(kind=rk), intent(inout)  :: W(*)
-   !! work array
     real(kind=rk), intent(in)     :: ropts(*) ! 1 cutoff 2 ub_cutoff 3 difflim
     integer(kind=ik), intent(in)  :: iopts(*) ! 1 maxeval
     logical, intent(in)           :: remove_com
@@ -306,7 +296,6 @@ contains
     end do
   end subroutine batch_run
 
-  !| batch parallel tri run
   subroutine batch_run_tri( &
  &    n_target, &
  &    n_chunk, &
@@ -328,9 +317,7 @@ contains
     integer(kind=ik), intent(in)  :: n_header
     integer(kind=ik), intent(in)  :: header(n_header)
     real(kind=rk), intent(in)     :: X(*)
-   !! reference and target coordinate
     real(kind=rk), intent(inout)  :: W(*)
-   !! work array
     real(kind=rk), intent(in)     :: ropts(*) ! 1 cutoff 2 ub_cutoff 3 difflim
     integer(kind=ik), intent(in)  :: iopts(*) ! 1 maxeval
     logical, intent(in)           :: remove_com
@@ -376,9 +363,7 @@ contains
     integer(kind=ik), intent(in)      :: n_header
     integer(kind=ik), intent(in)      :: header(n_header)
     real(kind=rk), intent(in)         :: X(*)
-   !! reference coordinate
     real(kind=rk), intent(inout)      :: W(*)
-   !! work memory
     real(kind=rk), intent(in)         :: ropts(*) ! 1 cutoff 2 ub_cutoff 3 difflim
     integer(kind=ik), intent(in)      :: iopts(*) ! 1 maxeval
     logical, intent(in)               :: remove_com
