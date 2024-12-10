@@ -25,6 +25,12 @@ def command_run(args):
             print(f"Warning : open json [{args.inp[0]}] is failed.")
             pass
 
+    def parse_topology(top):
+        try:
+            return mdtraj.Topology(top)  # to angs.
+        except:
+            return
+
     def parse_coordinate(obj, top, dtype):
 
         if obj is None:
@@ -32,22 +38,20 @@ def command_run(args):
 
         if isinstance(obj, str):
             try:
-                ref = mdtraj.load(obj, topology=top).xyz * 10.0
+                ref = mdtraj.load(obj, top=top).xyz * 10.0  # to angs.
                 if dtype != numpy.float32:
                     ref = numpy.array(ref, dtype=dtype)
             except:
                 try:
                     ref = numpy.array(json.loads(obj), dtype=dtype)
                 except:
-                    raise IOError
+                    print(f"Coordinate load error in : {obj}")
+                    exit()
         else:
-            try:
-                ref = numpy.array(obj, dtype=dtype)
-            except:
-                raise IOError
+            ref = numpy.array(obj, dtype=dtype)
         return ref
 
-    top = prms.get("top")
+    top = prms.get("topology")
     dtype = numpy.float32 if prms.get("precision") == "single" else numpy.float64
     ref = parse_coordinate(prms.get("reference"), top, dtype)
     trg = parse_coordinate(prms.get("target"), top, dtype)

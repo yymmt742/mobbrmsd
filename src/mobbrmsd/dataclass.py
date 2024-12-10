@@ -41,10 +41,12 @@ class molecular_system:
 ##
 # @function load
 # @brief load
-# @details prms : json/molecules list.
+# @details prms : dict. The main keys are follows:
+#                 "molecular_system": list[molecules] or dict or str (json string)
+#                 "molecules": dict
 
 
-def load(prms):
+def load(prms: dict):
     import json
 
     sys = prms.get("molecular_system")
@@ -53,10 +55,7 @@ def load(prms):
         name = None
     else:
         if isinstance(sys, str):
-            try:
-                jsys = json.loads(sys)
-            except:
-                raise IOError
+            jsys = json.loads(sys)
             mols = jsys.get("mols")
             name = jsys.get("name")
         elif isinstance(sys, dict):
@@ -66,14 +65,17 @@ def load(prms):
             mols = sys
             name = None
 
+    if mols is None:
+        raise IOError
+
     if isinstance(mols, str):
-        try:
-            jmols = json.loads(mols)
-        except:
-            raise IOError
+        jmols = json.loads(mols)
         if isinstance(jmols, dict):
             return molecules(**jmols)
         else:
             return molecular_system(mols=[molecules(**mol) for mol in jmols], name=name)
     else:
-        return molecular_system(mols=[molecules(**mol) for mol in mols], name=name)
+        if isinstance(mols, dict):
+            return molecular_system(mols=[molecules(**mols)], name=name)
+        else:
+            return molecular_system(mols=[molecules(**mol) for mol in mols], name=name)
