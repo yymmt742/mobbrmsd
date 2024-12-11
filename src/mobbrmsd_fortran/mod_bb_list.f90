@@ -192,7 +192,7 @@ contains
         ac = ac + bb_block_autocorr(q(q(pq + i)), W(q(pw + i)))
       end do
 !
-      lb = -TWO * ac
+      lb = -HALF * ac
 !
       cm = ZERO
       do i = 0, n_block - 1
