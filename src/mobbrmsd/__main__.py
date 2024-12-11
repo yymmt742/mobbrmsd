@@ -5,74 +5,17 @@ from importlib.metadata import version
 __version__ = version(__package__)
 
 
-def command_run(args):
-    import numpy
-    import json
-    import mdtraj
-    from .mobbrmsd import mobbrmsd
-    from pathlib import Path
+def command_run(args) -> None:
+    from .run import parse, batch, verbose
 
-    prms = {**args.params}
-    if args.inp is not None:
-        try:
-            with open(args.inp[0], "r") as f:
-                try:
-                    prms = {**json.load(f), **prms}
-                except:
-                    print(f"Warning : load json [{args.inp[0]}] is failed.")
-                    pass
-        except:
-            print(f"Warning : open json [{args.inp[0]}] is failed.")
-            pass
-
-    def parse_topology(top):
-        try:
-            return mdtraj.Topology(top)  # to angs.
-        except:
-            return
-
-    def parse_coordinate(obj, top, dtype):
-
-        if obj is None:
-            return None
-
-        if isinstance(obj, str):
-            try:
-                ref = mdtraj.load(obj, top=top).xyz * 10.0  # to angs.
-                if dtype != numpy.float32:
-                    ref = numpy.array(ref, dtype=dtype)
-            except:
-                try:
-                    ref = numpy.array(json.loads(obj), dtype=dtype)
-                except:
-                    print(f"Coordinate load error in : {obj}")
-                    exit()
-        else:
-            ref = numpy.array(obj, dtype=dtype)
-        return ref
-
-    top = prms.get("topology")
-    dtype = numpy.float32 if prms.get("precision") == "single" else numpy.float64
-    ref = parse_coordinate(prms.get("reference"), top, dtype)
-    trg = parse_coordinate(prms.get("target"), top, dtype)
-    if ref is None:
-        raise IOError
-
-    mols = load(prms)
-
-    mrmsd = mobbrmsd(mols=mols)
-    if trg is None:
-        ret = mrmsd.batch_run(ref, **prms)
-    else:
-        ret = mrmsd.batch_run(
-            ref,
-            trg,
-            **prms,
-        )
-    print(ret)
+    arg = parse.parser(args)
+    if arg.runtype == "batch":
+        batch.run(arg.mols, arg.refxyz, arg.trgxyz, **arg.prms)
+    elif arg.runtype == "verbose":
+        verbose.run(arg.mols, arg.refxyz, arg.trgxyz, **arg.prms)
 
 
-def command_demo(args):
+def command_demo(args) -> None:
     import numpy
     import pick
     from .demo import cogen

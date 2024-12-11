@@ -127,6 +127,7 @@ if(SKBUILD)
     ${python_files}
     DESTINATION ${SKBUILD_PLATLIB_DIR}/mobbrmsd
   )
+  add_subdirectory(run)
   add_subdirectory(demo)
 endif()
 
