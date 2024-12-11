@@ -115,6 +115,10 @@ class parser:
             ntrg = 1 if self.trgxyz is None else self.trgxyz.shape[0]
 
             if nref * ntrg == 1:
-                self.runtype = "verbose"
+                from .verbose_run import run
+
+                self.run = run
             else:
-                self.runtype = "batch"
+                from .batch_run import run
+
+                self.run = run

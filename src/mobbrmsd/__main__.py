@@ -6,13 +6,10 @@ __version__ = version(__package__)
 
 
 def command_run(args) -> None:
-    from .run import parse, batch, verbose
+    from .run import parse
 
     arg = parse.parser(args)
-    if arg.runtype == "batch":
-        batch.run(arg.mols, arg.refxyz, arg.trgxyz, **arg.prms)
-    elif arg.runtype == "verbose":
-        verbose.run(arg.mols, arg.refxyz, arg.trgxyz, **arg.prms)
+    arg.run(arg.mols, arg.refxyz, arg.trgxyz, **arg.prms)
 
 
 def command_demo(args) -> None:
