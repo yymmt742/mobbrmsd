@@ -418,6 +418,17 @@ contains
   end function mobbrmsd_exp_n_nodes
 !
 !| swap and rotation y
+  pure subroutine mobbrmsd_swap_indices(this, state, IX)
+    type(mobbrmsd), intent(in)       :: this
+    !! mobbrmsd header
+    type(mobbrmsd_state), intent(in) :: state
+    !! this
+    integer(IK), intent(inout)       :: IX(*)
+    !! coordinate
+    call bb_list_swap_indices(this%q, state%s, IX)
+  end subroutine mobbrmsd_swap_indices
+!
+!| swap and rotation y
   pure subroutine mobbrmsd_swap_and_rotation(this, state, X)
     type(mobbrmsd), intent(in)       :: this
     !! mobbrmsd header

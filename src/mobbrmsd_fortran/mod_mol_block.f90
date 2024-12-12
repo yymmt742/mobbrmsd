@@ -18,6 +18,7 @@ module mod_mol_block
   public :: mol_block_napm
   public :: mol_block_nsym
   public :: mol_block_swap
+  public :: mol_block_swap_ix
   public :: mol_block_inverse_swap
 !
   integer(IK), parameter  :: pn = 1
@@ -118,6 +119,19 @@ contains
     call group_permutation_swap(q(pg), isym, D, X)
 !
   end subroutine mol_block_swap
+!
+!| Compute molecular symmetry permutation according to isym.
+  pure subroutine mol_block_swap_ix(q, isym, lx, IX)
+    integer(IK), intent(in)    :: q(*)
+    !! mol_block
+    integer(IK), intent(in)    :: isym, lx
+    !! symmetry id
+    integer(IK), intent(inout) :: IX(*)
+    !! work array
+!
+    call group_permutation_swap_int(q(pg), isym, lx, IX)
+!
+  end subroutine mol_block_swap_ix
 !
 !| Compute molecular symmetry inverse permutation according to isym.
   pure subroutine mol_block_inverse_swap(q, isym, X)

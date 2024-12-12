@@ -53,6 +53,7 @@ module mod_bb_block
   public :: bb_block_log_ncomb
   public :: bb_block_evaluation_count
   public :: bb_block_save_state
+  public :: bb_block_swap_indices
   public :: bb_block_swap_y
   public :: bb_block_covmat_add
   public :: bb_block_destroy
@@ -696,6 +697,50 @@ contains
       call tree_current_sequence(q(qtree), s(stree), z)
     end associate
   end subroutine bb_block_save_state
+!
+!| swap indices by saved state z.
+  pure subroutine bb_block_swap_indices(q, s, z, IX)
+    integer(IK), intent(in)    :: q(*)
+    !! header
+    integer(IK), intent(in)    :: s(*)
+    !! state
+    integer(IK), intent(in)    :: z(*)
+    !! saved state (not state vector)
+    integer(IK), intent(inout) :: IX(*)
+    !! target coordinate
+    integer(IK)             :: nmol, napm
+    associate ( &
+   &  qcov => q(INDEX_TO_Q_COV), &
+   &  scov => q(INDEX_TO_S_COV), &
+   &  qtree => q(INDEX_TO_Q_TREE), &
+   &  qmol => q_POINTER_TO_Q_MOL &
+   &  )
+      nmol = mol_block_nmol(q(qmol))
+      napm = mol_block_napm(q(qmol))
+      block
+        integer(IK) :: jper(nmol), iper(nmol), imap(nmol)
+        call tree_sequence_to_permutation(q(qtree), z, jper)
+        call c_matrix_swap_indices( &
+       &  q(qcov), &
+       &  s(scov), &
+       &  jper, &
+       &  iper)
+        call tree_sequence_to_mapping(q(qtree), z, imap)
+        call swap_ix(nmol, napm, iper, imap, q(qmol), IX)
+      end block
+    end associate
+  contains
+    pure subroutine swap_ix(nmol, napm, iper, imap, b, IX)
+      integer(IK), intent(in)    :: nmol, napm, iper(nmol), imap(nmol), b(*)
+      integer(IK), intent(inout) :: IX(napm, nmol)
+      integer(IK)                :: IT(napm, nmol), i
+      do concurrent(i=1:nmol)
+        IT(:, iper(i)) = IX(:, i)
+        call mol_block_swap_ix(b, imap(i), 1, IT(1, iper(i)))
+      end do
+      IX = IT
+    end subroutine swap_ix
+  end subroutine bb_block_swap_indices
 !
 !| swap Y by saved state z.
   pure subroutine bb_block_swap_y(q, s, z, Y)

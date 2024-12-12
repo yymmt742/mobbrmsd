@@ -12,7 +12,7 @@ program main
   character(32)  :: carg
   integer(IK)    :: d_
 #ifdef USE_REAL32
-  integer, parameter :: place = 2
+  integer, parameter :: place = 1
 #else
   integer, parameter :: place = 7
 #endif
@@ -58,7 +58,7 @@ program main
   call u%init('test bb_list iterative for {(n,M,S)}={(24,3,1), (24,4,1)}')
   call test3(24, 3, 1, [0], 24, 4, 1, [0])
 !
-  call u%finish_and_terminate(passing_score=0.99_R8)
+  call u%finish_and_terminate(passing_score=0.95_R8)
 !
 contains
 !

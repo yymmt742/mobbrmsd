@@ -26,6 +26,7 @@ module mod_group_permutation
   public :: group_permutation
   public :: group_permutation_nsym
   public :: group_permutation_swap
+  public :: group_permutation_swap_int
   public :: group_permutation_inverse
 !
 !| A structure that references an array representing a replacement operation. <br>
@@ -340,6 +341,22 @@ contains
 !
   end subroutine group_permutation_swap
 !
+!| Replaces an array of real numbers according to the map s. <br>
+  pure subroutine group_permutation_swap_int(q, s, lx, IX)
+    integer(IK), intent(in)    :: q(*)
+    !! work array.
+    integer(IK), intent(in)    :: s
+    !! permutation index.
+    integer(IK), intent(in)    :: lx
+    !! leading dimension of x
+    integer(IK), intent(inout) :: IX(*)
+    !! data array.
+!
+    if (s < 1 .or. q(1) <= s) return ! identity map
+    call swap_int(q(q(s)), lx, IX)
+!
+  end subroutine group_permutation_swap_int
+!
   pure subroutine swap_real(q, d, X)
     integer(IK), intent(in) :: q(*)
     !! swap indices.
@@ -367,6 +384,34 @@ contains
     end do
 !
   end subroutine swap_real
+!
+  pure subroutine swap_int(q, d, IX)
+    integer(IK), intent(in)    :: q(*)
+    !! swap indices.
+    integer(IK), intent(in)    :: d
+    !! leading dimension of x
+    integer(IK), intent(inout) :: IX(*)
+    !! data array.
+    integer(IK)                :: i, m
+!
+    m = q(1) - 1
+!
+    do concurrent(i=1:m)
+      block
+        integer(IK) :: j, p, n, s, ns
+        p = q(i)
+        n = q(p)
+        p = p + 1
+        s = q(p)
+        p = p + 1
+        ns = p + (n - 1) * s
+        do concurrent(j=p:ns:s)
+          call cyclic_swap_int(d, s, q(j), IX)
+        end do
+      end block
+    end do
+!
+  end subroutine swap_int
 !
 !| Replaces an array of real numbers according to the inverse map s. <br>
   pure subroutine group_permutation_inverse(q, s, d, X)
@@ -412,23 +457,23 @@ contains
 !
   end subroutine inverse_real
 !
-! pure subroutine cyclic_swap_int(d, s, q, X)
-!   integer(IK), intent(in)    :: d, s, q(*)
-!   integer(IK), intent(inout) :: X(d, *)
-!   integer(IK)                :: T(d)
-!   integer(IK)                :: i, j
-!   do concurrent(i=1:d)
-!     T(i) = X(i, q(1))
-!   end do
-!   do j = 1, s - 1
-!     do concurrent(i=1:d)
-!       X(i, q(j)) = X(i, q(j + 1))
-!     end do
-!   end do
-!   do concurrent(i=1:d)
-!     X(i, q(s)) = T(i)
-!   end do
-! end subroutine cyclic_swap_int
+  pure subroutine cyclic_swap_int(d, s, q, X)
+    integer(IK), intent(in)    :: d, s, q(*)
+    integer(IK), intent(inout) :: X(d, *)
+    integer(IK)                :: T(d)
+    integer(IK)                :: i, j
+    do concurrent(i=1:d)
+      T(i) = X(i, q(1))
+    end do
+    do j = 1, s - 1
+      do concurrent(i=1:d)
+        X(i, q(j)) = X(i, q(j + 1))
+      end do
+    end do
+    do concurrent(i=1:d)
+      X(i, q(s)) = T(i)
+    end do
+  end subroutine cyclic_swap_int
 !
   pure subroutine cyclic_swap_real(d, s, q, X)
     integer(IK), intent(in) :: d, s, q(*)
