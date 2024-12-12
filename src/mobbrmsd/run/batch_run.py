@@ -10,7 +10,7 @@ from typing import Union
 
 def run(mols, refxyz, trgxyz, **kwargs) -> None:
     mrmsd = mobbrmsd(mols=mols)
-    if target is None:
+    if trgxyz is None:
         ret = mrmsd.batch_run(refxyz, **kwargs)
         for i, ri in enumerate(ret):
             for j, rij in enumerate(ri[i + 1 :]):
