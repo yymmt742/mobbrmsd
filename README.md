@@ -61,29 +61,39 @@
 
 Root mean squared deviation (RMSD) is one of the most common metrics
 for comparing the similarity of three-dimensional chemical structures.
-The chemical structuresimilarity plays an important role in data chemistry
-because it is closely related tochemical reactivity, physical property, and bioactivity.
-
 The molecular-oriented RMSD with branch-and-bound (mobbRMSD) is an RMSD-based metric for 3D chemical structure similarity.
 mobbRMSD is formulated in molecular-oriented coordinates
 and uses the branch-and-bound method to obtain an exact solution.
 It can handle large and complex chemical systems such as molecular liquids, solvationsof solute, and self-assembly of large molecules,
 which are difficult to handle using conventional methods.
 
-For a molecular coordinate pair $\mathbf{X}$ and $\mathbf{X}'$ that consisting of $M$ molecules of $n$ atoms,
+Define molecular oriented coordinates as follows:
+```math
+  \mathbf{X}
+  =
+  \left\{
+  \mathbf{X}_{1},\mathbf{X}_{2},\ldots,\mathbf{X}_{K}
+  \right\},
+```
+where $\mathbf{X}\_I\in\mathbb{R}^{d\times n^{k}\times M^{k}}$ is coordinates of the $k$-th homologous molecular assemblies,
+$d$ is a number of spatial dimentions,
+and $M^{k}$ and $n^{k}$ are a number of molecules and the number of atoms per molecule, respectively,
+
+For a molecular-oriented coordinate pair $\mathbf{X}$ and $\mathbf{X}'$ that consisting of $M$ molecules of $n$ atoms,
 the moRMSD is deﬁned as follows:
 ```math
   \text{moRMSD}\left(\mathbf{X},\mathbf{X}'\right)
   =
-  \min_{\mathbf{R},c,\mu,\nu_{1},\nu_{2},\ldots,\nu_{M}}
-  \sqrt{\frac{1}{Mn} \sum_{I=1}^{M} \sum_{j=1}^{n} \left\|{x}_{j,I}-\mathbf{R}{x}'_{\nu_{I}(j),\mu(I)}-{c}\right\|^2},
+  \min_{\mathbf{R},c,\mu^{k},\nu_{I}^{k}}
+  \sqrt{\frac{1}{Mn} \sum_{k=1}^{K} \sum_{I=1}^{M^{k}} \sum_{j=1}^{n^{k}} \left\|{x}^{k}_{j,I}-\mathbf{R}{{x}'}^{k}_{\nu^{k}_{I}(j),\mu^{k}(I)}-{c}\right\|^2},
 ```
-where, $x_{j,I}$ and ${x'}_{j,I}$ are the Cartesian coordinates corresponding to $j$-th atom of $I$-th molecule, respectively,
+where $x^{k}\_{j,I}$ and ${x'}^{k}\_{j,I}$ are the Cartesian coordinates of $j$-th atom in the $I$-th molecule of molecular species $k$
+corresponding to $\mathbf{X}$ and $\mathbf{X}'$, respectively,
 $c$ is a translation vecotor, and $\mathbf{R}$ is a rotation matrix.
-$\nu\_{I}$ and $\mu$ are permutations on $\\{1,\ldots,n\\}$ and $\\{1,\ldots, M\\}$, respectively.
-$\nu\_{I}$ takes the appropriate domain of definition corresponding to the molecular topology.
-Since $\nu\_{I}$ and $\mu$ expand the solution space by factorial and exponential costs with respect to $M$, respectively,
-it becomes more difficult to find a solution by brute force when $M$ is large.
+$\nu^{k}\_{I}$ and $\mu^{k}$ are permutations on $\\{1,\ldots,n^{k}\\}$ and $\\{1,\ldots, M^{k}\\}$, respectively.
+$\nu^{k}\_{I}$ takes the appropriate domain of definition corresponding to the molecular topology.
+Since $\nu^{k}\_{I}$ and $\mu^{k}$ expand the solution space by factorial and exponential costs with respect to $M^{k}$, respectively,
+It is difficult to find a solution by brute force when the number of molecules is large.
 
 mobbRMSD practically eliminates this difficulty by using the branch-and-bound method.
 See Back Ground and Benchmark for details.
@@ -107,26 +117,66 @@ To use the Python interface, you additionally need the following:
 
    You can use package build via
    ```sh
-   pip install git+ssh://git@github.com/yymmt742/mobbrmsd.git
+   pip install git+https://github.com/yymmt742/mobbrmsd.git
    ```
-
-   Running demonstrations via
+   Running some demonstrations via
    ```sh
    python -m mobbrmsd demo
    ```
-
-   Running via
-   ```sh
-   python -m mobbrmsd run input
-   ```
-   Input format is ...
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Usage
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+   Running via
+   ```sh
+   python -m mobbrmsd run -i <input>
+   ```
+   The input is json format, and a simple example is as follows
+   ```json
+   {
+     "reference":"./path/to/file1.pdb",
+     "target":"./path/to/file2.xyz",
+     "mols":[
+       {
+        "n_apm":2,
+        "n_mol":1,
+        "name":"HydrogenFluoride"
+       },
+       {
+        "n_apm":3,
+        "n_mol":4,
+        "sym":[[ 1, 3, 2]],
+         "name":"Water"
+       }
+     ]
+   }
+   ```
+   In this example, the system contains one hydrogen fluoride and four waters.
+   Intramolecular permutations resulting from the swapping of hydrogen positions are specified for water molecules.
+   The file load backend is [MDtraj](https://mdtraj.org/1.9.4/api/generated/mdtraj.load.html).
+   See [documentation](https://mdtraj.org/1.9.4/api/generated/mdtraj.load.html) for supported formats.
+   Only coordinates are referenced from the file; information such as residues and atom types are not used.
+   The coordinates must have Cartesian coordinates in the order specified in json file as follows.
+   ```sh
+   > cat file1.pdb
+   ATOM      1  F   HF  A   0       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           F
+   ATOM      2  H   HF  A   0       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
+   ATOM      3  OH  HF  A   1       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           O
+   ATOM      4  H1  WAT A   1       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
+   ATOM      5  H2  WAT A   1       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
+   ATOM      6  OH  WAT A   2       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           O
+   ATOM      7  H1  WAT A   2       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
+   ATOM      8  H2  WAT A   2       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
+   ATOM      9  OH  WAT A   3       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           O
+   ATOM     10  H1  WAT A   3       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
+   ATOM     11  H2  WAT A   3       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
+   ATOM     12  OH  WAT A   4       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           O
+   ATOM     13  H1  WAT A   4       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
+   ATOM     14  H2  WAT A   4       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H  
+   ```
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Background
 
@@ -139,7 +189,7 @@ To use the Python interface, you additionally need the following:
 
 ## Roadmap
 
-- [ ] Add Usage
+- [x] Add Usage
 - [x] Enable autovariance sorting
 - [ ] Enable skip tree
 - [ ] Compatible with compilers (intel)
