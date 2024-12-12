@@ -68,6 +68,7 @@ contains
     type(bb_list)         :: b
     real(RK)              :: X(D, n, m), Y(D, n, m), Z(D, n, m), R(D, D), sd, brute, rxz, nrm
     real(RK), allocatable :: W(:)
+    integer(IK)           :: IX(n * m)
     integer(IK)           :: i
 !
     call bb_block_init(blk(1), n, m, sym=RESHAPE(sym, [n, s - 1]))
@@ -88,11 +89,16 @@ contains
       call bb_list_rotation_matrix(b%q, b%s, w, R)
       sd = w(bb_list_INDEX_TO_AUTOCORR) + w(bb_list_INDEX_TO_UPPERBOUND) * 2._RK
       brute = brute_sd(n, m, s, sym, X, Y)
+      call centering(n, m, Z)
       rxz = SUM(([X] - [MATMUL(TRANSPOSE(R), RESHAPE(Z, [D, n * m]))])**2)
       call u%assert_almost_equal(sd * nrm, brute * nrm, 'minrmsd value', place=place)
       call u%assert_almost_equal(sd * nrm, rxz * nrm, 'sd vs rotmat', place=place)
+      call bb_list_swap_indices(b%q, b%s, IX)
+      call swap_YZ(n * m, ix, Y, Z)
+      call centering(n, m, Z)
+      rxz = SUM(([X] - [MATMUL(TRANSPOSE(R), RESHAPE(Z, [D, n * m]))])**2)
+      call u%assert_almost_equal(sd * nrm, rxz * nrm, 'sd vs rotmat (by swap_indices)', place=place)
       Y = 0.5 * Y + 0.5 * sample(n, m)
-      call centering(n, m, Y)
     end do
 !
   end subroutine test1
@@ -107,6 +113,7 @@ contains
     real(RK)              :: Y1(D, n1, m1), Y2(D, n2, m2)
     real(RK)              :: X(D, n1 * m1 + n2 * m2)
     real(RK)              :: Z(D, n1 * m1 + n2 * m2)
+    integer(IK)           :: IX(n1 * m1 + n2 * m2)
     integer(IK)           :: i
 !
     call bb_block_init(blk(1), n1, m1, sym=RESHAPE(sym1, [n1, s1 - 1]))
@@ -137,6 +144,11 @@ contains
         call bb_list_rotation_matrix(b%q, b%s, W, R)
         rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
         call u%assert_almost_equal(sd * nrm, rxz * nrm, 'sd vs rotmat', place=place)
+        call bb_list_swap_indices(b%q, b%s, IX)
+        call swap_YZ(n1 * m1 + n2 * m2, ix, [Y1, Y2], Z)
+        call centering(SIZE(Z, 2), Z)
+        rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
+        call u%assert_almost_equal(sd * nrm, rxz * nrm, 'sd vs rotmat (by swap_indices)', place=place)
         Y1 = 0.5 * Y1 + 0.5 * sample(n1, m1)
         Y2 = 0.5 * Y2 + 0.5 * sample(n2, m2)
       end do
@@ -154,6 +166,7 @@ contains
     real(RK)              :: Y1(D, n1, m1), Y2(D, n2, m2)
     real(RK)              :: X(D, n1 * m1 + n2 * m2)
     real(RK)              :: Z(D, n1 * m1 + n2 * m2)
+    integer(IK)           :: IX(n1 * m1 + n2 * m2)
     call bb_block_init(blk(1), n1, m1, sym=RESHAPE(sym1, [n1, s1 - 1]))
     call bb_block_init(blk(2), n2, m2, sym=RESHAPE(sym2, [n2, s2 - 1]))
     call bb_list_init(b, SIZE(blk), blk)
@@ -168,9 +181,9 @@ contains
       real(RK) :: W(bb_list_memsize(b%q)), R(D, D), rxz
       call bb_list_setup(b%q, b%s, [X1, X2], [Y1, Y2], W)
       do while (.not. bb_list_is_finished(b%q, b%s))
-        print '(3f9.4)', w(bb_list_INDEX_TO_N_EVAL), &
-       &                 w(bb_list_INDEX_TO_UPPERBOUND), &
-       &                 w(bb_list_INDEX_TO_LOWERBOUND)
+        print '(A,3f9.4)', "# ", w(bb_list_INDEX_TO_N_EVAL), &
+       &                         w(bb_list_INDEX_TO_UPPERBOUND), &
+       &                         w(bb_list_INDEX_TO_LOWERBOUND)
         call bb_list_run(b%q, b%s, W, maxeval=0)
       end do
       sd = w(bb_list_INDEX_TO_AUTOCORR) + w(bb_list_INDEX_TO_UPPERBOUND) + w(bb_list_INDEX_TO_UPPERBOUND)
@@ -181,10 +194,26 @@ contains
       call bb_list_swap_y(b%q, b%s, Z)
       call bb_list_rotation_matrix(b%q, b%s, W, R)
       rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
-      call u%assert_almost_equal(nrm * sd, nrm * rxz, 'swaped sd vs rotmat', place=place)
+      call u%assert_almost_equal(sd * nrm, rxz * nrm, 'sd vs rotmat', place=place)
+      call bb_list_swap_indices(b%q, b%s, IX)
+      call swap_YZ(n1 * m1 + n2 * m2, ix, [Y1, Y2], Z)
+      call centering(SIZE(Z, 2), Z)
+      rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
+      print'(10I4)', IX
+      call u%assert_almost_equal(sd * nrm, rxz * nrm, 'sd vs rotmat (by swap_indices)', place=place)
     end block
     FLUSH (OUTPUT_UNIT)
     FLUSH (ERROR_UNIT)
   end subroutine test3
+!
+  pure subroutine swap_YZ(n, ix, Y, Z)
+    integer(IK), intent(in) :: n, ix(n)
+    real(RK), intent(in)    :: Y(D, n)
+    real(RK), intent(inout) :: Z(D, n)
+    integer(IK)             :: i
+    do concurrent(i=1:n)
+      Z(:, i) = Y(:, ix(i))
+    end do
+  end subroutine swap_YZ
 end program main
 

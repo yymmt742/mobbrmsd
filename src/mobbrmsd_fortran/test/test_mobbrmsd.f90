@@ -197,26 +197,17 @@ contains
 !
     do i = 1, 10
       call mobbrmsd_restart(mobb, stat, W, maxeval=0)
-      print'(A, I8, *(f16.9))', "# ", mobbrmsd_state_n_eval(stat), &
-     &                       EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-     &                       mobbrmsd_state_upperbound(stat), &
-     &                       mobbrmsd_state_lowerbound(stat)
+      call print_stat(stat, mobbrmsd_state_autovariance(stat))
     end do
 !
     call mobbrmsd_restart(mobb, stat, W)
-    print'(A, I8, *(f16.9))', "# ", mobbrmsd_state_n_eval(stat), &
-   &                       EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &                       mobbrmsd_state_upperbound(stat), &
-   &                       mobbrmsd_state_lowerbound(stat)
+    call print_stat(stat, mobbrmsd_state_autovariance(stat))
     sd = mobbrmsd_state_squared_deviation(stat)
     brute = brute_sd(n, m, s, sym, X, Y)
 !
     call mobbrmsd_run(mobb, stat, X, Y)
     sd2 = mobbrmsd_state_squared_deviation(stat)
-    print'(A, I8, *(f16.9))', "# ", mobbrmsd_state_n_eval(stat), &
-   &                       EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &                       mobbrmsd_state_upperbound(stat), &
-   &                       mobbrmsd_state_lowerbound(stat)
+    call print_stat(stat, mobbrmsd_state_autovariance(stat))
     call u%assert_almost_equal(sd, brute, 'minrmsd value', place=place)
     call u%assert_almost_equal(sd, sd2, 'vs at once   ', place=place)
     FLUSH (OUTPUT_UNIT)
@@ -241,58 +232,17 @@ contains
     allocate (W(mobbrmsd_memsize(mobb)))
 !
     call mobbrmsd_run(mobb, stat, X, Y, W, difflim=1.0_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", &
-   &  1.0_RK * mobbrmsd_state_autovariance(stat), &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 1.0_RK * mobbrmsd_state_autovariance(stat))
     call mobbrmsd_restart(mobb, stat, W, difflim=0.2_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", &
-   &  0.2_RK * mobbrmsd_state_autovariance(stat), &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.2_RK * mobbrmsd_state_autovariance(stat))
     call mobbrmsd_restart(mobb, stat, W, difflim=0.1_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", &
-   &  0.1_RK * mobbrmsd_state_autovariance(stat), &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.1_RK * mobbrmsd_state_autovariance(stat))
     call mobbrmsd_restart(mobb, stat, W, difflim=0.01_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", &
-   &  0.01_RK * mobbrmsd_state_autovariance(stat), &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.01_RK * mobbrmsd_state_autovariance(stat))
     call mobbrmsd_restart(mobb, stat, W, difflim=0.001_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", &
-   &  0.001_RK * mobbrmsd_state_autovariance(stat), &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.001_RK * mobbrmsd_state_autovariance(stat))
     call mobbrmsd_restart(mobb, stat, W)
-    print'(A,F9.3,I8,*(F9.3))', "# ", 0.0_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.0_RK)
     FLUSH (OUTPUT_UNIT)
     FLUSH (ERROR_UNIT)
 !
@@ -315,58 +265,17 @@ contains
     allocate (W(mobbrmsd_memsize(mobb)))
 !
     call mobbrmsd_run(mobb, stat, X, Y, W, difflim=1.0_RK, difflim_absolute=.true.)
-    print'(A,F9.3,I8,*(F9.4))', "# ", &
-   &  1.0_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  SQRT(mobbrmsd_state_bbgap(stat) / (n * m)), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 1.0_RK)
     call mobbrmsd_restart(mobb, stat, W, difflim=0.2_RK, difflim_absolute=.true.)
-    print'(A,F9.3,I8,*(F9.4))', "# ", &
-   &  0.2_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  SQRT(mobbrmsd_state_bbgap(stat) / (n * m)), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.2_RK)
     call mobbrmsd_restart(mobb, stat, W, difflim=0.1_RK, difflim_absolute=.true.)
-    print'(A,F9.3,I8,*(F9.4))', "# ", &
-   &  0.1_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  SQRT(mobbrmsd_state_bbgap(stat) / (n * m)), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.1_RK)
     call mobbrmsd_restart(mobb, stat, W, difflim=0.01_RK, difflim_absolute=.true.)
-    print'(A,F9.3,I8,*(F9.4))', "# ", &
-   &  0.01_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  SQRT(mobbrmsd_state_bbgap(stat) / (n * m)), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.01_RK)
     call mobbrmsd_restart(mobb, stat, W, difflim=0.001_RK, difflim_absolute=.true.)
-    print'(A,F9.3,I8,*(F9.4))', "# ", &
-   &  0.001_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  SQRT(mobbrmsd_state_bbgap(stat) / (n * m)), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.001_RK)
     call mobbrmsd_restart(mobb, stat, W)
-    print'(A,F9.3,I8,*(F9.4))', "# ", 0.0_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  SQRT(mobbrmsd_state_bbgap(stat) / (n * m)), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.0_RK)
     FLUSH (OUTPUT_UNIT)
     FLUSH (ERROR_UNIT)
 !
@@ -390,53 +299,17 @@ contains
 !
     call mobbrmsd_run(mobb, stat, X, Y, W, maxeval=0)
     call mobbrmsd_restart(mobb, stat, W, cutoff=0.0_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", 0.0_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.0_RK)
     call mobbrmsd_restart(mobb, stat, W, cutoff=0.1_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", 0.1_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.1_RK)
     call mobbrmsd_restart(mobb, stat, W, cutoff=0.2_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", 0.2_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.2_RK)
     call mobbrmsd_restart(mobb, stat, W, cutoff=0.3_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", 0.3_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.3_RK)
     call mobbrmsd_run(mobb, stat, X, Y, W, cutoff=0.4_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", 0.4_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.4_RK)
     call mobbrmsd_restart(mobb, stat, W)
-    print'(A,F9.3,I8,*(F9.3))', "# ", 99.0_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 99.0_RK)
     FLUSH (OUTPUT_UNIT)
     FLUSH (ERROR_UNIT)
 !
@@ -514,6 +387,19 @@ contains
     FLUSH (ERROR_UNIT)
 !
   end subroutine test7
+!
+  subroutine print_stat(stat, cutoff)
+    type(mobbrmsd_state), intent(in) :: stat
+    real(RK), intent(in)             :: cutoff
+    print'(A,F9.3,I8,*(F9.3))', "# ", &
+   &  cutoff, &
+   &  mobbrmsd_state_n_eval(stat), &
+   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
+   &  mobbrmsd_state_upperbound(stat), &
+   &  mobbrmsd_state_lowerbound(stat), &
+   &  mobbrmsd_state_bbgap(stat), &
+   &  mobbrmsd_state_rmsd(stat)
+  end subroutine print_stat
 !
   pure subroutine min_span_tree(n, r, e)
     integer(IK), intent(in)    :: n

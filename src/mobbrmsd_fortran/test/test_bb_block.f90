@@ -33,8 +33,8 @@ contains
     real(RK)                :: X(D, n, m), Y(D, n, m), Z(D, n, m)
     real(RK)                :: CX(D), CY(D)
     real(RK), allocatable   :: W(:)
-    integer(IK)             :: sb(m)
-    integer(IK)             :: i
+    integer(IK)             :: sb(m), ix(n, m)
+    integer(IK)             :: i, j, k
 !
     bm = bb_block(n, m, RESHAPE(sym, [n, s - 1]))
     allocate (W(bb_block_memsize(bm%q) + bb_block_worksize(bm%q)))
@@ -50,9 +50,25 @@ contains
       Z = Y
       call bb_block_swap_y(bm%q, bm%s, sb, Z)
       call u%assert_almost_equal(W(1), sd(m * n, X, Z), 'swap sd value', place=place)
+      do concurrent(j=1:n, k=1:m)
+        ix(j, k) = j + (k - 1) * n
+      end do
+      call bb_block_swap_indices(bm%q, bm%s, sb, ix)
+      call swap_YZ(n * m, ix, Y, Z)
+      call u%assert_almost_equal(W(1), sd(m * n, X, Z), 'swap index sd value', place=place)
       Y = 0.5 * Y + sample(n, m) * 0.5
     end do
   end subroutine test1
+!
+  pure subroutine swap_YZ(n, ix, Y, Z)
+    integer(IK), intent(in) :: n, ix(n)
+    real(RK), intent(in)    :: Y(D, n)
+    real(RK), intent(inout) :: Z(D, n)
+    integer(IK)             :: i
+    do concurrent(i=1:n)
+      Z(:, i) = Y(:, ix(i))
+    end do
+  end subroutine swap_YZ
 !
   subroutine run(q, s, X, Y, CX, CY, W, sb)
     integer(IK), intent(in)    :: q(*)
