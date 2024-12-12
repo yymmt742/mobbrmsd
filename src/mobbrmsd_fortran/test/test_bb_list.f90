@@ -199,7 +199,6 @@ contains
       call swap_YZ(n1 * m1 + n2 * m2, ix, [Y1, Y2], Z)
       call centering(SIZE(Z, 2), Z)
       rxz = SUM((X - MATMUL(TRANSPOSE(R), Z))**2)
-      print'(10I4)', IX
       call u%assert_almost_equal(sd * nrm, rxz * nrm, 'sd vs rotmat (by swap_indices)', place=place)
     end block
     FLUSH (OUTPUT_UNIT)
