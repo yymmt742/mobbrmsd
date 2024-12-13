@@ -85,7 +85,7 @@ the moRMSD is deﬁned as follows:
   \text{moRMSD}\left(\mathbf{X},\mathbf{X}'\right)
   =
   \min_{\mathbf{R},c,\mu^{k},\nu_{I}^{k}}
-  \sqrt{\frac{1}{Mn} \sum_{k=1}^{K} \sum_{I=1}^{M^{k}} \sum_{j=1}^{n^{k}} \left\|{x}^{k}_{j,I}-\mathbf{R}{{x}'}^{k}_{\nu^{k}_{I}(j),\mu^{k}(I)}-{c}\right\|^2},
+  \sqrt{\frac{1}{\sum_{k=1}^{K}M^{k}n^{k}} \sum_{k=1}^{K} \sum_{I=1}^{M^{k}} \sum_{j=1}^{n^{k}} \left\|{x}^{k}_{j,I}-\mathbf{R}{{x}'}^{k}_{\nu^{k}_{I}(j),\mu^{k}(I)}-{c}\right\|^2},
 ```
 where $x^{k}\_{j,I}$ and ${x'}^{k}\_{j,I}$ are the Cartesian coordinates of $j$-th atom in the $I$-th molecule of molecular species $k$
 corresponding to $\mathbf{X}$ and $\mathbf{X}'$, respectively,
@@ -147,7 +147,7 @@ To use the Python interface, you additionally need the following:
         "n_apm":3,
         "n_mol":4,
         "sym":[[ 1, 3, 2]],
-         "name":"Water"
+        "name":"Water"
        }
      ]
    }
