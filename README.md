@@ -84,15 +84,19 @@ the moRMSD is deﬁned as follows:
 ```math
   \text{moRMSD}\left(\mathbf{X},\mathbf{X}'\right)
   =
-  \min_{\mathbf{R},c,\mu^{k},\nu_{I}^{k}}
-  \sqrt{\frac{1}{\sum_{k=1}^{K}M^{k}n^{k}} \sum_{k=1}^{K} \sum_{I=1}^{M^{k}} \sum_{j=1}^{n^{k}} \left\|{x}^{k}_{j,I}-\mathbf{R}{{x}'}^{k}_{\nu^{k}_{I}(j),\mu^{k}(I)}-{c}\right\|^2},
+  \min_{\mathbf{R},c,\mu^{(k)},\nu_{I}^{(k)}}
+  \sqrt{\frac{1}{\sum_{k=1}^{K}M^{(k)}n^{(k)}} \sum_{k=1}^{K} \sum_{I=1}^{M^{(k)}} \sum_{j=1}^{n^{(k)}} \left\|{x}^{(k)}_{j,I}-\mathbf{R}{{x}'}^{(k)}_{\nu^{(k)}_{I}(j),\mu^{(k)}(I)}-{c}\right\|^2},
 ```
-where $x^{k}\_{j,I}$ and ${x'}^{k}\_{j,I}$ are the Cartesian coordinates of $j$-th atom in the $I$-th molecule of molecular species $k$
+where $x^{(k)}\_{j,I}$ and ${x'}^{(k)}\_{j,I}$ are the Cartesian coordinates of $j$-th atom in the $I$-th molecule of molecular species $k$
 corresponding to $\mathbf{X}$ and $\mathbf{X}'$, respectively,
 $c$ is a translation vecotor, and $\mathbf{R}$ is a rotation matrix.
-$\nu^{k}\_{I}$ and $\mu^{k}$ are permutations on $\\{1,\ldots,n^{k}\\}$ and $\\{1,\ldots, M^{k}\\}$, respectively.
-$\nu^{k}\_{I}$ takes the appropriate domain of definition corresponding to the molecular topology.
-Since $\nu^{k}\_{I}$ and $\mu^{k}$ expand the solution space by factorial and exponential costs with respect to $M^{k}$, respectively,
+$\nu^{(k)}\_{I}$ and $\mu^{(k)}$ are permutations on
+$\\{1,\ldots,n^{(k)}\\}$
+and
+$\\{1,\ldots,{M}^{(k)}\\}$,
+respectively.
+$\nu^{(k)}\_{I}$ takes the appropriate domain of definition corresponding to the molecular topology.
+Since $\nu^{(k)}\_{I}$ and $\mu^{(k)}$ expand the solution space by factorial and exponential costs with respect to $M^{(k)}$, respectively,
 It is difficult to find a solution by brute force when the number of molecules is large.
 
 mobbRMSD practically eliminates this difficulty by using the branch-and-bound method.
