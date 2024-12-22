@@ -547,8 +547,8 @@ contains
   end subroutine init_par
 !
   pure function root(n, v, par)
-    integer, intent(in) :: n, v, par(n)
-    integer             :: root
+    integer(IK), intent(in) :: n, v, par(n)
+    integer(IK)             :: root
     root = v
     do
       if (par(root) == root) exit
@@ -557,9 +557,9 @@ contains
   end function root
 !
   pure subroutine reduction(n, v, root, par)
-    integer, intent(in)    :: n, v, root
-    integer, intent(inout) :: par(n)
-    integer                :: p
+    integer(IK), intent(in)    :: n, v, root
+    integer(IK), intent(inout) :: par(n)
+    integer(IK)                :: p
     p = v
     do
       if (par(p) == root) exit
@@ -569,10 +569,10 @@ contains
   end subroutine reduction
 !
   pure subroutine unite(n, v1, v2, par, is_same)
-    integer, intent(in)    :: n, v1, v2
-    integer, intent(inout) :: par(n)
-    logical, intent(inout) :: is_same
-    integer                :: r1, r2
+    integer(IK), intent(in)    :: n, v1, v2
+    integer(IK), intent(inout) :: par(n)
+    logical, intent(inout)     :: is_same
+    integer(IK)                :: r1, r2
     r1 = root(n, v1, par)
     call reduction(n, v1, r1, par)
     r2 = root(n, v2, par)
