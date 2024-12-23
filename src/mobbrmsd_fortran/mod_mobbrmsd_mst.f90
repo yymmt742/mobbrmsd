@@ -237,14 +237,26 @@ contains
     real(RK), intent(out), optional     :: weights(n_target - 1)
     !! minimum spanning tree weights
     integer(IK)                         :: f(n_target), pi, pj
+    type(edge)                          :: e(n_target * (n_target - 1) / 2)
     real(RK)                            :: ub, rmsd, cutoff_global
     integer(IK)                         :: i, j, k, ilcl, jlcl, nlim, spnt, xpnt, ypnt, wpnt, l0, ldx, ldw
 !   type(edge)                          :: e(n_target * (n_target - 1) / 2)
 !
-!   Initialize UnionFind
-!   do concurrent(i=1:n_target)
-!     par(i) = i
-!   end do
+    cutoff_global = 0.001_RK
+    do
+      print *, cutoff_global
+      call kruscal( &
+         &  n_target, &
+         &  header, &
+         &  cutoff_global, &
+         &  X, &
+         &  e, &
+         &  remove_com, &
+         &  sort_by_g &
+         & )
+      if (cutoff_global >= e(n_target - 1)%w) exit
+      cutoff_global = e(n_target - 1)%w * 1.1
+    end do
 !
     l0 = n_target * (n_target - 1) / 2
     ldx = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
@@ -271,6 +283,7 @@ contains
        &       sort_by_g=sort_by_g, &
        &       difflim_absolute=difflim_absolute  &
        &      )
+        print *, i, j, spnt, mobbrmsd_state_lowerbound_as_rmsd(state(spnt))
       end do
     end do
     !$omp end parallel do
@@ -357,132 +370,58 @@ contains
       j = f(k + 1)
       f(k + 1) = f(pj)
       f(pj) = j
+      print'(2i4,f6.3)', edges(:, k), weights(k)
     end do
 !
   end subroutine mobbrmsd_min_span_tree
 !
 ! ---
 !
-  pure subroutine update( &
- &             k, &
- &             header, &
- &             cutoff, &
- &             X, &
- &             W, &
- &             state, &
- &             b, &
- &             ub_cutoff, &
- &             difflim, &
- &             maxeval, &
- &             remove_com, &
- &             sort_by_g, &
- &             difflim_absolute &
- &            )
-    integer(IK), intent(in)             :: k
-    type(mobbrmsd), intent(in)          :: header
-    real(RK), intent(in)                :: cutoff
-    real(RK), intent(in)                :: X(*)
-    real(RK), intent(inout)             :: W(*)
-    type(mobbrmsd_state), intent(inout) :: state
-    type(node), intent(inout)           :: b
-    real(RK), intent(in), optional      :: ub_cutoff
-    real(RK), intent(in), optional      :: difflim
-    integer(IK), intent(in), optional   :: maxeval
-    logical, intent(in), optional       :: remove_com
-    logical, intent(in), optional       :: sort_by_g
-    logical, intent(in), optional       :: difflim_absolute
-    integer                             :: xpnt, ypnt, wpnt
-    integer                             :: i, j, ldx, ldw
-    ldx = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
-    ldw = mobbrmsd_memsize(header)
-    call cantor_pair_inverse(k, i, j)
-    xpnt = (i - 1) * ldx + 1
-    ypnt = (j - 1) * ldx + 1
-    wpnt = (k - 1) * ldw + 1
-    call mobbrmsd_run( &
-   &       header, &
-   &       state,  &
-   &       X(xpnt), &
-   &       X(ypnt), &
-   &       W(wpnt), &
-   &       cutoff=cutoff, &
-   &       ub_cutoff=ub_cutoff, &
-   &       difflim=difflim, &
-   &       maxeval=1, &
-   &       remove_com=remove_com, &
-   &       sort_by_g=sort_by_g, &
-   &       difflim_absolute=difflim_absolute  &
-   &      )
-    b = node(0, 0, mobbrmsd_state_rmsd(state))
-  end subroutine update
-
-  pure subroutine kruscal( &
+  subroutine kruscal( &
  &             n_target, &
  &             header, &
  &             cutoff, &
  &             X, &
- &             W, &
- &             state, &
  &             e, &
- &             ub_cutoff, &
- &             difflim, &
- &             maxeval, &
  &             remove_com, &
- &             sort_by_g, &
- &             difflim_absolute &
+ &             sort_by_g &
  &            )
     integer(IK), intent(in)             :: n_target
     type(mobbrmsd), intent(in)          :: header
     real(RK), intent(in)                :: cutoff
     real(kind=RK), intent(in)           :: X(*)
-    real(kind=RK), intent(inout)        :: W(*)
-    type(mobbrmsd_state), intent(inout) :: state
-    type(edge), intent(inout)           :: e(*)
-    real(RK), intent(in), optional      :: ub_cutoff
-    real(RK), intent(in), optional      :: difflim
-    integer(IK), intent(in), optional   :: maxeval
+    type(edge), intent(inout)           :: e(n_target * (n_target - 1) / 2)
     logical, intent(in), optional       :: remove_com
     logical, intent(in), optional       :: sort_by_g
-    logical, intent(in), optional       :: difflim_absolute
     type(node)                          :: b(n_target * (n_target - 1) / 2)
     integer(IK)                         :: par(n_target), i, j, k, l
     logical                             :: is_same
-    l = 1
     call update( &
  &             1, &
  &             header, &
  &             cutoff, &
  &             X, &
- &             W, &
- &             state, &
  &             b(1), &
- &             ub_cutoff, &
- &             difflim, &
- &             maxeval, &
  &             remove_com, &
- &             sort_by_g, &
- &             difflim_absolute &
+ &             sort_by_g &
  &            )
+    l = 1
     do k = 2, SIZE(b)
       call update( &
    &             k, &
    &             header, &
    &             cutoff, &
    &             X, &
-   &             W, &
-   &             state, &
    &             b(k), &
-   &             ub_cutoff, &
-   &             difflim, &
-   &             maxeval, &
    &             remove_com, &
-   &             sort_by_g, &
-   &             difflim_absolute &
+   &             sort_by_g &
    &            )
       call insert(k, l, b)
     end do
+    print'(10f9.3)', b%w
     j = 1
     call ordering(1, j, b, e)
+    print'(10f9.3)', e%w
     k = 0
     l = 0
     call init_par(n_target, par)
@@ -494,7 +433,48 @@ contains
       l = l + 1
       e(l) = e(k)
     end do
+    do l = 1, n_target - 1
+      call cantor_pair_inverse(e(l)%p, i, j)
+      print'(2I4,f6.3)', i, j, e(l)%w
+    end do
+    print *
   end subroutine kruscal
+!
+  subroutine update( &
+ &             k, &
+ &             header, &
+ &             cutoff, &
+ &             X, &
+ &             b, &
+ &             remove_com, &
+ &             sort_by_g &
+ &            )
+    integer(IK), intent(in)             :: k
+    type(mobbrmsd), intent(in)          :: header
+    real(RK), intent(in)                :: cutoff
+    real(RK), intent(in)                :: X(*)
+    type(node), intent(inout)           :: b
+    logical, intent(in), optional       :: remove_com
+    logical, intent(in), optional       :: sort_by_g
+    type(mobbrmsd_state)                :: state
+    real(RK)                            :: w(mobbrmsd_memsize(header))
+    integer                             :: xpnt, ypnt
+    integer                             :: i, j, ldx
+    ldx = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
+    call cantor_pair_inverse(k, i, j)
+    xpnt = (i - 1) * ldx + 1
+    ypnt = (j - 1) * ldx + 1
+    call mobbrmsd_run( &
+   &       header, &
+   &       state,  &
+   &       X(xpnt), &
+   &       X(ypnt), &
+   &       W, &
+   &       cutoff=cutoff, &
+   &       sort_by_g=sort_by_g &
+   &      )
+    b = node(0, 0, mobbrmsd_state_lowerbound_as_rmsd(state))
+  end subroutine update
 !
   pure recursive subroutine insert(p, q, a)
     integer, intent(in)       :: p, q

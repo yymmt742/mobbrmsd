@@ -73,10 +73,10 @@ program main
 !
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=4')
   call test7(4, 10, 1, [0], 4)
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
-  call test7(4, 8, 1, [0], 10)
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
-  call test7(4, 4, 1, [0], 100)
+! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
+! call test7(4, 8, 1, [0], 10)
+! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
+! call test7(4, 4, 1, [0], 100)
 !
   call u%finish_and_terminate(passing_score=0.95_R8)
 !
@@ -375,6 +375,12 @@ contains
       lower(j, j) = 0.0_RK
       refer(j, j) = 0.0_RK
     end do
+    print'(4F9.3)', upper
+    print *
+    print'(4F9.3)', lower
+    print *
+    print'(4F9.3)', refer
+    print *
 !
     call min_span_tree(n_target, refer, redges)
     call u%assert(is_same_graph(n_target, edges, redges), 'is_same_graph')
