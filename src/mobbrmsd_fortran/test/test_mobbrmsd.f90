@@ -73,10 +73,10 @@ program main
 !
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=4')
   call test7(4, 10, 1, [0], 4)
-! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
-! call test7(4, 8, 1, [0], 10)
-! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
-! call test7(4, 4, 1, [0], 100)
+  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
+  call test7(4, 8, 1, [0], 10)
+  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
+  call test7(4, 4, 1, [0], 100)
 !
   call u%finish_and_terminate(passing_score=0.95_R8)
 !
@@ -327,8 +327,6 @@ contains
     integer(IK)            :: edges(2, n_target - 1)
     integer(IK)            :: redges(2, n_target - 1)
     real(RK)               :: weights(n_target - 1)
-    real(RK)               :: upper(n_target, n_target)
-    real(RK)               :: lower(n_target, n_target)
     real(RK)               :: refer(n_target, n_target)
     integer(IK)            :: i, j, k
 !
@@ -336,17 +334,17 @@ contains
     mobb = mobbrmsd(inp)
 !
     X(:, :, :, 1) = sample(n, m)
-    do i = 2, n_target / 3
+    do i = 2, n_target / 4
       X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
     end do
 !
-    X(:, :, :, n_target / 3 + 1) = sample(n, m)
-    do i = n_target / 3 + 2, 2 * n_target / 3
+    X(:, :, :, n_target / 4 + 1) = 0.5 * X(:, :, :, n_target / 4) + 0.5 * sample(n, m)
+    do i = n_target / 4 + 2, 3 * n_target / 4
       X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
     end do
 !
-    X(:, :, :, 2 * n_target / 3 + 1) = sample(n, m)
-    do i = 2 * n_target / 3 + 2, n_target
+    X(:, :, :, 3 * n_target / 4 + 1) = 0.5 * X(:, :, :, 3 * n_target / 4) + 0.5 * sample(n, m)
+    do i = 3 * n_target / 4 + 2, n_target
       X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
     end do
 !
@@ -364,23 +362,11 @@ contains
     do j = 1, n_target
       do i = 1, j - 1
         k = k + 1
-        upper(i, j) = mobbrmsd_state_rmsd(state1(k))
-        upper(j, i) = upper(i, j)
-        lower(i, j) = mobbrmsd_state_lowerbound_as_rmsd(state1(k))
-        lower(j, i) = lower(i, j)
         refer(i, j) = mobbrmsd_state_rmsd(state2(k))
         refer(j, i) = refer(i, j)
       end do
-      upper(j, j) = 0.0_RK
-      lower(j, j) = 0.0_RK
       refer(j, j) = 0.0_RK
     end do
-    print'(4F9.3)', upper
-    print *
-    print'(4F9.3)', lower
-    print *
-    print'(4F9.3)', refer
-    print *
 !
     call min_span_tree(n_target, refer, redges)
     call u%assert(is_same_graph(n_target, edges, redges), 'is_same_graph')
