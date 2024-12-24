@@ -18,15 +18,9 @@ module mod_mobbrmsd_mst
 !
   type edge
     sequence
-    integer(IK) :: p
-    real(RK)    :: w
+    integer(IK) :: l, r, s, q, p, w
+    real(RK)    :: lb, ub
   end type
-!
-  type node
-    sequence
-    integer(IK) :: l, r
-    real(RK)    :: w
-  end type node
 !
 contains
 !| minimum spanning tree construction.
@@ -240,7 +234,6 @@ contains
     type(edge)                          :: e(n_target * (n_target - 1) / 2)
     real(RK)                            :: ub, rmsd, cutoff_global
     integer(IK)                         :: i, j, k, ilcl, jlcl, nlim, spnt, xpnt, ypnt, wpnt, l0, ldx, ldw
-!   type(edge)                          :: e(n_target * (n_target - 1) / 2)
 !
     cutoff_global = 0.001_RK
     do
@@ -254,8 +247,8 @@ contains
          &  remove_com, &
          &  sort_by_g &
          & )
-      if (cutoff_global >= e(n_target - 1)%w) exit
-      cutoff_global = e(n_target - 1)%w * 1.1
+      if (cutoff_global >= e(n_target - 1)%lb) exit
+      cutoff_global = e(n_target - 1)%ub
     end do
 !
     l0 = n_target * (n_target - 1) / 2
@@ -393,51 +386,51 @@ contains
     type(edge), intent(inout)           :: e(n_target * (n_target - 1) / 2)
     logical, intent(in), optional       :: remove_com
     logical, intent(in), optional       :: sort_by_g
-    type(node)                          :: b(n_target * (n_target - 1) / 2)
-    integer(IK)                         :: par(n_target), i, j, k, l
+    integer(IK)                         :: par(n_target), i, j, k, l, c, root
     logical                             :: is_same
     call update( &
  &             1, &
  &             header, &
  &             cutoff, &
  &             X, &
- &             b(1), &
+ &             e(1), &
  &             remove_com, &
  &             sort_by_g &
  &            )
     l = 1
-    do k = 2, SIZE(b)
+    do k = 2, SIZE(e)
       call update( &
    &             k, &
    &             header, &
    &             cutoff, &
    &             X, &
-   &             b(k), &
+   &             e(k), &
    &             remove_com, &
    &             sort_by_g &
    &            )
-      call insert(k, l, b)
+      call insert(k, l, e)
     end do
-    print'(10f9.3)', b%w
-    j = 1
-    call ordering(1, j, b, e)
-    print'(10f9.3)', e%w
-    k = 0
-    l = 0
+    root = 0
+    call ordering(1, root, e)
+    k = root
+    l = root
+    c = 0
     call init_par(n_target, par)
-    do while (l < n_target - 1)
-      k = k + 1
+    do while (c < n_target - 1)
+      k = e(k)%s
       call cantor_pair_inverse(e(k)%p, i, j)
       call unite(n_target, i, j, par, is_same)
       if (is_same) cycle
-      l = l + 1
-      e(l) = e(k)
+      e(l)%q = k
+      l = k
+      c = c + 1
     end do
+    k = root
     do l = 1, n_target - 1
-      call cantor_pair_inverse(e(l)%p, i, j)
-      print'(2I4,f6.3)', i, j, e(l)%w
+      call cantor_pair_inverse(e(k)%p, i, j)
+      print'(2I4,2f6.3)', i, j, e(k)%lb, e(k)%ub
+      k = e(k)%q
     end do
-    print *
   end subroutine kruscal
 !
   subroutine update( &
@@ -445,7 +438,7 @@ contains
  &             header, &
  &             cutoff, &
  &             X, &
- &             b, &
+ &             e, &
  &             remove_com, &
  &             sort_by_g &
  &            )
@@ -453,7 +446,7 @@ contains
     type(mobbrmsd), intent(in)          :: header
     real(RK), intent(in)                :: cutoff
     real(RK), intent(in)                :: X(*)
-    type(node), intent(inout)           :: b
+    type(edge), intent(inout)           :: e
     logical, intent(in), optional       :: remove_com
     logical, intent(in), optional       :: sort_by_g
     type(mobbrmsd_state)                :: state
@@ -473,14 +466,21 @@ contains
    &       cutoff=cutoff, &
    &       sort_by_g=sort_by_g &
    &      )
-    b = node(0, 0, mobbrmsd_state_lowerbound_as_rmsd(state))
+    e%l = 0
+    e%r = 0
+    e%s = 0
+    e%p = k
+    e%w = 0
+    e%q = 0
+    e%lb = mobbrmsd_state_lowerbound_as_rmsd(state)
+    e%ub = mobbrmsd_state_upperbound_as_rmsd(state)
   end subroutine update
 !
   pure recursive subroutine insert(p, q, a)
     integer, intent(in)       :: p, q
-    type(node), intent(inout) :: a(*)
+    type(edge), intent(inout) :: a(*)
     integer                   :: r
-    if (a(p)%w < a(q)%w) then
+    if (a(p)%lb < a(q)%lb) then
       if (a(q)%l < 1) then
         a(q)%l = p
         return
@@ -496,16 +496,14 @@ contains
     call insert(p, r, a)
   end subroutine insert
 !
-  pure recursive subroutine ordering(p, q, a, e)
+  pure recursive subroutine ordering(p, q, e)
     integer(IK), intent(in)    :: p
     integer(IK), intent(inout) :: q
-    type(node), intent(inout)  :: a(*)
     type(edge), intent(inout)  :: e(*)
-    if (a(p)%l > 0) call ordering(a(p)%l, q, a, e)
-    e(q)%p = p
-    e(q)%w = a(p)%w
-    q = q + 1
-    if (a(p)%r > 0) call ordering(a(p)%r, q, a, e)
+    if (e(p)%r > 0) call ordering(e(p)%r, q, e)
+    e(p)%s = q
+    q = p
+    if (e(p)%l > 0) call ordering(e(p)%l, q, e)
   end subroutine ordering
 !
   pure elemental subroutine cantor_pair_inverse(k, i, j)

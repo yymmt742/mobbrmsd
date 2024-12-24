@@ -14,6 +14,7 @@ module mod_mobbrmsd_state
   public :: mobbrmsd_state_squared_deviation
   public :: mobbrmsd_state_mean_squared_deviation
   public :: mobbrmsd_state_rmsd
+  public :: mobbrmsd_state_upperbound_as_rmsd
   public :: mobbrmsd_state_lowerbound_as_rmsd
   public :: mobbrmsd_state_n_eval
   public :: mobbrmsd_state_eval_ratio
@@ -220,6 +221,24 @@ contains
   end function mobbrmsd_state_rmsd
 !
 !| returns lowerbound as rmsd
+  pure elemental function mobbrmsd_state_upperbound_as_rmsd(this) result(res)
+    type(mobbrmsd_state), intent(in) :: this
+    !! this
+    real(RK)                          :: res
+    associate (&
+   &  rn => mobbrmsd_state_RECIPROCAL_OF_N, &
+   &  ac => mobbrmsd_state_INDEX_TO_AUTOCORR, &
+   &  ub => mobbrmsd_state_INDEX_TO_UPPERBOUND &
+   &  )
+    if (SIZE(this%z) >= ub) then
+      res = SQRT(MAX(ZERO, this%z(rn) * (this%z(ac) + TWO * this%z(ub))))
+    else
+      res = ZERO
+    end if
+    end associate
+  end function mobbrmsd_state_upperbound_as_rmsd
+!
+!| returns lowerbound as rmsd
   pure elemental function mobbrmsd_state_lowerbound_as_rmsd(this) result(res)
     type(mobbrmsd_state), intent(in) :: this
     !! this
@@ -229,8 +248,8 @@ contains
    &  ac => mobbrmsd_state_INDEX_TO_AUTOCORR, &
    &  lb => mobbrmsd_state_INDEX_TO_LOWERBOUND &
    &  )
-    if (SIZE(this%z) >= LB) then
-      res = SQRT(MAX(ZERO, this%z(RN) * (this%z(AC) + TWO * this%z(LB))))
+    if (SIZE(this%z) >= lb) then
+      res = SQRT(MAX(ZERO, this%z(rn) * (this%z(ac) + TWO * this%z(lb))))
     else
       res = ZERO
     end if
