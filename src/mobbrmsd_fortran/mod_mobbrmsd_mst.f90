@@ -18,8 +18,8 @@ module mod_mobbrmsd_mst
 !
   type edge
     sequence
-    integer(IK) :: l, r, s, q, p, w
-    logical     :: f
+    integer(IK) :: l, r, s, q, w
+    logical     :: f, t
     real(RK)    :: lb, ub
   end type
 !
@@ -91,10 +91,11 @@ contains
          & )
       print *, root, leaf
       k = root
-      do l = 1, n_target - 1
-        call cantor_pair_inverse(e(k)%p, i, j)
+      do
+        call cantor_pair_inverse(k, i, j)
         print'(3I8,L4,2f6.3)', i, j, k, e(k)%f, e(k)%lb, e(k)%ub
         k = e(k)%q
+        if (k < 1) exit
       end do
       print *
       if (e(leaf)%f) exit
@@ -103,7 +104,7 @@ contains
 !
     k = root
     do l = 1, n_target - 1
-      call cantor_pair_inverse(e(k)%p, i, j)
+      call cantor_pair_inverse(k, i, j)
       if (PRESENT(edges)) then
         edges(1, l) = i
         edges(2, l) = j
@@ -253,7 +254,6 @@ contains
     logical, intent(in), optional  :: remove_com
     logical, intent(in), optional  :: sort_by_g
     integer(IK)                    :: par(n_target), i, j, k, l, c
-    logical                        :: is_same
     call update( &
  &             1, &
  &             header, &
@@ -263,6 +263,7 @@ contains
  &             remove_com, &
  &             sort_by_g &
  &            )
+    call cantor_pair_inverse(1, i, j)
     l = 1
     do k = 2, SIZE(e)
       call update( &
@@ -274,18 +275,19 @@ contains
    &             remove_com, &
    &             sort_by_g &
    &            )
+      call cantor_pair_inverse(k, i, j)
       call insert(k, l, e)
     end do
     root = 0
     call ordering(1, root, e)
+    call init_par(n_target, par)
     k = root
     l = root
     c = 0
-    call init_par(n_target, par)
     do while (c < n_target - 1)
-      call cantor_pair_inverse(e(k)%p, i, j)
-      call unite(n_target, i, j, par, is_same)
-      if (is_same) then
+      call cantor_pair_inverse(k, i, j)
+      call unite(n_target, i, j, par, e(k)%t)
+      if (e(k)%t) then
         k = e(k)%s
         cycle
       end if
@@ -333,13 +335,20 @@ contains
     e%l = 0
     e%r = 0
     e%s = 0
-    e%p = k
     e%w = 0
     e%q = 0
     e%f = mobbrmsd_state_is_finished(state)
+    e%t = .false.
     e%lb = mobbrmsd_state_lowerbound_as_rmsd(state)
     e%ub = mobbrmsd_state_upperbound_as_rmsd(state)
   end subroutine update
+!
+  pure recursive subroutine down_heap(p, q, e)
+    integer, intent(in)       :: p, q
+    type(edge), intent(inout) :: e(*)
+    !integer                   :: r
+    !call down_heap(p, r, e)
+  end subroutine down_heap
 !
   pure recursive subroutine insert(p, q, a)
     integer, intent(in)       :: p, q
@@ -389,15 +398,17 @@ contains
     end do
   end subroutine init_par
 !
-  pure function root(n, v, par)
-    integer(IK), intent(in) :: n, v, par(n)
-    integer(IK)             :: root
+  pure subroutine findroot(n, v, par, root, rank)
+    integer(IK), intent(in)    :: n, v, par(n)
+    integer(IK), intent(inout) :: root, rank
     root = v
+    rank = 0
     do
       if (par(root) == root) exit
       root = par(root)
+      rank = rank + 1
     end do
-  end function root
+  end subroutine findroot
 !
   pure subroutine reduction(n, v, root, par)
     integer(IK), intent(in)    :: n, v, root
@@ -415,15 +426,23 @@ contains
     integer(IK), intent(in)    :: n, v1, v2
     integer(IK), intent(inout) :: par(n)
     logical, intent(inout)     :: is_same
-    integer(IK)                :: r1, r2
-    r1 = root(n, v1, par)
-    call reduction(n, v1, r1, par)
-    r2 = root(n, v2, par)
+    integer(IK)                :: r1, l1, r2, l2
+    call findroot(n, v1, par, r1, l1)
+    call findroot(n, v2, par, r2, l2)
     is_same = r1 == r2
     if (is_same) then
+      call reduction(n, v1, r1, par)
       call reduction(n, v2, r2, par)
     else
-      call reduction(n, v2, r1, par)
+      if (l1 > l2) then
+        par(r2) = r1
+        call reduction(n, v1, r1, par)
+        call reduction(n, v2, r1, par)
+      else
+        par(r1) = r2
+        call reduction(n, v2, r2, par)
+        call reduction(n, v1, r2, par)
+      end if
     end if
   end subroutine unite
 !
