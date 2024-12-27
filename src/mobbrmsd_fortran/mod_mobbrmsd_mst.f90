@@ -18,9 +18,10 @@ module mod_mobbrmsd_mst
 !
   type edge
     sequence
-    integer(IK) :: l, r, s, q, w
+    integer(IK) :: p, w
+    !  integer(IK) :: l, r, p, s, q, w
     logical     :: f, t
-    real(RK)    :: lb, ub
+    real(RK)    :: lb
   end type
 !
 contains
@@ -71,49 +72,66 @@ contains
     !! minimum spanning tree weights
     integer(IK)                         :: f(n_target), pi, pj
     type(edge)                          :: e(n_target * (n_target - 1) / 2)
+    type(edge)                          :: b(n_target - 1)
     real(RK)                            :: ub, rmsd, cutoff_global
-    integer(IK)                         :: root, leaf
-    integer(IK)                         :: i, j, k, l, ilcl, jlcl, nlim, spnt, xpnt, ypnt, wpnt, l0, ldx, ldw
+    !integer(IK)                         :: root, leaf
+    integer(IK)                         :: n_chunk
+    integer(IK)                         :: i, j, k, c, ilcl, jlcl, nlim, spnt, xpnt, ypnt, wpnt, l0, ldx, ldw
 !
-    cutoff_global = 0.001_RK
+    !n_chunk = n_target * (n_target - 1) / 2
+    n_chunk = MIN(n_target * 3, n_target * (n_target - 1) / 2)
+    cutoff_global = 10.0_RK
     do
       print *, cutoff_global
-      call kruscal( &
+      call construct_chunk( &
          &  n_target, &
+         &  n_chunk, &
          &  header, &
          &  cutoff_global, &
          &  X, &
          &  e, &
-         &  root, &
-         &  leaf, &
          &  remove_com, &
          &  sort_by_g &
          & )
-      print *, root, leaf
-      k = root
-      do
-        call cantor_pair_inverse(k, i, j)
-        print'(3I8,L4,2f6.3)', i, j, k, e(k)%f, e(k)%lb, e(k)%ub
-        k = e(k)%q
-        if (k < 1) exit
-      end do
-      print *
-      if (e(leaf)%f) exit
-      cutoff_global = e(leaf)%ub * 1.0001
+      print'(10f9.3)', e(:n_chunk)%lb
+!     call kruscal( &
+!        &  n_target, &
+!        &  header, &
+!        &  cutoff_global, &
+!        &  X, &
+!        &  e, &
+!        &  root, &
+!        &  leaf, &
+!        &  remove_com, &
+!        &  sort_by_g &
+!        & )
+!     print *, root, leaf
+!     k = root
+!     do
+!       call cantor_pair_inverse(k, i, j)
+!       print'(3I8,L4,2f6.3)', i, j, k, e(k)%f, e(k)%lb, e(k)%ub
+!       k = e(k)%q
+!       if (k < 1) exit
+!     end do
+!     print *
+!     if (e(leaf)%f) exit
+!     cutoff_global = e(leaf)%ub * 1.0001
+      call kruscal(n_target, n_chunk, c, e, b)
+      exit
     end do
 !
-    k = root
-    do l = 1, n_target - 1
-      call cantor_pair_inverse(k, i, j)
-      if (PRESENT(edges)) then
-        edges(1, l) = i
-        edges(2, l) = j
-      end if
-      if (PRESENT(weights)) then
-        weights(l) = e(k)%lb
-      end if
-      k = e(k)%q
-    end do
+    if (PRESENT(edges)) then
+      do concurrent(k=1:n_target - 1)
+        call cantor_pair_inverse(b(k)%p, i, j)
+        edges(1, k) = i
+        edges(2, k) = j
+      end do
+    end if
+    if (PRESENT(weights)) then
+      do concurrent(k=1:n_target - 1)
+        weights(k) = b(k)%lb
+      end do
+    end if
     return
 !
     l0 = n_target * (n_target - 1) / 2
@@ -233,39 +251,28 @@ contains
 !
 ! ---
 !
-  subroutine kruscal( &
+  subroutine construct_chunk( &
  &             n_target, &
+ &             n_chunk, &
  &             header, &
  &             cutoff, &
  &             X, &
  &             e, &
- &             root, &
- &             leaf, &
  &             remove_com, &
  &             sort_by_g &
  &            )
     integer(IK), intent(in)        :: n_target
+    integer(IK), intent(in)        :: n_chunk
     type(mobbrmsd), intent(in)     :: header
     real(RK), intent(in)           :: cutoff
     real(RK), intent(in)           :: X(*)
-    type(edge), intent(inout)      :: e(n_target * (n_target - 1) / 2)
-    integer(IK), intent(inout)     :: root
-    integer(IK), intent(inout)     :: leaf
+    type(edge), intent(inout)      :: e(n_chunk)
     logical, intent(in), optional  :: remove_com
     logical, intent(in), optional  :: sort_by_g
-    integer(IK)                    :: par(n_target), i, j, k, l, c
-    call update( &
- &             1, &
- &             header, &
- &             cutoff, &
- &             X, &
- &             e(1), &
- &             remove_com, &
- &             sort_by_g &
- &            )
-    call cantor_pair_inverse(1, i, j)
-    l = 1
-    do k = 2, SIZE(e)
+    type(edge)                     :: t
+    integer(IK)                    :: k
+    !$omp parallel do
+    do k = 1, n_chunk
       call update( &
    &             k, &
    &             header, &
@@ -275,31 +282,125 @@ contains
    &             remove_com, &
    &             sort_by_g &
    &            )
-      call cantor_pair_inverse(k, i, j)
-      call insert(k, l, e)
     end do
-    root = 0
-    call ordering(1, root, e)
+    !$omp end parallel do
+    do k = n_chunk, 1, -1
+      call down_heap(n_chunk, k, e)
+    end do
+    !$omp parallel do shared(e), private(k,t)
+    do k = n_chunk + 1, n_target * (n_target - 1) / 2
+      call update( &
+   &             k, &
+   &             header, &
+   &             cutoff, &
+   &             X, &
+   &             t, &
+   &             remove_com, &
+   &             sort_by_g &
+   &            )
+      if (e(1)%lb < t%lb) cycle
+      !$omp critical
+      e(1) = t
+      call down_heap(n_chunk, 1, e)
+      !$omp end critical
+    end do
+    !$omp end parallel do
+    do k = n_chunk, 2, -1
+      call swap(e(1), e(k))
+      call down_heap(k - 1, 1, e)
+    end do
+  end subroutine construct_chunk
+!
+  pure subroutine kruscal(n_target, n_chunk, c, e, b)
+    integer(IK), intent(in)    :: n_target, n_chunk
+    integer(IK), intent(inout) :: c
+    type(edge), intent(inout)  :: e(n_chunk), b(n_target - 1)
+    integer(IK)                :: par(n_target)
+    integer(IK)                :: i, j, k
     call init_par(n_target, par)
-    k = root
-    l = root
     c = 0
-    do while (c < n_target - 1)
-      call cantor_pair_inverse(k, i, j)
+    do k = 1, n_chunk
+      call cantor_pair_inverse(e(k)%p, i, j)
       call unite(n_target, i, j, par, e(k)%t)
-      if (e(k)%t) then
-        k = e(k)%s
-        cycle
-      end if
-      e(l)%q = k
-      l = k
-      k = e(k)%s
+      if (e(k)%t) cycle
       c = c + 1
+      b(c) = e(k)
+      if (c >= n_target - 1) exit
     end do
-    leaf = l
   end subroutine kruscal
 !
-  subroutine update( &
+! subroutine kruscal( &
+!&             n_target, &
+!&             header, &
+!&             cutoff, &
+!&             X, &
+!&             e, &
+!&             root, &
+!&             leaf, &
+!&             remove_com, &
+!&             sort_by_g &
+!&            )
+!   integer(IK), intent(in)        :: n_target
+!   type(mobbrmsd), intent(in)     :: header
+!   real(RK), intent(in)           :: cutoff
+!   real(RK), intent(in)           :: X(*)
+!   type(edge), intent(inout)      :: e(n_target * (n_target - 1) / 2)
+!   integer(IK), intent(inout)     :: root
+!   integer(IK), intent(inout)     :: leaf
+!   logical, intent(in), optional  :: remove_com
+!   logical, intent(in), optional  :: sort_by_g
+!   integer(IK)                    :: heap(n_target * (n_target - 1) / 2)
+!   integer(IK)                    :: par(n_target), i, j, k, l, c
+!   call init_par(SIZE(heap), heap)
+!   do k = SIZE(e), 1, -1
+!     call update( &
+!  &             k, &
+!  &             header, &
+!  &             cutoff, &
+!  &             X, &
+!  &             e(k), &
+!  &             remove_com, &
+!  &             sort_by_g &
+!  &            )
+!     call down_heap(SIZE(e), k, e, heap)
+!   end do
+!   do k = SIZE(heap), 2, -1
+!     call swap(heap(1), heap(k))
+!     call down_heap(k - 1, 1, e, heap)
+!   end do
+!   root = heap(1)
+!   do concurrent(k=2:SIZE(e))
+!     e(heap(k - 1))%s = heap(k)
+!   end do
+!   call init_par(n_target, par)
+!   k = root
+!   l = root
+!   c = 0
+!   do while (c < n_target - 1)
+!     call cantor_pair_inverse(k, i, j)
+!     call unite(n_target, i, j, par, e(k)%t)
+!     if (e(k)%t) then
+!       k = e(k)%s
+!       cycle
+!     end if
+!     e(l)%q = k
+!     l = k
+!     k = e(k)%s
+!     c = c + 1
+!   end do
+!   leaf = l
+!
+! end subroutine kruscal
+!
+  pure elemental subroutine swap(a, b)
+    type(edge), intent(inout) :: a, b
+    type(edge)                :: s
+    s = b
+    b = a
+    a = s
+  end subroutine swap
+!
+  pure subroutine update( &
  &             k, &
  &             header, &
  &             cutoff, &
@@ -332,53 +433,70 @@ contains
    &       cutoff=cutoff, &
    &       sort_by_g=sort_by_g &
    &      )
-    e%l = 0
-    e%r = 0
-    e%s = 0
+    !e%l = 0
+    !e%r = 0
+    !e%s = 0
+    !e%q = 0
     e%w = 0
-    e%q = 0
+    e%p = k
     e%f = mobbrmsd_state_is_finished(state)
     e%t = .false.
     e%lb = mobbrmsd_state_lowerbound_as_rmsd(state)
-    e%ub = mobbrmsd_state_upperbound_as_rmsd(state)
+    !e%ub = mobbrmsd_state_upperbound_as_rmsd(state)
   end subroutine update
 !
-  pure recursive subroutine down_heap(p, q, e)
-    integer, intent(in)       :: p, q
+  pure subroutine down_heap(n, p, e)
+    integer(IK), intent(in)   :: n, p
     type(edge), intent(inout) :: e(*)
-    !integer                   :: r
-    !call down_heap(p, r, e)
+    integer(IK)               :: r, s, t
+    r = p
+    do while (r + r <= n)
+      s = r + r
+      t = s + 1
+      if (t > n) then
+        if (e(r)%lb > e(s)%lb) return
+      else
+        if (e(s)%lb > e(t)%lb) then
+          if (e(r)%lb > e(s)%lb) return
+        else
+          if (e(r)%lb > e(t)%lb) return
+          s = t
+        end if
+      end if
+      call swap(e(r), e(s))
+      r = s
+    end do
   end subroutine down_heap
 !
-  pure recursive subroutine insert(p, q, a)
-    integer, intent(in)       :: p, q
-    type(edge), intent(inout) :: a(*)
-    integer                   :: r
-    if (a(p)%lb < a(q)%lb) then
-      if (a(q)%l < 1) then
-        a(q)%l = p
-        return
-      end if
-      r = a(q)%l
-    else
-      if (a(q)%r < 1) then
-        a(q)%r = p
-        return
-      end if
-      r = a(q)%r
-    end if
-    call insert(p, r, a)
-  end subroutine insert
+! pure recursive subroutine insert(p, q, a)
+!   integer, intent(in)       :: p, q
+!   type(edge), intent(inout) :: a(*)
+!   integer                   :: r
+!   if (a(p)%lb < a(q)%lb) then
+!     if (a(q)%l < 1) then
+!       a(q)%l = p
+!       return
+!     end if
+!     r = a(q)%l
+!   else
+!     if (a(q)%r < 1) then
+!       a(q)%r = p
+!       return
+!     end if
+!     r = a(q)%r
+!   end if
+!   call insert(p, r, a)
+! end subroutine insert
 !
-  pure recursive subroutine ordering(p, q, e)
-    integer(IK), intent(in)    :: p
-    integer(IK), intent(inout) :: q
-    type(edge), intent(inout)  :: e(*)
-    if (e(p)%r > 0) call ordering(e(p)%r, q, e)
-    e(p)%s = q
-    q = p
-    if (e(p)%l > 0) call ordering(e(p)%l, q, e)
-  end subroutine ordering
+! pure recursive subroutine ordering(p, q, e)
+!   integer(IK), intent(in)    :: p
+!   integer(IK), intent(inout) :: q
+!   type(edge), intent(inout)  :: e(*)
+!   if (e(p)%r > 0) call ordering(e(p)%r, q, e)
+!   e(p)%s = q
+!   q = p
+!   if (e(p)%l > 0) call ordering(e(p)%l, q, e)
+! end subroutine ordering
 !
   pure elemental subroutine cantor_pair_inverse(k, i, j)
     integer(IK), intent(in)    :: k
