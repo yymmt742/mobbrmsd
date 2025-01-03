@@ -72,11 +72,11 @@ program main
   call test6(8, 10, 1, [0])
 !
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=4')
-  call test7(4, 10, 1, [0], 4)
+  call test7(4, 10, 1, [0], 4, 10)
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
-  call test7(4, 8, 1, [0], 10)
+  call test7(4, 8, 1, [0], 10, 20)
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
-  call test7(4, 4, 1, [0], 100)
+  call test7(4, 4, 1, [0], 100, 20)
 !
   call u%finish_and_terminate(passing_score=0.95_R8)
 !
@@ -315,9 +315,9 @@ contains
 !
   end subroutine test6
 !
-  subroutine test7(n, m, s, sym, n_target)
+  subroutine test7(n, m, s, sym, n_target, n_test)
 !$  use omp_lib
-    integer, intent(in)    :: n, m, s, sym(n * (s - 1)), n_target
+    integer, intent(in)    :: n, m, s, sym(n * (s - 1)), n_target, n_test
     type(mobbrmsd)         :: mobb
     type(mobbrmsd_state)   :: state1(n_target * (n_target - 1) / 2)
     type(mobbrmsd_state)   :: state2(n_target * (n_target - 1) / 2)
@@ -328,55 +328,57 @@ contains
     integer(IK)            :: redges(2, n_target - 1)
     real(RK)               :: weights(n_target - 1)
     real(RK)               :: refer(n_target, n_target)
-    integer(IK)            :: i, j, k
+    integer(IK)            :: i, j, k, itest
 !
     call mobbrmsd_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
-!
-    X(:, :, :, 1) = sample(n, m)
-    do i = 2, n_target / 4
-      X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
-    end do
-!
-    X(:, :, :, n_target / 4 + 1) = 0.5 * X(:, :, :, n_target / 4) + 0.5 * sample(n, m)
-    do i = n_target / 4 + 2, 3 * n_target / 4
-      X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
-    end do
-!
-    X(:, :, :, 3 * n_target / 4 + 1) = 0.5 * X(:, :, :, 3 * n_target / 4) + 0.5 * sample(n, m)
-    do i = 3 * n_target / 4 + 2, n_target
-      X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
-    end do
 !
     !$omp parallel
     if (omp_get_thread_num() == 0) k = MAX(n_target * (n_target - 1) / 2, omp_get_num_threads())
     !$omp end parallel
     allocate (W(mobbrmsd_memsize(mobb) * k))
 !
-    call mobbrmsd_min_span_tree(n_target, mobb, state1, X, W, &
-   &                            edges=edges, weights=weights)
-!
-    call mobbrmsd_batch_tri_run(n_target, mobb, state2, X, W)
-!
-    k = 0
-    do j = 1, n_target
-      do i = 1, j - 1
-        k = k + 1
-        refer(i, j) = mobbrmsd_state_rmsd(state2(k))
-        refer(j, i) = refer(i, j)
+    do itest = 1, n_test
+      X(:, :, :, 1) = sample(n, m)
+      do i = 2, n_target / 4
+        X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
       end do
-      refer(j, j) = 0.0_RK
+!
+      X(:, :, :, n_target / 4 + 1) = 0.5 * X(:, :, :, n_target / 4) + 0.5 * sample(n, m)
+      do i = n_target / 4 + 2, 3 * n_target / 4
+        X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
+      end do
+!
+      X(:, :, :, 3 * n_target / 4 + 1) = 0.5 * X(:, :, :, 3 * n_target / 4) + 0.5 * sample(n, m)
+      do i = 3 * n_target / 4 + 2, n_target
+        X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
+      end do
+!
+      call mobbrmsd_min_span_tree(n_target, mobb, state1, X, W, &
+     &                            edges=edges, weights=weights)
+!
+      call mobbrmsd_batch_tri_run(n_target, mobb, state2, X, W)
+!
+      k = 0
+      do j = 1, n_target
+        do i = 1, j - 1
+          k = k + 1
+          refer(i, j) = mobbrmsd_state_rmsd(state2(k))
+          refer(j, i) = refer(i, j)
+        end do
+        refer(j, j) = 0.0_RK
+      end do
+!
+      call min_span_tree(n_target, refer, redges)
+      call u%assert(is_same_graph(n_target, edges, redges), 'is_same_graph')
+      if (.not. is_same_graph(n_target, edges, redges)) then
+        do i = 1, n_target - 1
+          print *, edges(:, i), redges(:, i)
+        end do
+      end if
+      FLUSH (OUTPUT_UNIT)
+      FLUSH (ERROR_UNIT)
     end do
-!
-    call min_span_tree(n_target, refer, redges)
-    call u%assert(is_same_graph(n_target, edges, redges), 'is_same_graph')
-    if (.not. is_same_graph(n_target, edges, redges)) then
-      do i = 1, n_target - 1
-        print *, edges(:, i), redges(:, i)
-      end do
-    end if
-    FLUSH (OUTPUT_UNIT)
-    FLUSH (ERROR_UNIT)
 !
   end subroutine test7
 !
