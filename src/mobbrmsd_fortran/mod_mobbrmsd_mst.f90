@@ -19,7 +19,7 @@ module mod_mobbrmsd_mst
   type edge
     sequence
     integer(IK) :: p, w
-    logical     :: f !, t
+    logical     :: f
     real(RK)    :: lb, ub
   end type edge
 !
@@ -37,7 +37,6 @@ contains
  &             W, &
  &             remove_com, &
  &             sort_by_g, &
- &             difflim_absolute, &
  &             edges, &
  &             weights &
  &            )
@@ -45,31 +44,28 @@ contains
     !! number of coordinates
     type(mobbrmsd), intent(in)          :: header
     !! mobbrmsd_header
-    real(kind=RK), intent(in)           :: X(*)
+    real(RK), intent(in)                :: X(*)
     !! coordinate sequence
-    real(kind=RK), intent(inout)        :: W(*)
+    real(RK), intent(inout)             :: W(*)
 !   !! work memory, must be larger than header%memsize() * n_target * (n_target-1) / 2
     logical, intent(in), optional       :: remove_com
     !! if true, remove centroids. default [.true.]
     logical, intent(in), optional       :: sort_by_g
     !! if true, row is sorted respect to G of reference coordinate. default [.true.]
-    logical, intent(in), optional       :: difflim_absolute
-    !! if true, use absolute difflim. default [.false.]
     integer(IK), intent(out), optional  :: edges(2, n_target - 1)
     !! minimum spanning tree edges
     real(RK), intent(out), optional     :: weights(n_target - 1)
     !! minimum spanning tree weights
     type(edge)                          :: core(n_target - 1)
-    real(RK)                            :: lambda
-    integer(IK)                         :: par(n_target) ! for union find
     integer(IK)                         :: n_core, n_chunk, n_pack, i, j, k
-!
-    n_core = 0
-    call init_par(n_target, par)
     n_chunk = MIN(n_target * 300, n_target * (n_target - 1) / 2)
-    lambda = 1.0E-8_RK
     block
-      type(edge) :: e(n_chunk), g
+      type(edge)  :: e(n_chunk), g
+      integer(IK) :: par(n_target) ! for union find
+      real(RK)    :: lambda
+      lambda = 1.0E-2_RK
+      call init_par(n_target, par)
+      n_core = 0
       do
         call construct_chunk( &
            &  n_target, &
@@ -127,18 +123,18 @@ contains
 ! end function edge_to_ij
 !
   subroutine construct_chunk( &
- &             n_target, &
- &             n_core, &
- &             n_chunk, &
- &             header, &
- &             lambda, &
- &             par, &
- &             X, &
- &             n_pack, &
- &             e, &
- &             remove_com, &
- &             sort_by_g &
- &            )
+            &  n_target, &
+            &  n_core, &
+            &  n_chunk, &
+            &  header, &
+            &  lambda, &
+            &  par, &
+            &  X, &
+            &  n_pack, &
+            &  e, &
+            &  remove_com, &
+            &  sort_by_g &
+            & )
     integer(IK), intent(in)        :: n_target
     integer(IK), intent(in)        :: n_core
     integer(IK), intent(in)        :: n_chunk
@@ -154,7 +150,6 @@ contains
     integer(IK)                    :: i, j, k, l, m, c, n, ld, lc
 !
     call init_edge(n_chunk, e)
-!
     ld = n_target * (n_target - 1) / 2
     lc = MIN(n_chunk, ld - n_core)
 !

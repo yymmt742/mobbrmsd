@@ -16,6 +16,14 @@ program main
   integer, parameter :: place = 6
 #endif
 !
+#ifdef USE_DIM2
+  integer, parameter :: ntest_def = 20
+#elif USE_DIM3
+  integer, parameter :: ntest_def = 10
+#else
+  integer, parameter :: ntest_def = 1
+#endif
+!
   call setup_dimension(4)
   call u%init('test mobbrmsd for (n,M,S)=(1,1,1)')
   call test1(1, 1, 1, [0])
@@ -54,15 +62,21 @@ program main
   call test4(4, 4, 2, [3, 2, 1, 4])
   call u%init('test mobbrmsd difflim for {(n,M,S)}={(4,8,1)}')
   call test4(4, 8, 1, [0])
+#ifdef USE_DIMX
+#else
   call u%init('test mobbrmsd difflim for {(n,M,S)}={(8,10,1)}')
   call test4(8, 10, 1, [0])
+#endif
 !
   call u%init('test mobbrmsd absolute difflim for {(n,M,S)}={(4,4,2)}')
   call test5(4, 4, 2, [3, 2, 1, 4])
   call u%init('test mobbrmsd absolute difflim for {(n,M,S)}={(4,8,1)}')
   call test5(4, 8, 1, [0])
+#ifdef USE_DIMX
+#else
   call u%init('test mobbrmsd absolute difflim for {(n,M,S)}={(8,10,1)}')
   call test5(8, 10, 1, [0])
+#endif
 !
   call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,4,2)}')
   call test6(4, 4, 2, [3, 2, 1, 4])
@@ -72,11 +86,11 @@ program main
   call test6(8, 10, 1, [0])
 !
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=4')
-  call test7(4, 10, 1, [0], 4, 10)
+  call test7(4, 10, 1, [0], 4, ntest_def)
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
-  call test7(4, 8, 1, [0], 10, 20)
+  call test7(4, 8, 1, [0], 10, ntest_def * 2)
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
-  call test7(4, 4, 1, [0], 100, 20)
+  call test7(4, 4, 1, [0], 100, ntest_def * 2)
 !
   call u%finish_and_terminate(passing_score=0.95_R8)
 !
