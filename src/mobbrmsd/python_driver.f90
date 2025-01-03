@@ -372,20 +372,12 @@ contains
     integer(kind=ik), intent(out)     :: edges(2, n_target - 1)
     real(kind=rk), intent(out)        :: weights(n_target - 1)
     type(mobbrmsd)                    :: h
-    type(mobbrmsd_state), allocatable :: s(:, :)
 
     call mobbrmsd_load(h, header)
-    allocate (s(n_target, n_target))
-
     call mobbrmsd_min_span_tree( &
-   &       n_target, h, s, X, W, &
-   &       cutoff=ropts(1), &
-   &       ub_cutoff=ropts(2), &
-   &       difflim=ropts(3), &
-   &       maxeval=iopts(1), &
+   &       n_target, h, X, W, &
    &       remove_com=remove_com, &
    &       sort_by_g=sort_by_g, &
-   &       difflim_absolute=difflim_absolute, &
    &       edges=edges, &
    &       weights=weights &
    &    )

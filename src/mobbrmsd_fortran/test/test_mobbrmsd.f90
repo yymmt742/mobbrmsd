@@ -319,8 +319,7 @@ contains
 !$  use omp_lib
     integer, intent(in)    :: n, m, s, sym(n * (s - 1)), n_target, n_test
     type(mobbrmsd)         :: mobb
-    type(mobbrmsd_state)   :: state1(n_target * (n_target - 1) / 2)
-    type(mobbrmsd_state)   :: state2(n_target * (n_target - 1) / 2)
+    type(mobbrmsd_state)   :: state(n_target * (n_target - 1) / 2)
     type(mobbrmsd_input)   :: inp
     real(RK)               :: X(D, n, m, n_target)
     real(RK), allocatable  :: W(:)
@@ -354,16 +353,16 @@ contains
         X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
       end do
 !
-      call mobbrmsd_min_span_tree(n_target, mobb, state1, X, W, &
+      call mobbrmsd_min_span_tree(n_target, mobb, X, W, &
      &                            edges=edges, weights=weights)
 !
-      call mobbrmsd_batch_tri_run(n_target, mobb, state2, X, W)
+      call mobbrmsd_batch_tri_run(n_target, mobb, state, X, W)
 !
       k = 0
       do j = 1, n_target
         do i = 1, j - 1
           k = k + 1
-          refer(i, j) = mobbrmsd_state_rmsd(state2(k))
+          refer(i, j) = mobbrmsd_state_rmsd(state(k))
           refer(j, i) = refer(i, j)
         end do
         refer(j, j) = 0.0_RK

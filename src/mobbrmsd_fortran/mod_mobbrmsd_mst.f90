@@ -33,13 +33,8 @@ contains
   subroutine mobbrmsd_min_span_tree( &
  &             n_target, &
  &             header, &
- &             state, &
  &             X, &
  &             W, &
- &             cutoff, &
- &             ub_cutoff, &
- &             difflim, &
- &             maxeval, &
  &             remove_com, &
  &             sort_by_g, &
  &             difflim_absolute, &
@@ -50,20 +45,10 @@ contains
     !! number of coordinates
     type(mobbrmsd), intent(in)          :: header
     !! mobbrmsd_header
-    type(mobbrmsd_state), intent(inout) :: state(n_target * (n_target - 1) / 2)
-    !! mobbrmsd_state, the result is contained in this structure.
     real(kind=RK), intent(in)           :: X(*)
     !! coordinate sequence
     real(kind=RK), intent(inout)        :: W(*)
 !   !! work memory, must be larger than header%memsize() * n_target * (n_target-1) / 2
-    real(RK), intent(in), optional      :: cutoff
-    !! The search ends when lowerbound is determined to be greater than to cutoff.
-    real(RK), intent(in), optional      :: ub_cutoff
-    !! The search ends when upperbound is determined to be greater than to ub_cutoff.
-    real(RK), intent(in), optional      :: difflim
-    !! The search ends when the difference between the lower and upper bounds is less than difflim.
-    integer(IK), intent(in), optional   :: maxeval
-    !! The search ends when ncount exceeds maxiter.
     logical, intent(in), optional       :: remove_com
     !! if true, remove centroids. default [.true.]
     logical, intent(in), optional       :: sort_by_g
