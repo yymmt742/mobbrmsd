@@ -23,6 +23,11 @@ module mod_mobbrmsd_mst
     real(RK)    :: lb, ub
   end type edge
 !
+  type hash_table
+    sequence
+    integer(IK) :: p, c
+  end type hash_table
+!
 ! type ij
 !   sequence
 !   integer(IK) :: i, j
@@ -47,7 +52,7 @@ contains
     real(RK), intent(in)                :: X(*)
     !! coordinate sequence
     real(RK), intent(inout)             :: W(*)
-!   !! work memory, must be larger than header%memsize() * n_target * (n_target-1) / 2
+    !! work memory, must be larger than header%memsize() * n_target * (n_target-1) / 2
     logical, intent(in), optional       :: remove_com
     !! if true, remove centroids. default [.true.]
     logical, intent(in), optional       :: sort_by_g
@@ -57,8 +62,9 @@ contains
     real(RK), intent(out), optional     :: weights(n_target - 1)
     !! minimum spanning tree weights
     type(edge)                          :: core(n_target - 1)
-    integer(IK)                         :: n_core, n_chunk, n_pack, i, j, k
+    integer(IK)                         :: n_core, n_edges, n_chunk, n_pack, i, j, k
     n_chunk = MIN(n_target * 300, n_target * (n_target - 1) / 2)
+    n_edges = n_target - 1
     block
       type(edge)  :: e(n_chunk), g
       integer(IK) :: par(n_target) ! for union find
@@ -93,22 +99,22 @@ contains
            &  remove_com, &
            &  sort_by_g &
            & )
-        call kruscal_core(n_target, n_pack, n_core, par, e, core)
-        if (n_core == n_target - 1) exit
-        g = pick_heap(n_pack, n_target - n_core - 1, e)
+        call kruscal(n_target, n_pack, n_core, par, e, core)
+        if (n_core == n_edges) exit
+        g = pick_heap(n_pack, n_edges - n_core, e)
         lambda = MAX(lambda, g%ub)
       end do
     end block
 !
     if (PRESENT(edges)) then
-      do concurrent(k=1:n_target - 1)
+      do concurrent(k=1:n_edges)
         call cantor_pair_inverse(core(k)%p, i, j)
         edges(1, k) = i
         edges(2, k) = j
       end do
     end if
     if (PRESENT(weights)) then
-      do concurrent(k=1:n_target - 1)
+      do concurrent(k=1:n_edges)
         weights(k) = core(k)%lb
       end do
     end if
@@ -300,7 +306,7 @@ contains
     res = t(1)
   end function pick_heap
 !
-  pure subroutine kruscal_core(n_target, n_pack, c, par, e, b)
+  pure subroutine kruscal(n_target, n_pack, c, par, e, b)
     integer(IK), intent(in)    :: n_target, n_pack
     integer(IK), intent(inout) :: c, par(n_target)
     type(edge), intent(in)     :: e(n_pack)
@@ -322,7 +328,7 @@ contains
       b(c) = t(k)
       if (c >= n_target - 1) exit
     end do
-  end subroutine kruscal_core
+  end subroutine kruscal
 !
   pure elemental subroutine swap(a, b)
     type(edge), intent(inout) :: a, b
@@ -500,6 +506,26 @@ contains
 !     k = (j - 2) * (j - 1) / 2 + i
 !   end if
 ! end subroutine cantor_pair
+!
+  pure elemental function hash(n, k)
+    integer(IK), intent(in)    :: n, k
+    integer(IK)                :: hash
+    hash = MODULO(k - 1, n) + 1
+  end function hash
+!
+! pure subroutine hash_push(n, k, h)
+!   integer(IK), intent(in)         :: n, k
+!   type(hash_table), intent(inout) :: h(n)
+!   integer(IK)                     :: c
+!   c = hash(n, k)
+!   do
+!     if (h(c)%p == 0) then
+!       h(c)%p = k
+!       h(c)%c = 0
+!       exit
+!     end if
+!   end do
+! end subroutine hash_push
 !
   pure elemental subroutine cantor_pair_inverse(k, i, j)
     integer(IK), intent(in)    :: k
