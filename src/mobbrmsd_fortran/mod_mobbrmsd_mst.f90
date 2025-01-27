@@ -25,7 +25,7 @@ module mod_mobbrmsd_mst
 !
   type hash_table
     sequence
-    integer(IK) :: p, c
+    integer(IK) :: k
   end type hash_table
 !
 ! type ij
@@ -62,13 +62,16 @@ contains
     real(RK), intent(out), optional     :: weights(n_target - 1)
     !! minimum spanning tree weights
     type(edge)                          :: core(n_target - 1)
-    integer(IK)                         :: n_core, n_edges, n_chunk, n_pack, i, j, k
-    n_chunk = MIN(n_target * 300, n_target * (n_target - 1) / 2)
+    integer(IK)                         :: n_core, n_edges, n_chunk, n_hash, n_pack, i, j, k
+    n_chunk = MIN(n_target * 3, n_target * (n_target - 1) / 2)
+    n_hash = n_chunk + 2
     n_edges = n_target - 1
     block
-      type(edge)  :: e(n_chunk), g
-      integer(IK) :: par(n_target) ! for union find
-      real(RK)    :: lambda
+      type(edge)       :: e(n_chunk), g
+      type(hash_table) :: h(n_hash)
+      integer(IK)      :: par(n_target) ! for union find
+      real(RK)         :: lambda
+      call hash_table_init(h)
       lambda = 1.0E-2_RK
       call init_par(n_target, par)
       n_core = 0
@@ -77,12 +80,14 @@ contains
            &  n_target, &
            &  n_core, &
            &  n_chunk, &
+           &  n_hash, &
            &  header, &
            &  lambda, &
            &  par, &
            &  X, &
            &  n_pack, &
            &  e, &
+           &  h, &
            &  remove_com, &
            &  sort_by_g &
            & )
@@ -91,6 +96,7 @@ contains
            &  n_pack, &
            &  n_core, &
            &  n_chunk, &
+           &  n_hash, &
            &  header, &
            &  lambda, &
            &  par, &
@@ -132,28 +138,32 @@ contains
             &  n_target, &
             &  n_core, &
             &  n_chunk, &
+            &  n_hash, &
             &  header, &
             &  lambda, &
             &  par, &
             &  X, &
             &  n_pack, &
             &  e, &
+            &  h, &
             &  remove_com, &
             &  sort_by_g &
             & )
-    integer(IK), intent(in)        :: n_target
-    integer(IK), intent(in)        :: n_core
-    integer(IK), intent(in)        :: n_chunk
-    integer(IK), intent(in)        :: par(n_target)
-    type(mobbrmsd), intent(in)     :: header
-    real(RK), intent(in)           :: lambda
-    real(RK), intent(in)           :: X(*)
-    integer(IK), intent(inout)     :: n_pack
-    type(edge), intent(inout)      :: e(n_chunk)
-    logical, intent(in), optional  :: remove_com, sort_by_g
-    type(edge)                     :: t
-    logical                        :: check1, check2
-    integer(IK)                    :: i, j, k, l, m, c, n, ld, lc
+    integer(IK), intent(in)         :: n_target
+    integer(IK), intent(in)         :: n_core
+    integer(IK), intent(in)         :: n_chunk
+    integer(IK), intent(in)         :: n_hash
+    integer(IK), intent(in)         :: par(n_target)
+    type(mobbrmsd), intent(in)      :: header
+    real(RK), intent(in)            :: lambda
+    real(RK), intent(in)            :: X(*)
+    integer(IK), intent(inout)      :: n_pack
+    type(edge), intent(inout)       :: e(n_chunk)
+    type(hash_table), intent(inout) :: h(n_hash)
+    logical, intent(in), optional   :: remove_com, sort_by_g
+    type(edge)                      :: t
+    logical                         :: check1, check2
+    integer(IK)                     :: i, j, k, l, m, c, n, pw, ld, lc
 !
     call init_edge(n_chunk, e)
     ld = n_target * (n_target - 1) / 2
@@ -174,7 +184,7 @@ contains
     k = 0
     n = 0
 !
-    !$omp parallel shared(e,k,c), private(i,j,l,m,check1,check2)
+    !$omp parallel shared(e,k,c), private(i,j,l,m,pw,check1,check2)
     do
       !$omp critical
       l = k + 1
@@ -196,6 +206,11 @@ contains
       !$omp end critical
       if (check1) exit
       if (check2) cycle
+      !$omp critical
+      !call hash_add(n_hash, l, h)
+      !pw = hash_get(n_hash, l, h)
+      !$omp end critical
+      !print *, l, pw
       call update( &
    &             l, i, j, &
    &             header, &
@@ -211,7 +226,7 @@ contains
       call down_heap(n_pack, l, e)
     end do
     k = n
-    !$omp parallel shared(e,k), private(l,i,j,t,check1)
+    !$omp parallel shared(e,k), private(l,i,j,t,pw,check1)
     do
       !$omp critical
       l = k + 1
@@ -235,11 +250,15 @@ contains
       !$omp end critical
       if (check1) cycle
       !$omp critical
+      !call hash_del(n_hash, e(1)%p, h)
+      !call hash_add(n_hash, t%p, h)
       e(1) = t
       call down_heap(n_chunk, 1, e)
       !$omp end critical
+      !print *, l, hash_get(n_hash, l, h)
     end do
     !$omp end parallel
+    !print *
   end subroutine construct_chunk
 !
   pure subroutine update_chunk( &
@@ -247,6 +266,7 @@ contains
  &             n_pack, &
  &             n_core, &
  &             n_chunk, &
+ &             n_hash, &
  &             header, &
  &             lambda, &
  &             par, &
@@ -259,6 +279,7 @@ contains
     integer(IK), intent(in)        :: n_pack
     integer(IK), intent(in)        :: n_core
     integer(IK), intent(in)        :: n_chunk
+    integer(IK), intent(in)        :: n_hash
     integer(IK), intent(in)        :: par(n_target)
     type(mobbrmsd), intent(in)     :: header
     real(RK), intent(in)           :: lambda
@@ -507,25 +528,76 @@ contains
 !   end if
 ! end subroutine cantor_pair
 !
+!!! --- hash table ---
+! key value must be k>0.
+!
+  pure elemental subroutine hash_table_init(h)
+    type(hash_table), intent(inout) :: h
+    h%k = 0
+  end subroutine hash_table_init
+
   pure elemental function hash(n, k)
     integer(IK), intent(in)    :: n, k
     integer(IK)                :: hash
     hash = MODULO(k - 1, n) + 1
   end function hash
+
+  pure subroutine hash_add(n, k, h)
+    integer(IK), intent(in)         :: n, k
+    type(hash_table), intent(inout) :: h(n)
+    integer(IK)                     :: c
+    c = hash(n, k)
+    do
+      if (h(c)%k == k) return
+      if (h(c)%k <= 0) then
+        h(c)%k = k
+        return
+      else
+        c = MODULO(c, n) + 1
+      end if
+    end do
+  end subroutine hash_add
+
+  pure function hash_get(n, k, h) result(c)
+    integer(IK), intent(in)      :: n, k
+    type(hash_table), intent(in) :: h(n)
+    integer(IK)                  :: c, i
+    i = hash(n, k)
+    c = i
+    do
+      if (h(c)%k == k) then
+        return
+      elseif (h(c)%k == 0) then
+        c = 0
+        return
+      end if
+      c = MODULO(c, n) + 1
+      if (c == i) then
+        c = 0
+        return
+      end if
+    end do
+  end function hash_get
+
+  pure subroutine hash_del(n, k, h)
+    integer(IK), intent(in)         :: n, k
+    type(hash_table), intent(inout) :: h(n)
+    integer(IK)                     :: c, i
+    i = hash(n, k)
+    c = i
+    do
+      if (h(c)%k == k) then
+        h(c)%k = -k
+        return
+      elseif (h(c)%k == 0) then
+        return
+      end if
+      c = MODULO(c, n) + 1
+      if (c == i) return
+    end do
+  end subroutine hash_del
 !
-! pure subroutine hash_push(n, k, h)
-!   integer(IK), intent(in)         :: n, k
-!   type(hash_table), intent(inout) :: h(n)
-!   integer(IK)                     :: c
-!   c = hash(n, k)
-!   do
-!     if (h(c)%p == 0) then
-!       h(c)%p = k
-!       h(c)%c = 0
-!       exit
-!     end if
-!   end do
-! end subroutine hash_push
+! cantor_pair
 !
   pure elemental subroutine cantor_pair_inverse(k, i, j)
     integer(IK), intent(in)    :: k
