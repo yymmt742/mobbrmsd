@@ -15,6 +15,7 @@ module mod_bb_list
   public :: bb_list_setup
   public :: bb_list_run
   public :: bb_list_swap_y
+  public :: bb_list_swap_indices
   public :: bb_list_rotation_matrix
   public :: bb_list_is_finished
   public :: bb_list_destroy
@@ -66,7 +67,7 @@ contains
     integer, intent(in)          :: n
     type(bb_block), intent(in)   :: blk(n)
     integer(IK)                  :: q(header_size), s(header_sttsize)
-    integer(IK)                  :: pq(n), px(n), ps(n), pw(n)
+    integer(IK)                  :: pq(n), pa(n), px(n), ps(n), pw(n)
     integer(IK)                  :: i, j, nstat
     associate ( &
    &  nb => q(bb_list_NUMBER_OF_SPEACIES), &
@@ -75,7 +76,7 @@ contains
       nb = SIZE(blk)
       sb = 0
 !
-      j = header_size + 4 * nb + 1
+      j = header_size + 5 * nb + 1
       do i = 1, nb
         pq(i) = j
         j = j + SIZE(blk(i)%q)
@@ -96,8 +97,13 @@ contains
         px(i) = j
         j = j + bb_block_molsize(blk(i)%q)
       end do
+      j = 1
+      do i = 1, nb
+        pa(i) = j
+        j = j + bb_block_natm(blk(i)%q)
+      end do
 !
-      allocate (this%q, source=[q, pq, ps, pw, px, [(blk(i)%q, i=1, SIZE(blk))]])
+      allocate (this%q, source=[q, pq, ps, pw, px, pa, [(blk(i)%q, i=1, SIZE(blk))]])
       allocate (this%s, source=[s, [(-1, i=1, nstat)], [(blk(i)%s, i=1, SIZE(blk))]])
     end associate
   end subroutine bb_list_init
@@ -192,7 +198,7 @@ contains
         ac = ac + bb_block_autocorr(q(q(pq + i)), W(q(pw + i)))
       end do
 !
-      lb = -TWO * ac
+      lb = -HALF * ac
 !
       cm = ZERO
       do i = 0, n_block - 1
@@ -405,6 +411,31 @@ contains
     end associate
   end subroutine bb_list_swap_y
 !
+!| Swap target coordinate.
+  pure subroutine bb_list_swap_indices(q, s, IX)
+    integer(IK), intent(in)    :: q(*)
+    !! header
+    integer(IK), intent(in)    :: s(*)
+    !! state
+    integer(IK), intent(inout) :: IX(*)
+    !! swap indices
+    integer(IK)             :: i, pb, pq, ps, pa
+    associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
+      pa = a_pointer(q)
+      ps = s_pointer(q)
+      pq = q_pointer(q)
+      pb = bb_list_INDEX_TO_BESTSTATE
+!
+      do concurrent(i=1:bb_list_n_atoms(q))
+        IX(i) = i
+      end do
+      do i = 0, n_block - 1
+        call bb_block_swap_indices(q(q(pq + i)), s(q(ps + i)), s(pb), IX(q(pa + i)))
+        pb = pb + bb_block_statesize(q(q(pq + i)))
+      end do
+    end associate
+  end subroutine bb_list_swap_indices
+!
 !| Sum covariance matrix by saved state z.
   pure subroutine bb_list_rotation_matrix(q, s, W, R)
     integer(IK), intent(in) :: q(*)
@@ -517,6 +548,12 @@ contains
     integer(IK)             :: res
     res = header_size + 3 * q(bb_list_NUMBER_OF_SPEACIES) + 1
   end function x_pointer
+!
+  pure function a_pointer(q) result(res)
+    integer(IK), intent(in) :: q(*)
+    integer(IK)             :: res
+    res = header_size + 4 * q(bb_list_NUMBER_OF_SPEACIES) + 1
+  end function a_pointer
 !
   pure function q_pointer(q) result(res)
     integer(IK), intent(in) :: q(*)

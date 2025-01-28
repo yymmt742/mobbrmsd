@@ -51,7 +51,6 @@ contains
 !
 !| Compute \(\min_{R}\text{tr}[\mathbf{R}\mathbf{C}]\).
   pure subroutine estimate_rcmax(g, cov, w)
-    !pure subroutine estimate_rcmax(g, cov, w)
     real(RK), intent(in)    :: g
     !! sum of auto covariance matrix
     real(RK), intent(in)    :: cov(*)
@@ -63,7 +62,6 @@ contains
 !
 !| Compute the least-squares sum_i^n |x_i-Ry_i|^2 from cov = YX^T and g = tr[XX^T] + tr[YY^T].
   pure subroutine estimate_sdmin(g, cov, w)
-    !pure subroutine estimate_sdmin(g, cov, w)
     real(RK), intent(in)    :: g
     !! sum of auto covariance matrix
     real(RK), intent(in)    :: cov(*)
@@ -84,7 +82,6 @@ contains
 !| Compute the transpose rotation matrix for minimize tr[CR] from cov = YX^T and g = tr[XX^T] + tr[YY^T].
 !  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
   pure subroutine estimate_rotation(g, cov, rot, w)
-    !pure subroutine estimate_rotation(g, cov, rot, w)
     real(RK), intent(in)    :: g
     !! g = tr[XX^T] + tr[YY^T]
     real(RK), intent(in)    :: cov(*)
@@ -181,7 +178,6 @@ contains
 !| Compute maximum eigen value of S. <br>
 !  This subroutine is based on the method of Coutsias et.al. 10.1002/jcc.25802
   pure subroutine find_lambda_max(g, cov, w)
-    !pure subroutine find_lambda_max(g, cov, w)
     real(RK), intent(in)    :: g
     !! sum of auto covariance matrix
     real(RK), intent(in)    :: cov(*)
@@ -199,7 +195,6 @@ contains
 !
 !   K1 = - 8 det|R|
 !   A2 = tr[D]
-!    call det3(g, cov, w(q))
     call det3(cov(1), cov(2), cov(3), cov(4), cov(5), cov(6), cov(7), cov(8), cov(9), w(q))
 !
 !   D = RR^T
@@ -219,7 +214,23 @@ contains
       w(x) = ZERO
       return
     end if
-    w(p) = w(p) * w(d11) + w(d22) * w(d33) - w(d21) * w(d21) - w(d31) * w(d31) - w(d32) * w(d32)
+!   w(p) = w(p) * w(d11) + w(d22) * w(d33) - w(d21) * w(d21) - w(d31) * w(d31) - w(d32) * w(d32)
+    w(p) = w(p) * w(d11)
+    w(d22) = w(d22) * w(d33)
+    w(d21) = w(d21) * w(d21)
+    w(d31) = w(d31) * w(d31)
+    w(d32) = w(d32) * w(d32)
+    if ((w(d21) > w(d31)) .and. (w(d21) > w(d32))) then
+      w(d31) = w(d31) + w(d32)
+      w(d21) = w(d21) + w(d31)
+    elseif ((w(d31) > w(d21)) .and. (w(d31) > w(d32))) then
+      w(d21) = w(d21) + w(d32)
+      w(d21) = w(d21) + w(d31)
+    else
+      w(d21) = w(d21) + w(d31)
+      w(d21) = w(d21) + w(d32)
+    end if
+    w(p) = w(p) + w(d22) - w(d21)
     w(sr) = SQRT(w(r))
     w(rr) = FOUR / (w(r) * w(r))
     w(a) = -TWO * w(q) * w(rr) * w(sr)
@@ -379,7 +390,6 @@ contains
             q2 = q2 * a00
           elseif (ABS(a22) > DEGENERACY) then
             q0 = w(l2) * a32 - w(l3) * a22
-            q1 = ZERO
             q2 = a32
             q3 = -a22
             a00 = ONE / SQRT(q0 * q0 + q2 * q2 + q3 * q3)
@@ -396,16 +406,14 @@ contains
             q1 = q1 * a00
             q3 = q3 * a00
           else
-!           ! Triple degeneracy
+            ! Triple degeneracy
             q0 = ONE
-            q1 = ZERO
             q2 = ZERO
             q3 = ZERO
           end if
         else
-          q1 = ZERO
           q2 = ZERO
-          q3 = ONE / (one + w(l3) * w(l3))
+          q3 = ONE / SQRT(ONE + w(l3) * w(l3))
           q0 = w(l3) * q3
         end if
       else

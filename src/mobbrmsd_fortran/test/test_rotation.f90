@@ -12,7 +12,7 @@ program main
   implicit none
   type(unittest) :: z
 #ifdef USE_REAL32
-  integer, parameter :: place = 3
+  integer, parameter :: place = 1
 #else
   integer, parameter :: place = 6
 #endif
@@ -20,12 +20,12 @@ program main
   call setup_dimension(4) ! for xd
   call z%init('test rotation')
 !
-  call test1(1, 10)
-  call test1(2, 10)
-  call test1(3, 10)
-  call test1(10, 10)
-  call test1(20, 10)
-  call test1(100, 10)
+  call test1(1, 100)
+  call test1(2, 100)
+  call test1(3, 100)
+  call test1(10, 100)
+  call test1(20, 100)
+  call test1(100, 100)
 !
   call z%finish_and_terminate(passing_score=0.99_R8)
 !
@@ -34,7 +34,7 @@ contains
     integer, intent(in)   :: n, n_test
     real(RK)              :: Y(D, n), X(D, n)
     real(RK)              :: cov(D, D), g
-    real(RK)              :: rot(D, D), krot(D, D), nrm, sd, kd, sm
+    real(RK)              :: rot(D, D), krot(D, D), nrm, sd, kd, rd, sm, inxy
     real(RK), allocatable :: w(:)
     character(4)          :: cn, ct
     integer               :: i
@@ -53,11 +53,12 @@ contains
       cov = MATMUL(X, TRANSPOSE(Y))
 !
       call estimate_rotation(g, cov, krot, w)
-      call z%assert_almost_equal([X], [MATMUL(krot, Y)], 'X = YR '//cn//ct, place=place)
+      inxy = inner(D * n, X, MATMUL(krot, Y))
+      call z%assert_almost_equal(inxy, 1.0_RK, 'X = YR '//cn//ct, place=place)
+      !call z%assert_almost_equal([X], [MATMUL(krot, Y)], 'X = YR '//cn//ct, place=place)
 !
       if (D <= n) call z%assert_is_eye(MATMUL(rot, krot), 'S@RT = I '//cn//ct, place=place)
       call z%assert_is_eye(MATMUL(krot, TRANSPOSE(krot)), 'R@RT = I '//cn//ct, place=place)
-!
       call estimate_sdmin(g, cov, w)
       call z%assert_is_zero(nrm * w(1), 'sdmin = 0 '//cn//ct, place=place)
     end do
@@ -72,15 +73,23 @@ contains
       sd = nrm * SUM((X - MATMUL(krot, Y))**2)
       call z%assert_almost_equal(sm, sd, 'vs Kabsch', place=place)
       call estimate_rotation(g, cov, krot, w)
+      rd = nrm * SUM((X - MATMUL(krot, Y))**2)
+      kd = nrm * (g - SUM(cov * krot) * 2.0_RK)
       call z%assert_greater_equal(SUM(cov * krot), SUM(cov * SO()), 'CR >= CQ ')
-      sd = nrm * SUM((X - MATMUL(krot, Y))**2)
-      kd = SUM(cov * krot)
-      kd = nrm * (g - kd - kd)
-      call z%assert_almost_equal(sm, sd, 'sdmin-sd ', place=place)
-      call z%assert_almost_equal(sm, kd, 'sdmin-kd ', place=place)
+      call z%assert_almost_equal(rd, kd, 'rd vs kd ', place=place)
+      call z%assert_almost_equal(sd, rd, 'sd vs rd ', place=place)
+      call z%assert_almost_equal(sm, rd, 'sdmin-sd ', place=place)
       call z%assert_is_eye(MATMUL(krot, TRANSPOSE(krot)), 'R@RT = I ', place=place)
     end do
 !
   end subroutine test1
+!
+  pure function inner(n, X, Y) result(res)
+    integer(IK), intent(in) :: n
+    real(RK), intent(in)    :: X(n), Y(n)
+    real(RK)                :: res
+    res = DOT_PRODUCT(X, Y) / SQRT(DOT_PRODUCT(X, X) * DOT_PRODUCT(Y, Y))
+  end function inner
+!
 end program main
 

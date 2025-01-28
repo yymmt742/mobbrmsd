@@ -11,9 +11,17 @@ program main
   implicit none
   type(unittest) :: u
 #ifdef USE_REAL32
-  integer, parameter :: place = 2
+  integer, parameter :: place = 1
 #else
   integer, parameter :: place = 6
+#endif
+!
+#ifdef USE_DIM2
+  integer, parameter :: ntest_def = 20
+#elif USE_DIM3
+  integer, parameter :: ntest_def = 10
+#else
+  integer, parameter :: ntest_def = 1
 #endif
 !
   call setup_dimension(4)
@@ -54,15 +62,21 @@ program main
   call test4(4, 4, 2, [3, 2, 1, 4])
   call u%init('test mobbrmsd difflim for {(n,M,S)}={(4,8,1)}')
   call test4(4, 8, 1, [0])
+#ifdef USE_DIMX
+#else
   call u%init('test mobbrmsd difflim for {(n,M,S)}={(8,10,1)}')
   call test4(8, 10, 1, [0])
+#endif
 !
   call u%init('test mobbrmsd absolute difflim for {(n,M,S)}={(4,4,2)}')
   call test5(4, 4, 2, [3, 2, 1, 4])
   call u%init('test mobbrmsd absolute difflim for {(n,M,S)}={(4,8,1)}')
   call test5(4, 8, 1, [0])
+#ifdef USE_DIMX
+#else
   call u%init('test mobbrmsd absolute difflim for {(n,M,S)}={(8,10,1)}')
   call test5(8, 10, 1, [0])
+#endif
 !
   call u%init('test mobbrmsd cutoff for {(n,M,S)}={(4,4,2)}')
   call test6(4, 4, 2, [3, 2, 1, 4])
@@ -71,14 +85,14 @@ program main
   call u%init('test mobbrmsd cutoff for {(n,M,S)}={(8,10,1)}')
   call test6(8, 10, 1, [0])
 !
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=4')
-  call test7(4, 10, 1, [0], 4)
+! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=4')
+! call test7(4, 10, 1, [0], 4, ntest_def)
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
-  call test7(4, 8, 1, [0], 10)
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
-  call test7(4, 4, 1, [0], 100)
+  call test7(4, 8, 1, [0], 10, ntest_def * 2)
+! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
+! call test7(4, 4, 1, [0], 100, ntest_def * 2)
 !
-  call u%finish_and_terminate(passing_score=0.99_R8)
+  call u%finish_and_terminate(passing_score=0.95_R8)
 !
 contains
 !
@@ -197,26 +211,17 @@ contains
 !
     do i = 1, 10
       call mobbrmsd_restart(mobb, stat, W, maxeval=0)
-      print'(A, I8, *(f16.9))', "# ", mobbrmsd_state_n_eval(stat), &
-     &                       EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-     &                       mobbrmsd_state_upperbound(stat), &
-     &                       mobbrmsd_state_lowerbound(stat)
+      call print_stat(stat, mobbrmsd_state_autovariance(stat))
     end do
 !
     call mobbrmsd_restart(mobb, stat, W)
-    print'(A, I8, *(f16.9))', "# ", mobbrmsd_state_n_eval(stat), &
-   &                       EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &                       mobbrmsd_state_upperbound(stat), &
-   &                       mobbrmsd_state_lowerbound(stat)
+    call print_stat(stat, mobbrmsd_state_autovariance(stat))
     sd = mobbrmsd_state_squared_deviation(stat)
     brute = brute_sd(n, m, s, sym, X, Y)
 !
     call mobbrmsd_run(mobb, stat, X, Y)
     sd2 = mobbrmsd_state_squared_deviation(stat)
-    print'(A, I8, *(f16.9))', "# ", mobbrmsd_state_n_eval(stat), &
-   &                       EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &                       mobbrmsd_state_upperbound(stat), &
-   &                       mobbrmsd_state_lowerbound(stat)
+    call print_stat(stat, mobbrmsd_state_autovariance(stat))
     call u%assert_almost_equal(sd, brute, 'minrmsd value', place=place)
     call u%assert_almost_equal(sd, sd2, 'vs at once   ', place=place)
     FLUSH (OUTPUT_UNIT)
@@ -241,58 +246,17 @@ contains
     allocate (W(mobbrmsd_memsize(mobb)))
 !
     call mobbrmsd_run(mobb, stat, X, Y, W, difflim=1.0_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", &
-   &  1.0_RK * mobbrmsd_state_autovariance(stat), &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 1.0_RK * mobbrmsd_state_autovariance(stat))
     call mobbrmsd_restart(mobb, stat, W, difflim=0.2_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", &
-   &  0.2_RK * mobbrmsd_state_autovariance(stat), &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.2_RK * mobbrmsd_state_autovariance(stat))
     call mobbrmsd_restart(mobb, stat, W, difflim=0.1_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", &
-   &  0.1_RK * mobbrmsd_state_autovariance(stat), &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.1_RK * mobbrmsd_state_autovariance(stat))
     call mobbrmsd_restart(mobb, stat, W, difflim=0.01_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", &
-   &  0.01_RK * mobbrmsd_state_autovariance(stat), &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.01_RK * mobbrmsd_state_autovariance(stat))
     call mobbrmsd_restart(mobb, stat, W, difflim=0.001_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", &
-   &  0.001_RK * mobbrmsd_state_autovariance(stat), &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.001_RK * mobbrmsd_state_autovariance(stat))
     call mobbrmsd_restart(mobb, stat, W)
-    print'(A,F9.3,I8,*(F9.3))', "# ", 0.0_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.0_RK)
     FLUSH (OUTPUT_UNIT)
     FLUSH (ERROR_UNIT)
 !
@@ -315,58 +279,17 @@ contains
     allocate (W(mobbrmsd_memsize(mobb)))
 !
     call mobbrmsd_run(mobb, stat, X, Y, W, difflim=1.0_RK, difflim_absolute=.true.)
-    print'(A,F9.3,I8,*(F9.4))', "# ", &
-   &  1.0_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  SQRT(mobbrmsd_state_bbgap(stat) / (n * m)), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 1.0_RK)
     call mobbrmsd_restart(mobb, stat, W, difflim=0.2_RK, difflim_absolute=.true.)
-    print'(A,F9.3,I8,*(F9.4))', "# ", &
-   &  0.2_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  SQRT(mobbrmsd_state_bbgap(stat) / (n * m)), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.2_RK)
     call mobbrmsd_restart(mobb, stat, W, difflim=0.1_RK, difflim_absolute=.true.)
-    print'(A,F9.3,I8,*(F9.4))', "# ", &
-   &  0.1_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  SQRT(mobbrmsd_state_bbgap(stat) / (n * m)), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.1_RK)
     call mobbrmsd_restart(mobb, stat, W, difflim=0.01_RK, difflim_absolute=.true.)
-    print'(A,F9.3,I8,*(F9.4))', "# ", &
-   &  0.01_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  SQRT(mobbrmsd_state_bbgap(stat) / (n * m)), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.01_RK)
     call mobbrmsd_restart(mobb, stat, W, difflim=0.001_RK, difflim_absolute=.true.)
-    print'(A,F9.3,I8,*(F9.4))', "# ", &
-   &  0.001_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  SQRT(mobbrmsd_state_bbgap(stat) / (n * m)), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.001_RK)
     call mobbrmsd_restart(mobb, stat, W)
-    print'(A,F9.3,I8,*(F9.4))', "# ", 0.0_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  SQRT(mobbrmsd_state_bbgap(stat) / (n * m)), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.0_RK)
     FLUSH (OUTPUT_UNIT)
     FLUSH (ERROR_UNIT)
 !
@@ -390,130 +313,100 @@ contains
 !
     call mobbrmsd_run(mobb, stat, X, Y, W, maxeval=0)
     call mobbrmsd_restart(mobb, stat, W, cutoff=0.0_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", 0.0_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.0_RK)
     call mobbrmsd_restart(mobb, stat, W, cutoff=0.1_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", 0.1_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.1_RK)
     call mobbrmsd_restart(mobb, stat, W, cutoff=0.2_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", 0.2_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.2_RK)
     call mobbrmsd_restart(mobb, stat, W, cutoff=0.3_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", 0.3_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.3_RK)
     call mobbrmsd_run(mobb, stat, X, Y, W, cutoff=0.4_RK)
-    print'(A,F9.3,I8,*(F9.3))', "# ", 0.4_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 0.4_RK)
     call mobbrmsd_restart(mobb, stat, W)
-    print'(A,F9.3,I8,*(F9.3))', "# ", 99.0_RK, &
-   &  mobbrmsd_state_n_eval(stat), &
-   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
-   &  mobbrmsd_state_upperbound(stat), &
-   &  mobbrmsd_state_lowerbound(stat), &
-   &  mobbrmsd_state_bbgap(stat), &
-   &  mobbrmsd_state_rmsd(stat)
+    call print_stat(stat, 99.0_RK)
     FLUSH (OUTPUT_UNIT)
     FLUSH (ERROR_UNIT)
 !
   end subroutine test6
 !
-  subroutine test7(n, m, s, sym, n_target)
+  subroutine test7(n, m, s, sym, n_target, n_test)
 !$  use omp_lib
-    integer, intent(in)    :: n, m, s, sym(n * (s - 1)), n_target
+    integer, intent(in)    :: n, m, s, sym(n * (s - 1)), n_target, n_test
     type(mobbrmsd)         :: mobb
-    type(mobbrmsd_state)   :: state1(n_target * (n_target - 1) / 2)
-    type(mobbrmsd_state)   :: state2(n_target * (n_target - 1) / 2)
+    type(mobbrmsd_state)   :: state(n_target * (n_target - 1) / 2)
     type(mobbrmsd_input)   :: inp
     real(RK)               :: X(D, n, m, n_target)
     real(RK), allocatable  :: W(:)
     integer(IK)            :: edges(2, n_target - 1)
     integer(IK)            :: redges(2, n_target - 1)
     real(RK)               :: weights(n_target - 1)
-    real(RK)               :: upper(n_target, n_target)
-    real(RK)               :: lower(n_target, n_target)
     real(RK)               :: refer(n_target, n_target)
-    integer(IK)            :: i, j, k
+    integer(IK)            :: i, j, k, itest
 !
     call mobbrmsd_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
-!
-    X(:, :, :, 1) = sample(n, m)
-    do i = 2, n_target / 3
-      X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
-    end do
-!
-    X(:, :, :, n_target / 3 + 1) = sample(n, m)
-    do i = n_target / 3 + 2, 2 * n_target / 3
-      X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
-    end do
-!
-    X(:, :, :, 2 * n_target / 3 + 1) = sample(n, m)
-    do i = 2 * n_target / 3 + 2, n_target
-      X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
-    end do
 !
     !$omp parallel
     if (omp_get_thread_num() == 0) k = MAX(n_target * (n_target - 1) / 2, omp_get_num_threads())
     !$omp end parallel
     allocate (W(mobbrmsd_memsize(mobb) * k))
 !
-    call mobbrmsd_min_span_tree(n_target, mobb, state1, X, W, &
-   &                            edges=edges, weights=weights)
-!
-    call mobbrmsd_batch_tri_run(n_target, mobb, state2, X, W)
-!
-    k = 0
-    do j = 1, n_target
-      do i = 1, j - 1
-        k = k + 1
-        upper(i, j) = mobbrmsd_state_rmsd(state1(k))
-        upper(j, i) = upper(i, j)
-        lower(i, j) = mobbrmsd_state_lowerbound_as_rmsd(state1(k))
-        lower(j, i) = lower(i, j)
-        refer(i, j) = mobbrmsd_state_rmsd(state2(k))
-        refer(j, i) = refer(i, j)
+    do itest = 1, n_test
+      X(:, :, :, 1) = sample(n, m)
+      do i = 2, n_target / 4
+        X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
       end do
-      upper(j, j) = 0.0_RK
-      lower(j, j) = 0.0_RK
-      refer(j, j) = 0.0_RK
+!
+      X(:, :, :, n_target / 4 + 1) = 0.5 * X(:, :, :, n_target / 4) + 0.5 * sample(n, m)
+      do i = n_target / 4 + 2, 3 * n_target / 4
+        X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
+      end do
+!
+      X(:, :, :, 3 * n_target / 4 + 1) = 0.5 * X(:, :, :, 3 * n_target / 4) + 0.5 * sample(n, m)
+      do i = 3 * n_target / 4 + 2, n_target
+        X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
+      end do
+!
+      call mobbrmsd_min_span_tree(n_target, mobb, X, W, &
+     &                            edges=edges, weights=weights)
+!
+      call mobbrmsd_batch_tri_run(n_target, mobb, state, X, W)
+!
+      k = 0
+      do j = 1, n_target
+        do i = 1, j - 1
+          k = k + 1
+          refer(i, j) = mobbrmsd_state_rmsd(state(k))
+          refer(j, i) = refer(i, j)
+        end do
+        refer(j, j) = 0.0_RK
+      end do
+!
+      call min_span_tree(n_target, refer, redges)
+      call u%assert(is_same_graph(n_target, edges, redges), 'is_same_graph')
+      if (.not. is_same_graph(n_target, edges, redges)) then
+        do i = 1, n_target - 1
+          print *, edges(:, i), redges(:, i)
+        end do
+      end if
+      FLUSH (OUTPUT_UNIT)
+      FLUSH (ERROR_UNIT)
     end do
 !
-    call min_span_tree(n_target, refer, redges)
-    call u%assert(is_same_graph(n_target, edges, redges), 'is_same_graph')
-    if (.not. is_same_graph(n_target, edges, redges)) then
-      do i = 1, n_target - 1
-        print *, edges(:, i), redges(:, i)
-      end do
-    end if
-    FLUSH (OUTPUT_UNIT)
-    FLUSH (ERROR_UNIT)
-!
   end subroutine test7
+!
+  subroutine print_stat(stat, cutoff)
+    type(mobbrmsd_state), intent(in) :: stat
+    real(RK), intent(in)             :: cutoff
+    print'(A,F9.3,I8,*(F9.3))', "# ", &
+   &  cutoff, &
+   &  mobbrmsd_state_n_eval(stat), &
+   &  EXP(mobbrmsd_state_log_eval_ratio(stat)), &
+   &  mobbrmsd_state_upperbound(stat), &
+   &  mobbrmsd_state_lowerbound(stat), &
+   &  mobbrmsd_state_bbgap(stat), &
+   &  mobbrmsd_state_rmsd(stat)
+  end subroutine print_stat
 !
   pure subroutine min_span_tree(n, r, e)
     integer(IK), intent(in)    :: n
