@@ -78,61 +78,51 @@ contains
       real(RK)         :: w(n_chunk * memsize)
       integer(IK)      :: heap(n_chunk) ! for heap sort
       integer(IK)      :: par(n_target) ! for union find
-      integer(IK)      :: n_core, n_edge, n_pack, g
-      !call hash_table_init(h)
+      integer(IK)      :: n_core, n_edge, n_pack
       lambda = 1.0E-2_RK
       call init_par(n_target, par)
       call init_edge(edge)
       n_core = 0
       n_edge = 0
       do
-        print *, 'lambda', lambda
         call construct_chunk( &
-           &  memsize, &
-           &  ldxsize, &
-           &  n_target, &
-           &  n_edge, &
-           &  n_core, &
-           &  n_chunk, &
-           &  header, &
-           &  lambda, &
-           &  par, &
-           &  X, &
-           &  W, &
-           &  n_pack, &
-           &  heap, &
-           &  edge, &
-           &  remove_com, &
-           &  sort_by_g &
+           &  memsize &
+           &, ldxsize &
+           &, n_target &
+           &, n_edge &
+           &, n_core &
+           &, n_chunk &
+           &, header &
+           &, lambda &
+           &, par &
+           &, X &
+           &, W &
+           &, n_pack &
+           &, heap &
+           &, edge &
+           &, remove_com &
+           &, sort_by_g &
            & )
-!       call update_chunk( &
-!          &  memsize, &
-!          &  ldxsize, &
-!          &  n_target, &
-!          &  n_pack, &
-!          &  n_core, &
-!          &  n_chunk, &
-!          &  header, &
-!          &  lambda, &
-!          &  par, &
-!          &  X, &
-!          &  W, &
-!          &  heap, &
-!          &  edge, &
-!          &  remove_com, &
-!          &  sort_by_g &
-!          & )
-        g = pick_heap(n_pack, n_edges - n_core, edge, heap)
-        call kruscal(n_target, n_chunk, n_pack, lambda, n_edge, n_core, par, heap, edge, core)
-        print '(10i6)', edge(heap(:n_edge))%p
-        print '(10f6.3)', edge(heap(:n_edge))%lb
-        print *
-        print '(10i6)', core(:n_core)%p
-        print '(10f6.3)', core(:n_core)%lb
-        print *, n_core, n_edges
-        print *, '---'
-        if (n_core == n_edges) exit
-        lambda = MAX(lambda, edge(g)%ub)
+        block
+          integer(IK) :: g
+          real(RK) :: lambda1
+          g = pick_heap(n_pack, n_edges - n_core, edge, heap)
+          lambda1 = MAX(lambda, edge(g)%ub)
+          call kruscal( &
+              &  n_target &
+              &, n_chunk &
+              &, n_pack &
+              &, lambda &
+              &, n_edge &
+              &, n_core &
+              &, par &
+              &, heap &
+              &, edge &
+              &, core &
+              & )
+          if (n_core == n_edges) exit
+          lambda = lambda1
+        end block
       end do
     end block
 !
@@ -149,14 +139,6 @@ contains
       end do
     end if
   end subroutine mobbrmsd_min_span_tree
-!
-! ---
-!
-! pure elemental function edge_to_ij(e) result(res)
-!   type(edge), intent(in) :: e
-!   type(ij)               :: res
-!   call cantor_pair_inverse(e%p, res%i, res%j)
-! end function edge_to_ij
 !
   subroutine construct_chunk( &
             &  memsize, &
@@ -193,9 +175,8 @@ contains
     logical, intent(in), optional  :: remove_com, sort_by_g
     integer(IK)                    :: edges(n_edge + 2)
     logical                        :: check1, check2
-    integer(IK)                    :: i, j, k, l, m, c, n, pw, ld, lc, addr
+    integer(IK)                    :: i, j, k, l, m, c, n, pw, ld, lc
 !
-    print *, 'n_edge=', n_edge
     ld = n_target * (n_target - 1) / 2
     lc = MIN(n_chunk, ld - n_core)
 !
@@ -206,12 +187,11 @@ contains
     edges(n_edge + 2) = ld + 1
     call sort(n_edge, edges(2))
 !
+    !$omp parallel do
     do k = 1, n_edge
       call update( &
           &  ldxsize, &
           &  n_chunk, &
-          &  heap(k), &
-          &  edge(heap(k))%p, &
           &  header, &
           &  lambda, &
           &  X, &
@@ -221,59 +201,43 @@ contains
           &  sort_by_g &
           &)
     end do
-    if (n_edge == n_chunk) then
-      print *, "n_edge == n_chunk"
-      do concurrent(m=1:n_edge)
-        heap(m) = m
-      end do
-      do m = n_edge, 1, -1
-        call down_heap(n_edge, m, edge, heap)
-      end do
-      print'(10f7.4)', edge(heap(:n_edge))%lb
-    end if
+    !$omp end parallel do
+    if (n_edge == n_chunk) call make_heap(n_edge, edge, heap)
+!
     n_pack = n_edge
     do k = 1, n_edge + 1
       do l = edges(k) + 1, edges(k + 1) - 1
         if (is_same(n_target, l, par)) cycle
         if (n_pack < n_chunk) then
           n_pack = n_pack + 1
-          addr = find_address(n_chunk, l, edge)
-          !print *, l, addr
-          heap(n_pack) = addr
-          edge(addr)%w = (addr - 1) * memsize + 1
-          call update( &
-              &  ldxsize, &
-              &  n_chunk, &
-              &  addr, &
-              &  l, &
-              &  header, &
-              &  lambda, &
-              &  X, &
-              &  W, &
-              &  edge(addr), &
-              &  remove_com, &
-              &  sort_by_g &
-              &)
-          if (n_pack == n_chunk) then
-            print *, "n_pack == n_chunk"
-            do concurrent(m=1:n_pack)
-              heap(m) = m
-            end do
-            do m = n_pack, 1, -1
-              call down_heap(n_pack, m, edge, heap)
-            end do
-            !print'(10f7.4)', edge(heap(:n_pack))%lb
-          end if
+          block
+            integer(IK) :: addr
+            addr = find_address(n_chunk, l, edge)
+            heap(n_pack) = addr
+            edge(addr)%p = -l
+            edge(addr)%w = (addr - 1) * memsize + 1
+            call update( &
+                &  ldxsize, &
+                &  n_chunk, &
+                &  header, &
+                &  lambda, &
+                &  X, &
+                &  W, &
+                &  edge(addr), &
+                &  remove_com, &
+                &  sort_by_g &
+                &)
+          end block
+          if (n_pack == n_chunk) call make_heap(n_pack, edge, heap)
         else
           block
             real(RK) :: V(memsize)
             type(edge_data) :: t
             call init_edge(t)
+            t%p = -l
             call update( &
                 &  ldxsize, &
                 &  n_chunk, &
-                &  1, &
-                &  l, &
                 &  header, &
                 &  lambda, &
                 &  X, &
@@ -282,29 +246,44 @@ contains
                 &  remove_com, &
                 &  sort_by_g &
                 &)
-            !print *, l, t%lb, edge(heap(1))%lb
             if (t%lb < edge(heap(1))%lb) then
               edge(heap(1)) = t
               edge(heap(1))%w = (heap(1) - 1) * memsize + 1
-              call down_heap(n_chunk, 1, edge, heap)
               call memcopy(memsize, V, W(memsize * (heap(1) - 1) + 1))
+              call down_heap(n_chunk, 1, edge, heap)
             end if
           end block
         end if
       end do
     end do
-    if (n_pack < n_chunk) then
-      print *, "n_pack < n_chunk"
-      do concurrent(m=1:n_pack)
-        heap(m) = m
-      end do
-      do m = n_pack, 1, -1
-        call down_heap(n_pack, m, edge, heap)
-      end do
-    end if
-    !print '(10i6)', heap
-    !print '(10f6.3)', edge(heap)%lb
-    !print *, n_pack
+    if (n_pack < n_chunk) call make_heap(n_pack, edge, heap)
+
+!   block
+!     real(RK) :: lambda_local
+!     integer(IK) :: g, n_rem
+!     n_rem = n_target - 1 - n_core
+!     g = pick_heap(n_pack, n_rem, edge, heap)
+!     lambda_local = edge(g)%ub
+!     do while (lambda_local < lambda .and. .not. mobbrmsd_state_is_finished(edge(g)%state))
+!       do k = 1, n_rem
+!         if (mobbrmsd_state_is_finished(edge(heap(k))%state)) cycle
+!         call update( &
+!             &  ldxsize, &
+!             &  n_chunk, &
+!             &  header, &
+!             &  lambda_local, &
+!             &  X, &
+!             &  W, &
+!             &  edge(heap(k)), &
+!             &  remove_com, &
+!             &  sort_by_g &
+!             & )
+!       end do
+!       call make_heap(n_pack, edge, heap)
+!       g = pick_heap(n_pack, n_rem, edge, heap)
+!       lambda_local = MAX(lambda_local, edge(g)%ub)
+!     end do
+!   end block
 
 !   c = n_edge
 !   k = 0
@@ -389,73 +368,9 @@ contains
 !   !$omp end parallel
   end subroutine construct_chunk
 !
-  !pure subroutine update_chunk( &
-  subroutine update_chunk( &
-            &  memsize, &
-            &  ldxsize, &
-            &  n_target, &
-            &  n_pack, &
-            &  n_core, &
-            &  n_chunk, &
-            &  header, &
-            &  lambda, &
-            &  par, &
-            &  X, &
-            &  W, &
-            &  heap, &
-            &  edge, &
-            &  remove_com, &
-            &  sort_by_g &
-            & )
-    integer(IK), intent(in)        :: memsize
-    integer(IK), intent(in)        :: ldxsize
-    integer(IK), intent(in)        :: n_target
-    integer(IK), intent(in)        :: n_pack
-    integer(IK), intent(in)        :: n_core
-    integer(IK), intent(in)        :: n_chunk
-    integer(IK), intent(in)        :: par(n_target)
-    type(mobbrmsd), intent(in)     :: header
-    real(RK), intent(in)           :: lambda
-    real(RK), intent(in)           :: X(*)
-    real(RK), intent(inout)        :: W(*)
-    integer(IK), intent(inout)     :: heap(n_chunk)
-    type(edge_data), intent(inout) :: edge(n_pack)
-    logical, intent(in), optional  :: remove_com, sort_by_g
-    real(RK)                       :: lambda_local
-    integer(IK)                    :: k, p, g, addr
-    g = pick_heap(n_pack, n_target - n_core - 1, edge, heap)
-    lambda_local = edge(g)%ub
-    do while (lambda_local < lambda .and. .not. mobbrmsd_state_is_finished(edge(g)%state))
-      do k = 1, n_target - 1
-        if (mobbrmsd_state_is_finished(edge(k)%state)) cycle
-        addr = find_address(n_chunk, k, edge)
-        call update( &
-            &  ldxsize, &
-            &  n_chunk, &
-            &  addr, &
-            &  p, &
-            &  header, &
-            &  lambda_local, &
-            &  X, &
-            &  W, &
-            &  edge(k), &
-            &  remove_com, &
-            &  sort_by_g &
-            & )
-      end do
-      do k = n_pack, 1, -1
-        call down_heap(n_pack, k, edge, heap)
-      end do
-      g = pick_heap(n_pack, n_target - n_core - 1, edge, heap)
-      lambda_local = MAX(lambda_local, edge(g)%ub)
-    end do
-  end subroutine update_chunk
-!
-  subroutine update( &
+  pure subroutine update( &
  &             ldxsize, &
  &             n_chunk, &
- &             addr, &
- &             p, &
  &             header, &
  &             lambda, &
  &             X, &
@@ -465,38 +380,37 @@ contains
  &             sort_by_g &
  &            )
     integer(IK), intent(in)        :: ldxsize
-    integer(IK), intent(in)        :: n_chunk, addr, p
+    integer(IK), intent(in)        :: n_chunk
     type(mobbrmsd), intent(in)     :: header
     real(RK), intent(in)           :: lambda, X(*)
     real(RK), intent(inout)        :: W(*)
     type(edge_data), intent(inout) :: edge
     logical, intent(in), optional  :: remove_com, sort_by_g
-    print *, p, edge%p, edge%w, n_chunk
-!   if (p == edge%p) then
-!     call mobbrmsd_restart( &
-!    &       header, &
-!    &       edge%state,  &
-!    &       W(edge%w), &
-!    &       cutoff=lambda &
-!    &      )
-!   else
-    block
-      integer(IK)          :: i, j, xpnt, ypnt
-      call cantor_pair_inverse(p, i, j)
-      xpnt = (i - 1) * ldxsize + 1
-      ypnt = (j - 1) * ldxsize + 1
-      call mobbrmsd_run( &
+    if (edge%p < 0) then
+      block
+        integer(IK)          :: i, j, xpnt, ypnt
+        edge%p = -edge%p
+        call cantor_pair_inverse(edge%p, i, j)
+        xpnt = (i - 1) * ldxsize + 1
+        ypnt = (j - 1) * ldxsize + 1
+        call mobbrmsd_run( &
+       &       header, &
+       &       edge%state,  &
+       &       X(xpnt), &
+       &       X(ypnt), &
+       &       W(edge%w), &
+       &       cutoff=lambda, &
+       &       sort_by_g=sort_by_g &
+       &      )
+      end block
+    else
+      call mobbrmsd_restart( &
      &       header, &
      &       edge%state,  &
-     &       X(xpnt), &
-     &       X(ypnt), &
      &       W(edge%w), &
-     &       cutoff=lambda, &
-     &       sort_by_g=sort_by_g &
+     &       cutoff=lambda &
      &      )
-    end block
-    edge%p = p
-!   end if
+    end if
     edge%lb = mobbrmsd_state_lowerbound_as_rmsd(edge%state)
     edge%ub = mobbrmsd_state_upperbound_as_rmsd(edge%state)
   end subroutine update
@@ -538,11 +452,8 @@ contains
       call swap(t(1), t(k))
       call down_heap(k - 1, 1, edge, t)
     end do
-    print '(10f7.4)', edge(t(2:n_pack))%lb - edge(t(:n_pack - 1))%lb
-    !print '(5f9.6)', edge(t(:n_pack))%ub
     n_edge = 0
     do k = 1, n_pack
-      !print '(4f9.6)', edge(t(k))%lb, edge(t(k))%ub, edge(t(k))%ub - edge(t(k))%lb, lambda
       if (edge(t(k))%ub < lambda) then
         call unite(n_target, edge(t(k))%p, par, is_same)
         if (is_same) then
@@ -558,7 +469,6 @@ contains
         heap(n_edge) = t(k)
       end if
     end do
-    print *
   end subroutine kruscal
 !
   pure elemental subroutine swap(a, b)
@@ -864,6 +774,19 @@ contains
 ! end subroutine hash_del
 !
 ! cantor_pair
+!
+  pure subroutine make_heap(n, e, h)
+    integer(IK), intent(in)     :: n
+    type(edge_data), intent(in) :: e(n)
+    integer(IK), intent(inout)  :: h(n)
+    integer(IK)                 :: i
+    do concurrent(i=1:n)
+      h(i) = i
+    end do
+    do i = n, 1, -1
+      call down_heap(n, i, e, h)
+    end do
+  end subroutine make_heap
 !
   pure elemental subroutine cantor_pair_inverse(k, i, j)
     integer(IK), intent(in)    :: k
