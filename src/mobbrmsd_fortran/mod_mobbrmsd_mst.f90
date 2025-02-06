@@ -16,17 +16,18 @@ module mod_mobbrmsd_mst
   private
   public :: mobbrmsd_min_span_tree
 !
-  type edge
+  type edge_data
     sequence
     integer(IK) :: p, w
-    logical     :: f
     real(RK)    :: lb, ub
-  end type edge
+    type(mobbrmsd_state) :: state
+  end type edge_data
 !
-  type hash_table
-    sequence
-    integer(IK) :: k
-  end type hash_table
+! type hash_table
+!   sequence
+!   integer(IK)          :: k
+!   type(mobbrmsd_state) :: state
+! end type hash_table
 !
 ! type ij
 !   sequence
@@ -61,54 +62,77 @@ contains
     !! minimum spanning tree edges
     real(RK), intent(out), optional     :: weights(n_target - 1)
     !! minimum spanning tree weights
-    type(edge)                          :: core(n_target - 1)
-    integer(IK)                         :: n_core, n_edges, n_chunk, n_hash, n_pack, i, j, k
+    type(edge_data)                     :: core(n_target - 1)
+    integer(IK)                         :: memsize, ldxsize
+    integer(IK)                         :: n_edges, n_chunk, n_hash
+    integer(IK)                         :: i, j, k
+    if (.not. PRESENT(edges) .and. .not. PRESENT(weights)) return
     n_chunk = MIN(n_target * 3, n_target * (n_target - 1) / 2)
     n_hash = n_chunk + 2
     n_edges = n_target - 1
+    memsize = mobbrmsd_memsize(header)
+    ldxsize = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
     block
-      type(edge)       :: e(n_chunk), g
-      type(hash_table) :: h(n_hash)
-      integer(IK)      :: par(n_target) ! for union find
+      type(edge_data)  :: edge(n_chunk)
       real(RK)         :: lambda
-      call hash_table_init(h)
+      real(RK)         :: w(n_chunk * memsize)
+      integer(IK)      :: heap(n_chunk) ! for heap sort
+      integer(IK)      :: par(n_target) ! for union find
+      integer(IK)      :: n_core, n_edge, n_pack, g
+      !call hash_table_init(h)
       lambda = 1.0E-2_RK
       call init_par(n_target, par)
+      call init_edge(edge)
       n_core = 0
+      n_edge = 0
       do
+        print *, 'lambda', lambda
         call construct_chunk( &
+           &  memsize, &
+           &  ldxsize, &
            &  n_target, &
+           &  n_edge, &
            &  n_core, &
            &  n_chunk, &
-           &  n_hash, &
            &  header, &
            &  lambda, &
            &  par, &
            &  X, &
+           &  W, &
            &  n_pack, &
-           &  e, &
-           &  h, &
+           &  heap, &
+           &  edge, &
            &  remove_com, &
            &  sort_by_g &
            & )
-        call update_chunk( &
-           &  n_target, &
-           &  n_pack, &
-           &  n_core, &
-           &  n_chunk, &
-           &  n_hash, &
-           &  header, &
-           &  lambda, &
-           &  par, &
-           &  X, &
-           &  e, &
-           &  remove_com, &
-           &  sort_by_g &
-           & )
-        call kruscal(n_target, n_pack, n_core, par, e, core)
+!       call update_chunk( &
+!          &  memsize, &
+!          &  ldxsize, &
+!          &  n_target, &
+!          &  n_pack, &
+!          &  n_core, &
+!          &  n_chunk, &
+!          &  header, &
+!          &  lambda, &
+!          &  par, &
+!          &  X, &
+!          &  W, &
+!          &  heap, &
+!          &  edge, &
+!          &  remove_com, &
+!          &  sort_by_g &
+!          & )
+        g = pick_heap(n_pack, n_edges - n_core, edge, heap)
+        call kruscal(n_target, n_chunk, n_pack, lambda, n_edge, n_core, par, heap, edge, core)
+        print '(10i6)', edge(heap(:n_edge))%p
+        print '(10f6.3)', edge(heap(:n_edge))%lb
+        print *
+        print '(10i6)', core(:n_core)%p
+        print '(10f6.3)', core(:n_core)%lb
+        print *, n_core, n_edges
+        print *, '---'
         if (n_core == n_edges) exit
-        g = pick_heap(n_pack, n_edges - n_core, e)
-        lambda = MAX(lambda, g%ub)
+        lambda = MAX(lambda, edge(g)%ub)
       end do
     end block
 !
@@ -135,293 +159,494 @@ contains
 ! end function edge_to_ij
 !
   subroutine construct_chunk( &
+            &  memsize, &
+            &  ldxsize, &
             &  n_target, &
+            &  n_edge, &
             &  n_core, &
             &  n_chunk, &
-            &  n_hash, &
             &  header, &
             &  lambda, &
             &  par, &
             &  X, &
+            &  W, &
             &  n_pack, &
-            &  e, &
-            &  h, &
+            &  heap, &
+            &  edge, &
             &  remove_com, &
             &  sort_by_g &
             & )
-    integer(IK), intent(in)         :: n_target
-    integer(IK), intent(in)         :: n_core
-    integer(IK), intent(in)         :: n_chunk
-    integer(IK), intent(in)         :: n_hash
-    integer(IK), intent(in)         :: par(n_target)
-    type(mobbrmsd), intent(in)      :: header
-    real(RK), intent(in)            :: lambda
-    real(RK), intent(in)            :: X(*)
-    integer(IK), intent(inout)      :: n_pack
-    type(edge), intent(inout)       :: e(n_chunk)
-    type(hash_table), intent(inout) :: h(n_hash)
-    logical, intent(in), optional   :: remove_com, sort_by_g
-    type(edge)                      :: t
-    logical                         :: check1, check2
-    integer(IK)                     :: i, j, k, l, m, c, n, pw, ld, lc
-!
-    call init_edge(n_chunk, e)
-    ld = n_target * (n_target - 1) / 2
-    lc = MIN(n_chunk, ld - n_core)
-!
-    k = 0
-    l = 0
-    n_pack = 0
-    do while (k < ld .and. l < lc)
-      k = k + 1
-      call cantor_pair_inverse(k, i, j)
-      if (is_same(n_target, i, j, par)) cycle
-      l = l + 1
-      n_pack = n_pack + 1
-    end do
-!
-    c = 0
-    k = 0
-    n = 0
-!
-    !$omp parallel shared(e,k,c), private(i,j,l,m,pw,check1,check2)
-    do
-      !$omp critical
-      l = k + 1
-      m = c + 1
-      if (k < ld .and. c < lc) then
-        check1 = .false.
-        call cantor_pair_inverse(l, i, j)
-        k = l
-        if (is_same(n_target, i, j, par)) then
-          check2 = .true.
-        else
-          check2 = .false.
-          c = m
-          n = MAX(n, k)
-        end if
-      else
-        check1 = .true.
-      end if
-      !$omp end critical
-      if (check1) exit
-      if (check2) cycle
-      !$omp critical
-      !call hash_add(n_hash, l, h)
-      !pw = hash_get(n_hash, l, h)
-      !$omp end critical
-      !print *, l, pw
-      call update( &
-   &             l, i, j, &
-   &             header, &
-   &             lambda, &
-   &             X, &
-   &             e(m), &
-   &             remove_com, &
-   &             sort_by_g &
-   &            )
-    end do
-    !$omp end parallel
-    do l = n_pack, 1, -1
-      call down_heap(n_pack, l, e)
-    end do
-    k = n
-    !$omp parallel shared(e,k), private(l,i,j,t,pw,check1)
-    do
-      !$omp critical
-      l = k + 1
-      check1 = l > ld
-      if (.not. check1) k = l
-      !$omp end critical
-      if (check1) exit
-      call cantor_pair_inverse(l, i, j)
-      if (is_same(n_target, i, j, par)) cycle
-      call update( &
-   &             l, i, j, &
-   &             header, &
-   &             lambda, &
-   &             X, &
-   &             t, &
-   &             remove_com, &
-   &             sort_by_g &
-   &            )
-      !$omp critical
-      check1 = e(1)%lb < t%lb
-      !$omp end critical
-      if (check1) cycle
-      !$omp critical
-      !call hash_del(n_hash, e(1)%p, h)
-      !call hash_add(n_hash, t%p, h)
-      e(1) = t
-      call down_heap(n_chunk, 1, e)
-      !$omp end critical
-      !print *, l, hash_get(n_hash, l, h)
-    end do
-    !$omp end parallel
-    !print *
-  end subroutine construct_chunk
-!
-  pure subroutine update_chunk( &
- &             n_target, &
- &             n_pack, &
- &             n_core, &
- &             n_chunk, &
- &             n_hash, &
- &             header, &
- &             lambda, &
- &             par, &
- &             X, &
- &             e, &
- &             remove_com, &
- &             sort_by_g &
- &            )
+    integer(IK), intent(in)        :: memsize
+    integer(IK), intent(in)        :: ldxsize
     integer(IK), intent(in)        :: n_target
-    integer(IK), intent(in)        :: n_pack
+    integer(IK), intent(in)        :: n_edge
     integer(IK), intent(in)        :: n_core
     integer(IK), intent(in)        :: n_chunk
-    integer(IK), intent(in)        :: n_hash
     integer(IK), intent(in)        :: par(n_target)
     type(mobbrmsd), intent(in)     :: header
     real(RK), intent(in)           :: lambda
     real(RK), intent(in)           :: X(*)
-    type(edge), intent(inout)      :: e(n_pack)
+    real(RK), intent(inout)        :: W(*)
+    integer(IK), intent(inout)     :: n_pack
+    integer(IK), intent(inout)     :: heap(n_chunk)
+    type(edge_data), intent(inout) :: edge(n_chunk)
+    logical, intent(in), optional  :: remove_com, sort_by_g
+    integer(IK)                    :: edges(n_edge + 2)
+    logical                        :: check1, check2
+    integer(IK)                    :: i, j, k, l, m, c, n, pw, ld, lc, addr
+!
+    print *, 'n_edge=', n_edge
+    ld = n_target * (n_target - 1) / 2
+    lc = MIN(n_chunk, ld - n_core)
+!
+    edges(1) = 0
+    do concurrent(i=1:n_edge)
+      edges(i + 1) = edge(heap(i))%p
+    end do
+    edges(n_edge + 2) = ld + 1
+    call sort(n_edge, edges(2))
+!
+    do k = 1, n_edge
+      call update( &
+          &  ldxsize, &
+          &  n_chunk, &
+          &  heap(k), &
+          &  edge(heap(k))%p, &
+          &  header, &
+          &  lambda, &
+          &  X, &
+          &  W, &
+          &  edge(heap(k)), &
+          &  remove_com, &
+          &  sort_by_g &
+          &)
+    end do
+    if (n_edge == n_chunk) then
+      print *, "n_edge == n_chunk"
+      do concurrent(m=1:n_edge)
+        heap(m) = m
+      end do
+      do m = n_edge, 1, -1
+        call down_heap(n_edge, m, edge, heap)
+      end do
+      print'(10f7.4)', edge(heap(:n_edge))%lb
+    end if
+    n_pack = n_edge
+    do k = 1, n_edge + 1
+      do l = edges(k) + 1, edges(k + 1) - 1
+        if (is_same(n_target, l, par)) cycle
+        if (n_pack < n_chunk) then
+          n_pack = n_pack + 1
+          addr = find_address(n_chunk, l, edge)
+          !print *, l, addr
+          heap(n_pack) = addr
+          edge(addr)%w = (addr - 1) * memsize + 1
+          call update( &
+              &  ldxsize, &
+              &  n_chunk, &
+              &  addr, &
+              &  l, &
+              &  header, &
+              &  lambda, &
+              &  X, &
+              &  W, &
+              &  edge(addr), &
+              &  remove_com, &
+              &  sort_by_g &
+              &)
+          if (n_pack == n_chunk) then
+            print *, "n_pack == n_chunk"
+            do concurrent(m=1:n_pack)
+              heap(m) = m
+            end do
+            do m = n_pack, 1, -1
+              call down_heap(n_pack, m, edge, heap)
+            end do
+            !print'(10f7.4)', edge(heap(:n_pack))%lb
+          end if
+        else
+          block
+            real(RK) :: V(memsize)
+            type(edge_data) :: t
+            call init_edge(t)
+            call update( &
+                &  ldxsize, &
+                &  n_chunk, &
+                &  1, &
+                &  l, &
+                &  header, &
+                &  lambda, &
+                &  X, &
+                &  V, &
+                &  t, &
+                &  remove_com, &
+                &  sort_by_g &
+                &)
+            !print *, l, t%lb, edge(heap(1))%lb
+            if (t%lb < edge(heap(1))%lb) then
+              edge(heap(1)) = t
+              edge(heap(1))%w = (heap(1) - 1) * memsize + 1
+              call down_heap(n_chunk, 1, edge, heap)
+              call memcopy(memsize, V, W(memsize * (heap(1) - 1) + 1))
+            end if
+          end block
+        end if
+      end do
+    end do
+    if (n_pack < n_chunk) then
+      print *, "n_pack < n_chunk"
+      do concurrent(m=1:n_pack)
+        heap(m) = m
+      end do
+      do m = n_pack, 1, -1
+        call down_heap(n_pack, m, edge, heap)
+      end do
+    end if
+    !print '(10i6)', heap
+    !print '(10f6.3)', edge(heap)%lb
+    !print *, n_pack
+
+!   c = n_edge
+!   k = 0
+!   n = 0
+!
+!   !$omp parallel shared(edge,heap,k,c), private(i,j,l,m,pw,addr,check1,check2)
+!   do
+!     !$omp critical
+!     l = k + 1
+!     m = c + 1
+!     addr = find_address(n_chunk, l, edge)
+!     if (k < ld .and. c < lc) then
+!       check1 = .false.
+!       k = l
+!       if (is_same(n_target, l, par)) then
+!         check2 = .true.
+!       else
+!         check2 = .false.
+!         c = m
+!         n = MAX(n, k)
+!       end if
+!     else
+!       check1 = .true.
+!     end if
+!     !$omp end critical
+!     if (check1) exit
+!     if (check2) cycle
+!     heap(m) = m
+!     call update( &
+!         &  memsize, &
+!         &  ldxsize, &
+!         &  n_chunk, &
+!         &  addr, &
+!         &  l, &
+!         &  header, &
+!         &  lambda, &
+!         &  X, &
+!         &  W, &
+!         &  edge(heap(m)), &
+!         &  remove_com, &
+!         &  sort_by_g &
+!         &)
+!   end do
+!   !$omp end parallel
+!   k = n
+!   !$omp parallel shared(edge,heap,k), private(l,i,j,pw,addr,V,t,check1)
+!   do
+!     !$omp critical
+!     l = k + 1
+!     addr = find_address(n_chunk, l, edge)
+!     check1 = l > ld
+!     if (.not. check1) k = l
+!     !$omp end critical
+!     if (check1) exit
+!     if (addr > 0) cycle
+!     if (is_same(n_target, l, par)) cycle
+!     call init_edge(t)
+!     call update( &
+!         &  memsize, &
+!         &  ldxsize, &
+!         &  n_chunk, &
+!         &  1, &
+!         &  l, &
+!         &  header, &
+!         &  lambda, &
+!         &  X, &
+!         &  V, &
+!         &  t, &
+!         &  remove_com, &
+!         &  sort_by_g &
+!         &)
+!     !$omp critical
+!     check1 = edge(heap(1))%lb < t%lb
+!     !$omp end critical
+!     if (check1) cycle
+!     !$omp critical
+!     edge(heap(1)) = t
+!     W(memsize * (heap(1) - 1) + 1:memsize * heap(1)) = V(:)
+!     call down_heap(n_chunk, 1, edge, heap)
+!     !$omp end critical
+!   end do
+!   !$omp end parallel
+  end subroutine construct_chunk
+!
+  !pure subroutine update_chunk( &
+  subroutine update_chunk( &
+            &  memsize, &
+            &  ldxsize, &
+            &  n_target, &
+            &  n_pack, &
+            &  n_core, &
+            &  n_chunk, &
+            &  header, &
+            &  lambda, &
+            &  par, &
+            &  X, &
+            &  W, &
+            &  heap, &
+            &  edge, &
+            &  remove_com, &
+            &  sort_by_g &
+            & )
+    integer(IK), intent(in)        :: memsize
+    integer(IK), intent(in)        :: ldxsize
+    integer(IK), intent(in)        :: n_target
+    integer(IK), intent(in)        :: n_pack
+    integer(IK), intent(in)        :: n_core
+    integer(IK), intent(in)        :: n_chunk
+    integer(IK), intent(in)        :: par(n_target)
+    type(mobbrmsd), intent(in)     :: header
+    real(RK), intent(in)           :: lambda
+    real(RK), intent(in)           :: X(*)
+    real(RK), intent(inout)        :: W(*)
+    integer(IK), intent(inout)     :: heap(n_chunk)
+    type(edge_data), intent(inout) :: edge(n_pack)
     logical, intent(in), optional  :: remove_com, sort_by_g
     real(RK)                       :: lambda_local
-    type(edge)                     :: g
-    integer(IK)                    :: i, j, k, p
-    g = pick_heap(n_pack, n_target - n_core - 1, e)
-    lambda_local = g%ub
-    do while (lambda_local < lambda .and. .not. g%f)
+    integer(IK)                    :: k, p, g, addr
+    g = pick_heap(n_pack, n_target - n_core - 1, edge, heap)
+    lambda_local = edge(g)%ub
+    do while (lambda_local < lambda .and. .not. mobbrmsd_state_is_finished(edge(g)%state))
       do k = 1, n_target - 1
-        if (e(k)%f) cycle
-        p = e(k)%p
-        call cantor_pair_inverse(p, i, j)
+        if (mobbrmsd_state_is_finished(edge(k)%state)) cycle
+        addr = find_address(n_chunk, k, edge)
         call update( &
-     &             p, i, j, &
-     &             header, &
-     &             lambda_local, &
-     &             X, &
-     &             e(k), &
-     &             remove_com, &
-     &             sort_by_g &
-     &            )
+            &  ldxsize, &
+            &  n_chunk, &
+            &  addr, &
+            &  p, &
+            &  header, &
+            &  lambda_local, &
+            &  X, &
+            &  W, &
+            &  edge(k), &
+            &  remove_com, &
+            &  sort_by_g &
+            & )
       end do
       do k = n_pack, 1, -1
-        call down_heap(n_pack, k, e)
+        call down_heap(n_pack, k, edge, heap)
       end do
-      g = pick_heap(n_pack, n_target - n_core - 1, e)
-      lambda_local = MAX(lambda_local, g%ub)
+      g = pick_heap(n_pack, n_target - n_core - 1, edge, heap)
+      lambda_local = MAX(lambda_local, edge(g)%ub)
     end do
   end subroutine update_chunk
 !
-  pure function pick_heap(n, p, h) result(res)
-    integer(IK), intent(in) :: n, p
-    type(edge), intent(in)  :: h(n)
-    type(edge)              :: t(n), res
-    integer(IK)             :: k
-    t = h
+  subroutine update( &
+ &             ldxsize, &
+ &             n_chunk, &
+ &             addr, &
+ &             p, &
+ &             header, &
+ &             lambda, &
+ &             X, &
+ &             W, &
+ &             edge, &
+ &             remove_com, &
+ &             sort_by_g &
+ &            )
+    integer(IK), intent(in)        :: ldxsize
+    integer(IK), intent(in)        :: n_chunk, addr, p
+    type(mobbrmsd), intent(in)     :: header
+    real(RK), intent(in)           :: lambda, X(*)
+    real(RK), intent(inout)        :: W(*)
+    type(edge_data), intent(inout) :: edge
+    logical, intent(in), optional  :: remove_com, sort_by_g
+    print *, p, edge%p, edge%w, n_chunk
+!   if (p == edge%p) then
+!     call mobbrmsd_restart( &
+!    &       header, &
+!    &       edge%state,  &
+!    &       W(edge%w), &
+!    &       cutoff=lambda &
+!    &      )
+!   else
+    block
+      integer(IK)          :: i, j, xpnt, ypnt
+      call cantor_pair_inverse(p, i, j)
+      xpnt = (i - 1) * ldxsize + 1
+      ypnt = (j - 1) * ldxsize + 1
+      call mobbrmsd_run( &
+     &       header, &
+     &       edge%state,  &
+     &       X(xpnt), &
+     &       X(ypnt), &
+     &       W(edge%w), &
+     &       cutoff=lambda, &
+     &       sort_by_g=sort_by_g &
+     &      )
+    end block
+    edge%p = p
+!   end if
+    edge%lb = mobbrmsd_state_lowerbound_as_rmsd(edge%state)
+    edge%ub = mobbrmsd_state_upperbound_as_rmsd(edge%state)
+  end subroutine update
+!
+  pure function pick_heap(n, p, e, h) result(res)
+    integer(IK), intent(in)     :: n, p
+    type(edge_data), intent(in) :: e(n)
+    integer(IK), intent(in)     :: h(n)
+    integer(IK)                 :: t(n)
+    integer(IK)                 :: k, res
+    do concurrent(k=1:n)
+      t(k) = h(k)
+    end do
     do k = n, n - p + 1, -1
       t(1) = h(k)
-      call down_heap(k - 1, 1, t)
+      call down_heap(k - 1, 1, e, t)
     end do
     res = t(1)
   end function pick_heap
 !
-  pure subroutine kruscal(n_target, n_pack, c, par, e, b)
-    integer(IK), intent(in)    :: n_target, n_pack
-    integer(IK), intent(inout) :: c, par(n_target)
-    type(edge), intent(in)     :: e(n_pack)
-    type(edge), intent(inout)  :: b(n_target - 1)
-    type(edge)                 :: t(n_pack)
-    integer(IK)                :: i, j, k
-    logical                    :: is_same
-    t = e
+  subroutine kruscal(n_target, n_chunk, n_pack, lambda, n_edge, n_core, par, heap, edge, core)
+    !pure subroutine kruscal(n_target, n_chunk, n_pack, n_edge, n_core, par, heap, edge, core)
+    integer(IK), intent(in)        :: n_target, n_chunk, n_pack
+    real(RK), intent(in)           :: lambda
+    integer(IK), intent(inout)     :: n_edge, n_core
+    integer(IK), intent(inout)     :: par(n_target)
+    integer(IK), intent(inout)     :: heap(n_chunk)
+    type(edge_data), intent(inout) :: edge(n_chunk), core(n_target - 1)
+    integer(IK)                    :: t(n_pack)
+    integer(IK)                    :: k
+    logical                        :: is_same
+    do concurrent(k=1:n_pack)
+      t(k) = heap(k)
+    end do
+    do concurrent(k=1:n_chunk)
+      heap(k) = 0
+    end do
     do k = n_pack, 2, -1
       call swap(t(1), t(k))
-      call down_heap(k - 1, 1, t)
+      call down_heap(k - 1, 1, edge, t)
     end do
+    print '(10f7.4)', edge(t(2:n_pack))%lb - edge(t(:n_pack - 1))%lb
+    !print '(5f9.6)', edge(t(:n_pack))%ub
+    n_edge = 0
     do k = 1, n_pack
-      if (.not. t(k)%f) cycle
-      call cantor_pair_inverse(t(k)%p, i, j)
-      call unite(n_target, i, j, par, is_same)
-      if (is_same) cycle
-      c = c + 1
-      b(c) = t(k)
-      if (c >= n_target - 1) exit
+      !print '(4f9.6)', edge(t(k))%lb, edge(t(k))%ub, edge(t(k))%ub - edge(t(k))%lb, lambda
+      if (edge(t(k))%ub < lambda) then
+        call unite(n_target, edge(t(k))%p, par, is_same)
+        if (is_same) then
+          call init_edge(edge(t(k)))
+        else
+          n_core = n_core + 1
+          core(n_core) = edge(t(k))
+          call init_edge(edge(t(k)))
+          if (n_core == n_target - 1) exit
+        end if
+      else
+        n_edge = n_edge + 1
+        heap(n_edge) = t(k)
+      end if
     end do
+    print *
   end subroutine kruscal
 !
   pure elemental subroutine swap(a, b)
-    type(edge), intent(inout) :: a, b
-    type(edge)                :: s
+    integer(IK), intent(inout) :: a, b
+    integer(IK)                :: s
     s = b
     b = a
     a = s
   end subroutine swap
 !
-  pure subroutine update( &
- &             k, i, j, &
- &             header, &
- &             lambda, &
- &             X, &
- &             e, &
- &             remove_com, &
- &             sort_by_g &
- &            )
-    integer(IK), intent(in)       :: k, i, j
-    type(mobbrmsd), intent(in)    :: header
-    real(RK), intent(in)          :: lambda, X(*)
-    type(edge), intent(inout)     :: e
-    logical, intent(in), optional :: remove_com, sort_by_g
-    type(mobbrmsd_state)          :: state
-    real(RK)                      :: w(mobbrmsd_memsize(header))
-    integer(IK)                   :: xpnt, ypnt, ldx
-    ldx = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
-    xpnt = (i - 1) * ldx + 1
-    ypnt = (j - 1) * ldx + 1
-    call mobbrmsd_run( &
-   &       header, &
-   &       state,  &
-   &       X(xpnt), &
-   &       X(ypnt), &
-   &       W, &
-   &       cutoff=lambda, &
-   &       sort_by_g=sort_by_g &
-   &      )
-    e%w = 0
-    e%f = mobbrmsd_state_is_finished(state)
-    e%p = k
-!   e%t = .false.
-    e%lb = mobbrmsd_state_lowerbound_as_rmsd(state)
-    e%ub = mobbrmsd_state_upperbound_as_rmsd(state)
-  end subroutine update
-!
-  pure subroutine down_heap(n, p, e)
-    integer(IK), intent(in)   :: n, p
-    type(edge), intent(inout) :: e(*)
-    integer(IK)               :: r, s, t
+  pure subroutine down_heap(n, p, e, h)
+    integer(IK), intent(in)     :: n, p
+    type(edge_data), intent(in) :: e(*)
+    integer(IK), intent(inout)  :: h(*)
+    integer(IK)                 :: r, s, t
     r = p
     do while (r + r <= n)
       s = r + r
       t = s + 1
       if (t > n) then
-        if (e(r)%lb > e(s)%lb) return
+        if (e(h(r))%lb > e(h(s))%lb) return
       else
-        if (e(s)%lb > e(t)%lb) then
-          if (e(r)%lb > e(s)%lb) return
+        if (e(h(s))%lb > e(h(t))%lb) then
+          if (e(h(r))%lb > e(h(s))%lb) return
         else
-          if (e(r)%lb > e(t)%lb) return
+          if (e(h(r))%lb > e(h(t))%lb) return
           s = t
         end if
       end if
-      call swap(e(r), e(s))
+      call swap(h(r), h(s))
       r = s
     end do
   end subroutine down_heap
 !
+  pure subroutine sort(n, v)
+    integer(IK), intent(in)    :: n
+    integer(IK), intent(inout) :: v(n)
+    integer(IK)                :: i, j, r, s, t
+    do i = n, 1, -1
+      r = i
+      do while (r + r <= n)
+        s = r + r
+        t = s + 1
+        if (t > n) then
+          if (v(r) > v(s)) exit
+        else
+          if (v(s) > v(t)) then
+            if (v(r) > v(s)) exit
+          else
+            if (v(r) > v(t)) exit
+            s = t
+          end if
+        end if
+        j = v(r)
+        v(r) = v(s)
+        v(s) = j
+        r = s
+      end do
+    end do
+    do i = n, 2, -1
+      j = v(1)
+      v(1) = v(i)
+      v(i) = j
+      r = 1
+      do while (r + r <= i - 1)
+        s = r + r
+        t = s + 1
+        if (t > i - 1) then
+          if (v(r) > v(s)) exit
+        else
+          if (v(s) > v(t)) then
+            if (v(r) > v(s)) exit
+          else
+            if (v(r) > v(t)) exit
+            s = t
+          end if
+        end if
+        j = v(r)
+        v(r) = v(s)
+        v(s) = j
+        r = s
+      end do
+    end do
+  end subroutine sort
+!
 ! pure recursive subroutine insert(p, q, a)
 !   integer, intent(in)       :: p, q
-!   type(edge), intent(inout) :: a(*)
+!   type(edge_data), intent(inout) :: a(*)
 !   integer                   :: r
 !   if (a(p)%lb < a(q)%lb) then
 !     if (a(q)%l < 1) then
@@ -442,7 +667,7 @@ contains
 ! pure recursive subroutine ordering(p, q, e)
 !   integer(IK), intent(in)    :: p
 !   integer(IK), intent(inout) :: q
-!   type(edge), intent(inout)  :: e(*)
+!   type(edge_data), intent(inout)  :: e(*)
 !   if (e(p)%r > 0) call ordering(e(p)%r, q, e)
 !   e(p)%s = q
 !   q = p
@@ -484,21 +709,23 @@ contains
     end do
   end subroutine reduction
 !
-  pure function is_same(n, v1, v2, par)
-    integer(IK), intent(in) :: n, v1, v2
+  pure function is_same(n, p, par)
+    integer(IK), intent(in) :: n, p
     integer(IK), intent(in) :: par(n)
     logical                 :: is_same
-    integer(IK)             :: r1, l1, r2, l2
+    integer(IK)             :: v1, v2, r1, l1, r2, l2
+    call cantor_pair_inverse(p, v1, v2)
     call findroot(n, v1, par, r1, l1)
     call findroot(n, v2, par, r2, l2)
     is_same = r1 == r2
   end function is_same
 !
-  pure subroutine unite(n, v1, v2, par, is_same)
-    integer(IK), intent(in)    :: n, v1, v2
+  pure subroutine unite(n, p, par, is_same)
+    integer(IK), intent(in)    :: n, p
     integer(IK), intent(inout) :: par(n)
     logical, intent(inout)     :: is_same
-    integer(IK)                :: r1, l1, r2, l2
+    integer(IK)                :: v1, v2, r1, l1, r2, l2
+    call cantor_pair_inverse(p, v1, v2)
     call findroot(n, v1, par, r1, l1)
     call findroot(n, v2, par, r2, l2)
     is_same = r1 == r2
@@ -531,71 +758,110 @@ contains
 !!! --- hash table ---
 ! key value must be k>0.
 !
-  pure elemental subroutine hash_table_init(h)
-    type(hash_table), intent(inout) :: h
-    h%k = 0
-  end subroutine hash_table_init
-
-  pure elemental function hash(n, k)
-    integer(IK), intent(in)    :: n, k
+  pure elemental function hash(n, p)
+    integer(IK), intent(in)    :: n, p
     integer(IK)                :: hash
-    hash = MODULO(k - 1, n) + 1
+    hash = MODULO(p - 1, n) + 1
   end function hash
-
-  pure subroutine hash_add(n, k, h)
-    integer(IK), intent(in)         :: n, k
-    type(hash_table), intent(inout) :: h(n)
-    integer(IK)                     :: c
-    c = hash(n, k)
-    do
-      if (h(c)%k == k) return
-      if (h(c)%k <= 0) then
-        h(c)%k = k
-        return
-      else
-        c = MODULO(c, n) + 1
-      end if
-    end do
-  end subroutine hash_add
-
-  pure function hash_get(n, k, h) result(c)
-    integer(IK), intent(in)      :: n, k
-    type(hash_table), intent(in) :: h(n)
-    integer(IK)                  :: c, i
-    i = hash(n, k)
+!
+  pure function find_address(n, p, e) result(res)
+    integer(IK), intent(in)     :: n, p
+    type(edge_data), intent(in) :: e(n)
+    integer(IK)                 :: c, i, res
+    res = 0
+    i = hash(n, p)
     c = i
     do
-      if (h(c)%k == k) then
+      if (e(c)%p == p) then
+        res = c
         return
-      elseif (h(c)%k == 0) then
-        c = 0
-        return
-      end if
-      c = MODULO(c, n) + 1
-      if (c == i) then
-        c = 0
-        return
-      end if
-    end do
-  end function hash_get
-
-  pure subroutine hash_del(n, k, h)
-    integer(IK), intent(in)         :: n, k
-    type(hash_table), intent(inout) :: h(n)
-    integer(IK)                     :: c, i
-    i = hash(n, k)
-    c = i
-    do
-      if (h(c)%k == k) then
-        h(c)%k = -k
-        return
-      elseif (h(c)%k == 0) then
-        return
+      elseif (e(c)%p == 0) then
+        if (res == 0) res = c
       end if
       c = MODULO(c, n) + 1
       if (c == i) return
     end do
-  end subroutine hash_del
+  end function find_address
+
+! pure elemental subroutine hash_table_init(h)
+!   type(hash_table), intent(inout) :: h
+!   h%k = 0
+! end subroutine hash_table_init
+
+! pure subroutine hash_add(n, k, h)
+!   integer(IK), intent(in)         :: n, k
+!   real(RK), intent(in)            :: v
+!   type(hash_table), intent(inout) :: h(n)
+!   integer(IK)                     :: c
+!   c = hash(n, k)
+!   do
+!     if (h(c)%k == k) return
+!     if (h(c)%k <= 0) then
+!       h(c)%k = k
+!       return
+!     else
+!       c = MODULO(c, n) + 1
+!     end if
+!   end do
+! end subroutine hash_add
+
+! pure function hash_get(n, k, h) result(c)
+!   integer(IK), intent(in)      :: n, k
+!   type(hash_table), intent(in) :: h(n)
+!   integer(IK)                  :: c, i
+!   i = hash(n, k)
+!   c = i
+!   do
+!     if (h(c)%k == k) then
+!       return
+!     elseif (h(c)%k == 0) then
+!       c = 0
+!       return
+!     end if
+!     c = MODULO(c, n) + 1
+!     if (c == i) then
+!       c = 0
+!       return
+!     end if
+!   end do
+! end function hash_get
+
+! pure subroutine hash_replace(n, k, l, h)
+!   integer(IK), intent(in)         :: n, k, l
+!   type(hash_table), intent(inout) :: h(n)
+!   integer(IK)                     :: c, i
+!   i = hash(n, k)
+!   c = i
+!   do
+!     if (h(c)%k == k) then
+!       h(c)%k = l
+!       return
+!     elseif (h(c)%k == 0) then
+!       h(c)%k = l
+!       return
+!     end if
+!     c = MODULO(c, n) + 1
+!     if (c == i) return
+!   end do
+! end subroutine hash_replace
+
+! pure subroutine hash_del(n, k, h)
+!   integer(IK), intent(in)         :: n, k
+!   type(hash_table), intent(inout) :: h(n)
+!   integer(IK)                     :: c, i
+!   i = hash(n, k)
+!   c = i
+!   do
+!     if (h(c)%k == k) then
+!       h(c)%k = -k
+!       return
+!     elseif (h(c)%k == 0) then
+!       return
+!     end if
+!     c = MODULO(c, n) + 1
+!     if (c == i) return
+!   end do
+! end subroutine hash_del
 !
 ! cantor_pair
 !
@@ -606,19 +872,23 @@ contains
     i = k - (j - 1) * (j - 2) / 2
   end subroutine cantor_pair_inverse
 !
-  pure subroutine init_edge(n, e)
-    integer(IK), intent(in)   :: n
-    type(edge), intent(inout) :: e(n)
-    integer(IK)               :: i
-    do concurrent(i=1:n)
-      e(i)%p = 0
-      e(i)%w = 0
-      e(i)%f = .false.
-!     e(i)%t = .false.
-      e(i)%lb = HUGE(0.0_RK)
-      e(i)%ub = HUGE(0.0_RK)
-    end do
+  pure elemental subroutine init_edge(e)
+    type(edge_data), intent(inout) :: e
+    e%p = 0
+    e%w = 1
+    e%lb = HUGE(0.0_RK)
+    e%ub = HUGE(0.0_RK)
   end subroutine init_edge
+!
+  pure subroutine memcopy(n, from, dest)
+    integer(IK), intent(in) :: n
+    real(RK), intent(in)    :: from(n)
+    real(RK), intent(inout) :: dest(n)
+    integer(IK)             :: i
+    do concurrent(i=1:n)
+      dest(i) = from(i)
+    end do
+  end subroutine memcopy
 !
 end module mod_mobbrmsd_mst
 

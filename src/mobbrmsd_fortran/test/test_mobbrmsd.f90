@@ -87,10 +87,11 @@ program main
 !
 ! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=4')
 ! call test7(4, 10, 1, [0], 4, ntest_def)
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
-  call test7(4, 8, 1, [0], 10, ntest_def * 2)
-! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
-! call test7(4, 4, 1, [0], 100, ntest_def * 2)
+! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
+! call test7(4, 8, 1, [0], 10, ntest_def * 2)
+  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
+  call test7(4, 6, 1, [0], 100, 1)
+  !call test7(4, 4, 1, [0], 100, ntest_def * 2)
 !
   call u%finish_and_terminate(passing_score=0.95_R8)
 !
@@ -341,7 +342,7 @@ contains
     integer(IK)            :: redges(2, n_target - 1)
     real(RK)               :: weights(n_target - 1)
     real(RK)               :: refer(n_target, n_target)
-    integer(IK)            :: i, j, k, itest
+    integer(IK)            :: i, j, k, itest, nerr
 !
     call mobbrmsd_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
@@ -385,7 +386,27 @@ contains
       call min_span_tree(n_target, refer, redges)
       call u%assert(is_same_graph(n_target, edges, redges), 'is_same_graph')
       if (.not. is_same_graph(n_target, edges, redges)) then
+        nerr = 0
         do i = 1, n_target - 1
+          do j = 1, n_target - 1
+            if (ALL(edges(:, i) == redges(:, j))) exit
+            if (j == n_target - 1) then
+              nerr = nerr + 1
+              edges(:, nerr) = edges(:, i)
+            end if
+          end do
+        end do
+        nerr = 0
+        do i = 1, n_target - 1
+          do j = 1, n_target - 1
+            if (ALL(edges(:, j) == redges(:, i))) exit
+            if (j == n_target - 1) then
+              nerr = nerr + 1
+              redges(:, nerr) = redges(:, i)
+            end if
+          end do
+        end do
+        do i = 1, nerr
           print *, edges(:, i), redges(:, i)
         end do
       end if
