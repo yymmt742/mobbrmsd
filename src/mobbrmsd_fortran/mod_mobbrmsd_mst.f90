@@ -67,7 +67,7 @@ contains
     integer(IK)                         :: n_edges, n_chunk, n_hash
     integer(IK)                         :: i, j, k
     if (.not. PRESENT(edges) .and. .not. PRESENT(weights)) return
-    n_chunk = MIN(n_target * 3, n_target * (n_target - 1) / 2)
+    n_chunk = MIN(n_target * 30, n_target * (n_target - 1) / 2)
     n_hash = n_chunk + 2
     n_edges = n_target - 1
     memsize = mobbrmsd_memsize(header)
@@ -173,19 +173,12 @@ contains
     integer(IK), intent(inout)     :: heap(n_chunk)
     type(edge_data), intent(inout) :: edge(n_chunk)
     logical, intent(in), optional  :: remove_com, sort_by_g
-    integer(IK)                    :: edges(n_edge + 2)
-    logical                        :: check1, check2
-    integer(IK)                    :: i, j, k, l, m, c, n, pw, ld, lc
+    integer(IK)                    :: edges(n_edge + 1)
+    logical                        :: check1, check2, check3
+    integer(IK)                    :: k, l, addr, ld, lc
 !
     ld = n_target * (n_target - 1) / 2
     lc = MIN(n_chunk, ld - n_core)
-!
-    edges(1) = 0
-    do concurrent(i=1:n_edge)
-      edges(i + 1) = edge(heap(i))%p
-    end do
-    edges(n_edge + 2) = ld + 1
-    call sort(n_edge, edges(2))
 !
     !$omp parallel do
     do k = 1, n_edge
@@ -204,58 +197,112 @@ contains
     !$omp end parallel do
     if (n_edge == n_chunk) call make_heap(n_edge, edge, heap)
 !
-    n_pack = n_edge
-    do k = 1, n_edge + 1
-      do l = edges(k) + 1, edges(k + 1) - 1
-        if (is_same(n_target, l, par)) cycle
-        if (n_pack < n_chunk) then
-          n_pack = n_pack + 1
-          block
-            integer(IK) :: addr
-            addr = find_address(n_chunk, l, edge)
-            heap(n_pack) = addr
-            edge(addr)%p = -l
-            edge(addr)%w = (addr - 1) * memsize + 1
-            call update( &
-                &  ldxsize, &
-                &  n_chunk, &
-                &  header, &
-                &  lambda, &
-                &  X, &
-                &  W, &
-                &  edge(addr), &
-                &  remove_com, &
-                &  sort_by_g &
-                &)
-          end block
-          if (n_pack == n_chunk) call make_heap(n_pack, edge, heap)
-        else
-          block
-            real(RK) :: V(memsize)
-            type(edge_data) :: t
-            call init_edge(t)
-            t%p = -l
-            call update( &
-                &  ldxsize, &
-                &  n_chunk, &
-                &  header, &
-                &  lambda, &
-                &  X, &
-                &  V, &
-                &  t, &
-                &  remove_com, &
-                &  sort_by_g &
-                &)
-            if (t%lb < edge(heap(1))%lb) then
-              edge(heap(1)) = t
-              edge(heap(1))%w = (heap(1) - 1) * memsize + 1
-              call memcopy(memsize, V, W(memsize * (heap(1) - 1) + 1))
-              call down_heap(n_chunk, 1, edge, heap)
-            end if
-          end block
-        end if
-      end do
+    do concurrent(k=1:n_edge)
+      edges(k) = edge(heap(k))%p
     end do
+    call sort(n_edge, edges)
+    edges(n_edge + 1) = ld + 1
+!
+    n_pack = n_edge
+    l = 0
+    k = 1
+    !$omp parallel shared(edge,heap,n_pack,k,l), private(addr,check1,check2)
+    do
+      !$omp critical
+      l = l + 1
+      check1 = n_pack >= n_chunk
+      check2 = l > ld
+      if (check2) then
+        check3 = .false.
+      else
+        check3 = l == edges(k)
+        if (check3) then
+          k = k + 1
+        else
+          check3 = is_same(n_target, l, par)
+        end if
+      end if
+      if (.not. (check1 .or. check2 .or. check3)) then
+        n_pack = n_pack + 1
+        addr = find_address(n_chunk, l, edge)
+        heap(n_pack) = addr
+        edge(addr)%p = -l
+        edge(addr)%w = (addr - 1) * memsize + 1
+      else
+        addr = 0
+      end if
+      !$omp end critical
+
+      if (check1) exit
+      if (check2) exit
+      if (check3) cycle
+
+      call update( &
+          &  ldxsize, &
+          &  n_chunk, &
+          &  header, &
+          &  lambda, &
+          &  X, &
+          &  W, &
+          &  edge(addr), &
+          &  remove_com, &
+          &  sort_by_g &
+          &)
+    end do
+    !$omp end parallel
+
+    if (n_pack == n_chunk) call make_heap(n_pack, edge, heap)
+
+    !$omp parallel shared(edge,heap,k,l), private(check1,check2)
+    do
+      block
+        real(RK) :: V(memsize)
+        type(edge_data) :: t
+        !$omp critical
+        l = l + 1
+        check1 = l > ld
+        if (check1) then
+          check2 = .false.
+        else
+          check2 = l == edges(k)
+          if (check2) then
+            k = k + 1
+          else
+            check2 = is_same(n_target, l, par)
+          end if
+        end if
+        if (.not. (check1 .or. check2)) then
+          call init_edge(t)
+          t%p = -l
+        end if
+        !$omp end critical
+
+        if (check1) exit
+        if (check2) cycle
+
+        call update( &
+            &  ldxsize, &
+            &  n_chunk, &
+            &  header, &
+            &  lambda, &
+            &  X, &
+            &  V, &
+            &  t, &
+            &  remove_com, &
+            &  sort_by_g &
+            &)
+        !$omp critical
+        if (t%lb < edge(heap(1))%lb) then
+          edge(heap(1)) = t
+          edge(heap(1))%w = (heap(1) - 1) * memsize + 1
+          call memcopy(memsize, V, W(edge(heap(1))%w))
+          call down_heap(n_chunk, 1, edge, heap)
+        end if
+        !$omp end critical
+      end block
+    end do
+    !$omp end parallel
+
     if (n_pack < n_chunk) call make_heap(n_pack, edge, heap)
 
 !   block
@@ -284,88 +331,6 @@ contains
 !       lambda_local = MAX(lambda_local, edge(g)%ub)
 !     end do
 !   end block
-
-!   c = n_edge
-!   k = 0
-!   n = 0
-!
-!   !$omp parallel shared(edge,heap,k,c), private(i,j,l,m,pw,addr,check1,check2)
-!   do
-!     !$omp critical
-!     l = k + 1
-!     m = c + 1
-!     addr = find_address(n_chunk, l, edge)
-!     if (k < ld .and. c < lc) then
-!       check1 = .false.
-!       k = l
-!       if (is_same(n_target, l, par)) then
-!         check2 = .true.
-!       else
-!         check2 = .false.
-!         c = m
-!         n = MAX(n, k)
-!       end if
-!     else
-!       check1 = .true.
-!     end if
-!     !$omp end critical
-!     if (check1) exit
-!     if (check2) cycle
-!     heap(m) = m
-!     call update( &
-!         &  memsize, &
-!         &  ldxsize, &
-!         &  n_chunk, &
-!         &  addr, &
-!         &  l, &
-!         &  header, &
-!         &  lambda, &
-!         &  X, &
-!         &  W, &
-!         &  edge(heap(m)), &
-!         &  remove_com, &
-!         &  sort_by_g &
-!         &)
-!   end do
-!   !$omp end parallel
-!   k = n
-!   !$omp parallel shared(edge,heap,k), private(l,i,j,pw,addr,V,t,check1)
-!   do
-!     !$omp critical
-!     l = k + 1
-!     addr = find_address(n_chunk, l, edge)
-!     check1 = l > ld
-!     if (.not. check1) k = l
-!     !$omp end critical
-!     if (check1) exit
-!     if (addr > 0) cycle
-!     if (is_same(n_target, l, par)) cycle
-!     call init_edge(t)
-!     call update( &
-!         &  memsize, &
-!         &  ldxsize, &
-!         &  n_chunk, &
-!         &  1, &
-!         &  l, &
-!         &  header, &
-!         &  lambda, &
-!         &  X, &
-!         &  V, &
-!         &  t, &
-!         &  remove_com, &
-!         &  sort_by_g &
-!         &)
-!     !$omp critical
-!     check1 = edge(heap(1))%lb < t%lb
-!     !$omp end critical
-!     if (check1) cycle
-!     !$omp critical
-!     edge(heap(1)) = t
-!     W(memsize * (heap(1) - 1) + 1:memsize * heap(1)) = V(:)
-!     call down_heap(n_chunk, 1, edge, heap)
-!     !$omp end critical
-!   end do
-!   !$omp end parallel
   end subroutine construct_chunk
 !
   pure subroutine update( &
@@ -431,8 +396,7 @@ contains
     res = t(1)
   end function pick_heap
 !
-  subroutine kruscal(n_target, n_chunk, n_pack, lambda, n_edge, n_core, par, heap, edge, core)
-    !pure subroutine kruscal(n_target, n_chunk, n_pack, n_edge, n_core, par, heap, edge, core)
+  pure subroutine kruscal(n_target, n_chunk, n_pack, lambda, n_edge, n_core, par, heap, edge, core)
     integer(IK), intent(in)        :: n_target, n_chunk, n_pack
     real(RK), intent(in)           :: lambda
     integer(IK), intent(inout)     :: n_edge, n_core

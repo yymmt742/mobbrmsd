@@ -87,8 +87,8 @@ program main
 !
 ! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=4')
 ! call test7(4, 10, 1, [0], 4, ntest_def)
-! call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
-! call test7(4, 8, 1, [0], 10, ntest_def * 2)
+  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
+  call test7(4, 8, 1, [0], 10, ntest_def * 2)
   call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
   call test7(4, 4, 1, [0], 100, ntest_def * 2)
 !
