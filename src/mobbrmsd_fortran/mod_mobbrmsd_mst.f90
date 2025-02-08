@@ -23,17 +23,6 @@ module mod_mobbrmsd_mst
     type(mobbrmsd_state) :: state
   end type edge_data
 !
-! type hash_table
-!   sequence
-!   integer(IK)          :: k
-!   type(mobbrmsd_state) :: state
-! end type hash_table
-!
-! type ij
-!   sequence
-!   integer(IK) :: i, j
-! end type ij
-!
 contains
 !| minimum spanning tree construction.
   subroutine mobbrmsd_min_span_tree( &
@@ -67,8 +56,8 @@ contains
     integer(IK)                         :: n_edges, n_chunk
     integer(IK)                         :: i, j, k
     if (.not. PRESENT(edges) .and. .not. PRESENT(weights)) return
-    n_chunk = n_target * (n_target - 1) / 2
-    !n_chunk = MIN(n_target * 30, n_target * (n_target - 1) / 2)
+    !n_chunk = n_target * (n_target - 1) / 2
+    n_chunk = MIN(n_target * 3, n_target * (n_target - 1) / 2)
     n_edges = n_target - 1
     memsize = mobbrmsd_memsize(header)
     ldxsize = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
@@ -79,8 +68,8 @@ contains
       integer(IK)      :: heap(n_chunk) ! for heap sort
       integer(IK)      :: par(n_target) ! for union find
       integer(IK)      :: n_core, n_rec, n_pack
-      lambda = 0.3
-      !lambda = 1.0E-2_RK
+      !lambda = 0.3
+      lambda = 1.0E-2_RK
       call init_par(n_target, par)
       call init_edge(edge)
       n_core = 0
@@ -106,6 +95,9 @@ contains
            & )
         block
           integer(IK) :: g
+          real(RK) :: lambda_
+          g = pick_heap(n_pack, n_edges - n_core, edge, heap)
+          lambda_ = MAX(lambda, edge(g)%ub)
           call kruscal( &
               &  n_target &
               &, n_chunk &
@@ -119,8 +111,7 @@ contains
               &, core &
               & )
           if (n_core == n_edges) exit
-          g = pick_heap(n_rec, n_edges - n_core, edge, heap)
-          lambda = MAX(lambda, edge(g)%ub)
+          lambda = lambda_
         end block
       end do
     end block
@@ -397,7 +388,7 @@ contains
 !
   pure function pick_heap(n, p, e, h) result(res)
     integer(IK), intent(in)     :: n, p
-    type(edge_data), intent(in) :: e(n)
+    type(edge_data), intent(in) :: e(*)
     integer(IK), intent(in)     :: h(n)
     integer(IK)                 :: t(n)
     integer(IK)                 :: k, res
@@ -405,13 +396,13 @@ contains
       t(k) = h(k)
     end do
     do k = n, n - p + 1, -1
-      t(1) = h(k)
+      t(1) = t(k)
       call down_heap(k - 1, 1, e, t)
     end do
     res = t(1)
   end function pick_heap
 !
-  subroutine kruscal(&
+  pure subroutine kruscal(&
                  &  n_target &
                  &, n_chunk &
                  &, n_pack &
