@@ -396,7 +396,18 @@ contains
     res = t(1)
   end function pick_heap
 !
-  pure subroutine kruscal(n_target, n_chunk, n_pack, lambda, n_edge, n_core, par, heap, edge, core)
+  subroutine kruscal(&
+                 &  n_target &
+                 &, n_chunk &
+                 &, n_pack &
+                 &, lambda &
+                 &, n_edge &
+                 &, n_core &
+                 &, par &
+                 &, heap &
+                 &, edge &
+                 &, core &
+                 &)
     integer(IK), intent(in)        :: n_target, n_chunk, n_pack
     real(RK), intent(in)           :: lambda
     integer(IK), intent(inout)     :: n_edge, n_core
@@ -418,7 +429,10 @@ contains
     end do
     n_edge = 0
     do k = 1, n_pack
-      if (edge(t(k))%ub < lambda) then
+      if (edge(t(k))%ub > lambda) then
+        n_edge = n_edge + 1
+        heap(n_edge) = t(k)
+      else
         call unite(n_target, edge(t(k))%p, par, is_same)
         if (is_same) then
           call init_edge(edge(t(k)))
@@ -428,9 +442,6 @@ contains
           call init_edge(edge(t(k)))
           if (n_core == n_target - 1) exit
         end if
-      else
-        n_edge = n_edge + 1
-        heap(n_edge) = t(k)
       end if
     end do
   end subroutine kruscal
