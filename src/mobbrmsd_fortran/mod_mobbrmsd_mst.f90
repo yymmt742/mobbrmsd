@@ -64,11 +64,11 @@ contains
     !! minimum spanning tree weights
     type(edge_data)                     :: core(n_target - 1)
     integer(IK)                         :: memsize, ldxsize
-    integer(IK)                         :: n_edges, n_chunk, n_hash
+    integer(IK)                         :: n_edges, n_chunk
     integer(IK)                         :: i, j, k
     if (.not. PRESENT(edges) .and. .not. PRESENT(weights)) return
-    n_chunk = MIN(n_target * 30, n_target * (n_target - 1) / 2)
-    n_hash = n_chunk + 2
+    n_chunk = n_target * (n_target - 1) / 2
+    !n_chunk = MIN(n_target * 30, n_target * (n_target - 1) / 2)
     n_edges = n_target - 1
     memsize = mobbrmsd_memsize(header)
     ldxsize = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
@@ -78,18 +78,19 @@ contains
       real(RK)         :: w(n_chunk * memsize)
       integer(IK)      :: heap(n_chunk) ! for heap sort
       integer(IK)      :: par(n_target) ! for union find
-      integer(IK)      :: n_core, n_edge, n_pack
-      lambda = 1.0E-2_RK
+      integer(IK)      :: n_core, n_rec, n_pack
+      lambda = 0.3
+      !lambda = 1.0E-2_RK
       call init_par(n_target, par)
       call init_edge(edge)
       n_core = 0
-      n_edge = 0
+      n_rec = 0
       do
         call construct_chunk( &
            &  memsize &
            &, ldxsize &
            &, n_target &
-           &, n_edge &
+           &, n_rec &
            &, n_core &
            &, n_chunk &
            &, header &
@@ -105,15 +106,12 @@ contains
            & )
         block
           integer(IK) :: g
-          real(RK) :: lambda1
-          g = pick_heap(n_pack, n_edges - n_core, edge, heap)
-          lambda1 = MAX(lambda, edge(g)%ub)
           call kruscal( &
               &  n_target &
               &, n_chunk &
               &, n_pack &
               &, lambda &
-              &, n_edge &
+              &, n_rec &
               &, n_core &
               &, par &
               &, heap &
@@ -121,7 +119,8 @@ contains
               &, core &
               & )
           if (n_core == n_edges) exit
-          lambda = lambda1
+          g = pick_heap(n_rec, n_edges - n_core, edge, heap)
+          lambda = MAX(lambda, edge(g)%ub)
         end block
       end do
     end block
@@ -144,7 +143,7 @@ contains
             &  memsize, &
             &  ldxsize, &
             &  n_target, &
-            &  n_edge, &
+            &  n_rec, &
             &  n_core, &
             &  n_chunk, &
             &  header, &
@@ -161,7 +160,7 @@ contains
     integer(IK), intent(in)        :: memsize
     integer(IK), intent(in)        :: ldxsize
     integer(IK), intent(in)        :: n_target
-    integer(IK), intent(in)        :: n_edge
+    integer(IK), intent(in)        :: n_rec
     integer(IK), intent(in)        :: n_core
     integer(IK), intent(in)        :: n_chunk
     integer(IK), intent(in)        :: par(n_target)
@@ -173,15 +172,20 @@ contains
     integer(IK), intent(inout)     :: heap(n_chunk)
     type(edge_data), intent(inout) :: edge(n_chunk)
     logical, intent(in), optional  :: remove_com, sort_by_g
-    integer(IK)                    :: edges(n_edge + 1)
+    integer(IK)                    :: edges(n_rec + 1)
     logical                        :: check1, check2, check3
-    integer(IK)                    :: k, l, addr, ld, lc
+    integer(IK)                    :: k, l, addr, ld, n_rem
 !
     ld = n_target * (n_target - 1) / 2
-    lc = MIN(n_chunk, ld - n_core)
+    n_rem = MIN(n_chunk, ld - n_core)
+    do concurrent(k=1:n_rec)
+      edges(k) = edge(heap(k))%p
+    end do
+    call sort(n_rec, edges)
+    edges(n_rec + 1) = ld + 1
 !
     !$omp parallel do
-    do k = 1, n_edge
+    do k = 1, n_rec
       call update( &
           &  ldxsize, &
           &  n_chunk, &
@@ -195,63 +199,59 @@ contains
           &)
     end do
     !$omp end parallel do
-    if (n_edge == n_chunk) call make_heap(n_edge, edge, heap)
-!
-    do concurrent(k=1:n_edge)
-      edges(k) = edge(heap(k))%p
-    end do
-    call sort(n_edge, edges)
-    edges(n_edge + 1) = ld + 1
-!
-    n_pack = n_edge
+    n_pack = n_rec
     l = 0
     k = 1
-    !$omp parallel shared(edge,heap,n_pack,k,l), private(addr,check1,check2)
-    do
-      !$omp critical
-      l = l + 1
-      check1 = n_pack >= n_chunk
-      check2 = l > ld
-      if (check2) then
-        check3 = .false.
-      else
-        check3 = l == edges(k)
-        if (check3) then
-          k = k + 1
+!
+    if (n_rec < n_rem) then
+!
+      !$omp parallel shared(edge,heap,n_pack,k,l), private(addr,check1,check2,check3)
+      do
+        !$omp critical
+        if (l <= ld) l = l + 1
+        check1 = n_pack >= n_rem
+        check2 = l > ld
+        if (check2) then
+          check3 = .false.
         else
-          check3 = is_same(n_target, l, par)
+          check3 = l == edges(k)
+          if (check3) then
+            k = k + 1
+          else
+            check3 = is_same(n_target, l, par)
+          end if
         end if
-      end if
-      if (.not. (check1 .or. check2 .or. check3)) then
-        n_pack = n_pack + 1
-        addr = find_address(n_chunk, l, edge)
-        heap(n_pack) = addr
-        edge(addr)%p = -l
-        edge(addr)%w = (addr - 1) * memsize + 1
-      else
-        addr = 0
-      end if
-      !$omp end critical
+        if (check1 .or. check2 .or. check3) then
+          addr = 0
+        else
+          n_pack = n_pack + 1
+          addr = find_address(n_chunk, l, edge)
+          heap(n_pack) = addr
+          edge(addr)%p = -l
+          edge(addr)%w = (addr - 1) * memsize + 1
+        end if
+        !$omp end critical
 
-      if (check1) exit
-      if (check2) exit
-      if (check3) cycle
+        if (check1) exit
+        if (check2) exit
+        if (check3) cycle
 
-      call update( &
-          &  ldxsize, &
-          &  n_chunk, &
-          &  header, &
-          &  lambda, &
-          &  X, &
-          &  W, &
-          &  edge(addr), &
-          &  remove_com, &
-          &  sort_by_g &
-          &)
-    end do
-    !$omp end parallel
+        call update( &
+            &  ldxsize, &
+            &  n_chunk, &
+            &  header, &
+            &  lambda, &
+            &  X, &
+            &  W, &
+            &  edge(addr), &
+            &  remove_com, &
+            &  sort_by_g &
+            &)
+      end do
+      !$omp end parallel
+    end if
 
-    if (n_pack == n_chunk) call make_heap(n_pack, edge, heap)
+    call make_heap(n_pack, edge, heap)
 
     !$omp parallel shared(edge,heap,k,l), private(check1,check2)
     do
@@ -259,7 +259,7 @@ contains
         real(RK) :: V(memsize)
         type(edge_data) :: t
         !$omp critical
-        l = l + 1
+        if (l <= ld) l = l + 1
         check1 = l > ld
         if (check1) then
           check2 = .false.
@@ -303,15 +303,13 @@ contains
     end do
     !$omp end parallel
 
-    if (n_pack < n_chunk) call make_heap(n_pack, edge, heap)
-
 !   block
 !     real(RK) :: lambda_local
 !     integer(IK) :: g, n_rem
 !     n_rem = n_target - 1 - n_core
 !     g = pick_heap(n_pack, n_rem, edge, heap)
 !     lambda_local = edge(g)%ub
-!     do while (lambda_local < lambda .and. .not. mobbrmsd_state_is_finished(edge(g)%state))
+!     do while (lambda_local < lambda .and. mst_is_unfinished(n_pack, n_rem, heap, edge))
 !       do k = 1, n_rem
 !         if (mobbrmsd_state_is_finished(edge(heap(k))%state)) cycle
 !         call update( &
@@ -332,6 +330,23 @@ contains
 !     end do
 !   end block
   end subroutine construct_chunk
+!
+! pure function mst_is_unfinished(n_heap, n_rem, h, e) result(res)
+!   integer(IK), intent(in)     :: n_heap, n_rem
+!   integer(IK), intent(in)     :: h(n_heap)
+!   type(edge_data), intent(in) :: e(*)
+!   logical                     :: res
+!   integer(IK)                 :: t(n_heap)
+!   integer(IK)                 :: k
+!   do concurrent(k=1:n_heap)
+!     t(k) = h(k)
+!   end do
+!   do k = n_heap, 2, -1
+!     call swap(t(1), t(k))
+!     call down_heap(k - 1, 1, e, t)
+!   end do
+!   res = .not. ALL(mobbrmsd_state_is_finished(e(t(:n_rem))%state))
+! end function mst_is_unfinished
 !
   pure subroutine update( &
  &             ldxsize, &
@@ -401,7 +416,7 @@ contains
                  &, n_chunk &
                  &, n_pack &
                  &, lambda &
-                 &, n_edge &
+                 &, n_rec &
                  &, n_core &
                  &, par &
                  &, heap &
@@ -410,7 +425,7 @@ contains
                  &)
     integer(IK), intent(in)        :: n_target, n_chunk, n_pack
     real(RK), intent(in)           :: lambda
-    integer(IK), intent(inout)     :: n_edge, n_core
+    integer(IK), intent(inout)     :: n_rec, n_core
     integer(IK), intent(inout)     :: par(n_target)
     integer(IK), intent(inout)     :: heap(n_chunk)
     type(edge_data), intent(inout) :: edge(n_chunk), core(n_target - 1)
@@ -427,22 +442,25 @@ contains
       call swap(t(1), t(k))
       call down_heap(k - 1, 1, edge, t)
     end do
-    n_edge = 0
-    do k = 1, n_pack
-      if (edge(t(k))%ub > lambda) then
-        n_edge = n_edge + 1
-        heap(n_edge) = t(k)
+    k = 1
+    do while (k <= n_pack .and. n_core < n_target - 1)
+      if (edge(t(k))%ub > lambda .or. .not. mobbrmsd_state_is_finished(edge(t(k))%state)) exit
+      call unite(n_target, edge(t(k))%p, par, is_same)
+      if (is_same) then
+        call init_edge(edge(t(k)))
       else
-        call unite(n_target, edge(t(k))%p, par, is_same)
-        if (is_same) then
-          call init_edge(edge(t(k)))
-        else
-          n_core = n_core + 1
-          core(n_core) = edge(t(k))
-          call init_edge(edge(t(k)))
-          if (n_core == n_target - 1) exit
-        end if
+        n_core = n_core + 1
+        core(n_core) = edge(t(k))
+        call init_edge(edge(t(k)))
       end if
+      k = k + 1
+    end do
+    n_rec = 0
+    if (n_core == n_target - 1) return
+    do while (k <= n_pack)
+      n_rec = n_rec + 1
+      heap(n_rec) = t(k)
+      k = k + 1
     end do
   end subroutine kruscal
 !
@@ -453,111 +471,6 @@ contains
     b = a
     a = s
   end subroutine swap
-!
-  pure subroutine down_heap(n, p, e, h)
-    integer(IK), intent(in)     :: n, p
-    type(edge_data), intent(in) :: e(*)
-    integer(IK), intent(inout)  :: h(*)
-    integer(IK)                 :: r, s, t
-    r = p
-    do while (r + r <= n)
-      s = r + r
-      t = s + 1
-      if (t > n) then
-        if (e(h(r))%lb > e(h(s))%lb) return
-      else
-        if (e(h(s))%lb > e(h(t))%lb) then
-          if (e(h(r))%lb > e(h(s))%lb) return
-        else
-          if (e(h(r))%lb > e(h(t))%lb) return
-          s = t
-        end if
-      end if
-      call swap(h(r), h(s))
-      r = s
-    end do
-  end subroutine down_heap
-!
-  pure subroutine sort(n, v)
-    integer(IK), intent(in)    :: n
-    integer(IK), intent(inout) :: v(n)
-    integer(IK)                :: i, j, r, s, t
-    do i = n, 1, -1
-      r = i
-      do while (r + r <= n)
-        s = r + r
-        t = s + 1
-        if (t > n) then
-          if (v(r) > v(s)) exit
-        else
-          if (v(s) > v(t)) then
-            if (v(r) > v(s)) exit
-          else
-            if (v(r) > v(t)) exit
-            s = t
-          end if
-        end if
-        j = v(r)
-        v(r) = v(s)
-        v(s) = j
-        r = s
-      end do
-    end do
-    do i = n, 2, -1
-      j = v(1)
-      v(1) = v(i)
-      v(i) = j
-      r = 1
-      do while (r + r <= i - 1)
-        s = r + r
-        t = s + 1
-        if (t > i - 1) then
-          if (v(r) > v(s)) exit
-        else
-          if (v(s) > v(t)) then
-            if (v(r) > v(s)) exit
-          else
-            if (v(r) > v(t)) exit
-            s = t
-          end if
-        end if
-        j = v(r)
-        v(r) = v(s)
-        v(s) = j
-        r = s
-      end do
-    end do
-  end subroutine sort
-!
-! pure recursive subroutine insert(p, q, a)
-!   integer, intent(in)       :: p, q
-!   type(edge_data), intent(inout) :: a(*)
-!   integer                   :: r
-!   if (a(p)%lb < a(q)%lb) then
-!     if (a(q)%l < 1) then
-!       a(q)%l = p
-!       return
-!     end if
-!     r = a(q)%l
-!   else
-!     if (a(q)%r < 1) then
-!       a(q)%r = p
-!       return
-!     end if
-!     r = a(q)%r
-!   end if
-!   call insert(p, r, a)
-! end subroutine insert
-!
-! pure recursive subroutine ordering(p, q, e)
-!   integer(IK), intent(in)    :: p
-!   integer(IK), intent(inout) :: q
-!   type(edge_data), intent(inout)  :: e(*)
-!   if (e(p)%r > 0) call ordering(e(p)%r, q, e)
-!   e(p)%s = q
-!   q = p
-!   if (e(p)%l > 0) call ordering(e(p)%l, q, e)
-! end subroutine ordering
 !
 ! union find
 !
@@ -668,100 +581,90 @@ contains
     end do
   end function find_address
 
-! pure elemental subroutine hash_table_init(h)
-!   type(hash_table), intent(inout) :: h
-!   h%k = 0
-! end subroutine hash_table_init
-
-! pure subroutine hash_add(n, k, h)
-!   integer(IK), intent(in)         :: n, k
-!   real(RK), intent(in)            :: v
-!   type(hash_table), intent(inout) :: h(n)
-!   integer(IK)                     :: c
-!   c = hash(n, k)
-!   do
-!     if (h(c)%k == k) return
-!     if (h(c)%k <= 0) then
-!       h(c)%k = k
-!       return
-!     else
-!       c = MODULO(c, n) + 1
-!     end if
-!   end do
-! end subroutine hash_add
-
-! pure function hash_get(n, k, h) result(c)
-!   integer(IK), intent(in)      :: n, k
-!   type(hash_table), intent(in) :: h(n)
-!   integer(IK)                  :: c, i
-!   i = hash(n, k)
-!   c = i
-!   do
-!     if (h(c)%k == k) then
-!       return
-!     elseif (h(c)%k == 0) then
-!       c = 0
-!       return
-!     end if
-!     c = MODULO(c, n) + 1
-!     if (c == i) then
-!       c = 0
-!       return
-!     end if
-!   end do
-! end function hash_get
-
-! pure subroutine hash_replace(n, k, l, h)
-!   integer(IK), intent(in)         :: n, k, l
-!   type(hash_table), intent(inout) :: h(n)
-!   integer(IK)                     :: c, i
-!   i = hash(n, k)
-!   c = i
-!   do
-!     if (h(c)%k == k) then
-!       h(c)%k = l
-!       return
-!     elseif (h(c)%k == 0) then
-!       h(c)%k = l
-!       return
-!     end if
-!     c = MODULO(c, n) + 1
-!     if (c == i) return
-!   end do
-! end subroutine hash_replace
-
-! pure subroutine hash_del(n, k, h)
-!   integer(IK), intent(in)         :: n, k
-!   type(hash_table), intent(inout) :: h(n)
-!   integer(IK)                     :: c, i
-!   i = hash(n, k)
-!   c = i
-!   do
-!     if (h(c)%k == k) then
-!       h(c)%k = -k
-!       return
-!     elseif (h(c)%k == 0) then
-!       return
-!     end if
-!     c = MODULO(c, n) + 1
-!     if (c == i) return
-!   end do
-! end subroutine hash_del
-!
-! cantor_pair
-!
   pure subroutine make_heap(n, e, h)
     integer(IK), intent(in)     :: n
-    type(edge_data), intent(in) :: e(n)
+    type(edge_data), intent(in) :: e(*)
     integer(IK), intent(inout)  :: h(n)
     integer(IK)                 :: i
-    do concurrent(i=1:n)
-      h(i) = i
-    end do
     do i = n, 1, -1
       call down_heap(n, i, e, h)
     end do
   end subroutine make_heap
+!
+  pure subroutine down_heap(n, p, e, h)
+    integer(IK), intent(in)     :: n, p
+    type(edge_data), intent(in) :: e(*)
+    integer(IK), intent(inout)  :: h(*)
+    integer(IK)                 :: r, s, t
+    r = p
+    do while (r + r <= n)
+      s = r + r
+      t = s + 1
+      if (t > n) then
+        if (e(h(r))%lb > e(h(s))%lb) return
+      else
+        if (e(h(s))%lb > e(h(t))%lb) then
+          if (e(h(r))%lb > e(h(s))%lb) return
+        else
+          if (e(h(r))%lb > e(h(t))%lb) return
+          s = t
+        end if
+      end if
+      call swap(h(r), h(s))
+      r = s
+    end do
+  end subroutine down_heap
+!
+  pure subroutine sort(n, v)
+    integer(IK), intent(in)    :: n
+    integer(IK), intent(inout) :: v(n)
+    integer(IK)                :: i, j, r, s, t
+    do i = n, 1, -1
+      r = i
+      do while (r + r <= n)
+        s = r + r
+        t = s + 1
+        if (t > n) then
+          if (v(r) > v(s)) exit
+        else
+          if (v(s) > v(t)) then
+            if (v(r) > v(s)) exit
+          else
+            if (v(r) > v(t)) exit
+            s = t
+          end if
+        end if
+        j = v(r)
+        v(r) = v(s)
+        v(s) = j
+        r = s
+      end do
+    end do
+    do i = n, 2, -1
+      j = v(1)
+      v(1) = v(i)
+      v(i) = j
+      r = 1
+      do while (r + r <= i - 1)
+        s = r + r
+        t = s + 1
+        if (t > i - 1) then
+          if (v(r) > v(s)) exit
+        else
+          if (v(s) > v(t)) then
+            if (v(r) > v(s)) exit
+          else
+            if (v(r) > v(t)) exit
+            s = t
+          end if
+        end if
+        j = v(r)
+        v(r) = v(s)
+        v(s) = j
+        r = s
+      end do
+    end do
+  end subroutine sort
 !
   pure elemental subroutine cantor_pair_inverse(k, i, j)
     integer(IK), intent(in)    :: k
