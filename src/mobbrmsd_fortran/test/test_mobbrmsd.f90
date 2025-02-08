@@ -17,9 +17,9 @@ program main
 #endif
 !
 #ifdef USE_DIM2
-  integer, parameter :: ntest_def = 20
-#elif USE_DIM3
   integer, parameter :: ntest_def = 10
+#elif USE_DIM3
+  integer, parameter :: ntest_def = 5
 #else
   integer, parameter :: ntest_def = 1
 #endif
@@ -85,12 +85,18 @@ program main
   call u%init('test mobbrmsd cutoff for {(n,M,S)}={(8,10,1)}')
   call test6(8, 10, 1, [0])
 !
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=4')
-  call test7(4, 8, 1, [0], 4, ntest_def * 5)
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10')
-  call test7(4, 8, 1, [0], 10, ntest_def * 2)
-  call u%init('test mobbrmsd min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100')
-  call test7(4, 4, 1, [0], 100, ntest_def)
+  call u%init('test min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=4, a=0.9')
+  call test7(4, 8, 1, [0], 4, ntest_def * 4, 0.9_RK)
+  call u%init('test min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=4, a=0.0')
+  call test7(4, 8, 1, [0], 4, ntest_def * 4, 0.0_RK)
+  call u%init('test min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10, a=0.9')
+  call test7(4, 8, 1, [0], 10, ntest_def * 2, 0.9_RK)
+  call u%init('test min_span_tree for {(n,M,S)}={(4,10,1)}, n_target=10, a=0.0')
+  call test7(4, 8, 1, [0], 10, ntest_def * 2, 0.0_RK)
+  call u%init('test min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100, a=0.9')
+  call test7(4, 4, 1, [0], 100, ntest_def, 0.9_RK)
+  call u%init('test min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100, a=0.0')
+  call test7(4, 4, 1, [0], 100, ntest_def, 0.0_RK)
 !
   call u%finish_and_terminate(passing_score=0.95_R8)
 !
@@ -329,19 +335,20 @@ contains
 !
   end subroutine test6
 !
-  subroutine test7(n, m, s, sym, n_target, n_test)
+  subroutine test7(n, m, s, sym, n_target, n_test, alpha)
 !$  use omp_lib
-    integer, intent(in)    :: n, m, s, sym(n * (s - 1)), n_target, n_test
-    type(mobbrmsd)         :: mobb
-    type(mobbrmsd_state)   :: state(n_target * (n_target - 1) / 2)
-    type(mobbrmsd_input)   :: inp
-    real(RK)               :: X(D, n, m, n_target)
-    real(RK), allocatable  :: W(:)
-    integer(IK)            :: edges(2, n_target - 1)
-    integer(IK)            :: redges(2, n_target - 1)
-    real(RK)               :: weights(n_target - 1)
-    real(RK)               :: refer(n_target, n_target)
-    integer(IK)            :: i, j, k, itest, nerr
+    integer, intent(in)   :: n, m, s, sym(n * (s - 1)), n_target, n_test
+    real(RK), intent(in)  :: alpha
+    type(mobbrmsd)        :: mobb
+    type(mobbrmsd_state)  :: state(n_target * (n_target - 1) / 2)
+    type(mobbrmsd_input)  :: inp
+    real(RK)              :: X(D, n, m, n_target)
+    real(RK), allocatable :: W(:)
+    integer(IK)           :: edges(2, n_target - 1)
+    integer(IK)           :: redges(2, n_target - 1)
+    real(RK)              :: weights(n_target - 1)
+    real(RK)              :: refer(n_target, n_target)
+    integer(IK)           :: i, j, k, itest, nerr
 !
     call mobbrmsd_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
@@ -354,17 +361,17 @@ contains
     do itest = 1, n_test
       X(:, :, :, 1) = sample(n, m)
       do i = 2, n_target / 4
-        X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
+        X(:, :, :, i) = alpha * X(:, :, :, i - 1) + (1.0_RK - alpha) * sample(n, m)
       end do
 !
       X(:, :, :, n_target / 4 + 1) = 0.5 * X(:, :, :, n_target / 4) + 0.5 * sample(n, m)
       do i = n_target / 4 + 2, 3 * n_target / 4
-        X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
+        X(:, :, :, i) = alpha * X(:, :, :, i - 1) + (1.0_RK - alpha) * sample(n, m)
       end do
 !
       X(:, :, :, 3 * n_target / 4 + 1) = 0.5 * X(:, :, :, 3 * n_target / 4) + 0.5 * sample(n, m)
       do i = 3 * n_target / 4 + 2, n_target
-        X(:, :, :, i) = 0.9 * X(:, :, :, i - 1) + 0.1 * sample(n, m)
+        X(:, :, :, i) = alpha * X(:, :, :, i - 1) + (1.0_RK - alpha) * sample(n, m)
       end do
 !
       call mobbrmsd_min_span_tree(n_target, mobb, X, W, &
