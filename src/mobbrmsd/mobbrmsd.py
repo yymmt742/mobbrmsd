@@ -732,7 +732,6 @@ class mobbrmsd:
         dt = x.dtype
         x_ = self.to_rank3_coordinates(x)
         n_target = 1 if x.ndim == 2 else x.shape[0]
-        ww = numpy.empty((n_target * (n_target - 1) // 2 * self.memsize), dtype=dt)
 
         driver = _select_driver(self.d, dtype=dt)
         ropts = numpy.array([cutoff, ub_cutoff, difflim], dtype=dt)
@@ -742,7 +741,6 @@ class mobbrmsd:
             n_target,
             self.header,
             x_,
-            ww,
             ropts,
             iopts,
             remove_com,

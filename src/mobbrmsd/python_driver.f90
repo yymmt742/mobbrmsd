@@ -350,7 +350,6 @@ contains
  &    n_header, &
  &    header, &
  &    X, &
- &    W, &
  &    ropts, &
  &    iopts, &
  &    remove_com, &
@@ -363,7 +362,6 @@ contains
     integer(kind=ik), intent(in)      :: n_header
     integer(kind=ik), intent(in)      :: header(n_header)
     real(kind=rk), intent(in)         :: X(*)
-    real(kind=rk), intent(inout)      :: W(*)
     real(kind=rk), intent(in)         :: ropts(*) ! 1 cutoff 2 ub_cutoff 3 difflim
     integer(kind=ik), intent(in)      :: iopts(*) ! 1 maxeval
     logical, intent(in)               :: remove_com
@@ -375,7 +373,7 @@ contains
 
     call mobbrmsd_load(h, header)
     call mobbrmsd_min_span_tree( &
-   &       n_target, h, X, W, &
+   &       n_target, h, X, &
    &       remove_com=remove_com, &
    &       sort_by_g=sort_by_g, &
    &       edges=edges, &
