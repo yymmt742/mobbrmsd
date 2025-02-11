@@ -12,6 +12,7 @@ module mod_mobbrmsd_mst
  &      RHUGE
   use mod_mobbrmsd_state
   use mod_mobbrmsd
+  use mod_mobbrmsd_batch_run
   implicit none
   private
   public :: mobbrmsd_min_span_tree
@@ -52,35 +53,51 @@ contains
     real(RK), intent(out), optional     :: weights(n_target - 1)
     !! minimum spanning tree weights
     type(edge_data)                     :: core(n_target - 1)
-    integer(IK)                         :: memsize, ldxsize, n_edges, n_chunk_
+    integer(IK)                         :: ld, memsize, n_thread, ldxsize, n_edges, n_chunk_
     integer(IK)                         :: i, j, k
     if (.not. PRESENT(edges) .and. .not. PRESENT(weights)) return
-    if (PRESENT(n_chunk)) then
-      if (n_chunk < 1) then
-        n_chunk_ = n_target * (n_target - 1) / 2
-      else
-        n_chunk_ = MIN(MAX(n_target * 2, n_chunk), n_target * (n_target - 1) / 2)
-      end if
-    else
-      n_chunk_ = n_target * (n_target - 1) / 2
-    end if
     n_edges = n_target - 1
+    ld = n_target * (n_target - 1) / 2
+    !$omp parallel
+    if (omp_get_thread_num() == 0) n_thread = omp_get_num_threads()
+    !$omp end parallel
     memsize = mobbrmsd_memsize(header)
     ldxsize = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
+    n_chunk_ = ld
+    if (PRESENT(n_chunk)) then
+      if (n_chunk > 0) n_chunk_ = MIN(MAX(n_target * 2, n_chunk), n_chunk_)
+    end if
+    n_chunk_ = MAX(n_chunk_, n_thread)
     block
-      type(edge_data)  :: edge(n_chunk_)
       real(RK)         :: lambda
       real(RK)         :: w(n_chunk_ * memsize)
       integer(IK)      :: heap(n_chunk_) ! for heap sort
       integer(IK)      :: par(n_target) ! for union find
       integer(IK)      :: n_core, n_rec, n_pack
-      !lambda = 0.3
-      lambda = 1.0E-2_RK
+      type(mobbrmsd_state) :: state0(ld)
+      type(edge_data)      :: edge(n_chunk_)
+!
       call init_par(n_target, par)
       call init_edge(edge)
       n_core = 0
       n_rec = 0
+!
+      call mobbrmsd_batch_tri_run( &
+          &  n_target &
+          &, header &
+          &, state0 &
+          &, X &
+          &, W &
+          &, cutoff=0.0_RK &
+          &, remove_com=remove_com &
+          &, sort_by_g=sort_by_g &
+          & )
+!
+      !lambda = 0.3
+      lambda = 1.0E-2_RK
+!
       do
+        print *, 'mobbrmsd_min_span_tree :: construct_chunk with lambda =', lambda
         call construct_chunk( &
            &  memsize &
            &, ldxsize &
