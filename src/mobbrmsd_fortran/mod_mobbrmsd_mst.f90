@@ -29,6 +29,7 @@ contains
  &             n_target, &
  &             header, &
  &             X, &
+ &             n_chunk, &
  &             remove_com, &
  &             sort_by_g, &
  &             edges, &
@@ -40,6 +41,8 @@ contains
     !! mobbrmsd_header
     real(RK), intent(in)                :: X(*)
     !! coordinate sequence
+    integer(IK), intent(in), optional   :: n_chunk
+    !! if true, remove centroids. default [.true.]
     logical, intent(in), optional       :: remove_com
     !! if true, remove centroids. default [.true.]
     logical, intent(in), optional       :: sort_by_g
@@ -49,19 +52,26 @@ contains
     real(RK), intent(out), optional     :: weights(n_target - 1)
     !! minimum spanning tree weights
     type(edge_data)                     :: core(n_target - 1)
-    integer(IK)                         :: memsize, ldxsize, n_edges, n_chunk
+    integer(IK)                         :: memsize, ldxsize, n_edges, n_chunk_
     integer(IK)                         :: i, j, k
     if (.not. PRESENT(edges) .and. .not. PRESENT(weights)) return
-    !n_chunk = n_target * (n_target - 1) / 2
-    n_chunk = MIN(n_target * 3, n_target * (n_target - 1) / 2)
+    if (PRESENT(n_chunk)) then
+      if (n_chunk < 1) then
+        n_chunk_ = n_target * (n_target - 1) / 2
+      else
+        n_chunk_ = MIN(MAX(n_target * 2, n_chunk), n_target * (n_target - 1) / 2)
+      end if
+    else
+      n_chunk_ = n_target * (n_target - 1) / 2
+    end if
     n_edges = n_target - 1
     memsize = mobbrmsd_memsize(header)
     ldxsize = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
     block
-      type(edge_data)  :: edge(n_chunk)
+      type(edge_data)  :: edge(n_chunk_)
       real(RK)         :: lambda
-      real(RK)         :: w(n_chunk * memsize)
-      integer(IK)      :: heap(n_chunk) ! for heap sort
+      real(RK)         :: w(n_chunk_ * memsize)
+      integer(IK)      :: heap(n_chunk_) ! for heap sort
       integer(IK)      :: par(n_target) ! for union find
       integer(IK)      :: n_core, n_rec, n_pack
       !lambda = 0.3
@@ -77,7 +87,7 @@ contains
            &, n_target &
            &, n_rec &
            &, n_core &
-           &, n_chunk &
+           &, n_chunk_ &
            &, header &
            &, lambda &
            &, par &
@@ -96,7 +106,7 @@ contains
           lambda_ = MAX(lambda, edge(g)%ub)
           call kruscal( &
               &  n_target &
-              &, n_chunk &
+              &, n_chunk_ &
               &, n_pack &
               &, lambda &
               &, n_rec &

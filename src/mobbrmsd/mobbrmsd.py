@@ -687,13 +687,8 @@ class mobbrmsd:
     def min_span_tree(
         self,
         x: numpy.ndarray,
-        cutoff: float = float("inf"),
-        ub_cutoff: float = float("inf"),
-        difflim: float = 0.0,
-        maxeval: int = -1,
         remove_com: bool = True,
         sort_by_g: bool = True,
-        difflim_absolute: bool = False,
         verbose: bool = False,
         n_chunk: int = 0,
         *args,
@@ -704,26 +699,13 @@ class mobbrmsd:
 
         :param x: reference coordinates, rank 3.
         :type x: npt.NDArray
-        :param cutoff: BBの下限がRMSD換算でcutoff以上になったとき, 計算を終了する. default=float(inf).
-        :type cutoff: float
-        :param ub_cutoff: BBの上限がRMSD換算でub_cutoff以上であれば, 計算を終了する. default=float(inf).
-        :type ub_cutoff: float
-        :param difflim: BBの上限と下限の差が difflim 以下になったとき,計算を終了する. default=0.0.
-        :type difflim: float
-        :param maxeval: BBのノード評価数がmaxevalを超えたとき,計算を終了する.
-                        ただし,最低でも expand と closure の1サイクルは実行される.
-                        maxeval < 0 のとき,無制限.
-                        default=-1.
-        :type maxeval: int
         :param remove_com: 参照構造と対照構造から重心を除去する. default=True.
         :type remove_com: bool
         :param sort_by_g: 参照構造を自己分散の大きい順に並び替えて計算を実行する. default=True.
         :type sort_by_g: bool
-        :param difflim_absolute: True なら difflim を RMSD 換算で用いる. default=False.
-        :type difflim_absolute: bool
         :param verbose: 計算が長くなる場合, 進捗バーを表示する. default=True.
         :type verbose: bool
-        :param n_chunk: 一度にまとめて計算されるバッチサイズ上限. <1 の場合, 一括計算. default=1000.
+        :param n_chunk: 一度にまとめて計算されるバッチサイズ上限. <1 の場合, 一括計算. default=None.
         :type n_chunk: int
         :return: 最小全域木
         :rtype: networkx.Graph
@@ -734,8 +716,8 @@ class mobbrmsd:
         n_target = 1 if x.ndim == 2 else x.shape[0]
 
         driver = _select_driver(self.d, dtype=dt)
-        ropts = numpy.array([cutoff, ub_cutoff, difflim], dtype=dt)
-        iopts = numpy.array([maxeval], dtype=numpy.int32)
+        ropts = numpy.array([0.0, 0.0, 0.0], dtype=dt)
+        iopts = numpy.array([0], dtype=numpy.int32)
 
         edges, weights = driver.min_span_tree(
             n_target,
@@ -745,7 +727,6 @@ class mobbrmsd:
             iopts,
             remove_com,
             sort_by_g,
-            difflim_absolute,
         )
         del driver
 

@@ -354,7 +354,6 @@ contains
  &    iopts, &
  &    remove_com, &
  &    sort_by_g, &
- &    difflim_absolute, &
  &    edges, &
  &    weights &
  &  )
@@ -366,7 +365,6 @@ contains
     integer(kind=ik), intent(in)      :: iopts(*) ! 1 maxeval
     logical, intent(in)               :: remove_com
     logical, intent(in)               :: sort_by_g
-    logical, intent(in)               :: difflim_absolute
     integer(kind=ik), intent(out)     :: edges(2, n_target - 1)
     real(kind=rk), intent(out)        :: weights(n_target - 1)
     type(mobbrmsd)                    :: h
