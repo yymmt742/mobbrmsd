@@ -29,7 +29,6 @@ contains
  &             n_target, &
  &             header, &
  &             X, &
- &             W, &
  &             remove_com, &
  &             sort_by_g, &
  &             edges, &
@@ -41,8 +40,6 @@ contains
     !! mobbrmsd_header
     real(RK), intent(in)                :: X(*)
     !! coordinate sequence
-    real(RK), intent(inout)             :: W(*)
-    !! work memory, must be larger than header%memsize() * n_target * (n_target-1) / 2
     logical, intent(in), optional       :: remove_com
     !! if true, remove centroids. default [.true.]
     logical, intent(in), optional       :: sort_by_g
@@ -52,8 +49,7 @@ contains
     real(RK), intent(out), optional     :: weights(n_target - 1)
     !! minimum spanning tree weights
     type(edge_data)                     :: core(n_target - 1)
-    integer(IK)                         :: memsize, ldxsize
-    integer(IK)                         :: n_edges, n_chunk
+    integer(IK)                         :: memsize, ldxsize, n_edges, n_chunk
     integer(IK)                         :: i, j, k
     if (.not. PRESENT(edges) .and. .not. PRESENT(weights)) return
     !n_chunk = n_target * (n_target - 1) / 2

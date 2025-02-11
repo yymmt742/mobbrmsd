@@ -353,8 +353,9 @@ contains
     call mobbrmsd_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
 !
+    k = 1
     !$omp parallel
-    if (omp_get_thread_num() == 0) k = MAX(n_target * (n_target - 1) / 2, omp_get_num_threads())
+    if (omp_get_thread_num() == 0) k = omp_get_num_threads()
     !$omp end parallel
     allocate (W(mobbrmsd_memsize(mobb) * k))
 !
@@ -374,7 +375,7 @@ contains
         X(:, :, :, i) = alpha * X(:, :, :, i - 1) + (1.0_RK - alpha) * sample(n, m)
       end do
 !
-      call mobbrmsd_min_span_tree(n_target, mobb, X, W, &
+      call mobbrmsd_min_span_tree(n_target, mobb, X, &
      &                            edges=edges, weights=weights)
 !
       call mobbrmsd_batch_tri_run(n_target, mobb, state, X, W)
