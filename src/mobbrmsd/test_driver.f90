@@ -165,7 +165,6 @@ contains
     integer(IK)              :: n_dim, n_atm, n_header, n_int, n_float, n_rot, n_mem, n_job
     integer(IK)              :: edges(2, n_target - 1)
     real(RK)                 :: weights(n_target - 1)
-    real(RK), allocatable    :: W(:)
     integer(IK), allocatable :: header(:), int_states(:, :, :)
     real(RK), allocatable    :: float_states(:, :, :)
     integer(IK)              :: i
@@ -183,7 +182,6 @@ contains
     print'(*(I6))', n_dim, n_atm, n_header, n_int, n_float, n_rot, n_mem, n_job
 
     allocate (X(n_dim, n_apm, n_mol, n_target))
-    allocate (w(n_mem * (n_mem - 1) / 2))
     allocate (header(n_header))
     allocate (int_states(n_int, n_target, n_target))
     allocate (float_states(n_float, n_target, n_target))
@@ -193,7 +191,7 @@ contains
 !
     call min_span_tree( &
  &    n_target, n_header, header, &
- &    X, W, [RHUGE, RHUGE, ZERO], [-1], .true., .true., .false., &
+ &    X, [RHUGE, RHUGE, ZERO], [-1], .true., .true., .false., &
  &    edges, weights)
 !
     do i = 1, n_target - 1
