@@ -20,8 +20,8 @@ module mod_mobbrmsd_mst
   type edge_data
     sequence
     integer(IK) :: p, w
+    logical     :: not_finished
     real(RK)    :: lb, ub
-    type(mobbrmsd_state) :: state
   end type edge_data
 !
 contains
@@ -43,7 +43,7 @@ contains
     real(RK), intent(in)                :: X(*)
     !! coordinate sequence
     integer(IK), intent(in), optional   :: n_chunk
-    !! if true, remove centroids. default [.true.]
+    !! Maximum memory storage area size
     logical, intent(in), optional       :: remove_com
     !! if true, remove centroids. default [.true.]
     logical, intent(in), optional       :: sort_by_g
@@ -52,270 +52,330 @@ contains
     !! minimum spanning tree edges
     real(RK), intent(out), optional     :: weights(n_target - 1)
     !! minimum spanning tree weights
-    type(edge_data)                     :: core(n_target - 1)
-    integer(IK)                         :: ld, memsize, n_thread, ldxsize, n_edges, n_chunk_
+    integer(IK)                         :: sorted(n_target - 1) ! top + core
+    integer(IK)                         :: par(n_target) ! for union find
+    integer(IK)                         :: n_tri, ldw, ldx
+    integer(IK)                         :: n_core, n_rec, n_thread, n_edges, n_work
     integer(IK)                         :: i, j, k
+!
     if (.not. PRESENT(edges) .and. .not. PRESENT(weights)) return
+!
     n_edges = n_target - 1
-    ld = n_target * (n_target - 1) / 2
+    n_tri = n_target * (n_target - 1) / 2
+    ldw = mobbrmsd_memsize(header)
+    ldx = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
+!
     !$omp parallel
     if (omp_get_thread_num() == 0) n_thread = omp_get_num_threads()
     !$omp end parallel
-    memsize = mobbrmsd_memsize(header)
-    ldxsize = mobbrmsd_n_dims(header) * mobbrmsd_n_atoms(header)
-    n_chunk_ = ld
-    if (PRESENT(n_chunk)) then
-      if (n_chunk > 0) n_chunk_ = MIN(MAX(n_target * 2, n_chunk), n_chunk_)
-    end if
-    n_chunk_ = MAX(n_chunk_, n_thread)
-    block
-      real(RK)         :: lambda
-      real(RK)         :: w(n_chunk_ * memsize)
-      integer(IK)      :: heap(n_chunk_) ! for heap sort
-      integer(IK)      :: par(n_target) ! for union find
-      integer(IK)      :: n_core, n_rec, n_pack
-      type(mobbrmsd_state) :: state0(ld)
-      type(edge_data)      :: edge(n_chunk_)
 !
-      call init_par(n_target, par)
-      call init_edge(edge)
+    n_work = n_tri
+    if (PRESENT(n_chunk)) then
+      if (n_chunk > 0) n_work = MIN(MAX(n_target * 2, n_chunk), n_work)
+    end if
+    n_work = MAX(n_work, n_thread)
+    stop
+!
+    block
+      type(mobbrmsd_state), allocatable :: state(:)
+      real(RK)             :: wrkmem(ldw, n_work)
+      type(edge_data)      :: wrkptr(n_work) ! working pointer
+      integer(IK)          :: heap(n_work) ! heaped pointer
+!
+      allocate (state(n_tri))
+!
+      call mobbrmsd_batch_tri_run(n_target &
+                               &, header &
+                               &, state &
+                               &, X &
+                               &, wrkmem &
+                               &, maxeval=1 &
+                               &, remove_com=remove_com &
+                               &, sort_by_g=sort_by_g &
+                               & )
+!
       n_core = 0
       n_rec = 0
+      call init_arange(n_target, par)
+      call init_arange(n_work, heap)
 !
-      call mobbrmsd_batch_tri_run( &
-          &  n_target &
-          &, header &
-          &, state0 &
-          &, X &
-          &, W &
-          &, cutoff=0.0_RK &
-          &, remove_com=remove_com &
-          &, sort_by_g=sort_by_g &
-          & )
+      do while (n_core < n_edges)
 !
-      !lambda = 0.3
-      lambda = 1.0E-2_RK
+        call reflesh_wrkptr(n_tri &
+                         &, ldw &
+                         &, n_edges &
+                         &, n_work &
+                         &, n_rec &
+                         &, par &
+                         &, state &
+                         &, heap &
+                         &, wrkptr &
+                         &)
 !
-      do
-        print *, 'mobbrmsd_min_span_tree :: construct_chunk with lambda =', lambda
-        call construct_chunk( &
-           &  memsize &
-           &, ldxsize &
-           &, n_target &
-           &, n_rec &
-           &, n_core &
-           &, n_chunk_ &
-           &, header &
-           &, lambda &
-           &, par &
-           &, X &
-           &, W &
-           &, n_pack &
-           &, heap &
-           &, edge &
-           &, remove_com &
-           &, sort_by_g &
-           & )
-        block
-          integer(IK) :: g
-          real(RK) :: lambda_
-          g = pick_heap(n_pack, n_edges - n_core, edge, heap)
-          lambda_ = MAX(lambda, edge(g)%ub)
-          call kruscal( &
-              &  n_target &
-              &, n_chunk_ &
-              &, n_pack &
-              &, lambda &
-              &, n_rec &
-              &, n_core &
-              &, par &
-              &, heap &
-              &, edge &
-              &, core &
-              & )
-          if (n_core == n_edges) exit
-          lambda = lambda_
-        end block
+!       do while (n_core < n_edges .and. n_edges < n_rec)
+!         call update_bounds(memsize &
+!                         &, ldxsize &
+!                         &, header &
+!                         &, state &
+!                         &, X &
+!                         &, wrkmem &
+!                         &, heap &
+!                         &, wrkptr &
+!                         &, remove_com=remove_com &
+!                         &, sort_by_g=sort_by_g &
+!                         &)
+!
+!         call sort_wrkptr(n_work &
+!                       &, state &
+!                       &, heap &
+!                       &, wrkptr &
+!                       &)
+!
+!         call kruscal(n_target &
+!                   &, n_work &
+!                   &, n_pack &
+!                   &, lambda &
+!                   &, n_rec &
+!                   &, n_core &
+!                   &, par &
+!                   &, heap &
+!                   &, edge &
+!                   &, core &
+!                   &)
+!       end do
       end do
     end block
 !
-    if (PRESENT(edges)) then
-      do concurrent(k=1:n_edges)
-        call cantor_pair_inverse(core(k)%p, i, j)
-        edges(1, k) = i
-        edges(2, k) = j
-      end do
-    end if
-    if (PRESENT(weights)) then
-      do concurrent(k=1:n_edges)
-        weights(k) = core(k)%lb
-      end do
-    end if
+!   if (PRESENT(edges)) then
+!     do concurrent(k=1:n_edges)
+!       call cantor_pair_inverse(core(k)%p, i, j)
+!       edges(1, k) = i
+!       edges(2, k) = j
+!     end do
+!   end if
+!   if (PRESENT(weights)) then
+!     do concurrent(k=1:n_edges)
+!       weights(k) = core(k)%lb
+!     end do
+!   end if
   end subroutine mobbrmsd_min_span_tree
 !
-  subroutine construct_chunk( &
-            &  memsize, &
-            &  ldxsize, &
-            &  n_target, &
-            &  n_rec, &
-            &  n_core, &
-            &  n_chunk, &
-            &  header, &
-            &  lambda, &
-            &  par, &
-            &  X, &
-            &  W, &
-            &  n_pack, &
-            &  heap, &
-            &  edge, &
-            &  remove_com, &
-            &  sort_by_g &
-            & )
-    integer(IK), intent(in)        :: memsize
-    integer(IK), intent(in)        :: ldxsize
-    integer(IK), intent(in)        :: n_target
-    integer(IK), intent(in)        :: n_rec
-    integer(IK), intent(in)        :: n_core
-    integer(IK), intent(in)        :: n_chunk
-    integer(IK), intent(in)        :: par(n_target)
-    type(mobbrmsd), intent(in)     :: header
-    real(RK), intent(in)           :: lambda
-    real(RK), intent(in)           :: X(*)
-    real(RK), intent(inout)        :: W(*)
-    integer(IK), intent(inout)     :: n_pack
-    integer(IK), intent(inout)     :: heap(n_chunk)
-    type(edge_data), intent(inout) :: edge(n_chunk)
-    logical, intent(in), optional  :: remove_com, sort_by_g
-    integer(IK)                    :: edges(n_rec + 1)
-    logical                        :: check1, check2, check3
-    integer(IK)                    :: k, l, addr, ld, n_rem
+  pure subroutine reflesh_wrkptr(n_tri &
+                              &, ldw &
+                              &, n_edges &
+                              &, n_work &
+                              &, n_rec &
+                              &, par &
+                              &, state &
+                              &, heap &
+                              &, wrkptr &
+                              &)
+    integer(IK), intent(in)          :: n_tri
+    integer(IK), intent(in)          :: ldw
+    integer(IK), intent(in)          :: n_edges
+    integer(IK), intent(in)          :: n_work
+    integer(IK), intent(in)          :: n_rec
+    integer(IK), intent(in)          :: par(n_edges)
+    type(mobbrmsd_state), intent(in) :: state(n_tri)
+    integer(IK), intent(inout)       :: heap(n_work)
+    type(edge_data), intent(inout)   :: wrkptr(n_work)
+    real(RK)                         :: lb
+    integer(IK)                      :: i
+!   do concurrent(i=1:n_chunk)
+!     heap(i) = i
+!   end do
+!   do concurrent(i=1:n_chunk)
+!     edge(i)%p = i
+!     edge(i)%w = (i - 1) * memsize + 1
+!     edge(i)%lb = mobbrmsd_state_lowerbound_as_rmsd(state(i))
+!     edge(i)%ub = mobbrmsd_state_upperbound_as_rmsd(state(i))
+!     edge(i)%not_finished = .not. mobbrmsd_state_is_finished(state(i))
+!   end do
+!   call make_heap(n_chunk, edge, heap)
+!   do i = n_chunk + 1, ld
+!     lb = mobbrmsd_state_lowerbound_as_rmsd(state(i))
+!     if (lb < edge(heap(1))%lb) then
+!       edge(heap(1))%p = i
+!       edge(heap(1))%lb = lb
+!       edge(heap(1))%ub = mobbrmsd_state_lowerbound_as_rmsd(state(i))
+!       edge(heap(1))%not_finished = .not. mobbrmsd_state_is_finished(state(i))
+!       call down_heap(n_chunk, 1, edge, heap)
+!     end if
+!   end do
+  end subroutine reflesh_wrkptr
 !
-    ld = n_target * (n_target - 1) / 2
-    n_rem = MIN(n_chunk, ld - n_core)
-    do concurrent(k=1:n_rec)
-      edges(k) = edge(heap(k))%p
-    end do
-    call sort(n_rec, edges)
-    edges(n_rec + 1) = ld + 1
+! subroutine construct_chunk(ld &
+!                         &, memsize &
+!                         &, ldxsize &
+!                         &, n_target &
+!                         &, n_rec &
+!                         &, n_core &
+!                         &, n_chunk &
+!                         &, header &
+!                         &, lambda &
+!                         &, par &
+!                         &, first &
+!                         &, X &
+!                         &, W &
+!                         &, n_pack &
+!                         &, heap &
+!                         &, edge &
+!                         &, state &
+!                         &, remove_com &
+!                         &, sort_by_g &
+!                         & )
+!   integer(IK), intent(in)             :: ld
+!   integer(IK), intent(in)             :: memsize
+!   integer(IK), intent(in)             :: ldxsize
+!   integer(IK), intent(in)             :: n_target
+!   integer(IK), intent(in)             :: n_rec
+!   integer(IK), intent(in)             :: n_core
+!   integer(IK), intent(in)             :: n_chunk
+!   integer(IK), intent(in)             :: par(n_target)
+!   logical, intent(in)                 :: first
+!   type(mobbrmsd), intent(in)          :: header
+!   real(RK), intent(in)                :: lambda
+!   real(RK), intent(in)                :: X(*)
+!   real(RK), intent(inout)             :: W(*)
+!   integer(IK), intent(inout)          :: n_pack
+!   integer(IK), intent(inout)          :: heap(n_chunk)
+!   type(edge_data), intent(inout)      :: edge(n_chunk)
+!   type(mobbrmsd_state), intent(inout) :: state(*)
+!   logical, intent(in), optional       :: remove_com, sort_by_g
+!   integer(IK)                         :: edges(n_rec + 1)
+!   logical                             :: check1, check2, check3
+!   integer(IK)                         :: k, l, addr, n_rem
 !
-    !$omp parallel do
-    do k = 1, n_rec
-      call update( &
-          &  ldxsize, &
-          &  n_chunk, &
-          &  header, &
-          &  lambda, &
-          &  X, &
-          &  W, &
-          &  edge(heap(k)), &
-          &  remove_com, &
-          &  sort_by_g &
-          &)
-    end do
-    !$omp end parallel do
-    n_pack = n_rec
-    l = 0
-    k = 1
+!   n_rem = MIN(n_chunk, ld - n_core)
+!   do concurrent(k=1:n_rec)
+!     edges(k) = edge(heap(k))%p
+!   end do
+!   call sort(n_rec, edges)
+!   edges(n_rec + 1) = ld + 1
 !
-    if (n_rec < n_rem) then
+!   !$omp parallel do
+!   do k = 1, n_rec
+!     call update(ldxsize &
+!              &, n_chunk &
+!              &, header &
+!              &, lambda &
+!              &, first &
+!              &, X &
+!              &, W &
+!              &, state &
+!              &, edge(heap(k)) &
+!              &, remove_com &
+!              &, sort_by_g &
+!              &)
+!   end do
+!   !$omp end parallel do
+!   n_pack = n_rec
+!   l = 0
+!   k = 1
 !
-      !$omp parallel shared(edge,heap,n_pack,k,l), private(addr,check1,check2,check3)
-      do
-        !$omp critical
-        if (l <= ld) l = l + 1
-        check1 = n_pack >= n_rem
-        check2 = l > ld
-        if (check2) then
-          check3 = .false.
-        else
-          check3 = l == edges(k)
-          if (check3) then
-            k = k + 1
-          else
-            check3 = is_same(n_target, l, par)
-          end if
-        end if
-        if (check1 .or. check2 .or. check3) then
-          addr = 0
-        else
-          n_pack = n_pack + 1
-          addr = find_address(n_chunk, l, edge)
-          heap(n_pack) = addr
-          edge(addr)%p = -l
-          edge(addr)%w = (addr - 1) * memsize + 1
-        end if
-        !$omp end critical
+!   if (n_rec < n_rem) then
+!
+!     !$omp parallel shared(edge,heap,n_pack,k,l), private(addr,check1,check2,check3)
+!     do
+!       !$omp critical
+!       if (l <= ld) l = l + 1
+!       check1 = n_pack >= n_rem
+!       check2 = l > ld
+!       if (check2) then
+!         check3 = .false.
+!       else
+!         check3 = l == edges(k)
+!         if (check3) then
+!           k = k + 1
+!         else
+!           check3 = is_same(n_target, l, par)
+!         end if
+!       end if
+!       if (check1 .or. check2 .or. check3) then
+!         addr = 0
+!       else
+!         n_pack = n_pack + 1
+!         addr = find_address(n_chunk, l, edge)
+!         heap(n_pack) = addr
+!         edge(addr)%p = -l
+!         !edge(addr)%w = (addr - 1) * memsize + 1
+!       end if
+!       !$omp end critical
 
-        if (check1) exit
-        if (check2) exit
-        if (check3) cycle
+!       !print *, l, check1, check2, check3
+!       if (check1) exit
+!       if (check2) exit
+!       if (check3) cycle
 
-        call update( &
-            &  ldxsize, &
-            &  n_chunk, &
-            &  header, &
-            &  lambda, &
-            &  X, &
-            &  W, &
-            &  edge(addr), &
-            &  remove_com, &
-            &  sort_by_g &
-            &)
-      end do
-      !$omp end parallel
-    end if
+!       call update(ldxsize &
+!                &, n_chunk &
+!                &, header &
+!                &, lambda &
+!                &, first &
+!                &, X &
+!                &, W &
+!                &, state &
+!                &, edge(addr) &
+!                &, remove_com &
+!                &, sort_by_g &
+!                &)
+!     end do
+!     !$omp end parallel
+!   end if
 
-    call make_heap(n_pack, edge, heap)
+!   call make_heap(n_pack, edge, heap)
 
-    !$omp parallel shared(edge,heap,k,l), private(check1,check2)
-    do
-      block
-        real(RK) :: V(memsize)
-        type(edge_data) :: t
-        !$omp critical
-        if (l <= ld) l = l + 1
-        check1 = l > ld
-        if (check1) then
-          check2 = .false.
-        else
-          check2 = l == edges(k)
-          if (check2) then
-            k = k + 1
-          else
-            check2 = is_same(n_target, l, par)
-          end if
-        end if
-        if (.not. (check1 .or. check2)) then
-          call init_edge(t)
-          t%p = -l
-        end if
-        !$omp end critical
+!   !$omp parallel shared(edge,heap,k,l), private(check1,check2)
+!   do
+!     block
+!       real(RK) :: V(memsize)
+!       type(edge_data) :: t
+!       !$omp critical
+!       if (l <= ld) l = l + 1
+!       check1 = l > ld
+!       if (check1) then
+!         check2 = .false.
+!       else
+!         check2 = l == edges(k)
+!         if (check2) then
+!           k = k + 1
+!         else
+!           check2 = is_same(n_target, l, par)
+!         end if
+!       end if
+!       if (.not. (check1 .or. check2)) then
+!         call init_edge(t)
+!         t%p = -l
+!       end if
+!       !$omp end critical
 
-        if (check1) exit
-        if (check2) cycle
+!       if (check1) exit
+!       if (check2) cycle
 
-        call update( &
-            &  ldxsize, &
-            &  n_chunk, &
-            &  header, &
-            &  lambda, &
-            &  X, &
-            &  V, &
-            &  t, &
-            &  remove_com, &
-            &  sort_by_g &
-            &)
-        !$omp critical
-        if (t%lb < edge(heap(1))%lb) then
-          edge(heap(1)) = t
-          edge(heap(1))%w = (heap(1) - 1) * memsize + 1
-          call memcopy(memsize, V, W(edge(heap(1))%w))
-          call down_heap(n_chunk, 1, edge, heap)
-        end if
-        !$omp end critical
-      end block
-    end do
-    !$omp end parallel
+!       call update(ldxsize &
+!                &, n_chunk &
+!                &, header &
+!                &, lambda &
+!                &, first &
+!                &, X &
+!                &, V &
+!                &, state &
+!                &, t &
+!                &, remove_com &
+!                &, sort_by_g &
+!                &)
+!       !$omp critical
+!       if (t%lb < edge(heap(1))%lb) then
+!         t%w = edge(heap(1))%w
+!         edge(heap(1)) = t
+!         !edge(heap(1))%w = (heap(1) - 1) * memsize + 1
+!         call memcopy(memsize, V, W(edge(heap(1))%w))
+!         call down_heap(n_chunk, 1, edge, heap)
+!       end if
+!       !$omp end critical
+!     end block
+!   end do
+!   !$omp end parallel
 
 !   block
 !     real(RK) :: lambda_local
@@ -343,7 +403,7 @@ contains
 !       lambda_local = MAX(lambda_local, edge(g)%ub)
 !     end do
 !   end block
-  end subroutine construct_chunk
+! end subroutine construct_chunk
 !
 ! pure function mst_is_unfinished(n_heap, n_rem, h, e) result(res)
 !   integer(IK), intent(in)     :: n_heap, n_rem
@@ -362,34 +422,36 @@ contains
 !   res = .not. ALL(mobbrmsd_state_is_finished(e(t(:n_rem))%state))
 ! end function mst_is_unfinished
 !
-  pure subroutine update( &
- &             ldxsize, &
- &             n_chunk, &
- &             header, &
- &             lambda, &
- &             X, &
- &             W, &
- &             edge, &
- &             remove_com, &
- &             sort_by_g &
- &            )
-    integer(IK), intent(in)        :: ldxsize
-    integer(IK), intent(in)        :: n_chunk
-    type(mobbrmsd), intent(in)     :: header
-    real(RK), intent(in)           :: lambda, X(*)
-    real(RK), intent(inout)        :: W(*)
-    type(edge_data), intent(inout) :: edge
-    logical, intent(in), optional  :: remove_com, sort_by_g
-    if (edge%p < 0) then
+  subroutine update(ldxsize &
+                 &, n_chunk &
+                 &, header &
+                 &, lambda &
+                 &, first &
+                 &, X &
+                 &, W &
+                 &, state &
+                 &, edge &
+                 &, remove_com &
+                 &, sort_by_g &
+                 & )
+    integer(IK), intent(in)             :: ldxsize
+    integer(IK), intent(in)             :: n_chunk
+    type(mobbrmsd), intent(in)          :: header
+    logical, intent(in)                 :: first
+    real(RK), intent(in)                :: lambda, X(*)
+    real(RK), intent(inout)             :: W(*)
+    type(mobbrmsd_state), intent(inout) :: state(*)
+    type(edge_data), intent(inout)      :: edge
+    logical, intent(in), optional       :: remove_com, sort_by_g
+    if (first) then
       block
         integer(IK)          :: i, j, xpnt, ypnt
-        edge%p = -edge%p
         call cantor_pair_inverse(edge%p, i, j)
         xpnt = (i - 1) * ldxsize + 1
         ypnt = (j - 1) * ldxsize + 1
         call mobbrmsd_run( &
        &       header, &
-       &       edge%state,  &
+       &       state(edge%p), &
        &       X(xpnt), &
        &       X(ypnt), &
        &       W(edge%w), &
@@ -400,13 +462,16 @@ contains
     else
       call mobbrmsd_restart( &
      &       header, &
-     &       edge%state,  &
+     &       state(edge%p), &
      &       W(edge%w), &
      &       cutoff=lambda &
      &      )
     end if
-    edge%lb = mobbrmsd_state_lowerbound_as_rmsd(edge%state)
-    edge%ub = mobbrmsd_state_upperbound_as_rmsd(edge%state)
+    !print *, edge%p, edge%w, edge%lb, edge%ub,&
+    !  & mobbrmsd_state_lowerbound_as_rmsd(state(edge%p)), mobbrmsd_state_upperbound_as_rmsd(state(edge%p))
+    edge%lb = mobbrmsd_state_lowerbound_as_rmsd(state(edge%p))
+    edge%ub = mobbrmsd_state_upperbound_as_rmsd(state(edge%p))
+    edge%not_finished = .not. mobbrmsd_state_is_finished(state(edge%p))
   end subroutine update
 !
   pure function pick_heap(n, p, e, h) result(res)
@@ -425,7 +490,7 @@ contains
     res = t(1)
   end function pick_heap
 !
-  pure subroutine kruscal(&
+  subroutine kruscal(&
                  &  n_target &
                  &, n_chunk &
                  &, n_pack &
@@ -446,6 +511,8 @@ contains
     integer(IK)                    :: t(n_pack)
     integer(IK)                    :: k
     logical                        :: is_same
+    !print'(*(f6.3))', edge(heap(:n_pack))%ub
+    !print'(*(f6.3))', edge(heap(:n_pack))%lb
     do concurrent(k=1:n_pack)
       t(k) = heap(k)
     end do
@@ -458,24 +525,31 @@ contains
     end do
     k = 1
     do while (k <= n_pack .and. n_core < n_target - 1)
-      if (edge(t(k))%ub > lambda .or. .not. mobbrmsd_state_is_finished(edge(t(k))%state)) exit
+      if (edge(t(k))%ub > lambda .or. edge(t(k))%not_finished) exit
+      !print *, 'krucor', edge(t(k))%ub, lambda, edge(t(k))%not_finished
       call unite(n_target, edge(t(k))%p, par, is_same)
-      if (is_same) then
-        call init_edge(edge(t(k)))
-      else
+      if (.not. is_same) then
         n_core = n_core + 1
         core(n_core) = edge(t(k))
-        call init_edge(edge(t(k)))
       end if
+      edge(t(k))%p = 0
+      edge(t(k))%lb = HUGE(0.0_RK)
+      edge(t(k))%ub = HUGE(0.0_RK)
       k = k + 1
     end do
     n_rec = 0
     if (n_core == n_target - 1) return
     do while (k <= n_pack)
       n_rec = n_rec + 1
+      !print *, 'krurec', edge(t(k))%ub, lambda, edge(t(k))%not_finished
       heap(n_rec) = t(k)
       k = k + 1
     end do
+    ! print *, n_rec, n_core
+    !print '(*(I6))', edge(heap(:n_rec))%p, 0, core(:n_core)%p
+    !print '(*(I6))', edge(heap(:n_rec))%w, 0, core(:n_core)%w
+    !print'(*(f6.3))', edge(heap(:n_rec))%ub, 0.0_RK, core(:n_core)%ub
+    !print'(*(f6.3))', edge(heap(:n_rec))%lb, 0.0_RK, core(:n_core)%lb
   end subroutine kruscal
 !
   pure elemental subroutine swap(a, b)
@@ -488,14 +562,14 @@ contains
 !
 ! union find
 !
-  pure subroutine init_par(n, par)
+  pure subroutine init_arange(n, a)
     integer(IK), intent(in)    :: n
-    integer(IK), intent(inout) :: par(n)
+    integer(IK), intent(inout) :: a(n)
     integer(IK)                :: i
     do concurrent(i=1:n)
-      par(i) = i
+      a(i) = i
     end do
-  end subroutine init_par
+  end subroutine init_arange
 !
   pure subroutine findroot(n, v, par, root, rank)
     integer(IK), intent(in)    :: n, v, par(n)
