@@ -17,6 +17,10 @@ module mod_mobbrmsd_mst
   private
   public :: mobbrmsd_min_span_tree
 !
+  integer(IK), parameter :: IS_FINISHED = 0
+  integer(IK), parameter :: NOT_FINISHED = 1
+  integer(IK), parameter :: NOT_EVALUATED = 2
+!
   type heap_container
     sequence
     integer(IK) :: p, s
@@ -51,6 +55,7 @@ contains
     !! minimum spanning tree edges
     real(RK), intent(out), optional     :: weights(n_target - 1)
     !! minimum spanning tree weights
+    type(heap_container)                :: core(n_target - 1) ! heap container
     integer(IK)                         :: par(n_target) ! for union find
     integer(IK)                         :: n_tri, ldw, ldx
     integer(IK)                         :: n_core, n_reco, n_thread, n_edge, n_heap
@@ -67,7 +72,8 @@ contains
     if (omp_get_thread_num() == 0) n_thread = omp_get_num_threads()
     !$omp end parallel
 !
-    n_heap = n_tri
+    n_heap = MIN(n_tri, n_target * 2)
+    !n_heap = n_tri
     if (PRESENT(n_chunk)) then
       if (n_chunk > 0) n_heap = MIN(MAX(n_target * 2, n_chunk), n_heap)
     end if
@@ -76,7 +82,7 @@ contains
     block
       type(mobbrmsd_state), allocatable :: state(:)
       integer(IK)          :: hptr(n_heap) ! heap pointer
-      integer(IK)          :: sorted(n_edge) ! top + core
+      integer(IK)          :: sptr(n_heap) ! sorted pointer
       type(heap_container) :: hcon(n_heap) ! heap container
       real(RK)             :: wrkmem(ldw, n_heap)
       real(RK)             :: lambda
@@ -95,11 +101,11 @@ contains
 !
       n_core = 0
       n_reco = 0
-      lambda = 0.5_RK
       call init_arange(n_target, par)
-      call init_arange(n_edge, sorted)
+      call init_arange(n_edge, sptr)
       call init_arange(n_heap, hptr)
 !
+      stop
       do while (n_core < n_edge)
 !
         call reflesh_heap(n_tri &
@@ -114,7 +120,11 @@ contains
                        &, hcon &
                        &)
 !
-        do while (n_core < n_edge)
+        print *, n_core, n_edge, n_reco
+        lambda = 1000.0
+        !lambda = hcon(hptr(1))%lb
+        print'(*(f9.6))', hcon(hptr(:n_reco))%lb
+        do while (n_core < n_edge .and. n_edge - n_core <= n_reco .and. lambda >= hcon(hptr(1))%lb)
           call sort_heap(n_tri &
                       &, n_edge &
                       &, n_heap &
@@ -123,54 +133,69 @@ contains
                       &, state &
                       &, hptr &
                       &, hcon &
-                      &, sorted &
+                      &, sptr &
                       & )
-          print'(*(f8.4))', hcon(sorted)%ub
-          print'(*(f8.4))', hcon(sorted)%lb
-          stop
+          print'(*(i9))', sptr(:n_reco)
+          print'(*(f9.6))', hcon(sptr(:n_reco))%lb
+          print'(*(L9))', hcon(sptr(:n_reco))%s == IS_FINISHED
 !
-!         call kruscal(n_target &
-!                   &, n_heap &
-!                   &, n_pack &
-!                   &, lambda &
-!                   &, n_reco &
-!                   &, n_core &
-!                   &, par &
-!                   &, heap &
-!                   &, edge &
-!                   &, core &
-!                   &)
+          call kruscal(n_target &
+                    &, n_edge &
+                    &, n_heap &
+                    &, hcon &
+                    &, n_reco &
+                    &, n_core &
+                    &, par &
+                    &, sptr &
+                    &, core &
+                    & )
+          print'(*(f9.6))', core(:n_core)%ub
+          print'(*(f9.6))', core(:n_core)%lb
+          print'(*(f9.6))', hcon(sptr(:n_reco))%ub
+          print'(*(f9.6))', hcon(sptr(:n_reco))%lb
+!
           call update_bounds(ldx &
                           &, ldw &
                           &, n_edge &
+                          &, n_core &
                           &, n_heap &
                           &, header &
                           &, lambda &
                           &, X &
                           &, wrkmem &
-                          &, sorted &
+                          &, sptr &
                           &, hcon &
                           &, state &
                           &, remove_com &
                           &, sort_by_g &
                           &)
 !
+          print'(*(f9.6))', hcon(sptr(:n_reco))%ub
+          print'(*(f9.6))', hcon(sptr(:n_reco))%lb
+          print'(*(L9))', hcon(sptr(:n_reco))%s == IS_FINISHED
+!
+          hptr(:n_reco) = sptr(:n_reco)
+          call make_heap(n_reco, hcon, hptr)
+          print *, n_core, n_reco
+          print *, '---'
+!
         end do
       end do
 !
-!   if (PRESENT(edges)) then
-!     do concurrent(k=1:n_edge)
-!       call cantor_pair_inverse(core(k)%p, i, j)
-!       edges(1, k) = i
-!       edges(2, k) = j
-!     end do
-!   end if
-!   if (PRESENT(weights)) then
-!     do concurrent(k=1:n_edge)
-!       weights(k) = core(k)%lb
-!     end do
-!   end if
+      if (PRESENT(edges)) then
+        do concurrent(k=1:n_edge)
+          call cantor_pair_inverse(core(k)%p, i, j)
+          edges(1, k) = i
+          edges(2, k) = j
+        end do
+      end if
+      if (PRESENT(weights)) then
+        do concurrent(k=1:n_edge)
+          weights(k) = core(k)%lb
+        end do
+      end if
     end block
+!
   end subroutine mobbrmsd_min_span_tree
 !
   pure subroutine reflesh_heap(n_tri &
@@ -216,17 +241,18 @@ contains
       if (is_same(n_target, i, par)) cycle
       n_reco = n_reco + 1
       hcon(hptr(n_reco))%p = i
-      hcon(hptr(n_reco))%s = MERGE(-1, 0, mobbrmsd_state_is_finished(state(i)))
+      hcon(hptr(n_reco))%s = MERGE(IS_FINISHED, NOT_EVALUATED, mobbrmsd_state_is_finished(state(i)))
       hcon(hptr(n_reco))%lb = mobbrmsd_state_lowerbound_as_rmsd(state(i))
       hcon(hptr(n_reco))%ub = mobbrmsd_state_upperbound_as_rmsd(state(i))
     end do
     call make_heap(n_reco, hcon, hptr)
     do while (i < n_tri)
+      i = i + 1
       if (is_same(n_target, i, par)) cycle
       lb = mobbrmsd_state_lowerbound_as_rmsd(state(i))
       if (lb < hcon(hptr(1))%lb) then
         hcon(hptr(1))%p = i
-        hcon(hptr(1))%s = MERGE(-1, 0, mobbrmsd_state_is_finished(state(i)))
+        hcon(hptr(1))%s = MERGE(IS_FINISHED, NOT_EVALUATED, mobbrmsd_state_is_finished(state(i)))
         hcon(hptr(1))%lb = lb
         hcon(hptr(1))%ub = mobbrmsd_state_lowerbound_as_rmsd(state(i))
         call down_heap(n_heap, 1, hcon, hptr)
@@ -242,7 +268,7 @@ contains
                     &, state &
                     &, hptr &
                     &, hcon &
-                    &, sorted &
+                    &, sptr &
                     & )
     integer(IK), intent(in)          :: n_tri
     integer(IK), intent(in)          :: n_edge
@@ -252,30 +278,27 @@ contains
     type(mobbrmsd_state), intent(in) :: state(n_tri)
     integer(IK), intent(in)          :: hptr(n_reco)
     type(heap_container), intent(in) :: hcon(n_heap)
-    integer(IK), intent(inout)       :: sorted(n_edge)
-    integer(IK)                      :: t(n_heap)
+    integer(IK), intent(inout)       :: sptr(n_reco)
     integer(IK)                      :: k
     do concurrent(k=1:n_reco)
-      t(k) = hptr(k)
+      sptr(k) = hptr(k)
     end do
     do k = n_reco, 2, -1
-      call swap(t(1), t(k))
-      call down_heap(k - 1, 1, hcon, t)
-    end do
-    do concurrent(k=1:n_edge - n_core)
-      sorted(k) = t(k)
+      call swap(sptr(1), sptr(k))
+      call down_heap(k - 1, 1, hcon, sptr)
     end do
   end subroutine sort_heap
 !
   subroutine update_bounds(ldx &
                         &, ldw &
                         &, n_edge &
+                        &, n_core &
                         &, n_heap &
                         &, header &
                         &, lambda &
                         &, X &
                         &, wrkmem &
-                        &, hptr &
+                        &, sptr &
                         &, hcon &
                         &, state &
                         &, remove_com &
@@ -284,50 +307,102 @@ contains
     integer(IK), intent(in)             :: ldx
     integer(IK), intent(in)             :: ldw
     integer(IK), intent(in)             :: n_edge
+    integer(IK), intent(in)             :: n_core
     integer(IK), intent(in)             :: n_heap
     type(mobbrmsd), intent(in)          :: header
     real(RK), intent(in)                :: lambda
     real(RK), intent(in)                :: X(*)
     real(RK), intent(inout)             :: wrkmem(ldw, n_heap)
-    integer(IK), intent(in)             :: hptr(n_heap)
+    integer(IK), intent(in)             :: sptr(n_heap)
     type(heap_container), intent(inout) :: hcon(n_heap)
     type(mobbrmsd_state), intent(inout) :: state(*)
     logical, intent(in), optional       :: remove_com, sort_by_g
-    integer(IK)                         :: k
+    integer(IK)                         :: k, n_eval
+    n_eval = n_edge - n_core
     !$omp parallel do
-    do k = 1, n_edge
-      associate (p => hcon(hptr(k))%p&
-              &, s => hcon(hptr(k))%s&
-              &, h => hptr(k)&
+    do k = 1, n_eval
+      associate (p => hcon(sptr(k))%p&
+              &, s => hcon(sptr(k))%s&
+              &, lb => hcon(sptr(k))%lb&
+              &, ub => hcon(sptr(k))%ub&
+              &, st => state(hcon(sptr(k))%p)&
+              &, h => sptr(k)&
               & )
-      if (s == 0) then
-        block
-          integer(IK) :: i, j
-          call cantor_pair_inverse(p, i, j)
-          call mobbrmsd_run(header &
-                         &, state(p) &
-                         &, X((i - 1) * ldx + 1) &
-                         &, X((j - 1) * ldx + 1) &
-                         &, wrkmem(1, h) &
-                         &, cutoff=lambda &
-                         &, remove_com=remove_com &
-                         &, sort_by_g=sort_by_g &
-                         & )
-        end block
-      elseif (s == 1) then
-        call mobbrmsd_restart(header &
-                           &, state(p) &
+        if (s == IS_FINISHED) cycle
+        if (s == NOT_EVALUATED) then
+          block
+            integer(IK) :: i, j
+            call cantor_pair_inverse(p, i, j)
+            call mobbrmsd_run(header &
+                           &, st &
+                           &, X((i - 1) * ldx + 1) &
+                           &, X((j - 1) * ldx + 1) &
                            &, wrkmem(1, h) &
                            &, cutoff=lambda &
+                           &, remove_com=remove_com &
+                           &, sort_by_g=sort_by_g &
                            & )
-      end if
-      hcon(h)%lb = mobbrmsd_state_lowerbound_as_rmsd(state(p))
-      hcon(h)%ub = mobbrmsd_state_lowerbound_as_rmsd(state(p))
-      s = MERGE(-1, 1, mobbrmsd_state_is_finished(state(p)))
+          end block
+        elseif (s == NOT_FINISHED) then
+          call mobbrmsd_restart(header &
+                             &, st &
+                             &, wrkmem(1, h) &
+                             &, cutoff=lambda &
+                             & )
+        end if
+        lb = mobbrmsd_state_lowerbound_as_rmsd(state(p))
+        ub = mobbrmsd_state_lowerbound_as_rmsd(state(p))
+        s = MERGE(IS_FINISHED, NOT_FINISHED, mobbrmsd_state_is_finished(st))
       end associate
     end do
     !$omp end parallel do
   end subroutine update_bounds
+!
+  subroutine kruscal(n_target &
+                  &, n_edge &
+                  &, n_heap &
+                  &, hcon &
+                  &, n_reco &
+                  &, n_core &
+                  &, par &
+                  &, sptr &
+                  &, core &
+                  &)
+    integer(IK), intent(in)             :: n_target
+    integer(IK), intent(in)             :: n_edge
+    integer(IK), intent(in)             :: n_heap
+    type(heap_container), intent(in)    :: hcon(n_heap)
+    integer(IK), intent(inout)          :: n_reco
+    integer(IK), intent(inout)          :: n_core
+    integer(IK), intent(inout)          :: par(n_target)
+    integer(IK), intent(inout)          :: sptr(n_heap)
+    type(heap_container), intent(inout) :: core(n_edge)
+    integer(IK)                         :: i, n_pack
+    logical                             :: same
+    n_pack = n_reco
+    n_reco = 0
+    i = 0
+    do while (i < n_pack)
+      if (hcon(sptr(i + 1))%s /= IS_FINISHED) exit
+      i = i + 1
+      associate (c => hcon(sptr(i)))
+        call unite(n_target, c%p, par, same)
+        if (.not. same) then
+          n_core = n_core + 1
+          core(n_core) = c
+        end if
+      end associate
+      if (n_core == n_edge) return
+    end do
+    do while (i < n_pack)
+      i = i + 1
+      associate (p => hcon(sptr(i))%p)
+        if (is_same(n_target, p, par)) cycle
+        n_reco = n_reco + 1
+        sptr(n_reco) = sptr(i)
+      end associate
+    end do
+  end subroutine kruscal
 !
 ! subroutine construct_chunk(ld &
 !                         &, memsize &
@@ -599,83 +674,21 @@ contains
 !   edge%not_finished = .not. mobbrmsd_state_is_finished(state(edge%p))
 ! end subroutine update
 !
-  pure function pick_heap(n, p, e, h) result(res)
-    integer(IK), intent(in)          :: n, p
-    type(heap_container), intent(in) :: e(*)
-    integer(IK), intent(in)          :: h(n)
-    integer(IK)                      :: t(n)
-    integer(IK)                      :: k, res
-    do concurrent(k=1:n)
-      t(k) = h(k)
-    end do
-    do k = n, n - p + 1, -1
-      t(1) = t(k)
-      call down_heap(k - 1, 1, e, t)
-    end do
-    res = t(1)
-  end function pick_heap
-!
-! subroutine kruscal(&
-!                &  n_target &
-!                &, n_chunk &
-!                &, n_pack &
-!                &, lambda &
-!                &, n_rec &
-!                &, n_core &
-!                &, par &
-!                &, heap &
-!                &, edge &
-!                &, core &
-!                &)
-!   integer(IK), intent(in)             :: n_target, n_chunk, n_pack
-!   real(RK), intent(in)                :: lambda
-!   integer(IK), intent(inout)          :: n_rec, n_core
-!   integer(IK), intent(inout)          :: par(n_target)
-!   integer(IK), intent(inout)          :: heap(n_chunk)
-!   type(heap_container), intent(inout) :: edge(n_chunk), core(n_target - 1)
-!   integer(IK)                         :: t(n_pack)
-!   integer(IK)                         :: k
-!   logical                             :: is_same
-!   !print'(*(f6.3))', edge(heap(:n_pack))%ub
-!   !print'(*(f6.3))', edge(heap(:n_pack))%lb
-!   do concurrent(k=1:n_pack)
-!     t(k) = heap(k)
+! pure function pick_heap(n, p, e, h) result(res)
+!   integer(IK), intent(in)          :: n, p
+!   type(heap_container), intent(in) :: e(*)
+!   integer(IK), intent(in)          :: h(n)
+!   integer(IK)                      :: t(n)
+!   integer(IK)                      :: k, res
+!   do concurrent(k=1:n)
+!     t(k) = h(k)
 !   end do
-!   do concurrent(k=1:n_chunk)
-!     heap(k) = 0
+!   do k = n, n - p + 1, -1
+!     t(1) = t(k)
+!     call down_heap(k - 1, 1, e, t)
 !   end do
-!   do k = n_pack, 2, -1
-!     call swap(t(1), t(k))
-!     call down_heap(k - 1, 1, edge, t)
-!   end do
-!   k = 1
-!   do while (k <= n_pack .and. n_core < n_target - 1)
-!     if (edge(t(k))%ub > lambda .or. edge(t(k))%not_finished) exit
-!     !print *, 'krucor', edge(t(k))%ub, lambda, edge(t(k))%not_finished
-!     call unite(n_target, edge(t(k))%p, par, is_same)
-!     if (.not. is_same) then
-!       n_core = n_core + 1
-!       core(n_core) = edge(t(k))
-!     end if
-!     edge(t(k))%p = 0
-!     edge(t(k))%lb = HUGE(0.0_RK)
-!     edge(t(k))%ub = HUGE(0.0_RK)
-!     k = k + 1
-!   end do
-!   n_rec = 0
-!   if (n_core == n_target - 1) return
-!   do while (k <= n_pack)
-!     n_rec = n_rec + 1
-!     !print *, 'krurec', edge(t(k))%ub, lambda, edge(t(k))%not_finished
-!     heap(n_rec) = t(k)
-!     k = k + 1
-!   end do
-!   ! print *, n_rec, n_core
-!   !print '(*(I6))', edge(heap(:n_rec))%p, 0, core(:n_core)%p
-!   !print '(*(I6))', edge(heap(:n_rec))%w, 0, core(:n_core)%w
-!   !print'(*(f6.3))', edge(heap(:n_rec))%ub, 0.0_RK, core(:n_core)%ub
-!   !print'(*(f6.3))', edge(heap(:n_rec))%lb, 0.0_RK, core(:n_core)%lb
-! end subroutine kruscal
+!   res = t(1)
+! end function pick_heap
 !
   pure elemental subroutine swap(a, b)
     integer(IK), intent(inout) :: a, b
@@ -894,15 +907,15 @@ contains
     i = k - (j - 1) * (j - 2) / 2
   end subroutine cantor_pair_inverse
 !
-  pure subroutine memcopy(n, from, dest)
-    integer(IK), intent(in) :: n
-    real(RK), intent(in)    :: from(n)
-    real(RK), intent(inout) :: dest(n)
-    integer(IK)             :: i
-    do concurrent(i=1:n)
-      dest(i) = from(i)
-    end do
-  end subroutine memcopy
+! pure subroutine memcopy(n, from, dest)
+!   integer(IK), intent(in) :: n
+!   real(RK), intent(in)    :: from(n)
+!   real(RK), intent(inout) :: dest(n)
+!   integer(IK)             :: i
+!   do concurrent(i=1:n)
+!     dest(i) = from(i)
+!   end do
+! end subroutine memcopy
 !
 end module mod_mobbrmsd_mst
 
