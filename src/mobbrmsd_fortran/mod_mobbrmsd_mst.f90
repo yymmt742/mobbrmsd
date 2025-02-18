@@ -105,7 +105,6 @@ contains
       call init_arange(n_edge, sptr)
       call init_arange(n_heap, hptr)
 !
-      stop
       do while (n_core < n_edge)
 !
         call reflesh_heap(n_tri &
@@ -114,6 +113,7 @@ contains
                        &, n_heap &
                        &, n_core &
                        &, par &
+                       &, core &
                        &, state &
                        &, n_reco &
                        &, hptr &
@@ -121,9 +121,9 @@ contains
                        &)
 !
         print *, n_core, n_edge, n_reco
-        lambda = 1000.0
-        !lambda = hcon(hptr(1))%lb
+        lambda = hcon(hptr(1))%lb
         print'(*(f9.6))', hcon(hptr(:n_reco))%lb
+        stop
         do while (n_core < n_edge .and. n_edge - n_core <= n_reco .and. lambda >= hcon(hptr(1))%lb)
           call sort_heap(n_tri &
                       &, n_edge &
@@ -138,6 +138,7 @@ contains
           print'(*(i9))', sptr(:n_reco)
           print'(*(f9.6))', hcon(sptr(:n_reco))%lb
           print'(*(L9))', hcon(sptr(:n_reco))%s == IS_FINISHED
+          print'(*(L9))', hcon(sptr(:n_reco))%lb < lambda
 !
           call kruscal(n_target &
                     &, n_edge &
@@ -160,7 +161,7 @@ contains
                           &, n_core &
                           &, n_heap &
                           &, header &
-                          &, lambda &
+                          &, 100.0_RK &
                           &, X &
                           &, wrkmem &
                           &, sptr &
@@ -171,7 +172,6 @@ contains
                           &)
 !
           print'(*(f9.6))', hcon(sptr(:n_reco))%ub
-          print'(*(f9.6))', hcon(sptr(:n_reco))%lb
           print'(*(L9))', hcon(sptr(:n_reco))%s == IS_FINISHED
 !
           hptr(:n_reco) = sptr(:n_reco)
@@ -198,12 +198,13 @@ contains
 !
   end subroutine mobbrmsd_min_span_tree
 !
-  pure subroutine reflesh_heap(n_tri &
+  subroutine reflesh_heap(n_tri &
                             &, n_target &
                             &, n_edge &
                             &, n_heap &
                             &, n_core &
                             &, par &
+                            &, core &
                             &, state &
                             &, n_reco &
                             &, hptr &
@@ -215,20 +216,26 @@ contains
     integer(IK), intent(in)             :: n_heap
     integer(IK), intent(in)             :: n_core
     integer(IK), intent(in)             :: par(n_edge)
+    type(heap_container), intent(in)    :: core(n_core)
     type(mobbrmsd_state), intent(in)    :: state(n_tri)
     integer(IK), intent(inout)          :: n_reco
     integer(IK), intent(inout)          :: hptr(n_heap)
     type(heap_container), intent(inout) :: hcon(n_heap)
     real(RK)                            :: lb
-    integer(IK)                         :: record(n_reco + 1)
+    integer(IK)                         :: record(n_core + n_reco + 1)
     integer(IK)                         :: i, j, n_rem
 !
     n_rem = MIN(n_heap, n_tri - n_core)
-    do concurrent(i=1:n_reco)
-      record(i) = hcon(hptr(i))%p
+    do concurrent(i=1:n_core)
+      record(i) = core(i)%p
     end do
-    call sort(n_reco, record)
-    record(n_reco + 1) = n_tri + 1
+    do concurrent(i=1:n_reco)
+      record(n_core + i) = hcon(hptr(i))%p
+    end do
+    call sort(n_core + n_reco, record)
+    record(n_core + n_reco + 1) = n_tri + 1
+    print *, 'record'
+    print'(10i8)', record
 !
     i = 0
     j = 1

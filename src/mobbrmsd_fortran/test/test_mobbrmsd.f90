@@ -92,7 +92,7 @@ program main
 ! call u%init('test min_span_tree for {(n,M,S)}={(4,8,1)}, n_target=10, a=0.9')
 ! call test7(4, 8, 1, [0], 10, ntest_def * 2, 0.9_RK)
   call u%init('test min_span_tree for {(n,M,S)}={(4,8,1)}, n_target=10, a=0.0')
-  call test7(4, 8, 1, [0], 10, ntest_def * 2, 0.0_RK)
+  call test7(4, 8, 1, [0], 10, 1, 0.0_RK)
 ! call u%init('test min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100, a=0.9')
 ! call test7(4, 4, 1, [0], 100, ntest_def, 0.9_RK)
 ! call u%init('test min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100, a=0.0')
