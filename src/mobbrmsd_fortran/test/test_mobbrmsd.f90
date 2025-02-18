@@ -85,18 +85,18 @@ program main
   call u%init('test mobbrmsd cutoff for {(n,M,S)}={(8,10,1)}')
   call test6(8, 10, 1, [0])
 !
-! call u%init('test min_span_tree for {(n,M,S)}={(4,8,1)}, n_target=4, a=0.9')
-! call test7(4, 8, 1, [0], 4, ntest_def * 4, 0.9_RK)
-! call u%init('test min_span_tree for {(n,M,S)}={(4,8,1)}, n_target=4, a=0.0')
-! call test7(4, 8, 1, [0], 4, ntest_def * 4, 0.0_RK)
-! call u%init('test min_span_tree for {(n,M,S)}={(4,8,1)}, n_target=10, a=0.9')
-! call test7(4, 8, 1, [0], 10, ntest_def * 2, 0.9_RK)
+  call u%init('test min_span_tree for {(n,M,S)}={(4,8,1)}, n_target=4, a=0.9')
+  call test7(4, 8, 1, [0], 4, ntest_def * 4, 0.9_RK)
+  call u%init('test min_span_tree for {(n,M,S)}={(4,8,1)}, n_target=4, a=0.0')
+  call test7(4, 8, 1, [0], 4, ntest_def * 4, 0.0_RK)
+  call u%init('test min_span_tree for {(n,M,S)}={(4,8,1)}, n_target=10, a=0.9')
+  call test7(4, 8, 1, [0], 10, ntest_def * 2, 0.9_RK)
   call u%init('test min_span_tree for {(n,M,S)}={(4,8,1)}, n_target=10, a=0.0')
-  call test7(4, 8, 1, [0], 10, 1, 0.0_RK)
-! call u%init('test min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100, a=0.9')
-! call test7(4, 4, 1, [0], 100, ntest_def, 0.9_RK)
-! call u%init('test min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100, a=0.0')
-! call test7(4, 4, 1, [0], 100, ntest_def, 0.0_RK)
+  call test7(4, 8, 1, [0], 10, ntest_def * 2, 0.0_RK)
+  call u%init('test min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100, a=0.9')
+  call test7(4, 4, 1, [0], 100, ntest_def, 0.9_RK)
+  call u%init('test min_span_tree for {(n,M,S)}={(4,4,1)}, n_target=100, a=0.0')
+  call test7(4, 4, 1, [0], 100, ntest_def, 0.0_RK)
 !
   call u%finish_and_terminate(passing_score=0.95_R8)
 !
@@ -337,21 +337,24 @@ contains
 !
   subroutine test7(n, m, s, sym, n_target, n_test, alpha)
 !$  use omp_lib
-    integer, intent(in)   :: n, m, s, sym(n * (s - 1)), n_target, n_test
-    real(RK), intent(in)  :: alpha
-    type(mobbrmsd)        :: mobb
-    type(mobbrmsd_state)  :: state(n_target * (n_target - 1) / 2)
-    type(mobbrmsd_input)  :: inp
-    real(RK)              :: X(D, n, m, n_target)
-    real(RK), allocatable :: W(:)
-    integer(IK)           :: edges(2, n_target - 1)
-    integer(IK)           :: redges(2, n_target - 1)
-    real(RK)              :: weights(n_target - 1)
-    real(RK)              :: refer(n_target, n_target)
-    integer(IK)           :: i, j, k, itest, nerr
+    integer, intent(in)     :: n, m, s, sym(n * (s - 1)), n_target, n_test
+    real(RK), intent(in)    :: alpha
+    type(mobbrmsd)          :: mobb
+    type(mobbrmsd_state)    :: state(n_target * (n_target - 1) / 2)
+    type(mobbrmsd_input)    :: inp
+    real(RK)                :: X(D, n, m, n_target)
+    real(RK), allocatable   :: W(:)
+    integer(IK)             :: edges(2, n_target - 1)
+    integer(IK)             :: redges(2, n_target - 1)
+    real(RK)                :: weights(n_target - 1)
+    real(RK)                :: refer(n_target, n_target)
+    integer(IK)             :: n_works(2)
+    integer(IK)             :: i, j, k, itest, imode, nerr
+    character(*), parameter :: msg(2) = ['is_same_graph n_works=0', 'is_same_graph n_works=2']
 !
     call mobbrmsd_input_add_molecule(inp, n, m, sym=RESHAPE(sym, [n, s - 1]))
     mobb = mobbrmsd(inp)
+    n_works = [0, n_target * 2]
 !
     k = 1
     !$omp parallel
@@ -359,66 +362,68 @@ contains
     !$omp end parallel
     allocate (W(mobbrmsd_memsize(mobb) * k))
 !
-    do itest = 1, n_test
-      X(:, :, :, 1) = sample(n, m)
-      do i = 2, n_target / 4
-        X(:, :, :, i) = alpha * X(:, :, :, i - 1) + (1.0_RK - alpha) * sample(n, m)
-      end do
-!
-      X(:, :, :, n_target / 4 + 1) = 0.5 * X(:, :, :, n_target / 4) + 0.5 * sample(n, m)
-      do i = n_target / 4 + 2, 3 * n_target / 4
-        X(:, :, :, i) = alpha * X(:, :, :, i - 1) + (1.0_RK - alpha) * sample(n, m)
-      end do
-!
-      X(:, :, :, 3 * n_target / 4 + 1) = 0.5 * X(:, :, :, 3 * n_target / 4) + 0.5 * sample(n, m)
-      do i = 3 * n_target / 4 + 2, n_target
-        X(:, :, :, i) = alpha * X(:, :, :, i - 1) + (1.0_RK - alpha) * sample(n, m)
-      end do
-!
-      call mobbrmsd_min_span_tree(n_target, mobb, X, &
-     &                            edges=edges, weights=weights)
-!
-      call mobbrmsd_batch_tri_run(n_target, mobb, state, X, W)
-!
-      k = 0
-      do j = 1, n_target
-        do i = 1, j - 1
-          k = k + 1
-          refer(i, j) = mobbrmsd_state_rmsd(state(k))
-          refer(j, i) = refer(i, j)
+    do imode = 1, 2
+      do itest = 1, n_test
+        X(:, :, :, 1) = sample(n, m)
+        do i = 2, n_target / 4
+          X(:, :, :, i) = alpha * X(:, :, :, i - 1) + (1.0_RK - alpha) * sample(n, m)
         end do
-        refer(j, j) = 0.0_RK
-      end do
 !
-      call min_span_tree(n_target, refer, redges)
-      call u%assert(is_same_graph(n_target, edges, redges), 'is_same_graph')
-      if (.not. is_same_graph(n_target, edges, redges)) then
-        nerr = 0
-        do i = 1, n_target - 1
-          do j = 1, n_target - 1
-            if (ALL(edges(:, i) == redges(:, j))) exit
-            if (j == n_target - 1) then
-              nerr = nerr + 1
-              edges(:, nerr) = edges(:, i)
-            end if
+        X(:, :, :, n_target / 4 + 1) = 0.5 * X(:, :, :, n_target / 4) + 0.5 * sample(n, m)
+        do i = n_target / 4 + 2, 3 * n_target / 4
+          X(:, :, :, i) = alpha * X(:, :, :, i - 1) + (1.0_RK - alpha) * sample(n, m)
+        end do
+!
+        X(:, :, :, 3 * n_target / 4 + 1) = 0.5 * X(:, :, :, 3 * n_target / 4) + 0.5 * sample(n, m)
+        do i = 3 * n_target / 4 + 2, n_target
+          X(:, :, :, i) = alpha * X(:, :, :, i - 1) + (1.0_RK - alpha) * sample(n, m)
+        end do
+!
+        call mobbrmsd_min_span_tree(n_target, mobb, X, n_work=n_works(imode),&
+       &                            edges=edges, weights=weights)
+!
+        call mobbrmsd_batch_tri_run(n_target, mobb, state, X, W)
+!
+        k = 0
+        do j = 1, n_target
+          do i = 1, j - 1
+            k = k + 1
+            refer(i, j) = mobbrmsd_state_rmsd(state(k))
+            refer(j, i) = refer(i, j)
           end do
+          refer(j, j) = 0.0_RK
         end do
-        nerr = 0
-        do i = 1, n_target - 1
-          do j = 1, n_target - 1
-            if (ALL(edges(:, j) == redges(:, i))) exit
-            if (j == n_target - 1) then
-              nerr = nerr + 1
-              redges(:, nerr) = redges(:, i)
-            end if
+!
+        call min_span_tree(n_target, refer, redges)
+        call u%assert(is_same_graph(n_target, edges, redges), msg(imode))
+        if (.not. is_same_graph(n_target, edges, redges)) then
+          nerr = 0
+          do i = 1, n_target - 1
+            do j = 1, n_target - 1
+              if (ALL(edges(:, i) == redges(:, j))) exit
+              if (j == n_target - 1) then
+                nerr = nerr + 1
+                edges(:, nerr) = edges(:, i)
+              end if
+            end do
           end do
-        end do
-        do i = 1, nerr
-          print *, edges(:, i), redges(:, i)
-        end do
-      end if
-      FLUSH (OUTPUT_UNIT)
-      FLUSH (ERROR_UNIT)
+          nerr = 0
+          do i = 1, n_target - 1
+            do j = 1, n_target - 1
+              if (ALL(edges(:, j) == redges(:, i))) exit
+              if (j == n_target - 1) then
+                nerr = nerr + 1
+                redges(:, nerr) = redges(:, i)
+              end if
+            end do
+          end do
+          do i = 1, nerr
+            print *, edges(:, i), redges(:, i)
+          end do
+        end if
+        FLUSH (OUTPUT_UNIT)
+        FLUSH (ERROR_UNIT)
+      end do
     end do
 !
   end subroutine test7
