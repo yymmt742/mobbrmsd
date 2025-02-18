@@ -690,7 +690,7 @@ class mobbrmsd:
         remove_com: bool = True,
         sort_by_g: bool = True,
         verbose: bool = False,
-        n_chunk: int = 0,
+        n_work: int = 0,
         *args,
         **kwargs,
     ) -> networkx.Graph:
@@ -705,8 +705,8 @@ class mobbrmsd:
         :type sort_by_g: bool
         :param verbose: 計算が長くなる場合, 進捗バーを表示する. default=True.
         :type verbose: bool
-        :param n_chunk: 一度にまとめて計算されるバッチサイズ上限. <1 の場合, 一括計算. default=None.
-        :type n_chunk: int
+        :param n_work: メモリサイズ上限. <1 の場合、n*(n-1)/2. default=None.
+        :type n_work: int
         :return: 最小全域木
         :rtype: networkx.Graph
         """
@@ -717,7 +717,7 @@ class mobbrmsd:
 
         driver = _select_driver(self.d, dtype=dt)
         ropts = numpy.array([0.0, 0.0, 0.0], dtype=dt)
-        iopts = numpy.array([0], dtype=numpy.int32)
+        iopts = numpy.array([n_work], dtype=numpy.int32)
 
         edges, weights = driver.min_span_tree(
             n_target,

@@ -189,17 +189,16 @@ contains
     call RANDOM_NUMBER(X)
     call decode_header(SIZE(seq), seq, n_header, header)
 !
-    call min_span_tree( &
-       &  n_target &
-       &, n_header &
-       &, header &
-       &, X &
-       &, ropts=[0.0_RK] &
-       &, iopts=[0_IK] &
-       &, remove_com=.true. &
-       &, sort_by_g=.true. &
-       &, edges=edges &
-       &, weights=weights)
+    call min_span_tree(n_target &
+                    &, n_header &
+                    &, header &
+                    &, X &
+                    &, ropts=[0.0_RK] &
+                    &, iopts=[0_IK] &
+                    &, remove_com=.true. &
+                    &, sort_by_g=.true. &
+                    &, edges=edges &
+                    &, weights=weights)
 !
     do i = 1, n_target - 1
       print *, "# ", edges(:, i), weights(i)

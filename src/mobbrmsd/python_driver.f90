@@ -362,7 +362,7 @@ contains
     integer(kind=ik), intent(in)      :: header(n_header)
     real(kind=rk), intent(in)         :: X(*)
     real(kind=rk), intent(in)         :: ropts(*) ! 1 cutoff 2 ub_cutoff 3 difflim
-    integer(kind=ik), intent(in)      :: iopts(*) ! 1 maxeval
+    integer(kind=ik), intent(in)      :: iopts(*) ! 1 n_work
     logical, intent(in)               :: remove_com
     logical, intent(in)               :: sort_by_g
     integer(kind=ik), intent(out)     :: edges(2, n_target - 1)
@@ -370,13 +370,15 @@ contains
     type(mobbrmsd)                    :: h
 
     call mobbrmsd_load(h, header)
-    call mobbrmsd_min_span_tree( &
-   &       n_target, h, X, &
-   &       remove_com=remove_com, &
-   &       sort_by_g=sort_by_g, &
-   &       edges=edges, &
-   &       weights=weights &
-   &    )
+    call mobbrmsd_min_span_tree(n_target &
+                             &, h &
+                             &, X &
+                             &, n_work=iopts(1) &
+                             &, remove_com=remove_com &
+                             &, sort_by_g=sort_by_g &
+                             &, edges=edges &
+                             &, weights=weights &
+                             &)
 
   end subroutine min_span_tree
 end module driver

@@ -99,7 +99,7 @@ module mod_mobbrmsd_lapack_routines_sp
   real(RK), parameter  :: BIGNUM = SAFMAX * ULP
   real(RK), parameter  :: RTMIN  = SQRT(SMLNUM)
   real(RK), parameter  :: RTMAX  = SQRT(BIGNUM)
-!  Blue's scaling constants
+!  Blues scaling constants
   real(RK), parameter  :: TSML   = real(RADIX(ZERO), RK)**CEILING( &
                                  & (MINEXPONENT(ZERO) - 1) * HALF)
   real(RK), parameter  :: TBIG   = real(RADIX(ZERO), RK)**FLOOR( &
