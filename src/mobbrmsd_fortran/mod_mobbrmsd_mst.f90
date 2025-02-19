@@ -1,5 +1,5 @@
 !| Configure a minimum global tree with mobbrmsd. <br>
-!  MST construction is based on the Prims algorithm,
+!  MST construction is based on the Kruscal algorithm,
 !  but the useless calculations are reduced using the cutoff possibilities of mobbrmsd.
 module mod_mobbrmsd_mst
 !$ use omp_lib
@@ -29,16 +29,17 @@ module mod_mobbrmsd_mst
 !
 contains
 !| minimum spanning tree construction.
-  subroutine mobbrmsd_min_span_tree( &
- &             n_target, &
- &             header, &
- &             X, &
- &             n_work, &
- &             remove_com, &
- &             sort_by_g, &
- &             edges, &
- &             weights &
- &            )
+  subroutine mobbrmsd_min_span_tree(n_target&
+                                 &, header &
+                                 &, X &
+                                 &, n_work &
+                                 &, remove_com &
+                                 &, sort_by_g &
+                                 &, verbose &
+                                 &, edges &
+                                 &, weights &
+                                 &, log_n_eval &
+                                 &)
     integer(IK), intent(in)             :: n_target
     !! number of coordinates
     type(mobbrmsd), intent(in)          :: header
@@ -51,17 +52,21 @@ contains
     !! if true, remove centroids. default [.true.]
     logical, intent(in), optional       :: sort_by_g
     !! if true, row is sorted respect to G of reference coordinate. default [.true.]
+    logical, intent(in), optional       :: verbose
+    !! if true, enable verbose output
     integer(IK), intent(out), optional  :: edges(2, n_target - 1)
     !! minimum spanning tree edges
     real(RK), intent(out), optional     :: weights(n_target - 1)
     !! minimum spanning tree weights
+    real(RK), intent(out), optional     :: log_n_eval
+    !! log_n_eval
     type(heap_container)                :: core(n_target - 1) ! heap container
     integer(IK)                         :: par(n_target) ! for union find
     integer(IK)                         :: n_tri, ldw, ldx
     integer(IK)                         :: n_core, n_reco, n_thread, n_edge, n_heap
     integer(IK)                         :: i, j, k
 !
-    if (.not. PRESENT(edges) .and. .not. PRESENT(weights)) return
+    if (.not. PRESENT(edges) .and. .not. PRESENT(weights) .and. .not. PRESENT(log_n_eval)) return
 !
     n_edge = n_target - 1
     n_tri = n_target * (n_target - 1) / 2
@@ -93,7 +98,7 @@ contains
                                &, state &
                                &, X &
                                &, wrkmem &
-                               &, maxeval=1 &
+                               &, maxeval=0 &
                                &, remove_com=remove_com &
                                &, sort_by_g=sort_by_g &
                                & )
@@ -120,7 +125,7 @@ contains
                        &)
 !
         lambda = hcon(hptr(1))%lb
-        !print *, n_core, n_reco, SUM(mobbrmsd_state_n_eval(state)), lambda
+        !print *, mobbrmsd_state_log_sum_n_eval(n_tri, state)
         do while (n_core < n_edge .and. n_edge - n_core <= n_reco)
           !print *, 'sort_heap'
           call sort_heap(n_edge &
@@ -179,6 +184,9 @@ contains
         do concurrent(k=1:n_edge)
           weights(k) = core(k)%lb
         end do
+      end if
+      if (PRESENT(log_n_eval)) then
+        log_n_eval = mobbrmsd_state_log_sum_n_eval(n_tri, state)
       end if
     end block
 !
@@ -315,27 +323,27 @@ contains
         if (s == IS_FINISHED) cycle
         if (s == NOT_EVALUATED) then
           block
-            integer(IK) :: i, j
+            integer(IK) :: i, j, xpnt, ypnt
             call cantor_pair_inverse(p, i, j)
+            xpnt = (j - 1) * ldx + 1
+            ypnt = (i - 1) * ldx + 1
             call mobbrmsd_run(header &
                            &, st &
-                           &, X((i - 1) * ldx + 1) &
-                           &, X((j - 1) * ldx + 1) &
+                           &, X(xpnt) &
+                           &, X(ypnt) &
                            &, wrkmem(1, h) &
                            &, remove_com=remove_com &
                            &, sort_by_g=sort_by_g &
-                           &, cutoff=cutoff &
                            & )
           end block
         elseif (s == NOT_FINISHED) then
           call mobbrmsd_restart(header &
                              &, st &
                              &, wrkmem(1, h) &
-                             &, cutoff=cutoff &
                              & )
         end if
-        lb = mobbrmsd_state_lowerbound_as_rmsd(state(p))
-        ub = mobbrmsd_state_lowerbound_as_rmsd(state(p))
+        lb = mobbrmsd_state_lowerbound_as_rmsd(st)
+        ub = mobbrmsd_state_lowerbound_as_rmsd(st)
         s = MERGE(IS_FINISHED, NOT_FINISHED, mobbrmsd_state_is_finished(st))
       end associate
     end do

@@ -142,7 +142,7 @@ contains
     !! if true, remove centroids. default [.true.]
     logical, intent(in), optional        :: sort_by_g
     !! if true, row is sorted respect to G of reference coordinate. default [.true.]
-    logical, intent(in), optional       :: difflim_absolute
+    logical, intent(in), optional        :: difflim_absolute
     !! if true, use absolute difflim. default [.false.]
     integer(IK), intent(in), optional    :: n_lower
     !! Specify the lower limit of the range to be calculated. Default [1].
@@ -170,10 +170,19 @@ contains
       xpnt = xpnt * ldx + 1
       ypnt = ypnt * ldx + 1
       wpnt = ldw * omp_get_thread_num() + 1
-      call mobbrmsd_run(header, state(spnt), X(xpnt), X(ypnt), W(wpnt), &
-     &                  cutoff=cutoff, ub_cutoff=ub_cutoff, difflim=difflim, maxeval=maxeval, &
-     &                  remove_com=remove_com, sort_by_g=sort_by_g &
-     &      )
+      call mobbrmsd_run(header &
+                     &, state(spnt) &
+                     &, X(xpnt) &
+                     &, X(ypnt) &
+                     &, W(wpnt) &
+                     &, cutoff=cutoff &
+                     &, ub_cutoff=ub_cutoff &
+                     &, difflim=difflim &
+                     &, maxeval=maxeval &
+                     &, remove_com=remove_com &
+                     &, sort_by_g=sort_by_g &
+                     &, difflim_absolute=difflim_absolute &
+                     & )
     end do
     !$omp end parallel
   end subroutine mobbrmsd_batch_tri_run

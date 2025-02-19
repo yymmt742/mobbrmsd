@@ -18,6 +18,7 @@ module mod_mobbrmsd_state
   public :: mobbrmsd_state_lowerbound_as_rmsd
   public :: mobbrmsd_state_n_eval
   public :: mobbrmsd_state_log_n_eval
+  public :: mobbrmsd_state_log_sum_n_eval
   public :: mobbrmsd_state_eval_ratio
   public :: mobbrmsd_state_log_eval_ratio
   public :: mobbrmsd_state_has_rotation_matrix
@@ -284,6 +285,29 @@ contains
     end if
     end associate
   end function mobbrmsd_state_n_eval
+!
+  pure function mobbrmsd_state_log_sum_n_eval(n, state) result(res)
+    integer(IK), intent(in)          :: n
+    type(mobbrmsd_state), intent(in) :: state(n)
+    real(RK)                         :: maxn, res
+    integer(IK)                      :: i
+    if (n < 1) then
+      res = -HUGE(0.0_RK)
+      return
+    end if
+    associate (NE => mobbrmsd_state_INDEX_TO_N_EVAL)
+      maxn = state(1)%z(NE)
+      do i = 2, n
+        maxn = MAX(maxn, state(i)%z(NE))
+      end do
+      maxn = LOG(maxn)
+      res = 0.0_RK
+      do i = 1, n
+        res = res + EXP(LOG(state(i)%z(NE)) - maxn)
+      end do
+      res = LOG(res) + maxn
+    end associate
+  end function mobbrmsd_state_log_sum_n_eval
 !
 !| returns eval_ratio
   pure elemental function mobbrmsd_state_eval_ratio(this) result(res)

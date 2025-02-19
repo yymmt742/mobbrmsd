@@ -348,6 +348,7 @@ contains
     integer(IK)             :: redges(2, n_target - 1)
     real(RK)                :: weights(n_target - 1)
     real(RK)                :: refer(n_target, n_target)
+    real(RK)                :: log_n_eval
     integer(IK)             :: n_works(2)
     integer(IK)             :: i, j, k, itest, imode, nerr
     character(*), parameter :: msg(2) = ['is_same_graph n_works=0', 'is_same_graph n_works=2']
@@ -380,9 +381,11 @@ contains
         end do
 !
         call mobbrmsd_min_span_tree(n_target, mobb, X, n_work=n_works(imode),&
-       &                            edges=edges, weights=weights)
+       &                            edges=edges, weights=weights, log_n_eval=log_n_eval)
 !
         call mobbrmsd_batch_tri_run(n_target, mobb, state, X, W)
+        print '(F9.3,I12)', EXP(log_n_eval) / EXP(mobbrmsd_state_log_sum_n_eval(SIZE(state), state))&
+                         &, NINT(EXP(mobbrmsd_state_log_sum_n_eval(SIZE(state), state)))
 !
         k = 0
         do j = 1, n_target
