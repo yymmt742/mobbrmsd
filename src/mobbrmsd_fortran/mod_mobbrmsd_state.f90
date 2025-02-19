@@ -17,6 +17,7 @@ module mod_mobbrmsd_state
   public :: mobbrmsd_state_upperbound_as_rmsd
   public :: mobbrmsd_state_lowerbound_as_rmsd
   public :: mobbrmsd_state_n_eval
+  public :: mobbrmsd_state_log_n_eval
   public :: mobbrmsd_state_eval_ratio
   public :: mobbrmsd_state_log_eval_ratio
   public :: mobbrmsd_state_has_rotation_matrix
@@ -255,6 +256,20 @@ contains
     end if
     end associate
   end function mobbrmsd_state_lowerbound_as_rmsd
+!
+!| returns log_n_eval
+  pure elemental function mobbrmsd_state_log_n_eval(this) result(res)
+    type(mobbrmsd_state), intent(in) :: this
+    !! this
+    real(RK)                         :: res
+    associate (NE => mobbrmsd_state_INDEX_TO_N_EVAL)
+    if (SIZE(this%z) >= NE) then
+      res = LOG(this%z(NE))
+    else
+      res = -HUGE(0.0_RK)
+    end if
+    end associate
+  end function mobbrmsd_state_log_n_eval
 !
 !| returns n_eval
   pure elemental function mobbrmsd_state_n_eval(this) result(res)
