@@ -27,6 +27,7 @@ contains
     integer(IK)              :: n_dim, n_atm, n_header, n_int, n_float, n_rot, n_mem, n_job
     integer(IK), allocatable :: h(:)
     real(RK), allocatable    :: rmsd(:), W(:, :)
+    real(RK)                 :: log_n_eval
     integer(IK)              :: i, j, k, l
 !
     call decode_attributes(SIZE(seq), seq, att)
@@ -69,7 +70,7 @@ contains
    &  n_header, h, &
    &  X, W, &
    &  [999.0_RK, 999.0_RK, 0.0_RK], [-1], .true., .true., .false., &
-   &  rmsd)
+   &  rmsd, log_n_eval)
 !
     k = 0
     do j = 1, n_target
@@ -96,6 +97,7 @@ contains
     real(RK), allocatable    :: X(:, :, :, :), Y(:, :, :, :)
     integer(IK), allocatable :: h(:)
     real(RK), allocatable    :: W(:, :), rmsd(:, :)
+    real(RK)                 :: log_n_eval
     integer(IK)              :: i, j, k, l
 !
     call decode_attributes(SIZE(seq), seq, att)
@@ -144,7 +146,7 @@ contains
    &  1, n_header, h, &
    &  X, Y, W, &
    &  [999.0_RK, 999.0_RK, 0.0_RK], [-1], .true., .true., .false., &
-   &  rmsd)
+   &  rmsd, log_n_eval)
 !
     do j = 1, n_target
       do i = 1, n_reference
@@ -164,7 +166,7 @@ contains
     integer(IK)              :: att(8)
     integer(IK)              :: n_dim, n_atm, n_header, n_int, n_float, n_rot, n_mem, n_job
     integer(IK)              :: edges(2, n_target - 1)
-    real(RK)                 :: weights(n_target - 1)
+    real(RK)                 :: weights(n_target - 1), log_n_eval
     integer(IK), allocatable :: header(:), int_states(:, :, :)
     real(RK), allocatable    :: float_states(:, :, :)
     integer(IK)              :: i
@@ -197,8 +199,11 @@ contains
                     &, iopts=[0_IK] &
                     &, remove_com=.true. &
                     &, sort_by_g=.true. &
+                    &, verbose=.true. &
                     &, edges=edges &
-                    &, weights=weights)
+                    &, weights=weights &
+                    &, log_n_eval=log_n_eval &
+                    & )
 !
     do i = 1, n_target - 1
       print *, "# ", edges(:, i), weights(i)

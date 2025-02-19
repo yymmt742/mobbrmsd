@@ -524,7 +524,6 @@ class mobbrmsd:
         self,
         x: npt.NDArray,
         y: Union[None, npt.NDArray] = None,
-        # y: None | npt.NDArray = None,
         cutoff: float = float("inf"),
         ub_cutoff: float = float("inf"),
         difflim: float = 0.0,
@@ -573,6 +572,8 @@ class mobbrmsd:
         :rtype: npt.NDArray
         """
 
+        n_eval = 0
+
         if y is None:
             dt = x.dtype
             x_ = self.to_rank3_coordinates(x)
@@ -586,7 +587,7 @@ class mobbrmsd:
             iopts = numpy.array([maxeval], dtype=numpy.int32)
 
             if n_tri == n_chunk_ or not verbose:
-                r_tri = driver.batch_run_tri(
+                r_tri, log_n_eval = driver.batch_run_tri(
                     n_target,
                     n_tri,
                     1,
@@ -599,6 +600,7 @@ class mobbrmsd:
                     sort_by_g,
                     difflim_absolute,
                 )
+                n_eval += int(numpy.exp(log_n_eval))
             else:
                 n_lower = 1
                 nrep = (n_tri + n_chunk_ - 1) // n_chunk_
@@ -606,7 +608,7 @@ class mobbrmsd:
                 for i in trange(nrep, *args, **kwargs):
                     l = n_lower - 1
                     u = min([l + n_chunk_, n_tri])
-                    r_tri[l:u] = driver.batch_run_tri(
+                    r_tri[l:u], log_n_eval = driver.batch_run_tri(
                         n_target,
                         min(n_chunk_, n_tri - n_lower + 1),
                         n_lower,
@@ -620,6 +622,7 @@ class mobbrmsd:
                         difflim_absolute,
                     )
                     n_lower += n_chunk_
+                    n_eval += int(numpy.exp(log_n_eval))
             ret = numpy.zeros([n_target, n_target], dtype=dt)
             k = 0
             for j in range(n_target):
@@ -642,7 +645,7 @@ class mobbrmsd:
             iopts = numpy.array([maxeval], dtype=numpy.int32)
 
             if n_tri == n_chunk_ or not verbose:
-                ret = driver.batch_run(
+                ret, log_n_eval = driver.batch_run(
                     n_reference,
                     n_target,
                     n_tri,
@@ -657,6 +660,7 @@ class mobbrmsd:
                     sort_by_g,
                     difflim_absolute,
                 )
+                n_eval += int(numpy.exp(log_n_eval))
             else:
                 n_lower = 1
                 nrep = (n_tri + n_chunk_ - 1) // n_chunk_
@@ -664,7 +668,7 @@ class mobbrmsd:
                 for i in trange(nrep, *args, **kwargs):
                     l = n_lower - 1
                     u = min([l + n_chunk_, n_tri])
-                    ret[l:u] = driver.batch_run(
+                    ret[l:u], log_n_eval = driver.batch_run(
                         n_reference,
                         n_target,
                         min(n_chunk_, n_tri - n_lower + 1),
@@ -680,8 +684,12 @@ class mobbrmsd:
                         difflim_absolute,
                     )
                     n_lower += n_chunk_
+                    n_eval += int(numpy.exp(log_n_eval))
             ret = ret.reshape([n_target, n_reference])
         del driver
+
+        self.n_eval = n_eval
+
         return ret
 
     def min_span_tree(
@@ -719,7 +727,7 @@ class mobbrmsd:
         ropts = numpy.array([0.0, 0.0, 0.0], dtype=dt)
         iopts = numpy.array([n_work], dtype=numpy.int32)
 
-        edges, weights = driver.min_span_tree(
+        edges, weights, log_n_eval = driver.min_span_tree(
             n_target,
             self.header,
             x_,
@@ -727,12 +735,15 @@ class mobbrmsd:
             iopts,
             remove_com,
             sort_by_g,
+            verbose,
         )
         del driver
 
         g = networkx.Graph()
         for e, w in zip(edges.T, weights):
             g.add_edge(e[0] - 1, e[1] - 1, weight=w)
+
+        self.n_eval = int(numpy.exp(log_n_eval))
 
         return g
 
