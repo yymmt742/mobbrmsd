@@ -259,7 +259,9 @@ class mobbrmsd_result:
         self,
     ) -> npt.NDArray:
         driver = _select_driver(self.d)
-        ret = numpy.empty(round(1 / self.rstate["""RECIPROCAL_OF_N"""]), , dtype=self.header.dtype)
+        ret = numpy.empty(
+            round(1 / self.rstate["""RECIPROCAL_OF_N"""]), dtype=self.header.dtype
+        )
         driver.permutation_indices(self.header, self.istate, self.rstate, ret)
         del driver
         return ret
@@ -816,8 +818,3 @@ class mobbrmsd:
     def __repr__(self):
         kws = [f"{key}={value!r}" for key, value in self.__dict__.items()]
         return "{}({})".format(type(self).__name__, ", ".join(kws))
-
-Aborted!
-error: cannot format -: Cannot parse: 820:7: Aborted!
-error: cannot format -: Cannot parse: 262:73:         ret = numpy.empty(round(1 / self.rstate["""RECIPROCAL_OF_N"""]), , dtype=self.header.dtype)
-error: cannot format -: Cannot parse: 262:73:         ret = numpy.empty(round(1 / self.rstate["""RECIPROCAL_OF_N"""]), , dtype=self.header.dtype)

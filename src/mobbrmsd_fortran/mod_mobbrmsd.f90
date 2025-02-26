@@ -13,6 +13,10 @@ module mod_mobbrmsd
   use mod_bb_block
   use mod_mobbrmsd_state
   implicit none
+  private
+  public :: mol_block_input
+  public :: mol_block_input_add_molecule
+  public :: mol_block_input_destroy
   public :: setup_dimension
   public :: mobbrmsd_input_init
   public :: mobbrmsd_input
@@ -33,6 +37,7 @@ module mod_mobbrmsd
   public :: mobbrmsd_memsize
   public :: mobbrmsd_swap
   public :: mobbrmsd_swap_and_rotation
+  public :: mobbrmsd_swap_indices
   public :: mobbrmsd_dump
   public :: mobbrmsd_load
   public :: mobbrmsd_destroy
@@ -418,15 +423,17 @@ contains
     res = INT(LN_TO_L10 * bb_list_log_n_nodes(this%q), IK)
   end function mobbrmsd_exp_n_nodes
 !
-!| returns swap indices
-  pure subroutine mobbrmsd_swap_indices(this, state, IX)
-    type(mobbrmsd), intent(in)       :: this
+!| returns permutation indices for target coordinates.
+  pure subroutine mobbrmsd_swap_indices(this, state, IX, base)
+    type(mobbrmsd), intent(in)        :: this
     !! mobbrmsd header
-    type(mobbrmsd_state), intent(in) :: state
+    type(mobbrmsd_state), intent(in)  :: state
     !! this
-    integer(IK), intent(inout)       :: IX(*)
+    integer(IK), intent(inout)        :: IX(*)
     !! coordinate
-    call bb_list_swap_indices(this%q, state%s, IX)
+    integer(IK), intent(in), optional :: base
+    !! manual index base, default 1.
+    call bb_list_swap_indices(this%q, state%s, IX, base)
   end subroutine mobbrmsd_swap_indices
 !
 !| swap and rotation y

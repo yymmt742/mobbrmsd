@@ -256,7 +256,7 @@ contains
 
     call mobbrmsd_load(h, header)
     call mobbrmsd_state_load(s, int_states, z=float_states)
-    call mobbrmsd_swap_indices(h, s, IX)
+    call mobbrmsd_swap_indices(h, s, IX, base=0_IK)
 
   end subroutine permutation_indices
 
