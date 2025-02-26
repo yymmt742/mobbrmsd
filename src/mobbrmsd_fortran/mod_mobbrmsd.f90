@@ -31,6 +31,7 @@ module mod_mobbrmsd
   public :: mobbrmsd_exp_n_nodes
   public :: mobbrmsd_attributes
   public :: mobbrmsd_memsize
+  public :: mobbrmsd_swap
   public :: mobbrmsd_swap_and_rotation
   public :: mobbrmsd_dump
   public :: mobbrmsd_load
@@ -417,7 +418,7 @@ contains
     res = INT(LN_TO_L10 * bb_list_log_n_nodes(this%q), IK)
   end function mobbrmsd_exp_n_nodes
 !
-!| swap and rotation y
+!| returns swap indices
   pure subroutine mobbrmsd_swap_indices(this, state, IX)
     type(mobbrmsd), intent(in)       :: this
     !! mobbrmsd header
@@ -429,17 +430,27 @@ contains
   end subroutine mobbrmsd_swap_indices
 !
 !| swap and rotation y
-  pure subroutine mobbrmsd_swap_and_rotation(this, state, X)
+  pure subroutine mobbrmsd_swap(this, state, Y)
     type(mobbrmsd), intent(in)       :: this
     !! mobbrmsd header
     type(mobbrmsd_state), intent(in) :: state
     !! this
-    real(RK), intent(inout)           :: X(*)
-    !! coordinate
-    associate (rt => mobbrmsd_state_INDEX_TO_ROTMAT)
-      call bb_list_swap_y(this%q, state%s, X)
-      if (mobbrmsd_state_has_rotation_matrix(state)) call rotate(this%d, mobbrmsd_n_atoms(this), state%z(rt), X)
-    end associate
+    real(RK), intent(inout)           :: Y(*)
+    !! coordinate Y
+    call bb_list_swap_y(this%q, state%s, Y)
+  end subroutine mobbrmsd_swap
+!
+!| swap and rotation y
+  pure subroutine mobbrmsd_swap_and_rotation(this, state, Y)
+    type(mobbrmsd), intent(in)       :: this
+    !! mobbrmsd header
+    type(mobbrmsd_state), intent(in) :: state
+    !! this
+    real(RK), intent(inout)           :: Y(*)
+    !! coordinate Y
+    call bb_list_swap_y(this%q, state%s, Y)
+    if (mobbrmsd_state_has_rotation_matrix(state)) &
+   &  call rotate(this%d, mobbrmsd_n_atoms(this), state%z(mobbrmsd_state_INDEX_TO_ROTMAT), Y)
   contains
     pure subroutine rotate(n_dims, n_atoms, R, X)
       integer(IK), intent(in) :: n_dims, n_atoms
