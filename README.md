@@ -12,7 +12,7 @@
 <h3 align="center">mobbrmsd</h3>
 
   <p align="center">
-    molecular-oriented RMSD with the branch-and-bound.
+    An algorithm for efficient superposition and clustering of molecular assemblies using branch-and-bound method.
     <br />
 <!--
     <a href="https://github.com/yymmt742/mobbrmsd"><strong>Explore the docs »</strong></a>
@@ -132,10 +132,6 @@ To use the Python interface, you additionally need the following:
 
 ## Usage
 
-   Running via
-   ```sh
-   python -m mobbrmsd run -i <input>
-   ```
    The input is json format, and a simple example is as follows
    ```json
    {
@@ -158,6 +154,9 @@ To use the Python interface, you additionally need the following:
    ```
    In this example, the system contains one hydrogen fluoride and four waters.
    Intramolecular permutations resulting from the swapping of hydrogen positions are specified for water molecules.
+   sym is a list of index arrays (list[int]) enumerating the intramolecular permutations represented by substitutions.
+   Identity permutation (i.e., [0,1,... n_apm-1]) are ignored if you input it.
+   
    The file load backend is [MDtraj](https://mdtraj.org/1.9.4/api/generated/mdtraj.load.html).
    See [documentation](https://mdtraj.org/1.9.4/api/generated/mdtraj.load.html) for supported formats.
    Only coordinates are referenced from the file; information such as residues and atom types are not used.
@@ -178,6 +177,12 @@ To use the Python interface, you additionally need the following:
    ATOM     12  OH  WAT A   4       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           O
    ATOM     13  H1  WAT A   4       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
    ATOM     14  H2  WAT A   4       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H  
+   ```
+
+  You can run the calculations with the following commands:
+  
+   ```sh
+   python -m mobbrmsd run -i <input>
    ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
