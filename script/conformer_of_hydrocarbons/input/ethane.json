@@ -1,0 +1,9 @@
+{
+  "name": "ethane"
+ ,"template": "./templates/ethane.mol"
+ ,"n_apm": [4]
+ ,"n_mol": [2]
+ ,"sym": [[[0, 3, 1, 2], [0, 2, 3, 1]]]
+ ,"permutation": [0, 2, 3, 4, 1, 5, 6, 7]
+ ,"permute_groups": [[0, 1], [2, 3, 4, 5, 6, 7]]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "propane"
+ ,"template": "./templates/propane.mol"
+ ,"n_apm": [4, 3]
+ ,"n_mol": [2, 1]
+ ,"sym": [[[0, 3, 1, 2], [0, 2, 3, 1]], [[0, 2, 1]]]
+ ,"permutation": [1, 5, 6, 7, 2, 8, 9, 10, 0, 3, 4]
+ ,"permute_groups": [[0], [1, 2], [3, 4, 5, 6, 7, 8, 9, 10]]
+}
