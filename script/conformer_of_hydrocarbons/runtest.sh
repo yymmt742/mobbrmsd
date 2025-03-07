@@ -1,8 +1,7 @@
 #!/bin/bash
 
 sys=("ethane" "propane" "isobutane" "neopentane" "tetramethylbutane" "hexamethylpentane" "tetramethylhexane" "tetramethylpentane" "octamethylhexane")
-n_sample=("3" "3" "3" "3" "3" "3" "3" "3" "3")
-#n_sample=("10" "10" "10" "10" "10" "10" "10" "10" "10")
+n_sample=("10" "10" "10" "10" "10" "10" "10" "10" "10")
 run_getbestrms=("1" "1" "1" "1" "1" "0" "0" "0" "0")
 
 for i in "${!sys[@]}"; do

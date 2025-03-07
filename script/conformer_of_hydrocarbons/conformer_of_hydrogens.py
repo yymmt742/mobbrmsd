@@ -1,14 +1,14 @@
 #!/bin/env python
 import sys
+import time
+import json
+from pathlib import Path
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Geometry import Point3D
 import mdtraj as md
 import numpy as np
 import mobbrmsd
-import time
-import json
-from pathlib import Path
 import pandas as pd
 
 
@@ -152,4 +152,3 @@ run(
     permute_groups=js["permute_groups"],
     skip_GetBestRMS=skip_GetBestRMS,
 )
-exit()

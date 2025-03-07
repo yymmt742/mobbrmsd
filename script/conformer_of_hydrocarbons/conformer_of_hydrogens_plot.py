@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import pandas as pd
-import colorsets
 from pathlib import Path
 
 
@@ -78,7 +77,7 @@ def plot_corr_dummy_map(ax, x, y, lim, bw=None):
         ys,
         z,
         levels=level,
-        colors=[colorsets.sorg, colorsets.ured],
+        colors=[sorg, ured],
     )
 
 
@@ -92,9 +91,9 @@ systems = np.unique(df["system"])[[0, 5, 2, 3, 6, 8, 7, 1, 4]]
 
 for key, c, mec, mfc, delta, marker, ms, mss, mew, elinewidth in zip(
     ["time_rdkit", "time_mobbrmsd", "time_lprmsd_pg"],
-    [colorsets.uppl, colorsets.uorg, colorsets.ublk],
-    [colorsets.uppl, colorsets.uorg, colorsets.ublk],
-    [colorsets.uwht, colorsets.uwht, colorsets.uwht],
+    [uppl, uorg, ublk],
+    [uppl, uorg, ublk],
+    [uwht, uwht, uwht],
     [0.0, 0.0, 0.0],
     ["s", "o", "_"],
     [6, 6, 8],
@@ -175,7 +174,7 @@ for method, label in zip(
         n_points = xm.shape[0]
         lim = 4.0
 
-        ax1.plot([0, lim], [0, lim], c=colorsets.ugrd)
+        ax1.plot([0, lim], [0, lim], c=ugrd)
         ax1.scatter(
             xg[:100],
             xm[:100],
@@ -227,6 +226,5 @@ for method, label in zip(
         ax2.set_ylabel("mobbrmsd")
         ax2.set_box_aspect(1)
         plt.savefig(f"{method}_{system}.png")
-        plt.savefig(f"{method}_{system}.eps")
         plt.clf()
         plt.close()
