@@ -412,23 +412,31 @@ contains
   end subroutine bb_list_swap_y
 !
 !| Swap target coordinate.
-  pure subroutine bb_list_swap_indices(q, s, IX)
-    integer(IK), intent(in)    :: q(*)
+  pure subroutine bb_list_swap_indices(q, s, IX, base)
+    integer(IK), intent(in)           :: q(*)
     !! header
-    integer(IK), intent(in)    :: s(*)
+    integer(IK), intent(in)           :: s(*)
     !! state
-    integer(IK), intent(inout) :: IX(*)
+    integer(IK), intent(inout)        :: IX(*)
     !! swap indices
-    integer(IK)             :: i, pb, pq, ps, pa
+    integer(IK), intent(in), optional :: base
+    !! manual index base, default 1.
+    integer(IK)                :: i, pb, pq, ps, pa
     associate (n_block => q(bb_list_NUMBER_OF_SPEACIES))
       pa = a_pointer(q)
       ps = s_pointer(q)
       pq = q_pointer(q)
       pb = bb_list_INDEX_TO_BESTSTATE
 !
-      do concurrent(i=1:bb_list_n_atoms(q))
-        IX(i) = i
-      end do
+      if (PRESENT(base)) then
+        do concurrent(i=1:bb_list_n_atoms(q))
+          IX(i) = i + base - 1
+        end do
+      else
+        do concurrent(i=1:bb_list_n_atoms(q))
+          IX(i) = i
+        end do
+      end if
       do i = 0, n_block - 1
         call bb_block_swap_indices(q(q(pq + i)), s(q(ps + i)), s(pb), IX(q(pa + i)))
         pb = pb + bb_block_statesize(q(q(pq + i)))

@@ -24,7 +24,7 @@ class mobbrmsd_result:
     :type istate: None | npt.NDArray
     :param rstate: state array 2
     :type rstate: None | npt.NDArray (float32/float64)
-    :param rot: rotation matrix
+    :param rot: rotation matrix, given by flatten
     :type rot: None | npt.NDArray, shape[d,d] (float32/float64)
     :param w: working memory
     :type w: None | npt.NDArray (float32/float64)
@@ -238,27 +238,33 @@ class mobbrmsd_result:
 
         del driver
 
-    ##
-    # @brief swap and rotate Y
-    # @details
-    # @param
-    #   y (numpy.ndarray): 対象構造
-    # @return None
-    def rotate_y(
+    def superpose(
         self,
         y: npt.NDArray,
-    ) -> None:
-        """swap and rotate Y.
-           swap and rotation target coordinate.
+    ) -> npt.NDArray:
+        """superpose Y.
+           Returns swap and rotation target coordinate.
 
         :param y: target coordinates.
-        :type y: npt.NDArray
+        :type y: 対象構造
+        :return: Superpose された構造
         """
-        y_ = y.flatten()
-        driver = _select_driver(self.d, dtype=y.dtype)
+        y_ = y.flatten().copy()
+        driver = _select_driver(self.d, dtype=y_.dtype)
         driver.rotate_y(self.header, self.istate, self.rstate, self.rot, y_)
         del driver
         return y_.reshape(y.shape)
+
+    def permutation_indices(
+        self,
+    ) -> npt.NDArray:
+        driver = _select_driver(self.d)
+        ret = numpy.empty(
+            round(1 / self.rstate["""RECIPROCAL_OF_N"""]), dtype=self.header.dtype
+        )
+        driver.permutation_indices(self.header, self.istate, self.rstate, ret)
+        del driver
+        return ret
 
     def __repr__(self):
         kws = [f"{key}={value!r}" for key, value in self.__dict__.items()]

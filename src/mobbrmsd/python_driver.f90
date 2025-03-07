@@ -13,6 +13,7 @@ module driver
   public setup_dimension_
   public run
   public restart
+  public permutation_indices
   public rotate_y
   public batch_run
   public batch_run_tri
@@ -230,10 +231,34 @@ contains
     type(mobbrmsd_state)         :: s
 
     call mobbrmsd_load(h, header)
-    call mobbrmsd_state_load(s, int_states, float_states, rotation)
+    call mobbrmsd_state_load(s, int_states, z=float_states, r=rotation)
     call mobbrmsd_swap_and_rotation(h, s, Y)
 
   end subroutine rotate_y
+
+  pure subroutine permutation_indices(n_header &
+                                   &, n_int &
+                                   &, n_float &
+                                   &, header &
+                                   &, int_states &
+                                   &, float_states &
+                                   &, IX &
+                                   & )
+    integer(kind=ik), intent(in)    :: n_header
+    integer(kind=ik), intent(in)    :: n_int
+    integer(kind=ik), intent(in)    :: n_float
+    integer(kind=ik), intent(in)    :: header(n_header)
+    integer(kind=ik), intent(in)    :: int_states(n_int)
+    real(kind=rk), intent(in)       :: float_states(n_float)
+    integer(kind=ik), intent(inout) :: IX(*)
+    type(mobbrmsd)                  :: h
+    type(mobbrmsd_state)            :: s
+
+    call mobbrmsd_load(h, header)
+    call mobbrmsd_state_load(s, int_states, z=float_states)
+    call mobbrmsd_swap_indices(h, s, IX, base=0_IK)
+
+  end subroutine permutation_indices
 
   subroutine batch_run(n_reference &
                     &, n_target &
