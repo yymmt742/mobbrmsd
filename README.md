@@ -245,16 +245,22 @@ YYMMT742 - yymmt@kuchem.kyoto-u.ac.jp
 <!-- Reference -->
 ## Reference
 
-Molecular superposition is based on the following algorithm
+Further details are available from the following publications:
 
-* [A solution for the best rotation to relate two sets of vectors](https://scripts.iucr.org/cgi-bin/paper?S0567739476001873)
-* [Rapid calculation of RMSDs using a quaternion-based characteristic polynomial](https://scripts.iucr.org/cgi-bin/paper?S0108767305015266)
-* [RMSD and Symmetry](https://onlinelibrary.wiley.com/doi/10.1002/jcc.25802)
+* [Yamamoto, Y. "Algorithm for Efficient Superposition and Clustering of Molecular Assemblies Using the Branch-and-Bound Method", _J. Chem. Inf. Model._ __2025__](https://doi.org/10.1021/acs.jcim.4c02217)
 
-The solution to the linear assignment problem for estimating the variational lower bound is based on the Hungarian method.
+This project is based on the following papers:
 
-* [The Hungarian method for the assignment problem](https://onlinelibrary.wiley.com/doi/10.1002/nav.3800020109)
-* [Algorithms for the Assignment and Transportation Problems](http://www.jstor.org/stable/2098689)
+Molecular superposition
+
+* [Kabsch, W. A solution for the best rotation to relate two sets of vectors. _Acta Crystallogr., Sect. A_ __1976__, 32, 922-923](https://scripts.iucr.org/cgi-bin/paper?S0567739476001873)
+* [Theobald, D. L. Rapid calculation of RMSDs using a quaternion-based characteristic polynomial. _Acta Crystallogr., Sect. A_:Found. Crystallogr._ __2005__, 61, 478-480](https://scripts.iucr.org/cgi-bin/paper?S0108767305015266)
+* [Coutsias, E. A.; Wester, M. J. RMSD and Symmetry. _J. Comput. Chem._ __2019__, 40, 1496-1508](https://onlinelibrary.wiley.com/doi/10.1002/jcc.25802)
+
+Linear assignment problem
+
+* [Kuhn, H. W. The Hungarian method for the assignment problem. _Naval Res. Logistics Quarterly_ __1955__, 2, 83-97](https://onlinelibrary.wiley.com/doi/10.1002/nav.3800020109)
+* [Munkres, J. Algorithms for the Assignment and Transportation Problems. _J. Soc. Ind. Appl. Math._ __1957__, 5, 32-38](http://www.jstor.org/stable/2098689)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
