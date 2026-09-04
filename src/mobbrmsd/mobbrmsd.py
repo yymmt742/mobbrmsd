@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""mobbrmsd driver routine
-
-"""
+"""mobbrmsd driver routine"""
 
 import numpy
 import numpy.typing as npt
@@ -15,19 +13,14 @@ class mobbrmsd_result:
     """mobbrmsd の計算結果と再計算用のメモリを管理するクラス.
        ほとんどの場合, ユーザーはインスタンスを生成する必要はありません.
 
-    :param driver: fortran driver
-    :param d: spatial dimension
-    :type d: int
-    :param header: header array
-    :type header: npt.NDArray
-    :param istate: state array 1
-    :type istate: None | npt.NDArray
-    :param rstate: state array 2
-    :type rstate: None | npt.NDArray (float32/float64)
-    :param rot: rotation matrix, given by flatten
-    :type rot: None | npt.NDArray, shape[d,d] (float32/float64)
-    :param w: working memory
-    :type w: None | npt.NDArray (float32/float64)
+    Args:
+        driver: fortran driver
+        d: spatial dimension
+        header: header array
+        istate: state array (integer part)
+        rstate: state array (real part)
+        rot: rotation matrix, given by flatten
+        param w: working memory
     """
 
     def __init__(
@@ -66,32 +59,32 @@ class mobbrmsd_result:
     def autocorr(self) -> float:
         """自己相関項.
 
-        :return: 自己相関項.
-        :rtype: float
+        Returns:
+            Autocorrelation term, G.
         """
         return float(self.rstate["""INDEX_TO_AUTOCORR"""])
 
     def lowerbound(self) -> float:
         """目的関数の変分下限.
 
-        :return: 変分下限.
-        :rtype: float
+        Returns:
+            Lowerbound of BB.
         """
         return float(self.rstate["""INDEX_TO_LOWERBOUND"""])
 
     def upperbound(self) -> float:
         """目的関数の上限.
 
-        :return: 変分上限.
-        :rtype: float
+        Returns:
+            Upperbound of BB.
         """
         return float(self.rstate["""INDEX_TO_UPPERBOUND"""])
 
     def lowerbound_as_rmsd(self) -> float:
         """RMSD 換算された変分下限.
 
-        :return: RMSD 換算された変分下限.
-        :rtype: float
+        Returns:
+            Lowerbound in RMSD.
         """
         rn = self.rstate["""RECIPROCAL_OF_N"""]
         return numpy.sqrt(
@@ -101,8 +94,8 @@ class mobbrmsd_result:
     def upperbound_as_rmsd(self) -> float:
         """RMSD 換算された上限.
 
-        :return: RMSD 換算された上限.
-        :rtype: float
+        Returns:
+            Upperbound in RMSD.
         """
         rn = self.rstate["""RECIPROCAL_OF_N"""]
         return numpy.sqrt(
@@ -113,8 +106,8 @@ class mobbrmsd_result:
         """二乗変位.
            計算が早期終了されている場合, これは暫定値で, 真の解よりも大きい可能性があります。
 
-        :return: 二乗変位.
-        :rtype: float
+        Returns:
+            Squared displacement.
         """
         ret = float(2 * self.upperbound() + self.autocorr())
         if ret < 0.0:
@@ -126,8 +119,8 @@ class mobbrmsd_result:
         """平均二乗変位.
            計算が早期終了されている場合, これは暫定値で, 真の解よりも大きい可能性があります。
 
-        :return: 平均二乗変位.
-        :rtype: float
+        Returns:
+            Mean squared displacement.
         """
         rn = self.rstate["""RECIPROCAL_OF_N"""]
         return float(rn * self.sd())
@@ -136,24 +129,24 @@ class mobbrmsd_result:
         """RMSD.
            計算が早期終了されている場合, これは暫定値で, 真の解よりも大きい可能性があります。
 
-        :return: RMSD.
-        :rtype: float
+        Returns:
+            Root mean squared displacement.
         """
         return float(numpy.sqrt(self.msd()))
 
     def bounds(self) -> npt.NDArray:
         """目的関数の厳密解が含まれる区間.
 
-        :return: lowerbound, upperbound
-        :rtype: npt.NDArray
+        Returns:
+            Lowerbound and upperbound
         """
         return numpy.array([self.lowerbound(), self.upperbound()])
 
     def bounds_as_rmsd(self) -> npt.NDArray:
         """RMSD 換算の厳密解が含まれる区間.
 
-        :return: lowerbound, upperbound
-        :rtype: npt.NDArray
+        Returns:
+            Lowerbound and upperbound in RMSD.
         """
         rn = self.rstate["""RECIPROCAL_OF_N"""]
         return rn * (2 * self.bounds() + self.autocorr())
@@ -161,32 +154,32 @@ class mobbrmsd_result:
     def n_eval(self) -> int:
         """計算回数.
 
-        :return: 計算回数.
-        :rtype: int
+        Returns:
+            Number of evaluations.
         """
         return int(self.rstate["""INDEX_TO_N_EVAL"""])
 
     def log_eval_ratio(self) -> float:
         """全探索に対する、計算回数の割合の対数.
 
-        :return: 計算回数の割合の対数.
-        :rtype: float
+        Returns:
+            Ratio of evaluations in log.
         """
         return self.rstate["""INDEX_TO_LOG_RATIO"""]
 
     def eval_ratio(self) -> float:
         """全探索に対する、計算回数の割合.
 
-        :return: 計算回数の割合.
-        :rtype: float
+        Returns:
+            Ratio of evaluations.
         """
         return numpy.exp(self.log_eval_ratio())
 
     def is_finished(self) -> bool:
         """探索が最後まで完了しているか.
 
-        :return: 探索が完了しているならTrue.
-        :rtype: bool
+        Returns:
+            True if BB is complete.
         """
         return self.istate[-1] == ("""IS_FINISHED_FLAG""")
 
@@ -202,21 +195,16 @@ class mobbrmsd_result:
         """途中終了した計算を再開します.
            計算結果はインスタンスに上書きされます.
 
-        :param cutoff: BBの下限がRMSD換算でcutoff以上になったとき, 計算を終了する. default=float(inf).
-        :type cutoff: float
-        :param ub_cutoff: BBの上限がRMSD換算でub_cutoff以上であれば, 計算を終了する. default=float(inf).
-        :type ub_cutoff: float
-        :param difflim: BBの上限と下限の差が difflim 以下になったとき,計算を終了する. default=0.0.
-        :type difflim: float
-        :param maxeval: BBのノード評価数がmaxevalを超えたとき,計算を終了する.
+        Args:
+            cutoff: BBの下限がRMSD換算でcutoff以上になったとき, 計算を終了する. default=float(inf).
+            ub_cutoff: BBの上限がRMSD換算でub_cutoff以上であれば, 計算を終了する. default=float(inf).
+            difflim: BBの上限と下限の差が difflim 以下になったとき,計算を終了する. default=0.0.
+            maxeval: BBのノード評価数がmaxevalを超えたとき,計算を終了する.
                         ただし,最低でも expand と closure の1サイクルは実行される.
                         maxeval < 0 のとき,無制限.
                         default=-1.
-        :type maxeval: int
-        :param difflim_absolute: True なら difflim を RMSD 換算で用いる. default=False.
-        :type difflim_absolute: bool
-        :param get_rotation: 回転行列を計算する. default=False.
-        :type get_rotation: bool
+            difflim_absolute: True なら difflim を RMSD 換算で用いる. default=False.
+            get_rotation: 回転行列を計算する. default=False.
         """
         if not hasattr(self, "w"):
             return
@@ -245,9 +233,11 @@ class mobbrmsd_result:
         """superpose Y.
            Returns swap and rotation target coordinate.
 
-        :param y: target coordinates.
-        :type y: 対象構造
-        :return: Superpose された構造
+        Args:
+           y: target coordinates. shape[n, d]
+
+        Returns:
+           Superpose された構造Y', shape[n, d]
         """
         y_ = y.flatten().copy()
         driver = _select_driver(self.d, dtype=y_.dtype)
@@ -258,6 +248,11 @@ class mobbrmsd_result:
     def permutation_indices(
         self,
     ) -> npt.NDArray:
+        """Permutation_indices.
+
+        Returns:
+           Superpose された構造
+        """
         driver = _select_driver(self.d)
         ret = numpy.empty(
             round(1 / self.rstate["""RECIPROCAL_OF_N"""]), dtype=self.header.dtype
@@ -348,10 +343,9 @@ def _select_dtype(x: npt.NDArray, y: npt.NDArray):
 class mobbrmsd:
     """mobbrmsd driver
 
-    :param mols: molecules/molecular_system specifier
-    :type mols: molecules | molecular_system
-    :param d: Spatial dimension. default=3.
-    :type d: int
+    Args:
+        mols: molecules/molecular_system specifier
+        d: Spatial dimension. default=3.
     """
 
     def __init__(
@@ -406,14 +400,12 @@ class mobbrmsd:
         y: npt.NDArray,
     ) -> float:
         """calculate RMSD of a structural pair. (Simplified interface)
-           RMSDを計算します.
 
-        :param x: reference coordinates, rank 2.
-        :type x: npt.NDArray
-        :param y: target coordinates, rank 2.
-        :type y: npt.NDArray
-        :return: rmsd value.
-        :rtype: float
+        Args:
+           x: reference coordinates, rank 2.
+           y: target coordinates, rank 2.
+
+        Returns: rmsd value.
         """
         dt = _select_dtype(x, y)
         driver = _select_driver(self.d, dtype=dt)
@@ -464,33 +456,22 @@ class mobbrmsd:
            RMSD, 自己相関, 上下限, 分子の置換インデックス, 回転行列 (optional)を計算します.
            計算が早期終了された場合, mobbrmsd_result はインスタンスは計算再開用のデータを保持します.
 
-        :param x: reference coordinates, rank 2.
-        :type x: npt.NDArray
-        :param y: target coordinates, rank 2.
-        :type y: npt.NDArray
-        :param cutoff: BBの下限がRMSD換算でcutoff以上になったとき, 計算を終了する. default=float(inf).
-        :type cutoff: float
-        :param ub_cutoff: BBの上限がRMSD換算でub_cutoff以上であれば, 計算を終了する. default=float(inf).
-        :type ub_cutoff: float
-        :param difflim: BBの上限と下限の差が difflim 以下になったとき,計算を終了する. default=0.0.
-        :type difflim: float
-        :param maxeval: BBのノード評価数がmaxevalを超えたとき,計算を終了する.
-                        ただし,最低でも expand と closure の1サイクルは実行される.
-                        maxeval < 0 のとき,無制限.
-                        default=-1.
-        :type maxeval: int
-        :param remove_com: 参照構造と対照構造から重心を除去する. default=True.
-        :type remove_com: bool
-        :param sort_by_g: 参照構造を自己分散の大きい順に並び替えて計算を実行する. default=True.
-        :type sort_by_g: bool
-        :param difflim_absolute: True なら difflim を RMSD 換算で用いる. default=False.
-        :type difflim_absolute: bool
-        :param rotate_y: 対象構造に対して置換と回転を実行する. default=False.
-        :type rotate_y: bool
-        :param get_rotation: 回転行列を計算する. default=False.
-        :type get_rotation: bool
-        :return: RMSD, 自己相関, 上下限, 分子の置換インデックス, 回転行列 (optional), 計算再開用データ(早期終了時).
-        :rtype: mobbrmsd_result
+        Args:
+            x: reference coordinates, rank 2.
+            y: target coordinates, rank 2.
+            cutoff: BBの下限がRMSD換算でcutoff以上になったとき, 計算を終了する. default=float(inf).
+            ub_cutoff: BBの上限がRMSD換算でub_cutoff以上であれば, 計算を終了する. default=float(inf).
+            difflim: BBの上限と下限の差が difflim 以下になったとき,計算を終了する. default=0.0.
+            maxeval: BBのノード評価数がmaxevalを超えたとき,計算を終了する.
+                     ただし,最低でも expand と closure の1サイクルは実行される.
+                     maxeval < 0 のとき,無制限.
+                     default=-1.
+            remove_com: 参照構造と対照構造から重心を除去する. default=True.
+            sort_by_g: 参照構造を自己分散の大きい順に並び替えて計算を実行する. default=True.
+            difflim_absolute: True なら difflim を RMSD 換算で用いる. default=False.
+            rotate_y: 対象構造に対して置換と回転を実行する. default=False.
+            get_rotation: 回転行列を計算する. default=False.
+        Returns: RMSD, 自己相関, 上下限, 分子の置換インデックス, 回転行列 (optional), 計算再開用データ(早期終了時).
         """
 
         dt = _select_dtype(x, y)
@@ -547,35 +528,23 @@ class mobbrmsd:
            構造 x のみが与えられたとき, RMSD 対称行列 D(x, x) を返します.
            構造 x, y が与えられたとき, RMSD 行列 D(x, y) を返します.
 
-        :param x: reference coordinates, rank 2/3.
-        :type x: npt.NDArray
-        :param y: target coordinates, rank 2/3.
-        :type y: npt.NDArray
-        :param cutoff: BBの下限がRMSD換算でcutoff以上になったとき, 計算を終了する. default=float(inf).
-        :type cutoff: float
-        :param ub_cutoff: BBの上限がRMSD換算でub_cutoff以上であれば, 計算を終了する. default=float(inf).
-        :type ub_cutoff: float
-        :param difflim: BBの上限と下限の差が difflim 以下になったとき,計算を終了する. default=0.0.
-        :type difflim: float
-        :param maxeval: BBのノード評価数がmaxevalを超えたとき,計算を終了する.
-                        ただし,最低でも expand と closure の1サイクルは実行される.
-                        maxeval < 0 のとき,無制限.
-                        default=-1.
-        :type maxeval: int
-        :param remove_com: 参照構造と対照構造から重心を除去する. default=True.
-        :type remove_com: bool
-        :param sort_by_g: 参照構造を自己分散の大きい順に並び替えて計算を実行する. default=True.
-        :type sort_by_g: bool
-        :param difflim_absolute: True なら difflim を RMSD 換算で用いる. default=False.
-        :type difflim_absolute: bool
-        :param rotate_y: 対象構造に対して置換と回転を実行する. default=False.
-        :type rotate_y: bool
-        :param verbose: 計算が長くなる場合, 進捗バーを表示する. default=True.
-        :type verbose: bool
-        :param n_chunk: 一度にまとめて計算されるバッチサイズ上限. <1 の場合, 一括計算. default=1000.
-        :type n_chunk: int
-        :return: RMSD 行列
-        :rtype: npt.NDArray
+        Args:
+            x: reference coordinates, rank 2/3.
+            y: target coordinates, rank 2/3.
+            cutoff: BBの下限がRMSD換算でcutoff以上になったとき, 計算を終了する. default=float(inf).
+            ub_cutoff: BBの上限がRMSD換算でub_cutoff以上であれば, 計算を終了する. default=float(inf).
+            difflim: BBの上限と下限の差が difflim 以下になったとき,計算を終了する. default=0.0.
+            maxeval: BBのノード評価数がmaxevalを超えたとき,計算を終了する.
+                     ただし,最低でも expand と closure の1サイクルは実行される.
+                     maxeval < 0 のとき,無制限.
+                     default=-1.
+            remove_com: 参照構造と対照構造から重心を除去する. default=True.
+            sort_by_g: 参照構造を自己分散の大きい順に並び替えて計算を実行する. default=True.
+            difflim_absolute: True なら difflim を RMSD 換算で用いる. default=False.
+            rotate_y: 対象構造に対して置換と回転を実行する. default=False.
+            verbose: 計算が長くなる場合, 進捗バーを表示する. default=True.
+            n_chunk: 一度にまとめて計算されるバッチサイズ上限. <1 の場合, 一括計算. default=1000.
+        Returns: RMSD 行列
         """
 
         n_eval = 0
@@ -711,18 +680,13 @@ class mobbrmsd:
         """Min_span_tree batch runner.
            座標の系列について mobbRMSD の最小全域木を計算します.
 
-        :param x: reference coordinates, rank 3.
-        :type x: npt.NDArray
-        :param remove_com: 参照構造と対照構造から重心を除去する. default=True.
-        :type remove_com: bool
-        :param sort_by_g: 参照構造を自己分散の大きい順に並び替えて計算を実行する. default=True.
-        :type sort_by_g: bool
-        :param verbose: 計算が長くなる場合, 進捗バーを表示する. default=True.
-        :type verbose: bool
-        :param n_work: メモリサイズ上限. <1 の場合、n*(n-1)/2. default=None.
-        :type n_work: int
-        :return: 最小全域木
-        :rtype: networkx.Graph
+        Args:
+            x: reference coordinates, rank 3.
+            remove_com: 参照構造と対照構造から重心を除去する. default=True.
+            sort_by_g: 参照構造を自己分散の大きい順に並び替えて計算を実行する. default=True.
+            verbose: 計算が長くなる場合, 進捗バーを表示する. default=True.
+            n_work: メモリサイズ上限. <1 の場合、n*(n-1)/2. default=None.
+        Returns: 最小全域木
         """
 
         dt = x.dtype
@@ -757,14 +721,22 @@ class mobbrmsd:
         """座標が Rank2 であるかのバリデーションを行います.
            Rank2 座標は [self.n_atom, self.d] の次元を持ち, 単一の構造を意味します.
 
-        :param x: reference coordinates for test.
-        :type x: npt.NDArray
-        :param dtype: Any object that can be interpreted as a numpy data type.
-                      See `numpy.org <https://numpy.org/doc/2.1/reference/arrays.dtypes.html>`__ for detail.
-                      default = None.
-        :return: Rank2 座標.
-        :rtype: npt.NDArray
-        :raise: ValueError
+
+        Args:
+           x: reference coordinates for test.
+           dtype: Any object that can be interpreted as a numpy data type.
+            x: reference coordinates for test.
+            dtype: Any object that can be interpreted as a numpy data type.
+                   See `numpy.org <https://numpy.org/doc/2.1/reference/arrays.dtypes.html>`__ for detail.
+                   default = None.
+                  See `numpy.org <https://numpy.org/doc/2.1/reference/arrays.dtypes.html>`__ for detail.
+                  default = None.
+
+        Returns:
+            Rank2 座標.
+
+        Raises:
+            ValueError: Shape が合わない場合。
         """
 
         if x.ndim != 2:
@@ -779,14 +751,17 @@ class mobbrmsd:
         """座標が Rank3 であるかのバリデーションを行います.
            Rank3 座標は [nframe, self.n_atom, self.d] の次元を持ち, 構造の系列を意味します.
 
-        :param x: reference coordinates for test.
-        :type x: npt.NDArray
-        :param dtype: Any object that can be interpreted as a numpy data type.
-                      See `numpy.org <https://numpy.org/doc/2.1/reference/arrays.dtypes.html>`__ for detail.
-                      default = None.
-        :return: Rank3 座標.
-        :rtype: npt.NDArray
-        :raise: ValueError
+        Args:
+           x: reference coordinates for test.
+           dtype: Any object that can be interpreted as a numpy data type.
+                  See `numpy.org <https://numpy.org/doc/2.1/reference/arrays.dtypes.html>`__ for detail.
+                  default = None.
+
+        Returns:
+            Rank3 座標.
+
+        Raises:
+            ValueError: Shape が合わない場合。
         """
 
         if x.ndim == 2:

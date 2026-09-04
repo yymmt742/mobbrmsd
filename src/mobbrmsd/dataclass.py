@@ -4,49 +4,42 @@ from typing import Union
 import dataclasses
 
 
-##
-# @class molecules
-# @brief 分子集合体のデータクラス
-# @details n_apm : number of atoms per molecule.
-#          n_mol : number of molecules.
-#          sym : intramolecular atomic permutation. (optional)
-#          name : name of chemical species. (optional)
-
-
 @dataclasses.dataclass(frozen=True)
 class molecules:
     n_apm: int
     n_mol: int
     sym: Union[None, list] = None
     name: Union[None, str] = None
-    # sym: None | list = None
-    # name: None | str = None
+    """分子集合体のデータクラス
 
-
-##
-# @class molecular_system
-# @brief 一般分子系
-# @details mols : list of molecules.
-#          name : name of system. (optional)
+    Args:
+        n_apm : number of atoms per molecule.
+        n_mol : number of molecules.
+        sym : intramolecular atomic permutation. (optional)
+        name : name of chemical species. (optional)
+    """
 
 
 @dataclasses.dataclass(frozen=True)
 class molecular_system:
-    mols: list
+    mols: list[molecules]
     name: Union[None, str] = None
-    # mols: list[molecules]
-    # name: None | str = None
+    """一般分子系のデータクラス
 
-
-##
-# @function load
-# @brief load
-# @details prms : dict. The main keys are follows:
-#                 "molecular_system": list[molecules] or dict or str (json string)
-#                 "molecules": dict
+    Args:
+        mols : list of molecules.
+        name : name of system. (optional)
+    """
 
 
 def load(prms: dict):
+    """load
+
+    Args:
+        prms : dict. The main keys are follows:\n
+               "molecular_system": list[molecules] or str (json string) or dict\n
+               "molecules": dict
+    """
     import json
 
     sys = prms.get("molecular_system")
