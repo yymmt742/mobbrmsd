@@ -123,7 +123,7 @@ class __demo(_demo._demo):
         ret.restart(maxeval=0, get_rotation=True)
         _demo.print_ret(ret, post=erace, header=True, footer=True)
 
-        y = ret.rotate_y(y)
+        y = ret.superpose(y)
 
         sep1 = "  ------------------------------------------------------------------"
         sep2 = "  -------------------------------|--------|---------------|---------"

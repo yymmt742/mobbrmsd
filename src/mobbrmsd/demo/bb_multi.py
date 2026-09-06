@@ -132,7 +132,7 @@ class __demo(_demo._demo):
         ret.restart(maxeval=0, get_rotation=True)  # get rotation matrix
         _demo.print_ret(ret, post=erace, header=True, footer=True)
 
-        z = ret.rotate_y(y)
+        z = ret.superpose(y)
 
         print(
             "       Reference     | Target (original) |  disp. |  Target (rotate)  |  disp."
