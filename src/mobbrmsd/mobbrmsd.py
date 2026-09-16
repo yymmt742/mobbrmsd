@@ -555,7 +555,7 @@ class mobbrmsd:
                               This affects the computation time required to find an exact solution.
             difflim_absolute (bool): Use `difflim` in terms of RMSD (multiply the evaluation function by 1/n and take the square root).
                                      Scheduled for Discontinuation
-            get_rotation (bool): Calculate the rotation matrix.
+            verbose(bool): If the calculation takes a long time, display a progress bar.
             n_chunk (int): The maximum batch size for calculations performed in a single batch.
                            If set to <1, calculations are performed all at once.
 
@@ -701,10 +701,10 @@ class mobbrmsd:
 
         Args:
             x (npt.NDArray): Reference coordinates $X\in\mathbb R^{d\times n}$, shape [m, n, d].
-            verbose(bool): If the calculation takes a long time, display a progress bar.
             remove_com (bool): Remove the center of mass from the coodinates.
             sort_by_g (bool): Sort the reference structures in descending order of self-dispersion and perform the calculation.
                               This affects the computation time required to find an exact solution.
+            verbose(bool): If the calculation takes a long time, display a progress bar.
             n_work(int): Maximum working memory size. If <1, then w*n*(n-1)/2.
 
         Returns:
