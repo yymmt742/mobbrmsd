@@ -555,7 +555,6 @@ class mobbrmsd:
                               This affects the computation time required to find an exact solution.
             difflim_absolute (bool): Use `difflim` in terms of RMSD (multiply the evaluation function by 1/n and take the square root).
                                      Scheduled for Discontinuation
-            rotate_y (bool): Perform permutations and rotations on the target structure $Y$.
             get_rotation (bool): Calculate the rotation matrix.
             n_chunk (int): The maximum batch size for calculations performed in a single batch.
                            If set to <1, calculations are performed all at once.
@@ -695,7 +694,7 @@ class mobbrmsd:
         *args,
         **kwargs,
     ) -> networkx.Graph:
-        """
+        r"""
            Min_span_tree batch calculator.
            Calculate the minimum spanning tree (MST)
            for a sequence of coordinates.
