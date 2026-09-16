@@ -4,23 +4,22 @@
 import numpy
 import numpy.typing as npt
 import networkx
-from typing import Union
+from typing import Union, Optional, List
 from tqdm import trange
 from .dataclass import molecules, molecular_system
 
 
 class mobbrmsd_result:
-    """mobbrmsd の計算結果と再計算用のメモリを管理するクラス.
-       ほとんどの場合, ユーザーはインスタンスを生成する必要はありません.
+    """Manages calculation results and memory for recalculations.
 
     Args:
-        driver: fortran driver
-        d: spatial dimension
-        header: header array
-        istate: state array (integer part)
-        rstate: state array (real part)
-        rot: rotation matrix, given by flatten
-        param w: working memory
+        driver (): fortran driver
+        d (int): spatial dimension
+        header (npt.NDArray): header array
+        istate (Optional[npt.NDArray]): state array (integer part)
+        rstate (Optional[npt.NDArray]): state array (real part)
+        rot (Optional[npt.NDArray]): rotation matrix, given by flatten [d*d]
+        w (Optional[npt.NDArray]): working memory
     """
 
     def __init__(
@@ -28,14 +27,10 @@ class mobbrmsd_result:
         driver,
         d: int,
         header: npt.NDArray,
-        istate: Union[None, npt.NDArray],
-        rstate: Union[None, npt.NDArray],
-        rot: Union[None, npt.NDArray],
-        w: Union[None, npt.NDArray] = None,
-        # istate: None | npt.NDArray,
-        # rstate: None | npt.NDArray,
-        # rot: None | npt.NDArray,
-        # w: None | npt.NDArray = None,
+        istate: Optional[npt.NDArray] = None,
+        rstate: Optional[npt.NDArray] = None,
+        rot: Optional[npt.NDArray] = None,
+        w: Optional[npt.NDArray] = None,
     ) -> None:
 
         self.header = header.copy()
@@ -57,34 +52,37 @@ class mobbrmsd_result:
             self.w = w.copy()
 
     def autocorr(self) -> float:
-        """自己相関項.
+        r"""Autocorrelation term, given by
+           $G = \text{tr} [XX^{\top}] + \text{tr}[YY^\top]$
 
         Returns:
-            Autocorrelation term, G.
+            ret (float): Autocorrelation, $G$.
         """
         return float(self.rstate["""INDEX_TO_AUTOCORR"""])
 
     def lowerbound(self) -> float:
-        """目的関数の変分下限.
+        r"""Lowerbound of objective function,
+            $L(X,Y) = \max_{R,S} \text{tr}[RYSX^\top]$
 
         Returns:
-            Lowerbound of BB.
+            ret (float): Lowerbound of objective function, $L$.
         """
         return float(self.rstate["""INDEX_TO_LOWERBOUND"""])
 
     def upperbound(self) -> float:
-        """目的関数の上限.
+        r"""Upperbound of objective function,
+            $L(X,Y) = \max_{R,S} \text{tr}[RYSX^\top]$
 
         Returns:
-            Upperbound of BB.
+            ret (float): upperbound of objective function, $L$.
         """
         return float(self.rstate["""INDEX_TO_UPPERBOUND"""])
 
     def lowerbound_as_rmsd(self) -> float:
-        """RMSD 換算された変分下限.
+        r"""Lowerbound of objective function on RMSD scale (multiplied by 1/n and rooted).
 
         Returns:
-            Lowerbound in RMSD.
+            ret (float): Scaled lowerbound of objective function, $\sqrt{\frac1n \underline L}$.
         """
         rn = self.rstate["""RECIPROCAL_OF_N"""]
         return numpy.sqrt(
@@ -92,10 +90,10 @@ class mobbrmsd_result:
         )
 
     def upperbound_as_rmsd(self) -> float:
-        """RMSD 換算された上限.
+        r"""Upperbound of objective function on RMSD scale (multiplied by 1/n and rooted).
 
         Returns:
-            Upperbound in RMSD.
+            ret (float): Scaled lowerbound of objective function, $\sqrt{\frac1n \bar L}$.
         """
         rn = self.rstate["""RECIPROCAL_OF_N"""]
         return numpy.sqrt(
@@ -103,11 +101,12 @@ class mobbrmsd_result:
         )
 
     def sd(self) -> float:
-        """二乗変位.
-           計算が早期終了されている場合, これは暫定値で, 真の解よりも大きい可能性があります。
+        r"""Squared displacement.
+            If the calculation terminates early,
+            this is a preliminary value and may be larger than the true solution.
 
         Returns:
-            Squared displacement.
+            ret (float): Squared displacement.
         """
         ret = float(2 * self.upperbound() + self.autocorr())
         if ret < 0.0:
@@ -116,70 +115,71 @@ class mobbrmsd_result:
             return ret
 
     def msd(self) -> float:
-        """平均二乗変位.
-           計算が早期終了されている場合, これは暫定値で, 真の解よりも大きい可能性があります。
+        r"""Mean squared displacement.
+            If the calculation terminates early,
+            this is a preliminary value and may be larger than the true solution.
 
         Returns:
-            Mean squared displacement.
+            ret (float): Mean squared displacement.
         """
+
         rn = self.rstate["""RECIPROCAL_OF_N"""]
         return float(rn * self.sd())
 
     def rmsd(self) -> float:
-        """RMSD.
-           計算が早期終了されている場合, これは暫定値で, 真の解よりも大きい可能性があります。
+        r"""Root mean squared displacement.
+            If the calculation terminates early,
+            this is a preliminary value and may be larger than the true solution.
 
         Returns:
-            Root mean squared displacement.
+            ret (float): Root mean squared displacement.
         """
+
         return float(numpy.sqrt(self.msd()))
 
     def bounds(self) -> npt.NDArray:
-        """目的関数の厳密解が含まれる区間.
+        r"""Interval containing an exaxt solution.
 
         Returns:
-            Lowerbound and upperbound
+            ret (npt.NDArray): Lowerbound and upperbound, $\left[\underline L, \bar L\right]$.
         """
         return numpy.array([self.lowerbound(), self.upperbound()])
 
     def bounds_as_rmsd(self) -> npt.NDArray:
-        """RMSD 換算の厳密解が含まれる区間.
+        r"""Interval containing an exaxt solution on RMSD scale (multiplied by 1/n and rooted).
 
         Returns:
-            Lowerbound and upperbound in RMSD.
+            ret (npt.NDArray): Lowerbound and upperbound, $\left[\sqrt{\frac1n \underline L}, \sqrt{\frac1n \bar L}\right]$.
         """
         rn = self.rstate["""RECIPROCAL_OF_N"""]
         return rn * (2 * self.bounds() + self.autocorr())
 
     def n_eval(self) -> int:
-        """計算回数.
+        r"""Number of Nodes Evaluated.
 
         Returns:
-            Number of evaluations.
+            ret(int): Number of evaluations.
         """
         return int(self.rstate["""INDEX_TO_N_EVAL"""])
 
     def log_eval_ratio(self) -> float:
-        """全探索に対する、計算回数の割合の対数.
-
+        r"""
         Returns:
-            Ratio of evaluations in log.
+            ret(float): Percentage of computations relative to exhaustive search (logarithm).
         """
         return self.rstate["""INDEX_TO_LOG_RATIO"""]
 
     def eval_ratio(self) -> float:
-        """全探索に対する、計算回数の割合.
-
+        r"""
         Returns:
-            Ratio of evaluations.
+            ret(float): Percentage of computations relative to exhaustive search.
         """
         return numpy.exp(self.log_eval_ratio())
 
     def is_finished(self) -> bool:
-        """探索が最後まで完了しているか.
-
+        r"""
         Returns:
-            True if BB is complete.
+            ret(bool): True if calculation is complete.
         """
         return self.istate[-1] == ("""IS_FINISHED_FLAG""")
 
@@ -192,19 +192,19 @@ class mobbrmsd_result:
         difflim_absolute: bool = False,
         get_rotation: bool = False,
     ) -> None:
-        """途中終了した計算を再開します.
-           計算結果はインスタンスに上書きされます.
+        r"""Resume a calculation that was interrupted.
+            Overwrite the instance with the calculation results.
 
         Args:
-            cutoff: BBの下限がRMSD換算でcutoff以上になったとき, 計算を終了する. default=float(inf).
-            ub_cutoff: BBの上限がRMSD換算でub_cutoff以上であれば, 計算を終了する. default=float(inf).
-            difflim: BBの上限と下限の差が difflim 以下になったとき,計算を終了する. default=0.0.
-            maxeval: BBのノード評価数がmaxevalを超えたとき,計算を終了する.
-                        ただし,最低でも expand と closure の1サイクルは実行される.
-                        maxeval < 0 のとき,無制限.
-                        default=-1.
-            difflim_absolute: True なら difflim を RMSD 換算で用いる. default=False.
-            get_rotation: 回転行列を計算する. default=False.
+            cutoff (float): Terminate the calculation as soon as the lowerbound reaches `cutoff` or greater (RMSD-based).
+            ub_cutoff (float): Terminate the calculation as soon as the upperbound reaches `ub_cutoff` or greater (RMSD-based).
+            difflim (float): Terminate the calculation as soon as the difference between the upper and lowerbounds becomes `difflim` or less.
+            maxeval (int): Terminate the calculation when the number of evaluated nodes exceeds `maxeval`.
+                           At least one pruning cycle will be excuted.
+                           When maxeval < 0, the calculation continues until an exact solution is found.
+            difflim_absolute (bool): Use `difflim` in terms of RMSD (multiply the evaluation function by 1/n and take the square root).
+                                     Scheduled for Discontinuation
+            get_rotation (bool): Calculate the rotation matrix.
         """
         if not hasattr(self, "w"):
             return
@@ -230,14 +230,14 @@ class mobbrmsd_result:
         self,
         y: npt.NDArray,
     ) -> npt.NDArray:
-        """superpose Y.
-           Returns swap and rotation target coordinate.
+        r"""Superpose $Y$.
+            Returns swap and rotation target coordinate.
 
-        Args:
+        Args(npt.NDArray):
            y: target coordinates. shape[n, d]
 
-        Returns:
-           Superpose された構造Y', shape[n, d]
+        Returns(npt.NDArray):
+           Superposed $Y$, shape[n, d]
         """
         y_ = y.flatten().copy()
         driver = _select_driver(self.d, dtype=y_.dtype)
@@ -251,7 +251,7 @@ class mobbrmsd_result:
         """Permutation_indices.
 
         Returns:
-           Superpose された構造
+           Superposed indices, shape[n, d]
         """
         driver = _select_driver(self.d)
         ret = numpy.empty(
@@ -341,17 +341,17 @@ def _select_dtype(x: npt.NDArray, y: npt.NDArray):
 
 
 class mobbrmsd:
-    """mobbrmsd driver
+    """mobbrmsd driver class.
 
     Args:
-        mols: molecules/molecular_system specifier
-        d: Spatial dimension. default=3.
+        mols: molecules/molecular_system specifier.
+        d (int): Spatial dimension. default=3.
     """
 
     def __init__(
         self,
-        mols: Union[molecules, molecular_system] = molecules(1, 1),
-        # mols: molecules | molecular_system = molecules(1, 1),
+        mols: Union[molecules, molecular_system],
+        # mols: Union[molecules, molecular_system] = molecules(1, 1),
         d: int = 3,
     ) -> None:
 
@@ -399,13 +399,15 @@ class mobbrmsd:
         x: npt.NDArray,
         y: npt.NDArray,
     ) -> float:
-        """calculate RMSD of a structural pair. (Simplified interface)
+        r"""
+        Calculate mobbRMSD of a structural pair. (Simplified interface)
 
         Args:
-           x: reference coordinates, rank 2.
-           y: target coordinates, rank 2.
+           x (npt.NDArray): Reference coordinates $X\in\mathbb R^{d\times n}$, shape [n,d].
+           y (npt.NDArray): Target coordinates $Y\in\mathbb R^{d\times n}$, shape [n,d].
 
-        Returns: rmsd value.
+        Returns:
+           ret (float): rmsd value.
         """
         dt = _select_dtype(x, y)
         driver = _select_driver(self.d, dtype=dt)
@@ -452,26 +454,33 @@ class mobbrmsd:
         *args,
         **kwargs,
     ) -> mobbrmsd_result:
-        """calculate RMSD of a structural pair.
-           RMSD, 自己相関, 上下限, 分子の置換インデックス, 回転行列 (optional)を計算します.
-           計算が早期終了された場合, mobbrmsd_result はインスタンスは計算再開用のデータを保持します.
+        r"""Detailed interface.
+            In addition to the calculated RMSD of a structural pair,
+            intermediate calculation results are returned.
+            If the calculation is terminated prematurely,
+            the results retain the data needed to restart the calculation.
 
         Args:
-            x: reference coordinates, rank 2.
-            y: target coordinates, rank 2.
-            cutoff: BBの下限がRMSD換算でcutoff以上になったとき, 計算を終了する. default=float(inf).
-            ub_cutoff: BBの上限がRMSD換算でub_cutoff以上であれば, 計算を終了する. default=float(inf).
-            difflim: BBの上限と下限の差が difflim 以下になったとき,計算を終了する. default=0.0.
-            maxeval: BBのノード評価数がmaxevalを超えたとき,計算を終了する.
-                     ただし,最低でも expand と closure の1サイクルは実行される.
-                     maxeval < 0 のとき,無制限.
-                     default=-1.
-            remove_com: 参照構造と対照構造から重心を除去する. default=True.
-            sort_by_g: 参照構造を自己分散の大きい順に並び替えて計算を実行する. default=True.
-            difflim_absolute: True なら difflim を RMSD 換算で用いる. default=False.
-            rotate_y: 対象構造に対して置換と回転を実行する. default=False.
-            get_rotation: 回転行列を計算する. default=False.
-        Returns: RMSD, 自己相関, 上下限, 分子の置換インデックス, 回転行列 (optional), 計算再開用データ(早期終了時).
+            x (npt.NDArray): Reference coordinates $X\in\mathbb R^{d\times n}$, shape [n,d].
+            y (npt.NDArray): Target coordinates $Y\in\mathbb R^{d\times n}$, shape [n,d].
+                             if rotate_y=True, the best structure discovered is assigned.
+            cutoff (float): Terminate the calculation as soon as the lowerbound reaches `cutoff` or greater (RMSD-based).
+            ub_cutoff (float): Terminate the calculation as soon as the upperbound reaches `ub_cutoff` or greater (RMSD-based).
+            difflim (float): Terminate the calculation as soon as the difference between the upper and lowerbounds becomes `difflim` or less.
+            maxeval (int): Terminate the calculation when the number of evaluated nodes exceeds `maxeval`.
+                           At least one pruning cycle will be excuted.
+                           When maxeval < 0, the calculation continues until an exact solution is found.
+            remove_com (bool): Remove the center of mass from the coodinates.
+            sort_by_g (bool): Sort the reference structures in descending order of self-dispersion and perform the calculation.
+                              This affects the computation time required to find an exact solution.
+            difflim_absolute (bool): Use `difflim` in terms of RMSD (multiply the evaluation function by 1/n and take the square root).
+                                     Scheduled for Discontinuation
+            rotate_y (bool): Perform permutations and rotations on the target structure $Y$.
+            get_rotation (bool): Calculate the rotation matrix.
+
+        Returns:
+          ret (mobbrmsd_result): Calculation results.
+                                 Data for restart the calculation is included only in the event of early termination.
         """
 
         dt = _select_dtype(x, y)
@@ -500,6 +509,7 @@ class mobbrmsd:
         )
 
         ret = mobbrmsd_result(driver, self.d, self.header, iret, rret, rot, w=w)
+
         del driver, w, ropts, iopts
         if rotate_y:
             if not numpy.may_share_memory(y, y_):
@@ -510,7 +520,7 @@ class mobbrmsd:
     def batch_run(
         self,
         x: npt.NDArray,
-        y: Union[None, npt.NDArray] = None,
+        y: Optional[npt.NDArray] = None,
         cutoff: float = float("inf"),
         ub_cutoff: float = float("inf"),
         difflim: float = 0.0,
@@ -523,28 +533,36 @@ class mobbrmsd:
         *args,
         **kwargs,
     ) -> npt.NDArray:
-        """Batch RMSD runnner for multiple structures.
-           座標系列に対して mobbRMSD 行列を計算します.
-           構造 x のみが与えられたとき, RMSD 対称行列 D(x, x) を返します.
-           構造 x, y が与えられたとき, RMSD 行列 D(x, y) を返します.
+        r"""
+           Batch RMSD runnner for multiple structures.
+           Calculates the mobbRMSD matrix for a coordinate system.
+           When only structure $X$ is provided,
+           it returns the RMSD symmetric matrix $D(X,X)$;
+           when both $X$ and $Y$ are provided,
+           it returns the RMSD matrix $D(X,Y).
 
         Args:
-            x: reference coordinates, rank 2/3.
-            y: target coordinates, rank 2/3.
-            cutoff: BBの下限がRMSD換算でcutoff以上になったとき, 計算を終了する. default=float(inf).
-            ub_cutoff: BBの上限がRMSD換算でub_cutoff以上であれば, 計算を終了する. default=float(inf).
-            difflim: BBの上限と下限の差が difflim 以下になったとき,計算を終了する. default=0.0.
-            maxeval: BBのノード評価数がmaxevalを超えたとき,計算を終了する.
-                     ただし,最低でも expand と closure の1サイクルは実行される.
-                     maxeval < 0 のとき,無制限.
-                     default=-1.
-            remove_com: 参照構造と対照構造から重心を除去する. default=True.
-            sort_by_g: 参照構造を自己分散の大きい順に並び替えて計算を実行する. default=True.
-            difflim_absolute: True なら difflim を RMSD 換算で用いる. default=False.
-            rotate_y: 対象構造に対して置換と回転を実行する. default=False.
-            verbose: 計算が長くなる場合, 進捗バーを表示する. default=True.
-            n_chunk: 一度にまとめて計算されるバッチサイズ上限. <1 の場合, 一括計算. default=1000.
-        Returns: RMSD 行列
+            x (npt.NDArray): Reference coordinates $X\in\mathbb R^{d\times n}$, shape [n,d] or [m_X, n, d].
+            y (npt.NDArray): Target coordinates $Y\in\mathbb R^{d\times n}$, shape [n,d] or [m_Y, n, d].
+            cutoff (float): Terminate the calculation as soon as the lowerbound reaches `cutoff` or greater (RMSD-based).
+            ub_cutoff (float): Terminate the calculation as soon as the upperbound reaches `ub_cutoff` or greater (RMSD-based).
+            difflim (float): Terminate the calculation as soon as the difference between the upper and lowerbounds becomes `difflim` or less.
+            maxeval (int): Terminate the calculation when the number of evaluated nodes exceeds `maxeval`.
+                           At least one pruning cycle will be excuted.
+                           When maxeval < 0, the calculation continues until an exact solution is found.
+            remove_com (bool): Remove the center of mass from the coodinates.
+            sort_by_g (bool): Sort the reference structures in descending order of self-dispersion and perform the calculation.
+                              This affects the computation time required to find an exact solution.
+            difflim_absolute (bool): Use `difflim` in terms of RMSD (multiply the evaluation function by 1/n and take the square root).
+                                     Scheduled for Discontinuation
+            rotate_y (bool): Perform permutations and rotations on the target structure $Y$.
+            get_rotation (bool): Calculate the rotation matrix.
+            n_chunk (int): The maximum batch size for calculations performed in a single batch.
+                           If set to <1, calculations are performed all at once.
+
+
+        Returns:
+            ret (npt.NDArray): A mobbRMSD matrix, shape[$n_X$, $n_X$] if $Y$ is None, else shape[$n_X$, $n_Y$].
         """
 
         n_eval = 0
@@ -677,16 +695,21 @@ class mobbrmsd:
         *args,
         **kwargs,
     ) -> networkx.Graph:
-        """Min_span_tree batch runner.
-           座標の系列について mobbRMSD の最小全域木を計算します.
+        """
+           Min_span_tree batch calculator.
+           Calculate the minimum spanning tree (MST)
+           for a sequence of coordinates.
 
         Args:
-            x: reference coordinates, rank 3.
-            remove_com: 参照構造と対照構造から重心を除去する. default=True.
-            sort_by_g: 参照構造を自己分散の大きい順に並び替えて計算を実行する. default=True.
-            verbose: 計算が長くなる場合, 進捗バーを表示する. default=True.
-            n_work: メモリサイズ上限. <1 の場合、n*(n-1)/2. default=None.
-        Returns: 最小全域木
+            x (npt.NDArray): Reference coordinates $X\in\mathbb R^{d\times n}$, shape [m, n, d].
+            verbose(bool): If the calculation takes a long time, display a progress bar.
+            remove_com (bool): Remove the center of mass from the coodinates.
+            sort_by_g (bool): Sort the reference structures in descending order of self-dispersion and perform the calculation.
+                              This affects the computation time required to find an exact solution.
+            n_work(int): Maximum working memory size. If <1, then w*n*(n-1)/2.
+
+        Returns:
+            ret (networkx.Graph): A minimum spanning tree.
         """
 
         dt = x.dtype

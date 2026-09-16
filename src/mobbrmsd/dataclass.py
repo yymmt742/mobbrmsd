@@ -1,35 +1,38 @@
 # -*- coding: utf-8 -*-
 
-from typing import Union
+from typing import Union, Optional, List
 import dataclasses
 
 
 @dataclasses.dataclass(frozen=True)
 class molecules:
+    """
+    Data Class for Identical Molecular Aggregates.
+
+    Parameters:
+        n_apm (int): number of atoms per molecule.
+        n_mol (int): number of molecules.
+        sym (Optional[List[int]]): intramolecular atomic permutation.
+        name (Optional[str]): name of chemical species.
+    """
+
     n_apm: int
     n_mol: int
-    sym: Union[None, list] = None
-    name: Union[None, str] = None
-    """分子集合体のデータクラス
-
-    Args:
-        n_apm : number of atoms per molecule.
-        n_mol : number of molecules.
-        sym : intramolecular atomic permutation. (optional)
-        name : name of chemical species. (optional)
-    """
+    sym: Optional[List[int]] = None
+    name: Optional[str] = None
 
 
 @dataclasses.dataclass(frozen=True)
 class molecular_system:
-    mols: list[molecules]
-    name: Union[None, str] = None
-    """一般分子系のデータクラス
+    """Data Classes for General Molecular Systems.
 
-    Args:
-        mols : list of molecules.
-        name : name of system. (optional)
+    Parameters:
+        mols (List[molecules]): list of molecules.
+        name (Optional[str]): name of system.
     """
+
+    mols: List[molecules]
+    name: Optional[str] = None
 
 
 def load(prms: dict):
