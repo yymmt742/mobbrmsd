@@ -49,6 +49,8 @@ dump/
 _skbuild/
 dist/
 *.egg-info/
+site/
 
+.venv*
 __pycache__/
 MANIFEST.in
