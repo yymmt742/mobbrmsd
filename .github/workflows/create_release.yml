@@ -29,7 +29,8 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.12"
+        python-version: "3.14"
+        allow-prereleases: true
 
     - name: Setup Fortran
       uses: fortran-lang/setup-fortran@v1
