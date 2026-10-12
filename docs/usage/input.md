@@ -150,3 +150,8 @@ Extra keyword arguments are passed to the RMSD calculation via `-p`.
 | `reference target`, both 1 frame | Single-pair `run(x, y)` with full output |
 | `reference target`, multi-frame | Cross `batch_run(x, y)` — *n_ref* × *n_trg* distance matrix |
 
+When `-o FILE` is given, the dispatch changes for multi-frame or self-comparison cases:
+instead of the fast Fortran batch routine, `run(x, y, rotate_y=True)` is called
+per pair in Python so that the rotated coordinates can be captured.
+See [Structure output](index.md#structure-output--o---o) for the full naming rules.
+

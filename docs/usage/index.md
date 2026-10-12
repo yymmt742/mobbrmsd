@@ -172,9 +172,41 @@ mrmsd = mobbrmsd(mols=mols_sorted)
 |------------|-------------|
 | `run [-i JSON] [ref [tgt]] [-p KEY=VALUE ...]` | Run RMSD; topology from JSON, coordinates as positional args |
 | `run -b [ref [tgt]]` | Launch the topology builder, then run RMSD |
+| `run … -o FILE [-O]` | Write rotated target structure(s) to FILE (MDTraj format) |
 | `build [-o FILE]` | Launch the topology builder and save JSON |
 | `build -f FILE [-o FILE]` | Parse topology from an MDTraj-supported file, confirm, then save |
 | `demo` | Run bundled demonstration scripts |
 
 See [Input format](input.md) for the JSON schema used by `run -i`, and
 [Topology Builder](builder.md) for the interactive topology editor.
+
+## Structure output (`-o` / `-O`)
+
+When `-o FILE` is given to `run`, the target structure is rotated to best
+superimpose on the reference using the optimal permutation and rotation found
+by mobbRMSD, then saved via MDTraj.
+Any MDTraj-supported format is accepted (`.pdb`, `.xtc`, `.dcd`, …).
+
+### Output file naming
+
+| Reference frames | Target frames | Output |
+|-----------------|---------------|--------|
+| 1 | 1 | `FILE` — single file, no numbering |
+| 1 | *N* | `FILE` — single multi-frame file |
+| *M* | *N* | `FILE.001`, `FILE.002`, …, `FILE.`*M* — one file per reference, each with *N* frames |
+| *M* | — *(self)* | `FILE.001`, …, `FILE.`*M* — one file per reference, all frames fitted to it |
+
+When numbering is applied, the counter is zero-padded to at least three digits
+(e.g., `.001`) and widens automatically if more than 999 reference frames are
+present.
+
+### Overwrite protection
+
+If an output file already exists, `mobbrmsd` prints a warning to stderr and
+skips that file without failing:
+
+```
+Warning: fitted.pdb already exists; skipping. Use -O to overwrite.
+```
+
+Pass `-O` (capital letter) to overwrite existing files silently.
