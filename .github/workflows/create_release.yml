@@ -54,8 +54,12 @@ jobs:
     - name: Commit version bump
       run: |
         git add pyproject.toml
-        git commit -m "[release] bump version to ${{ env.VERSION_STRING }}"
-        git push
+        if git diff --cached --quiet; then
+          echo "pyproject.toml already at version ${{ env.VERSION_STRING }}, nothing to commit."
+        else
+          git commit -m "[release] bump version to ${{ env.VERSION_STRING }}"
+          git push
+        fi
 
     - name: Create and push tag
       run: |
