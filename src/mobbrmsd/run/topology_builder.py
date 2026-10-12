@@ -1,19 +1,4 @@
-"""Interactive builder for molecular_system.
-
-Since ``molecular_system`` is a frozen dataclass, this module provides a
-mutable ``TopologyBuilder`` that accumulates species edits interactively
-and emits a ``molecular_system`` when the user is done.
-
-``TopologyBuilder`` itself has no dependency on :mod:`mobbrmsd.dataclass`.
-Conversion to/from ``molecular_system`` is handled by helpers in
-:mod:`mobbrmsd.run.parse`.
-
-``atom_names`` (per-atom string labels) are stored in the builder only and
-stripped when converting to ``molecular_system``.
-
-Requires ``prompt_toolkit`` for cursor movement; falls back to plain
-``input()`` otherwise.
-"""
+"""Interactive builder for molecular_system."""
 
 from __future__ import annotations
 
@@ -28,7 +13,6 @@ _SEP = "  " + "-" * 72
 # ── ANSI helpers ──────────────────────────────────────────────────────────────
 
 def _ansi_up_clear(n: int) -> None:
-    """Move cursor up *n* lines then clear to end of screen."""
     if n > 0:
         sys.stdout.write(f"\033[{n}A\033[J")
     else:
@@ -60,17 +44,15 @@ except ImportError:
 # ── control-flow exceptions ───────────────────────────────────────────────────
 
 class _Abort(Exception):
-    """Cancel the current interactive operation; the REPL continues."""
+    pass
 
 class _Back(Exception):
-    """Go back one step in the current wizard."""
+    pass
 
 
 # ── prompt wrappers ───────────────────────────────────────────────────────────
 
 class _ReplPrompt:
-    """Main-REPL prompt with history.  Ctrl+C raises ``_Abort``."""
-
     def __init__(self) -> None:
         if _PT:
             kb = _PTKeyBindings()
@@ -81,8 +63,6 @@ class _ReplPrompt:
                 event.app.exit(result="")
 
             self._session = _PTSession(key_bindings=kb, history=_PTHistory())
-        else:
-            self._session = None
 
     def __call__(self, text: str) -> str:
         if _PT:
@@ -107,12 +87,7 @@ class _ReplPrompt:
 
 
 class _WizardPrompt:
-    """Wizard-step prompt.
-
-    * Up arrow  -> raise ``_Back``
-    * Ctrl+C    -> raise ``_Abort``
-    * Default shown as ``[val]`` in prompt text; buffer starts empty.
-    """
+    """Up=back, Ctrl+C=abort, default shown as [val] in prompt, buffer empty."""
 
     def __init__(self) -> None:
         if _PT:
@@ -130,11 +105,8 @@ class _WizardPrompt:
                 event.app.exit(result="")
 
             self._session = _PTSession(key_bindings=kb)
-        else:
-            self._session = None
 
     def __call__(self, label: str, default: str = "") -> str:
-        """Prompt for a wizard field.  Returns the typed string (or *default* if empty)."""
         hint = f" [{default}]" if default else ""
         text = f"    {label}{hint} >> "
         if _PT:
@@ -170,12 +142,11 @@ class _WizardPrompt:
 # ── atom name utilities ───────────────────────────────────────────────────────
 
 def _sanitize_atom_name(name: str) -> str:
-    """Strip whitespace and truncate to 4 characters."""
     return name.strip()[:4]
 
 
 def _fill_atom_names(names: List, n_apm: int) -> List[str]:
-    """Replace None entries with auto-generated unique names (X001, X002, ...)."""
+    """Fill None entries with unique auto-generated names (X001, X002, ...)."""
     result: List = list(names)
     assert len(result) == n_apm
     existing = {n for n in result if n is not None}
@@ -195,7 +166,6 @@ def _fill_atom_names(names: List, n_apm: int) -> List[str]:
 # ── permutation display ───────────────────────────────────────────────────────
 
 def _col_width(n_apm: int, atom_names: Optional[List] = None) -> int:
-    """Column width that fits both indices and atom names."""
     w = max(2, len(str(n_apm - 1)))
     if atom_names:
         w = max(w, max((len(n) for n in atom_names if n), default=0))
@@ -208,34 +178,25 @@ def _render_display(
     cursor_pos: int,
     atom_names: Optional[List] = None,
 ) -> str:
-    """Render Name / Pos / Map / cursor rows for the permutation editor."""
+    """Render Name / Map / cursor rows.  No Pos row.  No 'Cur:' label."""
     w = _col_width(n_apm, atom_names)
     rows = []
     if atom_names:
-        rows.append("  Name: " + " ".join(
-            f"{(n or '????'):<{w}}" for n in atom_names
-        ))
-    rows.append("  Pos:  " + " ".join(f"{i:>{w}d}" for i in range(n_apm)))
+        rows.append("  Name: " + " ".join(f"{(n or '????'):<{w}}" for n in atom_names))
     rows.append("  Map:  " + " ".join(f"{v:>{w}d}" for v in mapping))
-    rows.append("  Cur:  " + " " * (cursor_pos * (w + 1)) + "^")
+    rows.append("        " + " " * (cursor_pos * (w + 1)) + "^")
     return "\n".join(rows)
 
 
-# ── atom_names display (wrapped, no Pos row, no Cur: label) ──────────────────
+# ── atom_names display (wrapped, no Pos row, no Cur label) ───────────────────
 
 def _render_names_wrapped(n_apm: int, names: List, cursor_pos: int) -> str:
-    """Render the atom_names editor display.
-
-    * Name row wrapped to terminal width (using placeholder names for unset)
-    * Cursor indicator (^) appears below the row containing cursor_pos
-    * No Pos row.  No 'Cur:' label.
-    """
+    """Name row wrapped to terminal width, cursor indicator below the right row."""
     preview = _fill_atom_names(list(names), n_apm)
-
     term_w = shutil.get_terminal_size((80, 24)).columns
     col_w = max(4, _col_width(n_apm, [n for n in preview if n]))
-    prefix = "  Name: "           # 8 chars
-    cont   = " " * len(prefix)    # continuation indent (8 spaces)
+    prefix = "  Name: "
+    cont   = " " * len(prefix)
     items_per_row = max(1, (term_w - len(prefix)) // (col_w + 1))
 
     lines: List[str] = []
@@ -244,18 +205,34 @@ def _render_names_wrapped(n_apm: int, names: List, cursor_pos: int) -> str:
     while i < n_apm:
         chunk_end = min(i + items_per_row, n_apm)
         label = prefix if row_idx == 0 else cont
-        row_str = label + " ".join(f"{preview[j]:<{col_w}}" for j in range(i, chunk_end))
-        lines.append(row_str)
-
-        # Cursor indicator below this row if cursor_pos falls in this chunk
+        lines.append(label + " ".join(f"{preview[j]:<{col_w}}" for j in range(i, chunk_end)))
         if i <= cursor_pos < chunk_end:
             local = cursor_pos - i
             lines.append(cont + " " * (local * (col_w + 1)) + "^")
-
         i = chunk_end
         row_idx += 1
 
     return "\n".join(lines)
+
+
+def _wrap_perm_line(perm: List[int], label: str, suffix: str = "") -> List[str]:
+    """Format a permutation with line wrapping at terminal width."""
+    term_w = shutil.get_terminal_size((80, 24)).columns
+    indent = " " * (len(label) + 2)   # align continuation with '[' after label
+    items = [str(x) for x in perm]
+    lines: List[str] = []
+    current = f"  {label}: ["
+    for k, item in enumerate(items):
+        sep = "" if k == 0 else ", "
+        piece = sep + item
+        if k > 0 and len(current) + len(piece) + 1 > term_w:
+            lines.append(current + ",")
+            current = "  " + indent + item
+        else:
+            current += piece
+    current += "]" + (f"  {suffix}" if suffix else "")
+    lines.append(current)
+    return lines
 
 
 # ── permutation editor ────────────────────────────────────────────────────────
@@ -265,7 +242,6 @@ def _perm_editor_pt(
     existing: Optional[List[int]] = None,
     atom_names: Optional[List] = None,
 ) -> Optional[List[int]]:
-    """Cursor-based permutation editor (prompt_toolkit Application)."""
     from prompt_toolkit import Application
     from prompt_toolkit.buffer import Buffer
     from prompt_toolkit.document import Document
@@ -286,14 +262,12 @@ def _perm_editor_pt(
     @kb.add("left")
     def _(event):
         cursor[0] = max(0, cursor[0] - 1)
-        _clear()
-        msg[0] = ""
+        _clear(); msg[0] = ""
 
     @kb.add("right")
     def _(event):
         cursor[0] = min(n_apm - 1, cursor[0] + 1)
-        _clear()
-        msg[0] = ""
+        _clear(); msg[0] = ""
 
     @kb.add("enter")
     def _(event):
@@ -305,17 +279,11 @@ def _perm_editor_pt(
         try:
             target = int(text)
         except ValueError:
-            msg[0] = f"! expected integer, got {text!r}"
-            _clear()
-            return
+            msg[0] = f"! expected integer, got {text!r}"; _clear(); return
         if not (0 <= target < n_apm):
-            msg[0] = f"! {target} out of range 0..{n_apm - 1}"
-            _clear()
-            return
+            msg[0] = f"! {target} out of range 0..{n_apm - 1}"; _clear(); return
         if target == cursor[0]:
-            msg[0] = "! same position - nothing to swap"
-            _clear()
-            return
+            msg[0] = "! same position - nothing to swap"; _clear(); return
         mapping[cursor[0]], mapping[target] = mapping[target], mapping[cursor[0]]
         msg[0] = f"swapped pos {cursor[0]} <-> pos {target}"
         _clear()
@@ -326,10 +294,7 @@ def _perm_editor_pt(
         event.app.exit()
 
     def get_display() -> str:
-        lines = [
-            "",
-            _render_display(n_apm, mapping, cursor[0], atom_names),
-        ]
+        lines = ["", _render_display(n_apm, mapping, cursor[0], atom_names)]
         if msg[0]:
             lines.append(f"  {msg[0]}")
         elif mapping == list(range(n_apm)):
@@ -339,12 +304,10 @@ def _perm_editor_pt(
         lines.append(f"\n  Swap pos {cursor[0]} with: ")
         return "\n".join(lines)
 
-    layout = Layout(
-        HSplit([
-            Window(content=FormattedTextControl(get_display)),
-            Window(content=BufferControl(buffer=input_buf), height=1),
-        ])
-    )
+    layout = Layout(HSplit([
+        Window(content=FormattedTextControl(get_display)),
+        Window(content=BufferControl(buffer=input_buf), height=1),
+    ]))
     Application(layout=layout, key_bindings=kb, full_screen=False, mouse_support=False).run()
     return result[0]
 
@@ -354,10 +317,8 @@ def _perm_editor_simple(
     existing: Optional[List[int]] = None,
     atom_names: Optional[List] = None,
 ) -> Optional[List[int]]:
-    """Sequential permutation editor using plain input() (fallback)."""
     mapping: List[int] = list(existing) if existing else list(range(n_apm))
     cursor = 0
-
     while True:
         print(_render_display(n_apm, mapping, cursor, atom_names))
         print("  (n/p move   target+Enter swap   blank=confirm   !reset   !cancel)")
@@ -365,41 +326,30 @@ def _perm_editor_simple(
             raw = input(f"  Swap pos {cursor} with: ").strip()
         except (EOFError, KeyboardInterrupt):
             raise _Abort()
-
         low = raw.lower()
-        if low in ("!cancel",):
+        if low == "!cancel":
             raise _Abort()
         if low == "!reset":
-            mapping = list(range(n_apm))
-            continue
+            mapping = list(range(n_apm)); continue
         if low in ("n", "next"):
-            cursor = min(n_apm - 1, cursor + 1)
-            continue
+            cursor = min(n_apm - 1, cursor + 1); continue
         if low in ("p", "prev"):
-            cursor = max(0, cursor - 1)
-            continue
+            cursor = max(0, cursor - 1); continue
         if not raw:
             return mapping.copy()
         try:
             target = int(raw)
         except ValueError:
-            print("  ! expected integer")
-            continue
+            print("  ! expected integer"); continue
         if not (0 <= target < n_apm):
-            print(f"  ! out of range 0..{n_apm - 1}")
-            continue
+            print(f"  ! out of range 0..{n_apm - 1}"); continue
         if target == cursor:
-            print("  ! same position")
-            continue
+            print("  ! same position"); continue
         mapping[cursor], mapping[target] = mapping[target], mapping[cursor]
         print(f"  swapped pos {cursor} <-> pos {target}")
 
 
-def _perm_editor(
-    n_apm: int,
-    existing: Optional[List[int]] = None,
-    atom_names: Optional[List] = None,
-) -> Optional[List[int]]:
+def _perm_editor(n_apm, existing=None, atom_names=None):
     if _PT:
         return _perm_editor_pt(n_apm, existing, atom_names)
     return _perm_editor_simple(n_apm, existing, atom_names)
@@ -410,19 +360,15 @@ def _perm_editor(
 def _atom_names_editor_pt(
     n_apm: int, existing: Optional[List] = None
 ) -> Optional[List[str]]:
-    """Cursor-based atom_names editor (prompt_toolkit Application).
+    """Cursor-based atom_names editor.
 
-    Displays atom names with placeholder previews in a wrapped Name row.
-    No Pos row, no messages, no buffer label.
+    * Left/Right: move cursor
+    * name+Enter: set at cursor, advance
+    * blank+Enter: auto-assign at cursor, advance
+    * Enter at last position / Down / Ctrl+D: confirm all and exit
+    * Up: _Back   Ctrl+C: _Abort (skip step)
 
-    * Left / Right  : move cursor
-    * name + Enter  : set name at cursor, advance cursor
-    * blank + Enter : auto-assign at cursor, advance cursor
-    * Enter at last position (or Down / Ctrl+D): confirm all and exit
-    * Up            : raise _Back
-    * Ctrl+C        : raise _Abort (skip this step)
-
-    On exit, clears the Application display and prints ``atomnames >> [...]``.
+    On exit: clears Application output, prints 'atomnames >> [...]'.
     """
     from prompt_toolkit import Application
     from prompt_toolkit.buffer import Buffer
@@ -445,7 +391,6 @@ def _atom_names_editor_pt(
         input_buf.set_document(Document(""))
 
     def _set_current(text: str) -> bool:
-        """Set or auto-assign name at cursor.  Returns True on success."""
         if text:
             sanitized = _sanitize_atom_name(text)
             if not sanitized:
@@ -455,10 +400,9 @@ def _atom_names_editor_pt(
                 return False
             names[cursor[0]] = sanitized
         else:
+            # auto-assign: compute what _fill would give for this position
             if names[cursor[0]] is None:
-                tmp = list(names)
-                tmp[cursor[0]] = "__PLACEHOLDER__"
-                filled = _fill_atom_names(tmp, n_apm)
+                filled = _fill_atom_names(list(names), n_apm)
                 names[cursor[0]] = filled[cursor[0]]
         return True
 
@@ -469,20 +413,16 @@ def _atom_names_editor_pt(
 
     @kb.add("left")
     def _(event):
-        cursor[0] = max(0, cursor[0] - 1)
-        _clear()
+        cursor[0] = max(0, cursor[0] - 1); _clear()
 
     @kb.add("right")
     def _(event):
-        cursor[0] = min(n_apm - 1, cursor[0] + 1)
-        _clear()
+        cursor[0] = min(n_apm - 1, cursor[0] + 1); _clear()
 
     @kb.add("enter")
     def _(event):
-        text = input_buf.text.strip()
-        if not _set_current(text):
-            _clear()
-            return
+        if not _set_current(input_buf.text.strip()):
+            _clear(); return
         _clear()
         if cursor[0] < n_apm - 1:
             cursor[0] += 1
@@ -496,29 +436,24 @@ def _atom_names_editor_pt(
 
     @kb.add("up")
     def _(event):
-        exit_reason[0] = "back"
-        event.app.exit()
+        exit_reason[0] = "back"; event.app.exit()
 
     @kb.add("c-c")
     def _(event):
-        exit_reason[0] = "abort"
-        event.app.exit()
+        exit_reason[0] = "abort"; event.app.exit()
 
     def get_display() -> str:
         content = "\n" + _render_names_wrapped(n_apm, names, cursor[0])
         last_render_lines[0] = content.count('\n') + 1
         return content
 
-    layout = Layout(
-        HSplit([
-            Window(content=FormattedTextControl(get_display)),
-            Window(content=BufferControl(buffer=input_buf), height=1),
-        ])
-    )
+    layout = Layout(HSplit([
+        Window(content=FormattedTextControl(get_display)),
+        Window(content=BufferControl(buffer=input_buf), height=1),
+    ]))
     Application(layout=layout, key_bindings=kb, full_screen=False, mouse_support=False).run()
 
-    # Clear Application output then print summary or raise
-    n_up = last_render_lines[0] + 2  # +1 buffer line +1 margin
+    n_up = last_render_lines[0] + 2
     sys.stdout.write("\n")
     _ansi_up_clear(n_up)
 
@@ -536,10 +471,6 @@ def _atom_names_editor_pt(
 def _atom_names_editor_simple(
     n_apm: int, existing: Optional[List] = None
 ) -> Optional[List[str]]:
-    """Sequential atom_names editor using plain input() (fallback).
-
-    On exit, clears output and shows ``atomnames >> [...]``.
-    """
     names: List = list(existing) if existing else [None] * n_apm
     assert len(names) == n_apm
     cursor = 0
@@ -551,13 +482,11 @@ def _atom_names_editor_simple(
         try:
             raw = input("  >> ").strip()
         except (EOFError, KeyboardInterrupt):
-            _cursor_restore_clear()
-            raise _Abort()
+            _cursor_restore_clear(); raise _Abort()
 
         low = raw.lower()
-        if low in ("!back",):
-            _cursor_restore_clear()
-            raise _Back()
+        if low == "!back":
+            _cursor_restore_clear(); raise _Back()
         if low in ("!done", "!d"):
             final = _fill_atom_names(list(names), n_apm)
             _cursor_restore_clear()
@@ -565,28 +494,19 @@ def _atom_names_editor_simple(
             return final
         if low in ("n", "next"):
             cursor = min(n_apm - 1, cursor + 1)
-            _cursor_restore_clear()
-            _cursor_save()
-            continue
+            _cursor_restore_clear(); _cursor_save(); continue
         if low in ("p", "prev"):
             cursor = max(0, cursor - 1)
-            _cursor_restore_clear()
-            _cursor_save()
-            continue
+            _cursor_restore_clear(); _cursor_save(); continue
 
-        # Blank = auto-assign current position and advance
         if not raw:
             if names[cursor] is None:
-                tmp = list(names)
-                tmp[cursor] = "__PLACEHOLDER__"
-                filled = _fill_atom_names(tmp, n_apm)
+                filled = _fill_atom_names(list(names), n_apm)
                 names[cursor] = filled[cursor]
             if cursor < n_apm - 1:
                 cursor += 1
-                _cursor_restore_clear()
-                _cursor_save()
+                _cursor_restore_clear(); _cursor_save()
             else:
-                # last position - confirm all
                 final = _fill_atom_names(list(names), n_apm)
                 _cursor_restore_clear()
                 print(f"  atomnames >> {final}")
@@ -595,19 +515,14 @@ def _atom_names_editor_simple(
 
         sanitized = _sanitize_atom_name(raw)
         if not sanitized:
-            _cursor_restore_clear()
-            _cursor_save()
-            continue
+            _cursor_restore_clear(); _cursor_save(); continue
         used = [names[i] for i in range(n_apm) if i != cursor]
         if sanitized in used:
-            _cursor_restore_clear()
-            _cursor_save()
-            continue
+            _cursor_restore_clear(); _cursor_save(); continue
         names[cursor] = sanitized
         if cursor < n_apm - 1:
             cursor += 1
-            _cursor_restore_clear()
-            _cursor_save()
+            _cursor_restore_clear(); _cursor_save()
         else:
             final = _fill_atom_names(list(names), n_apm)
             _cursor_restore_clear()
@@ -615,42 +530,37 @@ def _atom_names_editor_simple(
             return final
 
 
-def _atom_names_editor(
-    n_apm: int, existing: Optional[List] = None
-) -> Optional[List[str]]:
-    """Open the atom_names editor.  Returns confirmed names or raises _Back/_Abort."""
+def _atom_names_editor(n_apm, existing=None):
     if _PT:
         return _atom_names_editor_pt(n_apm, existing)
     return _atom_names_editor_simple(n_apm, existing)
 
 
-# ── sym session (list of permutations) ───────────────────────────────────────
+# ── sym session ───────────────────────────────────────────────────────────────
 
 def _sym_session(
     n_apm: int,
     existing: Optional[List[List[int]]] = None,
     atom_names: Optional[List] = None,
 ) -> Optional[List[List[int]]]:
-    """Interactively manage a list of permutations for sym.
+    """Manage sym permutations interactively.
 
-    Clears all output on exit and prints ``sym >> [...]`` (on done) or nothing
-    (on back).  Returns the list (possibly None) or raises ``_Abort`` to go back.
+    Identity is always index 0.  User-added permutations are indexed 1, 2, ...
+    Clears output on exit; prints 'sym >> [...]' on done.
     """
     sym: List[List[int]] = list(existing) if existing else []
+    identity = list(range(n_apm))
 
     def _show() -> None:
         print(_SEP)
-        print(f"  Sym editor  (n_apm={n_apm})")
+        print(f"  Sym editor  (n_apm={n_apm}  n_sym={1 + len(sym)})")
         if atom_names:
-            print("  Names: " + "  ".join(f"{n}" for n in atom_names))
-        print(f"  Identity {list(range(n_apm))} is always implicit.")
-        if sym:
-            for i, p in enumerate(sym):
-                print(f"    {i}: {p}")
-        else:
-            print("  (no permutations)")
+            print("  Names: " + "  ".join(str(n) for n in atom_names))
+        print(f"    0: {identity}  (identity)")
+        for i, p in enumerate(sym):
+            print(f"    {i + 1}: {p}")
         print(_SEP)
-        print("  add / remove N / list / done / !back")
+        print("  add / remove N(>=1) / list / done / !back")
 
     _cursor_save()
     _show()
@@ -665,8 +575,7 @@ def _sym_session(
         try:
             raw = input("  sym >> ").strip()
         except (EOFError, KeyboardInterrupt):
-            _cleanup(False)
-            raise _Abort()
+            _cleanup(False); raise _Abort()
         if not raw:
             continue
         parts = raw.split()
@@ -678,40 +587,31 @@ def _sym_session(
             return sym or None
 
         elif cmd in ("!back", "back", "b"):
-            _cleanup(False)
-            raise _Abort()
+            _cleanup(False); raise _Abort()
 
         elif cmd in ("add", "a"):
             perm = _perm_editor(n_apm, atom_names=atom_names)
             if perm is None:
                 pass
-            elif perm == list(range(n_apm)):
-                print("  ! identity permutation - not added")
+            elif perm == identity:
+                print("  ! identity - not added")
             elif perm in sym:
                 print("  ! duplicate - not added")
             else:
                 sym.append(perm)
-            _cursor_restore_clear()
-            _cursor_save()
-            _show()
+            _cursor_restore_clear(); _cursor_save(); _show()
 
         elif cmd in ("remove", "r"):
             if len(args) != 1 or not args[0].isdigit():
-                print("  ! usage: remove N")
-                continue
+                print("  ! usage: remove N  (N >= 1)"); continue
             idx = int(args[0])
-            if not (0 <= idx < len(sym)):
-                print(f"  ! index {idx} out of range")
-                continue
-            sym.pop(idx)
-            _cursor_restore_clear()
-            _cursor_save()
-            _show()
+            if idx < 1 or idx > len(sym):
+                print(f"  ! index {idx} out of range 1..{len(sym)}"); continue
+            sym.pop(idx - 1)
+            _cursor_restore_clear(); _cursor_save(); _show()
 
         elif cmd in ("list", "l"):
-            _cursor_restore_clear()
-            _cursor_save()
-            _show()
+            _cursor_restore_clear(); _cursor_save(); _show()
 
         else:
             print(f"  ! unknown: {cmd!r}.  Commands: add / remove N / list / done / !back")
@@ -719,15 +619,8 @@ def _sym_session(
 
 # ── species wizard ────────────────────────────────────────────────────────────
 
-def _wizard_species(
-    wiz: _WizardPrompt, existing: Optional[Dict] = None
-) -> Dict:
-    """Step-through wizard for one species.
-
-    Steps: n_apm -> n_mol -> name -> atom_names -> sym.
-    Up arrow goes back one step; Ctrl+C raises ``_Abort``.
-    In atom_names: Ctrl+C skips (keeps current atom_names), Up goes back.
-    """
+def _wizard_species(wiz: _WizardPrompt, existing: Optional[Dict] = None) -> Dict:
+    """Step-through wizard: n_apm -> n_mol -> name -> atom_names -> sym."""
     sp: Dict = copy.deepcopy(existing) if existing else {
         "n_apm": 1, "n_mol": 1, "name": None, "atom_names": None, "sym": None
     }
@@ -740,7 +633,6 @@ def _wizard_species(
     while step < len(STEPS):
         field = STEPS[step]
 
-        # ── atom_names step ───────────────────────────────────────────────────
         if field == "atom_names":
             n = sp["n_apm"]
             existing_names = sp.get("atom_names") or [None] * n
@@ -750,14 +642,13 @@ def _wizard_species(
                 new_names = _atom_names_editor(n, existing_names)
                 if new_names is not None:
                     sp["atom_names"] = new_names
-                step += 1  # proceed to sym
+                step += 1
             except _Back:
-                step -= 1  # back to name
+                step -= 1
             except _Abort:
-                step += 1  # Ctrl+C = skip atom_names, proceed to sym
+                step += 1  # Ctrl+C = skip, proceed to sym
             continue
 
-        # ── sym step ──────────────────────────────────────────────────────────
         if field == "sym":
             try:
                 sp["sym"] = _sym_session(
@@ -770,7 +661,6 @@ def _wizard_species(
                 step -= 1  # back to atom_names
             continue
 
-        # ── text / int steps ─────────────────────────────────────────────────
         cur = sp[field]
         default_str = str(cur) if cur is not None else ""
         try:
@@ -786,13 +676,10 @@ def _wizard_species(
             try:
                 val = int(raw) if raw else (cur or 1)
                 if val < 1:
-                    print("    ! n_apm must be >= 1")
-                    continue
+                    print("    ! n_apm must be >= 1"); continue
                 if existing and val != existing.get("n_apm"):
-                    sp["atom_names"] = None
-                    sp["sym"] = None
-                sp["n_apm"] = val
-                step += 1
+                    sp["atom_names"] = None; sp["sym"] = None
+                sp["n_apm"] = val; step += 1
             except (ValueError, TypeError):
                 print("    ! expected integer")
 
@@ -800,18 +687,13 @@ def _wizard_species(
             try:
                 val = int(raw) if raw else (cur or 1)
                 if val < 1:
-                    print("    ! n_mol must be >= 1")
-                    continue
-                sp["n_mol"] = val
-                step += 1
+                    print("    ! n_mol must be >= 1"); continue
+                sp["n_mol"] = val; step += 1
             except (ValueError, TypeError):
                 print("    ! expected integer")
 
         elif field == "name":
-            if raw == "-":
-                sp["name"] = None
-            else:
-                sp["name"] = raw if raw else cur
+            sp["name"] = None if raw == "-" else (raw if raw else cur)
             step += 1
 
     return sp
@@ -822,28 +704,12 @@ def _wizard_species(
 # ---------------------------------------------------------------------------
 
 class TopologyBuilder:
-    """Mutable builder for :class:`~mobbrmsd.dataclass.molecular_system`.
+    """Mutable builder for molecular_system.
 
-    ``TopologyBuilder`` is a pure data-editing layer with no dependency on
-    the ``mobbrmsd`` dataclasses.  ``atom_names`` per species are held here
-    and stripped when converting to ``molecular_system``.
+    atom_names per species are stored here and stripped when converting to
+    molecular_system.
 
-    Examples
-    --------
-    Programmatic API::
-
-        mols = (
-            TopologyBuilder()
-            .add(n_apm=3, n_mol=4, name="WAT",
-                 atom_names=["OW", "HW1", "HW2"])
-            .sort()
-            .build()
-        )
-
-    Interactive::
-
-        from mobbrmsd.run.parse import builder_from_topology
-        mols = builder_from_topology(top).run()
+    n_sym per species = 1 (identity) + number of user-added permutations.
     """
 
     def __init__(self) -> None:
@@ -851,13 +717,8 @@ class TopologyBuilder:
         self._name: Optional[str] = None
         self._atom_order: Optional[List[int]] = None
 
-    # ------------------------------------------------------------------
-    # constructors
-    # ------------------------------------------------------------------
-
     @classmethod
     def from_molecular_system(cls, mols) -> "TopologyBuilder":
-        """Initialise from any object with ``.mols``, ``.name``, ``.atom_order``."""
         b = cls()
         b._name = mols.name
         b._atom_order = (
@@ -865,17 +726,13 @@ class TopologyBuilder:
         )
         for m in mols.mols:
             b._species.append({
-                "n_apm": m.n_apm,
-                "n_mol": m.n_mol,
-                "sym": copy.deepcopy(m.sym),
-                "name": m.name,
-                "atom_names": None,
+                "n_apm": m.n_apm, "n_mol": m.n_mol,
+                "sym": copy.deepcopy(m.sym), "name": m.name, "atom_names": None,
             })
         return b
 
     @classmethod
     def from_dict(cls, d: dict) -> "TopologyBuilder":
-        """Reconstruct a builder from a dict (builder JSON format, including atom_names)."""
         b = cls()
         ms = d.get("molecular_system", d)
         if isinstance(ms, str):
@@ -887,39 +744,23 @@ class TopologyBuilder:
             raw_mols = [raw_mols]
         for m in raw_mols:
             b._species.append({
-                "n_apm": m["n_apm"],
-                "n_mol": m["n_mol"],
-                "sym": m.get("sym"),
-                "name": m.get("name"),
-                "atom_names": m.get("atom_names"),
+                "n_apm": m["n_apm"], "n_mol": m["n_mol"],
+                "sym": m.get("sym"), "name": m.get("name"), "atom_names": m.get("atom_names"),
             })
         return b
 
     # ------------------------------------------------------------------
-    # programmatic API (fluent)
+    # fluent API
     # ------------------------------------------------------------------
 
-    def add(
-        self,
-        n_apm: int,
-        n_mol: int,
-        sym: Optional[List[List[int]]] = None,
-        name: Optional[str] = None,
-        atom_names: Optional[List[str]] = None,
-    ) -> "TopologyBuilder":
-        """Append a new species."""
+    def add(self, n_apm, n_mol, sym=None, name=None, atom_names=None) -> "TopologyBuilder":
         self._species.append({
-            "n_apm": n_apm,
-            "n_mol": n_mol,
-            "sym": sym,
-            "name": name,
-            "atom_names": atom_names,
+            "n_apm": n_apm, "n_mol": n_mol, "sym": sym, "name": name, "atom_names": atom_names,
         })
         return self
 
     def remove(self, index: int) -> "TopologyBuilder":
-        self._species.pop(index)
-        return self
+        self._species.pop(index); return self
 
     def edit(self, index: int, **kwargs) -> "TopologyBuilder":
         sp = self._species[index]
@@ -935,52 +776,30 @@ class TopologyBuilder:
         return self
 
     def sort(self) -> "TopologyBuilder":
-        """Structural sort: ascending n_mol, then descending n_apm."""
-        indices = sorted(
-            range(len(self._species)),
-            key=lambda i: (self._species[i]["n_mol"], -self._species[i]["n_apm"]),
-        )
-        self._species = [self._species[i] for i in indices]
+        self._species.sort(key=lambda sp: (sp["n_mol"], -sp["n_apm"]))
         return self
 
-    def set_name(self, name: Optional[str]) -> "TopologyBuilder":
-        self._name = name
-        return self
+    def set_name(self, name) -> "TopologyBuilder":
+        self._name = name; return self
 
-    def set_atom_order(self, order: Optional[List[int]]) -> "TopologyBuilder":
-        self._atom_order = list(order) if order is not None else None
-        return self
-
-    # ------------------------------------------------------------------
-    # build
-    # ------------------------------------------------------------------
+    def set_atom_order(self, order) -> "TopologyBuilder":
+        self._atom_order = list(order) if order is not None else None; return self
 
     def build(self):
-        """Return the final frozen ``molecular_system`` (atom_names excluded)."""
         from .parse import to_molecular_system
         return to_molecular_system(self)
 
-    # ------------------------------------------------------------------
-    # JSON serialization (includes atom_names)
-    # ------------------------------------------------------------------
-
     def to_dict(self) -> dict:
-        """Serialize builder state to dict.  Includes ``atom_names`` if present."""
         mol_list = []
         for sp in self._species:
             entry: dict = {"n_apm": sp["n_apm"], "n_mol": sp["n_mol"]}
-            if sp.get("sym"):
-                entry["sym"] = sp["sym"]
-            if sp.get("name"):
-                entry["name"] = sp["name"]
-            if sp.get("atom_names"):
-                entry["atom_names"] = sp["atom_names"]
+            if sp.get("sym"):  entry["sym"]        = sp["sym"]
+            if sp.get("name"): entry["name"]       = sp["name"]
+            if sp.get("atom_names"): entry["atom_names"] = sp["atom_names"]
             mol_list.append(entry)
         inner: dict = {"molecules": mol_list}
-        if self._name:
-            inner["name"] = self._name
-        if self._atom_order is not None:
-            inner["atom_order"] = self._atom_order
+        if self._name:          inner["name"]       = self._name
+        if self._atom_order is not None: inner["atom_order"] = self._atom_order
         return {"molecular_system": inner}
 
     # ------------------------------------------------------------------
@@ -990,27 +809,63 @@ class TopologyBuilder:
     def _show(self) -> None:
         print(_SEP)
         print(f"  System name : {self._name or '(none)'}")
-        print(
-            f"  atom_order  : {self._atom_order}"
-            if self._atom_order is not None
-            else "  atom_order  : (none)"
-        )
+        if self._atom_order is not None:
+            print(f"  atom_order  : {self._atom_order}")
         print(_SEP)
         if not self._species:
             print("  (no species defined)")
         else:
-            print(f"  {'#':>3}  {'n_apm':>6}  {'n_mol':>6}  {'name':<12}  {'atom_names':<20}  sym")
+            print(f"  {'#':>3}  {'n_apm':>6}  {'n_mol':>6}  {'n_sym':>6}  name")
             for i, sp in enumerate(self._species):
-                sym_repr = repr(sp["sym"]) if sp.get("sym") else "(none)"
-                an = sp.get("atom_names")
-                an_repr = repr(an) if an else "(none)"
-                if len(an_repr) > 20:
-                    an_repr = an_repr[:17] + "..."
-                print(
-                    f"  {i:>3}  {sp['n_apm']:>6}  {sp['n_mol']:>6}"
-                    f"  {sp.get('name') or '(none)':<12}  {an_repr:<20}  {sym_repr}"
-                )
+                sym = sp.get("sym") or []
+                n_sym = 1 + len(sym)
+                print(f"  {i:>3}  {sp['n_apm']:>6}  {sp['n_mol']:>6}  {n_sym:>6}  {sp.get('name') or '(none)'}")
         print(_SEP)
+        if self._species:
+            print("  (use 'list N' for atom_names / sym detail)")
+
+    def _show_species(self, idx: int) -> None:
+        """Detailed view of species idx: atom_names and sym with line wrapping."""
+        sp = self._species[idx]
+        n_apm = sp["n_apm"]
+        sym = sp.get("sym") or []
+        an = sp.get("atom_names")
+
+        lines: List[str] = []
+        lines.append(
+            f"  --- Species {idx}  n_apm={n_apm}  n_mol={sp['n_mol']}"
+            f"  n_sym={1 + len(sym)}  name={sp.get('name')!r}"
+        )
+
+        # atom_names - column-wrapped
+        if an:
+            preview = _fill_atom_names(list(an), n_apm)
+            term_w = shutil.get_terminal_size((80, 24)).columns
+            col_w = max(4, max(len(n) for n in preview))
+            items_per_row = max(1, (term_w - 4) // (col_w + 1))
+            lines.append("  atom_names:")
+            for chunk_start in range(0, n_apm, items_per_row):
+                chunk = preview[chunk_start:chunk_start + items_per_row]
+                lines.append("    " + " ".join(f"{n:<{col_w}}" for n in chunk))
+        else:
+            lines.append("  atom_names: (none)")
+
+        # sym permutations - perm-wrapped
+        lines.append(f"  sym  ({1 + len(sym)} total):")
+        lines.extend(_wrap_perm_line(list(range(n_apm)), "0", "(identity)"))
+        for j, p in enumerate(sym):
+            lines.extend(_wrap_perm_line(p, str(j + 1)))
+
+        if len(lines) >= 10:
+            print(f"  ({len(lines)} lines total)")
+            try:
+                if input("  Show? [Y/n] ").strip().lower() == 'n':
+                    return
+            except (KeyboardInterrupt, EOFError):
+                return
+
+        for line in lines:
+            print(line)
 
     # ------------------------------------------------------------------
     # interactive REPL
@@ -1018,7 +873,8 @@ class TopologyBuilder:
 
     _HELP = """\
   Commands:
-    list  (l)          - show current species
+    list  (l)          - show species summary
+    list  (l) N        - show species N detail (atom_names + sym)
     add   (a)          - add a new species
     edit  (e) N        - edit species N
     remove(r) N        - remove species N
@@ -1032,11 +888,7 @@ class TopologyBuilder:
 """
 
     def run(self):
-        """Start the interactive REPL.
-
-        Returns the built ``molecular_system`` on ``done``, or ``None`` on
-        ``quit``.
-        """
+        """Interactive REPL.  Returns built molecular_system or None on quit."""
         if not _PT:
             print("  (prompt_toolkit not found - using plain input)")
 
@@ -1051,11 +903,9 @@ class TopologyBuilder:
             try:
                 raw = repl_prompt("  >> ")
             except _Abort:
-                print()
-                continue
+                print(); continue
             except EOFError:
-                print("\n  Quit.")
-                return None
+                print("\n  Quit."); return None
 
             if not raw:
                 continue
@@ -1068,7 +918,14 @@ class TopologyBuilder:
                 print(self._HELP)
 
             elif cmd in ("list", "l"):
-                self._show()
+                if args and args[0].isdigit():
+                    idx = int(args[0])
+                    if 0 <= idx < len(self._species):
+                        self._show_species(idx)
+                    else:
+                        print(f"  ! index {idx} out of range")
+                else:
+                    self._show()
 
             elif cmd in ("add", "a"):
                 try:
@@ -1080,12 +937,10 @@ class TopologyBuilder:
 
             elif cmd in ("edit", "e"):
                 if len(args) != 1 or not args[0].isdigit():
-                    print("  ! usage: edit N")
-                    continue
+                    print("  ! usage: edit N"); continue
                 idx = int(args[0])
                 if not (0 <= idx < len(self._species)):
-                    print(f"  ! index {idx} out of range")
-                    continue
+                    print(f"  ! index {idx} out of range"); continue
                 try:
                     sp = _wizard_species(wiz, existing=self._species[idx])
                     self._species[idx] = sp
@@ -1095,31 +950,25 @@ class TopologyBuilder:
 
             elif cmd in ("remove", "r"):
                 if len(args) != 1 or not args[0].isdigit():
-                    print("  ! usage: remove N")
-                    continue
+                    print("  ! usage: remove N"); continue
                 idx = int(args[0])
                 if not (0 <= idx < len(self._species)):
-                    print(f"  ! index {idx} out of range")
-                    continue
-                self.remove(idx)
-                self._show()
+                    print(f"  ! index {idx} out of range"); continue
+                self.remove(idx); self._show()
 
             elif cmd in ("move", "mv"):
                 if len(args) != 2 or not all(a.isdigit() for a in args):
-                    print("  ! usage: move N M")
-                    continue
+                    print("  ! usage: move N M"); continue
                 src, dst = int(args[0]), int(args[1])
                 n = len(self._species)
                 if not (0 <= src < n and 0 <= dst < n):
-                    print(f"  ! indices out of range (0..{n - 1})")
-                    continue
+                    print(f"  ! indices out of range (0..{n - 1})"); continue
                 sp = self._species.pop(src)
                 self._species.insert(dst, sp)
                 self._show()
 
             elif cmd in ("sort", "s"):
-                self.sort()
-                self._show()
+                self.sort(); self._show()
 
             elif cmd in ("name", "n"):
                 self.set_name(" ".join(args) if args else None)
@@ -1128,14 +977,11 @@ class TopologyBuilder:
             elif cmd in ("order", "o"):
                 raw_order = " ".join(args)
                 if not raw_order:
-                    self.set_atom_order(None)
-                    print("  atom_order cleared.")
+                    self.set_atom_order(None); print("  atom_order cleared.")
                 else:
                     try:
                         order = json.loads(raw_order)
-                        if not isinstance(order, list) or not all(
-                            isinstance(x, int) for x in order
-                        ):
+                        if not isinstance(order, list) or not all(isinstance(x, int) for x in order):
                             raise ValueError("expected a JSON list of ints")
                         self.set_atom_order(order)
                         print(f"  atom_order set ({len(order)} elements).")
@@ -1153,8 +999,7 @@ class TopologyBuilder:
                     print(f"  ! {e}")
 
             elif cmd in ("quit", "q"):
-                print("  Quit.")
-                return None
+                print("  Quit."); return None
 
             else:
                 print(f"  ! unknown command: {cmd!r}. Type 'help'.")
@@ -1169,20 +1014,14 @@ def _main() -> None:
 
     ap = argparse.ArgumentParser(
         prog="python -m mobbrmsd.run.topology_builder",
-        description="Interactive molecular_system editor. Prints JSON on 'done'.",
+        description="Interactive molecular_system editor.",
     )
-    ap.add_argument("-t", "--topology", metavar="FILE", default=None,
-                    help="MDTraj topology/structure file (PDB, GRO, ...).")
-    ap.add_argument("-c", "--coords", metavar="FILE", default=None,
-                    help="Trajectory for variance-based ordering (needs --topology).")
-    ap.add_argument("-j", "--json", metavar="FILE", default=None,
-                    help="Load builder state from a JSON file (supports atom_names).")
-    ap.add_argument("-n", "--name", metavar="NAME", default=None,
-                    help="Initial system name.")
-    ap.add_argument("-o", "--output", metavar="FILE", default=None,
-                    help="Write JSON to FILE instead of stdout.")
-    ap.add_argument("--builder-json", action="store_true",
-                    help="Output builder JSON (includes atom_names) instead of molecular_system JSON.")
+    ap.add_argument("-t", "--topology", metavar="FILE", default=None)
+    ap.add_argument("-c", "--coords",   metavar="FILE", default=None)
+    ap.add_argument("-j", "--json",     metavar="FILE", default=None)
+    ap.add_argument("-n", "--name",     metavar="NAME", default=None)
+    ap.add_argument("-o", "--output",   metavar="FILE", default=None)
+    ap.add_argument("--builder-json", action="store_true")
     args = ap.parse_args()
 
     builder = None
@@ -1192,28 +1031,22 @@ def _main() -> None:
             with open(args.json) as f:
                 builder = TopologyBuilder.from_dict(json.load(f))
         except Exception as e:
-            print(f"ERROR loading JSON: {e}", file=sys.stderr)
-            sys.exit(1)
+            print(f"ERROR: {e}", file=sys.stderr); sys.exit(1)
 
     elif args.topology is not None:
         try:
             import mdtraj
         except ImportError:
-            print("ERROR: mdtraj is required to load topology files.", file=sys.stderr)
-            sys.exit(1)
+            print("ERROR: mdtraj required.", file=sys.stderr); sys.exit(1)
         try:
             from .parse import builder_from_topology, builder_from_mdtraj
             if args.coords is not None:
                 traj = mdtraj.load(args.coords, top=args.topology)
-                builder = builder_from_mdtraj(
-                    traj.topology, coords=traj.xyz * 10.0, name=args.name
-                )
+                builder = builder_from_mdtraj(traj.topology, coords=traj.xyz * 10.0, name=args.name)
             else:
-                top = mdtraj.load_topology(args.topology)
-                builder = builder_from_topology(top, name=args.name)
+                builder = builder_from_topology(mdtraj.load_topology(args.topology), name=args.name)
         except Exception as e:
-            print(f"ERROR loading topology: {e}", file=sys.stderr)
-            sys.exit(1)
+            print(f"ERROR: {e}", file=sys.stderr); sys.exit(1)
 
     if builder is None:
         builder = TopologyBuilder()
@@ -1224,15 +1057,10 @@ def _main() -> None:
     if ms is None:
         sys.exit(1)
 
-    if args.builder_json:
-        output = json.dumps(builder.to_dict(), indent=2)
-    else:
-        output = json.dumps(ms.to_dict(), indent=2)
-
+    output = json.dumps(builder.to_dict() if args.builder_json else ms.to_dict(), indent=2)
     if args.output is not None:
         with open(args.output, "w") as f:
-            f.write(output)
-            f.write("\n")
+            f.write(output); f.write("\n")
         print(f"  Written to {args.output}")
     else:
         print(output)
