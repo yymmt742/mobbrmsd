@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Any
 import dataclasses
 import numpy
 import numpy.typing as npt
@@ -147,7 +147,7 @@ class molecular_system:
         return mols_list, atom_order
 
     @classmethod
-    def from_topology(cls, top, name: Optional[str] = None) -> "molecular_system":
+    def from_topology(cls, top: Any, name: Optional[str] = None) -> "molecular_system":
         """Create from an MDTraj Topology using structural species ordering.
 
         Groups atoms by residue name. Species are sorted by ascending molecule
@@ -170,7 +170,7 @@ class molecular_system:
         return cls(mols=mols_list, name=name, atom_order=atom_order)
 
     @classmethod
-    def from_mdtraj(cls, top, coords=None, name: Optional[str] = None) -> "molecular_system":
+    def from_mdtraj(cls, top: Any, coords: Optional[npt.NDArray] = None, name: Optional[str] = None) -> "molecular_system":
         """Create from an MDTraj Topology, grouping atoms by residue name.
 
         Each unique residue name becomes one molecular species. All residues of
