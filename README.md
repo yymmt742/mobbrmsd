@@ -128,6 +128,35 @@ To use the Python interface, you additionally need the following:
    python -m mobbrmsd demo
    ```
 
+#### Windows (TDM-GCC / MinGW)
+
+On Windows the CMake generator must be set explicitly to avoid defaulting to the MSVC NMake generator.
+Install with:
+```sh
+set CMAKE_GENERATOR=MinGW Makefiles
+pip install git+https://github.com/yymmt742/mobbrmsd.git
+```
+or, for local development:
+```sh
+CMAKE_GENERATOR="MinGW Makefiles" uv pip install -e ".[test]"
+```
+
+### Testing
+
+   Install the test dependencies and run the test suite:
+   ```sh
+   pip install -e ".[test]"
+   python -m pytest tests/ -v
+   ```
+
+   On Windows, the gfortran runtime DLLs (`libgfortran_64-5.dll`, `libgomp_64-1.dll`) must be
+   on the DLL search path.  The test suite's `conftest.py` handles this automatically by
+   scanning `PATH` for directories that contain these DLLs, so having TDM-GCC or MinGW64 in
+   `PATH` is sufficient.  You can confirm the setup with:
+   ```sh
+   python -c "import mobbrmsd; print(mobbrmsd.__version__)"
+   ```
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Usage
