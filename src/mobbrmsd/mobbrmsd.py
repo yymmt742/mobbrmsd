@@ -394,6 +394,17 @@ class mobbrmsd:
         self.header = driver.decode_header(ms, self.n_header)
         del driver
 
+    def _coerce_coords(self, x: npt.NDArray, dtype=None):
+        """Accept [natom, d] or [nframe, natom, d]. Returns (nframe, flat Fortran array)."""
+        if x.ndim == 2:
+            x = x[numpy.newaxis]
+        if x.ndim != 3 or x.shape[1] != self.natom or x.shape[2] != self.d:
+            raise ValueError(
+                f"Expected shape [{self.natom}, {self.d}] or "
+                f"[nframe, {self.natom}, {self.d}], got {x.shape}"
+            )
+        return x.shape[0], numpy.asfortranarray(x, dtype=dtype).flatten()
+
     def rmsd(
         self,
         x: npt.NDArray,
@@ -403,32 +414,36 @@ class mobbrmsd:
         Calculate mobbRMSD of a structural pair. (Simplified interface)
 
         Args:
-           x (npt.NDArray): Reference coordinates $X\in\mathbb R^{d\times n}$, shape [n,d].
-           y (npt.NDArray): Target coordinates $Y\in\mathbb R^{d\times n}$, shape [n,d].
+           x (npt.NDArray): Reference coordinates $X\in\mathbb R^{d\times n}$, shape [n,d] or [1,n,d].
+           y (npt.NDArray): Target coordinates $Y\in\mathbb R^{d\times n}$, shape [n,d] or [1,n,d].
 
         Returns:
            ret (float): rmsd value.
         """
         dt = _select_dtype(x, y)
+        nxf, x_ = self._coerce_coords(x, dtype=dt)
+        nyf, y_ = self._coerce_coords(y, dtype=dt)
+        if nxf != 1 or nyf != 1:
+            raise ValueError("rmsd() requires single-frame inputs; use batch_run() for multiple frames.")
         driver = _select_driver(self.d, dtype=dt)
         w = numpy.empty(self.memsize, dtype=dt)
 
         _, rret, _ = driver.run(
-            self.n_int,  # n_int
-            self.n_float,  # n_float
-            self.n_rot,  # n_rot
-            self.header,  # header
-            self.to_rank2_coordinates(x, dtype=dt),  # X
-            self.to_rank2_coordinates(y, dtype=dt),  # Y
-            w,  # W
-            numpy.array([float("inf"), float("inf"), 0.0], dtype=dt),  # ropts
-            numpy.array([-1], dtype=numpy.int32),  # iopts
-            True,  # remove_com
-            True,  # sort_by_g
-            False,  # difflim_absolute
-            False,  # rotate_y
-            False,  # get_rotation
-        )  # returns (int_states, float_states, rotation)
+            self.n_int,
+            self.n_float,
+            self.n_rot,
+            self.header,
+            x_,
+            y_,
+            w,
+            numpy.array([float("inf"), float("inf"), 0.0], dtype=dt),
+            numpy.array([-1], dtype=numpy.int32),
+            True,
+            True,
+            False,
+            False,
+            False,
+        )
 
         ret = rret["""INDEX_TO_AUTOCORR"""] + 2 * rret["""INDEX_TO_UPPERBOUND"""]
         if ret < 0.0:
@@ -484,8 +499,10 @@ class mobbrmsd:
         """
 
         dt = _select_dtype(x, y)
-        x_ = self.to_rank2_coordinates(x, dtype=dt)
-        y_ = self.to_rank2_coordinates(y, dtype=dt)
+        nxf, x_ = self._coerce_coords(x, dtype=dt)
+        nyf, y_ = self._coerce_coords(y, dtype=dt)
+        if nxf != 1 or nyf != 1:
+            raise ValueError("run() requires single-frame inputs; use batch_run() for multiple frames.")
         driver = _select_driver(self.d, dtype=dt)
         w = numpy.empty(self.memsize, dtype=dt)
         ropts = numpy.array([cutoff, ub_cutoff, difflim], dtype=dt)
@@ -568,9 +585,8 @@ class mobbrmsd:
 
         if y is None:
             dt = x.dtype
-            x_ = self.to_rank3_coordinates(x)
+            n_target, x_ = self._coerce_coords(x, dtype=dt)
             driver = _select_driver(self.d, dtype=dt)
-            n_target = 1 if x.ndim == 2 else x.shape[0]
             n_tri = (n_target * (n_target - 1)) // 2
             n_chunk_ = n_tri if n_chunk < 1 else self.njob * n_chunk
             ww = numpy.empty((self.njob * self.memsize), dtype=dt)
@@ -624,11 +640,9 @@ class mobbrmsd:
             ret += ret.T
         else:
             dt = _select_dtype(x, y)
-            x_ = self.to_rank3_coordinates(x, dtype=dt)
-            y_ = self.to_rank3_coordinates(y, dtype=dt)
+            n_reference, x_ = self._coerce_coords(x, dtype=dt)
+            n_target, y_ = self._coerce_coords(y, dtype=dt)
             driver = _select_driver(self.d, dtype=dt)
-            n_reference = 1 if x.ndim == 2 else x.shape[0]
-            n_target = 1 if y.ndim == 2 else y.shape[0]
             n_tri = n_reference * n_target
             n_chunk_ = n_tri if n_chunk < 1 else self.njob * n_chunk
             ww = numpy.empty((self.njob * self.memsize), dtype=dt)
@@ -712,8 +726,7 @@ class mobbrmsd:
         """
 
         dt = x.dtype
-        x_ = self.to_rank3_coordinates(x)
-        n_target = 1 if x.ndim == 2 else x.shape[0]
+        n_target, x_ = self._coerce_coords(x, dtype=dt)
 
         driver = _select_driver(self.d, dtype=dt)
         ropts = numpy.array([0.0, 0.0, 0.0], dtype=dt)
@@ -738,66 +751,6 @@ class mobbrmsd:
         self.n_eval = int(numpy.exp(log_n_eval))
 
         return g
-
-    def to_rank2_coordinates(self, x: npt.NDArray, dtype=None) -> npt.NDArray:
-        """座標が Rank2 であるかのバリデーションを行います.
-           Rank2 座標は [self.n_atom, self.d] の次元を持ち, 単一の構造を意味します.
-
-
-        Args:
-           x: reference coordinates for test.
-           dtype: Any object that can be interpreted as a numpy data type.
-            x: reference coordinates for test.
-            dtype: Any object that can be interpreted as a numpy data type.
-                   See `numpy.org <https://numpy.org/doc/2.1/reference/arrays.dtypes.html>`__ for detail.
-                   default = None.
-                  See `numpy.org <https://numpy.org/doc/2.1/reference/arrays.dtypes.html>`__ for detail.
-                  default = None.
-
-        Returns:
-            Rank2 座標.
-
-        Raises:
-            ValueError: Shape が合わない場合。
-        """
-
-        if x.ndim != 2:
-            raise ValueError
-
-        if x.shape[1] != self.d or x.shape[0] != self.natom:
-            raise ValueError
-
-        return numpy.asfortranarray(x, dtype=dtype).flatten()
-
-    def to_rank3_coordinates(self, x: npt.NDArray, dtype=None) -> npt.NDArray:
-        """座標が Rank3 であるかのバリデーションを行います.
-           Rank3 座標は [nframe, self.n_atom, self.d] の次元を持ち, 構造の系列を意味します.
-
-        Args:
-           x: reference coordinates for test.
-           dtype: Any object that can be interpreted as a numpy data type.
-                  See `numpy.org <https://numpy.org/doc/2.1/reference/arrays.dtypes.html>`__ for detail.
-                  default = None.
-
-        Returns:
-            Rank3 座標.
-
-        Raises:
-            ValueError: Shape が合わない場合。
-        """
-
-        if x.ndim == 2:
-            pass
-            # x_ = x.transpose().reshape((x.shape[1], x.shape[0], 1))
-        elif x.ndim == 3:
-            pass
-            # x_ = x.transpose([2, 1, 0])
-        else:
-            raise ValueError
-        if x.shape[-1] != self.d or x.shape[-2] != self.natom:
-            raise ValueError
-
-        return numpy.asfortranarray(x, dtype=dtype).flatten()
 
     def __del__(self):
         if hasattr(self, "mols"):

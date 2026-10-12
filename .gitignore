@@ -54,3 +54,4 @@ site/
 .venv*
 __pycache__/
 MANIFEST.in
+uv.lock
