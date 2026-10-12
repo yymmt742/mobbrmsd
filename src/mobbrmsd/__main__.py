@@ -5,10 +5,62 @@ from importlib.metadata import version
 __version__ = version(__package__)
 
 
+def command_build(args) -> None:
+    import json
+    import sys
+    from .run.topology_builder import TopologyBuilder
+
+    builder = TopologyBuilder()
+    builder.run()
+    try:
+        mols = builder.build()
+    except ValueError as e:
+        print(f"Error: {e}")
+        return
+
+    d = mols.to_dict()
+    if args.output:
+        with open(args.output, "w") as f:
+            json.dump(d, f, indent=2)
+        print(f"  Written to {args.output}")
+    else:
+        json.dump(d, sys.stdout, indent=2)
+        print()
+
+
 def command_run(args) -> None:
     from .run import parse
 
-    arg = parse.parser(args)
+    if getattr(args, "build", False):
+        from .run.topology_builder import TopologyBuilder
+        builder = TopologyBuilder()
+        builder.run()
+        try:
+            mols = builder.build()
+        except ValueError as e:
+            print(f"Error: {e}")
+            return
+        prms = args.params or {}
+        if "reference" not in prms:
+            try:
+                ref = input("  Reference coordinate file: ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print("\nCancelled.")
+                return
+            if ref:
+                prms["reference"] = ref
+        if "target" not in prms:
+            try:
+                tgt = input("  Target coordinate file (blank = skip): ").strip()
+            except (EOFError, KeyboardInterrupt):
+                tgt = ""
+            if tgt:
+                prms["target"] = tgt
+        args.params = prms
+        arg = parse.parser(args, mols=mols)
+    else:
+        arg = parse.parser(args)
+
     arg.run(arg.mols, arg.refxyz, arg.trgxyz, **arg.prms)
 
 
@@ -82,12 +134,20 @@ def main():
     sub = parser.add_subparsers()
 
     parser_run = sub.add_parser("run", help="run mobbrmsd")
-    parser_run.add_argument(
+    run_input = parser_run.add_mutually_exclusive_group()
+    run_input.add_argument(
         "-i",
         "--inp",
         nargs=1,
         default=None,
         help="Input file (json)",
+    )
+    run_input.add_argument(
+        "-b",
+        "--build",
+        action="store_true",
+        default=False,
+        help="Launch topology builder interactively before running",
     )
     parser_run.add_argument(
         "params",
@@ -96,6 +156,18 @@ def main():
         help="Keyword arguments.",
     )
     parser_run.set_defaults(handler=command_run)
+
+    parser_build = sub.add_parser(
+        "build", help="build molecular topology interactively and save to JSON"
+    )
+    parser_build.add_argument(
+        "-o",
+        "--output",
+        default=None,
+        metavar="FILE",
+        help="Output JSON file (default: print to stdout)",
+    )
+    parser_build.set_defaults(handler=command_build)
 
     parser_demo = sub.add_parser("demo", help="compute demo codes")
     parser_demo.add_argument(

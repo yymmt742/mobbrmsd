@@ -103,7 +103,7 @@ def load(prms: dict) -> Optional[molecular_system]:
 
 
 class parser:
-    def __init__(self, args):
+    def __init__(self, args, mols=None):
         prms = {**args.params}
         if args.inp is not None:
             try:
@@ -167,7 +167,7 @@ class parser:
             top=self.top,
             mask=self.mask,
         )
-        self.mols = load(prms)
+        self.mols = mols if mols is not None else load(prms)
         if self.mols is None:
             self.mols = molecular_system([molecules(n_apm=self.refxyz.shape[1], n_mol=1)])
         self.prms = prms
