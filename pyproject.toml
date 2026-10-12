@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core", "meson", "numpy"]
+requires = ["scikit-build-core", "meson", "ninja", "numpy"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -47,6 +47,12 @@ docs = [
     "mkdocs-material",
     "mkdocstrings[python]",
 ]
+test = [
+    "pytest",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.scikit-build]
 ninja.version = ">=1.10"
