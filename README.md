@@ -3,6 +3,7 @@
 
 <!-- PROJECT LOGO -->
 <br />
+
 <div align="center">
   <a href="https://github.com/yymmt742/mobbrmsd">
     <img src="images/logo.png" alt="Logo" width="80" height="80">
@@ -36,6 +37,7 @@
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
+    <li><a href="#simple-example">Simple Example</a></li>
     <li><a href="#usage">Usage</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#license">License</a></li>
@@ -51,6 +53,8 @@
 
 [![CI](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml/badge.svg)](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml)
 [![Docs](https://img.shields.io/badge/docs-yymmt742.github.io%2Fmobbrmsd-blue)](https://yymmt742.github.io/mobbrmsd/)
+
+![mobbrmsd_demo_02](images/mobbrmsd_demo_02.webp)
 
 Root mean squared deviation (RMSD) is one of the most common metrics
 for comparing the similarity of three-dimensional chemical structures.
@@ -74,7 +78,6 @@ definition and algorithmic details.
 ### Prerequisites
 
 * gfortran >= 9.4.0
-* OpenBLAS (optional)
 * OpenMP (optional)
 
 Python interface additionally requires:
@@ -101,6 +104,59 @@ pip install git+https://github.com/yymmt742/mobbrmsd.git
 ```sh
 pip install -e ".[test]"
 python -m pytest tests/ -v
+```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Simple Example
+
+The `example/` directory contains two PDB files of 7 L-alanine molecules
+(5 heavy atoms each: N, CA, C, O, CB) in different arrangements.
+`ala7_B.pdb` is a globally rotated, permuted, and slightly perturbed copy of `ala7_A.pdb`.
+
+**CLI:**
+
+```sh
+python -m mobbrmsd run -i example/ala7.json example/ala7_A.pdb example/ala7_B.pdb
+```
+
+```
+Reference frame       1 | Target    frame       1
+  RMSD        :             0.508051395
+  ----------
+  AUTO CORR.  :          1433.226598528
+  UPPER BOUND :          -712.096265419  (as RMSD) :             0.508051395
+  LOWER BOUND :          -712.096265419  (as RMSD) :             0.508051395
+  N EVAL      :                      28  (ratio)   :    0.002043944813490036
+  ----------
+```
+
+mobbRMSD finds the optimal permutation + rotation in **28 evaluations out of 7! = 5040** possible
+molecule assignments (0.2 % of the brute-force cost).
+
+**Python API:**
+
+```python
+import mdtraj
+from mobbrmsd.dataclass import molecular_system
+from mobbrmsd.mobbrmsd import mobbrmsd
+
+tA = mdtraj.load("example/ala7_A.pdb")
+tB = mdtraj.load("example/ala7_B.pdb")
+x = tA.xyz[0] * 10   # nm → Å
+y = tB.xyz[0] * 10
+
+mols = molecular_system.from_topology(tA.topology)
+mrmsd = mobbrmsd(mols=mols)
+
+result = mrmsd.run(x, y)
+print(f"RMSD    = {result.rmsd():.6f} Å")
+print(f"N_eval  = {result.n_eval()} / 5040  (ratio = {result.eval_ratio():.6f})")
+```
+
+```
+RMSD    = 0.508051 Å
+N_eval  = 28 / 5040  (ratio = 0.002044)
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
