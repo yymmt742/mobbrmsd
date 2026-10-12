@@ -24,40 +24,102 @@ _SEP = "  " + "-" * 72
 # ── prompt_toolkit detection ──────────────────────────────────────────────────
 
 try:
-    from prompt_toolkit import prompt as _pt_prompt
+    from prompt_toolkit import PromptSession as _PTSession
     from prompt_toolkit.history import InMemoryHistory as _PTHistory
+    from prompt_toolkit.key_binding import KeyBindings as _PTKeyBindings
     _PT = True
 except ImportError:
     _PT = False
 
 
+# ── sentinel objects ──────────────────────────────────────────────────────────
+
+_BACK_SENTINEL = object()   # returned when Up arrow pressed in wizard
+_ABORT_SENTINEL = object()  # returned when Ctrl+C pressed in wizard prompt
+
+
+# ── control-flow exceptions ───────────────────────────────────────────────────
+
 class _Abort(Exception):
-    """Cancel the current interactive operation without quitting the REPL."""
+    """Cancel the current interactive operation; the REPL continues."""
+
+class _Back(Exception):
+    """Go back one step in the current wizard."""
 
 
-# ── prompt wrapper ────────────────────────────────────────────────────────────
+# ── prompt wrappers ───────────────────────────────────────────────────────────
 
-class _PromptFn:
-    """Thin wrapper around prompt() with optional history.
+class _ReplPrompt:
+    """Main-REPL prompt with history.  Ctrl+C raises ``_Abort``."""
 
-    Raises ``_Abort`` on Ctrl+C / EOF so callers don't need to catch
-    ``KeyboardInterrupt`` directly.
-    """
+    def __init__(self) -> None:
+        if _PT:
+            kb = _PTKeyBindings()
 
-    def __init__(self, use_history: bool = False):
-        self._hist = _PTHistory() if (_PT and use_history) else None
+            @kb.add('c-c')
+            def _(event):
+                event.app.exit(result=_ABORT_SENTINEL)
+
+            self._session = _PTSession(key_bindings=kb, history=_PTHistory())
+        else:
+            self._session = None
 
     def __call__(self, text: str, default: str = "") -> str:
         if _PT:
             try:
-                return _pt_prompt(text, default=default, history=self._hist).strip()
-            except KeyboardInterrupt:
+                result = self._session.prompt(text, default=default)
+            except (KeyboardInterrupt, EOFError):
                 raise _Abort()
-            except EOFError:
+            if result is _ABORT_SENTINEL:
                 raise _Abort()
+            return result.strip() if isinstance(result, str) else ""
         else:
             try:
                 raw = input(text).strip()
+                return raw if raw else default
+            except (KeyboardInterrupt, EOFError):
+                raise _Abort()
+
+
+class _WizardPrompt:
+    """Wizard-step prompt.  Up arrow raises ``_Back``; Ctrl+C raises ``_Abort``.
+
+    No history (each wizard field is independent).
+    """
+
+    def __init__(self) -> None:
+        if _PT:
+            kb = _PTKeyBindings()
+
+            @kb.add('up')
+            def _(event):
+                event.app.exit(result=_BACK_SENTINEL)
+
+            @kb.add('c-c')
+            @kb.add('c-d')
+            def _(event):
+                event.app.exit(result=_ABORT_SENTINEL)
+
+            self._session = _PTSession(key_bindings=kb)
+        else:
+            self._session = None
+
+    def __call__(self, text: str, default: str = "") -> str:
+        if _PT:
+            try:
+                result = self._session.prompt(text, default=default)
+            except (KeyboardInterrupt, EOFError):
+                raise _Abort()
+            if result is _BACK_SENTINEL:
+                raise _Back()
+            if result is _ABORT_SENTINEL:
+                raise _Abort()
+            return result.strip() if isinstance(result, str) else ""
+        else:
+            try:
+                raw = input(text).strip()
+                if raw.lower() == "!back":
+                    raise _Back()
                 return raw if raw else default
             except (KeyboardInterrupt, EOFError):
                 raise _Abort()
@@ -69,14 +131,10 @@ def _col_width(n_apm: int) -> int:
     return max(2, len(str(n_apm - 1)))
 
 
-def _render_mapping(n_apm: int, mapping: List, cursor_pos: int) -> str:
+def _render_mapping(n_apm: int, mapping: List[int], cursor_pos: int) -> str:
     w = _col_width(n_apm)
-    sep = " "
-    pos_row = "  Pos: " + sep.join(f"{i:{w}d}" for i in range(n_apm))
-    map_row = "  Map: " + sep.join(
-        f"{v:{w}d}" if v is not None else " " * (w - 1) + "_" for v in mapping
-    )
-    # cursor arrow: each column is (w + 1) chars wide except the last
+    pos_row = "  Pos: " + " ".join(f"{i:{w}d}" for i in range(n_apm))
+    map_row = "  Map: " + " ".join(f"{v:{w}d}" for v in mapping)
     cur_row = "  Cur: " + " " * (cursor_pos * (w + 1)) + "^"
     return "\n".join([pos_row, map_row, cur_row])
 
@@ -84,9 +142,10 @@ def _render_mapping(n_apm: int, mapping: List, cursor_pos: int) -> str:
 def _perm_editor_pt(n_apm: int, existing: Optional[List[int]] = None) -> Optional[List[int]]:
     """Cursor-based permutation editor using prompt_toolkit Application.
 
-    Arrow keys move the cursor. Type the target index + Enter to assign.
-    Backspace clears the current position. Enter with no input confirms
-    when the permutation is complete and non-identity. Ctrl+C cancels.
+    Starts from the identity (or *existing*).  Left/Right moves the cursor.
+    Type a target index and press Enter to **swap** ``mapping[cursor]`` with
+    ``mapping[target]``.  Press Enter on an empty buffer to confirm.
+    Ctrl+C cancels and returns ``None``.
     """
     from prompt_toolkit import Application
     from prompt_toolkit.buffer import Buffer
@@ -96,14 +155,14 @@ def _perm_editor_pt(n_apm: int, existing: Optional[List[int]] = None) -> Optiona
     from prompt_toolkit.layout.controls import FormattedTextControl, BufferControl
 
     w = _col_width(n_apm)
-    mapping: List = list(existing) if existing else [None] * n_apm
+    mapping: List[int] = list(existing) if existing else list(range(n_apm))
     cursor = [0]
     result: List[Optional[List[int]]] = [None]
     msg = [""]
     input_buf = Buffer(name="perm_input", multiline=False)
     kb = KeyBindings()
 
-    def _clear_input():
+    def _clear_input() -> None:
         input_buf.set_document(Document(""))
 
     @kb.add("left")
@@ -122,70 +181,45 @@ def _perm_editor_pt(n_apm: int, existing: Optional[List[int]] = None) -> Optiona
     def _(event):
         text = input_buf.text.strip()
         if not text:
-            if None in mapping:
-                msg[0] = "! incomplete - fill all positions first"
-                return
-            if mapping == list(range(n_apm)):
-                msg[0] = "! identity - swap at least one pair"
-                return
+            # Confirm current permutation (identity/duplicate check is in caller)
             result[0] = mapping.copy()
             event.app.exit()
             return
         try:
-            val = int(text)
+            target = int(text)
         except ValueError:
             msg[0] = f"! expected integer, got {text!r}"
             _clear_input()
             return
-        if not (0 <= val < n_apm):
-            msg[0] = f"! {val} out of range 0..{n_apm - 1}"
+        if not (0 <= target < n_apm):
+            msg[0] = f"! {target} out of range 0..{n_apm - 1}"
             _clear_input()
             return
-        used = {mapping[i] for i in range(n_apm) if i != cursor[0] and mapping[i] is not None}
-        if val in used:
-            msg[0] = f"! {val} already assigned at another position"
+        if target == cursor[0]:
+            msg[0] = "! same position - nothing to swap"
             _clear_input()
             return
-        mapping[cursor[0]] = val
-        msg[0] = ""
+        mapping[cursor[0]], mapping[target] = mapping[target], mapping[cursor[0]]
+        msg[0] = f"swapped pos {cursor[0]} <-> pos {target}"
         _clear_input()
-        cursor[0] = min(n_apm - 1, cursor[0] + 1)
-
-    @kb.add("backspace")
-    def _(event):
-        if input_buf.text:
-            input_buf.delete_before_cursor()
-        else:
-            mapping[cursor[0]] = None
-            msg[0] = ""
 
     @kb.add("c-c")
     @kb.add("c-d")
     def _(event):
-        event.app.exit()
+        event.app.exit()  # result stays None -> caller treats as cancel
 
     def get_display() -> str:
-        used_elsewhere = {
-            mapping[i] for i in range(n_apm) if i != cursor[0] and mapping[i] is not None
-        }
-        avail = sorted(set(range(n_apm)) - used_elsewhere)
         lines = [
             "",
             _render_mapping(n_apm, mapping, cursor[0]),
-            f"  Available: {avail}",
         ]
         if msg[0]:
             lines.append(f"  {msg[0]}")
-        elif None not in mapping:
-            if mapping == list(range(n_apm)):
-                lines.append("  [identity - swap at least one pair]")
-            else:
-                lines.append("  [complete - press Enter (empty) to confirm]")
+        elif mapping == list(range(n_apm)):
+            lines.append("  [identity - swap pairs to build permutation, Enter to accept as-is]")
         else:
-            lines.append(
-                "  [<- -> move cursor   index + Enter to set   Backspace to clear   Ctrl+C cancel]"
-            )
-        lines.append(f"\n  Set pos {cursor[0]} to: ")
+            lines.append("  [Enter to confirm   <- -> move cursor   target+Enter to swap   Ctrl+C cancel]")
+        lines.append(f"\n  Swap pos {cursor[0]} with: ")
         return "\n".join(lines)
 
     layout = Layout(
@@ -202,48 +236,48 @@ def _perm_editor_pt(n_apm: int, existing: Optional[List[int]] = None) -> Optiona
 def _perm_editor_simple(n_apm: int, existing: Optional[List[int]] = None) -> Optional[List[int]]:
     """Sequential permutation editor using plain input() (fallback).
 
-    Navigate with ``!back`` and ``!reset``; abort with ``!cancel``.
+    Starts from identity.  Enter a target index to swap with the current
+    cursor position.  ``n``/``p`` move cursor; ``!reset`` restores identity;
+    blank input confirms; ``!cancel`` aborts.
     """
-    mapping: List = list(existing) if existing else [None] * n_apm
-    pos = 0
-    while 0 <= pos < n_apm:
-        used = {mapping[i] for i in range(n_apm) if i != pos and mapping[i] is not None}
-        avail = sorted(set(range(n_apm)) - used)
-        print(_render_mapping(n_apm, mapping, pos))
-        print(f"  Available: {avail}")
+    mapping: List[int] = list(existing) if existing else list(range(n_apm))
+    cursor = 0
+
+    while True:
+        print(_render_mapping(n_apm, mapping, cursor))
+        print("  (n/p move   target+Enter swap   blank=confirm   !reset   !cancel)")
         try:
-            raw = input(f"  pos {pos}  (!back  !reset  !cancel) >> ").strip()
+            raw = input(f"  Swap pos {cursor} with: ").strip()
         except (EOFError, KeyboardInterrupt):
             raise _Abort()
+
         low = raw.lower()
-        if low == "!cancel":
+        if low in ("!cancel", "!q"):
             raise _Abort()
-        if low == "!back":
-            if pos > 0:
-                mapping[pos - 1] = None
-                pos -= 1
+        if low in ("!reset",):
+            mapping = list(range(n_apm))
             continue
-        if low == "!reset":
-            mapping = [None] * n_apm
-            pos = 0
+        if low in ("n", "next"):
+            cursor = min(n_apm - 1, cursor + 1)
             continue
+        if low in ("p", "prev", "!back"):
+            cursor = max(0, cursor - 1)
+            continue
+        if not raw:
+            return mapping.copy()
         try:
-            val = int(raw)
+            target = int(raw)
         except ValueError:
             print("  ! expected integer")
             continue
-        if not (0 <= val < n_apm):
+        if not (0 <= target < n_apm):
             print(f"  ! out of range 0..{n_apm - 1}")
             continue
-        if val in {mapping[i] for i in range(n_apm) if i != pos and mapping[i] is not None}:
-            print(f"  ! {val} already assigned at another position")
+        if target == cursor:
+            print("  ! same position")
             continue
-        mapping[pos] = val
-        pos += 1
-
-    if None in mapping or mapping == list(range(n_apm)):
-        return None
-    return mapping
+        mapping[cursor], mapping[target] = mapping[target], mapping[cursor]
+        print(f"  swapped pos {cursor} <-> pos {target}")
 
 
 def _perm_editor(n_apm: int, existing: Optional[List[int]] = None) -> Optional[List[int]]:
@@ -260,19 +294,20 @@ def _sym_session(
 ) -> Optional[List[List[int]]]:
     """Interactively manage a list of permutations for sym.
 
-    Returns the list (possibly empty -> None) or raises ``_Abort`` to go back.
+    Returns the list (possibly empty -> None) or raises ``_Abort`` to go back
+    to the previous wizard step.
     """
     sym: List[List[int]] = list(existing) if existing else []
 
-    def show():
+    def show() -> None:
         print(_SEP)
         print(f"  Sym editor  (n_apm={n_apm})")
-        print(f"  Identity {list(range(n_apm))} is implicit - do not add it.")
+        print(f"  Identity {list(range(n_apm))} is always implicit.")
         if sym:
             for i, p in enumerate(sym):
                 print(f"    {i}: {p}")
         else:
-            print("  (no permutations - only identity applies)")
+            print("  (no permutations)")
         print(_SEP)
         print("  add / remove N / list / done / !back")
 
@@ -295,16 +330,19 @@ def _sym_session(
             raise _Abort()
 
         elif cmd in ("add", "a"):
-            print("  --- new permutation ---")
+            print("  --- edit permutation (identity shown; Enter to confirm) ---")
             perm = _perm_editor(n_apm)
-            if perm is not None:
-                if perm in sym:
-                    print("  ! permutation already in list")
-                else:
-                    sym.append(perm)
-                    show()
+            if perm is None:
+                print("  (cancelled)")
+                continue
+            identity = list(range(n_apm))
+            if perm == identity:
+                print("  ! identity permutation - not added")
+            elif perm in sym:
+                print("  ! duplicate - not added")
             else:
-                print("  (cancelled or identity - not added)")
+                sym.append(perm)
+                show()
 
         elif cmd in ("remove", "r"):
             if len(args) != 1 or not args[0].isdigit():
@@ -327,13 +365,13 @@ def _sym_session(
 # ── species wizard ────────────────────────────────────────────────────────────
 
 def _wizard_species(
-    prompt_fn: _PromptFn, existing: Optional[Dict] = None
+    wiz: _WizardPrompt, existing: Optional[Dict] = None
 ) -> Dict:
     """Step-through wizard for one species.
 
     Steps: n_apm -> n_mol -> name -> sym.
-    ``!back`` goes back one step; Ctrl+C / ``!cancel`` raises ``_Abort``.
-    From the sym step, ``!back`` (or aborting the sym session) returns to name.
+    Up arrow (or ``!back`` in fallback) goes back one step.
+    Ctrl+C raises ``_Abort``.
     """
     sp: Dict = copy.deepcopy(existing) if existing else {
         "n_apm": 1, "n_mol": 1, "name": None, "sym": None
@@ -356,42 +394,36 @@ def _wizard_species(
             continue
 
         # ── text / int steps ─────────────────────────────────────────────────
-        back_hint = "  [!back]" if step > 0 else ""
-        cur_val = sp[field]
-        default_str = str(cur_val) if cur_val is not None else ""
+        cur = sp[field]
+        default_str = str(cur) if cur is not None else ""
+        hint = "  (Up=back)" if step > 0 and _PT else "  (!back)" if step > 0 else ""
 
         try:
-            raw = prompt_fn(
-                f"    {field}{back_hint}  [!cancel] >> ", default=default_str
-            )
+            raw = wiz(f"    {field}{hint} >> ", default=default_str)
+        except _Back:
+            if step > 0:
+                step -= 1
+            continue
         except _Abort:
             raise
-
-        low = raw.lower()
-        if low == "!cancel":
-            raise _Abort()
-        if low == "!back" and step > 0:
-            step -= 1
-            continue
 
         # ── validate by field ─────────────────────────────────────────────────
         if field == "n_apm":
             try:
-                val = int(raw) if raw else cur_val
+                val = int(raw) if raw else cur
                 if val < 1:
                     print("    ! n_apm must be >= 1")
                     continue
                 sp["n_apm"] = val
-                # reset sym if n_apm changed
                 if existing and val != existing.get("n_apm"):
-                    sp["sym"] = None
+                    sp["sym"] = None  # reset sym when n_apm changes
                 step += 1
             except (ValueError, TypeError):
                 print("    ! expected integer")
 
         elif field == "n_mol":
             try:
-                val = int(raw) if raw else cur_val
+                val = int(raw) if raw else cur
                 if val < 1:
                     print("    ! n_mol must be >= 1")
                     continue
@@ -401,11 +433,11 @@ def _wizard_species(
                 print("    ! expected integer")
 
         elif field == "name":
-            # blank -> clear; '-' -> explicit clear; any text -> set
+            # blank keeps current; "-" clears
             if raw == "-":
                 sp["name"] = None
             else:
-                sp["name"] = raw if raw else cur_val
+                sp["name"] = raw if raw else cur
             step += 1
 
     return sp
@@ -450,7 +482,7 @@ class TopologyBuilder:
         self._atom_order: Optional[List[int]] = None
 
     # ------------------------------------------------------------------
-    # constructor (duck-typed - no dataclass import)
+    # constructor (duck-typed -- no dataclass import)
     # ------------------------------------------------------------------
 
     @classmethod
@@ -523,7 +555,7 @@ class TopologyBuilder:
         return self
 
     # ------------------------------------------------------------------
-    # build - delegates to parse.to_molecular_system
+    # build -- delegates to parse.to_molecular_system
     # ------------------------------------------------------------------
 
     def build(self):
@@ -586,7 +618,8 @@ class TopologyBuilder:
             print("  (prompt_toolkit not found - using plain input; "
                   "install prompt-toolkit for cursor movement)")
 
-        repl_prompt = _PromptFn(use_history=True)
+        repl_prompt = _ReplPrompt()
+        wiz = _WizardPrompt()
 
         print(_SEP)
         print("  mobbrmsd topology editor  (type 'help' for commands)")
@@ -596,7 +629,6 @@ class TopologyBuilder:
             try:
                 raw = repl_prompt("  >> ")
             except _Abort:
-                # Ctrl+C in the main loop: clear the line and continue
                 print()
                 continue
             except EOFError:
@@ -617,9 +649,8 @@ class TopologyBuilder:
                 self._show()
 
             elif cmd in ("add", "a"):
-                field_prompt = _PromptFn(use_history=False)
                 try:
-                    sp = _wizard_species(field_prompt)
+                    sp = _wizard_species(wiz)
                     self._species.append(sp)
                     self._show()
                 except _Abort:
@@ -633,9 +664,8 @@ class TopologyBuilder:
                 if not (0 <= idx < len(self._species)):
                     print(f"  ! index {idx} out of range")
                     continue
-                field_prompt = _PromptFn(use_history=False)
                 try:
-                    sp = _wizard_species(field_prompt, existing=self._species[idx])
+                    sp = _wizard_species(wiz, existing=self._species[idx])
                     self._species[idx] = sp
                     self._show()
                 except _Abort:
@@ -721,7 +751,7 @@ def _main() -> None:
         description="Interactive molecular_system editor. Prints JSON on 'done'.",
     )
     ap.add_argument("-t", "--topology", metavar="FILE", default=None,
-                    help="MDTraj topology/structure file (PDB, GRO, …).")
+                    help="MDTraj topology/structure file (PDB, GRO, ...).")
     ap.add_argument("-c", "--coords", metavar="FILE", default=None,
                     help="Trajectory for variance-based ordering (needs --topology).")
     ap.add_argument("-n", "--name", metavar="NAME", default=None,
