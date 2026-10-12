@@ -163,5 +163,14 @@ mrmsd = mobbrmsd(mols=mols_sorted)
 
 ## Command-line interface
 
-See [Input format](input.md) for JSON input details and how to run with
-`python -m mobbrmsd run`.
+`mobbrmsd` exposes three subcommands:
+
+| Subcommand | Description |
+|------------|-------------|
+| `run [-i JSON] [ref [tgt]]` | Run RMSD; topology from JSON, coordinates as positional args |
+| `run -b [ref [tgt]]` | Launch the topology builder, then run RMSD |
+| `build [-o FILE]` | Launch the topology builder and save JSON |
+| `demo` | Run bundled demonstration scripts |
+
+See [Input format](input.md) for the JSON schema used by `run -i`, and
+[Topology Builder](builder.md) for the interactive topology editor.

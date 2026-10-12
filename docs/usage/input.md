@@ -104,7 +104,19 @@ atoms-per-molecule (tiebreaker).
 
 ## Running
 
+Pass the topology JSON with `-i` and the coordinate files as positional arguments:
+
 ```bash
+# topology from JSON, coordinates as positional args
+python -m mobbrmsd run -i topology.json ref.pdb tgt.pdb
+
+# everything in one JSON file (legacy style)
 python -m mobbrmsd run -i input.json
+
+# coordinate files without topology JSON (single all-atom species assumed)
+python -m mobbrmsd run ref.pdb tgt.pdb
 ```
+
+Additional `key=value` parameters (e.g. `maxeval=1000`) can be appended after
+the coordinate files.
 
