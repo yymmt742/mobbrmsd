@@ -196,13 +196,6 @@ def command_demo(args) -> None:
 
     output_spec = getattr(args, "output", None)
 
-    def resolve_output(demo_idx):
-        if output_spec is None:
-            return None
-        if output_spec == "":
-            return f"mobbrmsd_demo_{demo_idx + 1:02d}.png"
-        return output_spec
-
     demo_list = [
         cogen.__demo(cli=cli, prec=prec),
         bb.__demo(cli=cli, prec=prec),
@@ -212,6 +205,14 @@ def command_demo(args) -> None:
         batch_tri.__demo(cli=cli, prec=prec),
         mst.__demo(cli=cli, prec=prec),
     ]
+
+    def resolve_output(demo_idx):
+        if output_spec is None:
+            return None
+        if output_spec == "":
+            ext = demo_list[demo_idx].default_ext
+            return f"mobbrmsd_demo_{demo_idx + 1:02d}{ext}"
+        return output_spec
 
     if (no < 0) or len(demo_list) <= no:
         opts = [l.title for l in demo_list] + ["exit"]

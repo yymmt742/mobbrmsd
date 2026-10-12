@@ -7,6 +7,8 @@ import numpy
 
 
 class __demo(_demo._demo):
+    default_ext = ".webp"
+
     def __init__(self, **kwargs):
         super().__init__(title="mobbRMSD basic", **kwargs)
 

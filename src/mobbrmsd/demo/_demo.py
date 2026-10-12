@@ -170,6 +170,8 @@ def _save_figure(output, fig, rot_func=None, rot_frames=None):
 
 class _demo:
 
+    default_ext = ".png"
+
     def __init__(self, title="mobbrmsd demo", prec=numpy.float64, cli=False):
         self.prec = numpy.dtype(prec)
         self.cli = cli
