@@ -118,9 +118,14 @@ class parser:
                 pass
 
         def parse_coordinate(obj, dtype, top=None, mask=None):
+            """Return (coords, top, mdt_traj_or_None).
 
+            mdt_traj_or_None is an mdtraj.Trajectory when obj is a file path,
+            sliced to the masked atoms when a mask is applied.  It is None when
+            the coordinates come from a JSON literal or list.
+            """
             if obj is None:
-                return None, top
+                return None, top, None
 
             if isinstance(obj, str):
                 try:  # Assume obj is path and load with MDtraj.
@@ -134,11 +139,14 @@ class parser:
                             )  # to angs.
                         else:
                             ref = mdt.xyz[:, mx] * 10.0  # to angs.
+                        mdt_out = mdt.atom_slice(mx)
                     else:
                         if dtype != numpy.float32:
                             ref = numpy.array(mdt.xyz, dtype=dtype) * 10.0  # to angs.
                         else:
                             ref = mdt.xyz * 10.0  # to angs.
+                        mdt_out = mdt
+                    return ref, top, mdt_out
                 except:
                     try:  # Assume obj is json string and load with json.loads.
                         ref = numpy.array(json.loads(obj), dtype=dtype)
@@ -146,13 +154,13 @@ class parser:
                         raise Exception(f"Coordinate load error in : {obj}")
             else:  # Assume obj is list.
                 ref = numpy.array(obj, dtype=dtype)
-            return ref, top
+            return ref, top, None
 
         self.dtype = (
             numpy.float32 if prms.get("precision") == "single" else numpy.float64
         )
         self.mask = prms.get("mask")
-        self.refxyz, self.top = parse_coordinate(
+        self.refxyz, self.top, _ = parse_coordinate(
             prms.get("reference"),
             self.dtype,
             top=prms.get("topology"),
@@ -161,7 +169,7 @@ class parser:
         if self.refxyz is None:
             raise Exception(f"No coordinate information was found from the input.")
 
-        self.trgxyz, _ = parse_coordinate(
+        self.trgxyz, _, self.trgmdt = parse_coordinate(
             prms.get("target"),
             self.dtype,
             top=self.top,

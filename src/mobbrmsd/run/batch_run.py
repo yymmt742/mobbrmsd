@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Union
 
 
-def run(mols, refxyz, trgxyz, **kwargs) -> None:
+def run(mols, refxyz, trgxyz, output=None, trgmdt=None, **kwargs) -> None:
     mrmsd = mobbrmsd(mols=mols)
     if trgxyz is None:
         ret = mrmsd.batch_run(refxyz, **kwargs)

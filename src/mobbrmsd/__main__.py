@@ -166,7 +166,15 @@ def command_run(args) -> None:
     else:
         arg = parse.parser(args)
 
-    arg.run(arg.mols, arg.refxyz, arg.trgxyz, **arg.prms)
+    run_kwargs = {k: v for k, v in arg.prms.items() if k not in ("output", "trgmdt")}
+    arg.run(
+        arg.mols,
+        arg.refxyz,
+        arg.trgxyz,
+        output=getattr(args, "output", None),
+        trgmdt=getattr(arg, "trgmdt", None),
+        **run_kwargs,
+    )
 
 
 def command_demo(args) -> None:
@@ -270,6 +278,13 @@ def main():
         nargs="?",
         default=None,
         help="Target coordinate file (optional)",
+    )
+    parser_run.add_argument(
+        "-o",
+        "--output",
+        default=None,
+        metavar="FILE",
+        help="Save rotated target structure to FILE (MDTraj-supported format, e.g. .pdb, .xtc)",
     )
     parser_run.add_argument(
         "-p",
