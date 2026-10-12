@@ -110,13 +110,18 @@ Pass the topology JSON with `-i` and the coordinate files as positional argument
 # topology from JSON, coordinates as positional args
 python -m mobbrmsd run -i topology.json ref.pdb tgt.pdb
 
-# everything in one JSON file (legacy style)
+# everything in one JSON file
 python -m mobbrmsd run -i input.json
 
 # coordinate files without topology JSON (single all-atom species assumed)
 python -m mobbrmsd run ref.pdb tgt.pdb
 ```
 
-Additional `key=value` parameters (e.g. `maxeval=1000`) can be appended after
-the coordinate files.
+### Dispatch rules
+
+| Arguments | Behavior |
+|-----------|----------|
+| `reference` only | Symmetric `batch_run(x)` — *n_frame* × *n_frame* distance matrix |
+| `reference target`, both 1 frame | Single-pair `run(x, y)` with full output |
+| `reference target`, multi-frame | Cross `batch_run(x, y)` — *n_ref* × *n_trg* distance matrix |
 

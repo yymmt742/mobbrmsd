@@ -31,12 +31,17 @@ the tool prompts for it interactively after the builder exits.
 ## `build` subcommand
 
 ```
-python -m mobbrmsd build [-o FILE]
+python -m mobbrmsd build [-o FILE] [-f FILE [--topology TOP]]
 ```
 
 | Option | Description |
 |--------|-------------|
 | `-o FILE` / `--output FILE` | Write JSON to FILE (default: print to stdout) |
+| `-f FILE` / `--file FILE` | Parse topology from an MDTraj-supported file (PDB, GRO, …) instead of the interactive builder |
+| `--topology TOP` | Topology file required by some formats (e.g. a PDB alongside a DCD) |
+
+When `-f` is given the interactive REPL is skipped: the topology is read
+directly from the file via `molecular_system.from_topology()`.
 
 The output uses the same `"molecular_system"` format as `molecular_system.to_dict()`
 and is directly consumable by `run -i`.
