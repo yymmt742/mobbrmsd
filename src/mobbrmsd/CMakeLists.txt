@@ -9,72 +9,82 @@ if(SKBUILD)
     OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
+  # Python >= 3.12 uses the meson f2py backend which determines the extension
+  # suffix via sysconfig rather than CMAKE_SHARED_MODULE_SUFFIX.
+  execute_process(
+    COMMAND "${Python_EXECUTABLE}"
+    -c "import sysconfig; print(sysconfig.get_config_var('EXT_SUFFIX'), end='')"
+    OUTPUT_VARIABLE Python_EXT_SUFFIX
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
   function(F2PY_BUILD dims prec)
 
     set( target ${PROJECT_NAME}_${dims}${prec}_f2py )
-
-    if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-      set (sofile "${CMAKE_CURRENT_BINARY_DIR}/mobbrmsd_${dims}${prec}.${SKBUILD_SOABI}${CMAKE_SHARED_MODULE_SUFFIX}")
-    else()
-      set (sofile "${CMAKE_CURRENT_BINARY_DIR}/mobbrmsd_${dims}${prec}.${SKBUILD_SOABI}.so")
-    endif()
+    set( sofile "${CMAKE_CURRENT_BINARY_DIR}/mobbrmsd_${dims}${prec}${Python_EXT_SUFFIX}" )
 
     set(lomp)
-    set(lflag)
+    set(fflags)
 
     if( dims STREQUAL "xd" )
       set( blas 1 )
       if(BLAS_FOUND AND LAPACK_FOUND)
         list( APPEND lomp ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} )
-        list( APPEND lflag ${BLAS_LINKER_FLAGS} ${LAPACK_LINKER_FLAGS} )
+        list( APPEND fflags ${BLAS_LINKER_FLAGS} ${LAPACK_LINKER_FLAGS} )
       endif()
     endif()
 
     if(OpenMP_FOUND)
       foreach(var IN ITEMS ${OpenMP_Fortran_LIB_NAMES})
-        list( APPEND lomp "-l${var} " )
+        list( APPEND lomp "-l${var}" )
       endforeach()
-      list( APPEND lflag ${OpenMP_Fortran_FLAGS} )
+      list( APPEND fflags ${OpenMP_Fortran_FLAGS} )
     endif()
+
+    # Collapse fflags list to a single space-separated string for FFLAGS env var.
+    string(JOIN " " fflags_str ${fflags}
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:-O3>
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:-cpp>
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:-std=f2008>
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:-fimplicit-none>
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:-fall-intrinsics>
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","NVHPC">:-fast>
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","NVHPC">:-cpp>
+      $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","NVHPC">:-Mnobackslash>
+      $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:-fast>
+      $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:-free>
+      $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:-fpp>
+      $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:-fast>
+      $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:-free>
+      $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:-fpp>
+      $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:/fast>
+      $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:/free>
+      $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:/fpp>
+      $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:/fast>
+      $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:/free>
+      $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:/fpp>
+    )
 
     message(STATUS ${dims} ${prec} ${sofile})
     add_custom_command(
       OUTPUT ${sofile}
-      COMMAND ${Python_EXECUTABLE} -m "numpy.f2py"
-        -c
-        -m mobbrmsd_${dims}${prec}
-        --no-wrap-functions
-        $<$<CONFIG:Debug>:--debug-capi>
-        --f2cmap "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap_${prec}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
-        -I${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd_fortran/${dims}${prec}/mod_files
-        -L${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd_fortran/static
-        -lmobbrmsd_${dims}${prec}
-        ${lomp}
-        --f90flags='
-        "${lflag}"
-        $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-O3">
-        $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-cpp">
-        $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-std=f2008">
-        $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fimplicit-none">
-        $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","GNU">:"-fall-intrinsics">
-        $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","NVHPC">:"-fast">
-        $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","NVHPC">:"-cpp">
-        $<$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","NVHPC">:"-Mnobackslash">
-        $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:"-fast">
-        $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:"-free">
-        $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:"-fpp">
-        $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:"-fast">
-        $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:"-free">
-        $<$<AND:$<BOOL:${UNIX}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:"-fpp">
-        $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:"/fast">
-        $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:"/free">
-        $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","IntelLLVM">>:"/fpp">
-        $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:"/fast">
-        $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:"/free">
-        $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:"${CMAKE_Fortran_COMPILER_ID}","Intel">>:"/fpp">
-        '
-        $<$<CONFIG:Debug>:--debug>
+      # f2py meson backend (Python>=3.12) reads .f2py_f2cmap from CWD; copy it there first.
+      COMMAND ${CMAKE_COMMAND} -E copy
+        "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap_${prec}"
+        "${CMAKE_CURRENT_BINARY_DIR}/.f2py_f2cmap"
+      # Pass Fortran flags via FFLAGS env var (meson backend ignores --f90flags).
+      COMMAND ${CMAKE_COMMAND} -E env "FFLAGS=${fflags_str}"
+        ${Python_EXECUTABLE} -m "numpy.f2py"
+          -c
+          -m mobbrmsd_${dims}${prec}
+          $<$<CONFIG:Debug>:--debug-capi>
+          "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
+          -I${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd_fortran/${dims}${prec}/mod_files
+          -L${CMAKE_CURRENT_BINARY_DIR}/../mobbrmsd_fortran/static
+          -lmobbrmsd_${dims}${prec}
+          ${lomp}
+          $<$<CONFIG:Debug>:--debug>
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       DEPENDS "mobbrmsd_${dims}${prec}_static"
               "${CMAKE_CURRENT_SOURCE_DIR}/.f2py_f2cmap_${prec}"
               "${CMAKE_CURRENT_SOURCE_DIR}/python_driver.f90"
@@ -103,7 +113,7 @@ if(SKBUILD)
         COMMAND ${Python_EXECUTABLE}
         ${preprocessor}
         ${CMAKE_CURRENT_SOURCE_DIR}/${py}.py
-        > ${CMAKE_CURRENT_BINARY_DIR}/${py}.py 2>&1
+        ${CMAKE_CURRENT_BINARY_DIR}/${py}.py
       )
     add_custom_target(${py} ALL
       DEPENDS

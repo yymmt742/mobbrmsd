@@ -23,6 +23,11 @@ def replace_line(l):
     return ret
 
 
-with open(sys.argv[1], "r") as f:
-    for l in f.readlines():
-        print(replace_line(l), end="")
+with open(sys.argv[1], "r", encoding="utf-8") as fin:
+    content = "".join(replace_line(l) for l in fin.readlines())
+
+if len(sys.argv) >= 3:
+    with open(sys.argv[2], "w", encoding="utf-8") as fout:
+        fout.write(content)
+else:
+    print(content, end="")

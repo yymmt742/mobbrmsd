@@ -8,7 +8,7 @@ A minimal example is:
 {
   "reference": "./path/to/file1.pdb",
   "target": "./path/to/file2.xyz",
-  "mols": [
+  "molecules": [
     {
       "n_apm": 2,
       "n_mol": 1,
@@ -26,7 +26,7 @@ A minimal example is:
 
 ## Molecular species
 
-Each entry in `mols` describes one molecular species.
+Each entry in `molecules` describes one molecular species.
 
 ### `n_apm`
 
