@@ -160,43 +160,58 @@ class molecular_system:
         return molecular_system(mols=new_mols, name=self.name, atom_order=new_order)
 
 
-def load(prms: dict):
-    """load
-
-    Args:
-        prms : dict. The main keys are follows:\n
-               "molecular_system": list[molecules] or str (json string) or dict\n
-               "molecules": dict
-    """
+def _coerce_json(v):
+    """Parse v as JSON if it is a string; otherwise return as-is."""
     import json
 
-    sys = prms.get("molecular_system")
-    if sys is None:
-        mols = prms.get("molecules")
+    return json.loads(v) if isinstance(v, str) else v
+
+
+def load(prms: dict) -> "molecular_system":
+    """Build a molecular_system from a parameter dict.
+
+    Args:
+        prms (dict): Keys recognised:
+
+            ``"molecular_system"`` (preferred)
+                A dict (or JSON string) with sub-keys:
+
+                * ``"molecules"`` — list of molecule-spec dicts (or a single dict).
+                * ``"name"`` — optional system name.
+                * ``"atom_order"`` — optional permutation index list.
+
+            ``"molecules"`` (legacy top-level key)
+                A list of molecule-spec dicts, or a single dict.
+
+            Values may be pre-parsed Python objects or raw JSON strings.
+    """
+    sys_val = _coerce_json(prms.get("molecular_system"))
+    if isinstance(sys_val, dict):
+        raw_mols = _coerce_json(sys_val.get("molecules"))
+        name = sys_val.get("name")
+        raw_atom_order = sys_val.get("atom_order")
+    elif sys_val is not None:
+        raw_mols = sys_val
         name = None
+        raw_atom_order = None
     else:
-        if isinstance(sys, str):
-            jsys = json.loads(sys)
-            mols = jsys.get("mols")
-            name = jsys.get("name")
-        elif isinstance(sys, dict):
-            mols = sys.get("mols")
-            name = sys.get("name")
-        else:
-            mols = sys
-            name = None
+        raw_mols = _coerce_json(prms.get("molecules"))
+        name = None
+        raw_atom_order = None
 
-    if mols is None:
-        raise IOError
+    if raw_mols is None:
+        raise IOError("No molecular system information found in prms.")
 
-    if isinstance(mols, str):
-        jmols = json.loads(mols)
-        if isinstance(jmols, dict):
-            return molecules(**jmols)
-        else:
-            return molecular_system(mols=[molecules(**mol) for mol in jmols], name=name)
-    else:
-        if isinstance(mols, dict):
-            return molecular_system(mols=[molecules(**mols)], name=name)
-        else:
-            return molecular_system(mols=[molecules(**mol) for mol in mols], name=name)
+    atom_order = (
+        numpy.array(raw_atom_order, dtype=numpy.intp)
+        if raw_atom_order is not None
+        else None
+    )
+
+    if isinstance(raw_mols, dict):
+        return molecular_system(
+            mols=[molecules(**raw_mols)], name=name, atom_order=atom_order
+        )
+    return molecular_system(
+        mols=[molecules(**m) for m in raw_mols], name=name, atom_order=atom_order
+    )

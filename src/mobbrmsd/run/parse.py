@@ -17,24 +17,43 @@ def load(prms: dict) -> Optional[molecular_system]:
     Accepts both ``"molecular_system"`` (preferred) and ``"molecules"`` (legacy)
     keys.  Values may be pre-parsed Python objects (dict / list) or raw JSON
     strings, e.g. when supplied via the command line.
+
+    Within ``"molecular_system"``, recognised sub-keys are:
+
+    * ``"molecules"`` — list of molecule-spec dicts (or a single dict).
+    * ``"name"`` — optional system name.
+    * ``"atom_order"`` — optional permutation index list.
     """
     sys_val = _coerce_json(prms.get("molecular_system"))
     if isinstance(sys_val, dict):
-        raw_mols = _coerce_json(sys_val.get("mols"))
+        raw_mols = _coerce_json(sys_val.get("molecules"))
         name = sys_val.get("name")
+        raw_atom_order = sys_val.get("atom_order")
     elif sys_val is not None:
         raw_mols = sys_val
         name = None
+        raw_atom_order = None
     else:
         raw_mols = _coerce_json(prms.get("molecules"))
         name = None
+        raw_atom_order = None
 
     if raw_mols is None:
         return None
 
+    atom_order = (
+        numpy.array(raw_atom_order, dtype=numpy.intp)
+        if raw_atom_order is not None
+        else None
+    )
+
     if isinstance(raw_mols, dict):
-        return molecular_system(mols=[molecules(**raw_mols)], name=name)
-    return molecular_system(mols=[molecules(**m) for m in raw_mols], name=name)
+        return molecular_system(
+            mols=[molecules(**raw_mols)], name=name, atom_order=atom_order
+        )
+    return molecular_system(
+        mols=[molecules(**m) for m in raw_mols], name=name, atom_order=atom_order
+    )
 
 
 class parser:
