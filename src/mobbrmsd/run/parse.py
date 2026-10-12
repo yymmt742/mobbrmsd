@@ -11,6 +11,48 @@ def _coerce_json(v):
     return json.loads(v) if isinstance(v, str) else v
 
 
+# ---------------------------------------------------------------------------
+# TopologyBuilder ↔ molecular_system conversions
+# ---------------------------------------------------------------------------
+
+def to_molecular_system(builder) -> molecular_system:
+    """Convert a :class:`~mobbrmsd.run.topology_builder.TopologyBuilder` to
+    a frozen :class:`~mobbrmsd.dataclass.molecular_system`.
+
+    This is the implementation that :meth:`TopologyBuilder.build` delegates to.
+    """
+    if not builder._species:
+        raise ValueError("No species defined — call add() at least once.")
+    mols_list = [molecules(**sp) for sp in builder._species]
+    atom_order = (
+        numpy.array(builder._atom_order, dtype=numpy.intp)
+        if builder._atom_order is not None
+        else None
+    )
+    return molecular_system(mols=mols_list, name=builder._name, atom_order=atom_order)
+
+
+def builder_from_topology(top, name: Optional[str] = None):
+    """Create a :class:`~mobbrmsd.run.topology_builder.TopologyBuilder` from
+    an MDTraj Topology using structural species ordering (n_mol asc, n_apm desc).
+    """
+    from .topology_builder import TopologyBuilder
+    mols = molecular_system.from_topology(top, name=name)
+    return TopologyBuilder.from_molecular_system(mols)
+
+
+def builder_from_mdtraj(top, coords=None, name: Optional[str] = None):
+    """Create a :class:`~mobbrmsd.run.topology_builder.TopologyBuilder` from
+    an MDTraj Topology.
+
+    When *coords* are provided, species are sorted by descending COM variance;
+    otherwise structural ordering (n_mol asc, n_apm desc) is applied.
+    """
+    from .topology_builder import TopologyBuilder
+    mols = molecular_system.from_mdtraj(top, coords=coords, name=name)
+    return TopologyBuilder.from_molecular_system(mols)
+
+
 def load(prms: dict) -> Optional[molecular_system]:
     """Build a molecular_system from a parameter dict.
 

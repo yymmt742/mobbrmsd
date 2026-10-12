@@ -3,18 +3,18 @@
 Since ``molecular_system`` is a frozen dataclass, this module provides a
 mutable ``TopologyBuilder`` that accumulates species edits interactively
 and emits a ``molecular_system`` when the user is done.
+
+``TopologyBuilder`` itself has no dependency on :mod:`mobbrmsd.dataclass`.
+Conversion to/from ``molecular_system`` is handled by helper functions in
+:mod:`mobbrmsd.run.parse` (``to_molecular_system``, ``builder_from_topology``,
+``builder_from_mdtraj``), keeping the builder a pure data-editing layer.
 """
 
 from __future__ import annotations
 
-import json
 import copy
+import json
 from typing import Dict, List, Optional
-
-import numpy
-import numpy.typing as npt
-
-from ..dataclass import molecules, molecular_system
 
 
 _SEP = "  " + "-" * 72
@@ -38,7 +38,6 @@ def _parse_sym(raw: str) -> Optional[List[List[int]]]:
 
 
 def _ask(prompt: str, default: str = "") -> str:
-    """Read a line from stdin with a default value."""
     hint = f" (default: {default!r})" if default != "" else ""
     raw = input(f"    {prompt}{hint} >> ").strip()
     return raw if raw != "" else default
@@ -65,19 +64,23 @@ def _ask_optional_str(prompt: str, default: Optional[str]) -> Optional[str]:
 class TopologyBuilder:
     """Mutable builder for :class:`~mobbrmsd.dataclass.molecular_system`.
 
-    Construct from an existing ``molecular_system`` or an MDTraj topology,
-    edit species interactively or programmatically, then call :meth:`build`
-    to obtain the final frozen ``molecular_system``.
+    ``TopologyBuilder`` is a pure data-editing layer with no dependency on
+    the ``mobbrmsd`` dataclasses.  Conversion to/from ``molecular_system``
+    is done via :mod:`mobbrmsd.run.parse`:
+
+    * :func:`~mobbrmsd.run.parse.to_molecular_system` — builder → molecular_system
+    * :func:`~mobbrmsd.run.parse.builder_from_topology` — MDTraj topology → builder
+    * :func:`~mobbrmsd.run.parse.builder_from_mdtraj` — MDTraj topology + coords → builder
 
     Examples
     --------
     Start from a topology file and edit interactively::
 
+        from mobbrmsd.run.parse import builder_from_topology
         import mdtraj
-        from mobbrmsd.run.topology_builder import TopologyBuilder
 
         top = mdtraj.load_topology("topology.pdb")
-        mols = TopologyBuilder.from_topology(top).run()
+        mols = builder_from_topology(top).run()
 
     Programmatic fluent API::
 
@@ -96,12 +99,16 @@ class TopologyBuilder:
         self._atom_order: Optional[List[int]] = None
 
     # ------------------------------------------------------------------
-    # constructors
+    # constructor from duck-typed molecular_system
     # ------------------------------------------------------------------
 
     @classmethod
-    def from_molecular_system(cls, mols: molecular_system) -> "TopologyBuilder":
-        """Initialise from an existing ``molecular_system``."""
+    def from_molecular_system(cls, mols) -> "TopologyBuilder":
+        """Initialise from any object with ``.mols``, ``.name``, ``.atom_order``.
+
+        Works with :class:`~mobbrmsd.dataclass.molecular_system` without
+        importing it — pure duck typing.
+        """
         b = cls()
         b._name = mols.name
         b._atom_order = (
@@ -117,12 +124,6 @@ class TopologyBuilder:
                 }
             )
         return b
-
-    @classmethod
-    def from_topology(cls, top, name: Optional[str] = None) -> "TopologyBuilder":
-        """Initialise from an MDTraj Topology (structural ordering applied)."""
-        mols = molecular_system.from_topology(top, name=name)
-        return cls.from_molecular_system(mols)
 
     # ------------------------------------------------------------------
     # programmatic API (fluent)
@@ -182,20 +183,16 @@ class TopologyBuilder:
         return self
 
     # ------------------------------------------------------------------
-    # build
+    # build — thin wrapper; conversion logic lives in parse.py
     # ------------------------------------------------------------------
 
-    def build(self) -> molecular_system:
-        """Return the final frozen ``molecular_system``."""
-        if not self._species:
-            raise ValueError("No species defined — call add() at least once.")
-        mols_list = [molecules(**sp) for sp in self._species]
-        atom_order = (
-            numpy.array(self._atom_order, dtype=numpy.intp)
-            if self._atom_order is not None
-            else None
-        )
-        return molecular_system(mols=mols_list, name=self._name, atom_order=atom_order)
+    def build(self):
+        """Return the final frozen ``molecular_system``.
+
+        Delegates to :func:`mobbrmsd.run.parse.to_molecular_system`.
+        """
+        from .parse import to_molecular_system
+        return to_molecular_system(self)
 
     # ------------------------------------------------------------------
     # display
@@ -203,22 +200,23 @@ class TopologyBuilder:
 
     def _show(self) -> None:
         print(_SEP)
-        name_str = f"  System name : {self._name}" if self._name else "  System name : (none)"
-        print(name_str)
-        ao_str = (
-            f"  atom_order  : {self._atom_order}" if self._atom_order is not None
+        print(f"  System name : {self._name}" if self._name else "  System name : (none)")
+        print(
+            f"  atom_order  : {self._atom_order}"
+            if self._atom_order is not None
             else "  atom_order  : (none)"
         )
-        print(ao_str)
         print(_SEP)
         if not self._species:
             print("  (no species defined)")
         else:
             print(f"  {'#':>3}  {'n_apm':>6}  {'n_mol':>6}  {'name':<16}  sym")
             for i, sp in enumerate(self._species):
-                sym_repr = repr(sp["sym"]) if sp["sym"] else "(none)"
-                name_repr = sp["name"] or "(none)"
-                print(f"  {i:>3}  {sp['n_apm']:>6}  {sp['n_mol']:>6}  {name_repr:<16}  {sym_repr}")
+                print(
+                    f"  {i:>3}  {sp['n_apm']:>6}  {sp['n_mol']:>6}"
+                    f"  {sp['name'] or '(none)':<16}  "
+                    f"{repr(sp['sym']) if sp['sym'] else '(none)'}"
+                )
         print(_SEP)
 
     # ------------------------------------------------------------------
@@ -240,7 +238,7 @@ class TopologyBuilder:
     help  (h / ?)      — show this help
 """
 
-    def run(self) -> Optional[molecular_system]:
+    def run(self):
         """Start the interactive REPL.
 
         Returns the built ``molecular_system`` on ``done``, or ``None`` on
@@ -264,15 +262,12 @@ class TopologyBuilder:
             cmd = parts[0].lower()
             args = parts[1:]
 
-            # -- help --
             if cmd in ("help", "h", "?"):
                 print(self._HELP)
 
-            # -- list --
             elif cmd in ("list", "l"):
                 self._show()
 
-            # -- add --
             elif cmd in ("add", "a"):
                 print("  --- add species ---")
                 n_apm = _ask_int("n_apm", 1)
@@ -288,7 +283,6 @@ class TopologyBuilder:
                 self.add(n_apm=n_apm, n_mol=n_mol, sym=sym, name=name)
                 self._show()
 
-            # -- edit N --
             elif cmd in ("edit", "e"):
                 if len(args) != 1 or not args[0].isdigit():
                     print("  ! usage: edit N")
@@ -319,7 +313,6 @@ class TopologyBuilder:
                 self.edit(idx, n_apm=n_apm, n_mol=n_mol, sym=sym, name=name)
                 self._show()
 
-            # -- remove N --
             elif cmd in ("remove", "r"):
                 if len(args) != 1 or not args[0].isdigit():
                     print("  ! usage: remove N")
@@ -331,7 +324,6 @@ class TopologyBuilder:
                 self.remove(idx)
                 self._show()
 
-            # -- move N M --
             elif cmd in ("move", "mv"):
                 if len(args) != 2 or not all(a.isdigit() for a in args):
                     print("  ! usage: move N M")
@@ -345,18 +337,14 @@ class TopologyBuilder:
                 self._species.insert(dst, sp)
                 self._show()
 
-            # -- sort --
             elif cmd in ("sort", "s"):
                 self.sort()
                 self._show()
 
-            # -- name [TEXT] --
             elif cmd in ("name", "n"):
-                new_name = " ".join(args) if args else None
-                self.set_name(new_name)
+                self.set_name(" ".join(args) if args else None)
                 print(f"  System name set to: {self._name!r}")
 
-            # -- order [JSON] --
             elif cmd in ("order", "o"):
                 raw_order = " ".join(args)
                 if not raw_order:
@@ -374,7 +362,6 @@ class TopologyBuilder:
                     except (json.JSONDecodeError, ValueError) as e:
                         print(f"  ! {e}")
 
-            # -- done --
             elif cmd in ("done", "d"):
                 try:
                     result = self.build()
@@ -385,7 +372,6 @@ class TopologyBuilder:
                 except ValueError as e:
                     print(f"  ! {e}")
 
-            # -- quit --
             elif cmd in ("quit", "q"):
                 print("  Aborted.")
                 return None
@@ -405,37 +391,18 @@ def _main() -> None:
     ap = argparse.ArgumentParser(
         prog="python -m mobbrmsd.run.topology_builder",
         description=(
-            "Interactive molecular_system editor.  "
+            "Interactive molecular_system editor. "
             "On 'done', prints the resulting JSON to stdout."
         ),
     )
-    ap.add_argument(
-        "-t", "--topology",
-        metavar="FILE",
-        default=None,
-        help="MDTraj-supported topology/structure file to pre-load (PDB, GRO, …).",
-    )
-    ap.add_argument(
-        "-c", "--coords",
-        metavar="FILE",
-        default=None,
-        help=(
-            "Trajectory file for variance-based species ordering "
-            "(requires --topology for non-self-describing formats)."
-        ),
-    )
-    ap.add_argument(
-        "-n", "--name",
-        metavar="NAME",
-        default=None,
-        help="Initial system name.",
-    )
-    ap.add_argument(
-        "-o", "--output",
-        metavar="FILE",
-        default=None,
-        help="Write JSON to FILE instead of stdout.",
-    )
+    ap.add_argument("-t", "--topology", metavar="FILE", default=None,
+                    help="MDTraj topology/structure file to pre-load (PDB, GRO, …).")
+    ap.add_argument("-c", "--coords", metavar="FILE", default=None,
+                    help="Trajectory for variance-based ordering (requires --topology).")
+    ap.add_argument("-n", "--name", metavar="NAME", default=None,
+                    help="Initial system name.")
+    ap.add_argument("-o", "--output", metavar="FILE", default=None,
+                    help="Write JSON to FILE instead of stdout.")
     args = ap.parse_args()
 
     if args.topology is not None:
@@ -445,26 +412,24 @@ def _main() -> None:
             print("ERROR: mdtraj is required to load topology files.", file=sys.stderr)
             sys.exit(1)
         try:
+            from .parse import builder_from_topology, builder_from_mdtraj
             if args.coords is not None:
                 traj = mdtraj.load(args.coords, top=args.topology)
-                coords = traj.xyz * 10.0
-                mols_init = molecular_system.from_mdtraj(
-                    traj.topology, coords=coords, name=args.name
+                builder = builder_from_mdtraj(
+                    traj.topology, coords=traj.xyz * 10.0, name=args.name
                 )
             else:
                 top = mdtraj.load_topology(args.topology)
-                mols_init = molecular_system.from_topology(top, name=args.name)
+                builder = builder_from_topology(top, name=args.name)
         except Exception as e:
             print(f"ERROR loading topology: {e}", file=sys.stderr)
             sys.exit(1)
-        builder = TopologyBuilder.from_molecular_system(mols_init)
     else:
         builder = TopologyBuilder()
         if args.name:
             builder.set_name(args.name)
 
     result = builder.run()
-
     if result is None:
         sys.exit(1)
 
