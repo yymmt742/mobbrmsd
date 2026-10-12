@@ -40,8 +40,25 @@ python -m mobbrmsd build [-o FILE] [-f FILE [--topology TOP]]
 | `-f FILE` / `--file FILE` | Parse topology from an MDTraj-supported file (PDB, GRO, …) instead of the interactive builder |
 | `--topology TOP` | Topology file required by some formats (e.g. a PDB alongside a DCD) |
 
-When `-f` is given the interactive REPL is skipped: the topology is read
-directly from the file via `molecular_system.from_topology()`.
+When `-f` is given, the parsed topology is shown as a species table and
+the user is prompted before writing:
+
+```
+  Discovered 3 species
+  #    Name          n_apm  n_mol  sym
+  ───  ────────────  ─────  ─────  ───
+    1  HOH               3    216  —
+    2  NA                1     23  —
+    3  CL                1     18  —
+  Total atoms: 689
+
+  Proceed? [Y]es / [n]o / [e]dit >
+```
+
+Choosing `e` launches the interactive REPL with the discovered species
+pre-loaded so they can be inspected or edited before saving.
+If `molecular_system.from_topology()` raises an error (e.g. inconsistent
+atom counts), the user is offered to define species manually via the REPL.
 
 The output uses the same `"molecular_system"` format as `molecular_system.to_dict()`
 and is directly consumable by `run -i`.

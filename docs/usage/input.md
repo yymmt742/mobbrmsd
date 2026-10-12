@@ -115,7 +115,23 @@ python -m mobbrmsd run -i input.json
 
 # coordinate files without topology JSON (single all-atom species assumed)
 python -m mobbrmsd run ref.pdb tgt.pdb
+
+# extra run parameters via -p (repeatable)
+python -m mobbrmsd run -i topology.json ref.pdb tgt.pdb -p maxeval=1000 -p cutoff=2.0
 ```
+
+### Run parameters (`-p KEY=VALUE`)
+
+Extra keyword arguments are passed to the RMSD calculation via `-p`.
+They are equivalent to the top-level keys in the legacy JSON input format.
+
+| Key | Example | Description |
+|-----|---------|-------------|
+| `precision` | `single` | Use single-precision floats (`float32`) |
+| `mask` | `name CA` | MDTraj atom selection mask |
+| `topology` | `top.pdb` | Topology file for trajectory formats that need one |
+| `maxeval` | `1000` | Maximum branch-and-bound nodes (< 0 = exact) |
+| `cutoff` | `2.0` | Stop when lower bound ≥ cutoff |
 
 ### Dispatch rules
 

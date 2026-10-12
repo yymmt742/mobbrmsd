@@ -167,9 +167,10 @@ mrmsd = mobbrmsd(mols=mols_sorted)
 
 | Subcommand | Description |
 |------------|-------------|
-| `run [-i JSON] [ref [tgt]]` | Run RMSD; topology from JSON, coordinates as positional args |
+| `run [-i JSON] [ref [tgt]] [-p KEY=VALUE ...]` | Run RMSD; topology from JSON, coordinates as positional args |
 | `run -b [ref [tgt]]` | Launch the topology builder, then run RMSD |
 | `build [-o FILE]` | Launch the topology builder and save JSON |
+| `build -f FILE [-o FILE]` | Parse topology from an MDTraj-supported file, confirm, then save |
 | `demo` | Run bundled demonstration scripts |
 
 See [Input format](input.md) for the JSON schema used by `run -i`, and
