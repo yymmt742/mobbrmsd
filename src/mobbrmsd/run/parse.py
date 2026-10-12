@@ -174,13 +174,16 @@ class parser:
         self.runtype = prms.get("runtype")
         if self.runtype is None:
             nref = self.refxyz.shape[0]
-            ntrg = 1 if self.trgxyz is None else self.trgxyz.shape[0]
+            ntrg = 0 if self.trgxyz is None else self.trgxyz.shape[0]
 
-            if nref * ntrg == 1:
+            if ntrg == 0:
+                # Single file: symmetric batch_run → n_frame × n_frame matrix
+                from .batch_run import run
+            elif nref == 1 and ntrg == 1:
+                # Two single-frame files: verbose single-pair run
                 from .verbose_run import run
-
-                self.run = run
             else:
+                # Multi-frame: cross batch_run → n_ref × n_trg matrix
                 from .batch_run import run
 
-                self.run = run
+            self.run = run

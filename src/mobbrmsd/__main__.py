@@ -8,15 +8,30 @@ __version__ = version(__package__)
 def command_build(args) -> None:
     import json
     import sys
-    from .run.topology_builder import TopologyBuilder
 
-    builder = TopologyBuilder()
-    builder.run()
-    try:
-        mols = builder.build()
-    except ValueError as e:
-        print(f"Error: {e}")
-        return
+    if getattr(args, "file", None):
+        try:
+            import mdtraj
+        except ImportError:
+            print("Error: mdtraj is required. Install with: pip install mdtraj")
+            return
+        top_arg = getattr(args, "topology", None)
+        try:
+            top = mdtraj.load_topology(args.file, top_arg)
+        except Exception as e:
+            print(f"Error loading topology: {e}")
+            return
+        from .dataclass import molecular_system
+        mols = molecular_system.from_topology(top)
+    else:
+        from .run.topology_builder import TopologyBuilder
+        builder = TopologyBuilder()
+        builder.run()
+        try:
+            mols = builder.build()
+        except ValueError as e:
+            print(f"Error: {e}")
+            return
 
     d = mols.to_dict()
     if args.output:
@@ -186,7 +201,7 @@ def main():
         "params",
         nargs="*",
         action=ParamProc,
-        help="Additional keyword arguments (key=value).",
+        help=argparse.SUPPRESS,
     )
     parser_run.set_defaults(handler=command_run)
 
@@ -199,6 +214,19 @@ def main():
         default=None,
         metavar="FILE",
         help="Output JSON file (default: print to stdout)",
+    )
+    parser_build.add_argument(
+        "-f",
+        "--file",
+        default=None,
+        metavar="FILE",
+        help="Parse topology from an MDTraj-supported file (PDB, GRO, …) instead of the interactive builder",
+    )
+    parser_build.add_argument(
+        "--topology",
+        default=None,
+        metavar="TOP",
+        help="Topology file for formats that require one (e.g. a PDB alongside a DCD)",
     )
     parser_build.set_defaults(handler=command_build)
 
