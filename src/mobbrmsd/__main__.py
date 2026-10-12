@@ -5,24 +5,104 @@ from importlib.metadata import version
 __version__ = version(__package__)
 
 
-def command_build(args) -> None:
-    import json
-    import sys
+def _print_species_table(ms):
+    print()
+    print(f"  Discovered {len(ms)} species")
+    w_name = max((len(m.get("name") or "—") for m in ms), default=4)
+    w_name = max(w_name, 4)
+    hdr = f"  {'#':>3}  {'Name':<{w_name}}  {'n_apm':>5}  {'n_mol':>5}  sym"
+    print(hdr)
+    print(f"  {'─'*3}  {'─'*w_name}  {'─'*5}  {'─'*5}  {'─'*3}")
+    for i, m in enumerate(ms, 1):
+        name = m.get("name") or "—"
+        sym = m.get("sym")
+        sym_str = f"{len(sym)} perm" if sym else "—"
+        print(f"  {i:>3}  {name:<{w_name}}  {m['n_apm']:>5}  {m['n_mol']:>5}  {sym_str}")
+    total = sum(m["n_apm"] * m["n_mol"] for m in ms)
+    print(f"  Total atoms: {total}")
 
+
+def _write_json(mols, output):
+    import json, sys
+    d = mols.to_dict()
+    if output:
+        with open(output, "w") as f:
+            json.dump(d, f, indent=2)
+        print(f"  Written to {output}")
+    else:
+        json.dump(d, sys.stdout, indent=2)
+        print()
+
+
+def command_build(args) -> None:
     if getattr(args, "file", None):
         try:
             import mdtraj
         except ImportError:
             print("Error: mdtraj is required. Install with: pip install mdtraj")
             return
+
         top_arg = getattr(args, "topology", None)
+        print(f"  Parsing topology from {top_arg or args.file} …")
         try:
             top = mdtraj.load_topology(args.file, top_arg)
         except Exception as e:
-            print(f"Error loading topology: {e}")
+            print(f"  Error loading topology: {e}")
             return
-        from .dataclass import molecular_system
-        mols = molecular_system.from_topology(top)
+
+        from .dataclass import molecular_system as ms_cls
+        try:
+            mols = ms_cls.from_topology(top)
+        except Exception as e:
+            print(f"  Error: {e}")
+            print("  Launch topology builder to define species manually? [Y/n] ", end="", flush=True)
+            try:
+                ans = input().strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                print("\n  Cancelled.")
+                return
+            if ans in ("n", "no"):
+                return
+            from .run.topology_builder import TopologyBuilder
+            builder = TopologyBuilder()
+            builder.run()
+            try:
+                mols = builder.build()
+            except ValueError as e2:
+                print(f"  Error: {e2}")
+                return
+            _write_json(mols, args.output)
+            return
+
+        ms_dict = mols.to_dict().get("molecular_system", {})
+        species = ms_dict.get("molecules", [])
+        if isinstance(species, dict):
+            species = [species]
+        _print_species_table(species)
+
+        print()
+        print("  Proceed? [Y]es / [n]o / [e]dit > ", end="", flush=True)
+        try:
+            ans = input().strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print("\n  Cancelled.")
+            return
+
+        if ans in ("n", "no"):
+            print("  Cancelled.")
+            return
+        elif ans in ("e", "edit"):
+            from .run.parse import builder_from_topology
+            print(f"  Launching topology builder ({len(species)} species pre-loaded) …")
+            print()
+            builder = builder_from_topology(top)
+            builder.run()
+            try:
+                mols = builder.build()
+            except ValueError as e:
+                print(f"  Error: {e}")
+                return
+
     else:
         from .run.topology_builder import TopologyBuilder
         builder = TopologyBuilder()
@@ -33,30 +113,17 @@ def command_build(args) -> None:
             print(f"Error: {e}")
             return
 
-    d = mols.to_dict()
-    if args.output:
-        with open(args.output, "w") as f:
-            json.dump(d, f, indent=2)
-        print(f"  Written to {args.output}")
-    else:
-        json.dump(d, sys.stdout, indent=2)
-        print()
+    _write_json(mols, args.output)
 
 
 def command_run(args) -> None:
     from .run import parse
 
-    # Build a unified params dict; positional reference/target take priority.
-    prms = dict(args.params or {})
-
-    # argparse nargs='?' greedily assigns the first positionals to reference/target
-    # even when the string looks like key=value — move those back to params.
-    for attr in ("reference", "target"):
-        v = getattr(args, attr, None)
-        if v and "=" in v:
-            k, _, val = v.partition("=")
-            prms.setdefault(k, val)
-            setattr(args, attr, None)
+    prms = {}
+    for item in args.param or []:
+        k, _, v = item.partition("=")
+        if k:
+            prms[k] = v
 
     if getattr(args, "reference", None):
         prms.setdefault("reference", args.reference)
@@ -167,7 +234,7 @@ def main():
     parser_run = sub.add_parser(
         "run",
         help="run mobbrmsd",
-        usage="%(prog)s [-i JSON | -b] [reference [target]] [key=value ...]",
+        usage="%(prog)s [-i JSON | -b] [-p KEY=VALUE ...] [reference [target]]",
     )
     run_input = parser_run.add_mutually_exclusive_group()
     run_input.add_argument(
@@ -198,10 +265,12 @@ def main():
         help="Target coordinate file (optional)",
     )
     parser_run.add_argument(
-        "params",
-        nargs="*",
-        action=ParamProc,
-        help=argparse.SUPPRESS,
+        "-p",
+        "--param",
+        action="append",
+        default=None,
+        metavar="KEY=VALUE",
+        help="Extra run parameter (repeatable), e.g. -p maxeval=1000 -p cutoff=2.0",
     )
     parser_run.set_defaults(handler=command_run)
 
