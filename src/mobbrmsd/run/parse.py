@@ -6,38 +6,35 @@ from pathlib import Path
 from typing import Optional
 
 
-def load(prms: dict) -> Optional[molecular_system]:
+def _coerce_json(v):
+    """Parse v as JSON if it is a string; otherwise return as-is."""
+    return json.loads(v) if isinstance(v, str) else v
 
-    sys = prms.get("molecular_system")
-    if sys is None:
-        mols = prms.get("molecules")
+
+def load(prms: dict) -> Optional[molecular_system]:
+    """Build a molecular_system from a parameter dict.
+
+    Accepts both ``"molecular_system"`` (preferred) and ``"molecules"`` (legacy)
+    keys.  Values may be pre-parsed Python objects (dict / list) or raw JSON
+    strings, e.g. when supplied via the command line.
+    """
+    sys_val = _coerce_json(prms.get("molecular_system"))
+    if isinstance(sys_val, dict):
+        raw_mols = _coerce_json(sys_val.get("mols"))
+        name = sys_val.get("name")
+    elif sys_val is not None:
+        raw_mols = sys_val
         name = None
     else:
-        if isinstance(sys, str):
-            jsys = json.loads(sys)
-            mols = jsys.get("mols")
-            name = jsys.get("name")
-        elif isinstance(sys, dict):
-            mols = sys.get("mols")
-            name = sys.get("name")
-        else:
-            mols = sys
-            name = None
+        raw_mols = _coerce_json(prms.get("molecules"))
+        name = None
 
-    if mols is None:
-        return
+    if raw_mols is None:
+        return None
 
-    if isinstance(mols, str):
-        jmols = json.loads(mols)
-        if isinstance(jmols, dict):
-            return molecular_system(mols=[molecules(**jmols)], name=name)
-        else:
-            return molecular_system(mols=[molecules(**mol) for mol in jmols], name=name)
-    else:
-        if isinstance(mols, dict):
-            return molecular_system(mols=[molecules(**mols)], name=name)
-        else:
-            return molecular_system(mols=[molecules(**mol) for mol in mols], name=name)
+    if isinstance(raw_mols, dict):
+        return molecular_system(mols=[molecules(**raw_mols)], name=name)
+    return molecular_system(mols=[molecules(**m) for m in raw_mols], name=name)
 
 
 class parser:
