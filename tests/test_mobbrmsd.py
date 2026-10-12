@@ -350,3 +350,102 @@ class TestFromMDTraj:
         ms = molecular_system.from_mdtraj(simple_topology, coords=coords)
         # Species order may differ but atom_order must still be a valid permutation
         assert sorted(ms.atom_order.tolist()) == list(range(natom))
+
+
+class TestBuildJsonRoundtrip:
+    """TopologyBuilder → build() → molecular_system.to_dict() → parse.load() round-trip.
+
+    Verifies that the JSON produced by ``command_build`` (via ``mols.to_dict()``)
+    can be consumed by ``run -i`` (via ``parse.load()``).
+    """
+
+    def test_to_dict_has_molecular_system_key(self):
+        from mobbrmsd.run.topology_builder import TopologyBuilder
+
+        mols = TopologyBuilder().add(n_apm=2, n_mol=3).build()
+        d = mols.to_dict()
+        assert "molecular_system" in d
+        assert "molecules" in d["molecular_system"]
+
+    def test_simple_roundtrip(self):
+        from mobbrmsd.run.topology_builder import TopologyBuilder
+        from mobbrmsd.run.parse import load
+
+        mols = TopologyBuilder().add(n_apm=3, n_mol=4, name="Water").build()
+        loaded = load(mols.to_dict())
+        assert loaded is not None
+        assert len(loaded.mols) == 1
+        assert loaded.mols[0].n_apm == 3
+        assert loaded.mols[0].n_mol == 4
+        assert loaded.mols[0].name == "Water"
+
+    def test_sym_preserved(self):
+        from mobbrmsd.run.topology_builder import TopologyBuilder
+        from mobbrmsd.run.parse import load
+
+        mols = TopologyBuilder().add(n_apm=3, n_mol=4, sym=[[1, 0, 2]]).build()
+        loaded = load(mols.to_dict())
+        assert loaded is not None
+        assert loaded.mols[0].sym == [[1, 0, 2]]
+
+    def test_multispecies_roundtrip(self):
+        from mobbrmsd.run.topology_builder import TopologyBuilder
+        from mobbrmsd.run.parse import load
+
+        mols = (
+            TopologyBuilder()
+            .add(n_apm=3, n_mol=4, name="Water")
+            .add(n_apm=6, n_mol=2, name="Methanol")
+            .build()
+        )
+        loaded = load(mols.to_dict())
+        assert loaded is not None
+        assert len(loaded.mols) == 2
+        by_name = {m.name: m for m in loaded.mols}
+        assert by_name["Water"].n_apm == 3
+        assert by_name["Water"].n_mol == 4
+        assert by_name["Methanol"].n_apm == 6
+        assert by_name["Methanol"].n_mol == 2
+
+    def test_json_file_roundtrip(self, tmp_path):
+        import json
+        from mobbrmsd.run.topology_builder import TopologyBuilder
+        from mobbrmsd.run.parse import load
+
+        mols = TopologyBuilder().add(n_apm=3, n_mol=4, sym=[[1, 0, 2]], name="Water").build()
+        out = tmp_path / "topology.json"
+        out.write_text(json.dumps(mols.to_dict(), indent=2))
+        loaded = load(json.loads(out.read_text()))
+        assert loaded is not None
+        assert loaded.mols[0].n_apm == 3
+        assert loaded.mols[0].n_mol == 4
+        assert loaded.mols[0].sym == [[1, 0, 2]]
+
+    def test_atom_names_not_in_output(self):
+        """atom_names are builder-only and must not appear in molecular_system JSON."""
+        from mobbrmsd.run.topology_builder import TopologyBuilder
+
+        mols = (
+            TopologyBuilder()
+            .add(n_apm=3, n_mol=4, atom_names=["OW", "HW1", "HW2"])
+            .build()
+        )
+        d = mols.to_dict()
+        for mol_entry in d["molecular_system"]["molecules"]:
+            assert "atom_names" not in mol_entry
+
+    def test_loaded_system_runs(self):
+        """A molecular_system loaded from build JSON can run mobbrmsd without error."""
+        from mobbrmsd.run.topology_builder import TopologyBuilder
+        from mobbrmsd.run.parse import load
+
+        mols = TopologyBuilder().add(n_apm=3, n_mol=4, sym=[[1, 0, 2]]).build()
+        loaded = load(mols.to_dict())
+
+        rng = numpy.random.default_rng(0)
+        natom = 3 * 4
+        x = rng.random((natom, 3))
+        y = rng.random((natom, 3))
+        ret = mobbrmsd(mols=loaded).run(x, y)
+        assert ret.is_finished()
+        assert ret.rmsd() >= 0.0
