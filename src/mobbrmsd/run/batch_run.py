@@ -18,8 +18,14 @@ def _numbered_path(base, i, n):
     return str(p.parent / f"{p.stem}.{i + 1:0{width}d}{p.suffix}")
 
 
-def _save_rotated_frames(frames, atom_order, topology, output):
+def _save_rotated_frames(frames, atom_order, topology, output, overwrite=False):
     """Stack *frames* (mobbrmsd atom order), apply inverse permutation, save."""
+    if Path(output).exists() and not overwrite:
+        print(
+            f"Warning: {output} already exists; skipping. Use -O to overwrite.",
+            file=sys.stderr,
+        )
+        return
     if atom_order is not None:
         inv = numpy.argsort(atom_order)
         xyz = numpy.stack([f[inv] for f in frames])
@@ -28,7 +34,7 @@ def _save_rotated_frames(frames, atom_order, topology, output):
     mdtraj.Trajectory(xyz / 10.0, topology).save(output)
 
 
-def run(mols, refxyz, trgxyz, output=None, trgmdt=None, refmdt=None, **kwargs) -> None:
+def run(mols, refxyz, trgxyz, output=None, trgmdt=None, refmdt=None, overwrite=False, **kwargs) -> None:
     mrmsd = mobbrmsd(mols=mols)
 
     if output is not None:
@@ -52,7 +58,7 @@ def run(mols, refxyz, trgxyz, output=None, trgmdt=None, refmdt=None, **kwargs) -
                 print()
                 if src_top is not None:
                     out_path = _numbered_path(output, i, n_ref)
-                    _save_rotated_frames(frames, mrmsd._atom_order, src_top, out_path)
+                    _save_rotated_frames(frames, mrmsd._atom_order, src_top, out_path, overwrite=overwrite)
                     print(f"  Saved to {out_path}")
         else:
             # Cross: fit every target frame to each reference frame.
@@ -74,7 +80,7 @@ def run(mols, refxyz, trgxyz, output=None, trgmdt=None, refmdt=None, **kwargs) -
                 print()
                 if src_top is not None:
                     out_path = _numbered_path(output, i, n_ref)
-                    _save_rotated_frames(frames, mrmsd._atom_order, src_top, out_path)
+                    _save_rotated_frames(frames, mrmsd._atom_order, src_top, out_path, overwrite=overwrite)
                     print(f"  Saved to {out_path}")
         return
 

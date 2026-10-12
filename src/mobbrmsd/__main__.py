@@ -166,7 +166,7 @@ def command_run(args) -> None:
     else:
         arg = parse.parser(args)
 
-    run_kwargs = {k: v for k, v in arg.prms.items() if k not in ("output", "trgmdt", "refmdt")}
+    run_kwargs = {k: v for k, v in arg.prms.items() if k not in ("output", "trgmdt", "refmdt", "overwrite")}
     arg.run(
         arg.mols,
         arg.refxyz,
@@ -174,6 +174,7 @@ def command_run(args) -> None:
         output=getattr(args, "output", None),
         trgmdt=getattr(arg, "trgmdt", None),
         refmdt=getattr(arg, "refmdt", None),
+        overwrite=getattr(args, "overwrite", False),
         **run_kwargs,
     )
 
@@ -286,6 +287,13 @@ def main():
         default=None,
         metavar="FILE",
         help="Save rotated target structure to FILE (MDTraj-supported format, e.g. .pdb, .xtc)",
+    )
+    parser_run.add_argument(
+        "-O",
+        "--overwrite",
+        action="store_true",
+        default=False,
+        help="Overwrite output file(s) if they already exist (default: warn and skip)",
     )
     parser_run.add_argument(
         "-p",
