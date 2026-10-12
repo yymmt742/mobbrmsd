@@ -12,6 +12,7 @@ dependencies = [
     "tqdm",
     "pick",
     "mdtraj",
+    "prompt_toolkit",
 ]
 
 version = "0.0.28"
