@@ -23,7 +23,11 @@ def to_molecular_system(builder) -> molecular_system:
     """
     if not builder._species:
         raise ValueError("No species defined — call add() at least once.")
-    mols_list = [molecules(**sp) for sp in builder._species]
+    _BUILDER_ONLY = {"atom_names"}
+    mols_list = [
+        molecules(**{k: v for k, v in sp.items() if k not in _BUILDER_ONLY})
+        for sp in builder._species
+    ]
     atom_order = (
         numpy.array(builder._atom_order, dtype=numpy.intp)
         if builder._atom_order is not None

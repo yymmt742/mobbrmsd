@@ -5,12 +5,14 @@ mutable ``TopologyBuilder`` that accumulates species edits interactively
 and emits a ``molecular_system`` when the user is done.
 
 ``TopologyBuilder`` itself has no dependency on :mod:`mobbrmsd.dataclass`.
-Conversion to/from ``molecular_system`` is handled by helper functions in
+Conversion to/from ``molecular_system`` is handled by helpers in
 :mod:`mobbrmsd.run.parse`.
 
-Interactive features require ``prompt_toolkit`` (``pip install prompt-toolkit``).
-Without it the REPL falls back to plain ``input()`` with ``!back``/``!cancel``
-navigation.
+``atom_names`` (per-atom string labels) are stored in the builder only and
+stripped when converting to ``molecular_system``.
+
+Requires ``prompt_toolkit`` for cursor movement; falls back to plain
+``input()`` otherwise.
 """
 
 from __future__ import annotations
@@ -30,12 +32,6 @@ try:
     _PT = True
 except ImportError:
     _PT = False
-
-
-# ── sentinel objects ──────────────────────────────────────────────────────────
-
-_BACK_SENTINEL = object()   # returned when Up arrow pressed in wizard
-_ABORT_SENTINEL = object()  # returned when Ctrl+C pressed in wizard prompt
 
 
 # ── control-flow exceptions ───────────────────────────────────────────────────
@@ -58,33 +54,42 @@ class _ReplPrompt:
 
             @kb.add('c-c')
             def _(event):
-                event.app.exit(result=_ABORT_SENTINEL)
+                # store reason so we can detect it after prompt() returns
+                event.app._abort_requested = True
+                event.app.exit(result="")
 
             self._session = _PTSession(key_bindings=kb, history=_PTHistory())
         else:
             self._session = None
 
-    def __call__(self, text: str, default: str = "") -> str:
+    def __call__(self, text: str) -> str:
         if _PT:
             try:
-                result = self._session.prompt(text, default=default)
+                self._session.app  # may not exist yet
+                app_ref = [None]
+                # capture app reference via pre_run
+                def _pre_run():
+                    app_ref[0] = self._session.app
+                result = self._session.prompt(text, pre_run=_pre_run)
             except (KeyboardInterrupt, EOFError):
                 raise _Abort()
-            if result is _ABORT_SENTINEL:
+            if app_ref[0] is not None and getattr(app_ref[0], '_abort_requested', False):
+                app_ref[0]._abort_requested = False
                 raise _Abort()
             return result.strip() if isinstance(result, str) else ""
         else:
             try:
-                raw = input(text).strip()
-                return raw if raw else default
+                return input(text).strip()
             except (KeyboardInterrupt, EOFError):
                 raise _Abort()
 
 
 class _WizardPrompt:
-    """Wizard-step prompt.  Up arrow raises ``_Back``; Ctrl+C raises ``_Abort``.
+    """Wizard-step prompt.
 
-    No history (each wizard field is independent).
+    * Up arrow  -> raise ``_Back``
+    * Ctrl+C    -> raise ``_Abort``
+    * Default shown as ``[val]`` in prompt text; buffer starts empty.
     """
 
     def __init__(self) -> None:
@@ -93,28 +98,41 @@ class _WizardPrompt:
 
             @kb.add('up')
             def _(event):
-                event.app.exit(result=_BACK_SENTINEL)
+                event.app._wiz_back = True
+                event.app.exit(result="")
 
             @kb.add('c-c')
             @kb.add('c-d')
             def _(event):
-                event.app.exit(result=_ABORT_SENTINEL)
+                event.app._wiz_abort = True
+                event.app.exit(result="")
 
             self._session = _PTSession(key_bindings=kb)
         else:
             self._session = None
 
-    def __call__(self, text: str, default: str = "") -> str:
+    def __call__(self, label: str, default: str = "") -> str:
+        """Prompt for a wizard field.  Returns the typed string (or *default* if empty)."""
+        hint = f" [{default}]" if default else ""
+        text = f"    {label}{hint} >> "
         if _PT:
+            app_ref = [None]
+            def _pre_run():
+                a = self._session.app
+                a._wiz_back = False
+                a._wiz_abort = False
+                app_ref[0] = a
             try:
-                result = self._session.prompt(text, default=default)
+                result = self._session.prompt(text, pre_run=_pre_run)
             except (KeyboardInterrupt, EOFError):
                 raise _Abort()
-            if result is _BACK_SENTINEL:
+            a = app_ref[0]
+            if a and getattr(a, '_wiz_back', False):
                 raise _Back()
-            if result is _ABORT_SENTINEL:
+            if a and getattr(a, '_wiz_abort', False):
                 raise _Abort()
-            return result.strip() if isinstance(result, str) else ""
+            raw = result.strip() if isinstance(result, str) else ""
+            return raw if raw else default
         else:
             try:
                 raw = input(text).strip()
@@ -125,27 +143,87 @@ class _WizardPrompt:
                 raise _Abort()
 
 
+# ── atom name utilities ───────────────────────────────────────────────────────
+
+def _sanitize_atom_name(name: str) -> str:
+    """Strip whitespace and truncate to 4 characters."""
+    return name.strip()[:4]
+
+
+def _fill_atom_names(names: List, n_apm: int) -> List[str]:
+    """Replace None entries with auto-generated unique names (X001, X002, ...)."""
+    result: List = list(names)
+    assert len(result) == n_apm
+    existing = {n for n in result if n is not None}
+    counter = 1
+    for i in range(n_apm):
+        if result[i] is None:
+            while True:
+                candidate = f"X{counter:03d}"
+                counter += 1
+                if candidate not in existing:
+                    result[i] = candidate
+                    existing.add(candidate)
+                    break
+    return result
+
+
+# ── permutation / atom-names display ─────────────────────────────────────────
+
+def _col_width(n_apm: int, atom_names: Optional[List] = None) -> int:
+    """Column width that fits both indices and atom names."""
+    w = max(2, len(str(n_apm - 1)))
+    if atom_names:
+        w = max(w, max((len(n) for n in atom_names if n), default=0))
+    return max(w, 4 if atom_names else w)
+
+
+def _render_display(
+    n_apm: int,
+    mapping: List[int],
+    cursor_pos: int,
+    atom_names: Optional[List] = None,
+) -> str:
+    """Render the Pos / Map / (Name) / Cur rows."""
+    w = _col_width(n_apm, atom_names)
+    rows = []
+    if atom_names:
+        rows.append("  Name: " + " ".join(
+            f"{(n or '????'):<{w}}" for n in atom_names
+        ))
+    rows.append("  Pos:  " + " ".join(f"{i:>{w}d}" for i in range(n_apm)))
+    rows.append("  Map:  " + " ".join(f"{v:>{w}d}" for v in mapping))
+    rows.append("  Cur:  " + " " * (cursor_pos * (w + 1)) + "^")
+    return "\n".join(rows)
+
+
+def _render_names_display(
+    n_apm: int,
+    names: List,
+    cursor_pos: int,
+) -> str:
+    """Render Name / Pos / Cur rows for the atom_names editor."""
+    w = _col_width(n_apm, [n for n in names if n])
+    rows = [
+        "  Name: " + " ".join(f"{(n or '????'):<{w}}" for n in names),
+        "  Pos:  " + " ".join(f"{i:>{w}d}" for i in range(n_apm)),
+        "  Cur:  " + " " * (cursor_pos * (w + 1)) + "^",
+    ]
+    return "\n".join(rows)
+
+
 # ── permutation editor ────────────────────────────────────────────────────────
 
-def _col_width(n_apm: int) -> int:
-    return max(2, len(str(n_apm - 1)))
+def _perm_editor_pt(
+    n_apm: int,
+    existing: Optional[List[int]] = None,
+    atom_names: Optional[List] = None,
+) -> Optional[List[int]]:
+    """Cursor-based permutation editor (prompt_toolkit Application).
 
-
-def _render_mapping(n_apm: int, mapping: List[int], cursor_pos: int) -> str:
-    w = _col_width(n_apm)
-    pos_row = "  Pos: " + " ".join(f"{i:{w}d}" for i in range(n_apm))
-    map_row = "  Map: " + " ".join(f"{v:{w}d}" for v in mapping)
-    cur_row = "  Cur: " + " " * (cursor_pos * (w + 1)) + "^"
-    return "\n".join([pos_row, map_row, cur_row])
-
-
-def _perm_editor_pt(n_apm: int, existing: Optional[List[int]] = None) -> Optional[List[int]]:
-    """Cursor-based permutation editor using prompt_toolkit Application.
-
-    Starts from the identity (or *existing*).  Left/Right moves the cursor.
-    Type a target index and press Enter to **swap** ``mapping[cursor]`` with
-    ``mapping[target]``.  Press Enter on an empty buffer to confirm.
-    Ctrl+C cancels and returns ``None``.
+    Starts from identity (or *existing*).  Left/Right moves cursor.
+    Type a target index + Enter to swap ``mapping[cursor]`` with
+    ``mapping[target]``.  Enter on empty buffer confirms.  Ctrl+C cancels.
     """
     from prompt_toolkit import Application
     from prompt_toolkit.buffer import Buffer
@@ -154,7 +232,6 @@ def _perm_editor_pt(n_apm: int, existing: Optional[List[int]] = None) -> Optiona
     from prompt_toolkit.layout import Layout, HSplit, Window
     from prompt_toolkit.layout.controls import FormattedTextControl, BufferControl
 
-    w = _col_width(n_apm)
     mapping: List[int] = list(existing) if existing else list(range(n_apm))
     cursor = [0]
     result: List[Optional[List[int]]] = [None]
@@ -162,26 +239,25 @@ def _perm_editor_pt(n_apm: int, existing: Optional[List[int]] = None) -> Optiona
     input_buf = Buffer(name="perm_input", multiline=False)
     kb = KeyBindings()
 
-    def _clear_input() -> None:
+    def _clear() -> None:
         input_buf.set_document(Document(""))
 
     @kb.add("left")
     def _(event):
         cursor[0] = max(0, cursor[0] - 1)
-        _clear_input()
+        _clear()
         msg[0] = ""
 
     @kb.add("right")
     def _(event):
         cursor[0] = min(n_apm - 1, cursor[0] + 1)
-        _clear_input()
+        _clear()
         msg[0] = ""
 
     @kb.add("enter")
     def _(event):
         text = input_buf.text.strip()
         if not text:
-            # Confirm current permutation (identity/duplicate check is in caller)
             result[0] = mapping.copy()
             event.app.exit()
             return
@@ -189,36 +265,36 @@ def _perm_editor_pt(n_apm: int, existing: Optional[List[int]] = None) -> Optiona
             target = int(text)
         except ValueError:
             msg[0] = f"! expected integer, got {text!r}"
-            _clear_input()
+            _clear()
             return
         if not (0 <= target < n_apm):
             msg[0] = f"! {target} out of range 0..{n_apm - 1}"
-            _clear_input()
+            _clear()
             return
         if target == cursor[0]:
             msg[0] = "! same position - nothing to swap"
-            _clear_input()
+            _clear()
             return
         mapping[cursor[0]], mapping[target] = mapping[target], mapping[cursor[0]]
         msg[0] = f"swapped pos {cursor[0]} <-> pos {target}"
-        _clear_input()
+        _clear()
 
     @kb.add("c-c")
     @kb.add("c-d")
     def _(event):
-        event.app.exit()  # result stays None -> caller treats as cancel
+        event.app.exit()
 
     def get_display() -> str:
         lines = [
             "",
-            _render_mapping(n_apm, mapping, cursor[0]),
+            _render_display(n_apm, mapping, cursor[0], atom_names),
         ]
         if msg[0]:
             lines.append(f"  {msg[0]}")
         elif mapping == list(range(n_apm)):
-            lines.append("  [identity - swap pairs to build permutation, Enter to accept as-is]")
+            lines.append("  [identity - swap pairs, or Enter to accept as-is]")
         else:
-            lines.append("  [Enter to confirm   <- -> move cursor   target+Enter to swap   Ctrl+C cancel]")
+            lines.append("  [Enter confirm   <- -> move   target+Enter swap   Ctrl+C cancel]")
         lines.append(f"\n  Swap pos {cursor[0]} with: ")
         return "\n".join(lines)
 
@@ -228,23 +304,21 @@ def _perm_editor_pt(n_apm: int, existing: Optional[List[int]] = None) -> Optiona
             Window(content=BufferControl(buffer=input_buf), height=1),
         ])
     )
-    app = Application(layout=layout, key_bindings=kb, full_screen=False, mouse_support=False)
-    app.run()
+    Application(layout=layout, key_bindings=kb, full_screen=False, mouse_support=False).run()
     return result[0]
 
 
-def _perm_editor_simple(n_apm: int, existing: Optional[List[int]] = None) -> Optional[List[int]]:
-    """Sequential permutation editor using plain input() (fallback).
-
-    Starts from identity.  Enter a target index to swap with the current
-    cursor position.  ``n``/``p`` move cursor; ``!reset`` restores identity;
-    blank input confirms; ``!cancel`` aborts.
-    """
+def _perm_editor_simple(
+    n_apm: int,
+    existing: Optional[List[int]] = None,
+    atom_names: Optional[List] = None,
+) -> Optional[List[int]]:
+    """Sequential permutation editor using plain input() (fallback)."""
     mapping: List[int] = list(existing) if existing else list(range(n_apm))
     cursor = 0
 
     while True:
-        print(_render_mapping(n_apm, mapping, cursor))
+        print(_render_display(n_apm, mapping, cursor, atom_names))
         print("  (n/p move   target+Enter swap   blank=confirm   !reset   !cancel)")
         try:
             raw = input(f"  Swap pos {cursor} with: ").strip()
@@ -252,15 +326,15 @@ def _perm_editor_simple(n_apm: int, existing: Optional[List[int]] = None) -> Opt
             raise _Abort()
 
         low = raw.lower()
-        if low in ("!cancel", "!q"):
+        if low in ("!cancel",):
             raise _Abort()
-        if low in ("!reset",):
+        if low == "!reset":
             mapping = list(range(n_apm))
             continue
         if low in ("n", "next"):
             cursor = min(n_apm - 1, cursor + 1)
             continue
-        if low in ("p", "prev", "!back"):
+        if low in ("p", "prev"):
             cursor = max(0, cursor - 1)
             continue
         if not raw:
@@ -280,28 +354,214 @@ def _perm_editor_simple(n_apm: int, existing: Optional[List[int]] = None) -> Opt
         print(f"  swapped pos {cursor} <-> pos {target}")
 
 
-def _perm_editor(n_apm: int, existing: Optional[List[int]] = None) -> Optional[List[int]]:
-    """Open the permutation editor (prompt_toolkit if available, else simple)."""
+def _perm_editor(
+    n_apm: int,
+    existing: Optional[List[int]] = None,
+    atom_names: Optional[List] = None,
+) -> Optional[List[int]]:
     if _PT:
-        return _perm_editor_pt(n_apm, existing)
-    return _perm_editor_simple(n_apm, existing)
+        return _perm_editor_pt(n_apm, existing, atom_names)
+    return _perm_editor_simple(n_apm, existing, atom_names)
+
+
+# ── atom_names editor ─────────────────────────────────────────────────────────
+
+def _atom_names_editor_pt(
+    n_apm: int, existing: Optional[List] = None
+) -> Optional[List[str]]:
+    """Cursor-based atom_names editor (prompt_toolkit Application).
+
+    Left/Right moves cursor.  Type a name + Enter to set the current position.
+    Empty Enter auto-assigns a name for that position.
+    Ctrl+D confirms (auto-fills remaining unset names).
+    Up arrow raises ``_Back``.  Ctrl+C raises ``_Abort`` (skip this step).
+    """
+    from prompt_toolkit import Application
+    from prompt_toolkit.buffer import Buffer
+    from prompt_toolkit.document import Document
+    from prompt_toolkit.key_binding import KeyBindings
+    from prompt_toolkit.layout import Layout, HSplit, Window
+    from prompt_toolkit.layout.controls import FormattedTextControl, BufferControl
+
+    names: List = list(existing) if existing else [None] * n_apm
+    assert len(names) == n_apm
+
+    cursor = [0]
+    result: List[Optional[List[str]]] = [None]
+    exit_reason: List[str] = [""]
+    msg = [""]
+    input_buf = Buffer(name="name_input", multiline=False)
+    kb = KeyBindings()
+
+    def _clear() -> None:
+        input_buf.set_document(Document(""))
+
+    @kb.add("left")
+    def _(event):
+        cursor[0] = max(0, cursor[0] - 1)
+        _clear()
+        msg[0] = ""
+
+    @kb.add("right")
+    def _(event):
+        cursor[0] = min(n_apm - 1, cursor[0] + 1)
+        _clear()
+        msg[0] = ""
+
+    @kb.add("enter")
+    def _(event):
+        text = input_buf.text.strip()
+        if not text:
+            # auto-assign for current position
+            tmp = list(names)
+            if tmp[cursor[0]] is None:
+                tmp[cursor[0]] = "__PLACEHOLDER__"
+            filled = _fill_atom_names(tmp, n_apm)
+            names[cursor[0]] = filled[cursor[0]]
+            msg[0] = f"auto: {names[cursor[0]]}"
+        else:
+            sanitized = _sanitize_atom_name(text)
+            if not sanitized:
+                msg[0] = "! empty after sanitize"
+                _clear()
+                return
+            used = [names[i] for i in range(n_apm) if i != cursor[0]]
+            if sanitized in used:
+                msg[0] = f"! '{sanitized}' already used"
+                _clear()
+                return
+            names[cursor[0]] = sanitized
+            msg[0] = f"set: {sanitized}"
+        _clear()
+        cursor[0] = min(n_apm - 1, cursor[0] + 1)
+
+    @kb.add("c-d")
+    def _(event):
+        result[0] = _fill_atom_names(list(names), n_apm)
+        exit_reason[0] = "confirm"
+        event.app.exit()
+
+    @kb.add("up")
+    def _(event):
+        exit_reason[0] = "back"
+        event.app.exit()
+
+    @kb.add("c-c")
+    def _(event):
+        exit_reason[0] = "abort"
+        event.app.exit()
+
+    def get_display() -> str:
+        lines = [
+            "",
+            _render_names_display(n_apm, names, cursor[0]),
+        ]
+        if msg[0]:
+            lines.append(f"  {msg[0]}")
+        else:
+            unset = sum(1 for n in names if n is None)
+            if unset:
+                lines.append(f"  [{unset} unset - Enter to auto-assign   Ctrl+D confirm all   Up=back   Ctrl+C skip]")
+            else:
+                lines.append("  [all set - Ctrl+D to confirm   Up=back   Ctrl+C skip]")
+        lines.append(f"\n  Name for pos {cursor[0]}: ")
+        return "\n".join(lines)
+
+    layout = Layout(
+        HSplit([
+            Window(content=FormattedTextControl(get_display)),
+            Window(content=BufferControl(buffer=input_buf), height=1),
+        ])
+    )
+    Application(layout=layout, key_bindings=kb, full_screen=False, mouse_support=False).run()
+
+    if exit_reason[0] == "back":
+        raise _Back()
+    if exit_reason[0] == "abort":
+        raise _Abort()
+    return result[0]  # None if exited without Ctrl+D
+
+
+def _atom_names_editor_simple(
+    n_apm: int, existing: Optional[List] = None
+) -> Optional[List[str]]:
+    """Sequential atom_names editor using plain input() (fallback).
+
+    Commands: ``n``/``p`` move; name+Enter set; blank=auto; ``!done`` confirm;
+    ``!back`` go back; Ctrl+C skip.
+    """
+    names: List = list(existing) if existing else [None] * n_apm
+    assert len(names) == n_apm
+    cursor = 0
+
+    while True:
+        print(_render_names_display(n_apm, names, cursor))
+        unset = sum(1 for n in names if n is None)
+        print(f"  (n/p move   name+Enter set   blank=auto   !done confirm   !back   Ctrl+C skip)")
+        try:
+            raw = input(f"  Name for pos {cursor}: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            raise _Abort()
+
+        low = raw.lower()
+        if low in ("!back",):
+            raise _Back()
+        if low in ("!done", "!d"):
+            return _fill_atom_names(list(names), n_apm)
+        if low in ("n", "next"):
+            cursor = min(n_apm - 1, cursor + 1)
+            continue
+        if low in ("p", "prev"):
+            cursor = max(0, cursor - 1)
+            continue
+        if not raw:
+            tmp = list(names)
+            if tmp[cursor] is None:
+                tmp[cursor] = "__PLACEHOLDER__"
+            filled = _fill_atom_names(tmp, n_apm)
+            names[cursor] = filled[cursor]
+            print(f"  auto: {names[cursor]}")
+            cursor = min(n_apm - 1, cursor + 1)
+            continue
+        sanitized = _sanitize_atom_name(raw)
+        if not sanitized:
+            print("  ! empty after sanitize")
+            continue
+        used = [names[i] for i in range(n_apm) if i != cursor]
+        if sanitized in used:
+            print(f"  ! '{sanitized}' already used")
+            continue
+        names[cursor] = sanitized
+        cursor = min(n_apm - 1, cursor + 1)
+
+
+def _atom_names_editor(
+    n_apm: int, existing: Optional[List] = None
+) -> Optional[List[str]]:
+    """Open the atom_names editor.  Returns confirmed names or raises _Back/_Abort."""
+    if _PT:
+        return _atom_names_editor_pt(n_apm, existing)
+    return _atom_names_editor_simple(n_apm, existing)
 
 
 # ── sym session (list of permutations) ───────────────────────────────────────
 
 def _sym_session(
-    n_apm: int, existing: Optional[List[List[int]]] = None
+    n_apm: int,
+    existing: Optional[List[List[int]]] = None,
+    atom_names: Optional[List] = None,
 ) -> Optional[List[List[int]]]:
     """Interactively manage a list of permutations for sym.
 
-    Returns the list (possibly empty -> None) or raises ``_Abort`` to go back
-    to the previous wizard step.
+    Returns the list (possibly empty -> None) or raises ``_Abort`` to go back.
     """
     sym: List[List[int]] = list(existing) if existing else []
 
     def show() -> None:
         print(_SEP)
         print(f"  Sym editor  (n_apm={n_apm})")
+        if atom_names:
+            print("  Names: " + "  ".join(f"{n}" for n in atom_names))
         print(f"  Identity {list(range(n_apm))} is always implicit.")
         if sym:
             for i, p in enumerate(sym):
@@ -331,12 +591,11 @@ def _sym_session(
 
         elif cmd in ("add", "a"):
             print("  --- edit permutation (identity shown; Enter to confirm) ---")
-            perm = _perm_editor(n_apm)
+            perm = _perm_editor(n_apm, atom_names=atom_names)
             if perm is None:
                 print("  (cancelled)")
                 continue
-            identity = list(range(n_apm))
-            if perm == identity:
+            if perm == list(range(n_apm)):
                 print("  ! identity permutation - not added")
             elif perm in sym:
                 print("  ! duplicate - not added")
@@ -369,37 +628,59 @@ def _wizard_species(
 ) -> Dict:
     """Step-through wizard for one species.
 
-    Steps: n_apm -> n_mol -> name -> sym.
-    Up arrow (or ``!back`` in fallback) goes back one step.
-    Ctrl+C raises ``_Abort``.
+    Steps: n_apm -> n_mol -> name -> atom_names -> sym.
+    Up arrow goes back one step; Ctrl+C raises ``_Abort``.
+    In the atom_names step: Ctrl+C skips (keeps current atom_names), Up goes back.
     """
     sp: Dict = copy.deepcopy(existing) if existing else {
-        "n_apm": 1, "n_mol": 1, "name": None, "sym": None
+        "n_apm": 1, "n_mol": 1, "name": None, "atom_names": None, "sym": None
     }
+    if "atom_names" not in sp:
+        sp["atom_names"] = None
 
-    STEPS = ["n_apm", "n_mol", "name", "sym"]
+    STEPS = ["n_apm", "n_mol", "name", "atom_names", "sym"]
     step = 0
 
     while step < len(STEPS):
         field = STEPS[step]
 
+        # ── atom_names step ───────────────────────────────────────────────────
+        if field == "atom_names":
+            n = sp["n_apm"]
+            existing_names = sp.get("atom_names") or [None] * n
+            if len(existing_names) != n:
+                existing_names = [None] * n
+            print(f"  --- atom names (n_apm={n}, Ctrl+D confirm, Up=back, Ctrl+C skip) ---")
+            try:
+                new_names = _atom_names_editor(n, existing_names)
+                if new_names is not None:
+                    sp["atom_names"] = new_names
+                step += 1  # proceed to sym
+            except _Back:
+                step -= 1  # back to name
+            except _Abort:
+                step += 1  # Ctrl+C = skip atom_names, proceed to sym
+            continue
+
         # ── sym step ──────────────────────────────────────────────────────────
         if field == "sym":
             print(f"  --- sym (n_apm={sp['n_apm']}) ---")
             try:
-                sp["sym"] = _sym_session(sp["n_apm"], existing=sp.get("sym"))
+                sp["sym"] = _sym_session(
+                    sp["n_apm"],
+                    existing=sp.get("sym"),
+                    atom_names=sp.get("atom_names"),
+                )
                 step += 1
             except _Abort:
-                step -= 1  # back to name
+                step -= 1  # back to atom_names
             continue
 
         # ── text / int steps ─────────────────────────────────────────────────
         cur = sp[field]
         default_str = str(cur) if cur is not None else ""
-        hint = "  (Up=back)" if step > 0 and _PT else "  (!back)" if step > 0 else ""
-
         try:
-            raw = wiz(f"    {field}{hint} >> ", default=default_str)
+            raw = wiz(field, default=default_str)
         except _Back:
             if step > 0:
                 step -= 1
@@ -410,20 +691,21 @@ def _wizard_species(
         # ── validate by field ─────────────────────────────────────────────────
         if field == "n_apm":
             try:
-                val = int(raw) if raw else cur
+                val = int(raw) if raw else (cur or 1)
                 if val < 1:
                     print("    ! n_apm must be >= 1")
                     continue
-                sp["n_apm"] = val
                 if existing and val != existing.get("n_apm"):
-                    sp["sym"] = None  # reset sym when n_apm changes
+                    sp["atom_names"] = None  # reset when n_apm changes
+                    sp["sym"] = None
+                sp["n_apm"] = val
                 step += 1
             except (ValueError, TypeError):
                 print("    ! expected integer")
 
         elif field == "n_mol":
             try:
-                val = int(raw) if raw else cur
+                val = int(raw) if raw else (cur or 1)
                 if val < 1:
                     print("    ! n_mol must be >= 1")
                     continue
@@ -451,12 +733,8 @@ class TopologyBuilder:
     """Mutable builder for :class:`~mobbrmsd.dataclass.molecular_system`.
 
     ``TopologyBuilder`` is a pure data-editing layer with no dependency on
-    the ``mobbrmsd`` dataclasses.  Conversion to/from ``molecular_system``
-    is handled by :mod:`mobbrmsd.run.parse`:
-
-    * :func:`~mobbrmsd.run.parse.to_molecular_system`
-    * :func:`~mobbrmsd.run.parse.builder_from_topology`
-    * :func:`~mobbrmsd.run.parse.builder_from_mdtraj`
+    the ``mobbrmsd`` dataclasses.  ``atom_names`` per species are held here
+    and stripped when converting to ``molecular_system``.
 
     Examples
     --------
@@ -464,8 +742,8 @@ class TopologyBuilder:
 
         mols = (
             TopologyBuilder()
-            .add(n_apm=3, n_mol=4, name="WAT")
-            .add(n_apm=2, n_mol=1, name="HF")
+            .add(n_apm=3, n_mol=4, name="WAT",
+                 atom_names=["OW", "HW1", "HW2"])
             .sort()
             .build()
         )
@@ -499,6 +777,29 @@ class TopologyBuilder:
                 "n_mol": m.n_mol,
                 "sym": copy.deepcopy(m.sym),
                 "name": m.name,
+                "atom_names": None,
+            })
+        return b
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "TopologyBuilder":
+        """Reconstruct a builder from a dict (builder JSON format, including atom_names)."""
+        b = cls()
+        ms = d.get("molecular_system", d)
+        if isinstance(ms, str):
+            ms = json.loads(ms)
+        b._name = ms.get("name")
+        b._atom_order = ms.get("atom_order")
+        raw_mols = ms.get("molecules", [])
+        if isinstance(raw_mols, dict):
+            raw_mols = [raw_mols]
+        for m in raw_mols:
+            b._species.append({
+                "n_apm": m["n_apm"],
+                "n_mol": m["n_mol"],
+                "sym": m.get("sym"),
+                "name": m.get("name"),
+                "atom_names": m.get("atom_names"),
             })
         return b
 
@@ -512,26 +813,30 @@ class TopologyBuilder:
         n_mol: int,
         sym: Optional[List[List[int]]] = None,
         name: Optional[str] = None,
+        atom_names: Optional[List[str]] = None,
     ) -> "TopologyBuilder":
         """Append a new species."""
-        self._species.append({"n_apm": n_apm, "n_mol": n_mol, "sym": sym, "name": name})
+        self._species.append({
+            "n_apm": n_apm,
+            "n_mol": n_mol,
+            "sym": sym,
+            "name": name,
+            "atom_names": atom_names,
+        })
         return self
 
     def remove(self, index: int) -> "TopologyBuilder":
-        """Remove species at *index* (0-based)."""
         self._species.pop(index)
         return self
 
     def edit(self, index: int, **kwargs) -> "TopologyBuilder":
-        """Update fields of species at *index* (n_apm, n_mol, sym, name)."""
         sp = self._species[index]
-        for k in ("n_apm", "n_mol", "sym", "name"):
+        for k in ("n_apm", "n_mol", "sym", "name", "atom_names"):
             if k in kwargs:
                 sp[k] = kwargs[k]
         return self
 
     def reorder(self, indices: List[int]) -> "TopologyBuilder":
-        """Reorder species by *indices* (a permutation of 0..n-1)."""
         if sorted(indices) != list(range(len(self._species))):
             raise ValueError("indices must be a permutation of 0 .. n_species-1")
         self._species = [self._species[i] for i in indices]
@@ -555,13 +860,36 @@ class TopologyBuilder:
         return self
 
     # ------------------------------------------------------------------
-    # build -- delegates to parse.to_molecular_system
+    # build -- delegates to parse.to_molecular_system (strips atom_names)
     # ------------------------------------------------------------------
 
     def build(self):
-        """Return the final frozen ``molecular_system``."""
+        """Return the final frozen ``molecular_system`` (atom_names excluded)."""
         from .parse import to_molecular_system
         return to_molecular_system(self)
+
+    # ------------------------------------------------------------------
+    # JSON serialization (includes atom_names)
+    # ------------------------------------------------------------------
+
+    def to_dict(self) -> dict:
+        """Serialize builder state to dict.  Includes ``atom_names`` if present."""
+        mol_list = []
+        for sp in self._species:
+            entry: dict = {"n_apm": sp["n_apm"], "n_mol": sp["n_mol"]}
+            if sp.get("sym"):
+                entry["sym"] = sp["sym"]
+            if sp.get("name"):
+                entry["name"] = sp["name"]
+            if sp.get("atom_names"):
+                entry["atom_names"] = sp["atom_names"]
+            mol_list.append(entry)
+        inner: dict = {"molecules": mol_list}
+        if self._name:
+            inner["name"] = self._name
+        if self._atom_order is not None:
+            inner["atom_order"] = self._atom_order
+        return {"molecular_system": inner}
 
     # ------------------------------------------------------------------
     # display
@@ -579,12 +907,16 @@ class TopologyBuilder:
         if not self._species:
             print("  (no species defined)")
         else:
-            print(f"  {'#':>3}  {'n_apm':>6}  {'n_mol':>6}  {'name':<16}  sym")
+            print(f"  {'#':>3}  {'n_apm':>6}  {'n_mol':>6}  {'name':<12}  {'atom_names':<20}  sym")
             for i, sp in enumerate(self._species):
-                sym_repr = repr(sp["sym"]) if sp["sym"] else "(none)"
+                sym_repr = repr(sp["sym"]) if sp.get("sym") else "(none)"
+                an = sp.get("atom_names")
+                an_repr = repr(an) if an else "(none)"
+                if len(an_repr) > 20:
+                    an_repr = an_repr[:17] + "..."
                 print(
                     f"  {i:>3}  {sp['n_apm']:>6}  {sp['n_mol']:>6}"
-                    f"  {sp['name'] or '(none)':<16}  {sym_repr}"
+                    f"  {sp.get('name') or '(none)':<12}  {an_repr:<20}  {sym_repr}"
                 )
         print(_SEP)
 
@@ -611,12 +943,10 @@ class TopologyBuilder:
         """Start the interactive REPL.
 
         Returns the built ``molecular_system`` on ``done``, or ``None`` on
-        ``quit``.  Requires ``prompt_toolkit`` for cursor movement and history;
-        falls back to plain ``input()`` otherwise.
+        ``quit``.
         """
         if not _PT:
-            print("  (prompt_toolkit not found - using plain input; "
-                  "install prompt-toolkit for cursor movement)")
+            print("  (prompt_toolkit not found - using plain input)")
 
         repl_prompt = _ReplPrompt()
         wiz = _WizardPrompt()
@@ -754,13 +1084,27 @@ def _main() -> None:
                     help="MDTraj topology/structure file (PDB, GRO, ...).")
     ap.add_argument("-c", "--coords", metavar="FILE", default=None,
                     help="Trajectory for variance-based ordering (needs --topology).")
+    ap.add_argument("-j", "--json", metavar="FILE", default=None,
+                    help="Load builder state from a JSON file (supports atom_names).")
     ap.add_argument("-n", "--name", metavar="NAME", default=None,
                     help="Initial system name.")
     ap.add_argument("-o", "--output", metavar="FILE", default=None,
                     help="Write JSON to FILE instead of stdout.")
+    ap.add_argument("--builder-json", action="store_true",
+                    help="Output builder JSON (includes atom_names) instead of molecular_system JSON.")
     args = ap.parse_args()
 
-    if args.topology is not None:
+    builder = None
+
+    if args.json is not None:
+        try:
+            with open(args.json) as f:
+                builder = TopologyBuilder.from_dict(json.load(f))
+        except Exception as e:
+            print(f"ERROR loading JSON: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    elif args.topology is not None:
         try:
             import mdtraj
         except ImportError:
@@ -779,16 +1123,21 @@ def _main() -> None:
         except Exception as e:
             print(f"ERROR loading topology: {e}", file=sys.stderr)
             sys.exit(1)
-    else:
+
+    if builder is None:
         builder = TopologyBuilder()
         if args.name:
             builder.set_name(args.name)
 
-    result = builder.run()
-    if result is None:
+    ms = builder.run()
+    if ms is None:
         sys.exit(1)
 
-    output = json.dumps(result.to_dict(), indent=2)
+    if args.builder_json:
+        output = json.dumps(builder.to_dict(), indent=2)
+    else:
+        output = json.dumps(ms.to_dict(), indent=2)
+
     if args.output is not None:
         with open(args.output, "w") as f:
             f.write(output)
