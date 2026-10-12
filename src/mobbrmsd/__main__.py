@@ -31,6 +31,24 @@ def command_build(args) -> None:
 def command_run(args) -> None:
     from .run import parse
 
+    # Build a unified params dict; positional reference/target take priority.
+    prms = dict(args.params or {})
+
+    # argparse nargs='?' greedily assigns the first positionals to reference/target
+    # even when the string looks like key=value — move those back to params.
+    for attr in ("reference", "target"):
+        v = getattr(args, attr, None)
+        if v and "=" in v:
+            k, _, val = v.partition("=")
+            prms.setdefault(k, val)
+            setattr(args, attr, None)
+
+    if getattr(args, "reference", None):
+        prms.setdefault("reference", args.reference)
+    if getattr(args, "target", None):
+        prms.setdefault("target", args.target)
+    args.params = prms
+
     if getattr(args, "build", False):
         from .run.topology_builder import TopologyBuilder
         builder = TopologyBuilder()
@@ -40,7 +58,6 @@ def command_run(args) -> None:
         except ValueError as e:
             print(f"Error: {e}")
             return
-        prms = args.params or {}
         if "reference" not in prms:
             try:
                 ref = input("  Reference coordinate file: ").strip()
@@ -56,7 +73,6 @@ def command_run(args) -> None:
                 tgt = ""
             if tgt:
                 prms["target"] = tgt
-        args.params = prms
         arg = parse.parser(args, mols=mols)
     else:
         arg = parse.parser(args)
@@ -133,14 +149,19 @@ def main():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers()
 
-    parser_run = sub.add_parser("run", help="run mobbrmsd")
+    parser_run = sub.add_parser(
+        "run",
+        help="run mobbrmsd",
+        usage="%(prog)s [-i JSON | -b] [reference [target]] [key=value ...]",
+    )
     run_input = parser_run.add_mutually_exclusive_group()
     run_input.add_argument(
         "-i",
         "--inp",
         nargs=1,
         default=None,
-        help="Input file (json)",
+        metavar="JSON",
+        help="Topology JSON file (molecular_system definition)",
     )
     run_input.add_argument(
         "-b",
@@ -150,10 +171,22 @@ def main():
         help="Launch topology builder interactively before running",
     )
     parser_run.add_argument(
+        "reference",
+        nargs="?",
+        default=None,
+        help="Reference coordinate file",
+    )
+    parser_run.add_argument(
+        "target",
+        nargs="?",
+        default=None,
+        help="Target coordinate file (optional)",
+    )
+    parser_run.add_argument(
         "params",
         nargs="*",
         action=ParamProc,
-        help="Keyword arguments.",
+        help="Additional keyword arguments (key=value).",
     )
     parser_run.set_defaults(handler=command_run)
 
