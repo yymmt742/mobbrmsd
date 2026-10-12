@@ -544,17 +544,9 @@ class mobbrmsd:
         self,
         x: npt.NDArray,
         y: Optional[npt.NDArray] = None,
-        cutoff: float = float("inf"),
-        ub_cutoff: float = float("inf"),
-        difflim: float = 0.0,
-        maxeval: int = -1,
-        remove_com: bool = True,
-        sort_by_g: bool = True,
-        difflim_absolute: bool = False,
         verbose: bool = True,
         n_chunk: int = 0,
-        *args,
-        **kwargs,
+        **run_kwargs,
     ) -> npt.NDArray:
         r"""
            Batch RMSD runnner for multiple structures.
@@ -567,25 +559,30 @@ class mobbrmsd:
         Args:
             x (npt.NDArray): Reference coordinates $X\in\mathbb R^{d\times n}$, shape [n,d] or [m_X, n, d].
             y (npt.NDArray): Target coordinates $Y\in\mathbb R^{d\times n}$, shape [n,d] or [m_Y, n, d].
-            cutoff (float): Terminate the calculation as soon as the lowerbound reaches `cutoff` or greater (RMSD-based).
-            ub_cutoff (float): Terminate the calculation as soon as the upperbound reaches `ub_cutoff` or greater (RMSD-based).
-            difflim (float): Terminate the calculation as soon as the difference between the upper and lowerbounds becomes `difflim` or less.
-            maxeval (int): Terminate the calculation when the number of evaluated nodes exceeds `maxeval`.
-                           At least one pruning cycle will be excuted.
-                           When maxeval < 0, the calculation continues until an exact solution is found.
-            remove_com (bool): Remove the center of mass from the coodinates.
-            sort_by_g (bool): Sort the reference structures in descending order of self-dispersion and perform the calculation.
-                              This affects the computation time required to find an exact solution.
-            difflim_absolute (bool): Use `difflim` in terms of RMSD (multiply the evaluation function by 1/n and take the square root).
-                                     Scheduled for Discontinuation
             verbose(bool): If the calculation takes a long time, display a progress bar.
             n_chunk (int): The maximum batch size for calculations performed in a single batch.
                            If set to <1, calculations are performed all at once.
-
+            **run_kwargs: Options forwarded to the underlying run. Accepted keys:
+                cutoff (float): Terminate as soon as the lowerbound reaches `cutoff` (RMSD-based). Default inf.
+                ub_cutoff (float): Terminate as soon as the upperbound reaches `ub_cutoff` (RMSD-based). Default inf.
+                difflim (float): Terminate when upper−lower bound gap ≤ `difflim`. Default 0.0.
+                maxeval (int): Max nodes to evaluate (exact solution when < 0). Default -1.
+                remove_com (bool): Remove centre of mass before calculation. Default True.
+                sort_by_g (bool): Sort references by self-dispersion for better pruning. Default True.
+                difflim_absolute (bool): Interpret `difflim` in RMSD units. Scheduled for discontinuation. Default False.
+                Any remaining keyword arguments are passed to tqdm.trange for progress-bar customisation.
 
         Returns:
             ret (npt.NDArray): A mobbRMSD matrix, shape[$n_X$, $n_X$] if $Y$ is None, else shape[$n_X$, $n_Y$].
         """
+
+        cutoff = run_kwargs.pop("cutoff", float("inf"))
+        ub_cutoff = run_kwargs.pop("ub_cutoff", float("inf"))
+        difflim = run_kwargs.pop("difflim", 0.0)
+        maxeval = run_kwargs.pop("maxeval", -1)
+        remove_com = run_kwargs.pop("remove_com", True)
+        sort_by_g = run_kwargs.pop("sort_by_g", True)
+        difflim_absolute = run_kwargs.pop("difflim_absolute", False)
 
         n_eval = 0
 
@@ -619,7 +616,7 @@ class mobbrmsd:
                 n_lower = 1
                 nrep = (n_tri + n_chunk_ - 1) // n_chunk_
                 r_tri = numpy.empty(n_tri, dtype=dt)
-                for i in trange(nrep, *args, **kwargs):
+                for i in trange(nrep, **run_kwargs):
                     l = n_lower - 1
                     u = min([l + n_chunk_, n_tri])
                     r_tri[l:u], log_n_eval = driver.batch_run_tri(
@@ -677,7 +674,7 @@ class mobbrmsd:
                 n_lower = 1
                 nrep = (n_tri + n_chunk_ - 1) // n_chunk_
                 ret = numpy.empty(n_tri, dtype=dt)
-                for i in trange(nrep, *args, **kwargs):
+                for i in trange(nrep, **run_kwargs):
                     l = n_lower - 1
                     u = min([l + n_chunk_, n_tri])
                     ret[l:u], log_n_eval = driver.batch_run(
