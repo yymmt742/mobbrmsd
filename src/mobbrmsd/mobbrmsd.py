@@ -284,34 +284,34 @@ def _select_driver(d: int, dtype=None):
         if dt == numpy.float64:
             try:
                 from .mobbrmsd_2ddp import driver
-            except ModuleNotFoundError:
+            except ImportError:
                 error = True
         elif dt == numpy.float32:
             try:
                 from .mobbrmsd_2dsp import driver
-            except ModuleNotFoundError:
+            except ImportError:
                 error = True
     elif d == 3:
         if dt == numpy.float64:
             try:
                 from .mobbrmsd_3ddp import driver
-            except ModuleNotFoundError:
+            except ImportError:
                 error = True
         elif dt == numpy.float32:
             try:
                 from .mobbrmsd_3dsp import driver
-            except ModuleNotFoundError:
+            except ImportError:
                 error = True
     elif d == 1 or d > 3:
         if dt == numpy.float64:
             try:
                 from .mobbrmsd_xddp import driver
-            except ModuleNotFoundError:
+            except ImportError:
                 error = True
         elif dt == numpy.float32:
             try:
                 from .mobbrmsd_xdsp import driver
-            except ModuleNotFoundError:
+            except ImportError:
                 error = True
         driver.setup_dimension_(d)
     if error:
@@ -354,8 +354,6 @@ class mobbrmsd:
         d: int = 3,
     ) -> None:
 
-        if type(mols) is molecules:
-            mols = molecular_system([mols])
         self.mols = mols
 
         # Extract atom_order for transparent coordinate reordering
@@ -369,7 +367,7 @@ class mobbrmsd:
             if m.sym is None:
                 ret += [1]
             else:
-                sym = numpy.array(m.sym, dtype=numpy.int32) + 1
+                sym = numpy.array(m.sym, dtype=numpy.int32) + 1  # 0-based → 1-based for Fortran
                 if sym.ndim == 1:
                     if sym.shape[0] != 0 and sym.shape[0] != m.n_apm:
                         raise ValueError
@@ -430,7 +428,9 @@ class mobbrmsd:
         nxf, x_ = self._coerce_coords(x, dtype=dt)
         nyf, y_ = self._coerce_coords(y, dtype=dt)
         if nxf != 1 or nyf != 1:
-            raise ValueError("rmsd() requires single-frame inputs; use batch_run() for multiple frames.")
+            raise ValueError(
+                "rmsd() requires single-frame inputs; use batch_run() for multiple frames."
+            )
         driver = _select_driver(self.d, dtype=dt)
         w = numpy.empty(self.memsize, dtype=dt)
 
@@ -508,7 +508,9 @@ class mobbrmsd:
         nxf, x_ = self._coerce_coords(x, dtype=dt)
         nyf, y_ = self._coerce_coords(y, dtype=dt)
         if nxf != 1 or nyf != 1:
-            raise ValueError("run() requires single-frame inputs; use batch_run() for multiple frames.")
+            raise ValueError(
+                "run() requires single-frame inputs; use batch_run() for multiple frames."
+            )
         driver = _select_driver(self.d, dtype=dt)
         w = numpy.empty(self.memsize, dtype=dt)
         ropts = numpy.array([cutoff, ub_cutoff, difflim], dtype=dt)

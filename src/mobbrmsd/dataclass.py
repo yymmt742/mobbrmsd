@@ -14,7 +14,7 @@ class molecules:
     Parameters:
         n_apm (int): number of atoms per molecule.
         n_mol (int): number of molecules.
-        sym (Optional[List[int]]): intramolecular atomic permutation.
+        sym (Optional[List[int]]): intramolecular atomic permutation (0-based atom indices).
         name (Optional[str]): name of chemical species.
     """
 
