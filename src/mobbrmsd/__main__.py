@@ -166,13 +166,14 @@ def command_run(args) -> None:
     else:
         arg = parse.parser(args)
 
-    run_kwargs = {k: v for k, v in arg.prms.items() if k not in ("output", "trgmdt")}
+    run_kwargs = {k: v for k, v in arg.prms.items() if k not in ("output", "trgmdt", "refmdt")}
     arg.run(
         arg.mols,
         arg.refxyz,
         arg.trgxyz,
         output=getattr(args, "output", None),
         trgmdt=getattr(arg, "trgmdt", None),
+        refmdt=getattr(arg, "refmdt", None),
         **run_kwargs,
     )
 

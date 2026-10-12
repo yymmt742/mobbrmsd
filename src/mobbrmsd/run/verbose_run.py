@@ -40,7 +40,7 @@ def _save_rotated(trgmdt, y, atom_order, output):
     traj.save(output)
 
 
-def run(mols, refxyz, trgxyz, output=None, trgmdt=None, **kwargs) -> None:
+def run(mols, refxyz, trgxyz, output=None, trgmdt=None, refmdt=None, **kwargs) -> None:
     mrmsd = mobbrmsd(mols=mols)
     do_save = output is not None and trgmdt is not None
     if trgxyz is None:

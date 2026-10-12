@@ -160,7 +160,7 @@ class parser:
             numpy.float32 if prms.get("precision") == "single" else numpy.float64
         )
         self.mask = prms.get("mask")
-        self.refxyz, self.top, _ = parse_coordinate(
+        self.refxyz, self.top, self.refmdt = parse_coordinate(
             prms.get("reference"),
             self.dtype,
             top=prms.get("topology"),
