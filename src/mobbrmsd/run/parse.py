@@ -3,10 +3,10 @@ import numpy
 import mdtraj
 from ..dataclass import molecules, molecular_system
 from pathlib import Path
-from typing import Union
+from typing import Optional
 
 
-def load(prms: dict) -> Union[molecules, molecular_system, None]:
+def load(prms: dict) -> Optional[molecular_system]:
 
     sys = prms.get("molecular_system")
     if sys is None:
@@ -30,7 +30,7 @@ def load(prms: dict) -> Union[molecules, molecular_system, None]:
     if isinstance(mols, str):
         jmols = json.loads(mols)
         if isinstance(jmols, dict):
-            return molecules(**jmols)
+            return molecular_system(mols=[molecules(**jmols)], name=name)
         else:
             return molecular_system(mols=[molecules(**mol) for mol in jmols], name=name)
     else:
@@ -107,7 +107,7 @@ class parser:
         )
         self.mols = load(prms)
         if self.mols is None:
-            self.mols = molecules(n_apm=self.refxyz.shape[1], n_mol=1)
+            self.mols = molecular_system([molecules(n_apm=self.refxyz.shape[1], n_mol=1)])
         self.prms = prms
         self.runtype = prms.get("runtype")
         if self.runtype is None:

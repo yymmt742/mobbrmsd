@@ -350,15 +350,16 @@ class mobbrmsd:
 
     def __init__(
         self,
-        mols: Union[molecules, molecular_system],
-        # mols: Union[molecules, molecular_system] = molecules(1, 1),
+        mols: molecular_system,
         d: int = 3,
     ) -> None:
 
+        if type(mols) is molecules:
+            mols = molecular_system([mols])
         self.mols = mols
 
         # Extract atom_order for transparent coordinate reordering
-        if isinstance(mols, molecular_system) and mols.atom_order is not None:
+        if mols.atom_order is not None:
             self._atom_order = numpy.asarray(mols.atom_order, dtype=numpy.intp)
         else:
             self._atom_order = None
@@ -378,14 +379,11 @@ class mobbrmsd:
                 ret += [sym.shape[0] + 1] + sym.flatten().tolist()
             return ret
 
+        if not isinstance(mols, molecular_system):
+            raise ValueError(f"mols must be molecular_system, got {type(mols)}")
         ms = []
-        if type(mols) is molecular_system:
-            for m in mols.mols:
-                ms += add_molecule(m)
-        elif type(mols) is molecules:
-            ms += add_molecule(mols)
-        else:
-            raise ValueError
+        for m in mols.mols:
+            ms += add_molecule(m)
 
         driver = _select_driver(d, dtype=None)
         att = driver.decode_attributes(ms)

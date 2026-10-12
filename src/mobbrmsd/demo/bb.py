@@ -96,9 +96,9 @@ class __demo(_demo._demo):
         )
         z = y.copy()
 
-        mols = molecules(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
+        mols = molecular_system([molecules(n_apm=n_apm_, n_mol=n_mol_, sym=sym)])
         _demo.print_system(
-            molecular_system([mols]),
+            mols,
             title="Demonstration of mobbRMSD with random coordinates",
         )
         mrmsd = mobbrmsd(mols=mols)
