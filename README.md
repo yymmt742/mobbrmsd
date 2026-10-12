@@ -111,7 +111,7 @@ python -m pytest tests/ -v
 ## Simple Example
 
 The `example/` directory contains two PDB files of 7 L-alanine molecules
-(5 heavy atoms each: N, CA, C, O, CB) in different arrangements.
+(13 atoms each: N, CA, C, O, OXT, CB, H1, H2, HA, HB1, HB2, HB3, HXT) in different arrangements.
 `ala7_B.pdb` is a globally rotated, permuted, and slightly perturbed copy of `ala7_A.pdb`.
 
 **CLI:**
@@ -122,11 +122,11 @@ python -m mobbrmsd run -i example/ala7.json example/ala7_A.pdb example/ala7_B.pd
 
 ```
 Reference frame       1 | Target    frame       1
-  RMSD        :             0.508051395
+  RMSD        :             0.533976299
   ----------
-  AUTO CORR.  :          1433.226598528
-  UPPER BOUND :          -712.096265419  (as RMSD) :             0.508051395
-  LOWER BOUND :          -712.096265419  (as RMSD) :             0.508051395
+  AUTO CORR.  :         19567.055573460
+  UPPER BOUND :         -9770.554340444  (as RMSD) :             0.533976299
+  LOWER BOUND :         -9770.554340444  (as RMSD) :             0.533976299
   N EVAL      :                      28  (ratio)   :    0.002043944813490036
   ----------
 ```
@@ -155,7 +155,7 @@ print(f"N_eval  = {result.n_eval()} / 5040  (ratio = {result.eval_ratio():.6f})"
 ```
 
 ```
-RMSD    = 0.508051 Å
+RMSD    = 0.533976 Å
 N_eval  = 28 / 5040  (ratio = 0.002044)
 ```
 
