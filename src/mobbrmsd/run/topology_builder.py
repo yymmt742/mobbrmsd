@@ -232,19 +232,50 @@ def _col_width(n_apm: int, atom_names: Optional[List] = None) -> int:
     return max(w, 4 if atom_names else w)
 
 
+def _perm_pages(n_apm: int, atom_names: Optional[List] = None) -> tuple:
+    """Return (items_per_page, n_pages) for the permutation display."""
+    term_w = shutil.get_terminal_size((80, 24)).columns
+    w = _col_width(n_apm, atom_names)
+    indicator_w = len(f" ({n_apm}/{n_apm})")
+    items = max(1, (term_w - 8 - indicator_w) // (w + 1))
+    return items, max(1, (n_apm + items - 1) // items)
+
+
 def _render_display(
     n_apm: int,
     mapping: List[int],
     cursor_pos: int,
     atom_names: Optional[List] = None,
+    page: int = 0,
+    items_per_page: Optional[int] = None,
+    n_pages: int = 1,
 ) -> str:
-    """Render Name / Map / cursor rows.  No Pos row.  No 'Cur:' label."""
+    """Render one page of Name / Map / cursor rows.  No Pos row, no 'Cur:' label.
+
+    Appends ``(n/N)`` page indicator when n_pages > 1.
+    """
     w = _col_width(n_apm, atom_names)
+    if items_per_page is None:
+        items_per_page = n_apm
+    page_start = page * items_per_page
+    page_end = min(page_start + items_per_page, n_apm)
+    indicator = f" ({page + 1}/{n_pages})" if n_pages > 1 else ""
+
     rows = []
     if atom_names:
-        rows.append("  Name: " + " ".join(f"{(n or '????'):<{w}}" for n in atom_names))
-    rows.append("  Map:  " + " ".join(f"{v:>{w}d}" for v in mapping))
-    rows.append("        " + " " * (cursor_pos * (w + 1)) + "^")
+        rows.append("  Name: " + " ".join(
+            f"{(atom_names[j] or '????'):<{w}}" for j in range(page_start, page_end)
+        ) + indicator)
+    rows.append("  Map:  " + " ".join(
+        f"{mapping[j]:>{w}d}" for j in range(page_start, page_end)
+    ) + indicator)
+
+    if page_start <= cursor_pos < page_end:
+        local = cursor_pos - page_start
+        rows.append("        " + " " * (local * (w + 1)) + "^")
+    elif n_pages > 1:
+        rows.append(f"        (cursor at pos {cursor_pos})")
+
     return "\n".join(rows)
 
 
@@ -316,18 +347,32 @@ def _perm_editor_pt(
     input_buf = Buffer(name="perm_input", multiline=False)
     kb = KeyBindings()
 
+    ipp, n_pages = _perm_pages(n_apm, atom_names)
+    display_page = [0]
+
+    def _follow_cursor() -> None:
+        display_page[0] = cursor[0] // ipp
+
     def _clear() -> None:
         input_buf.set_document(Document(""))
 
     @kb.add("left")
     def _(event):
         cursor[0] = max(0, cursor[0] - 1)
-        _clear(); msg[0] = ""
+        _follow_cursor(); _clear(); msg[0] = ""
 
     @kb.add("right")
     def _(event):
         cursor[0] = min(n_apm - 1, cursor[0] + 1)
-        _clear(); msg[0] = ""
+        _follow_cursor(); _clear(); msg[0] = ""
+
+    @kb.add("up")
+    def _(event):
+        display_page[0] = max(0, display_page[0] - 1)
+
+    @kb.add("down")
+    def _(event):
+        display_page[0] = min(n_pages - 1, display_page[0] + 1)
 
     @kb.add("enter")
     def _(event):
@@ -354,11 +399,14 @@ def _perm_editor_pt(
         event.app.exit()
 
     def get_display() -> str:
-        lines = ["", _render_display(n_apm, mapping, cursor[0], atom_names)]
+        dp = min(display_page[0], n_pages - 1)
+        lines = ["", _render_display(n_apm, mapping, cursor[0], atom_names, dp, ipp, n_pages)]
         if msg[0]:
             lines.append(f"  {msg[0]}")
         elif mapping == list(range(n_apm)):
             lines.append("  [identity - swap pairs, or Enter to accept as-is]")
+        elif n_pages > 1:
+            lines.append("  [Enter confirm   <- -> move   Up/Down page   target+Enter swap   Ctrl+C cancel]")
         else:
             lines.append("  [Enter confirm   <- -> move   target+Enter swap   Ctrl+C cancel]")
         lines.append(f"\n  Swap pos {cursor[0]} with: ")
@@ -379,9 +427,18 @@ def _perm_editor_simple(
 ) -> Optional[List[int]]:
     mapping: List[int] = list(existing) if existing else list(range(n_apm))
     cursor = 0
+    ipp, n_pages = _perm_pages(n_apm, atom_names)
+    dp = [0]
+
+    def _follow_cursor():
+        dp[0] = cursor // ipp
+
     while True:
-        print(_render_display(n_apm, mapping, cursor, atom_names))
-        print("  (n/p move   target+Enter swap   blank=confirm   !reset   !cancel)")
+        print(_render_display(n_apm, mapping, cursor, atom_names, dp[0], ipp, n_pages))
+        if n_pages > 1:
+            print("  (n/p move   +/- page   target+Enter swap   blank=confirm   !reset   !cancel)")
+        else:
+            print("  (n/p move   target+Enter swap   blank=confirm   !reset   !cancel)")
         try:
             raw = input(f"  Swap pos {cursor} with: ").strip()
         except (EOFError, KeyboardInterrupt):
@@ -392,9 +449,13 @@ def _perm_editor_simple(
         if low == "!reset":
             mapping = list(range(n_apm)); continue
         if low in ("n", "next"):
-            cursor = min(n_apm - 1, cursor + 1); continue
+            cursor = min(n_apm - 1, cursor + 1); _follow_cursor(); continue
         if low in ("p", "prev"):
-            cursor = max(0, cursor - 1); continue
+            cursor = max(0, cursor - 1); _follow_cursor(); continue
+        if low in ("+", "pg+"):
+            dp[0] = min(n_pages - 1, dp[0] + 1); continue
+        if low in ("-", "pg-"):
+            dp[0] = max(0, dp[0] - 1); continue
         if not raw:
             return mapping.copy()
         try:
