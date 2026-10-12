@@ -142,4 +142,7 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
   target_link_libraries(test_driver PRIVATE
     mobbrmsd_3ddp_static
     )
+  if(OpenMP_FOUND)
+    target_link_libraries(test_driver PRIVATE OpenMP::OpenMP_Fortran)
+  endif()
 endif()
