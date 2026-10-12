@@ -95,7 +95,13 @@ D = mrmsd.batch_run(x, cutoff=2.0, maxeval=1000, verbose=False)
 ### MDTraj auto-detection
 
 When coordinates are loaded via [MDTraj](https://mdtraj.org/), the molecular
-system can be constructed automatically from the topology:
+system can be constructed automatically from the topology.
+
+#### `from_topology` (no coordinates needed)
+
+Groups atoms by residue name and sorts species by descending atoms-per-molecule
+then ascending molecule count — a structural heuristic that improves
+branch-and-bound pruning without requiring coordinates:
 
 ```python
 import mdtraj
@@ -105,24 +111,52 @@ from mobbrmsd.mobbrmsd import mobbrmsd
 traj = mdtraj.load("simulation.dcd", top="topology.pdb")
 coords = traj.xyz * 10.0  # nm → Å
 
-mols = molecular_system.from_mdtraj(traj.topology, coords)
+mols = molecular_system.from_topology(traj.topology)
 mrmsd = mobbrmsd(mols=mols)
 D = mrmsd.batch_run(coords)
 ```
 
-`from_mdtraj` groups atoms by residue name, assigns one `molecules` entry
-per unique residue type, and sets `atom_order` so that coordinates are
-reordered transparently before being passed to the Fortran core.
+#### `from_mdtraj` (variance-based ordering)
+
+When reference coordinates are provided, species are instead sorted by
+descending COM variance (most spatially dispersed species first):
+
+```python
+mols = molecular_system.from_mdtraj(traj.topology, coords)
+```
+
+Without coordinates, `from_mdtraj` falls back to the same structural ordering
+as `from_topology`.
+
+#### Generating JSON from topology
+
+`to_dict()` serialises a `molecular_system` to a dict compatible with the
+CLI JSON input format, including the correct `atom_order`:
+
+```python
+import json
+mols = molecular_system.from_topology(traj.topology)
+print(json.dumps(mols.to_dict(), indent=2))
+```
+
+Output:
+```json
+{
+  "molecular_system": {
+    "molecules": [{"n_apm": 3, "n_mol": 4, "name": "WAT"}],
+    "atom_order": [0, 1, 2, 3, ...]
+  }
+}
+```
 
 ### Atom ordering (`atom_order` / `sorted_by_variance`)
 
 `molecular_system.atom_order` is a permutation index array applied to
-coordinates before they reach the Fortran core.  It can be set directly or
-computed heuristically:
+coordinates before they reach the Fortran core.  It can be set directly,
+generated from a topology, or computed from coordinates:
 
 ```python
-# Sort species so the most spatially dispersed one comes first —
-# this typically improves branch-and-bound pruning.
+# Variance-based sort — requires reference coordinates
 mols_sorted = mols.sorted_by_variance(coords)
 mrmsd = mobbrmsd(mols=mols_sorted)
 ```

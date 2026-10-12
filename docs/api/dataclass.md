@@ -16,7 +16,11 @@ they do not include atomic coordinates.
 
 ::: mobbrmsd.dataclass.molecular_system
     options:
-      members: false
       merge_init_into_class: true
       show_signature_annotations: false
       show_docstring_parameters: true
+      members:
+        - from_topology
+        - from_mdtraj
+        - to_dict
+        - sorted_by_variance

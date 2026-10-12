@@ -24,6 +24,32 @@ class molecules:
     name: Optional[str] = None
 
 
+def _sort_species_structurally(
+    mols_list: List[molecules],
+    atom_order: npt.NDArray,
+) -> tuple:
+    """Sort species by descending n_apm then ascending n_mol (no coords needed).
+
+    Placing species with more atoms per molecule first tends to establish
+    tighter bounds earlier in branch-and-bound.  Among species with equal
+    n_apm, fewer molecules (smaller permutation space) come first.
+    """
+    per_species = []
+    pos = 0
+    for m in mols_list:
+        n = m.n_apm * m.n_mol
+        per_species.append(atom_order[pos : pos + n])
+        pos += n
+
+    order = sorted(
+        range(len(mols_list)),
+        key=lambda i: (-mols_list[i].n_apm, mols_list[i].n_mol),
+    )
+    new_mols = [mols_list[i] for i in order]
+    new_atom_order = numpy.concatenate([per_species[i] for i in order])
+    return new_mols, new_atom_order
+
+
 def _sort_species_by_variance(
     mols_list: List[molecules],
     atom_order: npt.NDArray,
@@ -79,22 +105,11 @@ class molecular_system:
     )
 
     @classmethod
-    def from_mdtraj(cls, top, coords=None, name: Optional[str] = None) -> "molecular_system":
-        """Create from an MDTraj Topology, grouping atoms by residue name.
+    def _build_from_top(cls, top) -> tuple:
+        """Parse an MDTraj Topology into (mols_list, atom_order) in residue order.
 
-        Each unique residue name becomes one molecular species. All residues of
-        the same name must have the same number of atoms.
-
-        Args:
-            top: ``mdtraj.Topology`` instance.
-            coords: optional reference coordinates ``[natom, d]`` or
-                ``[nframe, natom, d]``.  When provided, species are sorted by
-                descending COM variance (most dispersed species first) for
-                better branch-and-bound pruning.
-            name: optional system name.
-
-        Returns:
-            molecular_system with ``atom_order`` set.
+        Raises:
+            ValueError: if residues sharing a name have different atom counts.
         """
         from collections import defaultdict
 
@@ -130,13 +145,99 @@ class molecular_system:
             ],
             dtype=numpy.intp,
         )
+        return mols_list, atom_order
+
+    @classmethod
+    def from_topology(cls, top, name: Optional[str] = None) -> "molecular_system":
+        """Create from an MDTraj Topology using structural species ordering.
+
+        Groups atoms by residue name. Species are sorted by descending
+        atoms-per-molecule (n_apm), then ascending molecule count (n_mol).
+        This ordering needs no coordinate data and tends to improve
+        branch-and-bound pruning by placing heavier, less-numerous species first.
+
+        Args:
+            top: ``mdtraj.Topology`` instance.
+            name: optional system name.
+
+        Returns:
+            ``molecular_system`` with ``atom_order`` set.
+
+        Raises:
+            ValueError: if residues of the same name have different atom counts.
+        """
+        mols_list, atom_order = cls._build_from_top(top)
+        mols_list, atom_order = _sort_species_structurally(mols_list, atom_order)
+        return cls(mols=mols_list, name=name, atom_order=atom_order)
+
+    @classmethod
+    def from_mdtraj(cls, top, coords=None, name: Optional[str] = None) -> "molecular_system":
+        """Create from an MDTraj Topology, grouping atoms by residue name.
+
+        Each unique residue name becomes one molecular species. All residues of
+        the same name must have the same number of atoms.
+
+        Species ordering:
+
+        * When *coords* are provided, species are sorted by descending COM
+          variance (most spatially dispersed first) for better pruning.
+        * When *coords* are absent, structural ordering is used instead:
+          descending n_apm, then ascending n_mol.
+
+        Args:
+            top: ``mdtraj.Topology`` instance.
+            coords: optional reference coordinates ``[natom, d]`` or
+                ``[nframe, natom, d]``.
+            name: optional system name.
+
+        Returns:
+            ``molecular_system`` with ``atom_order`` set.
+
+        Raises:
+            ValueError: if residues of the same name have different atom counts.
+        """
+        mols_list, atom_order = cls._build_from_top(top)
 
         if coords is not None:
             mols_list, atom_order = _sort_species_by_variance(
                 mols_list, atom_order, numpy.asarray(coords)
             )
+        else:
+            mols_list, atom_order = _sort_species_structurally(mols_list, atom_order)
 
         return cls(mols=mols_list, name=name, atom_order=atom_order)
+
+    def to_dict(self) -> dict:
+        """Serialise to a dict compatible with the JSON input format.
+
+        Returns a dict of the form::
+
+            {
+                "molecular_system": {
+                    "molecules": [{"n_apm": ..., "n_mol": ..., ...}, ...],
+                    "name": ...,        # omitted when None
+                    "atom_order": [...] # omitted when None
+                }
+            }
+
+        The returned dict can be passed to :func:`json.dumps` directly or
+        used as input to :func:`load`.
+        """
+        mol_list = []
+        for m in self.mols:
+            entry: dict = {"n_apm": m.n_apm, "n_mol": m.n_mol}
+            if m.sym is not None:
+                entry["sym"] = m.sym
+            if m.name is not None:
+                entry["name"] = m.name
+            mol_list.append(entry)
+
+        inner: dict = {"molecules": mol_list}
+        if self.name is not None:
+            inner["name"] = self.name
+        if self.atom_order is not None:
+            inner["atom_order"] = self.atom_order.tolist()
+        return {"molecular_system": inner}
 
     def sorted_by_variance(self, coords: npt.NDArray) -> "molecular_system":
         """Return a new molecular_system with species sorted by descending COM variance.
