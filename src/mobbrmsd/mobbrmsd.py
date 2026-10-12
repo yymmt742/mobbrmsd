@@ -357,6 +357,12 @@ class mobbrmsd:
 
         self.mols = mols
 
+        # Extract atom_order for transparent coordinate reordering
+        if isinstance(mols, molecular_system) and mols.atom_order is not None:
+            self._atom_order = numpy.asarray(mols.atom_order, dtype=numpy.intp)
+        else:
+            self._atom_order = None
+
         def add_molecule(m: molecules):
             ret = [m.n_apm, m.n_mol]
             if m.sym is None:
@@ -403,6 +409,8 @@ class mobbrmsd:
                 f"Expected shape [{self.natom}, {self.d}] or "
                 f"[nframe, {self.natom}, {self.d}], got {x.shape}"
             )
+        if self._atom_order is not None:
+            x = x[:, self._atom_order, :]
         return x.shape[0], numpy.asfortranarray(x, dtype=dtype).flatten()
 
     def rmsd(
