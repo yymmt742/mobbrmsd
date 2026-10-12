@@ -354,6 +354,8 @@ class mobbrmsd:
         d: int = 3,
     ) -> None:
 
+        if type(mols) is molecules:
+            mols = molecular_system([mols])
         self.mols = mols
 
         # Extract atom_order for transparent coordinate reordering
