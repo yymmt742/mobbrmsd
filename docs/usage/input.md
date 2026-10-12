@@ -11,7 +11,7 @@ The command-line interface uses JSON input.
   "molecular_system": {
     "molecules": [
       {"n_apm": 2, "n_mol": 1, "name": "HydrogenFluoride"},
-      {"n_apm": 3, "n_mol": 4, "sym": [[1, 3, 2]], "name": "Water"}
+      {"n_apm": 3, "n_mol": 4, "sym": [[0, 2, 1]], "name": "Water"}
     ]
   }
 }
@@ -63,10 +63,10 @@ Number of molecules of this species.
 Optional intramolecular atomic permutations.
 
 ```json
-"sym": [[1, 3, 2]]
+"sym": [[0, 2, 1]]
 ```
 
-Represents a permutation of the atoms within a molecule.
+Represents a permutation of the atoms within a molecule (0-based atom indices).
 The identity permutation does not need to be specified.
 
 ### `name`
@@ -92,7 +92,7 @@ import json
 import mdtraj
 from mobbrmsd.dataclass import molecular_system
 
-top = mdtraj.load_topology("topology.pdb")
+top = mdtraj.load_topology("topology.pdb")   # PDB, prmtop, gro: self-contained
 mols = molecular_system.from_topology(top)
 print(json.dumps(mols.to_dict(), indent=2))
 ```
@@ -101,6 +101,14 @@ print(json.dumps(mols.to_dict(), indent=2))
 species), validates that all residues of a species have the same number of
 atoms, and orders species by ascending molecule count then descending
 atoms-per-molecule (tiebreaker).
+
+If residues of the same name have different atom counts (e.g. N/C-terminal
+residues in an all-atom peptide), `from_topology` raises a `ValueError`.
+In that case define the species manually with the [Topology Builder](builder.md)
+or via the Python API.
+
+The CLI command `build -f FILE` runs this pipeline interactively and prompts
+before writing the JSON (see [Topology Builder → build subcommand](builder.md#build-subcommand)).
 
 ## Running
 
@@ -123,15 +131,16 @@ python -m mobbrmsd run -i topology.json ref.pdb tgt.pdb -p maxeval=1000 -p cutof
 ### Run parameters (`-p KEY=VALUE`)
 
 Extra keyword arguments are passed to the RMSD calculation via `-p`.
-They are equivalent to the top-level keys in the legacy JSON input format.
 
 | Key | Example | Description |
 |-----|---------|-------------|
 | `precision` | `single` | Use single-precision floats (`float32`) |
-| `mask` | `name CA` | MDTraj atom selection mask |
-| `topology` | `top.pdb` | Topology file for trajectory formats that need one |
+| `mask` | `name CA` | MDTraj atom selection mask applied when loading coordinates |
+| `topology` | `top.pdb` | Topology file for trajectory formats that do not embed it (DCD, XTC, …) |
 | `maxeval` | `1000` | Maximum branch-and-bound nodes (< 0 = exact) |
 | `cutoff` | `2.0` | Stop when lower bound ≥ cutoff |
+| `ub_cutoff` | `2.0` | Stop when upper bound ≥ ub_cutoff |
+| `difflim` | `0.001` | Stop when upper − lower ≤ difflim |
 
 ### Dispatch rules
 

@@ -22,7 +22,7 @@ from mobbrmsd.dataclass import molecules, molecular_system
 water = molecules(
     n_apm=3,
     n_mol=4,
-    sym=[[1, 3, 2]],
+    sym=[[0, 2, 1]],
     name="Water",
 )
 
@@ -44,7 +44,7 @@ import numpy
 from mobbrmsd.dataclass import molecules, molecular_system
 from mobbrmsd.mobbrmsd import mobbrmsd
 
-mols = molecular_system([molecules(n_apm=3, n_mol=4, sym=[[1, 3, 2]])])
+mols = molecular_system([molecules(n_apm=3, n_mol=4, sym=[[0, 2, 1]])])
 mrmsd = mobbrmsd(mols=mols)
 
 # x and y: shape [n_atoms, 3] or [n_frames, n_atoms, 3]
@@ -101,7 +101,10 @@ system can be constructed automatically from the topology.
 
 Groups atoms by residue name and sorts species by ascending molecule count,
 then descending atoms-per-molecule as a tiebreaker — a structural heuristic
-that improves branch-and-bound pruning without requiring coordinates:
+that improves branch-and-bound pruning without requiring coordinates.
+All residues of the same name must have identical atom counts; otherwise a
+`ValueError` is raised (typical for all-atom peptides whose terminal residues
+differ from the interior).
 
 ```python
 import mdtraj

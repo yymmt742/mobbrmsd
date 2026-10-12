@@ -37,13 +37,30 @@ python -m mobbrmsd build [-o FILE] [-f FILE [--topology TOP]]
 | Option | Description |
 |--------|-------------|
 | `-o FILE` / `--output FILE` | Write JSON to FILE (default: print to stdout) |
-| `-f FILE` / `--file FILE` | Parse topology from an MDTraj-supported file (PDB, GRO, …) instead of the interactive builder |
-| `--topology TOP` | Topology file required by some formats (e.g. a PDB alongside a DCD) |
+| `-f FILE` / `--file FILE` | Parse topology from a file instead of the interactive builder |
+| `--topology TOP` | Separate topology file for trajectory formats that do not embed topology |
+
+### Supported file formats for `-f`
+
+| Format | Extension | `--topology` needed? | Notes |
+|--------|-----------|----------------------|-------|
+| PDB | `.pdb` | No | Self-contained |
+| AMBER prmtop | `.prmtop` | No | Self-contained |
+| GROMACS coordinate | `.gro` | No | Residue info embedded |
+| CHARMM DCD | `.dcd` | Yes (`--topology top.pdb`) | Trajectory-only format |
+| GROMACS XTC | `.xtc` | Yes (`--topology top.gro`) | Trajectory-only format |
+
+For self-contained formats, only `-f FILE` is needed.
+For trajectory-only formats, pass the trajectory as `-f` and the topology as `--topology`.
+
+### Confirmation flow
 
 When `-f` is given, the parsed topology is shown as a species table and
 the user is prompted before writing:
 
 ```
+  Parsing topology from simulation.pdb …
+
   Discovered 3 species
   #    Name          n_apm  n_mol  sym
   ───  ────────────  ─────  ─────  ───
@@ -55,10 +72,16 @@ the user is prompted before writing:
   Proceed? [Y]es / [n]o / [e]dit >
 ```
 
-Choosing `e` launches the interactive REPL with the discovered species
-pre-loaded so they can be inspected or edited before saving.
-If `molecular_system.from_topology()` raises an error (e.g. inconsistent
-atom counts), the user is offered to define species manually via the REPL.
+| Response | Behaviour |
+|----------|-----------|
+| `Y` (default) | Write JSON and exit |
+| `n` | Cancel and exit |
+| `e` | Launch the interactive REPL with the discovered species pre-loaded |
+
+If `from_topology` raises an error — most commonly because residues with the
+same name have inconsistent atom counts (e.g. N- and C-terminal residues in
+an all-atom peptide) — the user is offered to launch the REPL empty to define
+species manually.
 
 The output uses the same `"molecular_system"` format as `molecular_system.to_dict()`
 and is directly consumable by `run -i`.
