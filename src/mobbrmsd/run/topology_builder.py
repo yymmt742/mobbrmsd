@@ -30,6 +30,11 @@ def _cursor_restore_clear() -> None:
     sys.stdout.flush()
 
 
+def _trunc(s: str, width: int = 80) -> str:
+    """Truncate *s* to *width* chars, appending '...' if shortened."""
+    return s if len(s) <= width else s[:width - 3] + "..."
+
+
 # ── prompt_toolkit detection ──────────────────────────────────────────────────
 
 try:
@@ -48,6 +53,61 @@ class _Abort(Exception):
 
 class _Back(Exception):
     pass
+
+
+# ── sym session REPL prompt ───────────────────────────────────────────────────
+
+class _SymPrompt:
+    """sym-session REPL prompt.
+
+    * Up arrow / empty Enter -> raises _Back / returns ""
+    * Ctrl+C                 -> raises _Abort
+    """
+
+    def __init__(self) -> None:
+        if _PT:
+            kb = _PTKeyBindings()
+
+            @kb.add('up')
+            def _(event):
+                event.app._sym_back = True
+                event.app.exit(result="")
+
+            @kb.add('c-c')
+            def _(event):
+                event.app._sym_abort = True
+                event.app.exit(result="")
+
+            self._session = _PTSession(key_bindings=kb)
+
+    def __call__(self, text: str) -> str:
+        if _PT:
+            app_ref = [None]
+
+            def _pre_run():
+                a = self._session.app
+                a._sym_back = False
+                a._sym_abort = False
+                app_ref[0] = a
+
+            try:
+                result = self._session.prompt(text, pre_run=_pre_run)
+            except (KeyboardInterrupt, EOFError):
+                raise _Abort()
+            a = app_ref[0]
+            if a and getattr(a, '_sym_back', False):
+                raise _Back()
+            if a and getattr(a, '_sym_abort', False):
+                raise _Abort()
+            return result.strip() if isinstance(result, str) else ""
+        else:
+            try:
+                raw = input(text).strip()
+                if raw.lower() in ("!back", "b"):
+                    raise _Back()
+                return raw
+            except (KeyboardInterrupt, EOFError):
+                raise _Abort()
 
 
 # ── prompt wrappers ───────────────────────────────────────────────────────────
@@ -384,6 +444,7 @@ def _atom_names_editor_pt(
     result: List[Optional[List[str]]] = [None]
     exit_reason: List[str] = [""]
     last_render_lines = [0]
+    msg: List[str] = [""]
     input_buf = Buffer(name="name_input", multiline=False)
     kb = KeyBindings()
 
@@ -391,16 +452,26 @@ def _atom_names_editor_pt(
         input_buf.set_document(Document(""))
 
     def _set_current(text: str) -> bool:
+        """Validate and set name at cursor.  Sets msg[0] on failure."""
+        msg[0] = ""
         if text:
-            sanitized = _sanitize_atom_name(text)
-            if not sanitized:
+            stripped = text.strip()
+            if not stripped:
+                msg[0] = "! empty name"
                 return False
+            if not stripped.isascii():
+                msg[0] = "! non-ASCII characters not allowed"
+                return False
+            sanitized = stripped[:4]
+            if len(stripped) > 4:
+                msg[0] = f"! truncated to '{sanitized}'"
+                # still accept, just warn — fall through
             used = [names[i] for i in range(n_apm) if i != cursor[0]]
             if sanitized in used:
+                msg[0] = f"! '{sanitized}' already used at another position"
                 return False
             names[cursor[0]] = sanitized
         else:
-            # auto-assign: compute what _fill would give for this position
             if names[cursor[0]] is None:
                 filled = _fill_atom_names(list(names), n_apm)
                 names[cursor[0]] = filled[cursor[0]]
@@ -413,11 +484,11 @@ def _atom_names_editor_pt(
 
     @kb.add("left")
     def _(event):
-        cursor[0] = max(0, cursor[0] - 1); _clear()
+        cursor[0] = max(0, cursor[0] - 1); msg[0] = ""; _clear()
 
     @kb.add("right")
     def _(event):
-        cursor[0] = min(n_apm - 1, cursor[0] + 1); _clear()
+        cursor[0] = min(n_apm - 1, cursor[0] + 1); msg[0] = ""; _clear()
 
     @kb.add("enter")
     def _(event):
@@ -443,7 +514,10 @@ def _atom_names_editor_pt(
         exit_reason[0] = "abort"; event.app.exit()
 
     def get_display() -> str:
-        content = "\n" + _render_names_wrapped(n_apm, names, cursor[0])
+        body = _render_names_wrapped(n_apm, names, cursor[0])
+        if msg[0]:
+            body += f"\n  {msg[0]}"
+        content = "\n" + body
         last_render_lines[0] = content.count('\n') + 1
         return content
 
@@ -550,17 +624,18 @@ def _sym_session(
     """
     sym: List[List[int]] = list(existing) if existing else []
     identity = list(range(n_apm))
+    sym_prompt = _SymPrompt()
 
     def _show() -> None:
         print(_SEP)
         print(f"  Sym editor  (n_apm={n_apm}  n_sym={1 + len(sym)})")
         if atom_names:
-            print("  Names: " + "  ".join(str(n) for n in atom_names))
-        print(f"    0: {identity}  (identity)")
+            print(_trunc("  Names: " + "  ".join(str(n) for n in atom_names)))
+        print(_trunc(f"    0: {identity}  (identity)"))
         for i, p in enumerate(sym):
-            print(f"    {i + 1}: {p}")
+            print(_trunc(f"    {i + 1}: {p}"))
         print(_SEP)
-        print("  add / remove N(>=1) / list / done / !back")
+        print("  a(dd)  r(emove) N  l(ist)  d(one)/Enter  b(ack)/Up")
 
     _cursor_save()
     _show()
@@ -571,16 +646,36 @@ def _sym_session(
             sys.stdout.write(f"  sym >> {sym if sym else []}\n")
             sys.stdout.flush()
 
+    def _do_remove(idx_str: str) -> bool:
+        """Remove permutation by 1-based index string. Returns True on success."""
+        if not idx_str.isdigit():
+            print("  ! usage: remove N  (N >= 1)"); return False
+        idx = int(idx_str)
+        if idx < 1 or idx > len(sym):
+            print(f"  ! index {idx} out of range 1..{len(sym)}"); return False
+        sym.pop(idx - 1)
+        return True
+
     while True:
         try:
-            raw = input("  sym >> ").strip()
-        except (EOFError, KeyboardInterrupt):
+            raw = sym_prompt("  sym >> ")
+        except _Back:
             _cleanup(False); raise _Abort()
+        except _Abort:
+            _cleanup(False); raise _Abort()
+
+        # Empty Enter = done
         if not raw:
-            continue
+            _cleanup(True)
+            return sym or None
+
         parts = raw.split()
         cmd = parts[0].lower()
         args = parts[1:]
+
+        # Number shorthand: "2" -> remove 2
+        if cmd.isdigit():
+            args = [cmd]; cmd = "r"
 
         if cmd in ("done", "d"):
             _cleanup(True)
@@ -602,19 +697,16 @@ def _sym_session(
             _cursor_restore_clear(); _cursor_save(); _show()
 
         elif cmd in ("remove", "r"):
-            if len(args) != 1 or not args[0].isdigit():
+            if len(args) != 1:
                 print("  ! usage: remove N  (N >= 1)"); continue
-            idx = int(args[0])
-            if idx < 1 or idx > len(sym):
-                print(f"  ! index {idx} out of range 1..{len(sym)}"); continue
-            sym.pop(idx - 1)
-            _cursor_restore_clear(); _cursor_save(); _show()
+            if _do_remove(args[0]):
+                _cursor_restore_clear(); _cursor_save(); _show()
 
         elif cmd in ("list", "l"):
             _cursor_restore_clear(); _cursor_save(); _show()
 
         else:
-            print(f"  ! unknown: {cmd!r}.  Commands: add / remove N / list / done / !back")
+            print(f"  ! unknown: {cmd!r}.  Commands: a / r N / l / d / b")
 
 
 # ── species wizard ────────────────────────────────────────────────────────────
