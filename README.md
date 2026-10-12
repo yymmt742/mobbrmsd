@@ -137,7 +137,7 @@ To use the Python interface, you additionally need the following:
    {
      "reference":"./path/to/file1.pdb",
      "target":"./path/to/file2.xyz",
-     "mols":[
+     "molecules":[
        {
         "n_apm":2,
         "n_mol":1,
