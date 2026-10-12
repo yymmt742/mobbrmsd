@@ -392,3 +392,91 @@ class TopologyBuilder:
 
             else:
                 print(f"  ! unknown command: {cmd!r}. Type 'help' for commands.")
+
+
+# ---------------------------------------------------------------------------
+# standalone entry point
+# ---------------------------------------------------------------------------
+
+def _main() -> None:
+    import argparse
+    import sys
+
+    ap = argparse.ArgumentParser(
+        prog="python -m mobbrmsd.run.topology_builder",
+        description=(
+            "Interactive molecular_system editor.  "
+            "On 'done', prints the resulting JSON to stdout."
+        ),
+    )
+    ap.add_argument(
+        "-t", "--topology",
+        metavar="FILE",
+        default=None,
+        help="MDTraj-supported topology/structure file to pre-load (PDB, GRO, …).",
+    )
+    ap.add_argument(
+        "-c", "--coords",
+        metavar="FILE",
+        default=None,
+        help=(
+            "Trajectory file for variance-based species ordering "
+            "(requires --topology for non-self-describing formats)."
+        ),
+    )
+    ap.add_argument(
+        "-n", "--name",
+        metavar="NAME",
+        default=None,
+        help="Initial system name.",
+    )
+    ap.add_argument(
+        "-o", "--output",
+        metavar="FILE",
+        default=None,
+        help="Write JSON to FILE instead of stdout.",
+    )
+    args = ap.parse_args()
+
+    if args.topology is not None:
+        try:
+            import mdtraj
+        except ImportError:
+            print("ERROR: mdtraj is required to load topology files.", file=sys.stderr)
+            sys.exit(1)
+        try:
+            if args.coords is not None:
+                traj = mdtraj.load(args.coords, top=args.topology)
+                coords = traj.xyz * 10.0
+                mols_init = molecular_system.from_mdtraj(
+                    traj.topology, coords=coords, name=args.name
+                )
+            else:
+                top = mdtraj.load_topology(args.topology)
+                mols_init = molecular_system.from_topology(top, name=args.name)
+        except Exception as e:
+            print(f"ERROR loading topology: {e}", file=sys.stderr)
+            sys.exit(1)
+        builder = TopologyBuilder.from_molecular_system(mols_init)
+    else:
+        builder = TopologyBuilder()
+        if args.name:
+            builder.set_name(args.name)
+
+    result = builder.run()
+
+    if result is None:
+        sys.exit(1)
+
+    output = json.dumps(result.to_dict(), indent=2)
+    if args.output is not None:
+        with open(args.output, "w") as f:
+            f.write(output)
+            f.write("\n")
+        print(f"  Written to {args.output}")
+    else:
+        print(output)
+
+
+if __name__ == "__main__":
+    _main()
