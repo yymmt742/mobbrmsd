@@ -8,6 +8,6 @@ wrapper.
 
 ## Modules
 
-- [Data classes](dataclass.md)
-- [mobbrRMSD](mobbrmsd.md)
+- [dataclass](dataclass.md)
+- [mobbRMSD](mobbrmsd.md)
 

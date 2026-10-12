@@ -12,9 +12,10 @@ dependencies = [
     "tqdm",
     "pick",
     "mdtraj",
+    "prompt_toolkit",
 ]
 
-version = "0.0.28"
+version = "0.0.29"
 
 description = "Molecular-Oriented RMSD with Branch-and-Bound"
 

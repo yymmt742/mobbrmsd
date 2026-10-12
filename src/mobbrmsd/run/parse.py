@@ -3,45 +3,107 @@ import numpy
 import mdtraj
 from ..dataclass import molecules, molecular_system
 from pathlib import Path
-from typing import Union
+from typing import Optional
 
 
-def load(prms: dict) -> Union[molecules, molecular_system, None]:
+def _coerce_json(v):
+    """Parse v as JSON if it is a string; otherwise return as-is."""
+    return json.loads(v) if isinstance(v, str) else v
 
-    sys = prms.get("molecular_system")
-    if sys is None:
-        mols = prms.get("molecules")
+
+# ---------------------------------------------------------------------------
+# TopologyBuilder ↔ molecular_system conversions
+# ---------------------------------------------------------------------------
+
+def to_molecular_system(builder) -> molecular_system:
+    """Convert a :class:`~mobbrmsd.run.topology_builder.TopologyBuilder` to
+    a frozen :class:`~mobbrmsd.dataclass.molecular_system`.
+
+    This is the implementation that :meth:`TopologyBuilder.build` delegates to.
+    """
+    if not builder._species:
+        raise ValueError("No species defined — call add() at least once.")
+    _BUILDER_ONLY = {"atom_names"}
+    mols_list = [
+        molecules(**{k: v for k, v in sp.items() if k not in _BUILDER_ONLY})
+        for sp in builder._species
+    ]
+    atom_order = (
+        numpy.array(builder._atom_order, dtype=numpy.intp)
+        if builder._atom_order is not None
+        else None
+    )
+    return molecular_system(mols=mols_list, name=builder._name, atom_order=atom_order)
+
+
+def builder_from_topology(top, name: Optional[str] = None):
+    """Create a :class:`~mobbrmsd.run.topology_builder.TopologyBuilder` from
+    an MDTraj Topology using structural species ordering (n_mol asc, n_apm desc).
+    """
+    from .topology_builder import TopologyBuilder
+    mols = molecular_system.from_topology(top, name=name)
+    return TopologyBuilder.from_molecular_system(mols)
+
+
+def builder_from_mdtraj(top, coords=None, name: Optional[str] = None):
+    """Create a :class:`~mobbrmsd.run.topology_builder.TopologyBuilder` from
+    an MDTraj Topology.
+
+    When *coords* are provided, species are sorted by descending COM variance;
+    otherwise structural ordering (n_mol asc, n_apm desc) is applied.
+    """
+    from .topology_builder import TopologyBuilder
+    mols = molecular_system.from_mdtraj(top, coords=coords, name=name)
+    return TopologyBuilder.from_molecular_system(mols)
+
+
+def load(prms: dict) -> Optional[molecular_system]:
+    """Build a molecular_system from a parameter dict.
+
+    Accepts both ``"molecular_system"`` (preferred) and ``"molecules"`` (legacy)
+    keys.  Values may be pre-parsed Python objects (dict / list) or raw JSON
+    strings, e.g. when supplied via the command line.
+
+    Within ``"molecular_system"``, recognised sub-keys are:
+
+    * ``"molecules"`` — list of molecule-spec dicts (or a single dict).
+    * ``"name"`` — optional system name.
+    * ``"atom_order"`` — optional permutation index list.
+    """
+    sys_val = _coerce_json(prms.get("molecular_system"))
+    if isinstance(sys_val, dict):
+        raw_mols = _coerce_json(sys_val.get("molecules"))
+        name = sys_val.get("name")
+        raw_atom_order = sys_val.get("atom_order")
+    elif sys_val is not None:
+        raw_mols = sys_val
         name = None
+        raw_atom_order = None
     else:
-        if isinstance(sys, str):
-            jsys = json.loads(sys)
-            mols = jsys.get("mols")
-            name = jsys.get("name")
-        elif isinstance(sys, dict):
-            mols = sys.get("mols")
-            name = sys.get("name")
-        else:
-            mols = sys
-            name = None
+        raw_mols = _coerce_json(prms.get("molecules"))
+        name = None
+        raw_atom_order = None
 
-    if mols is None:
-        return
+    if raw_mols is None:
+        return None
 
-    if isinstance(mols, str):
-        jmols = json.loads(mols)
-        if isinstance(jmols, dict):
-            return molecules(**jmols)
-        else:
-            return molecular_system(mols=[molecules(**mol) for mol in jmols], name=name)
-    else:
-        if isinstance(mols, dict):
-            return molecular_system(mols=[molecules(**mols)], name=name)
-        else:
-            return molecular_system(mols=[molecules(**mol) for mol in mols], name=name)
+    atom_order = (
+        numpy.array(raw_atom_order, dtype=numpy.intp)
+        if raw_atom_order is not None
+        else None
+    )
+
+    if isinstance(raw_mols, dict):
+        return molecular_system(
+            mols=[molecules(**raw_mols)], name=name, atom_order=atom_order
+        )
+    return molecular_system(
+        mols=[molecules(**m) for m in raw_mols], name=name, atom_order=atom_order
+    )
 
 
 class parser:
-    def __init__(self, args):
+    def __init__(self, args, mols=None):
         prms = {**args.params}
         if args.inp is not None:
             try:
@@ -105,20 +167,23 @@ class parser:
             top=self.top,
             mask=self.mask,
         )
-        self.mols = load(prms)
+        self.mols = mols if mols is not None else load(prms)
         if self.mols is None:
-            self.mols = molecules(n_apm=self.refxyz.shape[1], n_mol=1)
+            self.mols = molecular_system([molecules(n_apm=self.refxyz.shape[1], n_mol=1)])
         self.prms = prms
         self.runtype = prms.get("runtype")
         if self.runtype is None:
             nref = self.refxyz.shape[0]
-            ntrg = 1 if self.trgxyz is None else self.trgxyz.shape[0]
+            ntrg = 0 if self.trgxyz is None else self.trgxyz.shape[0]
 
-            if nref * ntrg == 1:
+            if ntrg == 0:
+                # Single file: symmetric batch_run → n_frame × n_frame matrix
+                from .batch_run import run
+            elif nref == 1 and ntrg == 1:
+                # Two single-frame files: verbose single-pair run
                 from .verbose_run import run
-
-                self.run = run
             else:
+                # Multi-frame: cross batch_run → n_ref × n_trg matrix
                 from .batch_run import run
 
-                self.run = run
+            self.run = run

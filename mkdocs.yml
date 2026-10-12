@@ -73,6 +73,7 @@ nav:
   - Usage:
       - Overview: usage/index.md
       - Input format: usage/input.md
+      - Topology Builder: usage/builder.md
 
   - Theory:
       - Overview: theory/index.md

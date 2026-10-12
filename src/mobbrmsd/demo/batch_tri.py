@@ -97,9 +97,9 @@ class __demo(_demo._demo):
         for i in range(n_target_ - 1):
             x[i + 1] = (1.0 - r_) * x[i + 1] + r_ * x[i]
 
-        mols = molecules(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
+        mols = molecular_system([molecules(n_apm=n_apm_, n_mol=n_mol_, sym=sym)])
         _demo.print_system(
-            molecular_system([mols]),
+            mols,
             title="Demonstration of batch mobbrmsd triangle run (with OpenMP)",
         )
 

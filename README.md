@@ -161,6 +161,49 @@ CMAKE_GENERATOR="MinGW Makefiles" uv pip install -e ".[test]"
 
 ## Usage
 
+### Python API
+
+Construct a `molecular_system`, create a `mobbrmsd` object, and call `run` or `batch_run`.
+
+```python
+from mobbrmsd.dataclass import molecules, molecular_system
+from mobbrmsd.mobbrmsd import mobbrmsd
+
+mols = molecular_system([
+    molecules(n_apm=2, n_mol=1, name="HydrogenFluoride"),
+    molecules(n_apm=3, n_mol=4, sym=[[1, 3, 2]], name="Water"),
+])
+
+mrmsd = mobbrmsd(mols=mols)
+
+# Single-pair RMSD — returns a mobbrmsd_result
+result = mrmsd.run(x, y)
+print(result.rmsd)
+
+# Batch RMSD matrix — returns ndarray of shape [n_X, n_X] or [n_X, n_Y]
+D = mrmsd.batch_run(coords)
+D_xy = mrmsd.batch_run(x, y, cutoff=2.0, verbose=False)
+```
+
+Common options shared by both `run` and `batch_run` (passed as keyword arguments):
+`cutoff`, `ub_cutoff`, `difflim`, `maxeval`, `remove_com`, `sort_by_g`.
+
+#### MDTraj auto-detection
+
+```python
+import mdtraj
+from mobbrmsd.dataclass import molecular_system
+
+traj = mdtraj.load("simulation.dcd", top="topology.pdb")
+coords = traj.xyz * 10.0  # nm → Å
+
+mols = molecular_system.from_mdtraj(traj.topology, coords)
+mrmsd = mobbrmsd(mols=mols)
+D = mrmsd.batch_run(coords)
+```
+
+### Command-line interface
+
    The input is json format, and a simple example is as follows
    ```json
    {

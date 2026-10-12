@@ -96,9 +96,9 @@ class __demo(_demo._demo):
             ]
         )
 
-        mols = molecules(n_apm=n_apm_, n_mol=n_mol_, sym=sym)
+        mols = molecular_system([molecules(n_apm=n_apm_, n_mol=n_mol_, sym=sym)])
         _demo.print_system(
-            molecular_system([mols]),
+            mols,
             "Demonstration of minimum spanning tree construction with mobbrmsd",
         )
         mrmsd = mobbrmsd(mols=mols)
