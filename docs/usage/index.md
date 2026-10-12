@@ -99,9 +99,9 @@ system can be constructed automatically from the topology.
 
 #### `from_topology` (no coordinates needed)
 
-Groups atoms by residue name and sorts species by descending atoms-per-molecule
-then ascending molecule count — a structural heuristic that improves
-branch-and-bound pruning without requiring coordinates:
+Groups atoms by residue name and sorts species by ascending molecule count,
+then descending atoms-per-molecule as a tiebreaker — a structural heuristic
+that improves branch-and-bound pruning without requiring coordinates:
 
 ```python
 import mdtraj

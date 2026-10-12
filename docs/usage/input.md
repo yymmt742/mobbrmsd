@@ -99,8 +99,8 @@ print(json.dumps(mols.to_dict(), indent=2))
 
 `from_topology` groups atoms by residue name (same residue name → same
 species), validates that all residues of a species have the same number of
-atoms, and orders species by descending atoms-per-molecule then ascending
-molecule count.
+atoms, and orders species by ascending molecule count then descending
+atoms-per-molecule (tiebreaker).
 
 ## Running
 

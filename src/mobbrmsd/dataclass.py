@@ -28,11 +28,10 @@ def _sort_species_structurally(
     mols_list: List[molecules],
     atom_order: npt.NDArray,
 ) -> tuple:
-    """Sort species by descending n_apm then ascending n_mol (no coords needed).
+    """Sort species by ascending n_mol then descending n_apm (no coords needed).
 
-    Placing species with more atoms per molecule first tends to establish
-    tighter bounds earlier in branch-and-bound.  Among species with equal
-    n_apm, fewer molecules (smaller permutation space) come first.
+    Fewer molecules (smaller permutation space) come first.
+    Among species with equal n_mol, more atoms per molecule come first.
     """
     per_species = []
     pos = 0
@@ -43,7 +42,7 @@ def _sort_species_structurally(
 
     order = sorted(
         range(len(mols_list)),
-        key=lambda i: (-mols_list[i].n_apm, mols_list[i].n_mol),
+        key=lambda i: (mols_list[i].n_mol, -mols_list[i].n_apm),
     )
     new_mols = [mols_list[i] for i in order]
     new_atom_order = numpy.concatenate([per_species[i] for i in order])
@@ -151,10 +150,10 @@ class molecular_system:
     def from_topology(cls, top, name: Optional[str] = None) -> "molecular_system":
         """Create from an MDTraj Topology using structural species ordering.
 
-        Groups atoms by residue name. Species are sorted by descending
-        atoms-per-molecule (n_apm), then ascending molecule count (n_mol).
-        This ordering needs no coordinate data and tends to improve
-        branch-and-bound pruning by placing heavier, less-numerous species first.
+        Groups atoms by residue name. Species are sorted by ascending molecule
+        count (n_mol), then descending atoms-per-molecule (n_apm) as a
+        tiebreaker.  This ordering needs no coordinate data and tends to
+        improve branch-and-bound pruning by placing less-numerous species first.
 
         Args:
             top: ``mdtraj.Topology`` instance.
