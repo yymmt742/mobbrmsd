@@ -122,11 +122,11 @@ python -m mobbrmsd run -i example/ala7.json example/ala7_A.pdb example/ala7_B.pd
 
 ```
 Reference frame       1 | Target    frame       1
-  RMSD        :             0.533976299
+  RMSD        :             0.533560942
   ----------
-  AUTO CORR.  :         19567.055573460
-  UPPER BOUND :         -9770.554340444  (as RMSD) :             0.533976299
-  LOWER BOUND :         -9770.554340444  (as RMSD) :             0.533976299
+  AUTO CORR.  :         19641.129638797
+  UPPER BOUND :         -9807.611548225  (as RMSD) :             0.533560942
+  LOWER BOUND :         -9807.611548225  (as RMSD) :             0.533560942
   N EVAL      :                      28  (ratio)   :    0.002043944813490036
   ----------
 ```
@@ -155,7 +155,7 @@ print(f"N_eval  = {result.n_eval()} / 5040  (ratio = {result.eval_ratio():.6f})"
 ```
 
 ```
-RMSD    = 0.533976 Å
+RMSD    = 0.533561 Å
 N_eval  = 28 / 5040  (ratio = 0.002044)
 ```
 
