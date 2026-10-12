@@ -45,7 +45,10 @@ def command_build(args) -> None:
         top_arg = getattr(args, "topology", None)
         print(f"  Parsing topology from {top_arg or args.file} …")
         try:
-            top = mdtraj.load_topology(args.file, top_arg)
+            if top_arg:
+                top = mdtraj.load(args.file, top=top_arg).topology
+            else:
+                top = mdtraj.load_topology(args.file)
         except Exception as e:
             print(f"  Error loading topology: {e}")
             return
