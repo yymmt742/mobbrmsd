@@ -96,30 +96,32 @@ class __demo(_demo._demo):
         n_mol=8,
         alpha=0.5,
         beta=1.0,
-        path=None,
+        output=None,
         **kwargs,
     ):
 
         import matplotlib.pyplot as plt
 
-        def onclick(event):
-            ax.cla()
-            x = cog.generate(n_apm, n_mol, alpha, beta).reshape([n_mol, n_apm, 3])
-            for xi in x:
-                ax.plot(xi[:, 0], xi[:, 1], xi[:, 2])
-                ax.scatter(xi[:, 0], xi[:, 1], xi[:, 2])
-            ax.set_xlim([-2.5, 2.5])
-            ax.set_ylim([-2.5, 2.5])
-            ax.set_zlim([-2.5, 2.5])
-            ax.set_xlabel("X")
-            ax.set_ylabel("Y")
-            ax.set_zlabel("Z")
-            plt.draw()
+        if output is not None or self.yes_or_no("Show samples ? (Open matplotlib window)"):
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection="3d")
 
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection="3d")
-        fig.canvas.mpl_connect("key_press_event", onclick)
-        if self.yes_or_no("Show samples ? (Open matplotlib window)"):
+            if output is None:
+                def onclick(event):
+                    ax.cla()
+                    x = cog.generate(n_apm, n_mol, alpha, beta).reshape([n_mol, n_apm, 3])
+                    for xi in x:
+                        ax.plot(xi[:, 0], xi[:, 1], xi[:, 2])
+                        ax.scatter(xi[:, 0], xi[:, 1], xi[:, 2])
+                    ax.set_xlim([-2.5, 2.5])
+                    ax.set_ylim([-2.5, 2.5])
+                    ax.set_zlim([-2.5, 2.5])
+                    ax.set_xlabel("X")
+                    ax.set_ylabel("Y")
+                    ax.set_zlabel("Z")
+                    plt.draw()
+                fig.canvas.mpl_connect("key_press_event", onclick)
+
             x = cog.generate(n_apm, n_mol, alpha, beta).reshape([n_mol, n_apm, 3])
             for xi in x:
                 ax.plot(xi[:, 0], xi[:, 1], xi[:, 2])
@@ -131,11 +133,10 @@ class __demo(_demo._demo):
             ax.set_ylabel("Y")
             ax.set_zlabel("Z")
             ax.set_box_aspect([1, 1, 1])
-            if path is None:
+            if output is None:
                 plt.show()
             else:
-                for p in path.split(","):
-                    plt.savefig(p)
+                _demo._save_figure(output, fig)
             plt.clf()
             plt.close()
 

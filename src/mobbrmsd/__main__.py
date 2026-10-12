@@ -194,6 +194,15 @@ def command_demo(args) -> None:
     prec = numpy.float32 if args.single else numpy.float64
     cli = args.cli
 
+    output_spec = getattr(args, "output", None)
+
+    def resolve_output(demo_idx):
+        if output_spec is None:
+            return None
+        if output_spec == "":
+            return f"mobbrmsd_demo_{demo_idx + 1:02d}.png"
+        return output_spec
+
     demo_list = [
         cogen.__demo(cli=cli, prec=prec),
         bb.__demo(cli=cli, prec=prec),
@@ -218,10 +227,9 @@ def command_demo(args) -> None:
             option, index = pick.pick(opts, title, indicator="   >")
             if option == "exit":
                 break
-            for l in demo_list:
-                if option == l.title:
-                    l.run_demo(**args.argv)
-                    break
+            if 0 <= index < len(demo_list):
+                output = resolve_output(index)
+                demo_list[index].run_demo(output=output, **args.argv)
             inp = input('  press any key to continue ("q" to exit) >> ')
             print(inp)
             if inp == "":
@@ -229,7 +237,8 @@ def command_demo(args) -> None:
             if inp[0] == "q":
                 break
     else:
-        demo_list[no].run_demo(**args.argv)
+        output = resolve_output(no)
+        demo_list[no].run_demo(output=output, **args.argv)
 
 
 def main():
@@ -339,6 +348,18 @@ def main():
     )
     parser_demo.add_argument(
         "-s", "--single", action="store_true", help="Use single precision"
+    )
+    parser_demo.add_argument(
+        "-o", "--output",
+        nargs="?",
+        const="",
+        default=None,
+        metavar="FILE",
+        help=(
+            "Save plot to FILE instead of displaying. "
+            "For animations: .gif/.webp saves animated file, .png/.jpg saves numbered frames. "
+            "Omit FILE to use default name mobbrmsd_demo_NN.png."
+        ),
     )
     parser_demo.add_argument(
         "argv",

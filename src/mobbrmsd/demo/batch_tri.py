@@ -117,15 +117,14 @@ class __demo(_demo._demo):
         print(sep1)
         return {"mat": rmsds}
 
-    def after(self, mat=[[0.0]], path=None, **kwargs):
-        if self.yes_or_no("Show graph ? (Open matplotlib window)"):
+    def after(self, mat=[[0.0]], output=None, **kwargs):
+        if output is not None or self.yes_or_no("Show graph ? (Open matplotlib window)"):
             plt.imshow(mat)
             plt.colorbar()
             plt.xlabel("target")
             plt.ylabel("reference")
-            if path is None:
+            if output is None:
                 plt.show()
             else:
-                for p in path.split(","):
-                    plt.savefig(p)
+                _demo._save_figure(output, plt.gcf())
             plt.clf()

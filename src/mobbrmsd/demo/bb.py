@@ -170,12 +170,10 @@ class __demo(_demo._demo):
         x=[[[0.0, 0.0, 0.0]]],
         y=[[[0.0, 0.0, 0.0]]],
         z=[[[0.0, 0.0, 0.0]]],
-        path=None,
+        output=None,
         **kwargs,
     ):
-        ang = 0
-
-        if self.yes_or_no("Show samples ? (Open matplotlib window)"):
+        if output is not None or self.yes_or_no("Show samples ? (Open matplotlib window)"):
             import matplotlib.pyplot as plt
             import matplotlib.animation as animation
 
@@ -223,13 +221,12 @@ class __demo(_demo._demo):
                 axes[0].view_init(azim=frame)
                 axes[1].view_init(azim=frame)
 
-            if path is None:
+            if output is None:
                 ani = animation.FuncAnimation(
                     fig, rot, frames=numpy.arange(15, 374, 2), interval=1
                 )
                 plt.show()
             else:
-                for p in path.split(","):
-                    plt.savefig(p)
+                _demo._save_figure(output, fig, rot_func=rot, rot_frames=numpy.arange(15, 374, 2))
             plt.clf()
             plt.close()

@@ -106,11 +106,11 @@ class __demo(_demo._demo):
         del mrmsd
         return {"g": g}
 
-    def after(self, g=None, path=None, **kwargs):
+    def after(self, g=None, output=None, **kwargs):
 
         if g is None:
             return
-        if self.yes_or_no("Show graph? (Open matplotlib window)"):
+        if output is not None or self.yes_or_no("Show graph? (Open matplotlib window)"):
             n_target = len(g.nodes())
 
             vmax = numpy.array(
@@ -142,11 +142,10 @@ class __demo(_demo._demo):
             networkx.draw_networkx_labels(g, pos, font_size=int(50 / n_target) + 5)
             networkx.draw_networkx_edges(g, pos, width=weights, edge_color="tab:red")
 
-            if path is None:
+            if output is None:
                 plt.show()
             else:
-                for p in path.split(","):
-                    plt.savefig(p)
+                _demo._save_figure(output, plt.gcf())
 
             plt.clf()
             plt.close()

@@ -165,11 +165,11 @@ class __demo(_demo._demo):
         x=[[[0.0, 0.0]]],
         y=[[[0.0, 0.0]]],
         z=[[[0.0, 0.0]]],
-        path=None,
+        output=None,
         **kwargs,
     ):
 
-        if self.yes_or_no("Show samples? (Open matplotlib window)"):
+        if output is not None or self.yes_or_no("Show samples? (Open matplotlib window)"):
             import matplotlib.pyplot as plt
 
             vmax = 1.2 * numpy.max(numpy.abs([x, y, z]))
@@ -203,10 +203,9 @@ class __demo(_demo._demo):
                 ax.set_ylim([-vmax, vmax])
                 ax.set_box_aspect(1)
             plt.tight_layout()
-            if path is None:
+            if output is None:
                 plt.show()
             else:
-                for p in path.split(","):
-                    plt.savefig(p)
+                _demo._save_figure(output, fig)
             plt.clf()
             plt.close()
