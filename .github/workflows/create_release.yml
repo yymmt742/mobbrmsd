@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: '作成するバージョンを入力してください'
+        description: '作成するバージョンを入力してください (例: 0.0.30)'
         required: true
 
 permissions:
@@ -12,83 +12,63 @@ permissions:
   id-token: write
 
 jobs:
-
-  build:
-    name: Build distribution
+  release:
+    name: Create release branch and publish
     runs-on: ubuntu-latest
 
     env:
-      # githubのコンソールから入力したリリース名を環境変数へ保存
       VERSION_STRING: ${{ github.event.inputs.version }}
       RELEASE_BRANCH_NAME: release/${{ github.event.inputs.version }}
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4 # コードを取得
+      uses: actions/checkout@v4
       with:
-        fetch-depth: 2
+        fetch-depth: 0
 
     - name: Set up Python
-      uses: actions/setup-python@v5 # Python環境のセットアップ
+      uses: actions/setup-python@v5
       with:
-        python-version: "3.*"
+        python-version: "3.12"
 
     - name: Setup Fortran
       uses: fortran-lang/setup-fortran@v1
-      id: setup-fortran
       with:
         compiler: gcc
-        version: 12
+        version: 13
 
-    - name: Create and push release branch # releaseブランチを作成
-      run:
+    - name: Configure git
+      run: |
+        git config user.name "yymmt742"
+        git config user.email "yymmt@kuchem.kyoto-u.ac.jp"
+
+    - name: Create and push release branch
+      run: |
         git checkout -b ${{ env.RELEASE_BRANCH_NAME }}
+        git push --set-upstream origin ${{ env.RELEASE_BRANCH_NAME }}
 
-    - name: Update pyproject.toml
-      shell: bash
+    - name: Update version in pyproject.toml
       run: sed -i '/^version =/c version = "${{ env.VERSION_STRING }}"' pyproject.toml
 
-    - name: Commit pyproject.toml
-      uses: EndBug/add-and-commit@v7.1.0
-      with:
-        author_name: "yymmt742"
-        author_email: "yymmt@kuchem.kyoto-u.ac.jp"
-        message: "[update] pyproject.toml, version ${{ env.VERSION_STRING }}"
-        add: pyproject.toml
+    - name: Commit version bump
+      run: |
+        git add pyproject.toml
+        git commit -m "[release] bump version to ${{ env.VERSION_STRING }}"
+        git push
 
-    - name: Create a tag
-      id: tag_version
-      uses: mathieudutour/github-tag-action@v6.1
-      with:
-        custom_tag: ${{ env.VERSION_STRING }}
-        tag_prefix: v
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create and push tag
+      run: |
+        git tag "v${{ env.VERSION_STRING }}"
+        git push origin "v${{ env.VERSION_STRING }}"
 
-    - name: Install build tools # ビルドツールをインストール
-      run: >-
-        python -m
-        pip install
-        build
-        meson
-        --user
+    - name: Install build tools
+      run: pip install build
 
-    - name: Build a binary wheel and a source tarball # パッケージをビルド
+    - name: Build distribution
       run: python -m build
 
-    - name: Store the distribution packages # ビルド成果物をpython-package-distributionsという名前でdistディレクトリに一時的に保存
-      uses: actions/upload-artifact@v4
-      with:
-        name: python-package-distributions
-        path: dist/
-
-    - name: Download all the dists
-      uses: actions/download-artifact@v4
-      with:
-        name: python-package-distributions
-        path: dist/
-
-    - name: Sign the dists with Sigstore
-      uses: sigstore/gh-action-sigstore-python@v2.1.1
+    - name: Sign with Sigstore
+      uses: sigstore/gh-action-sigstore-python@v3.0.0
       with:
         inputs: >-
           ./dist/*.tar.gz
@@ -97,17 +77,15 @@ jobs:
     - name: Create GitHub Release
       env:
         GITHUB_TOKEN: ${{ github.token }}
-      run: >-
-        gh release create
-        'v${{ env.VERSION_STRING }}'
-        --repo '${{ github.repository }}'
-        --notes ""
+      run: |
+        gh release create "v${{ env.VERSION_STRING }}" \
+          --repo "${{ github.repository }}" \
+          --title "v${{ env.VERSION_STRING }}" \
+          --notes ""
 
-    - name: Upload artifact signatures to GitHub Release
+    - name: Upload artifacts to GitHub Release
       env:
         GITHUB_TOKEN: ${{ github.token }}
-      run: >-
-        gh release upload
-        'v${{ env.VERSION_STRING }}' dist/**
-        --repo '${{ github.repository }}'
-
+      run: |
+        gh release upload "v${{ env.VERSION_STRING }}" dist/** \
+          --repo "${{ github.repository }}"

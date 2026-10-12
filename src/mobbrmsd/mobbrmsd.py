@@ -4,7 +4,7 @@
 import numpy
 import numpy.typing as npt
 import networkx
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Any
 from tqdm import trange
 from .dataclass import molecules, molecular_system
 
@@ -354,6 +354,8 @@ class mobbrmsd:
         d: int = 3,
     ) -> None:
 
+        if type(mols) is molecules:
+            mols = molecular_system([mols])
         self.mols = mols
 
         # Extract atom_order for transparent coordinate reordering
@@ -548,7 +550,7 @@ class mobbrmsd:
         y: Optional[npt.NDArray] = None,
         verbose: bool = True,
         n_chunk: int = 0,
-        **run_kwargs,
+        **run_kwargs: Any,
     ) -> npt.NDArray:
         r"""
            Batch RMSD runnner for multiple structures.
