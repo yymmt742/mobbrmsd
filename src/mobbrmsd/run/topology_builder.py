@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins as _builtins
 import copy
 import json
 import shutil
@@ -10,24 +11,31 @@ from typing import Dict, List, Optional
 
 _SEP = "  " + "-" * 72
 
+
+def print(*args, **kwargs):  # noqa: A001
+    """All REPL output goes to stderr so stdout stays clean for JSON piping."""
+    kwargs.setdefault("file", sys.stderr)
+    _builtins.print(*args, **kwargs)
+
+
 # ── ANSI helpers ──────────────────────────────────────────────────────────────
 
 def _ansi_up_clear(n: int) -> None:
     if n > 0:
-        sys.stdout.write(f"\033[{n}A\033[J")
+        sys.stderr.write(f"\033[{n}A\033[J")
     else:
-        sys.stdout.write("\033[J")
-    sys.stdout.flush()
+        sys.stderr.write("\033[J")
+    sys.stderr.flush()
 
 
 def _cursor_save() -> None:
-    sys.stdout.write("\033[s")
-    sys.stdout.flush()
+    sys.stderr.write("\033[s")
+    sys.stderr.flush()
 
 
 def _cursor_restore_clear() -> None:
-    sys.stdout.write("\033[u\033[J")
-    sys.stdout.flush()
+    sys.stderr.write("\033[u\033[J")
+    sys.stderr.flush()
 
 
 def _trunc(s: str, width: int = 80) -> str:
@@ -41,9 +49,15 @@ try:
     from prompt_toolkit import PromptSession as _PTSession
     from prompt_toolkit.history import InMemoryHistory as _PTHistory
     from prompt_toolkit.key_binding import KeyBindings as _PTKeyBindings
+    from prompt_toolkit.output import create_output as _pt_create_output
     _PT = True
 except ImportError:
     _PT = False
+
+
+def _pt_output():
+    """prompt_toolkit output directed to stderr so stdout stays clean."""
+    return _pt_create_output(stdout=sys.stderr)
 
 
 # ── control-flow exceptions ───────────────────────────────────────────────────
@@ -78,7 +92,7 @@ class _SymPrompt:
                 event.app._sym_abort = True
                 event.app.exit(result="")
 
-            self._session = _PTSession(key_bindings=kb)
+            self._session = _PTSession(key_bindings=kb, output=_pt_output())
 
     def __call__(self, text: str) -> str:
         if _PT:
@@ -122,7 +136,7 @@ class _ReplPrompt:
                 event.app._abort_requested = True
                 event.app.exit(result="")
 
-            self._session = _PTSession(key_bindings=kb, history=_PTHistory())
+            self._session = _PTSession(key_bindings=kb, history=_PTHistory(), output=_pt_output())
 
     def __call__(self, text: str) -> str:
         if _PT:
@@ -164,7 +178,7 @@ class _WizardPrompt:
                 event.app._wiz_abort = True
                 event.app.exit(result="")
 
-            self._session = _PTSession(key_bindings=kb)
+            self._session = _PTSession(key_bindings=kb, output=_pt_output())
 
     def __call__(self, label: str, default: str = "") -> str:
         hint = f" [{default}]" if default else ""
@@ -416,7 +430,7 @@ def _perm_editor_pt(
         Window(content=FormattedTextControl(get_display)),
         Window(content=BufferControl(buffer=input_buf), height=1),
     ]))
-    Application(layout=layout, key_bindings=kb, full_screen=False, mouse_support=False).run()
+    Application(layout=layout, key_bindings=kb, full_screen=False, mouse_support=False, output=_pt_output()).run()
     return result[0]
 
 
@@ -586,10 +600,10 @@ def _atom_names_editor_pt(
         Window(content=FormattedTextControl(get_display)),
         Window(content=BufferControl(buffer=input_buf), height=1),
     ]))
-    Application(layout=layout, key_bindings=kb, full_screen=False, mouse_support=False).run()
+    Application(layout=layout, key_bindings=kb, full_screen=False, mouse_support=False, output=_pt_output()).run()
 
     n_up = last_render_lines[0] + 2
-    sys.stdout.write("\n")
+    sys.stderr.write("\n")
     _ansi_up_clear(n_up)
 
     reason = exit_reason[0]
@@ -598,8 +612,8 @@ def _atom_names_editor_pt(
     if reason == "abort":
         raise _Abort()
     if result[0] is not None:
-        sys.stdout.write(f"  atomnames >> {result[0]}\n")
-        sys.stdout.flush()
+        sys.stderr.write(f"  atomnames >> {result[0]}\n")
+        sys.stderr.flush()
     return result[0]
 
 
@@ -704,8 +718,8 @@ def _sym_session(
     def _cleanup(show_result: bool) -> None:
         _cursor_restore_clear()
         if show_result:
-            sys.stdout.write(f"  sym >> {sym if sym else []}\n")
-            sys.stdout.flush()
+            sys.stderr.write(f"  sym >> {sym if sym else []}\n")
+            sys.stderr.flush()
 
     def _do_remove(idx_str: str) -> bool:
         """Remove permutation by 1-based index string. Returns True on success."""
