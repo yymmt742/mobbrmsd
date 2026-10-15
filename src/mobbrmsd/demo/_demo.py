@@ -2,6 +2,7 @@ import time
 import numpy
 import pprint
 import sys
+from ..viz import _save_figure
 
 bar1 = (
     "  ------------------------------------------------------------------------------"
@@ -29,34 +30,34 @@ def generate_sym_indices(n_apm: int, n_sym: int = 1):
 
 
 def print_system(molsys, title):
-
-    print(bar1)
-    print(" " * ((len(bar1) - len(title)) // 2) + title)
-    print(bar1)
-    print("      --System settings--")
+    print(bar1, file=sys.stderr)
+    print(" " * ((len(bar1) - len(title)) // 2) + title, file=sys.stderr)
+    print(bar1, file=sys.stderr)
+    print("      --System settings--", file=sys.stderr)
     for mol in molsys.mols:
-
         print(
             f"    Atoms per molecule :{mol.n_apm:6d}",
+            file=sys.stderr,
         )
-        print(f"    Number of molecule :{mol.n_mol:6d}")
+        print(f"    Number of molecule :{mol.n_mol:6d}", file=sys.stderr)
         pp = pprint.pformat(
             tuple([i for i in range(mol.n_apm)]), width=48, compact=True
         ).split("\n")
-        print("    Molecular symmetry :     0", pp[0])
+        print("    Molecular symmetry :     0", pp[0], file=sys.stderr)
         for l in pp[1:]:
-            print("                              ", l)
+            print("                              ", l, file=sys.stderr)
         for i, s in enumerate(mol.sym):
             pp = pprint.pformat(s, width=48, compact=True).split("\n")
-            print(f"                        {i+1:6d}", pp[0])
+            print(f"                        {i+1:6d}", pp[0], file=sys.stderr)
             for l in pp[1:]:
-                print("                              ", l)
-        print()
+                print("                              ", l, file=sys.stderr)
+        print(file=sys.stderr)
 
 
 def readinp(msg, default, check=None):
-    print()
-    inp = input(f"\033[1A    {msg} (default : {default})   >> ")
+    sys.stderr.write(f"\n    {msg} (default : {default})   >> ")
+    sys.stderr.flush()
+    inp = sys.stdin.readline().rstrip("\n")
 
     def isfloat(string):
         try:
@@ -67,10 +68,13 @@ def readinp(msg, default, check=None):
 
     while True:
         if inp == "":
-            print(f"\033[1A    {msg} (default : {default})   >> {default}")
+            sys.stderr.write(
+                f"\033[1A    {msg} (default : {default})   >> {default}\n"
+            )
+            sys.stderr.flush()
             return default
         if inp[0] == "q" or inp[0] == "Q":
-            print(bar2)
+            print(bar2, file=sys.stderr)
             exit()
         elif inp.isdigit():
             ret = int(inp)
@@ -84,9 +88,11 @@ def readinp(msg, default, check=None):
                 return ret
         else:
             return ret
-        inp = input(
+        sys.stderr.write(
             f"    | [{ret}] is invalid. \033[1F\033[0K    {msg} (default : {default})   >> "
         )
+        sys.stderr.flush()
+        inp = sys.stdin.readline().rstrip("\n")
 
 
 def print_ret(
@@ -123,6 +129,8 @@ def print_ret(
 
 class _demo:
 
+    default_ext = ".png"
+
     def __init__(self, title="mobbrmsd demo", prec=numpy.float64, cli=False):
         self.prec = numpy.dtype(prec)
         self.cli = cli
@@ -142,8 +150,8 @@ class _demo:
     def after(self, **kwargs):
         return
 
-    def run_demo(self, **kwargs):
-        print(bar2)
+    def run_demo(self, output=None, **kwargs):
+        print(bar2, file=sys.stderr)
         if self.cli:
             prms = {**kwargs, **self.read_input()}
         else:
@@ -159,28 +167,34 @@ class _demo:
         elapsed_cpu_time = end_wallclock_time - start_wallclock_time
         elapsed_wallclock_time = end_wallclock_time - start_wallclock_time
 
-        print("    -- Elapsed times --")
+        print("    -- Elapsed times --", file=sys.stderr)
         print(
             f"       cpu time : {elapsed_cpu_time:16.3f} sec",
             f" wallclock time : {elapsed_wallclock_time:16.3f} sec",
+            file=sys.stderr,
         )
-        print(bar2, "\n")
+        print(bar2, "\n", file=sys.stderr)
 
         if ret is None:
-            self.after(**kwargs)
+            self.after(output=output, **kwargs)
         else:
-            self.after(**{**kwargs, **ret})
+            self.after(output=output, **{**kwargs, **ret})
 
     def yes_or_no(self, msg):
         if not self.cli:
             return True
-        print()
+        sys.stderr.write(f"\n\033[1A\033[0K    {msg} [Y/n] > ")
+        sys.stderr.flush()
         while True:
-            inp = input(f"\033[1A\033[0K    {msg} [Y/n] > ")
+            inp = sys.stdin.readline().rstrip("\n")
             if inp == "":
+                sys.stderr.write(f"\033[1A\033[0K    {msg} [Y/n] > ")
+                sys.stderr.flush()
                 continue
             if inp[0] == "q" or inp[0] == "Q":
-                print(bar2)
+                print(bar2, file=sys.stderr)
                 exit()
             if inp[0] == "y" or inp[0] == "Y" or inp[0] == "n" or inp[0] == "N":
                 return inp[0] == "y" or inp[0] == "Y"
+            sys.stderr.write(f"\033[1A\033[0K    {msg} [Y/n] > ")
+            sys.stderr.flush()

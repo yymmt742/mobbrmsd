@@ -449,3 +449,178 @@ class TestBuildJsonRoundtrip:
         ret = mobbrmsd(mols=loaded).run(x, y)
         assert ret.is_finished()
         assert ret.rmsd() >= 0.0
+
+
+# ---------------------------------------------------------------------------
+# TestRunMaxeval — partial evaluation and restart
+# (derived from vpaa/iterate.py in mobbrmsd_testcodes)
+# ---------------------------------------------------------------------------
+
+class TestRunMaxeval:
+    """Partial evaluation via maxeval and resume via result.restart()."""
+
+    @pytest.fixture
+    def mrmsd_pair(self):
+        """n_mol=5 gives a large-enough search tree that maxeval=1 rarely finishes."""
+        cog = make_cogen(seed=7)
+        x, y = cog.generate_pair(3, 5, alpha=0.5, beta=1.0)
+        mols = molecules(n_apm=3, n_mol=5)
+        return mobbrmsd(mols=mols), x, y
+
+    def test_maxeval_1_bounds_valid(self, mrmsd_pair):
+        mrmsd, x, y = mrmsd_pair
+        ret = mrmsd.run(x, y, maxeval=1)
+        assert ret.lowerbound_as_rmsd() <= ret.upperbound_as_rmsd() + 1e-9
+
+    def test_maxeval_1_n_eval_less_than_full(self, mrmsd_pair):
+        """Partial run evaluates fewer nodes than a full run."""
+        mrmsd, x, y = mrmsd_pair
+        n_full = mrmsd.run(x, y).n_eval()
+        n_partial = mrmsd.run(x, y, maxeval=1).n_eval()
+        assert n_partial <= n_full
+
+    def test_restart_eventually_finishes(self, mrmsd_pair):
+        mrmsd, x, y = mrmsd_pair
+        ret = mrmsd.run(x, y, maxeval=1)
+        ret.restart()
+        assert ret.is_finished()
+
+    def test_restart_rmsd_matches_full_run(self, mrmsd_pair):
+        mrmsd, x, y = mrmsd_pair
+        rmsd_full = mrmsd.run(x, y).rmsd()
+        ret = mrmsd.run(x, y, maxeval=1)
+        ret.restart()
+        assert ret.rmsd() == pytest.approx(rmsd_full, rel=1e-6)
+
+    def test_bounds_tighten_after_restart(self, mrmsd_pair):
+        """Upper bound after restart ≤ upper bound from partial run."""
+        mrmsd, x, y = mrmsd_pair
+        ret_partial = mrmsd.run(x, y, maxeval=1)
+        ub_partial = ret_partial.upperbound_as_rmsd()
+        ret_partial.restart()
+        assert ret_partial.upperbound_as_rmsd() <= ub_partial + 1e-9
+
+    def test_same_coords_restart_zero_rmsd(self):
+        """Partial run then restart on identical coords gives RMSD ≈ 0."""
+        cog = make_cogen(seed=99)
+        x, _ = cog.generate_pair(3, 5, alpha=0.5, beta=1.0)
+        mols = molecules(n_apm=3, n_mol=5)
+        mrmsd = mobbrmsd(mols=mols)
+        ret = mrmsd.run(x, x, maxeval=1)
+        ret.restart()
+        assert ret.rmsd() == pytest.approx(0.0, abs=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# TestRunCutoff — early termination via cutoff / ub_cutoff
+# (derived from vpaa/timing.py in mobbrmsd_testcodes)
+# ---------------------------------------------------------------------------
+
+class TestRunCutoff:
+    """Early termination controlled by cutoff and ub_cutoff thresholds."""
+
+    @pytest.fixture
+    def mrmsd_pair(self):
+        cog = make_cogen(seed=13)
+        x, y = cog.generate_pair(3, 5, alpha=0.8, beta=1.0)
+        mols = molecules(n_apm=3, n_mol=5)
+        return mobbrmsd(mols=mols), x, y
+
+    def test_high_cutoff_always_finishes(self, mrmsd_pair):
+        """A very large cutoff never triggers early termination."""
+        mrmsd, x, y = mrmsd_pair
+        ret = mrmsd.run(x, y, cutoff=1000.0)
+        assert ret.is_finished()
+
+    def test_cutoff_result_bounds_valid(self, mrmsd_pair):
+        """Even with cutoff=0, the bounds are still ordered correctly."""
+        mrmsd, x, y = mrmsd_pair
+        ret = mrmsd.run(x, y, cutoff=0.0)
+        assert ret.lowerbound_as_rmsd() <= ret.upperbound_as_rmsd() + 1e-9
+
+    def test_ub_cutoff_result_bounds_valid(self, mrmsd_pair):
+        mrmsd, x, y = mrmsd_pair
+        ret = mrmsd.run(x, y, ub_cutoff=0.0)
+        assert ret.lowerbound_as_rmsd() <= ret.upperbound_as_rmsd() + 1e-9
+
+    def test_cutoff_rmsd_is_nonneg(self, mrmsd_pair):
+        mrmsd, x, y = mrmsd_pair
+        ret = mrmsd.run(x, y, cutoff=0.0)
+        assert ret.rmsd() >= 0.0
+
+    def test_batch_run_with_cutoff_shape_preserved(self):
+        """batch_run with cutoff still returns the correct matrix shape."""
+        cog = make_cogen(seed=17)
+        n_apm, n_mol, n_str = 3, 4, 5
+        xs = numpy.array([cog.generate(n_apm, n_mol, 0.5, 1.0) for _ in range(n_str)])
+        mols = molecules(n_apm=n_apm, n_mol=n_mol)
+        mat = mobbrmsd(mols=mols).batch_run(xs, verbose=False, cutoff=1000.0)
+        assert mat.shape == (n_str, n_str)
+        assert numpy.all(mat >= 0)
+
+
+# ---------------------------------------------------------------------------
+# TestFromMDTrajWithSym — sym_template option on from_mdtraj
+# (new feature added in this session; no equivalent in mobbrmsd_testcodes)
+# ---------------------------------------------------------------------------
+
+class TestFromMDTrajWithSym:
+    """molecular_system.from_mdtraj with sym_template symmetry detection."""
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def water_top_xyz(cls):
+        """Single-residue water topology + Å coords (also used by test_sym_detect)."""
+        mdtraj = pytest.importorskip("mdtraj")
+        top = mdtraj.Topology()
+        chain = top.add_chain()
+        res = top.add_residue("WAT", chain)
+        O  = top.add_atom("O",  mdtraj.element.oxygen,   res)
+        H1 = top.add_atom("H1", mdtraj.element.hydrogen, res)
+        H2 = top.add_atom("H2", mdtraj.element.hydrogen, res)
+        top.add_bond(O, H1)
+        top.add_bond(O, H2)
+        angle = 104.5 * numpy.pi / 180
+        xyz = numpy.array([
+            [0.000, 0.000, 0.000],
+            [0.960, 0.000, 0.000],
+            [0.960 * numpy.cos(angle), 0.960 * numpy.sin(angle), 0.000],
+        ])
+        return top, xyz
+
+    def test_no_sym_without_template(self, water_top_xyz):
+        top, xyz = water_top_xyz
+        ms = molecular_system.from_mdtraj(top, coords=xyz)
+        for m in ms.mols:
+            assert m.sym is None
+
+    def test_sym_detected_with_template(self, water_top_xyz):
+        top, xyz = water_top_xyz
+        ms = molecular_system.from_mdtraj(top, coords=xyz, sym_template=xyz, sym_eps=0.05)
+        by_name = {m.name: m for m in ms.mols}
+        wat = by_name["WAT"]
+        assert wat.sym is not None
+        assert len(wat.sym) == 1   # H-swap only
+
+    def test_sym_hswap_permutation_correct(self, water_top_xyz):
+        top, xyz = water_top_xyz
+        ms = molecular_system.from_mdtraj(top, coords=xyz, sym_template=xyz, sym_eps=0.05)
+        wat = [m for m in ms.mols if m.name == "WAT"][0]
+        assert wat.sym[0] == [0, 2, 1]   # O stays, H1 ↔ H2
+
+    def test_sym_rmsd_self_zero(self, water_top_xyz):
+        """RMSD(x, x) is zero regardless of sym setting."""
+        top, xyz = water_top_xyz
+        ms = molecular_system.from_mdtraj(top, coords=xyz, sym_template=xyz, sym_eps=0.05)
+        ret = mobbrmsd(mols=ms).run(xyz, xyz)
+        assert ret.rmsd() == pytest.approx(0.0, abs=1e-6)
+
+    def test_sym_eps_nm_same_result(self, water_top_xyz):
+        """sym_template in nm with the same eps gives identical sym detection."""
+        top, xyz_ang = water_top_xyz
+        xyz_nm = xyz_ang * 0.1
+        ms_ang = molecular_system.from_mdtraj(top, coords=xyz_ang, sym_template=xyz_ang, sym_eps=0.05)
+        ms_nm  = molecular_system.from_mdtraj(top, coords=xyz_nm,  sym_template=xyz_nm,  sym_eps=0.05)
+        sym_ang = [m.sym for m in ms_ang.mols]
+        sym_nm  = [m.sym for m in ms_nm.mols]
+        assert sym_ang == sym_nm

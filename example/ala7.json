@@ -1,0 +1,11 @@
+{
+  "molecular_system": {
+    "molecules": [
+      {
+        "n_apm": 13,
+        "n_mol": 7,
+        "name": "ALA"
+      }
+    ]
+  }
+}

@@ -1,3 +1,4 @@
+import sys
 import json
 import numpy
 import numpy.typing as npt
@@ -29,8 +30,26 @@ def print_result(ret: mobbrmsd_result) -> None:
     return
 
 
-def run(mols, refxyz, trgxyz, **kwargs) -> None:
+def _save_rotated(trgmdt, y, atom_order, output, overwrite=False):
+    """Save rotated target coordinates to *output* via MDTraj."""
+    if Path(output).exists() and not overwrite:
+        print(
+            f"Warning: {output} already exists; skipping. Use -O to overwrite.",
+            file=sys.stderr,
+        )
+        return
+    if atom_order is not None:
+        inv_order = numpy.argsort(atom_order)
+        rotated = y[inv_order]
+    else:
+        rotated = y.copy()
+    traj = mdtraj.Trajectory(rotated[numpy.newaxis] / 10.0, trgmdt.topology)
+    traj.save(output)
+
+
+def run(mols, refxyz, trgxyz, output=None, trgmdt=None, refmdt=None, overwrite=False, **kwargs) -> None:
     mrmsd = mobbrmsd(mols=mols)
+    do_save = output is not None and trgmdt is not None
     if trgxyz is None:
         for i in range(refxyz.shape[0]):
             for j in range(i + 1, refxyz.shape[0]):
@@ -40,8 +59,15 @@ def run(mols, refxyz, trgxyz, **kwargs) -> None:
     else:
         for i in range(refxyz.shape[0]):
             for j in range(trgxyz.shape[0]):
-                ret = mrmsd.run(refxyz[i], trgxyz[j], **kwargs)
                 print(f"Reference frame{i+1:8d} | Target    frame{j+1:8d}")
-                print_result(ret)
+                if do_save:
+                    y = trgxyz[j].copy()
+                    ret = mrmsd.run(refxyz[i], y, rotate_y=True, **kwargs)
+                    print_result(ret)
+                    _save_rotated(trgmdt, y, mrmsd._atom_order, output, overwrite=overwrite)
+                    print(f"  Rotated structure saved to {output}")
+                else:
+                    ret = mrmsd.run(refxyz[i], trgxyz[j], **kwargs)
+                    print_result(ret)
 
     return

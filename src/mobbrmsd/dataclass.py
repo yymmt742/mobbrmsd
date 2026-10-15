@@ -104,8 +104,27 @@ class molecular_system:
     )
 
     @classmethod
-    def _build_from_top(cls, top) -> tuple:
+    def _build_from_top(
+        cls,
+        top,
+        sym_template: Optional[npt.NDArray] = None,
+        sym_eps: float = 0.05,
+    ) -> tuple:
         """Parse an MDTraj Topology into (mols_list, atom_order) in residue order.
+
+        When *sym_template* is supplied, intramolecular symmetry permutations
+        are detected for each species via VF2 graph automorphisms followed by a
+        local distance-matrix filter (threshold *sym_eps*) and stored in
+        ``molecules.sym``.
+
+        Args:
+            top:          ``mdtraj.Topology`` instance.
+            sym_template: MM-optimised reference coordinates,
+                          shape ``(n_atoms, 3)`` or ``(n_frames, n_atoms, 3)``.
+                          Units must be consistent (Å or nm — only ratios matter).
+                          When 3-D, the first frame is used.
+            sym_eps:      Local distance-preservation threshold for accepting a
+                          permutation (same unit as *sym_template*, default 0.05).
 
         Raises:
             ValueError: if residues sharing a name have different atom counts.
@@ -127,14 +146,32 @@ class molecular_system:
                     f"Residues named '{sp_name}' have inconsistent atom counts"
                 )
 
-        mols_list = [
-            molecules(
-                n_apm=len(species_residues[sp][0]),
-                n_mol=len(species_residues[sp]),
-                name=sp,
+        if sym_template is not None:
+            from .sym_detect import detect_sym
+            _template: Optional[npt.NDArray] = numpy.asarray(sym_template, dtype=float)
+        else:
+            _template = None
+
+        mols_list = []
+        for sp in species_order:
+            sym: Optional[list] = None
+            if _template is not None:
+                rep_indices = species_residues[sp][0]
+                sym_list, _ = detect_sym(
+                    top, rep_indices,
+                    template_xyz=_template,
+                    eps=sym_eps,
+                )
+                sym = sym_list if sym_list else None
+            mols_list.append(
+                molecules(
+                    n_apm=len(species_residues[sp][0]),
+                    n_mol=len(species_residues[sp]),
+                    name=sp,
+                    sym=sym,
+                )
             )
-            for sp in species_order
-        ]
+
         atom_order = numpy.array(
             [
                 idx
@@ -170,7 +207,14 @@ class molecular_system:
         return cls(mols=mols_list, name=name, atom_order=atom_order)
 
     @classmethod
-    def from_mdtraj(cls, top: Any, coords: Optional[npt.NDArray] = None, name: Optional[str] = None) -> "molecular_system":
+    def from_mdtraj(
+        cls,
+        top: Any,
+        coords: Optional[npt.NDArray] = None,
+        sym_template: Optional[npt.NDArray] = None,
+        sym_eps: float = 0.05,
+        name: Optional[str] = None,
+    ) -> "molecular_system":
         """Create from an MDTraj Topology, grouping atoms by residue name.
 
         Each unique residue name becomes one molecular species. All residues of
@@ -183,19 +227,43 @@ class molecular_system:
         * When *coords* are absent, structural ordering is used instead:
           descending n_apm, then ascending n_mol.
 
+        Symmetry detection:
+
+        * When *sym_template* is provided (MM-optimised monomer coordinates),
+          intramolecular symmetry permutations are detected automatically for
+          each species using VF2 graph automorphisms filtered by a local
+          distance-matrix check.  Only permutations with
+          ``local_max_dist_err(X, σ, G, hop=1) < sym_eps`` are kept.
+          Inspect candidates before committing::
+
+              from mobbrmsd.sym_detect import detect_sym
+              sym, report = detect_sym(top, res_indices, template_xyz, eps=0.05)
+              for row in report:
+                  print(row["perm"], f"local_dist_err={row['local_dist_err']:.4f}")
+
         Args:
-            top: ``mdtraj.Topology`` instance.
-            coords: optional reference coordinates ``[natom, d]`` or
-                ``[nframe, natom, d]``.
-            name: optional system name.
+            top:          ``mdtraj.Topology`` instance.
+            coords:       optional reference coordinates ``[natom, d]`` or
+                          ``[nframe, natom, d]`` for species ordering.
+            sym_template: MM-optimised reference coordinates for symmetry
+                          detection, ``(n_atoms, 3)`` or ``(n_frames, n_atoms, 3)``.
+                          When 3-D, the first frame is used.
+                          Units must match *sym_eps* (only ratios matter).
+            sym_eps:      Local distance-preservation acceptance threshold as
+                          a **fraction of mean bond length** (unit-free,
+                          default 0.05).  The same value works for *sym_template*
+                          coordinates in Å or nm.
+            name:         optional system name.
 
         Returns:
-            ``molecular_system`` with ``atom_order`` set.
+            ``molecular_system`` with ``atom_order`` (and optionally ``sym``) set.
 
         Raises:
             ValueError: if residues of the same name have different atom counts.
         """
-        mols_list, atom_order = cls._build_from_top(top)
+        mols_list, atom_order = cls._build_from_top(
+            top, sym_template=sym_template, sym_eps=sym_eps
+        )
 
         if coords is not None:
             mols_list, atom_order = _sort_species_by_variance(

@@ -60,3 +60,9 @@ endif()
 
 add_subdirectory( src )
 
+option(GRMSD_BENCH "Download and build X-GRMSD binary for benchmarking (requires GCC or Clang)" OFF)
+if(GRMSD_BENCH)
+    enable_language(CXX)
+    add_subdirectory(third_party/grmsd)
+endif()
+

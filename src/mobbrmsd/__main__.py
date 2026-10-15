@@ -166,7 +166,17 @@ def command_run(args) -> None:
     else:
         arg = parse.parser(args)
 
-    arg.run(arg.mols, arg.refxyz, arg.trgxyz, **arg.prms)
+    run_kwargs = {k: v for k, v in arg.prms.items() if k not in ("output", "trgmdt", "refmdt", "overwrite")}
+    arg.run(
+        arg.mols,
+        arg.refxyz,
+        arg.trgxyz,
+        output=getattr(args, "output", None),
+        trgmdt=getattr(arg, "trgmdt", None),
+        refmdt=getattr(arg, "refmdt", None),
+        overwrite=getattr(args, "overwrite", False),
+        **run_kwargs,
+    )
 
 
 def command_demo(args) -> None:
@@ -184,6 +194,8 @@ def command_demo(args) -> None:
     prec = numpy.float32 if args.single else numpy.float64
     cli = args.cli
 
+    output_spec = getattr(args, "output", None)
+
     demo_list = [
         cogen.__demo(cli=cli, prec=prec),
         bb.__demo(cli=cli, prec=prec),
@@ -193,6 +205,14 @@ def command_demo(args) -> None:
         batch_tri.__demo(cli=cli, prec=prec),
         mst.__demo(cli=cli, prec=prec),
     ]
+
+    def resolve_output(demo_idx):
+        if output_spec is None:
+            return None
+        if output_spec == "":
+            ext = demo_list[demo_idx].default_ext
+            return f"mobbrmsd_demo_{demo_idx + 1:02d}{ext}"
+        return output_spec
 
     if (no < 0) or len(demo_list) <= no:
         opts = [l.title for l in demo_list] + ["exit"]
@@ -208,10 +228,9 @@ def command_demo(args) -> None:
             option, index = pick.pick(opts, title, indicator="   >")
             if option == "exit":
                 break
-            for l in demo_list:
-                if option == l.title:
-                    l.run_demo(**args.argv)
-                    break
+            if 0 <= index < len(demo_list):
+                output = resolve_output(index)
+                demo_list[index].run_demo(output=output, **args.argv)
             inp = input('  press any key to continue ("q" to exit) >> ')
             print(inp)
             if inp == "":
@@ -219,7 +238,8 @@ def command_demo(args) -> None:
             if inp[0] == "q":
                 break
     else:
-        demo_list[no].run_demo(**args.argv)
+        output = resolve_output(no)
+        demo_list[no].run_demo(output=output, **args.argv)
 
 
 def main():
@@ -272,12 +292,45 @@ def main():
         help="Target coordinate file (optional)",
     )
     parser_run.add_argument(
+        "-o",
+        "--output",
+        default=None,
+        metavar="FILE",
+        help="Save rotated target structure to FILE (MDTraj-supported format, e.g. .pdb, .xtc)",
+    )
+    parser_run.add_argument(
+        "-O",
+        "--overwrite",
+        action="store_true",
+        default=False,
+        help="Overwrite output file(s) if they already exist (default: warn and skip)",
+    )
+    parser_run.add_argument(
         "-p",
         "--param",
         action="append",
         default=None,
         metavar="KEY=VALUE",
         help="Extra run parameter (repeatable), e.g. -p maxeval=1000 -p cutoff=2.0",
+    )
+    parser_run.add_argument(
+        "--sym-template",
+        default=None,
+        metavar="FILE",
+        help=(
+            "MM-optimised monomer structure for automatic symmetry detection "
+            "(used when -i/-b are absent). Any MDTraj-supported format."
+        ),
+    )
+    parser_run.add_argument(
+        "--sym-eps",
+        type=float,
+        default=0.05,
+        metavar="FRAC",
+        help=(
+            "Symmetry acceptance threshold as a fraction of mean bond length "
+            "(unit-free, default 0.05). Applied with --sym-template."
+        ),
     )
     parser_run.set_defaults(handler=command_run)
 
@@ -315,6 +368,18 @@ def main():
     )
     parser_demo.add_argument(
         "-s", "--single", action="store_true", help="Use single precision"
+    )
+    parser_demo.add_argument(
+        "-o", "--output",
+        nargs="?",
+        const="",
+        default=None,
+        metavar="FILE",
+        help=(
+            "Save plot to FILE instead of displaying. "
+            "For animations: .gif/.webp saves animated file, .png/.jpg saves numbered frames. "
+            "Omit FILE to use default name mobbrmsd_demo_NN.png."
+        ),
     )
     parser_demo.add_argument(
         "argv",

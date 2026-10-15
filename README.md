@@ -1,9 +1,9 @@
 <!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a name="readme-top"></a>
 
-
 <!-- PROJECT LOGO -->
 <br />
+
 <div align="center">
   <a href="https://github.com/yymmt742/mobbrmsd">
     <img src="images/logo.png" alt="Logo" width="80" height="80">
@@ -14,10 +14,8 @@
   <p align="center">
     An algorithm for efficient superposition and clustering of molecular assemblies using branch-and-bound method.
     <br />
-<!--
-    <a href="https://github.com/yymmt742/mobbrmsd"><strong>Explore the docs »</strong></a>
+    <a href="https://yymmt742.github.io/mobbrmsd/"><strong>Explore the docs »</strong></a>
     <br />
--->
     <br />
     <a href="https://github.com/yymmt742/mobbrmsd/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     ·
@@ -31,9 +29,7 @@
 <details>
   <summary>Table of Contents</summary>
   <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-    </li>
+    <li><a href="#about-the-project">About The Project</a></li>
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
@@ -41,9 +37,8 @@
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
+    <li><a href="#simple-example">Simple Example</a></li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#background">Background</a></li>
-    <li><a href="#benchmark">Benchmark</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contributing">Contributing</a></li>
@@ -57,50 +52,23 @@
 # About The Project
 
 [![CI](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml/badge.svg)](https://github.com/yymmt742/mobbrmsd/actions/workflows/ci.yml)
-[![Create Release Branch](https://github.com/yymmt742/mobbrmsd/actions/workflows/create_release.yml/badge.svg)](https://github.com/yymmt742/mobbrmsd/actions/workflows/create_release.yml)
+[![Docs](https://img.shields.io/badge/docs-yymmt742.github.io%2Fmobbrmsd-blue)](https://yymmt742.github.io/mobbrmsd/)
+
+![mobbrmsd_demo_02](images/mobbrmsd_demo_02.webp)
 
 Root mean squared deviation (RMSD) is one of the most common metrics
 for comparing the similarity of three-dimensional chemical structures.
-The molecular-oriented RMSD with branch-and-bound (mobbRMSD) is an RMSD-based metric for 3D chemical structure similarity.
-mobbRMSD is formulated in molecular-oriented coordinates
-and uses the branch-and-bound method to obtain an exact solution.
-It can handle large and complex chemical systems such as molecular liquids, solvationsof solute, and self-assembly of large molecules,
+The molecular-oriented RMSD with branch-and-bound (mobbRMSD) is an RMSD-based
+metric for 3D chemical structure similarity.
+
+mobbRMSD is formulated in molecular-oriented coordinates and uses the
+branch-and-bound method to obtain an exact solution.
+It can handle large and complex chemical systems such as molecular liquids,
+solvation of solute, and self-assembly of large molecules,
 which are difficult to handle using conventional methods.
 
-Define molecular oriented coordinates as follows:
-```math
-  \mathbf{X}
-  =
-  \left\{
-  \mathbf{X}_{1},\mathbf{X}_{2},\ldots,\mathbf{X}_{K}
-  \right\},
-```
-where $\mathbf{X}\_I\in\mathbb{R}^{d\times n^{k}\times M^{k}}$ is coordinates of the $k$-th homologous molecular assemblies,
-$d$ is a number of spatial dimentions,
-and $M^{k}$ and $n^{k}$ are a number of molecules and the number of atoms per molecule, respectively,
-
-For a molecular-oriented coordinate pair $\mathbf{X}$ and $\mathbf{X}'$ that consisting of $M$ molecules of $n$ atoms,
-the moRMSD is deﬁned as follows:
-```math
-  \text{moRMSD}\left(\mathbf{X},\mathbf{X}'\right)
-  =
-  \min_{\mathbf{R},c,\mu^{(k)},\nu_{I}^{(k)}}
-  \sqrt{\frac{1}{\sum_{k=1}^{K}M^{(k)}n^{(k)}} \sum_{k=1}^{K} \sum_{I=1}^{M^{(k)}} \sum_{j=1}^{n^{(k)}} \left\|{x}^{(k)}_{j,I}-\mathbf{R}{{x}'}^{(k)}_{\nu^{(k)}_{I}(j),\mu^{(k)}(I)}-{c}\right\|^2},
-```
-where $x^{(k)}\_{j,I}$ and ${x'}^{(k)}\_{j,I}$ are the Cartesian coordinates of $j$-th atom in the $I$-th molecule of molecular species $k$
-corresponding to $\mathbf{X}$ and $\mathbf{X}'$, respectively,
-$c$ is a translation vecotor, and $\mathbf{R}$ is a rotation matrix.
-$\nu^{(k)}\_{I}$ and $\mu^{(k)}$ are permutations on
-$\\{1,\ldots,n^{(k)}\\}$
-and
-$\\{1,\ldots,{M}^{(k)}\\}$,
-respectively.
-$\nu^{(k)}\_{I}$ takes the appropriate domain of definition corresponding to the molecular topology.
-Since $\nu^{(k)}\_{I}$ and $\mu^{(k)}$ expand the solution space by factorial and exponential costs with respect to $M^{(k)}$, respectively,
-It is difficult to find a solution by brute force when the number of molecules is large.
-
-mobbRMSD practically eliminates this difficulty by using the branch-and-bound method.
-See Back Ground and Benchmark for details.
+See [Theory](https://yymmt742.github.io/mobbrmsd/theory/) for the mathematical
+definition and algorithmic details.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -110,177 +78,169 @@ See Back Ground and Benchmark for details.
 ### Prerequisites
 
 * gfortran >= 9.4.0
-* OpenBLAS (optional)
 * OpenMP (optional)
 
-To use the Python interface, you additionally need the following:
-* python >= 3.8
+Python interface additionally requires:
+* Python >= 3.9
 * pip
 
 ### Installation
 
-   You can use package build via
-   ```sh
-   pip install git+https://github.com/yymmt742/mobbrmsd.git
-   ```
-   Running some demonstrations via
-   ```sh
-   python -m mobbrmsd demo
-   ```
+```sh
+pip install git+https://github.com/yymmt742/mobbrmsd.git
+```
 
 #### Windows (TDM-GCC / MinGW)
 
-On Windows the CMake generator must be set explicitly to avoid defaulting to the MSVC NMake generator.
-Install with:
+On Windows the CMake generator must be set explicitly:
+
 ```sh
 set CMAKE_GENERATOR=MinGW Makefiles
 pip install git+https://github.com/yymmt742/mobbrmsd.git
 ```
-or, for local development:
-```sh
-CMAKE_GENERATOR="MinGW Makefiles" uv pip install -e ".[test]"
-```
 
 ### Testing
 
-   Install the test dependencies and run the test suite:
-   ```sh
-   pip install -e ".[test]"
-   python -m pytest tests/ -v
-   ```
+```sh
+pip install -e ".[test]"
+python -m pytest tests/ -v
+```
 
-   On Windows, the gfortran runtime DLLs (`libgfortran_64-5.dll`, `libgomp_64-1.dll`) must be
-   on the DLL search path.  The test suite's `conftest.py` handles this automatically by
-   scanning `PATH` for directories that contain these DLLs, so having TDM-GCC or MinGW64 in
-   `PATH` is sufficient.  You can confirm the setup with:
-   ```sh
-   python -c "import mobbrmsd; print(mobbrmsd.__version__)"
-   ```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Simple Example
+
+The `example/` directory contains two PDB files of 7 L-alanine molecules
+(13 atoms each: N, CA, C, O, OXT, CB, H1, H2, HA, HB1, HB2, HB3, HXT) in different arrangements.
+`ala7_B.pdb` is a globally rotated, permuted, and slightly perturbed copy of `ala7_A.pdb`.
+
+**CLI:**
+
+```sh
+python -m mobbrmsd run -i example/ala7.json example/ala7_A.pdb example/ala7_B.pdb
+```
+
+```
+Reference frame       1 | Target    frame       1
+  RMSD        :             0.576438145
+  ----------
+  AUTO CORR.  :         19438.744027941
+  UPPER BOUND :         -9704.253231442  (as RMSD) :             0.576438145
+  LOWER BOUND :         -9704.253231442  (as RMSD) :             0.576438145
+  N EVAL      :                      28  (ratio)   :    0.002043944813490036
+  ----------
+```
+
+mobbRMSD finds the optimal permutation + rotation in **28 evaluations out of 7! = 5040** possible
+molecule assignments (0.2 % of the brute-force cost).
+
+**Python API:**
+
+```python
+import mdtraj
+from mobbrmsd.dataclass import molecular_system
+from mobbrmsd.mobbrmsd import mobbrmsd
+
+tA = mdtraj.load("example/ala7_A.pdb")
+tB = mdtraj.load("example/ala7_B.pdb")
+x = tA.xyz[0] * 10   # nm → Å
+y = tB.xyz[0] * 10
+
+mols = molecular_system.from_topology(tA.topology)
+mrmsd = mobbrmsd(mols=mols)
+
+result = mrmsd.run(x, y)
+print(f"RMSD    = {result.rmsd():.6f} Å")
+print(f"N_eval  = {result.n_eval()} / 5040  (ratio = {result.eval_ratio():.6f})")
+```
+
+```
+RMSD    = 0.576445 Å
+N_eval  = 28 / 5040  (ratio = 0.002044)
+```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Usage
 
-### Python API
+Full documentation: **<https://yymmt742.github.io/mobbrmsd/>**
 
-Construct a `molecular_system`, create a `mobbrmsd` object, and call `run` or `batch_run`.
+### Command-line interface
+
+**Build a topology JSON from a coordinate file:**
+
+```sh
+python -m mobbrmsd build -f system.pdb -o topology.json
+```
+
+**Compute RMSD:**
+
+```sh
+# single pair
+python -m mobbrmsd run -i topology.json reference.pdb target.pdb
+
+# batch (multi-frame DCD/XTC)
+python -m mobbrmsd run -i topology.json reference.dcd target.dcd -p topology=topology.pdb
+
+# self-comparison (distance matrix)
+python -m mobbrmsd run -i topology.json trajectory.dcd
+```
+
+**Save the fitted (rotated) target structure:**
+
+```sh
+python -m mobbrmsd run -i topology.json reference.pdb target.pdb -o fitted.pdb
+```
+
+When the reference has multiple frames, numbered output files are created
+automatically (`fitted.001.pdb`, `fitted.002.pdb`, …).
+Use `-O` to overwrite existing files.
+
+**Run a demo:**
+
+```sh
+python -m mobbrmsd demo
+```
+
+### Python API
 
 ```python
 from mobbrmsd.dataclass import molecules, molecular_system
 from mobbrmsd.mobbrmsd import mobbrmsd
 
-mols = molecular_system([
-    molecules(n_apm=2, n_mol=1, name="HydrogenFluoride"),
-    molecules(n_apm=3, n_mol=4, sym=[[1, 3, 2]], name="Water"),
-])
-
+# 4 water molecules; H atoms are interchangeable
+mols = molecular_system([molecules(n_apm=3, n_mol=4, sym=[[0, 2, 1]])])
 mrmsd = mobbrmsd(mols=mols)
 
-# Single-pair RMSD — returns a mobbrmsd_result
-result = mrmsd.run(x, y)
-print(result.rmsd)
-
-# Batch RMSD matrix — returns ndarray of shape [n_X, n_X] or [n_X, n_Y]
-D = mrmsd.batch_run(coords)
-D_xy = mrmsd.batch_run(x, y, cutoff=2.0, verbose=False)
+result = mrmsd.run(x, y)          # single pair → mobbrmsd_result
+D = mrmsd.batch_run(frames)       # distance matrix, shape [n, n]
 ```
 
-Common options shared by both `run` and `batch_run` (passed as keyword arguments):
-`cutoff`, `ub_cutoff`, `difflim`, `maxeval`, `remove_com`, `sort_by_g`.
-
-#### MDTraj auto-detection
+Load automatically from MDTraj:
 
 ```python
 import mdtraj
 from mobbrmsd.dataclass import molecular_system
 
 traj = mdtraj.load("simulation.dcd", top="topology.pdb")
-coords = traj.xyz * 10.0  # nm → Å
-
+coords = traj.xyz * 10.0          # nm → Å
 mols = molecular_system.from_mdtraj(traj.topology, coords)
-mrmsd = mobbrmsd(mols=mols)
-D = mrmsd.batch_run(coords)
 ```
-
-### Command-line interface
-
-   The input is json format, and a simple example is as follows
-   ```json
-   {
-     "reference":"./path/to/file1.pdb",
-     "target":"./path/to/file2.xyz",
-     "molecules":[
-       {
-        "n_apm":2,
-        "n_mol":1,
-        "name":"HydrogenFluoride"
-       },
-       {
-        "n_apm":3,
-        "n_mol":4,
-        "sym":[[ 1, 3, 2]],
-        "name":"Water"
-       }
-     ]
-   }
-   ```
-   In this example, the system contains one hydrogen fluoride and four waters.
-   Intramolecular permutations resulting from the swapping of hydrogen positions are specified for water molecules.
-   sym is a list of index arrays (list[int]) enumerating the intramolecular permutations represented by substitutions.
-   Identity permutation (i.e., [0,1,... n_apm-1]) are ignored if you input it.
-   
-   The file load backend is [MDtraj](https://mdtraj.org/1.9.4/api/generated/mdtraj.load.html).
-   See [documentation](https://mdtraj.org/1.9.4/api/generated/mdtraj.load.html) for supported formats.
-   Only coordinates are referenced from the file; information such as residues and atom types are not used.
-   The coordinates must have Cartesian coordinates in the order specified in json file as follows.
-   ```sh
-   > cat file1.pdb
-   ATOM      1  F   HF  A   0       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           F
-   ATOM      2  H   HF  A   0       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
-   ATOM      3  OH  HF  A   1       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           O
-   ATOM      4  H1  WAT A   1       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
-   ATOM      5  H2  WAT A   1       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
-   ATOM      6  OH  WAT A   2       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           O
-   ATOM      7  H1  WAT A   2       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
-   ATOM      8  H2  WAT A   2       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
-   ATOM      9  OH  WAT A   3       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           O
-   ATOM     10  H1  WAT A   3       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
-   ATOM     11  H2  WAT A   3       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
-   ATOM     12  OH  WAT A   4       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           O
-   ATOM     13  H1  WAT A   4       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H
-   ATOM     14  H2  WAT A   4       X.XXX   Y.YYY   Z.ZZZ  1.00  0.00           H  
-   ```
-
-  You can run the calculations with the following commands:
-  
-   ```sh
-   python -m mobbrmsd run -i <input>
-   ```
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-## Background
-
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-## Benchmark
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Roadmap
 
-- [x] Add Usage
-- [x] Enable autovariance sorting
-- [ ] Enable skip tree
-- [ ] Compatible with compilers (intel)
-- [x] Compatible with compilers (nv)
-- [ ] Add detail documentation
-- [ ] Add detail documentation (Python interface)
-- [ ] Add benchmarks
-- [x] Internalize lapack
+- [x] Python interface
+- [x] MDTraj auto-detection (`from_topology`, `from_mdtraj`)
+- [x] Topology builder (interactive CLI)
+- [x] Variance-based species ordering
+- [x] Structure output (`run -o`)
+- [ ] Skip tree
+- [ ] Intel compiler support
+- [ ] Detailed benchmarks
 
-See the [open issues](https://github.com/yymmt742/mobbrmsd/issues) for a full list of proposed features (and known issues).
+See the [open issues](https://github.com/yymmt742/mobbrmsd/issues) for a full list of proposed features and known issues.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -317,26 +277,21 @@ YYMMT742 - yymmt@kuchem.kyoto-u.ac.jp
 <!-- Reference -->
 ## Reference
 
-Further details are available from the following publications:
+Further details are available from the following publication:
 
-* [Yamamoto, Y. "Algorithm for Efficient Superposition and Clustering of Molecular Assemblies Using the Branch-and-Bound Method", _J. Chem. Inf. Model._ __2025__](https://doi.org/10.1021/acs.jcim.4c02217)
+* Yamamoto, Y. "Algorithm for Efficient Superposition and Clustering of Molecular Assemblies Using the Branch-and-Bound Method", _J. Chem. Inf. Model._ **2025**. <https://doi.org/10.1021/acs.jcim.4c02217>
 
 This project is based on the following papers:
 
-Molecular superposition
+**Molecular superposition**
 
-* [Kabsch, W. A solution for the best rotation to relate two sets of vectors. _Acta Crystallogr., Sect. A_ __1976__, 32, 922-923](https://scripts.iucr.org/cgi-bin/paper?S0567739476001873)
-* [Theobald, D. L. Rapid calculation of RMSDs using a quaternion-based characteristic polynomial. _Acta Crystallogr., Sect. A_:Found. Crystallogr._ __2005__, 61, 478-480](https://scripts.iucr.org/cgi-bin/paper?S0108767305015266)
-* [Coutsias, E. A.; Wester, M. J. RMSD and Symmetry. _J. Comput. Chem._ __2019__, 40, 1496-1508](https://onlinelibrary.wiley.com/doi/10.1002/jcc.25802)
+* Kabsch, W. A solution for the best rotation to relate two sets of vectors. _Acta Crystallogr., Sect. A_ **1976**, 32, 922–923.
+* Theobald, D. L. Rapid calculation of RMSDs using a quaternion-based characteristic polynomial. _Acta Crystallogr., Sect. A_ **2005**, 61, 478–480.
+* Coutsias, E. A.; Wester, M. J. RMSD and Symmetry. _J. Comput. Chem._ **2019**, 40, 1496–1508.
 
-Linear assignment problem
+**Linear assignment**
 
-* [Kuhn, H. W. The Hungarian method for the assignment problem. _Naval Res. Logistics Quarterly_ __1955__, 2, 83-97](https://onlinelibrary.wiley.com/doi/10.1002/nav.3800020109)
-* [Munkres, J. Algorithms for the Assignment and Transportation Problems. _J. Soc. Ind. Appl. Math._ __1957__, 5, 32-38](http://www.jstor.org/stable/2098689)
-
+* Kuhn, H. W. The Hungarian method for the assignment problem. _Naval Res. Logistics Quarterly_ **1955**, 2, 83–97.
+* Munkres, J. Algorithms for the Assignment and Transportation Problems. _J. Soc. Ind. Appl. Math._ **1957**, 5, 32–38.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-

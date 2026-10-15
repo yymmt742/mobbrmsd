@@ -7,6 +7,8 @@ import numpy
 
 
 class __demo(_demo._demo):
+    default_ext = ".webp"
+
     def __init__(self, **kwargs):
         super().__init__(title="mobbRMSD basic", **kwargs)
 
@@ -170,66 +172,15 @@ class __demo(_demo._demo):
         x=[[[0.0, 0.0, 0.0]]],
         y=[[[0.0, 0.0, 0.0]]],
         z=[[[0.0, 0.0, 0.0]]],
-        path=None,
+        output=None,
         **kwargs,
     ):
-        ang = 0
-
-        if self.yes_or_no("Show samples ? (Open matplotlib window)"):
+        if output is not None or self.yes_or_no("Show samples ? (Open matplotlib window)"):
             import matplotlib.pyplot as plt
-            import matplotlib.animation as animation
+            from .. import viz
 
-            cmap = plt.get_cmap("tab20")
-            fig = plt.figure(figsize=(8, 8 / 1.618))
-            axes = [
-                fig.add_subplot(1, 2, 1, projection="3d"),
-                fig.add_subplot(1, 2, 2, projection="3d"),
-            ]
-            for ax, ref, tgt in zip(axes, [x, x], [z, y]):
-                for i, xy in enumerate(zip(ref, tgt)):
-                    for xi, yi in zip(xy[0], xy[1]):
-                        ax.plot(
-                            [xi[0], yi[0]],
-                            [xi[1], yi[1]],
-                            [xi[2], yi[2]],
-                            color=cmap(2 * i),
-                            ls=":",
-                            lw=1.0,
-                        )
-                for crd, fillstyle, ms, j in zip(
-                    [ref, tgt], ["none", "full"], [6, 6], [1, 0]
-                ):
-                    for i, xi in enumerate(crd):
-                        ax.plot(
-                            xi[:, 0],
-                            xi[:, 1],
-                            xi[:, 2],
-                            color=cmap(2 * i + j),
-                            marker="o",
-                            fillstyle=fillstyle,
-                            ms=ms,
-                        )
-                ax.set_xlabel("X")
-                ax.set_ylabel("Y")
-                ax.set_zlabel("Z")
-                ax.set_xlim([-2.5, 2.5])
-                ax.set_ylim([-2.5, 2.5])
-                ax.set_zlim([-2.5, 2.5])
-                ax.view_init(azim=15)
-                ax.set_box_aspect([1, 1, 1])
-            plt.tight_layout()
-
-            def rot(frame):
-                axes[0].view_init(azim=frame)
-                axes[1].view_init(azim=frame)
-
-            if path is None:
-                ani = animation.FuncAnimation(
-                    fig, rot, frames=numpy.arange(15, 374, 2), interval=1
-                )
-                plt.show()
-            else:
-                for p in path.split(","):
-                    plt.savefig(p)
+            # Extract viz-relevant kwargs; remaining demo params (n_mol, n_apm, …) are ignored.
+            plot_kw = {k: v for k, v in kwargs.items() if k in viz._PLOT_KW}
+            fig = viz.plot_superposition(x, z, y, output=output, **plot_kw)
             plt.clf()
-            plt.close()
+            plt.close(fig)
