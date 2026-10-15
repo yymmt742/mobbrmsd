@@ -55,3 +55,6 @@ site/
 __pycache__/
 MANIFEST.in
 uv.lock
+.claude
+__cmake_systeminformation/
+
