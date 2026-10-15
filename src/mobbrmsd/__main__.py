@@ -313,6 +313,25 @@ def main():
         metavar="KEY=VALUE",
         help="Extra run parameter (repeatable), e.g. -p maxeval=1000 -p cutoff=2.0",
     )
+    parser_run.add_argument(
+        "--sym-template",
+        default=None,
+        metavar="FILE",
+        help=(
+            "MM-optimised monomer structure for automatic symmetry detection "
+            "(used when -i/-b are absent). Any MDTraj-supported format."
+        ),
+    )
+    parser_run.add_argument(
+        "--sym-eps",
+        type=float,
+        default=0.05,
+        metavar="FRAC",
+        help=(
+            "Symmetry acceptance threshold as a fraction of mean bond length "
+            "(unit-free, default 0.05). Applied with --sym-template."
+        ),
+    )
     parser_run.set_defaults(handler=command_run)
 
     parser_build = sub.add_parser(

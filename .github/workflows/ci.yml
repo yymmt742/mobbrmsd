@@ -126,19 +126,3 @@ jobs:
       - name: Run pytest
         run: python -m pytest tests/ -v
 
-  docs:
-    name: Build documentation
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install documentation dependencies
-        run: pip install mkdocs mkdocs-material "mkdocstrings[python]"
-
-      - name: Build documentation (strict)
-        run: mkdocs build --strict

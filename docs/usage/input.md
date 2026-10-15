@@ -153,5 +153,5 @@ Extra keyword arguments are passed to the RMSD calculation via `-p`.
 When `-o FILE` is given, the dispatch changes for multi-frame or self-comparison cases:
 instead of the fast Fortran batch routine, `run(x, y, rotate_y=True)` is called
 per pair in Python so that the rotated coordinates can be captured.
-See [Structure output](index.md#structure-output--o---o) for the full naming rules.
+See [Structure output](index.md#structure-output-o-o) for the full naming rules.
 

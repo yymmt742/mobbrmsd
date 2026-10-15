@@ -177,7 +177,35 @@ class parser:
         )
         self.mols = mols if mols is not None else load(prms)
         if self.mols is None:
-            self.mols = molecular_system([molecules(n_apm=self.refxyz.shape[1], n_mol=1)])
+            if self.refmdt is not None:
+                import sys
+                sym_template_file = getattr(args, "sym_template", None)
+                sym_eps = getattr(args, "sym_eps", 0.05)
+                sym_xyz = None
+                if sym_template_file is not None:
+                    sym_traj = mdtraj.load(sym_template_file)
+                    sym_xyz = sym_traj.xyz[0]  # nm; eps is unit-free so no conversion needed
+                    print(
+                        f"  [sym] template loaded from {sym_template_file}, eps={sym_eps}",
+                        file=sys.stderr,
+                    )
+                self.mols = molecular_system.from_mdtraj(
+                    self.refmdt.topology,
+                    coords=self.refxyz,
+                    sym_template=sym_xyz,
+                    sym_eps=sym_eps,
+                )
+                sym_info = ", ".join(
+                    f"{m.n_mol}×{m.n_apm}at"
+                    + (f"(sym×{len(m.sym)})" if m.sym else "")
+                    for m in self.mols.mols
+                )
+                print(
+                    f"  [auto] molecular_system built from topology: {sym_info}",
+                    file=sys.stderr,
+                )
+            else:
+                self.mols = molecular_system([molecules(n_apm=self.refxyz.shape[1], n_mol=1)])
         self.prms = prms
         self.runtype = prms.get("runtype")
         if self.runtype is None:

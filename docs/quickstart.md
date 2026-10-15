@@ -72,7 +72,7 @@ python -m mobbrmsd run -i topology.json reference.dcd target.dcd \
 ```
 
 For the full list of `-p` parameters (`maxeval`, `cutoff`, `mask`, …) see
-[Input format → Run parameters](input.md#run-parameters).
+[Input format → Run parameters](usage/input.md#run-parameters-p-keyvalue).
 
 ### Step 3 — Save the fitted structure
 

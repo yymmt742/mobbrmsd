@@ -1,13 +1,17 @@
 # API Reference
 
-The Python API is generated automatically from the source code
-in `src/mobbrmsd/`.
+## Python API
 
-The API documentation is based on the docstrings in the Python
-wrapper.
-
-## Modules
+Generated automatically from the docstrings in `src/mobbrmsd/`.
 
 - [dataclass](dataclass.md)
 - [mobbRMSD](mobbrmsd.md)
+
+## Fortran Core API
+
+The Fortran implementation is documented with
+[FORD](https://forddocs.readthedocs.io/).  It covers the
+branch-and-bound solver, RMSD kernels, and the Python–Fortran interface.
+
+→ [Fortran Core API (FORD)](fortran.md)
 

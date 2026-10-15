@@ -2,7 +2,7 @@ import time
 import numpy
 import pprint
 import sys
-from pathlib import Path
+from ..viz import _save_figure
 
 bar1 = (
     "  ------------------------------------------------------------------------------"
@@ -125,47 +125,6 @@ def print_ret(
         )
     if footer:
         print(sep1, "\n")
-
-
-def _save_figure(output, fig, rot_func=None, rot_frames=None):
-    """Save a matplotlib figure or animation to *output*.
-
-    When *rot_func* and *rot_frames* are given the output is animated:
-      - .gif / .webp  → single animated file (Pillow writer)
-      - .png / .jpg   → numbered frame files  (foo.001.png, foo.002.png, …)
-      - other         → static snapshot of the first frame
-
-    When no animation function is given, ``fig.savefig(output)`` is used.
-    """
-    p = Path(output)
-    suffix = p.suffix.lower()
-
-    if rot_func is None or rot_frames is None:
-        fig.savefig(output)
-        return
-
-    rot_frames = list(rot_frames)
-
-    if suffix in (".gif", ".webp"):
-        import matplotlib.animation as _anim
-        ani = _anim.FuncAnimation(fig, rot_func, frames=rot_frames, interval=50)
-        ani.save(output, writer="pillow")
-        print(f"  Animation saved to {output}", file=sys.stderr)
-    elif suffix in (".png", ".jpg", ".jpeg"):
-        width = max(3, len(str(len(rot_frames))))
-        for k, frame_val in enumerate(rot_frames):
-            rot_func(frame_val)
-            frame_path = str(p.parent / f"{p.stem}.{k + 1:0{width}d}{p.suffix}")
-            fig.savefig(frame_path)
-        print(
-            f"  {len(rot_frames)} frames saved as "
-            f"{p.stem}.001{p.suffix} … {p.stem}.{len(rot_frames):0{width}d}{p.suffix}",
-            file=sys.stderr,
-        )
-    else:
-        rot_func(rot_frames[0])
-        fig.savefig(output)
-        print(f"  Figure saved to {output}", file=sys.stderr)
 
 
 class _demo:

@@ -1,0 +1,69 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python documentation dependencies
+        run: pip install mkdocs mkdocs-material "mkdocstrings[python]"
+
+      - name: Build MkDocs site
+        run: mkdocs build --strict
+
+      - name: Install FORD and Graphviz
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y graphviz
+          pip install ford
+
+      - name: Build Fortran API documentation (FORD)
+        run: ford doc/api-doc-ford-settings.md
+
+      - name: Copy Fortran API docs into site
+        run: cp -r doc/api-doc/ site/fortran-api/
+
+      - name: Upload Pages artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

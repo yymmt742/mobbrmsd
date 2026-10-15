@@ -1,0 +1,17 @@
+{
+  "reference":"./HF_4H2O_A.pdb",
+  "target":"./HF_4H2O_B.pdb",
+  "molecules":[
+    {
+     "n_apm":2,
+     "n_mol":1,
+     "name":"HydrogenFluoride"
+    },
+    {
+     "n_apm":3,
+     "n_mol":4,
+     "sym":[[ 1, 3, 2]],
+     "name":"Water"
+    }
+  ]
+}

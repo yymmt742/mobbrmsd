@@ -15,7 +15,7 @@ dependencies = [
     "prompt_toolkit",
 ]
 
-version = "0.0.29"
+version = "0.1.0"
 
 description = "Molecular-Oriented RMSD with Branch-and-Bound"
 

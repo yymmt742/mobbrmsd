@@ -79,7 +79,10 @@ nav:
       - Overview: theory/index.md
       - mobbRMSD: theory/mobbrmsd.md
 
+  - Benchmark: benchmark/index.md
+
   - API Reference:
       - Overview: api/index.md
       - Data classes: api/dataclass.md
       - mobbRMSD: api/mobbrmsd.md
+      - Fortran Core (FORD): api/fortran.md
